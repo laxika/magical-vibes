@@ -52,6 +52,9 @@ class DamageTriggerCollectorServiceTest {
     @Mock
     private CreatureControlService creatureControlService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+
     @InjectMocks
     private DamageTriggerCollectorService sut;
 
@@ -153,6 +156,72 @@ class DamageTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             verify(permanentRemovalService, never()).removeOrphanedAuras(any());
             verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ExileDamageSourcePermanentUntilSourceLeavesEffect")
+    class ExileDamageSourceOnDamage {
+
+        @Test
+        @DisplayName("queues a non-targeting exile trigger aimed at the damage source")
+        void queuesExileTrigger() {
+            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
+            Permanent sourcePerm = createPermanent("Grizzly Bears");
+            var effect = new com.github.laxika.magicalvibes.model.effect
+                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true);
+            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
+
+            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(sourcePerm.getId());
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(triggerPerm.getId());
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        }
+
+        @Test
+        @DisplayName("does not fire on noncombat damage when combatOnly is set")
+        void skipsNoncombatDamage() {
+            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
+            Permanent sourcePerm = createPermanent("Grizzly Bears");
+            var effect = new com.github.laxika.magicalvibes.model.effect
+                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true);
+            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), false);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("does not fire when the intervening-if is not met")
+        void skipsWhenInterveningIfUnmet() {
+            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
+            Permanent sourcePerm = createPermanent("Grizzly Bears");
+            var condition = new com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn();
+            var effect = new com.github.laxika.magicalvibes.model.effect
+                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true, condition);
+            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
+
+            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 

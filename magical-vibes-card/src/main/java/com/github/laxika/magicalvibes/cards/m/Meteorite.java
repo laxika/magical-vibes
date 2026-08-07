@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "221")
+@CardRegistration(set = "ORI", collectorNumber = "233")
 public class Meteorite extends Card {
 
     public Meteorite() {

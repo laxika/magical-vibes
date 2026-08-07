@@ -338,6 +338,8 @@ public class CombatDamageService {
             }
         }
 
+        recordCombatDamageBySource(gameData, state);
+
         // Process ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice). combatDamageDealt is
         // already summed per source for this step, matching the "add up all the damage" ruling.
         processSourceDealsDamageReflectionTriggers(gameData, state);
@@ -974,6 +976,18 @@ public class CombatDamageService {
      * already sums the damage it dealt to every recipient (creatures and players), matching the
      * "add up all the damage done and deal it at one time" ruling.
      */
+    /**
+     * Accumulates the per-turn "damage this source has dealt" totals for combat damage. Combat damage
+     * never routes through {@code DamageSupport}, which records the noncombat side, so this is the
+     * combat half of the same counter (Chandra, Fire of Kaladesh). {@code combatDamageDealt} is already
+     * summed per source across every recipient in this step, so no double counting occurs.
+     */
+    private void recordCombatDamageBySource(GameData gameData, CombatDamageState state) {
+        for (var entry : state.combatDamageDealt.entrySet()) {
+            gameData.recordDamageDealtBySource(entry.getKey().getId(), entry.getValue());
+        }
+    }
+
     private void processSourceDealsDamageReflectionTriggers(GameData gameData, CombatDamageState state) {
         for (var entry : state.combatDamageDealt.entrySet()) {
             Permanent source = entry.getKey();
@@ -1005,6 +1019,10 @@ public class CombatDamageService {
     }
 
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
+        // Sources of batched ally triggers ("whenever one or more ... deal combat damage to a
+        // player") that already fired in this damage step against this player, so they fire once
+        // for the whole batch instead of once per dealer.
+        Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
         for (var entry : combatDamageDealtToPlayer.entrySet()) {
             Permanent creature = entry.getKey();
             int damageDealt = entry.getValue();
@@ -1259,7 +1277,8 @@ public class CombatDamageService {
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
-            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
+            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
+                    firedBatchedAllyTriggerSources);
         }
     }
 
@@ -1342,7 +1361,8 @@ public class CombatDamageService {
      * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
      * combat damage to a player, put a +1/+1 counter on it."
      */
-    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt) {
+    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt,
+                                                               Set<UUID> firedBatchedAllyTriggerSources) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (attackerBattlefield == null) return;
 
@@ -1352,6 +1372,11 @@ public class CombatDamageService {
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
+                        continue;
+                    }
+                    // "One or more ... deal combat damage" is a single event for the whole batch,
+                    // so a batched trigger only goes on the stack for the first matching dealer.
+                    if (trigger.oncePerDamageStep() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
                         continue;
                     }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
@@ -2218,7 +2243,7 @@ public class CombatDamageService {
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 // Urza's Armor: the defending player prevents a fixed amount of this attacker's damage.
-                int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, defenderId, damage);
+                int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, defenderId, damage, true);
                 if (fixedPrevented > 0) {
                     damage -= fixedPrevented;
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "

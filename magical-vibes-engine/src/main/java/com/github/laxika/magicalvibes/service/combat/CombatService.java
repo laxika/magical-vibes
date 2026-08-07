@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.ExileAndReturnTransformedService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
@@ -85,6 +87,7 @@ public class CombatService {
     private final DamageSupport damageSupport;
     private final StateBasedActionService stateBasedActionService;
     private final TapUntapSupport tapUntapSupport;
+    private final ExileAndReturnTransformedService exileAndReturnTransformedService;
 
     /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
     private static final GainControlOfTargetEffect CONTROL_OPPONENT_EFFECT =
@@ -496,42 +499,7 @@ public class CombatService {
                 .toList();
 
         for (UUID permId : toProcess) {
-            // Find the permanent and its controller
-            Permanent perm = null;
-            UUID controllerId = null;
-            for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
-                for (Permanent p : entry.getValue()) {
-                    if (p.getId().equals(permId)) {
-                        perm = p;
-                        controllerId = entry.getKey();
-                        break;
-                    }
-                }
-                if (perm != null) break;
-            }
-            if (perm == null) continue; // Already left the battlefield
-
-            Card originalCard = perm.getOriginalCard();
-            Card backFace = originalCard.getBackFaceCard();
-            if (backFace == null) continue;
-
-            // Exile the permanent
-            permanentRemovalService.removePermanentToExile(gameData, perm);
-            // Remove from exile immediately (it returns right away as the back face)
-            gameData.removeFromExile(originalCard.getId());
-
-            // Create new permanent from original card, then transform to back face
-            Permanent newPerm = new Permanent(originalCard);
-            newPerm.setCard(backFace);
-            newPerm.setTransformed(true);
-            newPerm.setSummoningSick(false); // Lands don't have summoning sickness
-
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
-
-            gameLogService.append(gameData, GameLog.cardTextCard(originalCard,
-                    " is exiled and returns transformed as ", backFace, "."));
-            log.info("Game {} - {} exiled and returned transformed as {}",
-                    gameData.id, originalCard.getName(), backFace.getName());
+            exileAndReturnTransformedService.exileAndReturnTransformed(gameData, permId);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

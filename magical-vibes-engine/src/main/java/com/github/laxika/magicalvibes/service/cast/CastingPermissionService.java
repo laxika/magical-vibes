@@ -451,8 +451,27 @@ public class CastingPermissionService {
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || grantsItselfFlashTiming(card)
+                || hasMetFlashCastCondition(gameData, playerId, card)
                 || hasAvailableFlashAlternateCast(gameData, playerId, card);
         return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+    }
+
+    /**
+     * True when the only thing letting {@code card} be cast right now is a flash-granting
+     * {@link AlternateHandCast}. The flash timing belongs to that alternate cast, so a cast that
+     * pays the normal mana cost instead is illegal at this moment (Harbinger of the Tides only has
+     * flash if the {2} surcharge is paid). {@link #canCastWithTiming} stays permissive — the card
+     * really is castable, just not for its normal cost — and the hand-cast path rejects the
+     * normal-cost cast with this check.
+     */
+    public boolean flashTimingRequiresAlternateCast(GameData gameData, UUID playerId, Card card) {
+        if (sorceryTimingAvailable(gameData, playerId)) return false;
+        if (!hasAvailableFlashAlternateCast(gameData, playerId, card)) return false;
+        return !card.hasType(CardType.INSTANT)
+                && !card.getKeywords().contains(Keyword.FLASH)
+                && !hasFlashGrantForCard(gameData, playerId, card)
+                && !grantsItselfFlashTiming(card)
+                && !hasMetFlashCastCondition(gameData, playerId, card);
     }
 
     /**
@@ -463,6 +482,17 @@ public class CastingPermissionService {
     private boolean grantsItselfFlashTiming(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance);
+    }
+
+    /**
+     * True if the card carries a condition-gated "you may cast this spell as though it had flash"
+     * clause whose condition is currently met for the caster (e.g. Swift Reckoning's spell mastery).
+     * The normal cost still applies — only the timing permission changes.
+     */
+    private boolean hasMetFlashCastCondition(GameData gameData, UUID playerId, Card card) {
+        Condition condition = card.getFlashCastCondition();
+        return condition != null
+                && conditionEvaluationService.isMet(gameData, condition, ConditionContext.forCasting(playerId));
     }
 
     /**

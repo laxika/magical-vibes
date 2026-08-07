@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "21")
+@CardRegistration(set = "ORI", collectorNumber = "27")
 public class MurderInvestigation extends Card {
 
     public MurderInvestigation() {

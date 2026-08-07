@@ -969,10 +969,11 @@ public class DamagePreventionService {
      * Urza's Armor-style prevention: "If a source would deal damage to you, prevent N of that damage."
      * Modeled on the controller of the permanent. Prevents up to the summed {@code amount} of every such
      * permanent they control from each source that would deal damage to them (combat and noncombat).
-     * Returns the amount prevented (the caller subtracts it); 0 when damage can't be prevented or no such
-     * permanent is present.
+     * Effects restricted to creature sources (Orbs of Warding) only contribute when
+     * {@code sourceIsCreature}. Returns the amount prevented (the caller subtracts it); 0 when damage
+     * can't be prevented or no such permanent is present.
      */
-    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage) {
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage, boolean sourceIsCreature) {
         if (!gameQueryService.isDamagePreventable(gameData)) return 0;
         if (damage <= 0) return 0;
 
@@ -982,7 +983,9 @@ public class DamagePreventionService {
         int reduction = battlefield.stream()
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(e -> e instanceof PreventFixedDamagePerSourceToControllerEffect)
-                .mapToInt(e -> ((PreventFixedDamagePerSourceToControllerEffect) e).amount())
+                .map(e -> (PreventFixedDamagePerSourceToControllerEffect) e)
+                .filter(e -> sourceIsCreature || !e.creatureSourcesOnly())
+                .mapToInt(PreventFixedDamagePerSourceToControllerEffect::amount)
                 .sum();
         return Math.min(damage, reduction);
     }

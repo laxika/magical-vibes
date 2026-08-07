@@ -45,6 +45,7 @@ public sealed interface DynamicAmount permits
         EnchantedPermanentManaValue,
         EventValue,
         Fixed,
+        FixedIfCondition,
         FixedIfControlMoreCreaturesThanEachOtherPlayer,
         FixedIfControlledCreaturesTotalToughnessAtLeast,
         FixedIfControlsAllNamed,

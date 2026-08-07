@@ -76,6 +76,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EquipoiseSupport equipoiseSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler keepOneOfEachTypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
             tappedLandSacrificeDamageIfSubtypeHandler;
 
@@ -207,6 +209,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileTetraviteTokensPutCountersOnSource(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KillingWaveKeep ctx) {
             handleKillingWaveKeep(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
+            handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
@@ -1324,6 +1328,18 @@ public class MultiPermanentChoiceHandlerService {
     private void handleKillingWaveKeep(GameData gameData, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.KillingWaveKeep context) {
         killingWaveEffectHandler.completeKeepChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleKeepOneOfEachTypeChoice(GameData gameData, List<UUID> permanentIds,
+                                               MultiPermanentChoiceContext.KeepOneOfEachTypeChoice context) {
+        keepOneOfEachTypeHandler.completeKeepChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

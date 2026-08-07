@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -13,8 +15,10 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -38,6 +42,7 @@ import java.util.UUID;
 public class CombatTriggerService {
 
     private final GameLogService gameLogService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -95,6 +100,18 @@ public class CombatTriggerService {
                             effectsForStack.add(effect);
                         }
                     }
+                    // "Whenever equipped creature attacks alone" (Sigil of Valor): the granted
+                    // ability doesn't trigger at all unless it's the only attacking creature its
+                    // controller controls (CR 506.5), so drop it here instead of putting a
+                    // do-nothing entry on the stack. Surviving conditionals are already satisfied
+                    // and get unwrapped.
+                    effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
+                            && ce.condition() instanceof AttacksAlone
+                            && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                    ConditionContext.forPermanent(creature, finalCreatureControllerId)));
+                    effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
+                            && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
+
                     if (effectsForStack.isEmpty()) return;
 
                     if (autoTargetOpponent) {

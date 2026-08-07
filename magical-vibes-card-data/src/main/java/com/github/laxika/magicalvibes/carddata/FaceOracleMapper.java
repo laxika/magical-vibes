@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 
@@ -54,10 +55,16 @@ public final class FaceOracleMapper {
                 CardDataSupport.parseInt(face.power()),
                 CardDataSupport.parseInt(face.toughness()),
                 keywordsOf(face, cardText, isBackFace),
-                // A back face is never printed with loyalty, defense or a watermark of its own.
-                isBackFace ? null : CardDataSupport.parseInt(face.loyalty()),
+                // A back face carries no defense or watermark of its own, and no loyalty either
+                // unless it is itself a planeswalker — a creature that transforms into one (Kytheon,
+                // Hero of Akros) enters as its back face and needs that face's starting loyalty.
+                isBackFace && !isPlaneswalker(parsed) ? null : CardDataSupport.parseInt(face.loyalty()),
                 isBackFace ? null : CardDataSupport.parseInt(face.defense()),
                 isBackFace ? null : blankToNull(face.watermark()));
+    }
+
+    private static boolean isPlaneswalker(TypeLineParser.ParsedTypeLine parsed) {
+        return parsed.type() == CardType.PLANESWALKER || parsed.additionalTypes().contains(CardType.PLANESWALKER);
     }
 
     private static List<CardColor> colorsOf(RawFace face, boolean isBackFace) {

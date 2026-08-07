@@ -380,12 +380,18 @@ public class AttackLegalityService {
             }
         }
 
-        // Check for transient "must attack this turn" flag (e.g. Alluring Siren)
-        if (creature.isMustAttackThisTurn()) {
+        UUID creatureControllerId = gameData.findControllerOf(creature);
+
+        // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
+        // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement
+        // lapses once that permanent is no longer a legal attack target.
+        if (creature.isMustAttackThisTurn()
+                && (creature.getMustAttackTargetId() == null
+                        || gameData.playerIds.contains(creature.getMustAttackTargetId())
+                        || getValidAttackTargetIds(gameData, creatureControllerId)
+                                .contains(creature.getMustAttackTargetId()))) {
             count[0]++;
         }
-
-        UUID creatureControllerId = gameData.findControllerOf(creature);
 
         // Taunt: every creature the affected player controls must attack the taunter if able.
         UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);

@@ -69,6 +69,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectBrilliantUltimatumPlayChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
+        register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
@@ -304,6 +305,18 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to seven cards in your hand to keep. Shuffle the rest into your library.");
+    }
+
+    private InteractionPromptMessage projectPutLandsFromHandChoice(
+            GameData gameData, PendingInteraction.PutLandsFromHandChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
+                "You may put any number of land cards from your hand onto the battlefield.");
     }
 
     private InteractionPromptMessage projectDoomsdayChoice(

@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
@@ -87,6 +88,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -105,11 +107,24 @@ import java.util.UUID;
  * controller, x value, …) come from at that site.</p>
  */
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class AmountEvaluationService {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
+
+    /**
+     * Hand-wires the condition evaluator from the same two collaborators, for the non-Spring call
+     * sites (AI evaluators, the headless simulator, handler unit tests) that build this service
+     * directly. {@link ConditionEvaluationService} is stateless, so a private instance behaves
+     * exactly like the Spring-managed one.
+     */
+    public AmountEvaluationService(PredicateEvaluationService predicateEvaluationService,
+            GameQueryService gameQueryService) {
+        this(predicateEvaluationService, gameQueryService,
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService));
+    }
 
     /**
      * Evaluates the current value of the given amount.
@@ -118,6 +133,9 @@ public class AmountEvaluationService {
         return switch (amount) {
             case Fixed f ->
                     f.value();
+            case FixedIfCondition a ->
+                    conditionEvaluationService.isMet(gameData, a.condition(), conditionContext(ctx))
+                            ? a.amount() : a.otherwise();
             case FixedIfControlMoreCreaturesThanEachOtherPlayer a ->
                     controlsMoreCreaturesThanEachOtherPlayer(gameData, ctx) ? a.amount() : a.otherwise();
             case FixedIfControlledCreaturesTotalToughnessAtLeast a ->
@@ -284,6 +302,18 @@ public class AmountEvaluationService {
             case ChosenNumberOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
         };
+    }
+
+    /**
+     * Projects the amount context onto a condition context so {@code FixedIfCondition} can reuse
+     * the condition hierarchy. Only the values both contexts carry are transferred; cast-time flags
+     * (kicked, buyback, …) are not part of an amount context and read as false.
+     */
+    private ConditionContext conditionContext(AmountContext ctx) {
+        return new ConditionContext(ctx.controllerId(),
+                ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
+                ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, false, null,
+                ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation());
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {

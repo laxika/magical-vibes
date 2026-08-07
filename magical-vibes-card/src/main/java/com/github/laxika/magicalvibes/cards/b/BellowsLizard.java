@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "88")
+@CardRegistration(set = "ORI", collectorNumber = "132")
 public class BellowsLizard extends Card {
 
     public BellowsLizard() {

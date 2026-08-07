@@ -1065,6 +1065,32 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED fires for the non-active player's permanents")
+        void opponentBeginningOfCombatFiresForNonActivePlayer() {
+            Card card = createCardWithName("Opponent Combat Card");
+            card.addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("Opponent Combat Card");
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED does not fire on the controller's own turn")
+        void opponentBeginningOfCombatSkipsActivePlayer() {
+            Card card = createCardWithName("Opponent Combat Card");
+            card.addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(gd.activePlayerId).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("AllOf intervening-if skips beginning-of-combat trigger when unmet")
         void allOfInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Graf Rats");

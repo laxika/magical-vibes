@@ -193,6 +193,12 @@ public class Card {
      * green spell this turn").
      */
     private Condition castCondition;
+    /**
+     * Card-specific "you may cast this spell as though it had flash" condition, evaluated for the
+     * caster when computing timing, or null for normal timing. The spell is still cast for its
+     * normal cost — only the timing permission changes. Swift Reckoning (spell mastery).
+     */
+    private Condition flashCastCondition;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -291,6 +297,7 @@ public class Card {
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
+        this.flashCastCondition = source.flashCastCondition;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
@@ -387,6 +394,7 @@ public class Card {
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
+    public void setFlashCastCondition(Condition flashCastCondition) { assertMutable(); this.flashCastCondition = flashCastCondition; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
 

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorceryOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardXAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -616,6 +617,11 @@ public class ActivatedAbilityExecutionService {
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} spells/abilities)",
                         gameData.id, player.getUsername(), soa.subtype());
+            } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {
+                // Mana-linked rider (Pyromancer's Goggles): the next red instant/sorcery cast
+                // before this mana drains is copied.
+                gameData.pendingNextRedInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
+                log.info("Game {} - {} registered a red instant/sorcery copy trigger", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect aacse) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");

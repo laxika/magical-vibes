@@ -15,9 +15,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * "target creature an opponent controls gets -2/-0" passes a "creature an opponent controls"
  * predicate. Trigger pipelines that read {@code targetSpec().predicate()} (such as the
  * cycle/discard controller-trigger target collector) use it to build the legal-target list.
+ *
+ * <p>{@code duration} is {@link GrantDuration#END_OF_TURN} for the overwhelming majority of pumps;
+ * {@link GrantDuration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
+ * until-next-turn bucket instead, so it survives end-of-turn cleanup (Jace, Telepath Unbound's +1).
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                        PermanentPredicate filter) implements CreatureBoostEffect {
+                                        PermanentPredicate filter,
+                                        GrantDuration duration) implements CreatureBoostEffect {
+
+    public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                     PermanentPredicate filter) {
+        this(powerBoost, toughnessBoost, filter, GrantDuration.END_OF_TURN);
+    }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
         this(powerBoost, toughnessBoost, null);
@@ -31,6 +41,11 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     /** Convenience for fixed boosts narrowed by a target restriction ("target creature an opponent controls gets -2/-0"). */
     public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost, PermanentPredicate filter) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), filter);
+    }
+
+    /** Convenience for fixed boosts with a non-default duration ("gets -2/-0 until your next turn"). */
+    public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost, GrantDuration duration) {
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, duration);
     }
 
     @Override

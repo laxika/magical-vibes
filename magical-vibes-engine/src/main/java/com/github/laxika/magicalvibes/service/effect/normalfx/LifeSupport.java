@@ -53,6 +53,12 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
             return;
         }
+        // Tainted Remedy turns the whole gain event into an equal life loss. Per CR 119.10 a gain of
+        // 0 is not a life-gain event, so there is nothing to replace.
+        if (amount > 0 && gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)) {
+            applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
+            return;
+        }
         // Life-gain doublers (e.g. Boon Reflection) replace the amount before it is applied.
         amount *= gameQueryService.lifeGainMultiplier(gameData, controllerId);
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
@@ -93,6 +99,10 @@ public class LifeSupport {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
                 return false;
+            }
+            if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)) {
+                applyLifeLoss(gameData, playerId, newLife - currentLife, "replaced life gain");
+                return true;
             }
             int gained = (newLife - currentLife) * gameQueryService.lifeGainMultiplier(gameData, playerId);
             gameData.playerLifeTotals.put(playerId, currentLife + gained);

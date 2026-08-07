@@ -475,6 +475,14 @@ public class BlockLegalityService {
                 }
             }
         }
+        List<CanBlockOnlyIfAttackerMatchesPredicateEffect> auraRestrictions =
+                gameQueryService.collectAuraEffects(gameData, blocker, CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
+        if (!auraRestrictions.isEmpty()) {
+            if (attackerFilterRestrictions == null) {
+                attackerFilterRestrictions = new ArrayList<>(auraRestrictions.size());
+            }
+            attackerFilterRestrictions.addAll(auraRestrictions);
+        }
         return new BlockLegalityContext.BlockerFacts(
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.FLYING),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.REACH),

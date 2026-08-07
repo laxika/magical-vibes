@@ -556,6 +556,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
+            Card leaving = graveyard.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
             if (graveyard.removeIf(c -> c.getId().equals(cardId))) {
                 Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(playerId);
                 if (tracked != null) {
@@ -565,7 +566,7 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                graveyardService.notifyCardLeftGraveyard(gameData, playerId, leaving);
                 return;
             }
         }
@@ -717,6 +718,9 @@ public class PermanentRemovalService {
             // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
             triggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers(
                     gameData, target.getOriginalCard(), controllerId, ownerId);
+            // Any permanent owned by another player is put into a graveyard (Kothophed, Soul Hoarder).
+            triggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(
+                    gameData, target.getOriginalCard(), ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn

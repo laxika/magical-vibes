@@ -8,7 +8,8 @@ import java.util.UUID;
  * Carry-over work attached to a {@link PendingInteraction.LibrarySearch} (via
  * {@link LibrarySearchParams#followUp()}) and performed (or continued) when the search
  * completes. Replaces the per-mechanic {@code pending*} fields {@code GameData} used to hold:
- * {@code basicLandToHand} begins the second Cultivate-style pick (basic land to hand);
+ * {@code basicLandToHand} begins the second Cultivate-style pick (one or more basic lands to hand,
+ * optionally restricted to a land subtype);
  * {@code cardToGraveyard} begins the second Final Parting / Jarad's Orders pick (card to graveyard);
  * the each-player basic-land pair is the APNAP remainder of an "each player searches for a basic
  * land" flow (Field of Ruin, Old-Growth Dryads), advanced after each player's search resolves;
@@ -41,7 +42,7 @@ import java.util.UUID;
  * lands onto the battlefield" searches plus the forced land sacrifices to perform once every
  * search has resolved.
  */
-public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick cardToGraveyard,
+public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
                                     List<UUID> remainingEachPlayerBasicLandSearches,
                                     boolean eachPlayerSearchTapped,
                                     PendingOpponentExileChoice opponentExileChoice,
@@ -122,6 +123,19 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
         }
     }
 
+    /**
+     * The remaining "search your library for a basic land card and put it into your hand" picks of a
+     * Cultivate-style search: how many picks are still owed and, when non-null, the land
+     * {@code subtype} the found cards must have.
+     */
+    public record BasicLandToHandPick(int count, CardSubtype subtype) {
+
+        /** The same pick with one card taken off the remaining count (null once none are left). */
+        public BasicLandToHandPick decremented() {
+            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype);
+        }
+    }
+
     /** One player's "may search for up to {@code count} basic land cards" pick (Natural Balance). */
     public record BasicLandsPick(UUID playerId, int count) {
     }
@@ -144,7 +158,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
     }
 
     public static final LibrarySearchFollowUp NONE =
-            new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
+            new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
                     List.of(), null, null);
 
     public LibrarySearchFollowUp {
@@ -158,7 +172,15 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
     }
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
-        return new LibrarySearchFollowUp(true, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
+        return forBasicLandToHand(1, null);
+    }
+
+    /**
+     * {@code count} further basic land cards to hand, restricted to {@code subtype} when non-null
+     * (Nissa's Pilgrimage searches for basic Forest cards only).
+     */
+    public static LibrarySearchFollowUp forBasicLandToHand(int count, CardSubtype subtype) {
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype), null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
                 List.of(), null, null);
     }
 
@@ -169,44 +191,44 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
 
     /** Second pick to graveyard with the same filter / fail / reveal settings as the first pick. */
     public static LibrarySearchFollowUp forCardToGraveyard(CardToGraveyardPick pick) {
-        return new LibrarySearchFollowUp(false, pick, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
+        return new LibrarySearchFollowUp(null, pick, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
                 List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(),
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(),
                 new SecondBoundedPick(type, restToGraveyard), null, List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp eachPlayerBasicLand(List<UUID> remainingSearchers, boolean tapped) {
-        return new LibrarySearchFollowUp(false, null, remainingSearchers, tapped, null, null, List.of(), 0, List.of(),
+        return new LibrarySearchFollowUp(null, null, remainingSearchers, tapped, null, null, List.of(), 0, List.of(),
                 null, null, List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp eachPlayerCreaturesToHand(List<UUID> remainingSearchers, int count) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, remainingSearchers, count,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, remainingSearchers, count,
                 List.of(), null, null, List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp eachPlayerCreatureToBattlefield(List<UUID> remainingSearchers) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, remainingSearchers,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, remainingSearchers,
                 null, null, List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp opponentExile(PendingOpponentExileChoice choice) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, choice, null, List.of(), 0, List.of(), null,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, choice, null, List.of(), 0, List.of(), null,
                 null, List.of(), null, null);
     }
 
     public static LibrarySearchFollowUp imprint(UUID sourcePermanentId) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, sourcePermanentId, List.of(), 0,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, sourcePermanentId, List.of(), 0,
                 List.of(), null, null, List.of(), null, null);
     }
 
     /** The queue of permanent names still to search for, one entry per permanent (Clarion Ultimatum, Doubling Chant). */
     public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
                                                       LibrarySearchDestination destination) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(), null,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(), null,
                 new SameNamePickQueue(names, creatureOnly, destination), List.of(), null, null);
     }
 
@@ -229,7 +251,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
     }
 
     private static LibrarySearchFollowUp toHandPicks(List<ToHandPick> picks) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
                 picks, null, null);
     }
 
@@ -239,14 +261,14 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
      * an empty list means every value has already been searched (shuffle once).
      */
     public static LibrarySearchFollowUp instantManaValueToHandPicks(List<Integer> manaValues) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(), null, null,
                 List.of(), List.copyOf(manaValues), null);
     }
 
     /** Natural Balance's remaining per-player basic-land picks plus the sacrifices that follow them. */
     public static LibrarySearchFollowUp naturalBalance(List<BasicLandsPick> remainingPicks,
                                                        List<PendingForcedSacrifice> sacrifices) {
-        return new LibrarySearchFollowUp(false, null, List.of(), false, null, null, List.of(), 0, List.of(), null,
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, List.of(), null,
                 null, List.of(), null, new NaturalBalanceQueue(remainingPicks, sacrifices));
     }
 
@@ -319,9 +341,14 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, CardToGraveyardPick
                 remainingInstantManaValueToHandPicks, queue);
     }
 
-    /** The same follow-up with the consumed basic-land-to-hand flag cleared. */
+    /** The same follow-up with the consumed basic-land-to-hand pick cleared. */
     public LibrarySearchFollowUp clearBasicLandToHand() {
-        return new LibrarySearchFollowUp(false, cardToGraveyard, remainingEachPlayerBasicLandSearches,
+        return withBasicLandToHand(null);
+    }
+
+    /** The same follow-up with the basic-land-to-hand pick replaced (null = no picks left). */
+    public LibrarySearchFollowUp withBasicLandToHand(BasicLandToHandPick pick) {
+        return new LibrarySearchFollowUp(pick, cardToGraveyard, remainingEachPlayerBasicLandSearches,
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
                 remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,

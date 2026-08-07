@@ -97,7 +97,12 @@ public class Permanent {
      * or ceases to be a creature.
      */
     @Setter private UUID pairedWithId;
-    @Setter private CardColor chosenColor;
+    private CardColor chosenColor;
+    /**
+     * Every color chosen for this permanent. Cards that choose a single color keep this in sync with
+     * {@link #chosenColor} (see {@link #setChosenColor(CardColor)}); cards that choose several
+     * distinct colors (Tablet of the Guilds) write here directly and leave {@code chosenColor} null.
+     */
     private final Set<CardColor> chosenColors = EnumSet.noneOf(CardColor.class);
     @Setter private String chosenName;
     /** Second card name chosen "as this enters" when two players each name a card
@@ -111,6 +116,12 @@ public class Permanent {
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
     @Setter private int chosenNumber;
+    /**
+     * Labels of the modes this permanent has already had chosen for a "choose one that hasn't been
+     * chosen" modal trigger (Demonic Pact). Consumed modes are never offered again while this object
+     * stays on the battlefield.
+     */
+    private final Set<String> chosenModeLabels = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     /**
@@ -390,9 +401,16 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
+     *  and read by "if it's renowned" abilities. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean renowned;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
+    /** Whether this permanent entered the battlefield by resolving as a spell its controller cast
+     *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
+     *  NOT cleared by {@link #resetModifiers()}. */
+    @Setter private boolean cast;
     /** Total bloodthirst granted to the spell that produced this permanent while it was on the stack
      *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
      *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
@@ -605,6 +623,7 @@ public class Permanent {
         this.evoked = source.evoked;
         this.prowl = source.prowl;
         this.castFromZone = source.castFromZone;
+        this.cast = source.cast;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
@@ -1081,10 +1100,23 @@ public class Permanent {
             }
             CardColor renamedTo = textChangeWordAsColor(replacement.toWord());
             if (renamedTo != null && renamedTo == this.chosenColor) {
-                this.chosenColor = textChangeWordAsColor(replacement.fromWord());
+                setChosenColor(textChangeWordAsColor(replacement.fromWord()));
             }
             return true;
         });
+    }
+
+    /**
+     * Records the single color chosen for this permanent, keeping {@link #getChosenColors()} in sync so
+     * effects that read the whole chosen-color set (a chosen-color spell-cast watcher, for instance)
+     * see it too.
+     */
+    public void setChosenColor(CardColor chosenColor) {
+        this.chosenColor = chosenColor;
+        this.chosenColors.clear();
+        if (chosenColor != null) {
+            this.chosenColors.add(chosenColor);
+        }
     }
 
     private static CardColor textChangeWordAsColor(String word) {

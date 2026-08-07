@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "49")
+@CardRegistration(set = "ORI", collectorNumber = "56")
 public class Dreadwaters extends Card {
 
     public Dreadwaters() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.DelayedTokenOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -42,6 +43,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -261,6 +266,25 @@ public class TriggerCollectionService {
                     ));
                     gameLogService.append(gameData, GameLog.text(desc + " triggers."));
                     log.info("Game {} - {} creature-spell search trigger queued", gameData.id, desc);
+                } else if (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER) {
+                    // "Whenever you cast a spell, target opponent mills N cards" (Jace, Telepath
+                    // Unbound's emblem) — the opponent restriction rides the player target filter.
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    Card source = emblem.sourceCard();
+                    Card sourceCard = source != null ? source : spellCard;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            sourceCard,
+                            emblem.controllerId(),
+                            new ArrayList<>(List.of(mill)),
+                            true,
+                            new PlayerPredicateTargetFilter(
+                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                    "Target must be an opponent")
+                    ));
+                    gameLogService.append(gameData, GameLog.text(
+                            (source != null ? source.getName() : "Emblem")
+                                    + "'s emblem triggers — choose target opponent."));
+                    log.info("Game {} - emblem mill trigger queued", gameData.id);
                 } else if (effect instanceof DealDamageEqualToManaSpentToCastToAnyTargetEffect damageTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (damageTrigger.spellFilter() != null
@@ -391,6 +415,41 @@ public class TriggerCollectionService {
                 }
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (Primal Wellspring)."));
                 log.info("Game {} - {} spell-copy trigger queued for {} (Primal Wellspring)",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            }
+        }
+
+        // Pyromancer's Goggles delayed mana trigger: copy next *red* instant/sorcery (one-shot)
+        Integer pendingRedCopies = gameData.pendingNextRedInstantSorceryCopyCount.get(castingPlayerId);
+        if (pendingRedCopies != null && pendingRedCopies > 0
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))
+                && spellCard.getColors() != null && spellCard.getColors().contains(CardColor.RED)) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CopyControllerCastSpellEffect copyEffect =
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName(),
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                int remaining = pendingRedCopies - 1;
+                if (remaining <= 0) {
+                    gameData.pendingNextRedInstantSorceryCopyCount.remove(castingPlayerId);
+                } else {
+                    gameData.pendingNextRedInstantSorceryCopyCount.put(castingPlayerId, remaining);
+                }
+                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+                log.info("Game {} - {} red spell-copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             }
         }
@@ -1272,6 +1331,7 @@ public class TriggerCollectionService {
 
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry);
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
+            collectOpponentCreatureBecomesTargetOfYourSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(gameData, targetPermanent, controllerId, spellEntry);
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
@@ -1352,6 +1412,7 @@ public class TriggerCollectionService {
             // Check for "whenever a creature you control becomes the target of opponent's spell or ability"
             if (controllerId != null) {
                 collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, abilityEntry);
+                collectOpponentCreatureBecomesTargetOfYourSpellTriggers(gameData, targetPermanent, controllerId, abilityEntry);
             }
 
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
@@ -1705,6 +1766,46 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} any-creature-becomes-target trigger queued",
                         gameData.id, source.getCard().getName());
             }
+        }
+    }
+
+    /**
+     * Checks the spell/ability controller's battlefield for
+     * {@link EffectSlot#ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY}. Only fires
+     * when the targeted permanent is a creature controlled by an opponent of the spell/ability's
+     * controller. The targeted creature is stored as the non-targeting {@code targetId} and the
+     * listening permanent as the {@code sourcePermanentId}. Used by Willbreaker.
+     */
+    private void collectOpponentCreatureBecomesTargetOfYourSpellTriggers(
+            GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry triggeringEntry) {
+        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+
+        UUID triggeringControllerId = triggeringEntry.getControllerId();
+        if (triggeringControllerId == null || triggeringControllerId.equals(creatureControllerId)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(triggeringControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : List.copyOf(battlefield)) {
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY);
+            if (effects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    triggeringControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    targetPermanent.getId(),
+                    source.getId()
+            );
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} opponent-creature-becomes-target-of-your-spell trigger queued",
+                    gameData.id, source.getCard().getName());
         }
     }
 
@@ -2086,6 +2187,60 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally permanent untap ({})",
                         gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
+            }
+        });
+    }
+
+    /**
+     * "When this creature becomes renowned" (Relic Seeker) and "whenever a creature you control
+     * becomes renowned" (Valeron Wardens) triggers. Called from
+     * {@code RenownEffectHandler} at the moment renown flips the creature from not-renowned to
+     * renowned; a creature that was already renowned never reaches this point (CR 702.112c).
+     *
+     * @param gameData         the current game state to modify
+     * @param renownedCreature the creature that just became renowned
+     * @param controllerId     the player controlling it
+     */
+    public void checkBecomesRenownedTriggers(GameData gameData, Permanent renownedCreature, UUID controllerId) {
+        for (CardEffect effect : renownedCreature.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_RENOWNED)) {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    renownedCreature.getCard(),
+                    controllerId,
+                    renownedCreature.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    renownedCreature.getId()
+            ));
+            gameLogService.append(gameData, GameLog.abilityTriggers(renownedCreature.getCard()));
+            log.info("Game {} - {} triggers on becoming renowned", gameData.id, renownedCreature.getCard().getName());
+        }
+
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(controllerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_BECOMES_RENOWNED)) {
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(renownedCreature, conditional.predicate(), filterContext)) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers on ally creature becoming renowned ({})",
+                        gameData.id, perm.getCard().getName(), renownedCreature.getCard().getName());
             }
         });
     }
@@ -2599,7 +2754,7 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextExploitTriggerTarget(gameData);
     }
 
-    private static boolean predicateContainsHasTarget(com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
+    public static boolean predicateContainsHasTarget(com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
         if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate) {
             return true;
         }
@@ -2736,7 +2891,16 @@ public class TriggerCollectionService {
         List<CardEffect> temporaryDeathEffects = dyingPermanent != null
                 ? dyingPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH) : List.of();
 
-        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty()) return;
+        // Include ON_DEATH abilities granted continuously by an attached Aura/Equipment
+        // (Infernal Scarring). Read straight off the attachments, not through the layer system:
+        // the dying permanent has already left the battlefield, but its Aura is still attached
+        // (orphaned Auras only fall off in a later state-based-action pass).
+        List<CardEffect> grantedDeathEffects = dyingPermanent != null
+                ? grantedTriggeredAbilitySupport.grantedTriggeredEffectsFromAttachments(
+                        gameData, dyingPermanent.getId(), EffectSlot.ON_DEATH)
+                : List.of();
+
+        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty() && grantedDeathEffects.isEmpty()) return;
 
         var ctx = new TriggerContext.SelfDeath(dyingCard, controllerId, wasCreature, dyingPermanent);
         Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
@@ -2749,6 +2913,13 @@ public class TriggerCollectionService {
             registry.dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
         }
         for (CardEffect effect : temporaryDeathEffects) {
+            if (effect.onlyTriggersOnSacrifice()) continue;
+            CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
+            if (resolvedEffect == null) continue;
+            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
+            registry.dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+        }
+        for (CardEffect effect : grantedDeathEffects) {
             if (effect.onlyTriggersOnSacrifice()) continue;
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
             if (resolvedEffect == null) continue;
@@ -3001,6 +3172,21 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * Fires ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers
+     * (Kothophed, Soul Hoarder). Ownership-based: only watchers controlled by a player other than the
+     * dying permanent's owner see it.
+     */
+    public void checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard, UUID ownerId) {
+        var ctx = new TriggerContext.OtherPlayerOwnedPermanentGraveyard(dyingCard, ownerId);
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (playerId.equals(ownerId)) return;
+            dispatchSlot(gameData, perm, playerId,
+                    EffectSlot.ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+        });
+    }
+
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
@@ -3021,6 +3207,36 @@ public class TriggerCollectionService {
             if (controllerId == null) continue;
             dispatchAnyCreatureDeathTriggersForWatcher(
                     gameData, controllerId, watcher, dyingPermanent, dyingCreatureControllerId, ctx);
+        }
+
+        collectEmblemCreatureDeathTriggers(gameData, dyingCard);
+    }
+
+    /**
+     * Emblem creature-death triggers — Liliana, Defiant Necromancer's "Whenever a creature dies,
+     * return it to the battlefield under your control at the beginning of the next end step."
+     * Emblems live outside the battlefield, so the permanent sweep above never sees them.
+     */
+    private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard) {
+        for (Emblem emblem : gameData.emblems) {
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof RegisterDelayedReturnDyingCreatureUnderControlEffect delayedReturn)) {
+                    continue;
+                }
+                Card source = emblem.sourceCard();
+                String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source != null ? source : dyingCard,
+                        emblem.controllerId(),
+                        desc,
+                        new ArrayList<>(List.of(delayedReturn))
+                );
+                entry.setTriggeringCardId(dyingCard.getId());
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.text(desc + " triggers (a creature died)."));
+                log.info("Game {} - {} schedules a delayed return of {}", gameData.id, desc, dyingCard.getName());
+            }
         }
     }
 
@@ -3323,6 +3539,42 @@ public class TriggerCollectionService {
 
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, ctx);
+        }
+    }
+
+    /**
+     * Fires {@link EffectSlot#GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD} for every card
+     * sitting in an opponent's graveyard when a creature card leaves {@code graveyardOwnerId}'s
+     * graveyard. The trigger lives on a card in a graveyard, so the ability's controller is that
+     * card's owner and there is no source permanent.
+     */
+    public void checkCreatureCardLeavesOpponentGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                 Card leavingCard) {
+        if (leavingCard == null || !leavingCard.hasType(CardType.CREATURE)) return;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(graveyardOwnerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} triggers ({} left an opponent's graveyard)",
+                            gameData.id, card.getName(), leavingCard.getName());
+                }
+            }
         }
     }
 

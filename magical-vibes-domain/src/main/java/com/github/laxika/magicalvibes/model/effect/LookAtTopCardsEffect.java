@@ -33,7 +33,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       Follow the Lumarets, ...). The look is private; the chosen cards are revealed.</li>
  *   <li>{@link #mayRevealOneToHandRestToGraveyard(int, CardPredicate)} — optional public reveal of
  *       the top N, you may put one matching card into your hand, rest into the graveyard
- *       (Grisly Salvage).</li>
+ *       (Grisly Salvage), or {@link #mayRevealUpToToHandRestToGraveyard(int, CardPredicate,
+ *       DynamicAmount)} for a rider that only changes how many are kept (Gather the Pack).</li>
  *   <li>{@link #mayPutMatchingOntoBattlefield(int, CardPredicate)} — you may put one matching card
  *       onto the battlefield, rest on the bottom (Mayael the Anima; Mitotic Manipulation via
  *       {@code CardSharesNameWithAPermanentPredicate}).</li>
@@ -143,7 +144,17 @@ public record LookAtTopCardsEffect(
      */
     public static LookAtTopCardsEffect mayRevealOneToHandRestToGraveyard(
             int lookCount, CardPredicate choosePredicate) {
-        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+        return mayRevealUpToToHandRestToGraveyard(lookCount, choosePredicate, new Fixed(1));
+    }
+
+    /**
+     * Reveal the top {@code lookCount} cards publicly; you may put up to {@code chooseCount}
+     * matching cards into your hand; the rest go into your graveyard. The dynamic choose count
+     * carries riders that only change the number kept (Gather the Pack's spell mastery).
+     */
+    public static LookAtTopCardsEffect mayRevealUpToToHandRestToGraveyard(
+            int lookCount, CardPredicate choosePredicate, DynamicAmount chooseCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), chooseCount, choosePredicate,
                 LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, true);
     }
 

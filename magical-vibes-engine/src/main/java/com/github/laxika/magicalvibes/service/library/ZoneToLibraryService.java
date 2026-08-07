@@ -49,6 +49,20 @@ public class ZoneToLibraryService {
         return new MovedCounts(handCount, graveyardCount);
     }
 
+    /**
+     * Drains only {@code playerId}'s hand into their library, leaving the graveyard alone
+     * (The Great Aurora shuffles the hand and the battlefield, not the graveyard).
+     *
+     * @return how many cards the hand contributed
+     */
+    public int moveHandIntoLibrary(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        if (library == null) {
+            return 0;
+        }
+        return drainInto(gameData.playerHands.get(playerId), library);
+    }
+
     private static int drainInto(List<Card> zone, List<Card> library) {
         if (zone == null || zone.isEmpty()) {
             return 0;

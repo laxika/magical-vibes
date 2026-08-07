@@ -685,10 +685,11 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
+            when(playerInputService.beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false)).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
-            verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of());
+            verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false);
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
     }

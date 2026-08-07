@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "13")
+@CardRegistration(set = "ORI", collectorNumber = "9")
 public class ChargingGriffin extends Card {
 
     public ChargingGriffin() {

@@ -535,6 +535,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new SelfDealtDamageThisTurn(n), wrapped)` | - | yes | yes (end step) | source has dealt **n or more** damage this turn to *any* recipient — players, planeswalkers, battles, creatures; combat and noncombat alike (Chandra, Fire of Kaladesh). Reads `damageDealtThisTurnBySource`, accumulated in `DamageSupport` (noncombat) and `CombatDamageService` (combat). Damage dealt earlier in the same resolution already counts |
 | `ConditionalEffect(new SelfDealtDamageToOpponentThisTurn(), wrapped)` | - | yes | yes (end step) | source dealt (combat) damage to an opponent of its *current* controller this turn (Whirling Dervish) — reads `combatDamageToPlayersThisTurn` |
 | `ConditionalEffect(new SelfWasDealtDamageThisTurn(), wrapped)` | - | yes | yes (end step) | source *was* dealt damage this turn, combat or not (Wall of Resistance) — reads `permanentsDealtDamageThisTurn`, the same tracking as `PermanentDealtDamageThisTurnPredicate` |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |

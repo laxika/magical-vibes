@@ -260,6 +260,51 @@ public class MayCastHandlerService {
     }
 
     /**
+     * Casts a revealed card that is currently held outside every zone (Talent of the Telepath)
+     * without paying its mana cost. A targeted spell pauses for target selection; a spell with no
+     * legal target can't be cast (CR 601.2c) and joins the rest of the revealed cards in
+     * {@code ownerId}'s graveyard, since the held cards have already left the library.
+     */
+    public void castRevealedCardWithoutPaying(GameData gameData, Player player, Card card, UUID ownerId) {
+        String playerName = player.getUsername();
+        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        StackEntryType spellType = card.hasType(CardType.INSTANT)
+                ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+
+        if (EffectResolution.needsTarget(card)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects);
+            if (validTargets.isEmpty()) {
+                graveyardService.addCardToGraveyard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " has no legal targets, so it can't be cast. It is put into the graveyard."));
+                log.info("Game {} - {} revealed free cast has no legal targets", gameData.id, card.getName());
+            } else {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.LibraryCastSpellTarget(card, player.getId(), spellEffects, spellType));
+                playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                        "Choose a target for " + card.getName() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card,
+                        " without paying its mana cost — choosing target."));
+                return;
+            }
+        } else {
+            gameData.stack.add(new StackEntry(
+                    spellType, card, player.getId(), card.getName(), spellEffects, 0, (UUID) null, null));
+
+            gameData.recordSpellCast(player.getId(), card);
+            gameData.priorityPassedBy.clear();
+
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card,
+                    " without paying its mana cost."));
+            log.info("Game {} - {} casts revealed {} without paying mana", gameData.id, playerName, card.getName());
+
+            triggerCollectionService.checkSpellCastTriggers(gameData, card, player.getId(), false);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Builds a list of valid target UUIDs for a targeted spell, including both permanents and players
      * as appropriate based on the spell's effects and target filter.
      */

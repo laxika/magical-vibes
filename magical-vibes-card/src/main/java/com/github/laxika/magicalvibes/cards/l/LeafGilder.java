@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 
 @CardRegistration(set = "LRW", collectorNumber = "227")
+@CardRegistration(set = "ORI", collectorNumber = "184")
 public class LeafGilder extends Card {
 
     public LeafGilder() {

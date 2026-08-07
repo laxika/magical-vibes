@@ -187,6 +187,21 @@ public class StackEntry {
     private final List<UUID> createdPermanentIds = new ArrayList<>();
 
     /**
+     * Players this entry has actually dealt damage to while resolving, in order. Written by the damage
+     * handlers and read back by a later effect on the same entry that acts on "each player dealt damage
+     * this way" — e.g. Chandra, Roaring Flame's ultimate hands an emblem only to the opponents whose
+     * damage was not fully prevented.
+     */
+    private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
+
+    /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
+    public void recordPlayerDealtDamage(UUID playerId) {
+        if (playerId != null && !playersDealtDamageThisResolution.contains(playerId)) {
+            playersDealtDamageThisResolution.add(playerId);
+        }
+    }
+
+    /**
      * A card referenced by a stack entry is live game state shared with AI simulation copies —
      * freeze it so any later mutation of the Card object fails fast instead of leaking.
      */

@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
@@ -35,6 +37,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,6 +66,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case TARGET_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
+            case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, true);
@@ -80,6 +84,15 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId != null) {
             lifeSupport.applyLifeLoss(gameData, defendingPlayerId, amount, sourceName);
+        }
+    }
+
+    private void dyingCreatureControllerLosesLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+        // The creature is already in the graveyard by the time the trigger resolves, so the
+        // graveyard pipeline baked its last-known controller onto the trigger's targetId.
+        UUID dyingControllerId = entry.getTargetId();
+        if (dyingControllerId != null) {
+            lifeSupport.applyLifeLoss(gameData, dyingControllerId, amount, sourceName);
         }
     }
 
@@ -109,6 +122,15 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
     }
 
+    private boolean controlsMatching(GameData gameData, UUID playerId, PermanentPredicate predicate) {
+        var battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate));
+    }
+
     private void eachPlayerLosesLife(GameData gameData, LoseLifeEffect e, UUID controllerId,
             int amount, String sourceName, boolean opponentsOnly) {
         // The X-scaled drain (Exsanguinate) short-circuits on non-positive X before touching any
@@ -120,6 +142,11 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         int totalLifeLost = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (opponentsOnly && playerId.equals(controllerId)) {
+                continue;
+            }
+            // "each opponent who doesn't control an Elf" — players controlling a matching
+            // permanent are skipped entirely (Thornbow Archer).
+            if (e.exemptIfControls() != null && controlsMatching(gameData, playerId, e.exemptIfControls())) {
                 continue;
             }
             lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);

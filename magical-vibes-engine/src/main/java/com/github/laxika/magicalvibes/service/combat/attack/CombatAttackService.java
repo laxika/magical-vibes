@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
@@ -263,7 +264,12 @@ public class CombatAttackService {
             }
             // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
             Permanent attacker = battlefield.get(idx);
-            if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
+            // A permanent-directed requirement (Gideon, Battle-Forged's +2) lapses once that permanent
+            // is no longer attackable; a player-directed one (Alluring Siren) always stands.
+            if (attacker.getMustAttackTargetId() != null
+                    && (gameData.playerIds.contains(attacker.getMustAttackTargetId())
+                            || validTargetIds.contains(attacker.getMustAttackTargetId()))
+                    && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
             // Taunt: a taunted player's attacking creatures must attack the taunter if able.
@@ -456,6 +462,12 @@ public class CombatAttackService {
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                // Filter out renown conditionals when the attacker isn't renowned (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof SourceIsRenowned
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 

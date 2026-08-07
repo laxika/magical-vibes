@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "245")
+@CardRegistration(set = "ORI", collectorNumber = "250")
 public class RoguesPassage extends Card {
 
     public RoguesPassage() {

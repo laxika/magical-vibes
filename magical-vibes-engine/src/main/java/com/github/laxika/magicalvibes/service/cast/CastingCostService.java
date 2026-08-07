@@ -601,7 +601,9 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
-                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
+                        && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
+                        && (tax.activeCondition() == null || conditionEvaluationService.isMet(
+                                gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, defenderId)))) {
                     totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
                             AmountContext.forStaticEffect(perm, defenderId));
                 }

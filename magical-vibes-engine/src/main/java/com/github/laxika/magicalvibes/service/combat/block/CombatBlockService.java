@@ -240,6 +240,7 @@ public class CombatBlockService {
         // Validate assignments
         int blockTaxTotal = 0;
         Map<UUID, Integer> blockLifeTaxByBlocker = new HashMap<>();
+        Map<UUID, Integer> globalBlockManaTaxByBlocker = new HashMap<>();
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
         Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
@@ -270,6 +271,11 @@ public class CombatBlockService {
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
             blockTaxTotal += blockTaxFor(gameData, blocker, attacker);
 
+            // Board-wide mana tax to block at all (Archangel of Tithes): once per unique blocker,
+            // however many attackers it blocks.
+            globalBlockManaTaxByBlocker.computeIfAbsent(blocker.getId(),
+                    ignored -> gameQueryService.getGlobalBlockManaTax(gameData, blocker));
+
             // Board-wide life tax (Heat Wave): once per unique qualifying blocker.
             int lifeTax = gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker);
             if (lifeTax > 0) {
@@ -279,6 +285,7 @@ public class CombatBlockService {
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
         }
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
+        blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
         // Team-wide "each creature you control can't be blocked by more than N creatures" (Yuan Shao).
         // All attackers belong to the active player, so scan that player's battlefield once.
@@ -1520,7 +1527,9 @@ public class CombatBlockService {
 
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+                .filter(CantAttackOrBlockAloneEffect.class::isInstance)
+                .map(CantAttackOrBlockAloneEffect.class::cast)
+                .anyMatch(CantAttackOrBlockAloneEffect::restrictsBlocking);
     }
 
     /**

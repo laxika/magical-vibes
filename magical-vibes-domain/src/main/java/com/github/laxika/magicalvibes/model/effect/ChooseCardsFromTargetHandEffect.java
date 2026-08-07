@@ -16,13 +16,29 @@ import java.util.List;
  * {@code filter}, when non-null, narrows the choosable cards further by a {@link CardPredicate}
  * (e.g. "nonlegendary" for Lay Bare the Heart). {@code returnOnSourceLeave} applies only to
  * {@link HandChoiceDestination#EXILE} (return exiled cards when the source permanent leaves).
+ * {@code declineFallbackDiscardCount}, when {@code > 0} (discard destination only), makes the
+ * choice a "you may" one and has the target player discard that many cards of their own choice
+ * when the caster chooses no card — including when the hand holds no legal choice (Nightsnare).
  */
 public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                               HandChoiceDestination destination, boolean returnOnSourceLeave,
-                                              CardPredicate filter) implements CombatDamageTriggerContextEffect {
+                                              CardPredicate filter, int declineFallbackDiscardCount)
+        implements CombatDamageTriggerContextEffect {
+
+    public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                           HandChoiceDestination destination, boolean returnOnSourceLeave,
+                                           CardPredicate filter) {
+        this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter, 0);
+    }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes, HandChoiceDestination destination) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false, null);
+    }
+
+    /** "You may choose a card; if you don't, that player discards {@code declineFallbackDiscardCount} cards." */
+    public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes, HandChoiceDestination destination,
+                                           int declineFallbackDiscardCount) {
+        this(new Fixed(count), excludedTypes, List.of(), destination, false, null, declineFallbackDiscardCount);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes, CardPredicate filter,

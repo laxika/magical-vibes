@@ -314,6 +314,23 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("empty color set triggers on a colorless spell (Managorger Hydra)")
+        void emptyColorSetTriggersOnColorlessSpell() {
+            Permanent perm = createPermanent("Managorger Hydra");
+            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(Set.of(), 1, false);
+            Card spellCard = createCard("Artifact Spell");
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
         @DisplayName("returns false when spell color is null")
         void returnsFalseWhenColorNull() {
             Permanent perm = createPermanent("Wurm's Tooth");

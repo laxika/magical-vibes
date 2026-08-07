@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,10 +39,11 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry);
+        doResolve(gameData, entry, (SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect) effect);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry) {
+    private void doResolve(GameData gameData, StackEntry entry,
+            SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
@@ -51,8 +56,10 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
             return;
         }
 
+        CardSubtype subtype = effect.subtype();
         List<Card> basicLands = deck.stream()
                 .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> subtype == null || card.getSubtypes().contains(subtype))
                 .toList();
 
         if (basicLands.isEmpty()) {
@@ -62,6 +69,10 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
             return;
         }
 
+        int toHandCount = 1 + (effect.extraCardCondition() != null && conditionEvaluationService.isMet(
+                gameData, effect.extraCardCondition(), ConditionContext.forStackEntry(entry)) ? 1 : 0);
+        String cardDescription = subtype == null ? "basic land" : "basic " + subtype.getDisplayName();
+
         // First pick: basic land to battlefield tapped (no shuffle yet); the follow-up
         // hand search rides the search interaction
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(basicLands))
@@ -69,9 +80,9 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
                 .shuffleAfterSelection(false)
-                .followUp(LibrarySearchFollowUp.forBasicLandToHand())
-                .build(), "Search your library for a basic land card to put onto the battlefield tapped.", true);
+                .followUp(LibrarySearchFollowUp.forBasicLandToHand(toHandCount, subtype))
+                .build(), "Search your library for a " + cardDescription + " card to put onto the battlefield tapped.", true);
 
-        log.info("Game {} - {} searches library for Cultivate ({} basic lands)", gameData.id, playerName, basicLands.size());
+        log.info("Game {} - {} searches library for {} basic lands", gameData.id, playerName, basicLands.size());
     }
 }

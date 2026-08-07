@@ -101,11 +101,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
@@ -116,6 +118,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlle
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -460,6 +463,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
+            case PermanentIsRenownedPredicate ignored ->
+                    permanent.isRenowned();
             case PermanentIsTokenPredicate ignored ->
                     permanent.getCard().isToken();
             case PermanentIsAttackingPredicate ignored ->
@@ -531,6 +536,13 @@ public class PredicateEvaluationService {
                 }
                 yield permanent.getCard().getManaValue() == filterContext.xValue();
             }
+            case PermanentMaxManaValueXPredicate ignored -> {
+                // With no chosen X yet (target enumeration), any permanent is potentially valid.
+                if (filterContext == null || filterContext.xValue() == null) {
+                    yield true;
+                }
+                yield permanent.getCard().getManaValue() <= filterContext.xValue();
+            }
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
                     permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
@@ -555,6 +567,14 @@ public class PredicateEvaluationService {
                     yield gameQueryService.toughnessForStaticFilter(permanent) >= toughnessAtLeastPredicate.minToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) >= toughnessAtLeastPredicate.minToughness();
+            }
+            case PermanentPowerEqualsToughnessPredicate ignored -> {
+                if (gameData == null) {
+                    yield gameQueryService.powerForStaticFilter(permanent)
+                            == gameQueryService.toughnessForStaticFilter(permanent);
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent)
+                        == gameQueryService.getEffectiveToughness(gameData, permanent);
             }
             case PermanentHasSupertypePredicate hasSupertypePredicate ->
                     gameQueryService.hasEffectiveSupertype(gameData, permanent, hasSupertypePredicate.supertype());
@@ -984,6 +1004,7 @@ public class PredicateEvaluationService {
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "107")
+@CardRegistration(set = "ORI", collectorNumber = "163")
 public class SmashToSmithereens extends Card {
 
     public SmashToSmithereens() {

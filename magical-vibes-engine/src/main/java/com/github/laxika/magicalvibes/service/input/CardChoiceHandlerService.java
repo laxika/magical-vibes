@@ -665,6 +665,16 @@ public class CardChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(declineLog));
         log.info("Game {} - {} declines the revealed-hand choice", gameData.id, player.getUsername());
 
+        // Nightsnare: declining makes the target discard cards of their own choice instead.
+        if (revealedHandChoice.declineFallbackDiscardCount() > 0) {
+            gameData.discardCausedByOpponent = true;
+            playerInteractionSupport.resolveDiscardCards(gameData, revealedHandChoice.targetPlayerId(),
+                    revealedHandChoice.declineFallbackDiscardCount());
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         // Resume resolving remaining effects on the same spell/ability.
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData,

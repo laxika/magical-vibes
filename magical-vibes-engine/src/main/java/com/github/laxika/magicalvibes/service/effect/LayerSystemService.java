@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
@@ -247,6 +248,7 @@ public class LayerSystemService {
     public record LayeredBoardState(Map<UUID, CharacteristicState> states,
                                     Map<UUID, List<CardSubtype>> landTypeOverrides,
                                     Set<UUID> marchAnimatedIds,
+                                    Set<UUID> starfieldAnimatedIds,
                                     Set<CardEffect> managedL4Effects,
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
                                     Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
@@ -731,6 +733,7 @@ public class LayerSystemService {
         Map<UUID, CharacteristicState> states = new HashMap<>();
         Map<UUID, PermanentSlot> slotsById = new HashMap<>();
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
+                new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>());
@@ -1078,6 +1081,7 @@ public class LayerSystemService {
         board.l4FilterVerdicts().forEach((filter, verdicts) -> trialVerdicts.put(filter, new HashMap<>(verdicts)));
         LayeredBoardState trialBoard = new LayeredBoardState(trialStates,
                 new HashMap<>(board.landTypeOverrides()), new HashSet<>(board.marchAnimatedIds()),
+                new HashSet<>(board.starfieldAnimatedIds()),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
@@ -1322,6 +1326,28 @@ public class LayerSystemService {
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                         board.marchAnimatedIds().add(permanent.getId());
+                    }
+                }
+            }
+            case AnimateControlledEnchantmentsEffect animateEnchantments -> {
+                // Starfield of Nyx. NOT managed, for the same reason as March above. Unlike March
+                // it does not skip permanents that are already creatures: "is a creature in
+                // addition to its other types" still sets an enchantment creature's base P/T.
+                PermanentSlot animateSource = instance.source();
+                if (animateSource == null) return;
+                UUID controllerId = animateSource.controllerId();
+                if (countEnchantments(slots, states, controllerId) < animateEnchantments.minEnchantments()) {
+                    return;
+                }
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    if (!target.controllerId().equals(controllerId)) continue;
+                    Permanent permanent = target.permanent();
+                    CharacteristicState state = states.get(permanent.getId());
+                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)
+                            && !isOneShotAnimated(permanent)) {
+                        state.addCardType(CardType.CREATURE);
+                        board.starfieldAnimatedIds().add(permanent.getId());
                     }
                 }
             }
@@ -1613,6 +1639,18 @@ public class LayerSystemService {
      */
     private static boolean isCreatureForL4(Permanent permanent, CharacteristicState state) {
         return state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+    }
+
+    /** Enchantments the player controls as of the layer-4 instances applied so far (CR 613.1d). */
+    private static int countEnchantments(List<PermanentSlot> slots, Map<UUID, CharacteristicState> states,
+                                         UUID controllerId) {
+        int count = 0;
+        for (PermanentSlot slot : slots) {
+            if (!slot.controllerId().equals(controllerId)) continue;
+            CharacteristicState state = states.get(slot.permanent().getId());
+            if (state != null && state.hasCardType(CardType.ENCHANTMENT)) count++;
+        }
+        return count;
     }
 
     private static boolean isOneShotAnimated(Permanent permanent) {
@@ -1974,6 +2012,21 @@ public class LayerSystemService {
                         if (isSource(instance, target)) continue;
                         Permanent permanent = target.permanent();
                         if (board.marchAnimatedIds().contains(permanent.getId())
+                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
+                            int manaValue = permanent.getCard().getManaValue();
+                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
+                                    instance.timestamp(), instance.position(),
+                                    provenanceSourceName(instance)));
+                        }
+                    }
+                }
+                case AnimateControlledEnchantmentsEffect ignored -> {
+                    // Starfield of Nyx: same MV base P/T, gated off enchantments that animate
+                    // themselves (their own animation defines the base P/T).
+                    for (PermanentSlot target : slots) {
+                        if (isSource(instance, target)) continue;
+                        Permanent permanent = target.permanent();
+                        if (board.starfieldAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
                             int manaValue = permanent.getCard().getManaValue();
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,

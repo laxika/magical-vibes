@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "12")
+@CardRegistration(set = "ORI", collectorNumber = "8")
 public class CelestialFlare extends Card {
 
     public CelestialFlare() {

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUp
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -28,6 +30,8 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.effect.EmblemUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -233,6 +237,34 @@ public class StepTriggerService {
      *
      * @param gameData the current game state to modify
      */
+    /**
+     * Puts the triggered abilities of "At the beginning of your upkeep, …" emblems onto the stack for
+     * the active player (Chandra, Roaring Flame's emblem). Emblems are never removed from the game, so
+     * the only gate is that the emblem's controller is the player whose upkeep this is.
+     */
+    private void collectEmblemUpkeepTriggers(GameData gameData) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!gameData.activePlayerId.equals(emblem.controllerId())) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof EmblemUpkeepTriggerEffect upkeepTrigger)) {
+                    continue;
+                }
+                Card source = emblem.sourceCard();
+                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
+                        new ArrayList<>(upkeepTrigger.effects()));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.text(
+                        description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
+                log.info("Game {} - {} upkeep emblem trigger pushed onto stack", gameData.id, description);
+            }
+        }
+    }
+
     public void handleUpkeepTriggers(GameData gameData) {
         // "… until your next upkeep" (Cycle of Life): the floating layer-7b effect ends as the
         // upkeep begins, before the delayed trigger below puts its counter on the creature.
@@ -242,6 +274,8 @@ public class StepTriggerService {
         // turn-based action of the untap step (CR 502.1), which has already passed, so clearing here
         // still protected the permanent through the marking player's own untap step.
         expireCantPhaseOut(gameData);
+
+        collectEmblemUpkeepTriggers(gameData);
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the
@@ -441,6 +475,18 @@ public class StepTriggerService {
             grantedUpkeepEffectSupport.appendGrantedUpkeepEffects(gameData, perm, upkeepEffects);
             if (upkeepEffects.isEmpty()) continue;
 
+            // "Choose one that hasn't been chosen —" (Demonic Pact): the mode is picked as the
+            // ability goes on the stack, and only then does the chosen mode's own targeting run.
+            CardEffect modal = upkeepEffects.stream()
+                    .filter(ChooseModeNotYetChosenEffect.class::isInstance)
+                    .findFirst().orElse(null);
+            if (modal != null) {
+                gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
+                        perm.getCard(), activePlayerId, (ChooseModeNotYetChosenEffect) modal, perm.getId()));
+                upkeepEffects.remove(modal);
+                if (upkeepEffects.isEmpty()) continue;
+            }
+
             // If any effect can target both a player and a permanent (i.e. "any target" —
             // creature/planeswalker/player, e.g. Form of the Dragon's "deals 5 damage to any target"),
             // route through the any-target pipeline so the controller may pick a permanent as well as a
@@ -489,6 +535,23 @@ public class StepTriggerService {
                 gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
                         perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
                 continue;
+            }
+
+            // "At the beginning of your upkeep, you may return target enchantment card from your
+            // graveyard to the battlefield" (Starfield of Nyx): the graveyard target is chosen as
+            // the trigger goes on the stack (CR 603.3d); with no legal target it is never put on
+            // the stack at all (CR 603.3c). The "you may" is the target choice itself — the pick
+            // is an up-to-one selection the controller can leave empty.
+            List<CardEffect> graveyardTargetEffects = upkeepEffects.stream()
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            if (!graveyardTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(graveyardTargetEffects)));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                log.info("Game {} - {} upkeep graveyard-target trigger queued", gameData.id, perm.getCard().getName());
+                upkeepEffects.removeAll(graveyardTargetEffects);
+                if (upkeepEffects.isEmpty()) continue;
             }
 
             for (CardEffect effect : upkeepEffects) {
@@ -1030,6 +1093,13 @@ public class StepTriggerService {
             return;
         }
 
+        // Modal upkeep triggers pick their mode before any targeting runs (Demonic Pact) — the mode
+        // decides which targets, if any, the ability needs.
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepModalTrigger.class)) {
+            processNextUpkeepModalTrigger(gameData);
+            return;
+        }
+
         // Process upkeep any-target triggers first (e.g. Form of the Dragon, CR 603.3d)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
             processNextUpkeepAnyTargetTrigger(gameData);
@@ -1066,6 +1136,12 @@ public class StepTriggerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
             processNextUpkeepPermanentTarget(gameData);
+            return;
+        }
+
+        // Process upkeep graveyard-target triggers (e.g. Starfield of Nyx, CR 603.3d)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }
 
@@ -1172,6 +1248,71 @@ public class StepTriggerService {
      *
      * @param gameData the current game state to modify
      */
+    public void processNextUpkeepModalTrigger(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepModalTrigger.class)) {
+            processNextUpkeepAnyTargetTrigger(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepModalTrigger trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepModalTrigger.class);
+
+        Permanent source = gameQueryService.findPermanentById(gameData, trigger.sourcePermanentId());
+        Set<String> alreadyChosen = source == null ? Set.of() : source.getChosenModeLabels();
+        List<ChooseOneEffect.ChooseOneOption> remaining = trigger.effect().options().stream()
+                .filter(option -> !alreadyChosen.contains(option.label()))
+                .toList();
+
+        if (remaining.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no modes left to choose."));
+            processNextUpkeepModalTrigger(gameData);
+            return;
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
+        playerInputService.beginChooseModeChoice(gameData, trigger.controllerId(), trigger.sourceCard(),
+                new ChooseOneEffect(remaining), true, trigger.sourcePermanentId());
+    }
+
+    /**
+     * Puts a modal upkeep trigger's chosen mode on the stack, routing it through the same targeting
+     * pipelines as an ordinary upkeep trigger: an "any target" mode queues an any-target choice, a
+     * player-targeting mode a player choice, and a non-targeting mode goes straight onto the stack.
+     * The mode's own {@code targetFilter} (e.g. "target opponent") overrides the card's.
+     *
+     * @param gameData    the current game state to modify
+     * @param sourceCard  the triggering permanent's card
+     * @param controllerId the ability's controller, who chooses the targets
+     * @param permanentId the triggering permanent
+     * @param chosen      the chosen mode
+     */
+    public void queueChosenModeUpkeepTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID permanentId, ChooseOneEffect.ChooseOneOption chosen) {
+        List<CardEffect> effects = new ArrayList<>(chosen.effects());
+        boolean anyTarget = effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean playerTarget = effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+
+        if (anyTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
+                    sourceCard, controllerId, effects, permanentId, chosen.targetFilter()));
+        } else if (playerTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                    sourceCard, controllerId, effects, permanentId, chosen.targetFilter()));
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s upkeep ability",
+                    effects,
+                    null,
+                    permanentId));
+        }
+    }
+
     public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
         if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
             processNextUpkeepMultiPlayerTarget(gameData);
@@ -1181,7 +1322,8 @@ public class StepTriggerService {
         PermanentChoiceContext.UpkeepAnyTargetTrigger trigger =
                 gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
 
-        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TargetFilter targetFilter = trigger.targetFilter() != null
+                ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                 gameData,
                 trigger.effects(),
@@ -1355,8 +1497,10 @@ public class StepTriggerService {
 
         // Honour the trigger's target filter (e.g. "target opponent") so the controller is not
         // offered as a valid target. A null filter (e.g. "target player") leaves all players eligible.
+        TargetFilter playerTargetFilter = trigger.targetFilter() != null
+                ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
-                gameData, trigger.sourceCard().getTargetFilter(),
+                gameData, playerTargetFilter,
                 new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId());
 
         gameData.interaction.setPermanentChoiceContext(trigger);
@@ -3469,6 +3613,8 @@ public class StepTriggerService {
      * (CR 507.1: "At the beginning of combat on your turn").
      * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every permanent on every
      * battlefield (e.g. Majestic Myriarch / Odric, Lunarch Marshal).
+     * {@code OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED} fires only for permanents controlled by a
+     * player other than the active player (Sentinel of the Eternal Watch).
      *
      * @param gameData the current game state to modify
      */
@@ -3485,6 +3631,13 @@ public class StepTriggerService {
         gameData.forEachPermanent((playerId, perm) ->
                 queueBeginningOfCombatTriggers(gameData, playerId, perm,
                         perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED)));
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(activePlayerId)) {
+                queueBeginningOfCombatTriggers(gameData, playerId, perm,
+                        perm.getCard().getEffects(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
+            }
+        });
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             processNextBeginningOfCombatTriggerTarget(gameData);

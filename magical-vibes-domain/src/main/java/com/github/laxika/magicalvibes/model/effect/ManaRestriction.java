@@ -100,6 +100,25 @@ public sealed interface ManaRestriction {
     }
 
     /**
+     * Mana spendable only to cast creature spells of the given subtype (Gnarlroot Trapper: "Add
+     * {G}. Spend this mana only to cast an Elf creature spell."). Routes into the per-subtype
+     * creature-spell bucket shared with {@link AwardAnyColorChosenSubtypeCreatureManaEffect}, so —
+     * unlike {@link SubtypeSpells} — it cannot pay for noncreature spells of that subtype or for
+     * activated abilities.
+     */
+    record SubtypeCreatureSpells(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeCreatureMana(subtype, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtype + " creature spells only";
+        }
+    }
+
+    /**
      * Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). Applies to any
      * spell or ability whose mana cost includes an {X} symbol; the mana can pay any generic portion
      * of such a cost. Stored in the x-cost-only colorless bucket.

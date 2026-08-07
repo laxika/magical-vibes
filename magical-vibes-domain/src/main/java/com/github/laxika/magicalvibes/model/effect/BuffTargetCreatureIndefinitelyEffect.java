@@ -11,6 +11,11 @@ import java.util.Set;
  * records it as a {@code PERMANENT} floating continuous effect on the target. The additive P/T
  * boost applies in sublayer 7c and the keywords in layer 6, read straight off the floating
  * effect by {@code GameQueryService.assembleStaticBonus} for the affected permanent.
+ *
+ * <p>The same record is also stamped, with an {@code UNTIL_YOUR_NEXT_TURN} duration on the
+ * floating effect rather than {@code PERMANENT}, by {@code BoostTargetCreatureEffectHandler} for
+ * "gets +X/+Y until your next turn" pumps: the duration lives on the floating effect, so both
+ * durations share this one sublayer-7c read path. It is never named on a card for that case.
  */
 public record BuffTargetCreatureIndefinitelyEffect(int powerBoost, int toughnessBoost,
                                                    Set<Keyword> keywords) implements CardEffect {

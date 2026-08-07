@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateToBattlefieldRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -23,10 +24,11 @@ public class JaliraMasterPolymorphist extends Card {
                 "{2}{U}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new RevealUntilCardPredicateToBattlefieldRestOnBottomRandomEffect(
+                        new RevealUntilCardPredicateRestOnBottomRandomEffect(
                                 new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
-                                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))))
+                                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))),
+                                LibrarySearchDestination.BATTLEFIELD)
                 ),
                 "{2}{U}, {T}, Sacrifice another creature: Reveal cards from the top of your library until you reveal a nonlegendary creature card. Put that card onto the battlefield and the rest on the bottom of your library in a random order."
         ));

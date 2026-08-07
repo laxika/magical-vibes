@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -171,6 +173,9 @@ public class TargetPolarityClassifier {
         if (effect instanceof SkipNextUntapEffect skip) {
             return skip.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
         }
+        if (effect instanceof CantAttackThisTurnEffect cantAttack) {
+            return cantAttack.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
+        }
         if (effect instanceof CantBlockThisTurnEffect cantBlock) {
             // TARGET_CONTROLLERS_OTHER_CREATURES (Mark for Death) shuts down the rest of the
             // target's controller's defence, so it aims at the opponent just like TARGET does.
@@ -203,7 +208,9 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
 
-        if (effect instanceof MustAttackThisTurnEffect || effect instanceof GainControlOfTargetEffect) {
+        if (effect instanceof MustAttackThisTurnEffect
+                || effect instanceof TargetCreatureMustAttackSourcePermanentNextTurnEffect
+                || effect instanceof GainControlOfTargetEffect) {
             return TargetPolarity.HARMFUL;
         }
 
@@ -365,6 +372,9 @@ public class TargetPolarityClassifier {
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
+            // Chandra's Ignition: the target is a creature you control and is only the damage
+            // source — it takes no damage itself, so the AI should aim at its own board.
+            entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordToTargetEffect", TargetPolarity.BENEFICIAL),

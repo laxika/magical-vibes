@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersE
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -1957,6 +1958,65 @@ class GameQueryServiceTest {
                     "Shock", new ArrayList<>(), null);
 
             assertThat(gqs.getControllerDamageBonus(gd, entry)).isEqualTo(4);
+        }
+    }
+
+    @Nested
+    @DisplayName("getColorSourcePermanentDamageBonus")
+    class ColorSourcePermanentDamageBonus {
+
+        private Permanent addHellion(UUID playerId) {
+            return addPermanent(playerId, createCreatureWithStaticEffect("Embermaw Hellion", 4, 5, CardColor.RED,
+                    new AdditionalColorSourceDamageEffect(1, CardColor.RED)));
+        }
+
+        @Test
+        @DisplayName("returns 0 by default")
+        void returnsZeroByDefault() {
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("returns amount for a matching color source")
+        void returnsAmountForMatchingColor() {
+            addHellion(player1Id);
+
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), null)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 0 for a nonmatching color source")
+        void returnsZeroForNonMatchingColor() {
+            addHellion(player1Id);
+
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.BLACK), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("does not affect an opponent's source")
+        void doesNotAffectOpponent() {
+            addHellion(player1Id);
+
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player2Id, List.of(CardColor.RED), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("excludes the permanent carrying the effect")
+        void excludesTheSourcePermanentItself() {
+            Permanent hellion = addHellion(player1Id);
+
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), hellion.getId()))
+                    .isZero();
+        }
+
+        @Test
+        @DisplayName("two copies boost each other")
+        void twoCopiesBoostEachOther() {
+            Permanent first = addHellion(player1Id);
+            addHellion(player1Id);
+
+            assertThat(gqs.getColorSourcePermanentDamageBonus(gd, player1Id, List.of(CardColor.RED), first.getId()))
+                    .isEqualTo(1);
         }
     }
 

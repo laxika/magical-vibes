@@ -769,7 +769,7 @@ record RevealUntilEffect(CardPredicate matchPredicate, int matchCount,
 **Absorbs** (1 card each): `RevealUntilBasicLandToHandRestToGraveyardEffect`,
 `RevealUntilColorToHandRestExiledEffect`, `RevealUntilNonlandCardsToHandRestToBottomEffect`,
 `RevealUntilLandToBattlefieldRestToBottomEffect`,
-`RevealUntilCardPredicateToBattlefieldRestOnBottomRandomEffect`.
+`RevealUntilCardPredicateRestOnBottomRandomEffect`.
 
 The three to-hand handlers are line-for-line copies (same reveal loop, same empty-library return,
 same "reveals X from the top of their library with Y" log, same `rest.remove(found)`); only the

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -267,6 +268,8 @@ public class TurnProgressionService {
             log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
         }
 
+        promoteSingleCreatureTaunts(gameData, nextActive);
+
         // Oracle en-Vec: promote the creatures the new active player chose last turn. They attack if
         // able, every other creature is barred, and each of them is destroyed at this turn's end step
         // if it didn't attack.
@@ -335,6 +338,7 @@ public class TurnProgressionService {
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
+        gameData.damageDealtThisTurnBySource.clear();
         gameData.playersAttackedThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
@@ -562,6 +566,15 @@ public class TurnProgressionService {
         stepTriggerService.processNextUpkeepAnyTargetTrigger(gameData);
     }
 
+    public void processNextUpkeepModalTrigger(GameData gameData) {
+        stepTriggerService.processNextUpkeepModalTrigger(gameData);
+    }
+
+    public void queueChosenModeUpkeepTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID permanentId, ChooseOneEffect.ChooseOneOption chosen) {
+        stepTriggerService.queueChosenModeUpkeepTrigger(gameData, sourceCard, controllerId, permanentId, chosen);
+    }
+
     public void processNextUpkeepPermanentTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepPermanentTarget(gameData);
     }
@@ -600,6 +613,51 @@ public class TurnProgressionService {
 
     public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
         stepTriggerService.processNextBeginningOfCombatTriggerTarget(gameData);
+    }
+
+    /**
+     * Promotes the delayed single-creature taunts recorded for creatures the new active player
+     * controls (Gideon, Battle-Forged's +2) onto the creatures themselves, so declare-attackers sees
+     * the same transient pair Alluring Siren sets. The entry is consumed even when the permanent it
+     * named is gone: a requirement that can no longer be obeyed simply lapses.
+     */
+    private void promoteSingleCreatureTaunts(GameData gameData, UUID nextActive) {
+        if (gameData.creatureMustAttackPermanentNextTurn.isEmpty()) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent creature : battlefield) {
+            UUID attackTargetId = gameData.creatureMustAttackPermanentNextTurn.remove(creature.getId());
+            if (attackTargetId == null) {
+                continue;
+            }
+            Permanent attackTarget = findPermanentOnAnyBattlefield(gameData, attackTargetId);
+            if (attackTarget == null) {
+                continue;
+            }
+            creature.setMustAttackThisTurn(true);
+            creature.setMustAttackTargetId(attackTargetId);
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(creature.getCard())
+                    .text(" must attack " + attackTarget.getCard().getName() + " this turn if able.")
+                    .build());
+            log.info("Game {} - {} must attack {} this turn", gameData.id,
+                    creature.getCard().getName(), attackTarget.getCard().getName());
+        }
+    }
+
+    private Permanent findPermanentOnAnyBattlefield(GameData gameData, UUID permanentId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(permanentId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     private void invalidateForAllPlayers(GameData gameData) {

@@ -101,7 +101,7 @@ class ETBTokenTargetServiceTest {
         Card sourceCard = new Card();
         sourceCard.setName("Snapcaster Mage");
         var trigger = new PermanentChoiceContext.ETBSpellTargetTrigger(
-                sourceCard, player1Id, List.of(new GainLifeEffect(1)), null);
+                sourceCard, player1Id, List.of(new GainLifeEffect(1)), null, false, null);
         gd.queueInteraction(trigger);
 
         service.processNextETBSpellTargetTrigger(gd);

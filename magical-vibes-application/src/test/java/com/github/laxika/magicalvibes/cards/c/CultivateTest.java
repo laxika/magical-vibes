@@ -60,7 +60,7 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().followUp().basicLandToHand()).isTrue();
+                .params().followUp().basicLandToHand()).isNotNull();
     }
 
     @Test
@@ -87,7 +87,7 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.HAND);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().followUp().basicLandToHand()).isFalse();
+                .params().followUp().basicLandToHand()).isNull();
     }
 
     @Test

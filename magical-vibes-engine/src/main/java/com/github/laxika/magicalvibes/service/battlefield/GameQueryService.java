@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivat
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -47,12 +48,14 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlockedUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -96,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
@@ -632,6 +636,21 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if a life-gain event affecting {@code playerId} must instead become an
+     * equal amount of life loss, because one of that player's opponents controls an
+     * {@link OpponentLifeGainBecomesLifeLossEffect} (Tainted Remedy).
+     */
+    public boolean lifeGainBecomesLifeLoss(GameData gameData, UUID playerId) {
+        for (UUID otherId : gameData.playerBattlefields.keySet()) {
+            if (otherId.equals(playerId)) continue;
+            if (playerBattlefieldHasStaticEffect(gameData, otherId, OpponentLifeGainBecomesLifeLossEffect.class)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the multiplier applied to life the given player gains, per any
      * {@link DoubleLifeGainEffect} static effects they control (e.g. Boon Reflection). Each such
      * effect doubles the life gained, and multiple stack multiplicatively (2^count), matching the
@@ -949,6 +968,7 @@ public class GameQueryService {
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.ARTIFACT)
                 && hasAnimateArtifactEffect(gameData)) return true;
+        if (isAnimatedByStarfield(gameData, permanent)) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
@@ -2821,7 +2841,7 @@ public class GameQueryService {
      * permanent on the battlefield) is never a creature. Used by Uncle Istvan-style "prevent all damage
      * that would be dealt to this creature by creatures" effects.
      */
-    private boolean isDamageSourceCreature(GameData gameData, StackEntry entry, Permanent explicitSource) {
+    public boolean isDamageSourceCreature(GameData gameData, StackEntry entry, Permanent explicitSource) {
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
@@ -3410,6 +3430,36 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the permanent is one of the "each other non-Aura enchantment you
+     * control" permanents an {@link AnimateControlledEnchantmentsEffect} (Starfield of Nyx) turns
+     * into a creature — the effect's source must be on the same battlefield and its controller must
+     * control enough enchantments.
+     */
+    public boolean isAnimatedByStarfield(GameData gameData, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            int enchantmentCount = -1;
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof AnimateControlledEnchantmentsEffect animate)) continue;
+                    if (source.getId().equals(permanent.getId())) continue;
+                    if (!battlefield.contains(permanent)) continue;
+                    if (!isEnchantment(permanent)
+                            || permanent.getCard().getSubtypes().contains(CardSubtype.AURA)) {
+                        continue;
+                    }
+                    if (enchantmentCount < 0) {
+                        enchantmentCount = (int) battlefield.stream().filter(this::isEnchantment).count();
+                    }
+                    if (enchantmentCount >= animate.minEnchantments()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the given land is animated into a creature by an
      * {@link AllLandsAreCreaturesEffect} on any battlefield. An effect with no required subtype
      * animates every land (Nature's Revolt); an effect with a required land subtype (Living Lands:
@@ -3463,6 +3513,36 @@ public class GameQueryService {
                         && !p.isAuraEffectsIgnoredThisTurn()
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
+    }
+
+    /**
+     * Returns every static effect of the given type carried by an aura or equipment attached to
+     * {@code creature}. The instance-level sibling of
+     * {@link #hasAuraWithEffect(GameData, Permanent, Class)} for callers that need the effect's own
+     * data (e.g. the attacker predicate of a block restriction) and not just its presence.
+     * {@link EnchantedPermanentConditionalEffect} wrappers are unwrapped to their currently active
+     * inner effect; an Aura whose effects are ignored this turn (Volrath's Curse) is skipped.
+     */
+    public <T extends CardEffect> List<T> collectAuraEffects(GameData gameData, Permanent creature, Class<T> effectClass) {
+        List<T> collected = new ArrayList<>();
+        gameData.forEachPermanent((id, permanent) -> {
+            if (!permanent.isAttached() || !creature.getId().equals(permanent.getAttachedTo())
+                    || permanent.isAuraEffectsIgnoredThisTurn()) {
+                return;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect active = effect;
+                if (effect instanceof EnchantedPermanentConditionalEffect cond) {
+                    active = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
+                            ? cond.ifMatch()
+                            : cond.ifNotMatch();
+                }
+                if (effectClass.isInstance(active)) {
+                    collected.add(effectClass.cast(active));
+                }
+            }
+        });
+        return collected;
     }
 
     /**
@@ -3598,6 +3678,25 @@ public class GameQueryService {
                             attacker, tax.lifeCostAttackerMatcher(), ctx)) {
                         total[0] += tax.lifePerBlocker();
                     }
+                }
+            }
+        });
+        return total[0];
+    }
+
+    /**
+     * Board-wide generic mana tax to declare {@code blocker} as a blocker at all
+     * ({@link RequirePaymentToBlockEffect}, e.g. Archangel of Tithes while attacking).
+     * Charged once per blocking creature regardless of how many attackers it blocks.
+     */
+    public int getGlobalBlockManaTax(GameData gameData, Permanent blocker) {
+        int[] total = {0};
+        gameData.forEachPermanent((playerId, source) -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RequirePaymentToBlockEffect tax
+                        && (tax.activeCondition() == null || conditionEvaluationService.isMet(
+                                gameData, tax.activeCondition(), ConditionContext.forPermanent(source, playerId)))) {
+                    total[0] += tax.amountPerBlocker();
                 }
             }
         });
@@ -3966,6 +4065,8 @@ public class GameQueryService {
         int bonus = 0;
         if (damage > 0 && entry != null) {
             bonus = getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
+                    + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
+                            entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
                     + getControllerDamageBonus(gameData, entry);
         }
         UUID controllerId = entry != null ? entry.getControllerId() : null;
@@ -4100,7 +4201,9 @@ public class GameQueryService {
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (damage > 0) {
             if (controllerId != null) {
-                bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors());
+                bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
+                        + getColorSourcePermanentDamageBonus(gameData, controllerId,
+                                source.getCard().getColors(), source.getId());
             }
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
@@ -4135,6 +4238,32 @@ public class GameQueryService {
             bonus += colorMap.getOrDefault(color, 0);
         }
         return bonus;
+    }
+
+    /**
+     * Returns the additive damage bonus from {@link AdditionalColorSourceDamageEffect} permanents
+     * controlled by the damage source's controller (e.g. Embermaw Hellion). The bonus applies to
+     * any source of the matching color — spell, ability or combat damage — except the permanent
+     * carrying the effect itself, which {@code sourcePermanentId} identifies ("another red source").
+     * Multiple instances stack additively.
+     */
+    int getColorSourcePermanentDamageBonus(GameData gameData, UUID controllerId,
+                                           List<CardColor> sourceColors, UUID sourcePermanentId) {
+        if (controllerId == null || sourceColors == null || sourceColors.isEmpty()) {
+            return 0;
+        }
+        int[] bonus = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(controllerId)) return;
+            if (p.getId().equals(sourcePermanentId)) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalColorSourceDamageEffect acsde
+                        && sourceColors.contains(acsde.color())) {
+                    bonus[0] += acsde.amount();
+                }
+            }
+        });
+        return bonus[0];
     }
 
     /**

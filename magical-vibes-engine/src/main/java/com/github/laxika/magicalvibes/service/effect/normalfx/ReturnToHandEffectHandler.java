@@ -152,13 +152,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     private void resolveAllMatching(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
 
+        FilterContext context = filterContext;
         List<Permanent> toReturn = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) ->
                 toReturn.addAll(battlefield.stream()
                         .filter(p -> e.filter() == null
-                                || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                                || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), context))
                         .toList()));
 
         bounceAll(gameData, entry, toReturn);

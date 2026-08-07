@@ -10,6 +10,6 @@ public class UrzasArmor extends Card {
 
     public UrzasArmor() {
         // "If a source would deal damage to you, prevent 1 of that damage."
-        addEffect(EffectSlot.STATIC, new PreventFixedDamagePerSourceToControllerEffect(1));
+        addEffect(EffectSlot.STATIC, PreventFixedDamagePerSourceToControllerEffect.fromAnySource(1));
     }
 }

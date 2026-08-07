@@ -23,6 +23,11 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileDamageSourcePermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -61,6 +66,7 @@ public class DamageTriggerCollectorService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
 
@@ -133,6 +139,52 @@ public class DamageTriggerCollectorService {
         }
         log.info("Game {} - {} triggers, destroying damage source {}",
                 gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileDamageSourcePermanentUntilSourceLeavesEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    private boolean handleExileDamageSourceOnDamage(TriggerMatchContext match,
+            ExileDamageSourcePermanentUntilSourceLeavesEffect exileEffect, TriggerContext ctx) {
+        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+
+        if (exileEffect.combatOnly() && !dc.isCombatDamage()) return false;
+
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
+        if (damageSource == null) return false;
+        if (exileEffect.filter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, exileEffect.filter())) {
+            return false;
+        }
+        // CR 603.4 — the intervening-"if" is checked as the ability would trigger, and the wrapper
+        // below makes the resolution-time re-check happen too.
+        if (exileEffect.intervening() != null
+                && !conditionEvaluationService.isMet(gameData, exileEffect.intervening(),
+                        ConditionContext.forPermanent(watcher, match.controllerId()))) {
+            return false;
+        }
+
+        CardEffect queued = new ExileTargetPermanentUntilSourceLeavesEffect();
+        if (exileEffect.intervening() != null) {
+            queued = new ConditionalEffect(exileEffect.intervening(), queued);
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(queued)),
+                damageSource.getId(),
+                watcher.getId());
+        // "exile that creature" — the damaging creature is not a chosen target.
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers, exiling damage source {} until it leaves",
+                gameData.id, watcher.getCard().getName(), damageSource.getCard().getName());
         return true;
     }
 

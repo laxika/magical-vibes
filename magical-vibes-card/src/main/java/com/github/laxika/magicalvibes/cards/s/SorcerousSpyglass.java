@@ -12,7 +12,7 @@ import java.util.List;
 public class SorcerousSpyglass extends Card {
 
     public SorcerousSpyglass() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(List.of(), true));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(List.of(), ChooseCardNameOnEnterEffect.HandAccess.LOOK_AT_OPPONENT_HAND));
         addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
     }
 }

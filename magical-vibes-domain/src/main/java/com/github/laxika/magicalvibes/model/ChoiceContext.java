@@ -470,8 +470,19 @@ public sealed interface ChoiceContext {
      * source (used for logging), {@code controllerId} chooses the mode, and {@code effect} carries the
      * {@link ChooseOneEffect}'s options; the chosen mode's effects are spliced into the paused
      * resolution. Used by non-targeting modal upkeep triggers such as Etherwrought Page.
+     *
+     * <p>A "choose one that hasn't been chosen" trigger (Demonic Pact) instead picks its mode as the
+     * ability goes on the stack: {@code triggerTime} is true, {@code sourcePermanentId} identifies the
+     * permanent whose consumed modes are recorded, and the chosen mode's effects become their own
+     * triggered ability (with that mode's targets) rather than being spliced into a resolution.
      */
-    record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) implements ChoiceContext {}
+    record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                            boolean triggerTime, UUID sourcePermanentId) implements ChoiceContext {
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
+            this(sourceCard, controllerId, effect, false, null);
+        }
+    }
 
     record RedistributePlayerLifeTotalsChoice(Map<String, Map<UUID, Integer>> choices) implements ChoiceContext {
 

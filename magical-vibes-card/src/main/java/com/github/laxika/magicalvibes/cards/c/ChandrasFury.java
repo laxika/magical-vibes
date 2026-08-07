@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesTarge
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "124")
+@CardRegistration(set = "ORI", collectorNumber = "136")
 public class ChandrasFury extends Card {
 
     public ChandrasFury() {

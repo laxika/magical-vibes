@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "13")
+@CardRegistration(set = "ORI", collectorNumber = "22")
 public class KnightlyValor extends Card {
 
     public KnightlyValor() {

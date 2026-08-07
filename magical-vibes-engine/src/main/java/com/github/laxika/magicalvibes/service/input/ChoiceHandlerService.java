@@ -861,6 +861,11 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        if (ctx.triggerTime()) {
+            handleTriggerTimeModeChoice(gameData, player, chosen, ctx);
+            return;
+        }
+
         // Splice the chosen mode's effects into the paused resolution at the ChooseOneEffect's slot
         // so they resolve in card-text order through the same effect loop.
         if (gameData.pendingEffectResolutionEntry != null) {
@@ -874,6 +879,30 @@ public class ChoiceHandlerService {
                 chosenLabel, ctx.sourceCard().getName());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * A "choose one that hasn't been chosen" mode pick, made as the trigger goes on the stack
+     * (Demonic Pact). The mode is marked consumed on the source permanent so it is never offered
+     * again, then the chosen mode's effects become the triggered ability — picking their own targets
+     * if the mode needs any. Remaining modal triggers are drained before the ordinary targeted-upkeep
+     * pipelines run.
+     */
+    private void handleTriggerTimeModeChoice(GameData gameData, Player player,
+            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source != null) {
+            source.getChosenModeLabels().add(chosen.label());
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses mode \"{}\" for {} as it goes on the stack", gameData.id,
+                player.getUsername(), chosen.label(), ctx.sourceCard().getName());
+
+        turnProgressionService.queueChosenModeUpkeepTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
+                ctx.sourcePermanentId(), chosen);
+        turnProgressionService.processNextUpkeepModalTrigger(gameData);
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {

@@ -42,6 +42,11 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
 
                 int count = 0;
                 for (Permanent perm : battlefield) {
+                    if (e.excludeTargets()
+                            && (perm.getId().equals(entry.getTargetId())
+                                || entry.getDeclaredTargetIds().contains(perm.getId()))) {
+                        continue;
+                    }
                     if (gameQueryService.isCreature(gameData, perm)
                             && (e.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext))) {

@@ -336,7 +336,19 @@ public class PlayerInputService {
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect) {
-        ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect);
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, false, null);
+    }
+
+    /**
+     * Mode pick for a modal ability. With {@code triggerTime} the mode is being chosen as the ability
+     * goes on the stack and {@code sourcePermanentId} records which permanent consumed it (Demonic
+     * Pact); otherwise the pick happens during resolution and the mode's effects are spliced in.
+     */
+    public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
+            UUID sourcePermanentId) {
+        ChoiceContext.ChooseModeChoice ctx =
+                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime, sourcePermanentId);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -695,11 +707,29 @@ public class PlayerInputService {
     );
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
+        beginCardNameChoice(gameData, playerId, card, excludedTypes, false);
+    }
+
+    /**
+     * Asks {@code playerId} to name a card. When {@code restrictToOpponentHands} is set the choice is
+     * limited to the cards their opponents currently hold (Alhammarret, High Arbiter — "you choose the
+     * name of a nonland card revealed this way").
+     *
+     * @return {@code false} when the restricted candidate list is empty, so no choice was started
+     */
+    public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
+                                       boolean restrictToOpponentHands) {
         ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
 
         List<String> cardNames;
         String prompt;
-        if (excludedTypes.isEmpty()) {
+        if (restrictToOpponentHands) {
+            cardNames = collectOpponentHandCardNames(gameData, playerId, excludedTypes);
+            if (cardNames.isEmpty()) {
+                return false;
+            }
+            prompt = "Choose the name of a revealed card.";
+        } else if (excludedTypes.isEmpty()) {
             cardNames = collectAllCardNamesInGame(gameData);
             prompt = "Choose a card name.";
         } else {
@@ -712,6 +742,21 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
+        return true;
+    }
+
+    /** Distinct names of the cards held by {@code playerId}'s opponents, minus {@code excludedTypes}. */
+    private List<String> collectOpponentHandCardNames(GameData gameData, UUID playerId, List<CardType> excludedTypes) {
+        Set<String> names = new TreeSet<>();
+        for (UUID pid : gameData.playerIds) {
+            if (pid.equals(playerId)) {
+                continue;
+            }
+            gameData.playerHands.getOrDefault(pid, List.of()).stream()
+                    .filter(c -> isNameCandidate(c, excludedTypes, null))
+                    .forEach(c -> names.add(c.getName()));
+        }
+        return List.copyOf(names);
     }
 
     /**

@@ -47,9 +47,12 @@ public class ETBTokenTargetService {
             List<UUID> validSpellCardIds = new ArrayList<>();
             for (StackEntry se : gameData.stack) {
                 StackEntryType type = se.getEntryType();
-                if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL
-                        && type != StackEntryType.CREATURE_SPELL && type != StackEntryType.ENCHANTMENT_SPELL
-                        && type != StackEntryType.ARTIFACT_SPELL && type != StackEntryType.PLANESWALKER_SPELL) {
+                boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
+                        || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
+                        || type == StackEntryType.TRIGGERED_ABILITY;
+                if (!isSpell && !(pending.includeAbilities() && isAbility)) {
                     continue;
                 }
                 if (pending.spellFilter() != null

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "M12", collectorNumber = "200")
 @CardRegistration(set = "M13", collectorNumber = "196")
+@CardRegistration(set = "ORI", collectorNumber = "204")
 public class VastwoodGorger extends Card {
 
     public VastwoodGorger() {

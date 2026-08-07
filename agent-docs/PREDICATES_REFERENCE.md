@@ -57,6 +57,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsBattlePredicate` | `()` | battles. Layer-aware like the planeswalker leaf; the permanent half of `TargetPredicates.anyTarget()` (CR 115.4) and the only leaf that separates it from `creatureOrPlaneswalker()`. Deliberately **not** in `matchesStaticFilter`'s whitelist — no static ability filters on "battle" |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
+| `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal) |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves). Also usable as a static GrantKeywordEffect/StaticBoostEffect filter (`matchesStaticFilter` supports it, like `PermanentIsAttackingPredicate`) — Snow Devil |
@@ -94,6 +95,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentManaValueAtMostOwnCountersPredicate` | `(CounterType)` | permanents whose mana value ≤ the number of that counter type on them (Corrosion rust destroy) |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
+| `PermanentPowerEqualsToughnessPredicate` | `()` | creatures whose effective power equals their effective toughness. Wrap in `PermanentNotPredicate` for "whose power and toughness aren't equal" (Gilt-Leaf Winnower) |
 | `PermanentToughnessAtLeastPredicate` | `(int minToughness)` | creatures with toughness >= N (uses effective/last-known toughness; e.g. Colfenor's Urn) |
 
 ### Dynamic/game-state predicates (require FilterContext)
@@ -105,6 +107,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X (from FilterContext.xValue) | `xValue` |
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
+| `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power | `gameData` + `sourceCardId` |
 | `PermanentPowerAtMostSourcePowerPredicate` | `()` | creatures with power <= source permanent's effective power (Earthshaker Khenra's ETB "target creature with power less than or equal to this creature's power" — source-relative so a 4/4 Eternalize token can target up to power 4) | `gameData` + `sourceCardId` |
 | `PermanentPowerAtMostSourceCountersPredicate` | `(CounterType)` | creatures with power <= the number of counters of that type on the source permanent (Legacy's Allure: "target creature with power less than or equal to the number of treasure counters on this enchantment"). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone, so it works for abilities that sacrifice the source as a cost (CR 608.2b) | `gameData` + `sourceCardId` |

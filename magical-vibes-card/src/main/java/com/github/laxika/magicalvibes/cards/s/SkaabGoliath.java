@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 
 @CardRegistration(set = "ISD", collectorNumber = "76")
+@CardRegistration(set = "ORI", collectorNumber = "74")
 public class SkaabGoliath extends Card {
 
     public SkaabGoliath() {

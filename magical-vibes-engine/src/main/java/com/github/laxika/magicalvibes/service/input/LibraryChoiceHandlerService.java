@@ -388,7 +388,7 @@ public class LibraryChoiceHandlerService {
             // so drop the pending hand search and shuffle.
             // Same for hand-then-graveyard (Jarad's Orders): declining the hand pick finds zero,
             // so drop the pending graveyard pick and shuffle.
-            if (followUp.basicLandToHand() || followUp.cardToGraveyard() != null) {
+            if (followUp.basicLandToHand() != null || followUp.cardToGraveyard() != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
                 gameLogService.append(gameData, GameLog.text(shuffleLog));
@@ -1141,13 +1141,15 @@ public class LibraryChoiceHandlerService {
      * starts the follow-up library search and returns true. Otherwise returns false.
      */
     private boolean startPendingBasicLandToHandSearch(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
-        if (!followUp.basicLandToHand()) return false;
+        LibrarySearchFollowUp.BasicLandToHandPick pick = followUp.basicLandToHand();
+        if (pick == null) return false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
 
         List<Card> basicLands = deck.stream()
                 .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> pick.subtype() == null || card.getSubtypes().contains(pick.subtype()))
                 .toList();
 
         if (basicLands.isEmpty()) {
@@ -1157,12 +1159,15 @@ public class LibraryChoiceHandlerService {
             return false;
         }
 
-        String prompt = "Search your library for a basic land card to put into your hand.";
+        String cardDescription = pick.subtype() == null ? "basic land" : "basic " + pick.subtype().getDisplayName();
+        String prompt = "Search your library for a " + cardDescription + " card to put into your hand.";
+        LibrarySearchFollowUp remaining = followUp.withBasicLandToHand(pick.decremented());
         LibrarySearchParams params = LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
                 .reveals(true)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.HAND)
-                .followUp(followUp.clearBasicLandToHand())
+                .shuffleAfterSelection(remaining.basicLandToHand() == null)
+                .followUp(remaining)
                 .build();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));

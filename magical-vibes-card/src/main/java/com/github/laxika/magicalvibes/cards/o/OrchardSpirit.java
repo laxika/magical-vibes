@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "198")
+@CardRegistration(set = "ORI", collectorNumber = "192")
 public class OrchardSpirit extends Card {
 
     public OrchardSpirit() {

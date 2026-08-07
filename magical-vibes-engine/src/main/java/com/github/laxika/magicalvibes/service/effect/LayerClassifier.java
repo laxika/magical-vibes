@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
@@ -237,6 +238,10 @@ public final class LayerClassifier {
                                         ? Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT)
                                         : Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT),
                                 false, false)));
+        // Starfield of Nyx: same layer-4 + sublayer-7b split for the enchantments its controller
+        // controls.
+        map.put(AnimateControlledEnchantmentsEffect.class,
+                fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
 
         // Layer 5 — color-changing effects. colorSetting distinguishes "becomes [color]"
         // (replaces, CR 105.3) from "in addition to its other colors" (adds).

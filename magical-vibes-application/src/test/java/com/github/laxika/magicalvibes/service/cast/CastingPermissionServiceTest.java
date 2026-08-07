@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
@@ -295,6 +298,57 @@ class CastingPermissionServiceTest {
             when(conditionEvaluationService.isMet(eq(gd), eq(card.getCastCondition()), any()))
                     .thenReturn(true);
             assertThat(svc.canCastWithCastCondition(gd, player1Id, card)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("flashTimingRequiresAlternateCast — flash belongs to the alternate cost")
+    class FlashAlternateCastGate {
+
+        private Card flashAlternateCastCreature() {
+            Card card = new Card();
+            card.setName("Harbinger of the Tides");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{U}{U}");
+            card.addCastingOption(new AlternateHandCast(
+                    List.of(new ManaCastingCost("{2}{U}{U}")), null, true));
+            return card;
+        }
+
+        @Test
+        @DisplayName("Normal-cost cast outside sorcery timing is rejected")
+        void rejectsNormalCostAtInstantSpeed() {
+            gd.activePlayerId = player2Id;
+
+            assertThat(svc.flashTimingRequiresAlternateCast(gd, player1Id, flashAlternateCastCreature())).isTrue();
+        }
+
+        @Test
+        @DisplayName("Normal-cost cast during your main phase is unaffected")
+        void allowsNormalCostAtSorceryTiming() {
+            assertThat(svc.flashTimingRequiresAlternateCast(gd, player1Id, flashAlternateCastCreature())).isFalse();
+        }
+
+        @Test
+        @DisplayName("A card that already has flash needs no alternate cast")
+        void cardWithFlashIsUnaffected() {
+            gd.activePlayerId = player2Id;
+            Card card = flashAlternateCastCreature();
+            card.setKeywords(Set.of(Keyword.FLASH));
+
+            assertThat(svc.flashTimingRequiresAlternateCast(gd, player1Id, card)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A card without a flash-granting alternate cast is unaffected")
+        void cardWithoutFlashAlternateCastIsUnaffected() {
+            gd.activePlayerId = player2Id;
+            Card card = new Card();
+            card.setName("Grizzly Bears");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{1}{G}");
+
+            assertThat(svc.flashTimingRequiresAlternateCast(gd, player1Id, card)).isFalse();
         }
     }
 }

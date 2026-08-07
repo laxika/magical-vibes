@@ -212,6 +212,7 @@ public class TurnCleanupService {
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
+        gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
@@ -224,6 +225,7 @@ public class TurnCleanupService {
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
+        gameData.drawStepFirstDrawTaken.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
@@ -334,6 +336,7 @@ public class TurnCleanupService {
 
         // Clear pending one-shot spell copy triggers (Primal Wellspring) since their mana drained
         gameData.pendingNextInstantSorceryCopyCount.clear();
+        gameData.pendingNextRedInstantSorceryCopyCount.clear();
     }
 
     /**

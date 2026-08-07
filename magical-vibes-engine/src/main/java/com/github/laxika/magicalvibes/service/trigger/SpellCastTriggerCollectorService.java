@@ -73,6 +73,8 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffe
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +100,7 @@ public class SpellCastTriggerCollectorService {
     private final GameLogService gameLogService;
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
 
@@ -111,8 +114,7 @@ public class SpellCastTriggerCollectorService {
     private boolean handleAnyPlayerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (sc.spellCard().getColor() == null) return false;
-        if (!trigger.triggerColors().contains(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
         if (trigger.onlyOwnSpells()) return false;
         return addColorCounterTrigger(match, trigger);
     }
@@ -342,8 +344,7 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (sc.spellCard().getColor() == null) return false;
-        if (!trigger.triggerColors().contains(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
         return addColorCounterTrigger(match, trigger);
     }
 
@@ -916,6 +917,17 @@ public class SpellCastTriggerCollectorService {
                         match.gameData(), sc.castingPlayerId())) {
             return false;
         }
+        // Intervening "if" (CR 603.4): the condition is checked against the source permanent as the
+        // spell is cast — the ability doesn't trigger at all when it fails — and again on resolution,
+        // which the ConditionalEffect wrapper below does.
+        if (trigger.intervening() != null && !conditionEvaluationService.isMet(match.gameData(),
+                trigger.intervening(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        CardEffect damageEffect = new DealDamageToPlayersEffect(trigger.damage(), DamageRecipient.TARGET_PLAYER);
+        if (trigger.intervening() != null) {
+            damageEffect = new ConditionalEffect(trigger.intervening(), damageEffect);
+        }
         // "This creature deals N damage to that player" — carry the casting opponent on targetId so the
         // TARGET_PLAYER damage lands on them (the casting player is not a chosen target), and the source
         // permanent id so the damage is attributed to this permanent.
@@ -924,8 +936,7 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.<CardEffect>of(
-                        new DealDamageToPlayersEffect(trigger.damage(), DamageRecipient.TARGET_PLAYER))),
+                new ArrayList<>(List.of(damageEffect)),
                 null,
                 match.permanent().getId()
         );
@@ -939,8 +950,7 @@ public class SpellCastTriggerCollectorService {
     private boolean handleOpponentColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (sc.spellCard().getColor() == null) return false;
-        if (!trigger.triggerColors().contains(sc.spellCard().getColor())) return false;
+        if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
         return addColorCounterTrigger(match, trigger);
     }
 

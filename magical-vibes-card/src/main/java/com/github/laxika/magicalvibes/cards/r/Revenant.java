@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "160")
+@CardRegistration(set = "ORI", collectorNumber = "117")
 public class Revenant extends Card {
 
     public Revenant() {

@@ -804,6 +804,11 @@ public class SpellCastingService {
             return;
         }
 
+        if (!usingAlternateCost && castingPermissionService.flashTimingRequiresAlternateCast(
+                gameData, playerId, gameData.playerHands.get(playerId).get(cardIndex))) {
+            throw new IllegalStateException("Card is not playable");
+        }
+
         List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, playerId);
         if (!playable.contains(cardIndex)) {
             // Re-check with convoke if card has convoke keyword

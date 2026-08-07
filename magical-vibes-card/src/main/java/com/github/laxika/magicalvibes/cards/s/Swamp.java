@@ -123,6 +123,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M15", collectorNumber = "259")
 @CardRegistration(set = "M15", collectorNumber = "260")
 @CardRegistration(set = "M15", collectorNumber = "261")
+@CardRegistration(set = "ORI", collectorNumber = "261")
+@CardRegistration(set = "ORI", collectorNumber = "262")
+@CardRegistration(set = "ORI", collectorNumber = "263")
+@CardRegistration(set = "ORI", collectorNumber = "264")
 public class Swamp extends Card {
 
     public Swamp() {

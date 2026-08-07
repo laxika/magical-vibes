@@ -307,7 +307,8 @@ public class AdditionalSpellCostService {
                 }
                 case ExileCardFromGraveyardCost cost -> {
                     if (graveyard.stream().noneMatch(c ->
-                            (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                            (cost.requiredType() == null || c.hasType(cost.requiredType())
+                                    || (cost.alternateType() != null && c.hasType(cost.alternateType())))
                                     && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
                 }
                 case ExileXCardsFromGraveyardCost ignored -> {
@@ -797,8 +798,10 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Invalid graveyard card index");
         }
         Card exiledCard = graveyard.get(exileGraveyardCardIndex);
-        if (cost.requiredType() != null && !exiledCard.hasType(cost.requiredType())) {
-            String typeName = cost.requiredType().name().toLowerCase();
+        if (cost.requiredType() != null && !exiledCard.hasType(cost.requiredType())
+                && !(cost.alternateType() != null && exiledCard.hasType(cost.alternateType()))) {
+            String typeName = cost.requiredType().name().toLowerCase()
+                    + (cost.alternateType() != null ? " or " + cost.alternateType().name().toLowerCase() : "");
             throw new IllegalStateException("Must exile a " + typeName + " card from your graveyard");
         }
         return exiledCard;

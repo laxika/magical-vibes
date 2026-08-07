@@ -1160,8 +1160,13 @@ public class PermanentChoiceTriggerHandlerService {
                 etbStt.controllerId(),
                 etbStt.sourceCard().getName() + "'s ETB ability",
                 new ArrayList<>(etbStt.effects()),
+                0,
                 cardId,
-                Zone.STACK
+                etbStt.sourcePermanentId(),
+                null,
+                Zone.STACK,
+                List.of(),
+                List.of()
         );
         gameData.stack.add(entry);
 

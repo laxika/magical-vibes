@@ -24,10 +24,13 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTriggeringCardId() == null || entry.getSourcePermanentId() == null) {
+        var e = (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect;
+        // An emblem (Liliana, Defiant Necromancer's) has no source permanent — that is only needed
+        // for the control-loss sacrifice link, so require it exclusively for that variant.
+        if (entry.getTriggeringCardId() == null
+                || (e.sacrificeOnSourceControlLoss() && entry.getSourcePermanentId() == null)) {
             return;
         }
-        var e = (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect;
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
                 entry.getTriggeringCardId(), entry.getControllerId(), entry.getSourcePermanentId(),
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),

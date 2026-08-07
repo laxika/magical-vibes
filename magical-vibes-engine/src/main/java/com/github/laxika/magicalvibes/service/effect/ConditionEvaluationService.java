@@ -107,9 +107,11 @@ import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourContr
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
@@ -120,12 +122,14 @@ import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedB
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
@@ -185,6 +189,8 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isSummoningSick();
             }
+            case SourceEnteredThisTurn ignored ->
+                    sourceEnteredThisTurn(gameData, ctx);
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
             case Delirium ignored ->
@@ -347,6 +353,10 @@ public class ConditionEvaluationService {
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case SelfDealtDamageThisTurn c ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.damageDealtThisTurnBySource.getOrDefault(ctx.sourcePermanentId(), 0)
+                            >= c.minimumAmount();
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
             case SelfWasDealtDamageThisTurn ignored ->
@@ -398,6 +408,16 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
             }
+            case TargetSpellCanBeCountered ignored -> {
+                com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
+                        : gameData.stack.stream()
+                                .filter(se -> se.getCard().getId().equals(ctx.targetId()))
+                                .findFirst().orElse(null);
+                yield targetSpell != null
+                        && !gameQueryService.isUncounterable(gameData, targetSpell.getCard())
+                        && !(ctx.sourceCard() != null && gameQueryService.isProtectedFromCounterBySourceCard(
+                                gameData, targetSpell.getControllerId(), ctx.sourceCard()));
+            }
             case TargetSpellMatches c -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
@@ -422,6 +442,10 @@ public class ConditionEvaluationService {
             }
             case SourceCanSoulbond ignored ->
                     canSoulbond(gameData, ctx);
+            case SourceIsRenowned ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isRenowned();
+            }
             case SourceCounterThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
@@ -1122,6 +1146,20 @@ public class ConditionEvaluationService {
         var perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(ctx.sourcePermanentId());
         if (perAbilityCounts == null) return 0;
         return perAbilityCounts.getOrDefault(abilityIndex, 0);
+    }
+
+    /**
+     * "if this permanent entered the battlefield this turn" — the source's card is looked up in the
+     * entered-this-turn record. The source may already have left the battlefield when the condition
+     * is re-checked at resolution, so the card, not a live permanent, is what is matched.
+     */
+    private boolean sourceEnteredThisTurn(GameData gameData, ConditionContext ctx) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        Card sourceCard = source != null ? source.getCard() : ctx.sourceCard();
+        if (sourceCard == null) return false;
+        return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(card -> card == sourceCard);
     }
 
     private long countPermanentsEnteredThisTurn(GameData gameData, ConditionContext ctx, PermanentEnteredThisTurn c) {

@@ -240,6 +240,9 @@ public class StackResolutionService {
     private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
         Permanent perm = new Permanent(card);
         perm.setCastFromZone(entry.getSourceZone());
+        // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
+        // resolves into didn't enter as the result of a cast spell either.
+        perm.setCast(!entry.isCopy());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
@@ -270,6 +273,34 @@ public class StackResolutionService {
         }
     }
 
+    /**
+     * Starts the "as this permanent enters, choose a card name" choice (CR 614.1c) if {@code card} has
+     * one, first granting whatever hand access the effect specifies. Returns {@code false} when there is
+     * no such effect, or when the effect restricts the name to opponents' revealed cards and they hold
+     * none — in both cases the caller lets the permanent enter right away.
+     */
+    private boolean beginChooseCardNameOnEnter(GameData gameData, UUID controllerId, Card card) {
+        ChooseCardNameOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
+                .map(e -> (ChooseCardNameOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return false;
+        }
+        switch (effect.handAccess()) {
+            case LOOK_AT_OPPONENT_HAND -> cardRevealService.lookAtOpponentHand(gameData, controllerId);
+            case REVEAL_OPPONENT_HAND -> gameData.playerIds.stream()
+                    .filter(playerId -> !playerId.equals(controllerId))
+                    .forEach(playerId -> cardRevealService.revealHandToAllPlayers(gameData, playerId));
+            case NONE -> {
+            }
+        }
+        boolean restrictToRevealedCards =
+                effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND;
+        return playerInputService.beginCardNameChoice(
+                gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
+    }
+
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
@@ -281,15 +312,7 @@ public class StackResolutionService {
 
         // "As enters" card name choice (e.g. Meddling Mage) — name must be chosen BEFORE the
         // permanent enters the battlefield (MTG Rule 614.1c)
-        var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
-                .map(e -> (ChooseCardNameOnEnterEffect) e)
-                .findFirst().orElse(null);
-        if (chooseNameEffect != null) {
-            if (chooseNameEffect.lookAtOpponentHand()) {
-                cardRevealService.lookAtOpponentHand(gameData, controllerId);
-            }
-            playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
+        if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
             return;
         }
 
@@ -495,15 +518,7 @@ public class StackResolutionService {
         } else {
             // "As enters" card name choice (e.g. Nevermore) — name must be chosen
             // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-            var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
-                    .map(e -> (ChooseCardNameOnEnterEffect) e)
-                    .findFirst().orElse(null);
-            if (chooseNameEffect != null) {
-                if (chooseNameEffect.lookAtOpponentHand()) {
-                    cardRevealService.lookAtOpponentHand(gameData, controllerId);
-                }
-                playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
+            if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
                 return;
             }
 
@@ -588,15 +603,7 @@ public class StackResolutionService {
 
         // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker, Sorcerous Spyglass)
         // — name must be chosen BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-        var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
-                .map(e -> (ChooseCardNameOnEnterEffect) e)
-                .findFirst().orElse(null);
-        if (chooseNameEffect != null) {
-            if (chooseNameEffect.lookAtOpponentHand()) {
-                cardRevealService.lookAtOpponentHand(gameData, controllerId);
-            }
-            playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
+        if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
             return;
         }
 

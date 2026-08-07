@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
@@ -148,8 +149,15 @@ import lombok.Builder;
  *                             {@link #plusOneCounterCount} alone is an unconditional rider (e.g.
  *                             Miraculous Recovery — "Put a +1/+1 counter on it"); only meaningful for
  *                             {@code BATTLEFIELD}
+ * @param plusOneCountersIfCondition when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
+ *                             the returned permanent only if this condition is met as the effect resolves
+ *                             (e.g. Necromantic Summons' spell mastery — "If there are two or more instant
+ *                             and/or sorcery cards in your graveyard, that creature enters with two
+ *                             additional +1/+1 counters on it"); combines with
+ *                             {@link #plusOneCountersIfSubtype} as an AND when both are set
  * @param plusOneCounterCount  number of +1/+1 counters placed after the return; gated by
- *                             {@link #plusOneCountersIfSubtype} when that field is non-null
+ *                             {@link #plusOneCountersIfSubtype} / {@link #plusOneCountersIfCondition} when
+ *                             those fields are non-null
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
@@ -202,6 +210,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileIfLeavesBattlefield,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
+        Condition plusOneCountersIfCondition,
         int plusOneCounterCount,
         CounterType enterWithCounter,
         int enterWithCounterCount,

@@ -173,6 +173,7 @@ on what the mana may pay for.
 | Opponent chooses one of two modes for you | `l/LibraryOfLatNam.java` | LibraryOfLatNamEffect — opponent's accept/decline may-ability picks the mode: accept → `DrawCardsAtNextUpkeep` delayed draw-3, decline → `SearchLibraryEffect()` tutor to hand |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryEffect(basicLand filter, LibrarySearchDestination.BATTLEFIELD_TAPPED) |
 | Cultivate (2 basic lands split) | `c/Cultivate.java` | SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect — one to BF tapped, one to hand |
+| Subtype-restricted split + spell mastery | `n/NissasPilgrimage.java` | same effect with `(CardSubtype.FOREST, GraveyardCardThreshold(2, instant/sorcery))` — basic Forests only, one extra card to hand when the condition is met |
 | Sac creature (track MV) → tutor creature MV ≤ X+2 to BF, exile self | `e/EldritchEvolution.java` | `SacrificeCreatureCost(true)` + `SearchLibraryEffect(creature, BATTLEFIELD, ManaValueBound(false, 2))` + `ExileSpellEffect` — spell-cost MV snapshot into xValue (same track flag as Birthing Pod) |
 | Sacrifice N lands → fetch N lands tapped | `s/Scapeshift.java` | SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect — controller sacrifices any number of lands, searches for that many land cards to BF tapped |
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build() — any card, targets graveyard |

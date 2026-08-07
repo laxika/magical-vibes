@@ -123,6 +123,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  via {@code TriggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers}. Used by
      *  Prince of Thralls. */
     ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent (of any type) <em>owned</em> by a player other than the controller
+     *  is put into a graveyard from the battlefield. Ownership-based, not control-based: a stolen
+     *  permanent still counts for its owner. Checked in
+     *  {@code PermanentRemovalService.processGraveyardAndTriggers} via
+     *  {@code TriggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers}.
+     *  Used by Kothophed, Soul Hoarder. */
+    ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers when a land the controller owns is put into their graveyard from the battlefield
      *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
      *  the graveyard owner controls. */
@@ -192,6 +199,20 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
      *  ({@code BoostSelfEffect(1, 1)}). */
     ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
+    /** Triggers whenever this creature becomes renowned (CR 702.112b) — i.e. when a {@code RenownEffect}
+     *  actually flips it from not-renowned to renowned. A creature that is already renowned never fires
+     *  this again (CR 702.112c). Driven from {@code RenownEffectHandler} via
+     *  {@code TriggerCollectionService.checkBecomesRenownedTriggers}; queued as a non-targeting triggered
+     *  ability whose {@code sourcePermanentId} is the newly renowned creature. Used by Relic Seeker
+     *  ({@code MayEffect(SearchLibraryEffect(Equipment))}). */
+    ON_SELF_BECOMES_RENOWNED,
+    /** Triggers whenever a creature the controller controls becomes renowned (CR 702.112b) — fires on
+     *  every permanent with this slot on the newly renowned creature's controller's battlefield,
+     *  including that creature itself. Wrap the effect in {@code TriggeringPermanentConditionalEffect}
+     *  to filter by the renowned creature. Driven from {@code RenownEffectHandler} via
+     *  {@code TriggerCollectionService.checkBecomesRenownedTriggers}, alongside
+     *  {@code ON_SELF_BECOMES_RENOWNED}. Used by Valeron Wardens ({@code DrawCardEffect(1)}). */
+    ON_ALLY_CREATURE_BECOMES_RENOWNED,
     /** Triggers whenever this permanent phases out — from the untap step's phasing turn-based action
      *  (CR 702.26a) or from an effect that phases it out. Fires only on the permanent that phased
      *  out, driven from {@code PhasingService} via
@@ -340,6 +361,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning all
      *  battlefields. Used by Majestic Myriarch / Odric, Lunarch Marshal. */
     EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+    /** Triggers at the beginning of combat on each opponent's turn (never on the controller's).
+     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning every
+     *  battlefield other than the active player's. Used by Sentinel of the Eternal Watch. */
+    OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
@@ -363,6 +388,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers once for each creature card that leaves an opponent's graveyard, while this card is
+     *  in its owner's graveyard. Fired per leaving card from
+     *  {@code GraveyardService.notifyCardLeftGraveyard} (and the bulk clear path), which scans the
+     *  graveyards of every opponent of the graveyard the card left. Non-targeting.
+     *  Used by Erebos's Titan. */
+    GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's command zone (Eminence — e.g. Edgar Markov). Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
@@ -514,6 +545,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
      *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Cowardice. */
     ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+    /** Triggers whenever a creature an opponent controls becomes the target of a spell or ability
+     *  controlled by this permanent's controller. Fires on ALL permanents with this slot on the
+     *  spell/ability controller's battlefield (not just the targeted creature). The targeted
+     *  creature's permanent ID is set as the non-targeting {@code targetId} and the listening
+     *  permanent as the {@code sourcePermanentId}, so duration-linked effects like
+     *  {@code GainControlOfTargetEffect(WHILE_SOURCE_ON_BATTLEFIELD)} resolve correctly. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
+     *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Willbreaker. */
+    ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
     /** Triggers whenever a creature controlled by the same player becomes the target of an instant
      *  or sorcery spell — regardless of who controls that spell. Fires on ALL permanents with this
      *  slot on the creature's controller's battlefield (not just the targeted creature). The

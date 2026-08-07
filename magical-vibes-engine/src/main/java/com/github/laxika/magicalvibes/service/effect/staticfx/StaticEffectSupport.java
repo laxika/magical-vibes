@@ -144,6 +144,7 @@ public class StaticEffectSupport {
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null && permanent.getCard().hasType(CardType.LAND)
                 && matchesAnimateLand(gameData, permanent)) return true;
+        if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
     }

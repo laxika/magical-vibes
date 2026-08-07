@@ -395,6 +395,10 @@ public class GameData {
      *  replacement applies to one draw). Consumed in {@code DrawService.resolveDrawCard} and
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
+    /** Players who have already taken their first draw during their own draw step this turn. Used by
+     *  {@code DrawService} to exempt that draw from "except the first one you draw in each of your
+     *  draw steps" draw doublers (Alhammarret's Archive). Cleared at end-of-turn cleanup. */
+    public final Set<UUID> drawStepFirstDrawTaken = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
      *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
@@ -486,6 +490,8 @@ public class GameData {
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who, this turn, exile creatures that would enter without having been cast (Hallowed Moonlight). */
+    public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /**
@@ -696,6 +702,12 @@ public class GameData {
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
 
+    /** Pending one-shot spell copy triggers from mana abilities that only copy <em>red</em>
+     *  instants and sorceries (Pyromancer's Goggles). Same lifecycle as
+     *  {@link #pendingNextInstantSorceryCopyCount}: decremented when a matching spell is cast,
+     *  cleared when mana pools drain. */
+    public final Map<UUID, Integer> pendingNextRedInstantSorceryCopyCount = new ConcurrentHashMap<>();
+
     /** Pending one-shot "when you next cast an instant or sorcery spell this turn, copy that spell"
      *  delayed triggers (e.g. Chandra, the Firebrand's −2). Each value tracks how many copies are
      *  pending for that player. Decremented when an instant/sorcery is cast; unlike
@@ -852,6 +864,21 @@ public class GameData {
                 .add(playerId);
     }
 
+    /** Tracks how much damage each source dealt this turn, to every recipient (players, planeswalkers,
+     *  battles and creatures; combat and noncombat alike). Maps source permanent UUID → total damage.
+     *  Used by "if [this] has dealt N or more damage this turn" (Chandra, Fire of Kaladesh).
+     *  Cleared at turn cleanup. */
+    public final Map<UUID, Integer> damageDealtThisTurnBySource = new ConcurrentHashMap<>();
+
+    /** Records that {@code sourcePermanentId} dealt {@code amount} damage this turn. No-op when the
+     *  source permanent is unknown or the amount is non-positive. */
+    public void recordDamageDealtBySource(UUID sourcePermanentId, int amount) {
+        if (sourcePermanentId == null || amount <= 0) {
+            return;
+        }
+        damageDealtThisTurnBySource.merge(sourcePermanentId, amount, Integer::sum);
+    }
+
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -985,6 +1012,15 @@ public class GameData {
     public final Map<UUID, UUID> tauntedNextTurn = new ConcurrentHashMap<>();
     /** Active this turn: affectedPlayerId -> controllerId all their creatures must attack if able. */
     public final Map<UUID, UUID> tauntedThisTurn = new ConcurrentHashMap<>();
+
+    /**
+     * Delayed single-creature taunt: creaturePermanentId -&gt; the permanent it must attack, consumed
+     * when the creature's controller's next turn begins (Gideon, Battle-Forged's +2). Unlike
+     * {@link #tauntedNextTurn} this binds one creature rather than every creature a player controls,
+     * and it is promoted onto the creature's own transient {@code mustAttackThisTurn} /
+     * {@code mustAttackTargetId} pair.
+     */
+    public final Map<UUID, UUID> creatureMustAttackPermanentNextTurn = new ConcurrentHashMap<>();
 
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
     /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
@@ -2290,6 +2326,7 @@ public class GameData {
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
+        copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
@@ -2360,6 +2397,7 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
+        copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         this.pendingNextDrawFromExiledPile.forEach((k, v) ->
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
@@ -2372,6 +2410,7 @@ public class GameData {
                 copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.playersAttackedThisTurn.forEach((k, v) ->
                 copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
+        copy.damageDealtThisTurnBySource.putAll(this.damageDealtThisTurnBySource);
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
@@ -2588,6 +2627,7 @@ public class GameData {
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
+        copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
@@ -2617,6 +2657,7 @@ public class GameData {
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
+        copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);

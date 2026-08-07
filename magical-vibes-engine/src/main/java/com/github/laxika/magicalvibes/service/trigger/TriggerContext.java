@@ -187,6 +187,15 @@ public sealed interface TriggerContext {
                                       UUID graveyardOwnerId) implements TriggerContext {}
 
     /**
+     * Context for ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers
+     * (Kothophed, Soul Hoarder).
+     *
+     * @param dyingCard the permanent's card, now in its owner's graveyard
+     * @param ownerId   the owner of the permanent (and of the graveyard it went to)
+     */
+    record OtherPlayerOwnedPermanentGraveyard(Card dyingCard, UUID ownerId) implements TriggerContext {}
+
+    /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
      *
      * @param landCard          the land card that was put into the graveyard from the battlefield

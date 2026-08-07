@@ -130,6 +130,7 @@ combat damage step is processed.
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_ANY_PLAYER_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any attacking player; attacking player stored as non-targeting `targetId`) | Non-targeting (Total War) |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`; `TriggeringPermanentConditionalEffect` filters which attackers trigger) | Non-targeting (Caltrops, Windreader Sphinx) |
+| `ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (spell controller's battlefield; targeted creature stored as non-targeting `targetId`, listener as `sourcePermanentId`) | Becomes-target |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`) | Becomes-target |
 | `UPKEEP_TRIGGERED` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect targets both — `targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
 | `UPKEEP_TRIGGERED` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect's `targetSpec()` includes permanents, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
@@ -203,6 +204,11 @@ via the pending-may-ability flow, not a target-choice pipeline),
 the untapped permanent's controller's battlefield, including the source untapping itself; same
 `checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent),
+`ON_SELF_BECOMES_RENOWNED` / `ON_ALLY_CREATURE_BECOMES_RENOWNED` (Relic Seeker / Valeron Wardens; fired from
+`RenownEffectHandler` via `TriggerCollectionService.checkBecomesRenownedTriggers` on the flip to renowned
+only. The ally slot fires on every permanent with it on the renowned creature's controller's battlefield,
+including that creature itself; wrap in `TriggeringPermanentConditionalEffect` to filter by the renowned
+creature),
 `ON_SELF_PHASES_OUT` / `ON_SELF_PHASES_IN` (Teferi's Imp; fired from `PhasingService` via
 `TriggerCollectionService.checkPhasesOutTriggers` / `checkPhasesInTriggers` — phase-out triggers are collected
 before the permanent leaves the battlefield, since they look back in time (CR 603.10b). Non-targeting
@@ -236,7 +242,7 @@ with the slot whenever another creature leaves the battlefield by any means, che
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
-`EACH_BEGINNING_OF_COMBAT_TRIGGERED`,
+`EACH_BEGINNING_OF_COMBAT_TRIGGERED`, `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED`,
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
@@ -317,6 +323,14 @@ lands on the entry's `targetCardIds` and the effect handler's pre-targeted path 
 the trigger path allows an empty selection, a "you may return target …" reads correctly as up-to-one
 (choose 0 to decline) with no `MayEffect` wrapper. `BecomeAuraReanimateFromGraveyardEffect` (Necromancy)
 uses the same flow with `ALL_GRAVEYARDS` — any player's graveyard, creature cards only.
+
+**Graveyard-targeting upkeep triggers** ("At the beginning of your upkeep, you may return target
+enchantment card from your graveyard to the battlefield" - Starfield of Nyx) use the same
+`SpellGraveyardTargetTrigger` flow. `StepTriggerService.handleUpkeepTriggers` pulls every
+`UPKEEP_TRIGGERED` effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` out of the per-effect loop
+and queues them as one interaction, drained at the end of the same method; no matching card in the
+graveyard means the trigger is never put on the stack (CR 603.3c). As above, the "you may" needs no
+`MayEffect` wrapper - the up-to-one pick can be left empty.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
 Ruin Rat) use the same trigger-time graveyard selection, but on the `ON_DEATH` path. `handleDeathDefault`

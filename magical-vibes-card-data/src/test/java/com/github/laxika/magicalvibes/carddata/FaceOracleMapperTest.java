@@ -91,6 +91,14 @@ class FaceOracleMapperTest {
         assertThat(front.watermark()).isEqualTo("phyrexian");
     }
 
+    @Test
+    void aPlaneswalkerBackFaceKeepsItsPrintedLoyalty() {
+        OracleData back = map(
+                face().typeLine("Legendary Planeswalker — Gideon").loyalty("3"), BACK);
+
+        assertThat(back.loyalty()).isEqualTo(3);
+    }
+
     /**
      * Both providers report a double-faced card's keywords combined across faces, so a back face
      * must keep only what its own text states. Inheriting the front's Defender produced an Awoken

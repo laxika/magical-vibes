@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -286,11 +287,34 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** {@code targetFilter} overrides the source card's own filter when the trigger's legal targets
+     *  belong to one chosen mode rather than to the whole card (Demonic Pact's "target opponent"). */
+    record UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
+                                     TargetFilter targetFilter) implements PermanentChoiceContext {
+
+        public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+        }
+    }
 
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    record UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** {@code targetFilter} overrides the source card's own filter — see {@link UpkeepPlayerTargetTrigger}. */
+    record UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
+                                  TargetFilter targetFilter) implements PermanentChoiceContext {
+
+        public UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+        }
+    }
+
+    /**
+     * "At the beginning of your upkeep, choose one that hasn't been chosen —" (Demonic Pact). The
+     * mode is picked as the ability is put on the stack; the chosen mode's effects then go through
+     * the ordinary upkeep trigger routing (any-target / player-target / non-targeting).
+     */
+    record UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseModeNotYetChosenEffect effect,
+                              UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
@@ -391,9 +415,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  triggered (Flayer of the Hatebound, Warstorm Surge). */
     record EnteringPermanentAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability). */
+    /**
+     * ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability).
+     * {@code includeAbilities} is true when the card's stack filter includes
+     * {@code StackEntryHasTargetPredicate}, so abilities on the stack are legal targets too
+     * ("target spell or ability" — Mizzium Meddler). {@code sourcePermanentId} is the permanent
+     * that just entered, for effects that act on the source permanent (target redirection).
+     */
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                 StackEntryPredicate spellFilter) implements PermanentChoiceContext {}
+                                 StackEntryPredicate spellFilter, boolean includeAbilities,
+                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /**
      * Exploit sacrifice choice: controller picks any creature they control (including the exploit

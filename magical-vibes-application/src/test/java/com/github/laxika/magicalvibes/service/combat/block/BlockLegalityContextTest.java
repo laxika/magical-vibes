@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
+import com.github.laxika.magicalvibes.cards.s.StratusWalk;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.z.ZodiacMonkey;
@@ -133,6 +134,20 @@ class BlockLegalityContextTest extends BaseCardTest {
         Permanent sprite = addCreatureReady(player2, new CloudSprite());
 
         assertThat(reason(sprite, bears)).contains("Cloud Sprite can only block creatures with flying");
+    }
+
+    @Test
+    @DisplayName("An aura can impose the blocker's attacker restriction (Stratus Walk)")
+    void auraImposesBlockerAttackerRestriction() {
+        Permanent bears = attacking(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(reason(blocker, bears)).isEmpty();
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StratusWalk());
+        aura.setAttachedTo(blocker.getId());
+
+        assertThat(reason(blocker, bears)).contains("Grizzly Bears can only block creatures with flying");
     }
 
     @Test

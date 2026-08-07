@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -78,6 +80,7 @@ public class GraveyardReturnSupport {
     private final GraveyardService graveyardService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -267,15 +270,18 @@ public class GraveyardReturnSupport {
     /**
      * Applies optional battlefield-entry riders from a {@link ReturnCardFromGraveyardEffect}
      * (mannequin counter, generic enter-with counter, exile-if-leaves replacement, granted cumulative
-     * upkeep, +1/+1 counters — unconditional when {@code plusOneCountersIfSubtype} is null, else
-     * subtype-gated).
+     * upkeep, +1/+1 counters — unconditional when both {@code plusOneCountersIfSubtype} and
+     * {@code plusOneCountersIfCondition} are null, else gated by whichever is set).
      */
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect) {
         boolean plusOneCounters = effect.plusOneCounterCount() > 0
                 && (effect.plusOneCountersIfSubtype() == null
                 || (card.getSubtypes() != null
-                && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())));
+                && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())))
+                && (effect.plusOneCountersIfCondition() == null
+                || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
+                ConditionContext.forCasting(controllerId)));
         boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         if (!effect.enterWithMannequinCounter()
                 && !enterWithCounter

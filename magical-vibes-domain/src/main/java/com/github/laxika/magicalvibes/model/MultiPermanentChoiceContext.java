@@ -326,6 +326,19 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Tragic Arrogance: the spell's controller ({@code controllerId}) chose the permanent of
+     * {@code typePhase} that {@code subjectPlayerId} keeps. {@code remainingPlayerIds} starts with
+     * the subject player (their later type passes still have to run) and {@code keptIds} carries
+     * every pick so far. After the last pass, all nonland permanents outside {@code keptIds} are
+     * sacrificed simultaneously.
+     */
+    record KeepOneOfEachTypeChoice(UUID controllerId, UUID subjectPlayerId, CardType typePhase,
+                                   java.util.List<UUID> remainingPlayerIds,
+                                   java.util.List<UUID> keptIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
      * controls to phase out (one pass of land / artifact / creature). Completion phases them out
      * then advances to the next pass via {@code EquipoiseSupport}.

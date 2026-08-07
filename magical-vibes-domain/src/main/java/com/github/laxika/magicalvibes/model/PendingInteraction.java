@@ -32,6 +32,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
+        PendingInteraction.PutLandsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
@@ -47,6 +48,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
+        PendingInteraction.RevealedFreeCastGroup,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
         PendingInteraction.CounteredSpellLibraryDestinationChoice,
@@ -436,6 +438,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * The Great Aurora: {@code playerId} may put any number of the land cards in their hand onto the
+     * battlefield. {@code validCardIds} are the land card ids in that player's hand at begin time;
+     * every chosen card enters untapped, all at once. {@code remainingPlayerIds} are the players
+     * still to choose after this one (APNAP order); answering prompts the next remaining player who
+     * has a land in hand. {@code cardName} is the source spell's name (for logging).
+     */
+    record PutLandsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                  java.util.List<UUID> remainingPlayerIds, String cardName)
+            implements PendingInteraction {
+
+        public PutLandsFromHandChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+        }
+    }
+
+    /**
      * Doomsday: choose up to five cards from the combined library+graveyard {@code pool} (held
      * out of both zones) to put on top of the library in any order; the unchosen cards are
      * exiled. IDs and card views are derived from {@code pool} at prompt time. The half-life
@@ -790,7 +819,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * discarded (Talara's Bane). {@code followUpFilter}/{@code followUpPrompt} (optional) begin a
      * second single pick under a different {@link com.github.laxika.magicalvibes.model.filter.CardPredicate}
      * after the first pick completes (Distended Mindbender's dual MV bands) — skipped when no
-     * remaining hand card matches.
+     * remaining hand card matches. {@code declineFallbackDiscardCount} (discard mode, {@code > 0}
+     * only together with {@code optional}) makes the target player discard that many cards of
+     * their own choice when the caster declines (Nightsnare's "if you don't, that player discards
+     * two cards").
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                               java.util.List<Integer> validIndices, int remainingCount,
@@ -799,8 +831,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               String prompt, boolean bottomThenDrawMode, boolean optional,
                               boolean gainLifeToChooserEqualToChosenToughness,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                              String followUpPrompt)
+                              String followUpPrompt, int declineFallbackDiscardCount)
             implements PendingInteraction {
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt, 0);
+        }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                   java.util.List<Integer> validIndices, int remainingCount,
@@ -1165,6 +1210,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /**
+     * Carry-over state for "reveal the top N cards of target player's library, you may cast up to
+     * {@code castsRemaining} instant or sorcery spells from among them without paying their mana
+     * costs, then that player puts the rest into their graveyard" (Talent of the Telepath).
+     *
+     * <p>The revealed cards are held outside every zone while the casting decisions are made, so
+     * they live here rather than in a library or graveyard; once the offers are exhausted the cards
+     * still held are put into {@code ownerId}'s graveyard. Like
+     * {@link PendingEachPlayerLibraryExile} this is a pure state carrier that never becomes the
+     * active interaction, so its {@code decidingPlayerId()} stays {@code null}.
+     *
+     * @param ownerId        owner of the revealed library; the rest end up in their graveyard
+     * @param casterId       the player who may cast the revealed instants/sorceries
+     * @param heldCards      the revealed cards not yet cast, currently in no zone
+     * @param castsRemaining how many more spells may still be cast from among them
+     */
+    record RevealedFreeCastGroup(UUID ownerId, UUID casterId, java.util.List<Card> heldCards,
+                                 int castsRemaining) implements PendingInteraction {
+
+        public RevealedFreeCastGroup {
+            heldCards = java.util.List.copyOf(heldCards);
         }
     }
 

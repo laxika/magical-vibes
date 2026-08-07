@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -9,6 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BairdStewardOfArgive extends Card {
 
     public BairdStewardOfArgive() {
-        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(1));
+        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(1, new SourceUntapped()));
     }
 }

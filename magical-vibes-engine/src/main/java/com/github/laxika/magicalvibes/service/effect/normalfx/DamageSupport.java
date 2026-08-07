@@ -217,6 +217,8 @@ public class DamageSupport {
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
         if (damage > 0) {
             gameData.permanentsDealtDamageThisTurn.add(target.getId());
+            gameData.recordDamageDealtBySource(
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage);
 
             UUID sourceControllerId = damageSource != null
                     ? gameQueryService.findPermanentController(gameData, damageSource.getId())
@@ -551,6 +553,7 @@ public class DamageSupport {
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), loyaltyDamage);
+                    gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), loyaltyDamage);
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
                             targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
                     gameLogService.append(gameData, GameLog.cardTextCard(source,
@@ -690,7 +693,8 @@ public class DamageSupport {
             }
 
             // Urza's Armor: the controller prevents a fixed amount of this source's damage.
-            int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, playerId, effectiveDamage);
+            int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(
+                    gameData, playerId, effectiveDamage, gameQueryService.isDamageSourceCreature(gameData, entry, null));
             if (fixedPrevented > 0) {
                 effectiveDamage -= fixedPrevented;
                 gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,
@@ -786,6 +790,8 @@ public class DamageSupport {
             if (effectiveDamage > 0) {
                 accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
+                entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 recordRedSpellDamage(gameData, entry, source, playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);

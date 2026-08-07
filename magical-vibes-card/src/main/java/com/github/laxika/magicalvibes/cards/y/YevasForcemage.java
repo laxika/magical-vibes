@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "198")
+@CardRegistration(set = "ORI", collectorNumber = "208")
 public class YevasForcemage extends Card {
 
     public YevasForcemage() {

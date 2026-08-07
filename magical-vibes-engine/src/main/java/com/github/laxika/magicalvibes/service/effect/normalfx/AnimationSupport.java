@@ -305,19 +305,36 @@ public class AnimationSupport {
                 gameData.id, count, power, toughness);
     }
 
-    /** TARGET scope, PERMANENT duration — target permanent becomes a creature with no wear-off (Tezzeret, Waker). */
+    /**
+     * TARGET scope, PERMANENT duration — the targeted permanent(s) become creatures with no wear-off
+     * (Tezzeret, Waker). Multi-target abilities animate every permanent in the target group, mirroring
+     * {@link #animateSingle} (Nissa, Sage Animist's "Untap up to six target lands. They become 6/6
+     * Elemental creatures.").
+     */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        List<UUID> targetIds;
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
+            targetIds = entry.getTargetIds();
+        } else if (entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        } else {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, target);
-        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        animatePermanently(gameData, target, effect, power, toughness,
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+            AmountContext ctx = AmountContext.forStackEntry(entry, target);
+            int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+            int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+
+            animatePermanently(gameData, target, effect, power, toughness,
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+        }
     }
 
     /**

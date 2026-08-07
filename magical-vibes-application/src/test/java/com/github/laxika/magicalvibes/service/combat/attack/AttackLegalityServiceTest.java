@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -367,6 +368,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
         // replacing it — CR 508.1d compares totals, so two requirements must outrank one.
         berserkers.setMustAttackThisTurn(true);
         assertThat(als.getMustAttackRequirementCount(gd, berserkers)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A must-attack flag naming a thing that is no longer attackable stops counting")
+    void directedMustAttackRequirementLapsesWhenItsTargetIsGone() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        bears.setMustAttackThisTurn(true);
+        bears.setMustAttackTargetId(player2.getId());
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
+
+        // A permanent id no living permanent carries — e.g. the planeswalker that imposed the
+        // requirement has since left the battlefield.
+        bears.setMustAttackTargetId(UUID.randomUUID());
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isZero();
     }
 
     @Test

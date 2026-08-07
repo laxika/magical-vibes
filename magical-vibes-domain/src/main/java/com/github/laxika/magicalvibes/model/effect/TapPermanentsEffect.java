@@ -17,7 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * resolving controller pick <em>up to</em> that many of them to tap (Yosei, the Morning Star).
  *
  * @param scope       which permanent(s) to tap
- * @param filter      optional predicate narrowing the scanned scopes (null = no restriction)
+ * @param filter      optional predicate narrowing the scanned scopes, or the targeting restriction
+ *                    for {@link TapUntapScope#TARGET} (null = no restriction)
  * @param chosenCount 0 = tap every permanent in scope; &gt;0 = the controller chooses up to N
  */
 public record TapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
@@ -36,7 +37,7 @@ public record TapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter
         return switch (scope) {
             // TARGET taps a chosen permanent; ALL_TARGETS is unused by tap (dead path) but keeps
             // canTargetPermanent=true exactly. The single-target validation runs requireBattlefieldTarget.
-            case TARGET, ALL_TARGETS -> TargetSpec.benign(TargetPredicates.permanent());
+            case TARGET, ALL_TARGETS -> TargetSpec.benign(TargetPredicates.permanent(), filter);
             case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.player());
             case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;

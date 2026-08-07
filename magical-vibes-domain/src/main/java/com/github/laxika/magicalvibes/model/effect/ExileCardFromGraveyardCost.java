@@ -13,26 +13,32 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param imprintOnSource           if true, the exiled card is set as the imprinted card on the source permanent
  * @param trackExiledPower          if true, the exiled card's power is stored as the X value (e.g. Corpse Lunge)
  * @param requiredSubtype           the card subtype required (null = any), e.g. "Exile an Elf card" (Scarred Vinebreeder)
+ * @param alternateType             a second acceptable card type (null = none); a card of either type qualifies,
+ *                                  e.g. "Exile an instant or sorcery card from your graveyard" (Disciple of the Ring)
  */
 public record ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                          boolean imprintOnSource, boolean trackExiledPower,
-                                         CardSubtype requiredSubtype) implements CostEffect {
+                                         CardSubtype requiredSubtype, CardType alternateType) implements CostEffect {
 
     public ExileCardFromGraveyardCost(CardType requiredType) {
-        this(requiredType, false, false, false, null);
+        this(requiredType, false, false, false, null, null);
+    }
+
+    public ExileCardFromGraveyardCost(CardType requiredType, CardType alternateType) {
+        this(requiredType, false, false, false, null, alternateType);
     }
 
     public ExileCardFromGraveyardCost(CardSubtype requiredSubtype) {
-        this(null, false, false, false, requiredSubtype);
+        this(null, false, false, false, requiredSubtype, null);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, false, null, null);
     }
 
     public ExileCardFromGraveyardCost(CardType requiredType, boolean payExiledCardManaCost,
                                       boolean imprintOnSource, boolean trackExiledPower) {
-        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null);
+        this(requiredType, payExiledCardManaCost, imprintOnSource, trackExiledPower, null, null);
     }
 }

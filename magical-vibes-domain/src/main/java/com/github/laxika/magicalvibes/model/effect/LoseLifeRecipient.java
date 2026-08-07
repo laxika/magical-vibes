@@ -12,6 +12,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *       entry's {@code targetId} is a permanent, not a player) loses life; the effect does not add
  *       its own target. Used by "destroy target creature; ... its controller loses N life"
  *       (Soul Reap). Resolve before any accompanying destroy so the permanent is still present.</li>
+ *   <li>{@link #DYING_CREATURE_CONTROLLER} — the last-known controller of the creature that died,
+ *       for {@code ON_DAMAGED_CREATURE_DIES} triggers such as "whenever a creature dealt damage by
+ *       that creature dies this turn, its controller loses 2 life" (Touch of Moonglove). The
+ *       graveyard pipeline binds that player onto the trigger's {@code targetId} when the ability is
+ *       put on the stack; the effect chooses no target.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked by the source (or the controller of
  *       the attacked planeswalker), captured as the trigger's {@code attackedTargetId}; used by
  *       combat triggers such as "whenever this creature becomes blocked, defending player loses N
@@ -25,6 +30,7 @@ public enum LoseLifeRecipient {
     CONTROLLER,
     TARGET_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
+    DYING_CREATURE_CONTROLLER,
     DEFENDING_PLAYER,
     EACH_PLAYER,
     EACH_OPPONENT

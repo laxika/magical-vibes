@@ -184,6 +184,9 @@ public class BattlefieldEntryService {
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
+        if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
+            return;
+        }
         if (!applySacrificePermanentToEnter(gameData, controllerId, permanent)) {
             return;
         }
@@ -317,6 +320,31 @@ public class BattlefieldEntryService {
             }
         }
         return controllerId;
+    }
+
+    /**
+     * Hallowed Moonlight replacement effect (CR 614.1): "Until end of turn, if a creature would
+     * enter and it wasn't cast, exile it instead." Returns {@code true} when the entering permanent
+     * was replaced and must not be placed, in which case it never enters and no enters-the-battlefield
+     * trigger fires.
+     *
+     * <p>An entering token is exiled too, but a token outside the battlefield ceases to exist
+     * (CR 111.7), so it is simply dropped rather than added to the exile zone.
+     */
+    private boolean applyExileUncastEnteringCreature(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
+                || permanent.isCast()
+                || !permanent.getCard().hasType(CardType.CREATURE)) {
+            return false;
+        }
+        Card card = permanent.getCard();
+        if (!card.isToken()) {
+            UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
+            gameData.addToExile(ownerId, card);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
+        log.info("Game {} - {} exiled instead of entering (it wasn't cast)", gameData.id, card.getName());
+        return true;
     }
 
     /**
@@ -1582,15 +1610,23 @@ public class BattlefieldEntryService {
         // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
         for (CardEffect effect : spellTargetEffects) {
             StackEntryPredicate spellFilter = null;
+            boolean includeAbilities = false;
             if (effect instanceof CopySpellEffect cse) {
                 spellFilter = cse.spellFilter();
             } else if (card.getTargetFilter() instanceof StackEntryPredicateTargetFilter sf) {
                 // "counter target spell with mana value X or less" (Spellstutter Sprite): the
                 // legal-spell restriction lives on the card's target filter, not the effect.
                 spellFilter = sf.predicate();
+                // "target spell or ability" (Mizzium Meddler) is signalled by a has-target filter.
+                includeAbilities = TriggerCollectionService.predicateContainsHasTarget(sf.predicate());
             }
+            List<Permanent> entered = gameData.playerBattlefields.get(controllerId);
+            UUID sourcePermanentId = entered == null ? null : entered.stream()
+                    .filter(p -> p.getCard().getId().equals(card.getId()))
+                    .map(Permanent::getId)
+                    .findFirst().orElse(null);
             gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                    card, controllerId, List.of(effect), spellFilter));
+                    card, controllerId, List.of(effect), spellFilter, includeAbilities, sourcePermanentId));
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {

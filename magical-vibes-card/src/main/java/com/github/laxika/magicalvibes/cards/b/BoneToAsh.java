@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "29")
+@CardRegistration(set = "ORI", collectorNumber = "47")
 public class BoneToAsh extends Card {
 
     public BoneToAsh() {

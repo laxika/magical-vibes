@@ -652,6 +652,7 @@ class TurnProgressionServiceTest {
             gd.cardsDrawnThisTurn.put(player1Id, 3);
             gd.lifeGainedThisTurn.put(player1Id, 4);
             gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
+            gd.recordDamageDealtBySource(UUID.randomUUID(), 3);
             gd.queueDelayedAction(new DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
@@ -673,6 +674,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
             assertThat(gd.lifeGainedThisTurn).isEmpty();
             assertThat(gd.combatDamageToPlayersThisTurn).isEmpty();
+            assertThat(gd.damageDealtThisTurnBySource).isEmpty();
             assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).isEmpty();
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
