@@ -33,22 +33,26 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTopCardsMayCastMatchingThisTurnEffect e = (ExileTopCardsMayCastMatchingThisTurnEffect) effect;
+        if (e.count() <= 0) {
+            return;
+        }
+
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        if (deck == null || deck.isEmpty() || e.count() <= 0) {
+        if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.text(controllerName + "'s library is empty — nothing to exile."));
             return;
         }
 
         List<String> castableNames = new ArrayList<>();
-        List<String> allNames = new ArrayList<>();
+        List<Card> exiled = new ArrayList<>();
         for (int i = 0; i < e.count() && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
-            allNames.add(topCard.getName());
+            exiled.add(topCard);
 
             if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)) {
                 gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
@@ -60,10 +64,16 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
         String castNote = castableNames.isEmpty()
                 ? ""
                 : " (may cast this turn: " + String.join(", ", castableNames) + ")";
-        gameLogService.append(gameData, GameLog.text(
-                controllerName + " exiles " + String.join(", ", allNames)
-                        + " from the top of their library" + castNote + "."));
+        GameLog.Builder logEntry = GameLog.builder().text(controllerName + " exiles ");
+        for (int i = 0; i < exiled.size(); i++) {
+            if (i > 0) {
+                logEntry.text(", ");
+            }
+            logEntry.card(exiled.get(i));
+        }
+        gameLogService.append(gameData, logEntry
+                .text(" from the top of their library" + castNote + ".").build());
         log.info("Game {} - {} exiles {} cards from library top ({} castable this turn)",
-                gameData.id, controllerName, allNames.size(), castableNames.size());
+                gameData.id, controllerName, exiled.size(), castableNames.size());
     }
 }

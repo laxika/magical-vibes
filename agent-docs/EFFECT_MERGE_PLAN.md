@@ -84,7 +84,7 @@ high-churn or needs a design call and is optional.
 | 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
 | 15 | Reveal / reorder library batch | 2 | LOW | **DONE** — both premises held. Three corrections: the two `boolean targetPlayer` flags became one shared `LibraryOwner` enum (which keeps the reorder family's nine own-library call sites untouched); the reveal's `@ValidatesTarget` validator had to be branched or the Deceivers would demand a player target; and `Fixed(0)` is honest to the *amount*-reading `LifeGainEffect` consumers but not to the two presence-checking ones, so the capability gained a `gainsNoLife()` default |
 | 16 | Damage target-category batch | 3 | LOW | **DONE** — all three premises held. The audit's "3" is the *net* count (5 records + 5 handlers deleted, 2 records + 1 enum + 2 handlers added) and its row-1 card count is three low (17, not 14). Three corrections: both proposed `boolean`s became enums (`PlayerRelation` reused, new `DamagedPermanentScope`), the all-creatures survivor had to be **renamed** or its name would lie, and the row-3 handlers diverged on two axes the audit missed (a null-target guard and `checkWinCondition`) |
-| 17 | Exile-top-cards families | 7 | LOW–MED | TODO |
+| 17 | Exile-top-cards families | 7 | LOW–MED | **DONE (partial)** — 17b's premise held (3 records + 3 handlers → 1). **17a's premise did not**: the six handlers are *not* identical (five different log shapes, a `DynamicAmount` evaluator, two delayed actions, face-down exile), so the full 17a merge was **rejected**; only its free sub-merge was taken. Net: 4 records + 4 handlers deleted, 1 enum added |
 | 18 | Enchanted-creature aura batch | 3 | LOW–MED | TODO |
 | 19 | Entering-creature conditionals + `GrantEffectTo*` | 5 | LOW–MED | TODO |
 | 20 | Misc low-risk 2→1 batch | 12 | LOW | TODO |
@@ -1455,7 +1455,10 @@ discard first.
 
 ---
 
-### Step 17 — Exile-top-cards families
+### Step 17 — Exile-top-cards families — **DONE (partial)**
+
+**Outcome.** 17b was merged as specified. **17a's central premise is false and the full merge was
+rejected**; only its "free sub-merge" was taken. Details in *What actually happened* below.
 
 **17a Target**
 ```java
@@ -1486,6 +1489,71 @@ All three resolve the source permanent, share the same
 `"Source permanent no longer on battlefield … fizzles"` log, then
 `Math.min(e.count(), deck.size())` and the same exile loop. The survivor's javadoc already names the
 other two as its counterparts.
+
+**What actually happened**
+
+*17a — rejected.* "All six handlers share the same body verbatim" is wrong; only the empty-library
+log line is shared. The six diverge on at least six axes the audit missed:
+
+| Handler | Divergence |
+|---|---|
+| `ExileTopCardMayPlayThisTurn` | per-card `GameLog.builder().card()` chip log; no `count <= 0` guard |
+| `ExileTopCardsMayPlayUntilNextTurn` | evaluates a `DynamicAmount` with a live-permanent→snapshot fallback; delegates to `ExileSupport.grantPlayUntilOwnersNextTurn`; aggregate plain-text log; silent return on `count <= 0` |
+| `ExileTopCardMayCastNonlandThisTurn` | single card, no loop; permission granted conditionally on card type |
+| `ExileTopCardMayPlayUntilNextUpkeep` | no end-of-turn expiry; queues `RevokeExilePlayPermissionAtNextUpkeep` |
+| `ExileTopCardsFaceDownMayPlayUntilNextUpkeep` | `exileCardFaceDown`; queues `ExileToOwnerGraveyardAtNextUpkeep`; count-based aggregate log |
+| `ExileTopCardsMayCastMatchingThisTurn` | filter-gated permission; aggregate log naming the castable subset |
+
+Collapsing these means unifying five different log formats and would change the visible game log for
+at least four cards — a rewrite, not the mechanical merge the step describes. Rejected under protocol
+rule 2. The `ExilePlayWindow` axis is real and a future step could still take it, but it needs its
+own log-format decision recorded up front.
+
+*17a sub-merge — taken, and it is not quite "free".* `ExileTopCardMayCastNonlandThisTurnEffect`
+(1 record + 1 handler) is gone; Vance's Blasting Cannons now uses
+`ExileTopCardsMayCastMatchingThisTurnEffect(1, new CardNotPredicate(new CardTypePredicate(LAND)))`.
+The null-predicate claim checks out (`PredicateEvaluationService.matchesCardPredicate` returns `true`
+for `null`, verified at the method's first statement). Two corrections to the step text:
+
+- The two handlers wrote **identical** permission state (`exilePlayPermissions` +
+  `exilePlayPermissionsExpireEndOfTurn`), but their **logs** differed — a card chip vs a plain-text
+  name. To avoid demoting Vance's log, the survivor's handler now emits card chips too. Net visible
+  delta: Vance's note gains the card name (`(may cast this turn: Shock)`), Chandra's log gains chips.
+- **`ExileTopCardMayPlayThisTurnEffect` does not collapse in**, so the claimed "2 classes + 2
+  handlers" is really 1 + 1. Oracle's Vault's second ability needs `withoutPayingManaCost = true`,
+  which the survivor cannot express; folding only the `false` call sites would split one concept
+  across two records for no deletion.
+- Latent bug fixed while in the handler: `count <= 0` logged *"library is empty — nothing to exile"*
+  regardless of library size. Now a silent return, matching its siblings. Dead for both live call
+  sites (counts 1 and 5); covered by a test.
+
+*17b — taken as specified.* `ExileTopCardsToSourceEffect(int, boolean, boolean, LibraryScope)` with
+`{ CONTROLLER, TARGET_OPPONENT, EACH_PLAYER }`; the three legacy convenience constructors default to
+`CONTROLLER`, so the six existing call sites were untouched apart from the three rewired cards.
+Four corrections:
+
+- The audit missed that `ExileTopCardsOfOpponentLibraryToSourceEffect` implements
+  **`CombatDamageTriggerContextEffect`**. The survivor now implements it and returns `DAMAGED_PLAYER`
+  **only** for `TARGET_OPPONENT`, `null` otherwise — exactly the component-dependent pattern that
+  interface's javadoc prescribes, and `null` is dispatch-identical to not implementing it, so the
+  `CONTROLLER`/`EACH_PLAYER` cards are unaffected.
+- The `@CollectsTrigger` / `@ValidatesTarget` class-keying worry does not bite: **no** collector or
+  validator is keyed on any of these three classes, despite Grimoire Thief
+  (`ON_ALLY_PERMANENT_BECOMES_TAPPED`), Nightveil Specter (`ON_COMBAT_DAMAGE_TO_PLAYER`) and three
+  ETB cards using trigger slots.
+- The fizzle log is **not** shared: the opponent handler said *"opponent-exile fizzles"*. Unified on
+  *"exile-top-cards fizzles"* (`log.info` only, not player-visible). The opponent handler also
+  **lacked** the by-card-id battlefield fallback the other two had; the survivor keeps the fallback
+  for all scopes — a superset that can only turn a fizzle into a resolution.
+- Log formats were not uniform: `EachPlayerExiles…` listed exiled card **names**, the other two
+  logged a **count**. Unified on the count form, so Knowledge Pool's log no longer names the cards.
+  This is the safe direction: the name-listing form applied to a face-down exile (Colfenor's Plans,
+  Grimoire Thief) would leak information CR 406.3 keeps hidden.
+
+Tests: `EachPlayerExilesTopCardsToSourceEffectHandlerTest` replaced by
+`ExileTopCardsToSourceEffectHandlerTest` (10 tests: all three scopes, the control-loss watch on and
+off, the fizzle, the card-id fallback, and the scope-dependent trigger context). Ran with the eight
+affected card tests — 69 tests, all green.
 
 ---
 

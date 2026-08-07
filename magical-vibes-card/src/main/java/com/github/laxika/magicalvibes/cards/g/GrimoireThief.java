@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellsNamedLikeCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfOpponentLibraryToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -19,7 +20,7 @@ public class GrimoireThief extends Card {
         // library face down. (Two-player: the single opponent is the only legal target.)
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
                 new PermanentIsSourceCardPredicate(),
-                new ExileTopCardsOfOpponentLibraryToSourceEffect(3, true)));
+                new ExileTopCardsToSourceEffect(3, true, false, LibraryScope.TARGET_OPPONENT)));
 
         // {U}, Sacrifice this creature: Turn all cards exiled with this creature face up.
         // Counter all spells with those names. (You may look at the exiled cards.)

@@ -8,9 +8,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * first ability, Act on Impulse with {@code count} 3).
  * <p>
  * Grants {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn} (and, for the
- * free variant, {@code exilePlayWithoutPayingManaCost}). Unlike
- * {@link ExileTopCardMayCastNonlandThisTurnEffect} (Vance's Blasting Cannons) the permission is
- * granted for lands as well as nonland cards.
+ * free variant, {@code exilePlayWithoutPayingManaCost}). The permission is granted unconditionally,
+ * for lands as well as nonland cards; use
+ * {@link ExileTopCardsMayCastMatchingThisTurnEffect} when only cards matching a filter become
+ * castable (Vance's Blasting Cannons, Chandra, Dressed to Kill). That effect covers this one's
+ * unfiltered case too — this record stays separate only for {@code withoutPayingManaCost}.
  */
 public record ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost)
         implements CardEffect {
