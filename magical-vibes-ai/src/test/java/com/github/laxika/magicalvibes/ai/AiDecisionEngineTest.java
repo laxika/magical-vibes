@@ -1976,7 +1976,7 @@ class AiDecisionEngineTest {
         assertThat(result).isEmpty();
     }
 
-    // ===== prepareAttackersForTax enforces CR 508.1b (can't attack alone) =====
+    // ===== prepareAttackersForTax enforces CR 508.1c (can't attack alone) =====
 
     @Test
     @DisplayName("prepareAttackersForTax drops lone Jackal Familiar even without an attack tax")

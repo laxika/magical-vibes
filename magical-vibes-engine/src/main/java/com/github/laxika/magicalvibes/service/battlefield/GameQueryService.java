@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantments
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
@@ -1531,7 +1532,7 @@ public class GameQueryService {
      * from FULLY LAYERED characteristics: the predicate goes through the {@code GameData}-taking
      * {@code matchesPermanentPredicate}, which reads power and toughness through layer 7. A
      * Glorious Anthem lifting a 1/1 to 2/2 therefore takes the evasion away, and an opponent's
-     * Cumber Stone dropping a 2/2 to 1/2 confers it (CR 509.1b checks restrictions at declare
+     * Cumber Stone dropping a 2/2 to 1/2 confers it (CR 509.1a checks restrictions at declare
      * blockers; the official ruling that a creature already blocked stays blocked is the
      * declaration-time snapshot, not a frozen set).
      *
@@ -3678,6 +3679,26 @@ public class GameQueryService {
      */
     public int getEnchantedCreatureBlockerTax(GameData gameData, Permanent creature) {
         return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.BLOCK_WITH);
+    }
+
+    /**
+     * Total additional generic mana the defending player must pay to declare {@code blocker} as a
+     * blocker of {@code attacker}: the Aura taxes on both creatures plus every
+     * {@link BlockCostEffect} the blocker carries (Hipparion — {1} to block power 3 or greater).
+     * The single source of truth for the mana part of a block's additional cost, shared by
+     * {@code CombatBlockService.declareBlockers} and the AI so the two can never disagree about
+     * whether a block is affordable.
+     */
+    public int getBlockManaTax(GameData gameData, Permanent blocker, Permanent attacker) {
+        int attackerPower = getEffectivePower(gameData, attacker);
+        int tax = getEnchantedCreatureBlockTax(gameData, attacker)
+                + getEnchantedCreatureBlockerTax(gameData, blocker);
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockCostEffect blockCost) {
+                tax += blockCost.blockCost(attackerPower);
+            }
+        }
+        return tax;
     }
 
     /**

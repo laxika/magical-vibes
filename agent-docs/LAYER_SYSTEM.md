@@ -1552,7 +1552,7 @@ and any deviations from this document.
     `ptForStaticFilter` degrades to the board-derived reading. The prescribed fix was to make
     per-permanent layer-7 numbers computable ahead of L6. **That was the wrong fix.** Verified with
     the `rules` MCP: **CR 613.11** applies continuous effects that affect the rules of the game
-    rather than objects *after all other continuous effects*, and **CR 509.1b** defines an evasion
+    rather than objects *after all other continuous effects*, and **CR 509.1a** defines an evasion
     ability as "a static ability an attacking creature has". Tetsuko's wording grants the creatures
     no ability — it states a blocking restriction — so by rule its matching set is decided after the
     layer system, from fully layered P/T. There is no layer-6-reads-layer-7 circularity to engineer

@@ -85,7 +85,7 @@ class CombatBlockServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 509.1b: a lone \"can't block alone\" creature leaves no legal blockers")
+        @DisplayName("CR 509.1a: a lone \"can't block alone\" creature leaves no legal blockers")
         void loneCantBlockAloneCreatureIsNotOffered() {
             Permanent familiar = addCreatureReady(player2, new JackalFamiliar());
 
@@ -383,6 +383,38 @@ class CombatBlockServiceTest extends BaseCardTest {
 
             assertThat(hipparion.isBlocking()).isTrue();
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("CR 509.1e: the defender may tap lands for the cost while blockers are declared")
+        void defenderMayFloatManaDuringTheDeclaration() {
+            Permanent giant = attacking(player1, new HillGiant());
+            Permanent hipparion = addCreatureReady(player2, new Hipparion());
+            Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+            enterDeclareBlockers();
+
+            // Nobody holds priority during the declaration; the mana window is open anyway.
+            gs.tapPermanent(gd, player2, defenderIndex(forest));
+
+            assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(defenderIndex(hipparion), attackerIndex(giant)))))
+                    .doesNotThrowAnyException();
+            assertThat(hipparion.isBlocking()).isTrue();
+            assertThat(forest.isTapped()).isTrue();
+            assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("CR 509.1e: the mana window belongs to the defender, not the attacking player")
+        void attackingPlayerCannotFloatManaDuringTheDeclaration() {
+            attacking(player1, new HillGiant());
+            addCreatureReady(player2, new Hipparion());
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+            enterDeclareBlockers();
+
+            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, attackerIndex(forest)))
+                    .isInstanceOf(IllegalStateException.class);
+            assertThat(forest.isTapped()).isFalse();
         }
     }
 

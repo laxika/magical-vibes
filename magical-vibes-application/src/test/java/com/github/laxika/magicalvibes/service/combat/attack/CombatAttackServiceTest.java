@@ -99,7 +99,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 508.1b: a lone \"can't attack alone\" creature leaves no legal attackers")
+        @DisplayName("CR 508.1c: a lone \"can't attack alone\" creature leaves no legal attackers")
         void loneCantAttackAloneCreatureIsNotOffered() {
             Permanent familiar = addCreatureReady(player1, new JackalFamiliar());
 
@@ -285,7 +285,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 508.1b: a \"can't attack alone\" creature needs a companion in the declaration")
+        @DisplayName("CR 508.1c: a \"can't attack alone\" creature needs a companion in the declaration")
         void cantAttackAloneCreatureNeedsACompanion() {
             Permanent familiar = addCreatureReady(player1, new JackalFamiliar());
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
@@ -55,9 +56,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base class for all AI difficulty levels. Provides message dispatch,
@@ -559,7 +565,7 @@ public abstract class AiDecisionEngine {
      * Uses only mana sources that won't trigger interactive choices (e.g. skips
      * Birds of Paradise) to avoid corrupting the ATTACKER_DECLARATION interaction state.
      *
-     * <p>Also enforces CR 508.1b: if the final list is a single attacker with
+     * <p>Also enforces CR 508.1c: if the final list is a single attacker with
      * "can't attack alone" (Jackal Familiar, etc.), drops it. Adding another
      * attacker isn't safe once tax has been paid, so we just clear the list —
      * AIs that want to keep Jackal attacking should pair it before calling this.
@@ -634,7 +640,7 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * CR 508.1b: if the only remaining attacker has "can't attack alone",
+     * CR 508.1c: if the only remaining attacker has "can't attack alone",
      * return an empty list. Used as the final legality gate before declaration.
      */
     private List<Integer> dropLoneCantAttackAlone(GameData gameData, List<Integer> attackerIndices) {
@@ -646,19 +652,237 @@ public abstract class AiDecisionEngine {
             return attackerIndices;
         }
         Permanent sole = battlefield.get(attackerIndices.getFirst());
-        boolean cantAttackAlone = sole.getCard().getEffects(EffectSlot.STATIC).stream()
+        return hasCantAttackOrBlockAlone(sole) ? List.of() : attackerIndices;
+    }
+
+    /**
+     * Trims a blocker declaration to the blocks whose additional costs the defending player can
+     * actually pay, and floats the mana those costs need.
+     *
+     * <p>CR 509.1d locks in the total cost of every declared block, CR 509.1e then gives the
+     * defending player a window to activate mana abilities, and CR 509.1f requires the whole cost
+     * to be paid at once — so the engine validates the declaration as a unit and rejects all of it
+     * when the pool or life total falls short, costing the AI every block instead of the one it
+     * couldn't pay for. Paying is never mandatory (CR 509.1c), so giving up the unaffordable
+     * blocks is the legal way out: attackers are considered in order of damage prevented per mana
+     * spent, so the biggest threats keep their blockers.
+     */
+    protected List<BlockerAssignment> prepareBlockersForTax(GameData gameData,
+                                                            List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty()) {
+            return assignments;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null
+                || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
+            return assignments;
+        }
+        BlockTax tax = new BlockTax(gameData, defenderBattlefield, attackerBattlefield);
+        if (tax.mana(assignments) == 0 && tax.life(assignments) == 0) {
+            return assignments;
+        }
+
+        // Only the defending player can pay, so their own mana sources are tappable only when
+        // this AI holds that seat (Melee hands the declaration to the attacking player instead).
+        boolean canTapForTax = defenderId.equals(aiPlayer.getId());
+        int manaBudget = canTapForTax
+                ? manaManager.buildSafeVirtualManaPool(gameData, defenderId).getTotal()
+                : gameData.playerManaPools.get(defenderId).getTotal();
+        int lifeBudget = gameQueryService.canPlayerLifeChange(gameData, defenderId)
+                ? gameData.getLife(defenderId)
+                : 0;
+
+        List<BlockerAssignment> affordable = tax.affordableBlocks(assignments, manaBudget, lifeBudget);
+        int manaOwed = tax.mana(affordable);
+        if (canTapForTax && manaOwed > 0) {
+            manaManager.tapLandsForCost(gameData, defenderId, "{" + manaOwed + "}", 0,
+                    manaTapAction(), true);
+            // A mana source tapped for the cost may have been one of the blockers (Llanowar Elves),
+            // and a source can still refuse to tap — re-fit against what actually happened.
+            affordable = affordable.stream()
+                    .filter(a -> !defenderBattlefield.get(a.blockerIndex()).isTapped())
+                    .toList();
+            affordable = tax.affordableBlocks(affordable,
+                    gameData.playerManaPools.get(defenderId).getTotal(), lifeBudget);
+        }
+        if (affordable.size() != assignments.size()) {
+            log.info("AI: Dropping {} of {} blocks in game {} whose block cost can't be paid",
+                    assignments.size() - affordable.size(), assignments.size(), gameId);
+        }
+        return dropBlocksLeftUnderfilled(gameData, defenderBattlefield, attackerBattlefield, affordable);
+    }
+
+    private boolean indicesInRange(List<BlockerAssignment> assignments, List<Permanent> defenderBattlefield,
+                                   List<Permanent> attackerBattlefield) {
+        return assignments.stream().allMatch(a ->
+                a.blockerIndex() >= 0 && a.blockerIndex() < defenderBattlefield.size()
+                        && a.attackerIndex() >= 0 && a.attackerIndex() < attackerBattlefield.size());
+    }
+
+    /**
+     * Drops blocks left illegal after unaffordable ones were removed: an attacker whose remaining
+     * blockers no longer meet its minimum (menace), and a lone blocker that can't block alone
+     * (CR 509.1a — an unmet blocking restriction makes the whole declaration illegal).
+     */
+    private List<BlockerAssignment> dropBlocksLeftUnderfilled(GameData gameData, List<Permanent> defenderBattlefield,
+                                                             List<Permanent> attackerBattlefield,
+                                                             List<BlockerAssignment> assignments) {
+        Map<Integer, Long> blockersPerAttacker = assignments.stream()
+                .collect(Collectors.groupingBy(BlockerAssignment::attackerIndex, Collectors.counting()));
+        List<BlockerAssignment> kept = assignments.stream()
+                .filter(a -> blockersPerAttacker.get(a.attackerIndex()) >= AiUtils.minimumBlockersRequiredToBlock(
+                        gameData, gameQueryService, attackerBattlefield.get(a.attackerIndex())))
+                .toList();
+
+        Set<Integer> uniqueBlockers = kept.stream()
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toSet());
+        if (uniqueBlockers.size() == 1 && hasCantAttackOrBlockAlone(
+                defenderBattlefield.get(uniqueBlockers.iterator().next()))) {
+            return List.of();
+        }
+        return kept;
+    }
+
+    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
-        return cantAttackAlone ? List.of() : attackerIndices;
+    }
+
+    /**
+     * The additional cost of a set of declared blocks, computed the way
+     * {@code CombatBlockService.declareBlockers} computes it: mana summed per blocker-attacker
+     * pair, life charged once per blocker at its highest rate (CR 509.1d — one locked-in total).
+     */
+    private final class BlockTax {
+
+        private final GameData gameData;
+        private final List<Permanent> defenderBattlefield;
+        private final List<Permanent> attackerBattlefield;
+
+        private BlockTax(GameData gameData, List<Permanent> defenderBattlefield,
+                         List<Permanent> attackerBattlefield) {
+            this.gameData = gameData;
+            this.defenderBattlefield = defenderBattlefield;
+            this.attackerBattlefield = attackerBattlefield;
+        }
+
+        private int mana(List<BlockerAssignment> assignments) {
+            return assignments.stream().mapToInt(this::mana).sum();
+        }
+
+        private int mana(BlockerAssignment assignment) {
+            return gameQueryService.getBlockManaTax(gameData, blocker(assignment), attacker(assignment));
+        }
+
+        private int life(List<BlockerAssignment> assignments) {
+            return lifeByBlocker(assignments, new HashMap<>()).values().stream()
+                    .mapToInt(Integer::intValue)
+                    .sum();
+        }
+
+        private Map<UUID, Integer> lifeByBlocker(List<BlockerAssignment> assignments,
+                                                 Map<UUID, Integer> alreadyCharged) {
+            Map<UUID, Integer> charged = new HashMap<>(alreadyCharged);
+            for (BlockerAssignment assignment : assignments) {
+                int lifeTax = gameQueryService.getGlobalBlockLifeTax(
+                        gameData, blocker(assignment), attacker(assignment));
+                if (lifeTax > 0) {
+                    charged.merge(blocker(assignment).getId(), lifeTax, Math::max);
+                }
+            }
+            return charged;
+        }
+
+        /**
+         * The largest subset of {@code assignments} the budgets cover, decided one attacker at a
+         * time so no attacker is left blocked by fewer creatures than it may legally be blocked by.
+         * Blocks preventing the most damage per mana are considered first, free ones before all of
+         * them.
+         */
+        private List<BlockerAssignment> affordableBlocks(List<BlockerAssignment> assignments,
+                                                         int manaBudget, int lifeBudget) {
+            Map<Integer, List<BlockerAssignment>> byAttacker = assignments.stream()
+                    .collect(Collectors.groupingBy(BlockerAssignment::attackerIndex,
+                            LinkedHashMap::new, Collectors.toList()));
+            List<List<BlockerAssignment>> ranked = new ArrayList<>(byAttacker.values());
+            ranked.sort(Comparator.comparingDouble(group -> -damagePreventedPerMana(group)));
+
+            Set<BlockerAssignment> kept = new LinkedHashSet<>();
+            Map<UUID, Integer> lifeCharged = new HashMap<>();
+            int manaSpent = 0;
+            for (List<BlockerAssignment> group : ranked) {
+                List<BlockerAssignment> fitted = fitToBudget(
+                        group, manaBudget - manaSpent, lifeBudget, lifeCharged);
+                if (fitted.isEmpty()) {
+                    continue;
+                }
+                manaSpent += mana(fitted);
+                lifeCharged = lifeByBlocker(fitted, lifeCharged);
+                kept.addAll(fitted);
+            }
+            return assignments.stream().filter(kept::contains).toList();
+        }
+
+        /**
+         * The blockers of one attacker that still fit the remaining budgets, cheapest first.
+         * Empty when what fits is fewer than the attacker may legally be blocked by (menace), since
+         * an underfilled block is an illegal declaration rather than a cheaper one.
+         */
+        private List<BlockerAssignment> fitToBudget(List<BlockerAssignment> group, int manaLeft,
+                                                    int lifeBudget, Map<UUID, Integer> lifeCharged) {
+            List<BlockerAssignment> fitted = new ArrayList<>();
+            Map<UUID, Integer> life = lifeCharged;
+            int manaSpent = 0;
+            for (BlockerAssignment assignment : group.stream()
+                    .sorted(Comparator.comparingInt(this::mana))
+                    .toList()) {
+                int manaTax = mana(assignment);
+                Map<UUID, Integer> withAssignment = lifeByBlocker(List.of(assignment), life);
+                int lifeSpent = withAssignment.values().stream().mapToInt(Integer::intValue).sum();
+                if (manaSpent + manaTax > manaLeft || lifeSpent > lifeBudget) {
+                    continue;
+                }
+                manaSpent += manaTax;
+                life = withAssignment;
+                fitted.add(assignment);
+            }
+            int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
+                    gameData, gameQueryService, attacker(group.getFirst()));
+            return fitted.size() >= minimumBlockers ? fitted : List.of();
+        }
+
+        private double damagePreventedPerMana(List<BlockerAssignment> group) {
+            int damagePrevented = gameQueryService.getEffectivePower(gameData, attacker(group.getFirst()));
+            int manaTax = mana(group);
+            return manaTax == 0 ? Double.MAX_VALUE : (double) damagePrevented / manaTax;
+        }
+
+        private Permanent blocker(BlockerAssignment assignment) {
+            return defenderBattlefield.get(assignment.blockerIndex());
+        }
+
+        private Permanent attacker(BlockerAssignment assignment) {
+            return attackerBattlefield.get(assignment.attackerIndex());
+        }
     }
 
     /**
      * Sends a blocker declaration with automatic fallback to empty blockers
-     * if the original declaration fails server-side validation.
+     * if the original declaration fails server-side validation. Blocks the defending player
+     * can't pay the additional cost for are dropped, and their mana floated, before sending.
      */
     protected void sendBlockerDeclaration(DeclareBlockersRequest request) {
+        GameData gameData = gameRegistry.get(gameId);
+        DeclareBlockersRequest affordable = gameData == null
+                ? request
+                : new DeclareBlockersRequest(prepareBlockersForTax(gameData, request.blockerAssignments()));
+
         String rejection;
         try {
-            rejection = gameActions.handleDeclareBlockers(request);
+            rejection = gameActions.handleDeclareBlockers(affordable);
         } catch (Exception e) {
             log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
             sendEmptyBlockerFallback();
@@ -667,7 +891,7 @@ public abstract class AiDecisionEngine {
 
         // The engine validates the whole declaration and rejects it as a unit, so a rejection
         // leaves the game still awaiting blockers — fall back to empty so it doesn't get stuck.
-        if (rejection != null && !request.blockerAssignments().isEmpty()) {
+        if (rejection != null && !affordable.blockerAssignments().isEmpty()) {
             log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to no blockers.",
                     gameId, rejection);
             sendEmptyBlockerFallback();

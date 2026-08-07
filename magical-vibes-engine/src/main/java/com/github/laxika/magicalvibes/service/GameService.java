@@ -132,6 +132,25 @@ public class GameService {
     }
 
     /**
+     * Returns true if the game is currently in blocker declaration and the given player is the
+     * defending player. CR 509.1d locks in the total cost of the blocks being declared and
+     * CR 509.1e then gives that player a chance to activate mana abilities to pay it, so this
+     * window is open even though nobody holds priority during the declaration.
+     */
+    private boolean isBlockCostManaPayment(GameData gameData, Player player) {
+        return gameData.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration bd
+                && bd.defenderId().equals(player.getId());
+    }
+
+    /**
+     * Returns true if the player may activate mana abilities to pay a combat cost they are
+     * currently being charged — the attack tax (CR 508.1i) or a block cost (CR 509.1e).
+     */
+    private boolean isCombatCostManaPayment(GameData gameData, Player player) {
+        return isAttackTaxManaPayment(gameData, player) || isBlockCostManaPayment(gameData, player);
+    }
+
+    /**
      * Returns true if the given player is being asked to pay mana mid-resolution — a
      * "may pay" ability prompt or a pay-{X} amount prompt. Per CR 605.3a, mana abilities
      * may be activated whenever a rule or effect asks for a mana payment, even in the
@@ -685,7 +704,7 @@ public class GameService {
                 () -> tapPermanent(gameData, actionPlayer, permanentIndex, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
+            if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
             requireCanActivateAbilities(gameData, player);
@@ -698,8 +717,8 @@ public class GameService {
      * Undoes the player's still-revertable mana-ability activations (MTGO-style cancel while
      * paying for a spell): tapped sources untap and the mana they produced leaves the pool.
      * Allowed whenever the player could have activated the abilities in the first place —
-     * holding priority, paying attack tax during attacker declaration, or answering a
-     * "may pay" prompt.
+     * holding priority, paying a combat cost during attacker or blocker declaration, or
+     * answering a "may pay" prompt.
      */
     public void revertManaActivations(GameData gameData, Player player) {
         Player actionPlayer = player;
@@ -707,7 +726,7 @@ public class GameService {
                 () -> revertManaActivations(gameData, actionPlayer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
+            if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
             abilityActivationService.revertManaActivations(gameData, player);
@@ -777,6 +796,11 @@ public class GameService {
                 // CR 508.1i: only mana abilities allowed during attacker declaration
                 if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
                     throw new IllegalStateException("Only mana abilities can be activated during attacker declaration");
+                }
+            } else if (isBlockCostManaPayment(gameData, player)) {
+                // CR 509.1e: only mana abilities allowed during blocker declaration
+                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                    throw new IllegalStateException("Only mana abilities can be activated during blocker declaration");
                 }
             } else {
                 requirePriority(gameData, player);

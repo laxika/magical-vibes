@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
-import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockPairConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockParticipant;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -107,7 +106,7 @@ public class CombatBlockService {
                 indices.add(i);
             }
         }
-        // CR 509.1b: if only one creature can block and it has "can't block alone", remove it
+        // CR 509.1a: if only one creature can block and it has "can't block alone", remove it
         if (indices.size() == 1) {
             Permanent sole = battlefield.get(indices.getFirst());
             if (hasCantAttackOrBlockAlone(sole)) {
@@ -270,7 +269,7 @@ public class CombatBlockService {
                     .ifPresent(reason -> { throw new IllegalStateException(reason); });
 
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
-            blockTaxTotal += blockTaxFor(gameData, blocker, attacker);
+            blockTaxTotal += gameQueryService.getBlockManaTax(gameData, blocker, attacker);
 
             // Board-wide mana tax to block at all (Archangel of Tithes): once per unique blocker,
             // however many attackers it blocks.
@@ -326,7 +325,7 @@ public class CombatBlockService {
             }
         }
 
-        // CR 509.1b: validate "can't block alone" — if any declared blocker has this restriction,
+        // CR 509.1a: validate "can't block alone" — if any declared blocker has this restriction,
         // there must be at least 2 total blockers
         validateCantBlockAlone(defenderBattlefield, blockerAssignments);
 
@@ -1561,24 +1560,6 @@ public class CombatBlockService {
         }
     }
 
-    /**
-     * Additional generic mana the blocker's controller must pay to declare this block: every
-     * {@link BlockCostEffect} the blocker carries against the attacker's effective power (e.g. Hipparion —
-     * {1} to block a creature with power 3 or greater), plus any per-blocker tax the attacker itself
-     * imposes (e.g. Awesome Presence — {3} for each creature blocking the enchanted creature).
-     */
-    private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
-        int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
-        int tax = gameQueryService.getEnchantedCreatureBlockTax(gameData, attacker)
-                + gameQueryService.getEnchantedCreatureBlockerTax(gameData, blocker);
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockCostEffect blockCost) {
-                tax += blockCost.blockCost(attackerPower);
-            }
-        }
-        return tax;
-    }
-
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(CantAttackOrBlockAloneEffect.class::isInstance)
@@ -1587,7 +1568,7 @@ public class CombatBlockService {
     }
 
     /**
-     * Okk (CR 509.1b): a creature with "can't block unless a creature with greater power also
+     * Okk (CR 509.1a): a creature with "can't block unless a creature with greater power also
      * blocks" may only be declared as a blocker if another declared blocker has strictly greater
      * power. The comparison is checked only at declaration time.
      */
@@ -1617,7 +1598,7 @@ public class CombatBlockService {
     }
 
     /**
-     * Orcish Conscripts (CR 509.1b): a creature with "can't block unless at least N other creatures
+     * Orcish Conscripts (CR 509.1a): a creature with "can't block unless at least N other creatures
      * also block" may only be declared as a blocker if at least N other creatures are declared as
      * blockers in the same combat. Checked only at declaration time.
      */

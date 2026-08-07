@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
@@ -823,7 +822,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
-        // CR 508.1b: if only one attacker selected and it can't attack alone, try to
+        // CR 508.1c: if only one attacker selected and it can't attack alone, try to
         // pair it with another available attacker before tax prep. prepareAttackersForTax
         // applies a final safety net if it can't.
         if (attackerIndices.size() == 1) {
@@ -926,10 +925,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         List<BlockerAssignment> assignments = new ArrayList<>();
         boolean[] blockerUsed = new boolean[battlefield.size()];
-        // Block taxes (Hipparion) are paid out of whatever is already floating — the AI never taps
-        // lands to block, and CR 509.1c never requires paying — so every declared block has to fit
-        // in the remaining pool.
+        // Block taxes (Hipparion) are budgeted against what is already floating: the fuzzer picks
+        // blockers at random rather than around a payment plan, and CR 509.1c never requires
+        // paying. Anything short of that is still caught by the shared affordability pass, which
+        // floats mana for what it keeps.
         int blockTaxBudget = gameData.playerManaPools.get(aiPlayer.getId()).getTotal();
+        // Board-wide block life costs (Heat Wave) come out of the AI's life total, and can't be
+        // paid at all while its life total is locked.
+        int blockLifeTaxBudget = gameQueryService.canPlayerLifeChange(gameData, aiPlayer.getId())
+                ? gameData.getLife(aiPlayer.getId())
+                : 0;
         int teamMaxBlockers = teamMaxBlockersPerAttacker(opponentBattlefield);
 
         for (int attackerIdx : sortedAttackers) {
@@ -948,8 +953,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 if (blockerUsed[blockerIdx]) continue;
                 Permanent blocker = battlefield.get(blockerIdx);
                 if (!canBlock(gameData, blocker, attacker)) continue;
-                // CR 509.1b: an unpaid block cost is a disobeyed restriction, not a free choice.
+                // CR 509.1f: the whole block cost is paid at once, and CR 509.1c never requires
+                // paying it — so a block we can't cover simply isn't declared.
                 if (blockTaxFor(gameData, blocker, attacker) > blockTaxBudget) continue;
+                if (blockLifeTaxFor(gameData, blocker, attacker) > blockLifeTaxBudget) continue;
                 candidates.add(blockerIdx);
             }
             if (candidates.isEmpty()) continue;
@@ -999,11 +1006,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 chosen = chosen.subList(0, maximumBlockers);
             }
             int chosenTax = 0;
+            int chosenLifeTax = 0;
             for (int blockerIdx : chosen) {
-                chosenTax += blockTaxFor(gameData, battlefield.get(blockerIdx), attacker);
+                Permanent blocker = battlefield.get(blockerIdx);
+                chosenTax += blockTaxFor(gameData, blocker, attacker);
+                chosenLifeTax += blockLifeTaxFor(gameData, blocker, attacker);
             }
             if (chosenTax > blockTaxBudget) continue;
+            if (chosenLifeTax > blockLifeTaxBudget) continue;
             blockTaxBudget -= chosenTax;
+            blockLifeTaxBudget -= chosenLifeTax;
 
             for (int blockerIdx : chosen) {
                 assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
@@ -1013,7 +1025,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         removeBlockersWithUnmetPartnerRequirement(gameData, battlefield, opponentBattlefield, assignments);
 
-        // CR 509.1b: if only one unique blocker and it can't block alone, remove it.
+        // CR 509.1a: if only one unique blocker and it can't block alone, remove it.
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
         for (BlockerAssignment a : assignments) {
             uniqueBlockerIndices.add(a.blockerIndex());
@@ -1076,7 +1088,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * CR 509.1b: whether a declared blocker's own "can't block unless …" partner restriction is
+     * CR 509.1a: whether a declared blocker's own "can't block unless …" partner restriction is
      * disobeyed by the rest of the declaration — Okk needs a co-blocker with strictly greater
      * power, Orcish Conscripts needs a minimum number of other creatures blocking. Both are
      * checked only at declaration time, against the blockers declared alongside it.
@@ -1135,18 +1147,22 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Generic mana the AI would owe to declare this blocker against this attacker (Hipparion —
-     * {1} to block power 3 or greater), summed over every {@link BlockCostEffect} it carries.
+     * Generic mana the AI would owe to declare this blocker against this attacker — Hipparion's
+     * {1} to block power 3 or greater, plus the Aura taxes on either creature (Awesome Presence,
+     * Oppressive Rays). Delegates to the engine so the AI's affordability check and the engine's
+     * validation are computed from the same rule.
      */
     private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
-        int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
-        int tax = 0;
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockCostEffect blockCost) {
-                tax += blockCost.blockCost(attackerPower);
-            }
-        }
-        return tax;
+        return gameQueryService.getBlockManaTax(gameData, blocker, attacker);
+    }
+
+    /**
+     * Life the AI would owe to declare this blocker against this attacker under a board-wide
+     * block life cost (Heat Wave). Zero when the AI's life total can't change, since the engine
+     * rejects a block whose life cost can't be paid.
+     */
+    private int blockLifeTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
+        return gameQueryService.getGlobalBlockLifeTax(gameData, blocker, attacker);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -78,6 +79,33 @@ class RandomAiDecisionEngineTest {
         declareBlockersAsRandomAi(harness);
 
         assertThat(hipparion.isBlocking()).isTrue();
+        assertThat(gameData.playerManaPools.get(harness.getPlayer2().getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void doesNotBlockAttackerTaxedByAnAuraItCannotPayFor() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent blocker = blockScenario(harness, new HillGiant(), new GrizzlyBears());
+        enchantAttackerWithAwesomePresence(harness);
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void blocksAttackerTaxedByAnAuraWhenTheBlockCostIsPaid() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent blocker = blockScenario(harness, new HillGiant(), new GrizzlyBears());
+        enchantAttackerWithAwesomePresence(harness);
+        harness.addMana(harness.getPlayer2(), ManaColor.GREEN, 3);
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(blocker.isBlocking()).isTrue();
         assertThat(gameData.playerManaPools.get(harness.getPlayer2().getId()).getTotal()).isZero();
     }
 
@@ -248,6 +276,19 @@ class RandomAiDecisionEngineTest {
         Permanent blocker = harness.addToBattlefieldAndReturn(harness.getPlayer2(), blockerCard);
         blocker.setSummoningSick(false);
         return blocker;
+    }
+
+    /**
+     * Attaches an Awesome Presence controlled by the attacking player to the sole attacker, so
+     * every blocker declared against it costs the AI an extra {3}.
+     */
+    private void enchantAttackerWithAwesomePresence(GameTestHarness harness) {
+        Permanent attacker = harness.getGameData().playerBattlefields.get(harness.getPlayer1().getId()).stream()
+                .filter(Permanent::isAttacking)
+                .findFirst()
+                .orElseThrow();
+        Permanent aura = harness.addToBattlefieldAndReturn(harness.getPlayer1(), new AwesomePresence());
+        aura.setAttachedTo(attacker.getId());
     }
 
     /**

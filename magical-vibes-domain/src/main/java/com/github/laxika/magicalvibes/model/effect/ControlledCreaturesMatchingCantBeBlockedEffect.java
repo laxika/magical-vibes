@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>This is a continuous effect that <strong>modifies the rules of the game</strong> (CR 613.11),
  * not one that modifies an object's characteristics: the wording grants the creatures no ability
  * (contrast "creatures you control gain 'this creature can't be blocked'"), it states a blocking
- * restriction, which CR 509.1b checks when blockers are declared. CR 613.11 applies such effects
+ * restriction, which CR 509.1a checks when blockers are declared. CR 613.11 applies such effects
  * <em>after all other continuous effects</em>, so the matching set is decided from fully layered
  * power and toughness — an anthem lifting a 1/1 to 2/2 takes the evasion away, and an opponent's
  * Cumber Stone dropping a 2/2 to 1/2 confers it. That is why this is its own effect type rather

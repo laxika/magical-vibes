@@ -124,7 +124,7 @@ public class CombatAttackService {
                 indices.add(i);
             }
         }
-        // CR 508.1b: if only one creature can attack and it has "can't attack alone", remove it
+        // CR 508.1c: if only one creature can attack and it has "can't attack alone", remove it
         if (indices.size() == 1) {
             Permanent sole = battlefield.get(indices.getFirst());
             if (hasCantAttackOrBlockAlone(sole)) {
@@ -215,7 +215,7 @@ public class CombatAttackService {
             }
         }
 
-        // CR 508.1b: validate "can't attack alone" — if any declared attacker has this restriction,
+        // CR 508.1c: validate "can't attack alone" — if any declared attacker has this restriction,
         // there must be at least 2 total attackers
         validateCantAttackAlone(battlefield, attackerIndices);
 

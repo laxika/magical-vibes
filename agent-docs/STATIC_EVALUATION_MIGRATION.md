@@ -315,7 +315,7 @@ Verified against the CR effective June 19, 2026 via the `rules` MCP:
 | Rule | Content |
 |---|---|
 | 613.11 | Continuous effects that affect the rules of the game rather than objects are applied **after all other continuous effects** |
-| 509.1b | Blocking restrictions are checked at declare blockers; an evasion ability is "a static ability **an attacking creature has**" |
+| 509.1a | Blocking restrictions are checked at declare blockers; an evasion ability is "a static ability **an attacking creature has**" |
 
 Tetsuko reads "Creatures you control with power or toughness 1 or less **can't be blocked**" — it
 states a blocking restriction and grants the creatures no ability (contrast "…gain 'this creature
