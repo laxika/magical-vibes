@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NivixBarrierTest extends BaseCardTest {
 
@@ -66,7 +67,8 @@ class NivixBarrierTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Nivix Barrier");
         assertThat(attacker.getPowerModifier()).isEqualTo(-4);
         assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(0);
+        // A 3/3 given -4/-0 is a -1/3 creature; power is not floored at 0 (CR 107.1b).
+        assertThat(attacker.getEffectivePower()).isEqualTo(-1);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
     }
 
@@ -87,6 +89,10 @@ class NivixBarrierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(-4);
+
+        // Nivix Barrier is a legal blocker, so combat stops for blocker declaration; the pending
+        // interaction has to be answered or passing priority below is a no-op and cleanup never runs.
+        gs.declareBlockers(gd, player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -109,7 +115,9 @@ class NivixBarrierTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
 
-        gs.playCard(gd, player2, 0, 0, bearsId, null);
+        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, bearsId, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an attacking creature");
 
         assertThat(gd.stack).isEmpty();
     }

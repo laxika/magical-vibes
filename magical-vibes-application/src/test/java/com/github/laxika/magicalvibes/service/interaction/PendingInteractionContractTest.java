@@ -58,7 +58,8 @@ class PendingInteractionContractTest {
             PendingKnowledgePoolCast.class,
             PendingPileSeparation.class,
             PendingEachPlayerLibraryExile.class,
-            PendingGuildFeud.class);
+            PendingGuildFeud.class,
+            PendingInteraction.RevealedFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,

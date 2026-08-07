@@ -34,6 +34,12 @@ class ThornbowArcherTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
+        // The Elves is a possible blocker, so combat waits for a blocker declaration instead of
+        // auto-passing to damage the way the no-blocker tests above do.
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
         // Only combat damage; the trigger skips the Elf controller.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }

@@ -100,7 +100,12 @@ class ValeronWardensTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
-        resolveCombat();
+        // player2 is the attacker here, and player1's Wardens is a possible blocker, so the combat
+        // needs an explicit "no blocks" for the Freeblade to connect. Do not pass priority again
+        // afterwards: combat damage is already done, and another pass would roll into player1's
+        // turn and draw them a card, masking the very draw this test is asserting the absence of.
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
         resolveAllTriggers();
 
         assertThat(freeblade.isRenowned()).isTrue();

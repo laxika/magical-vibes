@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FoundryOfTheConsulsTest extends BaseCardTest {
 
@@ -29,7 +30,7 @@ class FoundryOfTheConsulsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FoundryOfTheConsuls());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Foundry of the Consuls");
@@ -52,8 +53,9 @@ class FoundryOfTheConsulsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FoundryOfTheConsuls());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
 
         harness.assertOnBattlefield(player1, "Foundry of the Consuls");
         assertThat(gd.playerBattlefields.get(player1.getId()))
