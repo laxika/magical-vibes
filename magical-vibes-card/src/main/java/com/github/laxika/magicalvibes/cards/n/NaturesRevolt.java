@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "260")
+@CardRegistration(set = "TMP", collectorNumber = "240")
 public class NaturesRevolt extends Card {
 
     public NaturesRevolt() {

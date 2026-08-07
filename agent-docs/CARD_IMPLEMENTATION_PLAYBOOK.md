@@ -486,6 +486,7 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
 3. **Transform trigger** — Choose the right pattern:
    - Werewolf: `EACH_UPKEEP_TRIGGERED` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
    - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`
+   - Every player's life: `ConditionalEffect(new EachPlayerLifeAtMost(N), TransformSelfEffect())` on `UPKEEP_TRIGGERED` (Cryptolith Fragment)
    - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
    - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
@@ -526,7 +527,9 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 |---|---|---|---|
 | `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new EachPlayerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) | "if each player has N or less life" (Cryptolith Fragment, 10) |
 | `ConditionalEffect(new GainedLifeThisTurn(), wrapped)` | yes | yes | yes (end step) |
+| `ConditionalEffect(new ControllerDealtDamageThisTurn(minimum), wrapped)` | - | yes | yes (end step) | "if you were dealt N or more damage this turn" (Boarded Window, 4) — reads `GameData.damageDealtToPlayersThisTurn` for the controller, any source |
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CreatureDiedUnderYourControlThisTurn(), wrapped)` | - | yes | yes (end step) |

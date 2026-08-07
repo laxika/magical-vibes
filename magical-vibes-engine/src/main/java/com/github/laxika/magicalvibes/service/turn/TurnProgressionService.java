@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
@@ -317,6 +318,7 @@ public class TurnProgressionService {
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
+        gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -373,7 +375,7 @@ public class TurnProgressionService {
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
-        gameData.creatureCreatingTokenOnDeathThisTurn.clear();
+        gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatPhasesOnly = 0;
         gameData.combatPhasesThisTurn = 0;
@@ -416,6 +418,10 @@ public class TurnProgressionService {
                 boost -> boost.controllerId().equals(nextActive));
         gameData.clearDelayedActions(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class,
                 trigger -> trigger.controllerId().equals(nextActive));
+        // Tamiyo, Field Researcher +1: the "whenever either of those creatures deals combat damage"
+        // watch lasts until its controller's next turn, so it expires here too.
+        gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
+                watch -> watch.controllerId().equals(nextActive));
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

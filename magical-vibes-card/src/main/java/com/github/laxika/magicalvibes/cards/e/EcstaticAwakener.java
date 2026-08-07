@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "107")
+@CardRegistration(set = "INR", collectorNumber = "462")
 public class EcstaticAwakener extends Card {
 
     public EcstaticAwakener() {

@@ -120,6 +120,22 @@ public sealed interface ChoiceContext {
                                                 Card sourceCard) implements ChoiceContext {}
 
     /**
+     * First half of Mindblaze: the controller picks a card name. The answer chains into
+     * {@link RevealLibraryNumberGuessChoice}, which asks for the number.
+     */
+    record RevealLibraryNameGuessChoice(UUID targetPlayerId, UUID controllerId,
+                                        List<CardType> excludedTypes, int damage,
+                                        Card sourceCard) implements ChoiceContext {}
+
+    /**
+     * Second half of Mindblaze: the controller picks a number greater than 0 for the already
+     * chosen {@code chosenName}. On the answer {@code targetPlayerId} reveals their library, takes
+     * {@code damage} damage if it holds exactly that many cards with that name, and shuffles.
+     */
+    record RevealLibraryNumberGuessChoice(UUID targetPlayerId, UUID controllerId, String chosenName,
+                                          int damage, Card sourceCard) implements ChoiceContext {}
+
+    /**
      * A single protection choice that applies to every permanent in {@code targetIds} — one pick
      * covering all of a spell's targets ("X target creatures gain protection from the chosen
      * color", Prismatic Boon), which for most cards is a one-element list.
@@ -198,6 +214,15 @@ public sealed interface ChoiceContext {
     record TetravusCounterRemoval(UUID permanentId,
                                   com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate)
             implements ChoiceContext {}
+
+    /**
+     * "Move any number of {@code counterType} counters from target creature onto another target
+     * creature" (Bioshift): the spell's controller chooses how many (0..the count on
+     * {@code fromPermanentId}); on the answer that many counters are moved onto
+     * {@code toPermanentId}.
+     */
+    record MoveCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId, CounterType counterType,
+                                    String sourceCardName) implements ChoiceContext {}
 
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
@@ -315,6 +340,14 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
+     * Wood Sage: the controller names a creature card, then reveals the top {@code count} cards of
+     * their library, putting every revealed card with that name into their hand and the rest into
+     * their graveyard.
+     */
+    record ChooseCreatureNameRevealTopCardsChoice(UUID controllerId, Card sourceCard, int count)
+            implements ChoiceContext {}
+
+    /**
      * Comply: the controller names a card; until their next turn, their opponents can't cast spells
      * with that name. Stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
      */
@@ -328,6 +361,14 @@ public sealed interface ChoiceContext {
      */
     record TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
                                                int damageOnMiss) implements ChoiceContext {}
+
+    /**
+     * Cursed Scroll: the controller names a card, then reveals a card at random from their own hand.
+     * If the revealed card has that name, {@code sourceCard} deals {@code damage} damage to
+     * {@code targetId} (the any-target chosen when the ability was activated).
+     */
+    record ChooseNameRevealRandomHandCardDamageChoice(UUID controllerId, UUID targetId, UUID sourcePermanentId,
+                                                     Card sourceCard, int damage) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

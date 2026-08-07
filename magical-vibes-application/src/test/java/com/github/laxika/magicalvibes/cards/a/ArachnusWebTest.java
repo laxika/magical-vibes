@@ -74,6 +74,8 @@ class ArachnusWebTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Arachnus Web");
         harness.assertInGraveyard(player1, "Arachnus Web");
+        // "Destroy this Aura" means the Aura, never the permanent it is attached to.
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test

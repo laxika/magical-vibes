@@ -59,6 +59,10 @@ class BriberyTest extends BaseCardTest {
         // It left the opponent's library and did not go under their control.
         assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // Bribery reaches the battlefield and nothing else — not exile, not either graveyard.
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 

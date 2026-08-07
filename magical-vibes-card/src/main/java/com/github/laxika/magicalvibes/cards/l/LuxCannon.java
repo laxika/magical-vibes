@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class LuxCannon extends Card {
                 true,
                 null,
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(3),
+                        new RemoveCounterFromSourceCost(3, CounterType.CHARGE),
                         new DestroyTargetPermanentEffect()
                 ),
                 "{T}, Remove three charge counters from Lux Cannon: Destroy target permanent."

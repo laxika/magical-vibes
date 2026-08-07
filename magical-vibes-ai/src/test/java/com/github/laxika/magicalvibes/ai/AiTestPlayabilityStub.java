@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -125,8 +126,9 @@ final class AiTestPlayabilityStub {
      * Board-driven mirror of {@code CastingCostService.canPayAdditionalSpellCosts} for the
      * mock-wired suites: reads the card's SPELL-slot cost effects against the player's
      * battlefield/graveyard using the permanents' own card types (which these tests set directly,
-     * matching their {@code gameQueryService.isCreature/isArtifact} stubs). Permanent-predicate
-     * sacrifice costs aren't exercised by the mock suites and are treated as satisfiable.
+     * matching their {@code gameQueryService.isCreature/isArtifact} stubs). Of the permanent-predicate
+     * sacrifice costs only the artifact filter is exercised by the mock suites; the rest are treated
+     * as satisfiable.
      */
     private static boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
@@ -142,8 +144,9 @@ final class AiTestPlayabilityStub {
                 case DiscardCardOrPayManaCost ignored -> {
                     // Mana option always keeps this cost satisfiable for stub suites.
                 }
-                case SacrificeArtifactCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT))) return false;
+                case SacrificePermanentCost cost -> {
+                    if (cost.filter() instanceof PermanentIsArtifactPredicate
+                            && battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT))) return false;
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
                     long matchingCount = graveyard.stream()

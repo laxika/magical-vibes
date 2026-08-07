@@ -104,6 +104,6 @@ class PiaAndKiranNalaarTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No artifact to sacrifice");
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
     }
 }

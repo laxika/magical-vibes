@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
+import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class IvoryGargoyle extends Card {
     public IvoryGargoyle() {
         // Flying is auto-loaded from Scryfall keywords.
         addEffect(EffectSlot.ON_DEATH, new RegisterDelayedSelfReturnFromGraveyardEffect());
-        addEffect(EffectSlot.ON_DEATH, new SkipNextDrawStepEffect());
+        addEffect(EffectSlot.ON_DEATH, new SkipNextEffect(SkipKind.DRAW_STEP));
 
         addActivatedAbility(new ActivatedAbility(false, "{4}{W}",
                 List.of(new ExileSelfEffect()),

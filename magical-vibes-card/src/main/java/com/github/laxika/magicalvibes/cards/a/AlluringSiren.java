@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class AlluringSiren extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MustAttackThisTurnEffect(true)),
+                List.of(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK_EFFECT_CONTROLLER)),
                 "{T}: Target creature an opponent controls attacks you this turn if able.",
                 TargetFilters.creatureAnOpponentControls()
         ));

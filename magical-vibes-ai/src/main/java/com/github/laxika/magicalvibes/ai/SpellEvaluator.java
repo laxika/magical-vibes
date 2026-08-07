@@ -415,7 +415,10 @@ public class SpellEvaluator {
     }
 
     private boolean isLifeGainEffect(CardEffect effect) {
-        if (effect instanceof LifeGainEffect) return true;
+        // A capability that reports Fixed(0) states a fact: this configuration gains no life. Reveal
+        // effects carry the capability for the sake of their optional land rider, so a presence-only
+        // check must read the amount or it would score every reveal as a lifegain spell.
+        if (effect instanceof LifeGainEffect gain) return !gain.gainsNoLife();
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream().anyMatch(o -> isLifeGainEffect(o.effect()));
         }

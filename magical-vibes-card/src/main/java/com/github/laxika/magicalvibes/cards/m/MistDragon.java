@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class MistDragon extends Card {
                 List.of(new SetSelfKeywordIndefinitelyEffect(Keyword.FLYING, false)),
                 "{0}: This creature loses flying."));
         addActivatedAbility(new ActivatedAbility(false, "{3}{U}{U}",
-                List.of(new PhaseOutSelfEffect()),
+                List.of(new PhaseOutEffect(PhaseOutSubject.SOURCE)),
                 "{3}{U}{U}: This creature phases out."));
     }
 }

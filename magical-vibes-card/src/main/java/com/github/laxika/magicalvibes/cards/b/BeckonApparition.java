@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "82")
+@CardRegistration(set = "GTC", collectorNumber = "212")
 public class BeckonApparition extends Card {
 
     public BeckonApparition() {

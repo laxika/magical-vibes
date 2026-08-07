@@ -28,6 +28,7 @@ import java.util.Set;
  * invitation counters on it, transform it.
  */
 @CardRegistration(set = "INR", collectorNumber = "51")
+@CardRegistration(set = "INR", collectorNumber = "453")
 public class WeddingAnnouncement extends Card {
 
     public WeddingAnnouncement() {

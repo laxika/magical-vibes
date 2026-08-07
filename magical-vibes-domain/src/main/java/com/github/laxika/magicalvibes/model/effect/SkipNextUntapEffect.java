@@ -30,6 +30,11 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     }
 
     @Override
+    public boolean referencesCombatOpponent() {
+        return scope == TapUntapScope.TARGET;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         if (scope == TapUntapScope.TARGET) {
             return TargetSpec.benign(TargetPredicates.permanent());

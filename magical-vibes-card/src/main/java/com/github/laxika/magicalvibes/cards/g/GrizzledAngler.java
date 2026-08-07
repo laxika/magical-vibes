@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "67")
+@CardRegistration(set = "INR", collectorNumber = "458")
 public class GrizzledAngler extends Card {
 
     public GrizzledAngler() {

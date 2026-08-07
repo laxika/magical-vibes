@@ -104,6 +104,19 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("Red ability can target its own controller — it says target player, not target opponent")
+    void redAbilityCanTargetItsOwnController() {
+        harness.setLife(player1, 20);
+        addReadyObelisk(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 3, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
     // ===== {1}{G}: Target creature gets +4/+4 =====
 
     @Test

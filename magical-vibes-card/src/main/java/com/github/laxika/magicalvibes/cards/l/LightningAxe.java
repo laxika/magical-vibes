@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 
 @CardRegistration(set = "INR", collectorNumber = "162")
+@CardRegistration(set = "INR", collectorNumber = "398")
 public class LightningAxe extends Card {
 
     public LightningAxe() {

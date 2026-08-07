@@ -13,15 +13,12 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorCreatureSpellManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.context.annotation.Lazy;
@@ -144,8 +141,10 @@ public class PotentialManaService {
                             if (isCreature) {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
-                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            addAnyColorManaToVirtualPool(virtual, aace.amount(), isCreature);
+                        } else if (effect instanceof AwardAnyColorManaEffect anyColor
+                                && anyColor.restriction() == ManaSpendRestriction.NONE) {
+                            // A spend restriction keeps the mana out of the ordinary pool a cost draws from.
+                            addAnyColorManaToVirtualPool(virtual, estimateManaAmount(anyColor.amount(), perm, gameData), isCreature);
                         }
                     }
                 } else {
@@ -213,8 +212,9 @@ public class PotentialManaService {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
-                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                            addAnyColorManaToVirtualPool(virtual, aace.amount(), false);
+                        } else if (effect instanceof AwardAnyColorManaEffect anyColor
+                                && anyColor.restriction() == ManaSpendRestriction.NONE) {
+                            addAnyColorManaToVirtualPool(virtual, estimateManaAmount(anyColor.amount(), perm, gameData), false);
                         }
                     }
                 } else {
@@ -535,11 +535,7 @@ public class PotentialManaService {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardAnyColorManaEffect
-                        || effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect
-                        || effect instanceof AwardAnyColorCreatureSpellManaEffect
-                        || effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect
-                        || effect instanceof AwardFlashbackOnlyAnyColorManaEffect) {
+                if (effect instanceof AwardAnyColorManaEffect) {
                     return true;
                 }
             }
@@ -646,7 +642,6 @@ public class PotentialManaService {
      */
     public static boolean hasOnTapManaEffects(Card card) {
         return card.getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
-                        || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
+                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
     }
 }

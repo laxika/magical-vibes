@@ -40,6 +40,27 @@ class WoeleecherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The counter comes off the target, not off Woeleecher itself")
+    void counterComesOffTheTargetNotTheSource() {
+        Permanent woeleecher = harness.addToBattlefieldAndReturn(player1, new Woeleecher());
+        woeleecher.setSummoningSick(false);
+        // Woeleecher is the ability's source permanent, so a source/target mix-up is observable:
+        // it carries its own -1/-1 counter (3/5 → 2/4, survives).
+        woeleecher.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        Permanent giant = findPermanent(player1, "Hill Giant");
+        giant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(woeleecher.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("No life gained when the target has no -1/-1 counter")
     void noLifeWhenNoCounter() {
         addReadyWoeleecher(player1);

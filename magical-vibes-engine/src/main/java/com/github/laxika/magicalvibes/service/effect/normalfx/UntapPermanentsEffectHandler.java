@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -140,6 +144,11 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
 
+        if (e.chosenCount() > 0) {
+            resolveChosenControlled(gameData, entry, e, controllerId, battlefield);
+            return;
+        }
+
         int count = 0;
         for (Permanent p : battlefield) {
             if (e.filter() != null
@@ -152,6 +161,32 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count + " permanent(s) you control."));
         log.info("Game {} - {} untaps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    /**
+     * "Untap up to N permanents you control" (Rewind, Unwind). The controller chooses which tapped
+     * permanents to untap at resolution; picking none is legal. Untapping the first N in battlefield
+     * order would deny that choice.
+     */
+    private void resolveChosenControlled(GameData gameData, StackEntry entry, UntapPermanentsEffect e,
+                                         UUID controllerId, List<Permanent> battlefield) {
+        List<UUID> validIds = new ArrayList<>();
+        for (Permanent p : battlefield) {
+            if (!p.isTapped()) continue;
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
+
+            validIds.add(p.getId());
+        }
+        if (validIds.isEmpty()) {
+            return;
+        }
+
+        int maxCount = Math.min(e.chosenCount(), validIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, maxCount,
+                new MultiPermanentChoiceContext.UntapChosenPermanents(entry.getCard().getName()),
+                entry.getCard().getName() + " — Choose up to " + maxCount + " permanent"
+                        + (maxCount == 1 ? "" : "s") + " to untap.");
     }
 
     private void resolveOtherControlledCreatures(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {

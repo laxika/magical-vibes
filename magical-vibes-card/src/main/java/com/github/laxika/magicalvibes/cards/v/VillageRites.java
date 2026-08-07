@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "INR", collectorNumber = "137")
+@CardRegistration(set = "INR", collectorNumber = "392")
 public class VillageRites extends Card {
 
     public VillageRites() {

@@ -251,6 +251,13 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Sacrifice the chosen permanents, then add one mana of {@code color} to the controller's pool
+     * for each one actually sacrificed (Mana Seism).
+     */
+    record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * "Sacrifice [source] unless you sacrifice any number of creatures with total power
      * {@code requiredPower} or greater" (Phyrexian Dreadnought). The chosen creatures are
      * sacrificed only when their total effective power reaches {@code requiredPower}; an empty
@@ -278,6 +285,33 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
                            UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Dracoplasm: the entering creature's controller chose which of their other creatures to
+     * sacrifice as it enters (CR 614.1c). The chosen creatures are sacrificed, the entering
+     * permanent's base power and toughness are set to their total power and total toughness, then
+     * the creature's ETB triggers proceed. Carries the entry context needed to resume
+     * {@code processCreatureETBEffects}.
+     */
+    record SacrificeCreaturesSetEnteringPowerToughness(UUID enteringPermanentId, UUID controllerId, Card card,
+                                                       UUID targetId, boolean wasCastFromHand, int etbMode,
+                                                       boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * "As this permanent enters, sacrifice any number of permanents. It enters with that many +1/+1
+     * counters on it" (Shimatsu the Bloodcloaked): the entering permanent's controller chose which of
+     * their permanents to sacrifice as it enters. The chosen permanents are sacrificed, the entering
+     * permanent receives {@code countersPerPermanent} times that many +1/+1 counters, then its ETB
+     * triggers proceed. Carries the entry context needed to resume
+     * {@code processCreatureETBEffects}.
+     */
+    record SacrificeAsEntersForCounters(UUID enteringPermanentId, int countersPerPermanent,
+                                        UUID controllerId, Card card, UUID targetId,
+                                        boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }
 

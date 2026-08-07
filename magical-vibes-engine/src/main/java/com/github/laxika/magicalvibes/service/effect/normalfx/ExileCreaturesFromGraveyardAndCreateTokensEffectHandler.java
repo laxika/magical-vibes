@@ -79,7 +79,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             for (Card exiledCard : exiledCards) {
                 graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, exiledCard, addedSubtypes,
                         false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride(),
-                        false, false, copyBatch);
+                        false, false, copyBatch, Set.of());
             }
             return;
         }

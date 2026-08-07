@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.HighestOpponentLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
@@ -206,6 +207,8 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case HighestLifeTotalAmongPlayers ignored ->
+                    gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
             case HighestOpponentLifeTotal ignored ->
                     highestOpponentLifeTotal(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->

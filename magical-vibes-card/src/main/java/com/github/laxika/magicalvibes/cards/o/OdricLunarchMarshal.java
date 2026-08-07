@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "36")
+@CardRegistration(set = "INR", collectorNumber = "298")
 public class OdricLunarchMarshal extends Card {
 
     private static final List<Keyword> SHARED_KEYWORDS = List.of(

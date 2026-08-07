@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "7")
+@CardRegistration(set = "INR", collectorNumber = "332")
 public class WretchedGryff extends Card {
 
     public WretchedGryff() {

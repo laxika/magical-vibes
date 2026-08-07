@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -25,8 +26,14 @@ public class DamageTargetValidators {
 
     private final TargetValidationService tvs;
 
-    @ValidatesTarget(DealDamageToTargetOpponentOrPlaneswalkerEffect.class)
-    public void validateDealDamageToTargetOpponentOrPlaneswalker(TargetValidationContext ctx) {
+    @ValidatesTarget(DealDamageToTargetPlayerOrPlaneswalkerEffect.class)
+    public void validateDealDamageToTargetPlayerOrPlaneswalker(TargetValidationContext ctx,
+                                                               DealDamageToTargetPlayerOrPlaneswalkerEffect effect) {
+        // Only the "target opponent" wording needs the escape hatch. The plain "target player"
+        // wording is fully covered by the declarative spec, which runs before every validator.
+        if (effect.playerRelation() != PlayerRelation.OPPONENT) {
+            return;
+        }
         tvs.requireTarget(ctx);
         if (ctx.gameData().playerIds.contains(ctx.targetId())) {
             // Player target — must be an opponent (not the controller)

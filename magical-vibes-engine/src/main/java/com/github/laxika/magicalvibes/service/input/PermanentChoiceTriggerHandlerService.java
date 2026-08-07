@@ -655,6 +655,7 @@ public class PermanentChoiceTriggerHandlerService {
                     ett.sourcePermanentId()
             );
             entry.setTargetId(permanentId);
+            entry.setTriggeringPermanentId(ett.enteringPermanentId());
             gameData.stack.add(entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);
@@ -1240,6 +1241,11 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
             etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
+            turnProgressionService.processNextBeginningOfCombatTriggerTarget(gameData);
             return;
         }
 

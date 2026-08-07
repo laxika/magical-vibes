@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -60,6 +61,23 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A spend-restricted any-color opponent land still counts as a source of every color")
+    void spendRestrictedOpponentLandContributesEveryColor() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        // CR 106.7: what a land "could produce" is about the mana's type, and CR 106.6 says a spend
+        // restriction doesn't affect the type — so Ziggurat's creature-spell-only mana still counts.
+        harness.addToBattlefield(player2, new AncientZiggurat());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, "RED");
+
+        // The mana Fellwar Stone itself adds is unrestricted.
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
     @Test

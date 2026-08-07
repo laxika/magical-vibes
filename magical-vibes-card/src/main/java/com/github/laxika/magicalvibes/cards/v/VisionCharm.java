@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfChosenTypeBecomeChosenBasicTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class VisionCharm extends Card {
                         new LandsOfChosenTypeBecomeChosenBasicTypeUntilEndOfTurnEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target artifact phases out",
-                        new PhaseOutTargetPermanentEffect(),
+                        new PhaseOutEffect(PhaseOutSubject.TARGET),
                         TargetFilters.artifact())
         )));
     }

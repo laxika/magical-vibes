@@ -359,10 +359,12 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
-        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly
+        // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
+        boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
         boolean canAfford = hasRestricted
-                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly)
+                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, false, legendarySpellOnly)
                 : cost.canPay(pool, additionalCost);
         if (canAfford && card.isRequiresCreatureMana()) {
             canAfford = cost.canPayCreatureOnly(pool, additionalCost);
@@ -410,25 +412,19 @@ public class GameActionAvailabilityService {
         }
 
         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
-        ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
-        ReduceOwnCastCostIfTargetingPermanentEffect generalTargetReduce = null;
+        ReduceOwnCastCostIfTargetingPermanentEffect targetReduce = null;
         ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
         for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-            if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) {
+            if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
                 targetReduce = r;
-            } else if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
-                generalTargetReduce = r;
             } else if (e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect r) {
                 stackTargetReduce = r;
             }
         }
-        if (targetReduce != null && castingCostService.controlsPermanent(gameData, playerId, targetReduce.predicate())) {
+        if (targetReduce != null && (targetReduce.controlledByCaster()
+                ? castingCostService.controlsPermanent(gameData, playerId, targetReduce.predicate())
+                : castingCostService.battlefieldHasPermanentMatching(gameData, targetReduce.predicate()))) {
             if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
-                return true;
-            }
-        } else if (generalTargetReduce != null
-                && castingCostService.battlefieldHasPermanentMatching(gameData, generalTargetReduce.predicate())) {
-            if (cost.canPay(pool, additionalCost - generalTargetReduce.amount())) {
                 return true;
             }
         } else if (stackTargetReduce != null

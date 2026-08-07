@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link SacrificeMultiplePermanentsCost}, the count is dynamic.
  *
  * <p>Example: "Sacrifice X Goats" (Springjack Pasture). The number sacrificed becomes the X used by
- * the ability's remaining effects (e.g. {@link AwardXAnyColorManaEffect} and a gain-X-life rider).
+ * the ability's remaining effects (e.g. {@code AwardAnyColorManaEffect(new XValue())} and a
+ * gain-X-life rider).
  */
 public record SacrificeXPermanentsCost(PermanentPredicate filter) implements CostEffect {
 }

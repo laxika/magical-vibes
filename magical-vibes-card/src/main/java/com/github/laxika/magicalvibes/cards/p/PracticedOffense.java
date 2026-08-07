@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -26,8 +27,8 @@ public class PracticedOffense extends Card {
                 .addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect());
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantChosenKeywordToTargetEffect(
-                        List.of(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK)));
+                .addEffect(EffectSlot.SPELL, new GrantChosenKeywordEffect(
+                        List.of(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK), GrantScope.TARGET));
 
         addCastingOption(new FlashbackCast("{1}{W}"));
     }

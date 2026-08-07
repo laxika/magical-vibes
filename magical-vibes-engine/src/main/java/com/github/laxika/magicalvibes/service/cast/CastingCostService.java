@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -357,35 +357,70 @@ public class CastingCostService {
     }
 
     /**
-     * A permanent the player controls whose {@link AlternativeCostForSpellsEffect} offers a zero
+     * A permanent whose {@link AlternativeCostForSpellsEffect} offers the player a zero
      * alternative cost currently applicable to {@code card}: the filter matches, any counter-based
      * mana-value cap is satisfied, and a once-each-turn source has not yet been used this turn. An
      * unlimited source (e.g. Rooftop Storm) is preferred over a once-each-turn source (As Foretold)
      * so the limited use is not spent while a free one is available. A hand-only source (Omniscience)
-     * is skipped entirely when the spell is not being cast from hand.
+     * is skipped entirely when the spell is not being cast from hand. The player's emblems are
+     * consulted first; permanents are then searched across every battlefield, but an opponent's
+     * source only counts when it applies to all players (Aluren).
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return null;
+        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, fromHand);
+        if (emblemSource != null) return emblemSource;
+
         FreeCastSource oncePerTurnFallback = null;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && (fromHand || !altCost.fromHandOnly())
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
-                        && manaValueCapSatisfied(perm, card, altCost)
-                        && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
-                    if (!altCost.oncePerTurn()) {
-                        return new FreeCastSource(perm, altCost);
-                    }
-                    if (oncePerTurnFallback == null) {
-                        oncePerTurnFallback = new FreeCastSource(perm, altCost);
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AlternativeCostForSpellsEffect altCost
+                            && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
+                            && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                            && (fromHand || !altCost.fromHandOnly())
+                            && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
+                            && manaValueCapSatisfied(perm, card, altCost)
+                            && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
+                        if (!altCost.oncePerTurn()) {
+                            return new FreeCastSource(perm, altCost);
+                        }
+                        if (oncePerTurnFallback == null) {
+                            oncePerTurnFallback = new FreeCastSource(perm, altCost);
+                        }
                     }
                 }
             }
         }
         return oncePerTurnFallback;
+    }
+
+    /**
+     * The emblem counterpart of {@link #findFreeCastSource}: an emblem the player has whose
+     * {@link AlternativeCostForSpellsEffect} offers a zero alternative cost for {@code card}
+     * ("You may cast spells from your hand without paying their mana costs." — Tamiyo, Field
+     * Researcher's −7). An emblem is not a permanent, so it carries no counters and cannot be
+     * "used this turn"; the counter-capped and once-each-turn variants are therefore skipped rather
+     * than silently treated as unlimited. The returned source has a null permanent — every caller
+     * only consults {@code effect()}, and {@code consumeFreeCastFromBattlefield} touches the
+     * permanent only on the once-each-turn path this can never take.
+     */
+    private FreeCastSource findEmblemFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof AlternativeCostForSpellsEffect altCost
+                        && altCost.manaValueCapCounter() == null
+                        && !altCost.oncePerTurn()
+                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                        && (fromHand || !altCost.fromHandOnly())
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                    return new FreeCastSource(null, altCost);
+                }
+            }
+        }
+        return null;
     }
 
     private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {
@@ -534,27 +569,19 @@ public class CastingCostService {
         UUID firstTargetId = targetIds.getFirst();
         Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
         if (firstTarget != null) {
-            ReduceOwnCastCostIfTargetingPermanentEffect generalEffect = card.getEffects(EffectSlot.STATIC).stream()
+            ReduceOwnCastCostIfTargetingPermanentEffect permanentEffect = card.getEffects(EffectSlot.STATIC).stream()
                     .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                     .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
                     .findFirst().orElse(null);
-            if (generalEffect != null
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, generalEffect.predicate())) {
-                return generalEffect.amount();
-            }
-
-            ReduceOwnCastCostIfTargetingControlledPermanentEffect controlledEffect = card.getEffects(EffectSlot.STATIC).stream()
-                    .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
-                    .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
-                    .findFirst().orElse(null);
-            if (controlledEffect == null) {
+            if (permanentEffect == null) {
                 return 0;
             }
-
-            UUID targetController = gameQueryService.findPermanentController(gameData, firstTargetId);
-            if (playerId.equals(targetController)
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, controlledEffect.predicate())) {
-                return controlledEffect.amount();
+            if (permanentEffect.controlledByCaster()
+                    && !playerId.equals(gameQueryService.findPermanentController(gameData, firstTargetId))) {
+                return 0;
+            }
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, permanentEffect.predicate())) {
+                return permanentEffect.amount();
             }
             return 0;
         }
@@ -578,7 +605,6 @@ public class CastingCostService {
     public boolean hasTargetBasedCastCostReduction(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
-                        || e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect
                         || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect);
     }
 

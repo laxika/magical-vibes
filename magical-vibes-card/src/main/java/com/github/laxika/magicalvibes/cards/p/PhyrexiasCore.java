@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class PhyrexiasCore extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new SacrificeArtifactCost(), new GainLifeEffect(1)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new GainLifeEffect(1)),
                 "{1}, {T}, Sacrifice an artifact: You gain 1 life."
         ));
     }

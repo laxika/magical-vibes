@@ -19,10 +19,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code duration} is {@link GrantDuration#END_OF_TURN} for the overwhelming majority of pumps;
  * {@link GrantDuration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
  * until-next-turn bucket instead, so it survives end-of-turn cleanup (Jace, Telepath Unbound's +1).
+ *
+ * <p>As a {@link CombatOpponentReferencingEffect}, when this fires from a combat trigger
+ * ("whenever this creature blocks …, that creature gets +1/+1") the boosted creature is the
+ * source's combat opponent, baked in as the trigger's non-targeting target.
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
-                                        GrantDuration duration) implements CreatureBoostEffect {
+                                        GrantDuration duration) implements CreatureBoostEffect, CombatOpponentReferencingEffect {
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                      PermanentPredicate filter) {

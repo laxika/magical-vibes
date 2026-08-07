@@ -83,6 +83,22 @@ public sealed interface ManaRestriction {
     }
 
     /**
+     * Colorless mana spendable only to cast legendary spells — any spell with the legendary supertype
+     * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.
+     */
+    record LegendarySpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addLegendarySpellOnlyColorless(amount);
+        }
+
+        @Override
+        public String description() {
+            return "legendary spells only";
+        }
+    }
+
+    /**
      * Colorless mana spendable only to cast spells / activate abilities of the given creature subtype.
      * Only Myr exists in the pool today (routes to the myr-only bucket, e.g. Myr Reservoir); the
      * subtype is retained as the routing/logging key.

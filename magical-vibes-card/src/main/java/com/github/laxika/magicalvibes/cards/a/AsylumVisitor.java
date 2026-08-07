@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "96")
+@CardRegistration(set = "INR", collectorNumber = "371")
 public class AsylumVisitor extends Card {
 
     public AsylumVisitor() {

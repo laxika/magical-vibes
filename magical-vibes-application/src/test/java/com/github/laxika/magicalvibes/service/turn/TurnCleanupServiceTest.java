@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -724,6 +725,17 @@ class TurnCleanupServiceTest {
             gd.playerBattlefields.get(player2Id).add(new Permanent(card2));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Sets own hand size when controlling SetControllerMaximumHandSizeEffect")
+        void setByControllerSetEffect() {
+            Card card = createCardWithName("Recycle");
+            card.addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(2);
+            assertThat(sut.getMaxHandSize(gd, player2Id)).isEqualTo(7);
         }
 
         @Test

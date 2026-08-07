@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "244")
+@CardRegistration(set = "CHK", collectorNumber = "195")
 public class UncontrollableAnger extends Card {
 
     public UncontrollableAnger() {

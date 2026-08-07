@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
@@ -366,6 +367,13 @@ public class LibraryChoiceHandlerService {
                 finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
                 return;
             }
+            // Signal the Clans stopped short of three creature cards: fewer than three revealed
+            // cards can never satisfy "three cards with different names", so nothing goes to hand.
+            if (destination == LibrarySearchDestination.SIGNAL_THE_CLANS_POOL) {
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " stops searching."));
+                finishSignalTheClansSearch(gameData, playerId, accumulatedCards);
+                return;
+            }
             // A pile search stopped early still shuffles whatever was already exiled into it.
             if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
@@ -457,6 +465,35 @@ public class LibraryChoiceHandlerService {
 
             gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s library is shuffled."));
             finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.SIGNAL_THE_CLANS_POOL) {
+            // Signal the Clans: the revealed card leaves the library but enters no zone — the pool
+            // is only resolved once all three picks are made (or the searcher stops short).
+            accumulatedCards.add(chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+
+            List<Card> remainingCreatures = deck.stream()
+                    .filter(c -> c.hasType(CardType.CREATURE))
+                    .toList();
+            if (remainingCount > 1 && !remainingCreatures.isEmpty()) {
+                int newRemaining = remainingCount - 1;
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingCreatures))
+                                .remainingCount(newRemaining)
+                                .reveals(true)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.SIGNAL_THE_CLANS_POOL)
+                                .accumulatedCards(accumulatedCards)
+                                .build(),
+                        "Search your library for a creature card to reveal ("
+                                + newRemaining + " remaining).", true));
+                return;
+            }
+
+            finishSignalTheClansSearch(gameData, playerId, accumulatedCards);
             return;
         }
 
@@ -952,6 +989,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case GIFTS_UNGIVEN_POOL -> throw new IllegalStateException("GIFTS_UNGIVEN_POOL should be handled earlier");
+                case SIGNAL_THE_CLANS_POOL -> throw new IllegalStateException("SIGNAL_THE_CLANS_POOL should be handled earlier");
             };
             GameLogEntry logEntry;
             if (targetPlayerId != null) {
@@ -1007,6 +1045,38 @@ public class LibraryChoiceHandlerService {
      * began; they choose two of the cards for the controller's graveyard and the rest go to their
      * hand. An empty pool has nothing to choose from, so resolution just finishes.
      */
+    /**
+     * Signal the Clans: the search is over. Only a pool of exactly three revealed cards with three
+     * different names puts a card into the searcher's hand, and which one is chosen at random; every
+     * other revealed card is shuffled back into the library along with the rest of it.
+     */
+    private void finishSignalTheClansSearch(GameData gameData, UUID controllerId, List<Card> pool) {
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        Card chosen = null;
+        long distinctNames = pool.stream().map(Card::getName).distinct().count();
+        if (pool.size() == 3 && distinctNames == 3) {
+            chosen = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
+            gameData.addCardToHand(controllerId, chosen);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " chooses ", chosen, " at random and puts it into their hand."));
+        } else if (!pool.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " did not reveal three cards with different names."));
+        }
+
+        for (Card card : pool) {
+            if (card != chosen) {
+                deck.add(card);
+            }
+        }
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        gameLogService.append(gameData, GameLog.text(controllerName + "'s library is shuffled."));
+        finishSearchAndResume(gameData);
+    }
+
     private void finishGiftsUngivenSearch(GameData gameData, UUID controllerId, List<Card> pool) {
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 

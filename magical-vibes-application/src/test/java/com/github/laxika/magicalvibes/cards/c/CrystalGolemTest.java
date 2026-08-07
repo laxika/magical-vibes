@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,6 +21,21 @@ class CrystalGolemTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("Only the Golem phases out — the trigger phases out no other permanent")
+    void phasesOutOnlyItself() {
+        Permanent golem = addGolem();
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities(); // resolve the Golem's trigger only
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bystander);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentPermanent);
     }
 
     @Test

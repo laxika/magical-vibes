@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "129")
+@CardRegistration(set = "INR", collectorNumber = "479")
 public class BalefireDragon extends Card {
 
     public BalefireDragon() {

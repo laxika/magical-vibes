@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class TrigonOfRage extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(1),
+                        new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
                         new BoostTargetCreatureEffect(3, 0)
                 ),
                 "{2}, {T}, Remove a charge counter from Trigon of Rage: Target creature gets +3/+0 until end of turn."

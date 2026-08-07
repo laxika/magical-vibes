@@ -39,6 +39,11 @@ class EmergentGrowthTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(7);
         assertThat(bears.getEffectiveToughness()).isEqualTo(7);
         assertThat(bears.isMustBeBlockedThisTurn()).isTrue();
+        // "must be blocked if able" is satisfied by one blocker — it must not become the Lure-style
+        // "all creatures able to block it do so".
+        assertThat(bears.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
     }
 
     // ===== Combat interaction =====

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class TrigonOfMending extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(1),
+                        new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
                         new TargetPlayerGainsLifeEffect(3)
                 ),
                 "{2}, {T}, Remove a charge counter from Trigon of Mending: Target player gains 3 life."

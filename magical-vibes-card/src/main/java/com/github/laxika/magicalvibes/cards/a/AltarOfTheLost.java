@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class AltarOfTheLost extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardFlashbackOnlyAnyColorManaEffect(2)),
+                List.of(new AwardAnyColorManaEffect(2, ManaSpendRestriction.FLASHBACK_ONLY)),
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast spells with flashback from a graveyard."
         ));
     }

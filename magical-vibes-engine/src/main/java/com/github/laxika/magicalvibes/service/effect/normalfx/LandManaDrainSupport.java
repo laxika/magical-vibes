@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -74,8 +75,8 @@ public class LandManaDrainSupport {
                     if (e instanceof AwardManaEffect award) {
                         amount += amountEvaluationService.evaluate(gameData, award.amount(),
                                 AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    } else if (e instanceof AwardAnyColorManaEffect aace) {
-                        amount += aace.amount() * multiplier;
+                    } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                        amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
                     }
                 }
             } else {
@@ -87,8 +88,8 @@ public class LandManaDrainSupport {
                         if (e instanceof AwardManaEffect award) {
                             amount += amountEvaluationService.evaluate(gameData, award.amount(),
                                     AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                        } else if (e instanceof AwardAnyColorManaEffect aace) {
-                            amount += aace.amount() * multiplier;
+                        } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                            amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
                         }
                     }
                     break;
@@ -117,8 +118,8 @@ public class LandManaDrainSupport {
                     int amount = amountEvaluationService.evaluate(gameData, award.amount(),
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect aace) {
-                    pool.add(ManaColor.COLORLESS, aace.amount() * multiplier);
+                } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                    pool.add(ManaColor.COLORLESS, evaluate(gameData, playerId, perm, anyColor) * multiplier);
                 }
             }
             return true;
@@ -132,12 +133,25 @@ public class LandManaDrainSupport {
                     int amount = amountEvaluationService.evaluate(gameData, award.amount(),
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect aace) {
-                    pool.add(ManaColor.COLORLESS, aace.amount() * multiplier);
+                } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
+                    pool.add(ManaColor.COLORLESS, evaluate(gameData, playerId, perm, anyColor) * multiplier);
                 }
             }
             return true;
         }
         return false;
+    }
+
+    /**
+     * Spend-restricted any-color mana is skipped: this path pays plain colorless into the ordinary
+     * pool, which would launder away the restriction the printed ability puts on it (CR 106.6).
+     */
+    private static boolean unrestricted(AwardAnyColorManaEffect effect) {
+        return effect.restriction() == ManaSpendRestriction.NONE;
+    }
+
+    private int evaluate(GameData gameData, UUID playerId, Permanent perm, AwardAnyColorManaEffect effect) {
+        return amountEvaluationService.evaluate(gameData, effect.amount(),
+                AmountContext.forManaAbility(perm, playerId));
     }
 }

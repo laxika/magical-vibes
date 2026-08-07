@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -41,7 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -1462,7 +1463,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns true when TrueBeliever is on battlefield")
         void returnsTrueWithTrueBeliever() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerShroudEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerKeywordEffect(Keyword.SHROUD)));
 
             assertThat(gqs.playerHasShroud(gd, player1Id)).isTrue();
         }
@@ -1470,7 +1471,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("does not affect opponent")
         void doesNotAffectOpponent() {
-            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerShroudEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("True Believer", 2, 2, CardColor.WHITE, new GrantControllerKeywordEffect(Keyword.SHROUD)));
 
             assertThat(gqs.playerHasShroud(gd, player2Id)).isFalse();
         }
@@ -2303,6 +2304,37 @@ class GameQueryServiceTest {
             assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isFalse();
             assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
         }
+
+        @Test
+        @DisplayName("predicate overload distinguishes the halves of a parameterized effect")
+        void predicateOverloadInspectsEffectComponents() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent aura = addPermanent(player1Id, createAura("Forced Worship",
+                    new EnchantedCreatureCantAttackOrBlockEffect(true, false)));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsAttacking())).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isFalse();
+            // the class-keyed overload still matches either half
+            assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
+        }
+
+        @Test
+        @DisplayName("predicate overload still unwraps EnchantedPermanentConditionalEffect")
+        void predicateOverloadUnwrapsConditional() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
+                    new EnchantedPermanentConditionalEffect(
+                            new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new EnchantedCreatureCantAttackOrBlockEffect())));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isTrue();
+        }
     }
 
     // ===== sourceHasKeyword =====
@@ -2729,6 +2761,42 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDamageToPlayerColorSourceBonus")
+    class GetDamageToPlayerColorSourceBonus {
+
+        @Test
+        @DisplayName("Adds the bonus when the source shares a colour, whoever controls the permanent")
+        void addsBonusForMatchingSourceColor() {
+            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Adds nothing for a source of another colour or of no colour")
+        void addsNothingForNonMatchingSource() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.GREEN))).isZero();
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of())).isZero();
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, null)).isZero();
+        }
+
+        @Test
+        @DisplayName("Multiple instances stack additively")
+        void multipleInstancesStackAdditively() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(2);
         }
     }
 }

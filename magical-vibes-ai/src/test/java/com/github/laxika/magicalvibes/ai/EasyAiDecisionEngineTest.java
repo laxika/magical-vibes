@@ -30,7 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -260,13 +261,14 @@ class EasyAiDecisionEngineTest {
     // ===== Sacrifice cost restriction =====
 
     @Test
-    @DisplayName("Easy AI does not attempt to cast spell with SacrificeArtifactCost when no artifact available")
+    @DisplayName("Easy AI does not attempt to cast spell with a sacrifice-an-artifact cost when no artifact available")
     void doesNotCastSacrificeArtifactCostWithNoArtifact() throws Exception {
         Card sacrificeSpell = new Card();
         sacrificeSpell.setName("Test Artifact Sac");
         sacrificeSpell.setType(CardType.SORCERY);
         sacrificeSpell.setManaCost("{R}");
-        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeArtifactCost());
+        sacrificeSpell.addEffect(EffectSlot.SPELL,
+                new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
         gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());

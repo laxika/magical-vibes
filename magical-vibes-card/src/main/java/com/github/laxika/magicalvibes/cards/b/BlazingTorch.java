@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "216")
+@CardRegistration(set = "INR", collectorNumber = "254")
 public class BlazingTorch extends Card {
 
     public BlazingTorch() {

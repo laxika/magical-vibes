@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,5 +86,58 @@ class BrainwashTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(freeIndex));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Brainwash taxes only attacking — the enchanted creature blocks for free")
+    void blockingWithTheEnchantedCreatureIsFree() {
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        attacker.setAttacking(true);
+
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        enchant(blocker, player1);
+
+        enterDeclareBlockers();
+
+        // player2's pool is empty: reading the ATTACK tax as BLOCK_WITH would reject this block
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Brainwash taxes only attacking — blocking the enchanted creature is free")
+    void blockingTheEnchantedCreatureIsFree() {
+        Permanent enchanted = new Permanent(new GrizzlyBears());
+        enchanted.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(enchanted);
+        enchanted.setAttacking(true);
+        enchant(enchanted, player2);
+
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        enterDeclareBlockers();
+
+        // player2's pool is empty: reading the ATTACK tax as BE_BLOCKED_BY would reject this block
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(enchanted))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    private void enterDeclareBlockers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
     }
 }

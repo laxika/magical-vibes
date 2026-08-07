@@ -75,6 +75,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromCol
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -167,6 +169,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -195,6 +198,10 @@ public class PredicateEvaluationService {
 
     /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
+
+    /** Changeling leaf, built here for the same reason as {@link #STATIC_CREATURE_LEAF}. */
+    private static final PermanentHasKeywordPredicate CHANGELING_PREDICATE =
+            new PermanentHasKeywordPredicate(Keyword.CHANGELING);
 
     // --- Card predicate matching ---
 
@@ -435,6 +442,19 @@ public class PredicateEvaluationService {
                 }
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
+            }
+            case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
+                Permanent equipped = equippedCreatureOfSource(gameData, sourceCardId, filterContext);
+                if (equipped == null) {
+                    yield false;
+                }
+                Set<CardColor> equippedColors = gameQueryService.getEffectiveColors(gameData, equipped);
+                yield !equippedColors.isEmpty() && gameQueryService.getEffectiveColors(gameData, permanent)
+                        .stream().anyMatch(equippedColors::contains);
+            }
+            case PermanentSharesCreatureTypeWithEquippedCreaturePredicate ignored -> {
+                Permanent equipped = equippedCreatureOfSource(gameData, sourceCardId, filterContext);
+                yield equipped != null && gameQueryService.shareCreatureType(gameData, permanent, equipped);
             }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
@@ -990,6 +1010,14 @@ public class PredicateEvaluationService {
             case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsAttackingSourceControllerPredicate ignored -> {
+                // Recursion-safe: attack state and attack target are stored on the permanent, so
+                // "creatures attacking you" only needs the source controller from the context
+                // (Boarded Window, Watchdog).
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                yield permanent.isAttacking() && sourceControllerId != null
+                        && sourceControllerId.equals(permanent.getAttackTarget());
+            }
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -1000,6 +1028,21 @@ public class PredicateEvaluationService {
                 Permanent sourceAura = context == null ? null : context.sourcePermanentSnapshot();
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
+            }
+            case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
+                // Recursion-safe: both colour sets come from the in-flight layer state (or the
+                // permanents' own stored colours), never from computeStaticBonus. Konda's Banner.
+                Permanent equipped = equippedCreatureStatic(context);
+                if (equipped == null) {
+                    yield false;
+                }
+                Set<CardColor> equippedColors = recursionSafeColors(equipped);
+                yield !equippedColors.isEmpty()
+                        && recursionSafeColors(permanent).stream().anyMatch(equippedColors::contains);
+            }
+            case PermanentSharesCreatureTypeWithEquippedCreaturePredicate ignored -> {
+                Permanent equipped = equippedCreatureStatic(context);
+                yield equipped != null && recursionSafeSharesCreatureType(permanent, equipped);
             }
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -1073,6 +1116,99 @@ public class PredicateEvaluationService {
         return battlefield.stream()
                 .filter(candidate -> !predicate.excludeSelf() || !candidate.getId().equals(target.getId()))
                 .anyMatch(candidate -> matchesStaticFilter(candidate, predicate.filter(), context));
+    }
+
+    /**
+     * The creature the source Equipment is attached to, on the fully layered path, or {@code null}
+     * while the Equipment is unattached or unfindable. The source is located by card id when the
+     * board is at hand and falls back to the snapshot the caller carries.
+     */
+    private Permanent equippedCreatureOfSource(GameData gameData, UUID sourceCardId, FilterContext filterContext) {
+        if (gameData == null) return null;
+        Permanent equipment = sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
+        if (equipment == null && filterContext != null) {
+            equipment = filterContext.sourcePermanentSnapshot();
+        }
+        if (equipment == null || !equipment.isAttached()) return null;
+        return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+    }
+
+    /**
+     * The creature the source Equipment is attached to, on the recursion-safe path: attachment
+     * state lives on the snapshot the static pass carries, so no layered query is needed to find
+     * the host.
+     */
+    private Permanent equippedCreatureStatic(FilterContext context) {
+        Permanent equipment = context == null ? null : context.sourcePermanentSnapshot();
+        GameData gameData = context == null ? null : context.gameData();
+        if (equipment == null || gameData == null || !equipment.isAttached()) return null;
+        return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+    }
+
+    /**
+     * Colours of a permanent without consulting {@code GameQueryService.computeStaticBonus}: the
+     * in-flight layer-5 state when a CR 613 pass is running, the permanent's own stored colours
+     * otherwise. Mirrors the {@code PermanentColorInPredicate} leaf.
+     */
+    private Set<CardColor> recursionSafeColors(Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.getColors();
+        }
+        if (permanent.isColorOverridden()) {
+            return permanent.getTransientColors();
+        }
+        Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+        combined.addAll(permanent.getEffectiveColors());
+        combined.addAll(permanent.getTransientColors());
+        combined.addAll(permanent.getGrantedColors());
+        return combined;
+    }
+
+    /**
+     * Recursion-safe counterpart of {@code GameQueryService.shareCreatureType}: Changeling counts
+     * as every creature type, and a permanent with no creature types shares none.
+     */
+    private boolean recursionSafeSharesCreatureType(Permanent a, Permanent b) {
+        boolean aChangeling = matchesStaticLeaf(a, CHANGELING_PREDICATE);
+        boolean bChangeling = matchesStaticLeaf(b, CHANGELING_PREDICATE);
+        Set<CardSubtype> aTypes = recursionSafeCreatureSubtypes(a);
+        Set<CardSubtype> bTypes = recursionSafeCreatureSubtypes(b);
+        if (aChangeling) {
+            return bChangeling || !bTypes.isEmpty();
+        }
+        if (bChangeling) {
+            return !aTypes.isEmpty();
+        }
+        return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /**
+     * Named creature subtypes of a permanent without consulting {@code computeStaticBonus}
+     * (Changeling is handled by the caller). Mirrors the {@code PermanentHasSubtypePredicate} leaf:
+     * the in-flight layer-4 state when a pass is running, the permanent's own stored types
+     * otherwise, honouring "becomes a [type]", "loses all creature types", and removed subtypes.
+     */
+    private Set<CardSubtype> recursionSafeCreatureSubtypes(Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.getSubtypes().stream()
+                    .filter(gameQueryService::isCreatureSubtype)
+                    .collect(java.util.stream.Collectors.toSet());
+        }
+        if (permanent.getTransientCreatureTypeOverride() != null) {
+            return Set.of(permanent.getTransientCreatureTypeOverride());
+        }
+        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
+            return Set.of();
+        }
+        Set<CardSubtype> result = new HashSet<>();
+        result.addAll(permanent.getCard().getSubtypes());
+        result.addAll(permanent.getTransientSubtypes());
+        result.addAll(permanent.getGrantedSubtypes());
+        result.removeAll(permanent.getTransientRemovedSubtypes());
+        result.removeIf(subtype -> !gameQueryService.isCreatureSubtype(subtype));
+        return result;
     }
 
     /**

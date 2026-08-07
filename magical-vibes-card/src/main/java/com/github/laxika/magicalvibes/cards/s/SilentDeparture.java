@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "75")
 @CardRegistration(set = "INR", collectorNumber = "84")
+@CardRegistration(set = "INR", collectorNumber = "367")
 public class SilentDeparture extends Card {
 
     public SilentDeparture() {

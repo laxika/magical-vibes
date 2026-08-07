@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillAndTransformIfTypesEffect
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "52")
+@CardRegistration(set = "INR", collectorNumber = "454")
 public class AberrantResearcher extends Card {
 
     public AberrantResearcher() {

@@ -156,7 +156,7 @@ class AiDecisionEngineTest {
     // ===== Sacrifice cost checks =====
 
     @Test
-    @DisplayName("AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    @DisplayName("AI skips spell with a sacrifice-an-artifact cost when no artifact on battlefield")
     void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
         giveAiPriority();
         giveAiMountains(1);

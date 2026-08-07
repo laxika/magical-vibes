@@ -57,6 +57,8 @@ class SuleimansLegacyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Nettletooth Djinn");
         harness.assertInGraveyard(player1, "Nettletooth Djinn");
+        // "Destroy it" is the permanent that entered, never the enchantment whose trigger fired.
+        harness.assertOnBattlefield(player1, "Suleiman's Legacy");
     }
 
     @Test

@@ -90,7 +90,14 @@ public class Permanent {
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
     @Setter private int timesRegeneratedThisTurn;
-    @Setter private UUID attachedTo;
+    private UUID attachedTo;
+    /**
+     * The last permanent this one was attached to, kept after {@link #attachedTo} is cleared.
+     * Triggers that fire once the host has already left the battlefield (Kusari-Gama's "whenever
+     * equipped creature deals damage …", where the host may have died to the same combat damage)
+     * read it as last-known information.
+     */
+    private UUID lastAttachedTo;
     /**
      * Soulbond pairing (CR 702.94): id of the other creature this permanent is paired with, or
      * {@code null} when unpaired. Cleared when either leaves the battlefield, changes controller,
@@ -331,6 +338,11 @@ public class Permanent {
      *  it came from; {@code null} otherwise. Read during the entering creature's ETB processing to fire
      *  "whenever a creature enters from your graveyard" triggers (e.g. Flayer of the Hatebound). */
     @Setter private UUID enteredFromGraveyardOwnerId;
+    /** True when this permanent entered the battlefield from exile via a delayed return (flicker,
+     *  Obzedat, Ghost Council). Like a token copy or a reanimated creature it never went through
+     *  cast-time target selection, so a mandatory targeted ETB must choose its target as the
+     *  triggered ability is put on the stack (CR 603.3b). */
+    @Setter private boolean enteredFromExile;
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
     private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
@@ -528,6 +540,7 @@ public class Permanent {
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
+        this.lastAttachedTo = source.lastAttachedTo;
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
@@ -579,6 +592,7 @@ public class Permanent {
         this.extraLoyaltyActivationsThisTurn = source.extraLoyaltyActivationsThisTurn;
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
+        this.enteredFromExile = source.enteredFromExile;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
@@ -722,6 +736,14 @@ public class Permanent {
     public void rollOverAttackRecord() {
         this.attackedDuringControllersLastTurn = this.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersCurrentTurn = false;
+    }
+
+    /** Remembers the host in {@link #lastAttachedTo} so it survives the detach. */
+    public void setAttachedTo(UUID attachedTo) {
+        if (attachedTo != null) {
+            this.lastAttachedTo = attachedTo;
+        }
+        this.attachedTo = attachedTo;
     }
 
     public void setBlocking(boolean blocking) {

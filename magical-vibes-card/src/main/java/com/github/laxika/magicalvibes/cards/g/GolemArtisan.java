@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +35,7 @@ public class GolemArtisan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new GrantChosenKeywordToTargetEffect(List.of(Keyword.FLYING, Keyword.TRAMPLE, Keyword.HASTE))),
+                List.of(new GrantChosenKeywordEffect(List.of(Keyword.FLYING, Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET)),
                 "{2}: Target artifact creature gains your choice of flying, trample, or haste until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

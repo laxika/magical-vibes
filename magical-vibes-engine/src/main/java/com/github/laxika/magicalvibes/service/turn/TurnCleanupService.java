@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -189,6 +191,7 @@ public class TurnCleanupService {
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
+        gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.damagePreventionLifeGainShields.clear();
         gameData.globalDamagePreventionShield = 0;
@@ -197,6 +200,7 @@ public class TurnCleanupService {
         gameData.preventAllDamageByCreatures = false;
         gameData.combatDamageExemptPredicate = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
+        gameData.additionalEnterCountersThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
@@ -222,6 +226,7 @@ public class TurnCleanupService {
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
+        gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
@@ -256,6 +261,7 @@ public class TurnCleanupService {
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.conspiredSpellIds.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
@@ -344,7 +350,9 @@ public class TurnCleanupService {
      * Starts at the default 7, then applies each opponent-controlled
      * {@link OpponentMaxHandSizeEffect} (e.g. {@link ReduceOpponentMaxHandSizeEffect} reducing by
      * N, {@link SetOpponentMaximumHandSizeEffect} setting to a specific value) to the running
-     * value in battlefield/timestamp order (CR 402.2).
+     * value in battlefield/timestamp order (CR 402.2), plus every controller-controlled
+     * {@link ControllerMaxHandSizeEffect} (e.g. {@link SetControllerMaximumHandSizeEffect} —
+     * Recycle's "your maximum hand size is two").
      *
      * @param gameData the current game state
      * @param playerId the player whose hand-size limit to compute
@@ -352,14 +360,18 @@ public class TurnCleanupService {
      */
     public int getMaxHandSize(GameData gameData, UUID playerId) {
         int maxHandSize = 7;
-        // Fold every opponent-controlled hand-size effect over the running value in timestamp order.
+        // Fold every hand-size effect that applies to this player over the running value in
+        // timestamp order — opponent-controlled ones from the other battlefields, and the
+        // player's own "your maximum hand size is N" effects from theirs.
         for (UUID otherPlayerId : gameData.orderedPlayerIds) {
-            if (otherPlayerId.equals(playerId)) continue;
+            boolean own = otherPlayerId.equals(playerId);
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                    if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                    } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
                         maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
                     }
                 }

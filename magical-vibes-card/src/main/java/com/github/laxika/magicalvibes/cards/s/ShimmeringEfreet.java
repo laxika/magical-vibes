@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
@@ -15,6 +16,6 @@ public class ShimmeringEfreet extends Card {
 
     public ShimmeringEfreet() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_SELF_PHASES_IN, new PhaseOutTargetPermanentEffect());
+                .addEffect(EffectSlot.ON_SELF_PHASES_IN, new PhaseOutEffect(PhaseOutSubject.TARGET));
     }
 }

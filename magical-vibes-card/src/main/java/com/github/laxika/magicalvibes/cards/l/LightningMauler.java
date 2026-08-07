@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
+@CardRegistration(set = "INR", collectorNumber = "399")
 @CardRegistration(set = "INR", collectorNumber = "163")
 @CardRegistration(set = "AVR", collectorNumber = "144")
 public class LightningMauler extends Card {

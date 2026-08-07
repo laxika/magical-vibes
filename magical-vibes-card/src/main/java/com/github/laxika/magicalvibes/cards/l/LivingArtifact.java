@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "259")
@@ -23,7 +24,7 @@ public class LivingArtifact extends Card {
                 // At the beginning of your upkeep, you may remove a vitality counter from this Aura.
                 // If you do, you gain 1 life.
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                        new MayEffect(new RemoveCounterFromSourceAndGainLifeEffect(CounterType.VITALITY, 1),
+                        new MayEffect(new RemoveCounterAndGainLifeEffect(CounterType.VITALITY, 1, CounterRemovalSubject.SOURCE),
                                 "Remove a vitality counter from Living Artifact to gain 1 life?"));
     }
 }

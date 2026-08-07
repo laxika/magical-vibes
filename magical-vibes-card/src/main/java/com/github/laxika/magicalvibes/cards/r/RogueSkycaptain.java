@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayPerCounterOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class RogueSkycaptain extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.WAGE),
                 new PayPerCounterOrElseEffect(CounterType.WAGE, "{2}", List.of(
-                        new RemoveAllCountersFromSelfEffect(CounterType.WAGE),
+                        new RemoveAllCountersEffect(CounterType.WAGE),
                         new OpponentGainsControlOfSourceCreatureEffect(ControlDuration.PERMANENT)
                 ))
         ));

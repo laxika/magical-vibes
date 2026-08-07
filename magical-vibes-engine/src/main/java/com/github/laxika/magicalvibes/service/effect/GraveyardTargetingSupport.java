@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,15 @@ public class GraveyardTargetingSupport {
     public Target findTarget(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
             CardEffect targetEffect = unwrapMay(effect);
+            // A "you may [exile this, then return target cards]" bundle keeps its steps in a
+            // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
+            if (targetEffect instanceof SequenceEffect sequence) {
+                Target nested = findTarget(sequence.steps());
+                if (nested != null) {
+                    return nested;
+                }
+                continue;
+            }
             Target target = targetOf(targetEffect);
             if (target != null) {
                 return target;
@@ -32,8 +43,12 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileGraveyardCardsEffect exile) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope != null) {
-                return new Target(exile.filter(), scope, "to exile");
+                return new Target(exile.filter(), scope, "to exile", 1);
             }
+        }
+        if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
+            return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to your hand", returnTargets.maxTargets());
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {
@@ -45,11 +60,17 @@ public class GraveyardTargetingSupport {
                 case EXILE -> "to exile";
                 case MAY_ABILITY_TARGET -> "as chosen";
             };
-            return new Target(returnEffect.filter(), returnEffect.source(), destination);
+            return new Target(returnEffect.filter(), returnEffect.source(), destination, 1);
         }
         return null;
     }
 
-    public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination) {
+    /**
+     * A graveyard-targeting step found on a trigger's effects.
+     *
+     * @param maxTargets how many graveyard cards the step may target — {@code 1} for the
+     *                   single-target effects, larger for "up to N"/"any number of target cards"
+     */
+    public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination, int maxTargets) {
     }
 }

@@ -15,7 +15,7 @@ Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` o
 ## Pattern
 
 1. **Package is `costmod`, under `service/cast/`.**
-2. **Naming convention.** `<EffectName>Handler` (e.g. `IncreaseOpponentCastCostEffectHandler`).
+2. **Naming convention.** `<EffectName>Handler` (e.g. `IncreaseSpellCostEffectHandler`).
 3. **One `@Component` per handler**, implementing `CostModificationHandlerBean`:
    - `Class<? extends CardEffect> handledEffect()` — the effect type it handles.
    - `boolean onSpellItself()` — `true` when the effect is carried by the spell being cast
@@ -61,13 +61,16 @@ generic-mana delta.
 
 **Forbidden:** adding a new `ReduceOwnCastCostIf<Condition>Effect` or
 `ReduceOwnCastCostPer<Thing>Effect` record + bespoke handler. Those collapse onto the two shapes
-above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). The
-`ReduceOwnCastCostFor*` battlefield-source effects (Heartless Summoning, Semblance Anvil) keep their
-own handlers because they filter *which other spells* are discounted, but their reduction quantity is
-still a `DynamicAmount`.
+above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). A battlefield-source
+effect that filters *which other spells* are discounted is
+`ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope)` — not a
+new record. Heartless Summoning is that effect with a `CardTypePredicate(CREATURE)` and `SELF` scope;
+`ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
+it compares against the imprinted card rather than a predicate.
 
-**Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect`,
-`ReduceOwnCastCostIfTargetingControlledPermanentEffect`, and `ReduceOwnCastCostIfTargetingStackEntryEffect`
+**Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
+`controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control")
+and `ReduceOwnCastCostIfTargetingStackEntryEffect`
 stay as their own records. Their reduction depends on the being-cast spell's **chosen first target**,
 which the generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; they are
 resolved inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
@@ -89,10 +92,13 @@ not through the handler registry.
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
   permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less for each +1/+1 counter
   on this creature" — Herald of War).
-- `cast/costmod/IncreaseOwnCastCostEffectHandler.java` — battlefield handler for
-  `IncreaseOwnCastCostEffect(CardPredicate, int)`; returns `+amount` only when the source is
-  controlled by the caster and the spell matches the predicate (self-scoped colour/type tax, e.g.
-  Derelor: black spells you cast cost {B} more, modeled as +1 generic).
+- `cast/costmod/IncreaseSpellCostEffectHandler.java` — battlefield handler for
+  `IncreaseSpellCostEffect(CardPredicate, int, CostModificationScope)`, the tax-side mirror of
+  `ReduceCastCostForMatchingSpellsEffect`; scopes by the same `SELF`/`OPPONENT`/`ALL` and returns
+  `+amount` when the spell matches the predicate. `ALL` = symmetric (Thalia, Chill, Gloom, Feroz's
+  Ban, Thorn of Amethyst, Irini Sengir); `SELF` = only the source controller's spells (Derelor:
+  black spells you cast cost {B} more, modeled as +1 generic); `OPPONENT` = only their opponents'
+  (Aura of Silence).
 - `cast/costmod/IncreaseSpellCostExceptOnControllersTurnEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostExceptOnControllersTurnEffect(int amount)`; returns `+amount` for every spell unless
   it is being cast during its controller's own turn (`castingPlayerId == activePlayerId`). Defense Grid.

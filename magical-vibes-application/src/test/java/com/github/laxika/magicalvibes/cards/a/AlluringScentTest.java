@@ -37,6 +37,24 @@ class AlluringScentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving sets only the by-all flag, not the weaker must-be-blocked-if-able one")
+    void resolvingDoesNotSetTheIfAbleFlag() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.setHand(player1, List.of(new AlluringScent()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
+    }
+
+    @Test
     @DisplayName("Flag wears off at end of turn")
     void flagWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player2, new GrizzlyBears());

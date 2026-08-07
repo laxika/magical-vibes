@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SpitfireBastion;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastNonlandThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -27,7 +30,8 @@ public class VancesBlastingCannons extends Card {
         // At the beginning of your upkeep, exile the top card of your library.
         // If it's a nonland card, you may cast that card this turn.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ExileTopCardMayCastNonlandThisTurnEffect());
+                new ExileTopCardsMayCastMatchingThisTurnEffect(
+                        1, new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
         // Whenever you cast your third spell in a turn, you may transform
         // Vance's Blasting Cannons.

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "7ED", collectorNumber = "223")
 @CardRegistration(set = "8ED", collectorNumber = "226")
 @CardRegistration(set = "9ED", collectorNumber = "222")
+@CardRegistration(set = "TMP", collectorNumber = "208")
 public class SuddenImpact extends Card {
 
     public SuddenImpact() {

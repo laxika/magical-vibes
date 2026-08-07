@@ -44,6 +44,13 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
         return new SetBasePowerToughnessEffect(null, toughness, GrantScope.TARGET);
     }
 
+    /**
+     * One-shot "target creature has base power X until end of turn" — base toughness untouched.
+     */
+    public static SetBasePowerToughnessEffect powerOnly(int power) {
+        return new SetBasePowerToughnessEffect(power, null, GrantScope.TARGET);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {

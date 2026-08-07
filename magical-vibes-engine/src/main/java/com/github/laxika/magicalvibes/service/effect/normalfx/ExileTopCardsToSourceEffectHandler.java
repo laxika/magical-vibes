@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * ETB handler: the controller exiles the top N cards of their own library face down,
- * tracked as "exiled with" the source permanent (Colfenor's Plans).
+ * Exiles the top N cards of one or more libraries, tracked "exiled with" the source permanent.
+ * The {@code scope} picks the exiling players: the controller (Colfenor's Plans, Duplicity, Search
+ * the City), a single opponent (Grimoire Thief face down, Nightveil Specter face up), or every
+ * player (Knowledge Pool).
  */
 @Slf4j
 @Component
@@ -66,27 +68,55 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId, controllerId);
         }
 
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (deck == null) return;
+        for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
+            exileTopCards(gameData, e, playerId, sourcePermanent, sourcePermanentId);
+        }
+    }
+
+    /** The players who exile, in the order they do so. */
+    private List<UUID> exilingPlayers(GameData gameData, StackEntry entry, LibraryScope scope,
+                                      UUID controllerId) {
+        return switch (scope) {
+            case CONTROLLER -> List.of(controllerId);
+            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
+            case TARGET_OPPONENT -> {
+                // A combat-damage trigger binds the damaged player as the target; otherwise
+                // (Grimoire Thief) the single opponent is the only legal target in a two-player game.
+                UUID opponentId = entry.getTargetId() != null && !entry.getTargetId().equals(controllerId)
+                        ? entry.getTargetId()
+                        : gameData.orderedPlayerIds.stream()
+                                .filter(id -> !id.equals(controllerId))
+                                .findFirst().orElse(null);
+                yield opponentId == null ? List.of() : List.of(opponentId);
+            }
+        };
+    }
+
+    private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
+                               Permanent sourcePermanent, UUID sourcePermanentId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null) {
+            return;
+        }
 
         int toExile = Math.min(e.count(), deck.size());
-        List<String> exiledNames = new ArrayList<>();
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
             if (e.faceDown()) {
-                exileService.exileCardFaceDown(gameData, controllerId, card, sourcePermanentId);
+                exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
             } else {
-                exileService.exileCard(gameData, controllerId, card, sourcePermanentId);
+                exileService.exileCard(gameData, playerId, card, sourcePermanentId);
             }
-            exiledNames.add(card.getName());
         }
 
-        if (!exiledNames.isEmpty()) {
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String visibility = e.faceDown() ? " face down (" : " (";
+        if (toExile > 0) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            // Card names are never listed: for a face-down exile that would leak information
+            // CR 406.3 keeps hidden.
+            String visibility = e.faceDown() ? " face down" : "";
             gameLogService.append(gameData, GameLog.builder()
                     .text(playerName + " exiles the top " + toExile + " card"
-                            + (toExile != 1 ? "s" : "") + " of their library" + visibility)
+                            + (toExile != 1 ? "s" : "") + " of their library" + visibility + " (")
                     .card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from library to {}",
                     gameData.id, playerName, toExile, sourcePermanent.getCard().getName());

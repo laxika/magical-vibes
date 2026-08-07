@@ -28,6 +28,7 @@ import java.util.List;
  * this artifact. Then if it has no omen counters on it, transform it.
  */
 @CardRegistration(set = "INR", collectorNumber = "85")
+@CardRegistration(set = "INR", collectorNumber = "459")
 public class SoulcipherBoard extends Card {
 
     public SoulcipherBoard() {

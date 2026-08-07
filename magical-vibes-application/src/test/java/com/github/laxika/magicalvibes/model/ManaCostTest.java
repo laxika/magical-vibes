@@ -421,6 +421,57 @@ class ManaCostTest {
         }
 
         @Test
+        @DisplayName("Two identical hybrid pips each spend their own mana")
+        void repeatedHybridPipsEachSpendMana() {
+            // {R/G}{R/G} (Burning-Tree Emissary): the two pips are identical, so a set-like
+            // collapse would charge for only one of them.
+            ManaCost cost = new ManaCost("{R/G}{R/G}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.RED, 1);
+            pool.add(ManaColor.GREEN, 1);
+
+            assertThat(cost.canPay(pool, 0)).isTrue();
+            cost.pay(pool, 0);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Context-aware pay spends mana for hybrid pips instead of leaving them free")
+        void contextAwarePaySpendsHybridPips() {
+            // The context overloads (used when casting a spell) must charge for hybrid symbols;
+            // otherwise a purely hybrid cost like Burning-Tree Emissary's {R/G}{R/G} costs nothing.
+            ManaCost cost = new ManaCost("{R/G}{R/G}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.RED, 1);
+            pool.add(ManaColor.GREEN, 1);
+            cost.pay(pool, 0, false, false, false, false, false);
+            assertThat(pool.getTotal()).isZero();
+
+            // The subtype/creature-spell context path is a separate implementation.
+            ManaPool restrictedCtxPool = new ManaPool();
+            restrictedCtxPool.add(ManaColor.RED, 1);
+            restrictedCtxPool.add(ManaColor.GREEN, 1);
+            cost.pay(restrictedCtxPool, 0, false, false, false, false, false, null, null, true);
+            assertThat(restrictedCtxPool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Context-aware pay still charges generic alongside a hybrid pip")
+        void contextAwarePayChargesGenericAndHybrid() {
+            ManaCost cost = new ManaCost("{1}{W/B}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.WHITE, 1);
+            pool.add(ManaColor.BLACK, 1);
+
+            cost.pay(pool, 0, false, false, false, false, false);
+
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
         @DisplayName("Context-aware canPay enforces a color hybrid pip (e.g. an activated ability cost)")
         void contextAwareCanPayEnforcesHybrid() {
             // The context overload (used by ability activation) must not treat {U/B} as free.

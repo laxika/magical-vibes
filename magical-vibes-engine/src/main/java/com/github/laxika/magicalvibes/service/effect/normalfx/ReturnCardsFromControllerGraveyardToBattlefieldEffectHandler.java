@@ -43,6 +43,9 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
 
         List<Card> matching = new ArrayList<>();
         for (Card card : graveyard) {
+            if (e.manaValueEqualsX() && card.getManaValue() != entry.getXValue()) {
+                continue;
+            }
             if (predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
                 matching.add(card);
             }

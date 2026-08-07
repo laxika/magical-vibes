@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "174")
+@CardRegistration(set = "INR", collectorNumber = "403")
 public class ThermoAlchemist extends Card {
 
     public ThermoAlchemist() {

@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -63,16 +61,6 @@ class TrueBelieverTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "True Believer");
-    }
-
-    @Test
-    @DisplayName("True Believer grants its controller shroud via static effect")
-    void grantsControllerShroudOnBattlefield() {
-        harness.addToBattlefield(player1, new TrueBeliever());
-
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.getCard().getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof GrantControllerShroudEffect);
     }
 
     @Test

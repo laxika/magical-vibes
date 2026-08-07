@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -969,7 +968,7 @@ class AbilityActivationServiceTest {
     class ActivateAbilityCounterCosts {
 
         @Test
-        @DisplayName("RemoveChargeCountersFromSourceCost: insufficient counters throws")
+        @DisplayName("RemoveCounterFromSourceCost(CHARGE): insufficient counters throws")
         void removeChargeCountersInsufficientThrows() {
             Card card = createArtifactWithChargeCounterAbility(3);
             Permanent perm = addReadyPermanent(player1Id, card);
@@ -981,11 +980,11 @@ class AbilityActivationServiceTest {
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Not enough charge counters");
+                    .hasMessageContaining("Not enough counters to remove");
         }
 
         @Test
-        @DisplayName("RemoveChargeCountersFromSourceCost: removes exactly the required count")
+        @DisplayName("RemoveCounterFromSourceCost(CHARGE): removes exactly the required count")
         void removeChargeCountersExactCount() {
             Card card = createArtifactWithChargeCounterAbility(3);
             Permanent perm = addReadyPermanent(player1Id, card);
@@ -1733,7 +1732,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new RemoveChargeCountersFromSourceCost(requiredCount), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                true, null, List.of(new RemoveCounterFromSourceCost(requiredCount, CounterType.CHARGE), new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Remove charge counters"
         ));
         return card;

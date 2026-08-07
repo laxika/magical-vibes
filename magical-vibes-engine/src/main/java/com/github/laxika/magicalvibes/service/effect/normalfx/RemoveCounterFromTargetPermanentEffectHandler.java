@@ -20,6 +20,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,13 +35,10 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
-        // Specific counter type ("remove a -1/-1 counter"): remove one of exactly that type, no-op if none.
+        // Specific counter type ("remove a -1/-1 counter", "remove up to four charge counters"):
+        // remove as many of exactly that type as are there, up to the effect's amount.
         if (e.counterType() != null) {
-            if (target.getCounterCount(e.counterType()) > 0) {
-                target.setCounterCount(e.counterType(), target.getCounterCount(e.counterType()) - 1);
-                gameLogService.append(gameData, GameLog.textCardText("A " + e.counterType() + " counter removed from ", target.getCard(), "."));
-                log.info("Game {} - {} counter removed from {}", gameData.id, e.counterType(), target.getCard().getName());
-            }
+            removeUpTo(gameData, target, e.counterType(), e.amount());
             return;
         }
 
@@ -49,12 +47,26 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
             }
-            if (target.getCounterCount(counterType) > 0) {
-                target.setCounterCount(counterType, target.getCounterCount(counterType) - 1);
-                gameLogService.append(gameData, GameLog.textCardText("A " + counterType + " counter removed from " , target.getCard(), "."));
-                log.info("Game {} - {} counter removed from {}", gameData.id, counterType, target.getCard().getName());
+            if (removeUpTo(gameData, target, counterType, e.amount())) {
                 return;
             }
         }
+    }
+
+    /** Removes up to {@code amount} counters of one type; returns whether any came off. */
+    private boolean removeUpTo(GameData gameData, Permanent target, CounterType counterType, int amount) {
+        int removed = Math.min(amount, target.getCounterCount(counterType));
+        if (removed <= 0) {
+            return false;
+        }
+
+        target.setCounterCount(counterType, target.getCounterCount(counterType) - removed);
+        String counterName = permanentCounterSupport.counterTypeName(counterType);
+        String prefix = removed == 1
+                ? "A " + counterName + " counter removed from "
+                : removed + " " + counterName + " counters removed from ";
+        gameLogService.append(gameData, GameLog.textCardText(prefix, target.getCard(), "."));
+        log.info("Game {} - {} {} counter(s) removed from {}", gameData.id, removed, counterType, target.getCard().getName());
+        return true;
     }
 }

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -280,7 +281,10 @@ public class TargetLegalityService {
                 // "Return up to N target [type] cards from your graveyard to your hand" (Soul of
                 // Innistrad) — no more than N distinct cards, each in the controller's own graveyard
                 // and matching the filter.
-                if (targetCardIds.size() > returnCardsEffect.maxTargets()) {
+                // A dynamic cap (Reap) is computed and enforced at cast time by the multi-graveyard
+                // choice itself — there is no fixed number to check against here.
+                if (returnCardsEffect.dynamicMaxTargets() == null
+                        && targetCardIds.size() > returnCardsEffect.maxTargets()) {
                     throw new IllegalStateException("Cannot target more than "
                             + returnCardsEffect.maxTargets() + " cards");
                 }
@@ -493,10 +497,12 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
-                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage(),
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
-                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage(),
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
             }
         }
 
@@ -1166,10 +1172,12 @@ public class TargetLegalityService {
                 return false;
             }
             if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
-                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, playerFilter.predicate());
+                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, playerFilter.predicate(),
+                        entry.getSourcePermanentId());
             }
             if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
-                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, anyFilter.playerPredicate());
+                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, anyFilter.playerPredicate(),
+                        entry.getSourcePermanentId());
             }
             return true;
         }
@@ -1393,7 +1401,10 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (targetController != null && !targetController.equals(sourcePlayerId)) {
+        // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
+        boolean hexproofLifted = gameQueryService.isCreature(gameData, target)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId);
+        if (!hexproofLifted && targetController != null && !targetController.equals(sourcePlayerId)) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
                     || gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
@@ -1566,7 +1577,12 @@ public class TargetLegalityService {
     }
 
     private void validatePlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {
-        if (!matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate)) {
+        validatePlayerPredicate(gameData, controllerId, targetPlayerId, predicate, errorMessage, null);
+    }
+
+    private void validatePlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
+                                         PlayerPredicate predicate, String errorMessage, UUID sourcePermanentId) {
+        if (!matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, sourcePermanentId)) {
             throw new IllegalStateException(errorMessage);
         }
     }
@@ -1945,6 +1961,17 @@ public class TargetLegalityService {
      * known controller should do.
      */
     public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
+        return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, null);
+    }
+
+    /**
+     * Source-aware overload. {@code sourcePermanentId} is the permanent the spell or ability came
+     * from, needed by source-relative predicates such as
+     * {@link PlayerDamagedBySourceThisTurnPredicate}; a {@code null} source matches no player for
+     * those, so a targeting path that cannot supply one rejects rather than over-allows.
+     */
+    public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
+                                          PlayerPredicate predicate, UUID sourcePermanentId) {
         return switch (predicate) {
             case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;
@@ -1955,6 +1982,41 @@ public class TargetLegalityService {
                     gameData.playersDealtDamageThisTurn.contains(targetPlayerId);
             case PlayerLostLifeThisTurnPredicate ignored ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
+            case PlayerDamagedBySourceThisTurnPredicate ignored ->
+                    wasDamagedBySourceThisTurn(gameData, sourcePermanentId, targetPlayerId);
         };
+    }
+
+    private boolean wasDamagedBySourceThisTurn(GameData gameData, UUID sourcePermanentId, UUID targetPlayerId) {
+        if (sourcePermanentId == null) {
+            return false;
+        }
+        Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(sourcePermanentId);
+        Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(sourcePermanentId);
+        return (combatVictims != null && combatVictims.contains(targetPlayerId))
+                || (noncombatVictims != null && noncombatVictims.contains(targetPlayerId));
+    }
+
+    /**
+     * The battlefield permanent whose original card is {@code sourceCardId}, or {@code null} when
+     * the source is not (or no longer) on the battlefield. Source-relative player predicates key
+     * the per-turn damage records by permanent id, not card id.
+     */
+    UUID findSourcePermanentIdByCardId(GameData gameData, UUID sourceCardId) {
+        if (sourceCardId == null) {
+            return null;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getOriginalCard().getId().equals(sourceCardId)) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
     }
 }

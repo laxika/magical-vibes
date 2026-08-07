@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "102")
+@CardRegistration(set = "INR", collectorNumber = "376")
 public class CrawlFromTheCellar extends Card {
 
     public CrawlFromTheCellar() {

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -27,7 +27,7 @@ public class RingOfXathrid extends Card {
         ));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's black.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnEquippedCreatureEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
 
         // Equip {1}

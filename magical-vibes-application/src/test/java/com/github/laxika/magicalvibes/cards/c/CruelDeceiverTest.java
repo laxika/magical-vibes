@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -97,6 +98,23 @@ class CruelDeceiverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(spider);
+    }
+
+    @Test
+    @DisplayName("The reveal ability names the controller's own top card, never an opponent's")
+    void revealReadsTheControllersOwnLibrary() {
+        addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals") && entry.contains("Forest"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(entry -> entry.contains("Grizzly Bears"));
     }
 
     @Test

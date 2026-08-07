@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.cards.a.AjaniOutlandChaperone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,6 +51,9 @@ class RadiatingLightningTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).hasSize(2);
         assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
+        // Radiating Lightning has no "attacks this turn if able" rider — Aggravate's flag must not
+        // ride along on every card sharing the effect.
+        assertThat(battlefield).noneMatch(Permanent::isMustAttackThisTurn);
     }
 
     @Test
@@ -68,6 +73,28 @@ class RadiatingLightningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaves the target player's planeswalker alone — only creatures are damaged")
+    void leavesTheTargetPlayersPlaneswalkerAlone() {
+        harness.setLife(player2, 20);
+        Permanent ajani = new Permanent(new AjaniOutlandChaperone());
+        ajani.setCounterCount(CounterType.LOYALTY, 4);
+        ajani.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(ajani);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new RadiatingLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        // The Bear takes its 1 damage; the planeswalker keeps every loyalty counter.
+        assertThat(findPermanent(player2, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Ajani, Outland Chaperone");
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 
     // ===== Does not affect caster's creatures =====

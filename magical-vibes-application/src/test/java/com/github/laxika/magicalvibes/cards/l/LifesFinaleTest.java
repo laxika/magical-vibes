@@ -107,6 +107,27 @@ class LifesFinaleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Found creature lands only in the target's graveyard — not exile, not the caster's")
+    void foundCreatureLandsOnlyInTheTargetsGraveyard() {
+        Card bears = new GrizzlyBears();
+        gd.playerDecks.get(player2.getId()).clear();
+        gd.playerDecks.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new LifesFinale()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(bears.getId()));
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(bears.getId()));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Can choose up to three creature cards sequentially")
     void canChooseUpToThreeCreatures() {
         Card bears1 = new GrizzlyBears();

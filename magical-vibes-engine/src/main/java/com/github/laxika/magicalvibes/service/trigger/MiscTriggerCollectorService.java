@@ -11,11 +11,12 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
@@ -27,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
@@ -196,9 +197,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyEnchantedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDestroy(TriggerMatchContext match,
-            DestroyEnchantedPermanentEffect e, TriggerContext ctx) {
+            DestroyReferencedPermanentEffect e, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -235,9 +236,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnEnchantedCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapCounter(TriggerMatchContext match,
-            PutCounterOnEnchantedCreatureEffect e, TriggerContext ctx) {
+            PutCounterOnReferencedPermanentEffect e, TriggerContext ctx) {
         // The effect re-derives the enchanted creature from the source Aura at resolution, so the
         // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
         match.gameData().enqueueTrigger(new StackEntry(
@@ -474,9 +475,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleLandPutIntoGraveyardPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleLandPutIntoGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -491,7 +492,7 @@ public class MiscTriggerCollectorService {
         ));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (land put into graveyard, put counter on self)", gameData.id, cardName);
+        log.info("Game {} - {} triggers (land put into graveyard)", gameData.id, cardName);
         return true;
     }
 
@@ -513,6 +514,33 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = BecomeCopyOfCreatureCardInOpponentGraveyardEffect.class,
+            slot = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCreatureCardPutIntoOpponentGraveyardBecomeCopy(TriggerMatchContext match,
+            BecomeCopyOfCreatureCardInOpponentGraveyardEffect effect, TriggerContext ctx) {
+        // Lazav, Dimir Mastermind: the ability doesn't target and doesn't check the graveyard again on
+        // resolution, so bake the triggering card in and copy it as last-known information.
+        var gameData = match.gameData();
+        var triggeringCard = ((TriggerContext.CreatureCardPutIntoGraveyard) ctx).creatureCard();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(
+                        new BecomeCopyOfCreatureCardInOpponentGraveyardEffect(triggeringCard),
+                        "Become a copy of " + triggeringCard.getName() + "?"))),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (become a copy of {})", gameData.id, cardName, triggeringCard.getName());
         return true;
     }
 

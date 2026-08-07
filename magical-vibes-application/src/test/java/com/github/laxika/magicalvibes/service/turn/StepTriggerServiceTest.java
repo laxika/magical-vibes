@@ -53,7 +53,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -61,7 +63,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTransformedReturnService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -117,6 +121,9 @@ class StepTriggerServiceTest {
     private BattlefieldEntryService battlefieldEntryService;
 
     @Mock
+    private GraveyardTransformedReturnService graveyardTransformedReturnService;
+
+    @Mock
     private GraveyardTargetingService graveyardTargetingService;
 
     @Mock
@@ -133,6 +140,9 @@ class StepTriggerServiceTest {
 
     @Mock
     private GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
+
+    @Mock
+    private ETBTokenTargetService etbTokenTargetService;
 
     private StepTriggerService sut;
 
@@ -156,6 +166,7 @@ class StepTriggerServiceTest {
                 playerInputService,
                 permanentRemovalService,
                 battlefieldEntryService,
+                graveyardTransformedReturnService,
                 graveyardTargetingService,
                 graveyardService,
                 triggerCollectionService,
@@ -163,7 +174,8 @@ class StepTriggerServiceTest {
                 paradigmService,
                 validTargetService,
                 creatureControlService,
-                grantedUpkeepEffectSupport);
+                grantedUpkeepEffectSupport,
+                etbTokenTargetService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -478,6 +490,39 @@ class StepTriggerServiceTest {
             for (int i = 0; i < 5; i++) {
                 gd.playerGraveyards.get(player1Id).add(creatureCard());
             }
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Each-player life intervening-if triggers when every player is at or below the threshold")
+        void eachPlayerLifeTriggersWhenAllAtOrBelow() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Cryptolith Fragment");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new ConditionalEffect(new EachPlayerLifeAtMost(10), new TransformSelfEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerLifeTotals.put(player1Id, 10);
+            gd.playerLifeTotals.put(player2Id, 3);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("Cryptolith Fragment");
+        }
+
+        @Test
+        @DisplayName("Each-player life intervening-if does not trigger when one player is above the threshold")
+        void eachPlayerLifeDoesNotTriggerWhenOneAbove() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Cryptolith Fragment");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new ConditionalEffect(new EachPlayerLifeAtMost(10), new TransformSelfEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerLifeTotals.put(player1Id, 10);
+            gd.playerLifeTotals.put(player2Id, 11);
 
             sut.handleUpkeepTriggers(gd);
 

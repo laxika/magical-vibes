@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorceryOnlyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class ResonatingLute extends Card {
         ActivatedAbility landManaAbility = new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyOneColorInstantSorceryOnlyManaEffect(2)),
+                List.of(new AwardAnyColorManaEffect(2, ManaSpendRestriction.INSTANT_SORCERY_ONLY)),
                 "{T}: Add two mana of any one color. Spend this mana only to cast instant and sorcery spells."
         );
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

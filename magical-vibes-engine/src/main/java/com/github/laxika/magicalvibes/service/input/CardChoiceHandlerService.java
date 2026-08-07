@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaVal
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -722,11 +723,11 @@ public class CardChoiceHandlerService {
                 newValid.remove(Integer.valueOf(cardIndex));
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                         choice.decidingPlayerId(), targetPlayerId, choice.controllerId(), true,
-                        newValid, remaining, revealed, choice.discardCount()));
+                        newValid, remaining, revealed, choice.discardCount(), choice.destination()));
             } else {
                 gameData.interaction.clearAwaitingInput();
                 playerInteractionSupport.beginRevealCardsDiscardStage(gameData, targetPlayerId,
-                        choice.controllerId(), revealed, choice.discardCount());
+                        choice.controllerId(), revealed, choice.discardCount(), choice.destination());
             }
             return;
         }
@@ -745,7 +746,12 @@ public class CardChoiceHandlerService {
             Card card = targetHand.remove(handIndex);
             String controllerName = player.getUsername();
 
-            if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            if (choice.destination() == HandChoiceDestination.EXILE) {
+                exileService.exileCard(gameData, targetPlayerId, card);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        controllerName + " chooses ", card, " and exiles it from " + targetName + "'s hand."));
+                log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, controllerName, card.getName(), targetName);
+            } else if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
                 Permanent permanent = new Permanent(card);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
                 gameLogService.append(gameData, GameLog.textCardText(
@@ -772,7 +778,8 @@ public class CardChoiceHandlerService {
         remainingRevealed.remove(chosenId);
         if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
             playerInteractionSupport.beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId,
-                    choice.controllerId(), remainingRevealed, remainingDiscards, choice.discardCount());
+                    choice.controllerId(), remainingRevealed, remainingDiscards, choice.discardCount(),
+                    choice.destination());
             return;
         }
 

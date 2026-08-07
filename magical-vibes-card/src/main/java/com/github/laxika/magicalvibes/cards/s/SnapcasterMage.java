@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "78")
+@CardRegistration(set = "INR", collectorNumber = "478")
 public class SnapcasterMage extends Card {
 
     public SnapcasterMage() {

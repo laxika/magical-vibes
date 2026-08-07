@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -779,14 +780,37 @@ public abstract class AiDecisionEngine {
 
     /**
      * Returns the maximum X allowed by a {@link DiscardXCardsCost} additional cast cost (Abandon
-     * Hope): the hand size minus the spell itself, which cannot be discarded to pay for itself
-     * (CR 601.2a). Returns {@link Integer#MAX_VALUE} when the card has no such cost.
+     * Hope): how many hand cards other than the spell itself can pay it, since a spell cannot be
+     * discarded to pay for itself (CR 601.2a). A cost predicate ("discard X land cards" — Scorched
+     * Earth) narrows the count further. Returns {@link Integer#MAX_VALUE} when the card has no such
+     * cost.
      */
     protected int getMaxXForDiscardCost(GameData gameData, Card card) {
-        if (card.getEffects(EffectSlot.SPELL).stream().noneMatch(DiscardXCardsCost.class::isInstance)) {
+        DiscardXCardsCost cost = findDiscardXCardsCost(card);
+        if (cost == null) {
             return Integer.MAX_VALUE;
         }
-        return Math.max(0, gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of()).size() - 1);
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        if (cost.predicate() == null) {
+            return Math.max(0, hand.size() - 1);
+        }
+        // The spell is still in hand here, but it can never match a cost that excludes it; when it
+        // does match, one copy must be reserved for the spell being cast.
+        long matching = hand.stream()
+                .filter(c -> predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), c.getId()))
+                .count();
+        if (predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), card.getId())) {
+            matching--;
+        }
+        return (int) Math.max(0, matching);
+    }
+
+    private DiscardXCardsCost findDiscardXCardsCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardXCardsCost.class::isInstance)
+                .map(DiscardXCardsCost.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -795,13 +819,16 @@ public abstract class AiDecisionEngine {
      * empty for every other spell.
      */
     protected List<Integer> chooseDiscardXCostIndices(GameData gameData, Card card, int cardIndex, int count) {
-        if (card.getEffects(EffectSlot.SPELL).stream().noneMatch(DiscardXCardsCost.class::isInstance)) {
+        DiscardXCardsCost cost = findDiscardXCardsCost(card);
+        if (cost == null) {
             return null;
         }
         List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
         List<Integer> indices = new java.util.ArrayList<>();
         for (int i = 0; i < hand.size() && indices.size() < count; i++) {
-            if (i != cardIndex) {
+            Card candidate = hand.get(i);
+            if (i != cardIndex && (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(candidate, cost.predicate(), candidate.getId()))) {
                 indices.add(i);
             }
         }
@@ -1197,7 +1224,9 @@ public abstract class AiDecisionEngine {
                     return false;
                 }
             }
-            if (effect instanceof TapXPermanentsCost) {
+            // A tap cost whose count is not a flat number is announced as X at activation, which the
+            // AI has no way to choose (Aryel, Knight of Windgrace). Fixed-count tap costs are fine.
+            if (effect instanceof TapMultiplePermanentsCost tapCost && !(tapCost.count() instanceof Fixed)) {
                 return false;
             }
         }

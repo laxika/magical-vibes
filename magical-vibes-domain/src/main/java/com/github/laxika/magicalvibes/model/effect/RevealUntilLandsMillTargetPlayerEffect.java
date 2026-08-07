@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
  * A player reveals cards from the top of their library until {@code landCount} land cards are
  * revealed (or the library empties). That player puts all cards revealed this way into their
@@ -13,11 +16,22 @@ package com.github.laxika.magicalvibes.model.effect;
  * owns the permanent target and list this effect first, while the permanent is still on the
  * battlefield — Destroy the Evidence ({@code landCount = 1}).
  * {@link MillRecipient#EACH_OPPONENT} reveals for every player other than the effect's controller
- * and adds no target of its own — Consuming Aberration ({@code landCount = 1}).
+ * and adds no target of its own — Consuming Aberration ({@code landCount = 1}), Mind Grind
+ * ({@code landCount = new XValue()}).
+ * <p>
+ * {@code landCount} is a {@link DynamicAmount} so the land count can come from the spell's paid X.
  */
-public record RevealUntilLandsMillTargetPlayerEffect(int landCount, MillRecipient recipient) implements CardEffect {
+public record RevealUntilLandsMillTargetPlayerEffect(DynamicAmount landCount, MillRecipient recipient) implements CardEffect {
 
     public RevealUntilLandsMillTargetPlayerEffect(int landCount) {
+        this(new Fixed(landCount), MillRecipient.TARGET_PLAYER);
+    }
+
+    public RevealUntilLandsMillTargetPlayerEffect(int landCount, MillRecipient recipient) {
+        this(new Fixed(landCount), recipient);
+    }
+
+    public RevealUntilLandsMillTargetPlayerEffect(DynamicAmount landCount) {
         this(landCount, MillRecipient.TARGET_PLAYER);
     }
 

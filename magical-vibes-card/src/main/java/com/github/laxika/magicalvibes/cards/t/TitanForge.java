@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +30,7 @@ public class TitanForge extends Card {
                 true,
                 null,
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(3),
+                        new RemoveCounterFromSourceCost(3, CounterType.CHARGE),
                         new CreateTokenEffect("Golem", 9, 9, null,
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))
                 ),

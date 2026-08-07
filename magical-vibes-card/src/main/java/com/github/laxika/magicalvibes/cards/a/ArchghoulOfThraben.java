@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "95")
+@CardRegistration(set = "INR", collectorNumber = "370")
 public class ArchghoulOfThraben extends Card {
 
     private static final LookAtTopCardMayRevealMatchingToHandEffect LOOK =

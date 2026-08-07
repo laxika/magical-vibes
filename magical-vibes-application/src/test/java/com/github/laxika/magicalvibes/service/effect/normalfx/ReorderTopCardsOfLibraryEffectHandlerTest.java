@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -154,5 +155,48 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1Id);
                 verifyNoInteractions(sessionManager);
+            }
+
+            @Test
+            @DisplayName("Controller owner reorders the controller's own library even when the entry carries a target")
+            void controllerOwnerIgnoresTargetId() {
+                stubCardViewFactory();
+                gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+                gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+
+                ReorderTopCardsOfLibraryEffect effect = new ReorderTopCardsOfLibraryEffect(2);
+                StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Discombobulate"),
+                        player1Id, "Discombobulate", List.of(effect), 0,
+                        player2Id, null);
+
+                reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                PendingInteraction.LibraryReorder reorder =
+                        gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+                assertThat(reorder.deckOwnerId()).isEqualTo(player1Id);
+                assertThat(gd.playerDecks.get(player2Id)).isEmpty();
+            }
+
+            @Test
+            @DisplayName("Target-player owner takes the cards from the target's library, decided by the controller")
+            void targetPlayerOwnerReadsTargetLibrary() {
+                stubCardViewFactory();
+                gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
+                gd.playerDecks.get(player2Id).add(createCard("Llanowar Elves"));
+
+                ReorderTopCardsOfLibraryEffect effect =
+                        new ReorderTopCardsOfLibraryEffect(2, LibraryOwner.TARGET_PLAYER);
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Portent"),
+                        player1Id, "Portent", List.of(effect), 0,
+                        player2Id, null);
+
+                reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                PendingInteraction.LibraryReorder reorder =
+                        gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+                assertThat(reorder.playerId()).isEqualTo(player1Id);
+                assertThat(reorder.deckOwnerId()).isEqualTo(player2Id);
+                assertThat(reorder.cards()).hasSize(2);
+                assertThat(gd.playerDecks.get(player2Id)).isEmpty();
             }
 }

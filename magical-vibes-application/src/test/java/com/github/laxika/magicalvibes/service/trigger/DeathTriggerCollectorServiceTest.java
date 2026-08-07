@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeDyingSourceCountersAmongControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -34,7 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -74,6 +75,9 @@ class DeathTriggerCollectorServiceTest {
 
     @Mock
     private GameLogService gameLogService;
+
+    @Mock
+    private com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
 
     @InjectMocks
     private DeathTriggerCollectorService svc;
@@ -213,24 +217,24 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("handleDistributeDyingSourceCountersAmongControlledCreatures")
-    class DistributeDyingSourceCounters {
+    @DisplayName("handleDistributeCountersAmongCreaturesOnDeath")
+    class DistributeCountersAmongCreaturesOnDeath {
 
         @Test
         @DisplayName("Snapshots counter count and stacks a MayEffect")
         void snapshotsAndStacksMay() {
             Card card = createCreature("Hydra", 0, 0);
-            var effect = new DistributeDyingSourceCountersAmongControlledCreaturesEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE);
+            var effect = DistributeCountersAmongCreaturesOnDeathEffect
+                    .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE);
             Permanent perm = new Permanent(card);
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
-            assertThat(svc.handleDistributeDyingSourceCountersAmongControlledCreatures(
+            assertThat(svc.handleDistributeCountersAmongCreaturesOnDeath(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             MayEffect may = (MayEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            var baked = (DistributeDyingSourceCountersAmongControlledCreaturesEffect) may.wrapped();
+            var baked = (DistributeCountersAmongCreaturesOnDeathEffect) may.wrapped();
             assertThat(baked.count()).isEqualTo(3);
             assertThat(baked.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
         }
@@ -239,12 +243,12 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("Does not trigger when dying permanent is null")
         void noPermanent() {
             Card card = createCreature("Hydra", 0, 0);
-            var effect = new DistributeDyingSourceCountersAmongControlledCreaturesEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE);
+            var effect = DistributeCountersAmongCreaturesOnDeathEffect
+                    .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE);
             Permanent perm = new Permanent(card);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
 
-            assertThat(svc.handleDistributeDyingSourceCountersAmongControlledCreatures(
+            assertThat(svc.handleDistributeCountersAmongCreaturesOnDeath(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
@@ -466,7 +470,7 @@ class DeathTriggerCollectorServiceTest {
             Card equipment = createEquipment("Death Sword");
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(equipment);
-            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -480,7 +484,7 @@ class DeathTriggerCollectorServiceTest {
             Card equipment = createEquipment("Target Sword");
             var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
             Permanent perm = new Permanent(equipment);
-            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
@@ -494,11 +498,80 @@ class DeathTriggerCollectorServiceTest {
             Card equipment = createEquipment("Trigger Blade");
             var effect = new DrawCardEffect(1);
             Permanent perm = new Permanent(equipment);
-            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Trigger Blade") && logEntry.plainText().contains("equipped creature died")));
+        }
+    }
+
+    @Nested
+    @DisplayName("handleEquippedCreatureReturn")
+    class EquippedCreatureReturn {
+
+        @Test
+        @DisplayName("Binds the dying card and carries the source Equipment as the entry's target")
+        void bindsDyingCardAndSource() {
+            Card equipment = createEquipment("Oathkeeper");
+            Card dying = createCreature("Samurai", 3, 3);
+            Permanent perm = new Permanent(equipment);
+            var effect = new ReturnDyingCreatureToBattlefieldEffect(false);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
+
+            svc.handleEquippedCreatureReturn(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getTargetId()).isEqualTo(perm.getId());
+            var bound = (ReturnDyingCreatureToBattlefieldEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(bound.attachSource()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not fire without a dying card")
+        void noDyingCard() {
+            Card equipment = createEquipment("Oathkeeper");
+            Permanent perm = new Permanent(equipment);
+            var effect = new ReturnDyingCreatureToBattlefieldEffect(false);
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
+
+            assertThat(svc.handleEquippedCreatureReturn(match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("handleExileEquippedCreature")
+    class ExileEquippedCreature {
+
+        @Test
+        @DisplayName("Binds the Equipment's last-known attachment")
+        void bindsLastKnownAttachment() {
+            Card equipment = createEquipment("Oathkeeper");
+            Permanent perm = new Permanent(equipment);
+            UUID equippedId = UUID.randomUUID();
+            perm.setAttachedTo(equippedId);
+            var effect = new ExileEquippedCreatureEffect();
+            var ctx = new TriggerContext.SelfDeath(equipment, PLAYER1_ID, false, perm);
+
+            svc.handleExileEquippedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            var bound = (ExileEquippedCreatureEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(bound.equippedCreatureId()).isEqualTo(equippedId);
+        }
+
+        @Test
+        @DisplayName("Does not fire when the Equipment was unattached")
+        void unattachedDoesNotFire() {
+            Card equipment = createEquipment("Oathkeeper");
+            Permanent perm = new Permanent(equipment);
+            var effect = new ExileEquippedCreatureEffect();
+            var ctx = new TriggerContext.SelfDeath(equipment, PLAYER1_ID, false, perm);
+
+            assertThat(svc.handleExileEquippedCreature(match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 
@@ -1048,7 +1121,7 @@ class DeathTriggerCollectorServiceTest {
         void returnTriggerFiresWhenInGraveyard() {
             Card dying = createCreature("Dead Creature", 2, 2);
             Card deathmantle = createEquipment("Nim Deathmantle");
-            var returnEffect = new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect();
+            var returnEffect = new ReturnDyingCreatureToBattlefieldEffect(true);
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
             gd.playerGraveyards.get(PLAYER1_ID).add(dying);
@@ -1064,7 +1137,7 @@ class DeathTriggerCollectorServiceTest {
         void returnTriggerDoesNotFireWhenNotInGraveyard() {
             Card dying = createCreature("Dead Creature", 2, 2);
             Card deathmantle = createEquipment("Nim Deathmantle");
-            var returnEffect = new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect();
+            var returnEffect = new ReturnDyingCreatureToBattlefieldEffect(true);
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
@@ -1077,7 +1150,7 @@ class DeathTriggerCollectorServiceTest {
         void returnTriggerNullGraveyard() {
             Card dying = createCreature("Dead Creature", 2, 2);
             Card deathmantle = createEquipment("Nim Deathmantle");
-            var returnEffect = new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect();
+            var returnEffect = new ReturnDyingCreatureToBattlefieldEffect(true);
             var rawMayPay = new MayPayManaEffect("{4}", returnEffect, "Pay 4?");
             Permanent perm = new Permanent(deathmantle);
             gd.playerGraveyards.remove(PLAYER1_ID);

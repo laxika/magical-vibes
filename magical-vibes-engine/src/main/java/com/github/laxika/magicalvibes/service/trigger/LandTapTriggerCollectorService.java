@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
@@ -20,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSu
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -31,10 +30,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +57,7 @@ public class LandTapTriggerCollectorService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentControlSupport permanentControlSupport;
 
     @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
@@ -145,11 +146,12 @@ public class LandTapTriggerCollectorService {
         ManaProducingEffect mana = trigger.mana();
 
         if (mana instanceof AwardAnyColorManaEffect anyColor) {
-            ChoiceContext.ManaColorChoice choiceContext =
-                    new ChoiceContext.ManaColorChoice(tappingPlayerId, false, anyColor.amount());
-            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                    tappingPlayerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+            int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(),
+                    new AmountContext(tappingPlayerId, null, null, 0, 0));
+            if (!AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
+                    tappingPlayerId, anyColor, amount, false, null)) {
+                return false;
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                     " triggers — " + playerName + " chooses a color of mana to add."));
@@ -358,6 +360,30 @@ public class LandTapTriggerCollectorService {
 
         gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 " triggers — ", tappedLand.getCard(), " is returned to its owner's hand."));
+        return true;
+    }
+
+    /**
+     * "Whenever you tap this land for mana, target opponent creates ..." (Forbidden Orchard). Only the
+     * source land's own taps by its own controller count, and the tokens go to that controller's
+     * opponent — the sole legal target for the "target opponent" clause in a two-player game.
+     */
+    @CollectsTrigger(value = CreateTokenForTargetPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleCreateTokenForOpponentOnSelfTapped(TriggerMatchContext match,
+            CreateTokenForTargetPlayerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (!match.permanent().getId().equals(lt.tappedLandId())) return false;
+        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        UUID opponentId = gameQueryService.getOpponentId(match.gameData(), match.controllerId());
+        if (opponentId == null) return false;
+
+        permanentControlSupport.applyCreateToken(match.gameData(), opponentId, trigger.tokenEffect(),
+                match.permanent().getCard().getSetCode());
+
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(opponentId)
+                        + " creates a " + trigger.tokenEffect().tokenName() + " token."));
         return true;
     }
 

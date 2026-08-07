@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
@@ -30,7 +31,7 @@ public class CallousDeceiver extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new RevealTopCardOfOwnLibraryEffect(),
+                        new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 SequenceEffect.of(

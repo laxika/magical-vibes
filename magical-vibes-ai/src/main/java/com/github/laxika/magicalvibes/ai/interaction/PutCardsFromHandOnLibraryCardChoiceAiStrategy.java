@@ -33,10 +33,15 @@ class PutCardsFromHandOnLibraryCardChoiceAiStrategy
         // Always answer, even with nothing to pick — an empty CardsChosen lets the engine
         // resolve the (then impossible) requirement instead of hanging the game.
         List<Card> cards = interaction.cards() != null ? interaction.cards() : List.of();
+
+        // Scroll Rack's "any number" would otherwise let the baseline pick the whole hand and
+        // reshuffle everything blind; one card keeps the swap a targeted upgrade.
+        int limit = interaction.swapWithLibraryTop() ? 1 : Math.max(interaction.maxCount(), 0);
+
         List<UUID> chosen = cards.stream()
                 .filter(c -> interaction.validCardIds().contains(c.getId()))
                 .sorted(Comparator.comparingInt(Card::getManaValue).reversed())
-                .limit(Math.max(interaction.maxCount(), 0))
+                .limit(limit)
                 .map(Card::getId)
                 .toList();
 

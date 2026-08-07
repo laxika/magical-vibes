@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -112,6 +114,33 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Artifact creature spells are reduced too — an artifact creature is a creature spell (CR 205.2b)")
+    void artifactCreatureSpellsAreReduced() {
+        harness.addToBattlefield(player1, new HeartlessSummoning());
+        // Juggernaut is an Artifact Creature costing {4}; with the {2} reduction it costs {2}.
+        harness.setHand(player1, List.of(new Juggernaut()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Juggernaut");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Artifact spells that are not creatures are not reduced")
+    void nonCreatureArtifactSpellsNotReduced() {
+        harness.addToBattlefield(player1, new HeartlessSummoning());
+        // Angel's Feather is a plain {2} artifact — no creature type, so no reduction.
+        harness.setHand(player1, List.of(new AngelsFeather()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -8,8 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>The decision belongs to the active player (who controls the creature — the target filter
  * restricts it to a creature they have controlled continuously since the beginning of the turn).
  * Declining, or being unable to pay, applies both halves of the penalty, which are the same
- * effects Norritt applies unconditionally ({@link MustAttackThisTurnEffect} with
- * {@code forceAttackController = false} plus {@link DestroyTargetIfDidNotAttackAtEndStepEffect}).
+ * effects Norritt applies unconditionally ({@link SetCombatRequirementThisTurnEffect} with
+ * {@link CombatRequirement#MUST_ATTACK} plus {@link DestroyTargetIfDidNotAttackAtEndStepEffect}).
  *
  * <p>Used by Arcum's Whistle.
  */

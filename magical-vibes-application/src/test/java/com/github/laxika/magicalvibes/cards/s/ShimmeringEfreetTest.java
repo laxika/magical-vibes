@@ -35,6 +35,9 @@ class ShimmeringEfreetTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(bears);
+        // The chosen target phases out, never the Efreet that granted the ability.
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(efreet);
     }
 
     @Test

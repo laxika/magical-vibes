@@ -26,13 +26,19 @@ public class MakeAllCreaturesUnblockableEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        boolean controllerOnly = ((MakeAllCreaturesUnblockableEffect) effect).controllerOnly();
         gameData.forEachPermanent((playerId, perm) -> {
+            if (controllerOnly && !playerId.equals(entry.getControllerId())) {
+                return;
+            }
             if (gameQueryService.isCreature(gameData, perm)) {
                 perm.setCantBeBlocked(true);
             }
         });
 
-        String logEntry = "Creatures can't be blocked this turn.";
+        String logEntry = controllerOnly
+                ? "Creatures its controller controls can't be blocked this turn."
+                : "Creatures can't be blocked this turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - All creatures can't be blocked this turn", gameData.id);
     }

@@ -91,6 +91,10 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
+        // The countered spell occupies the entry's targetId, so an own-library reorder must not
+        // read it: the caster looks at their own library, not the target's.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).deckOwnerId())
+                .isEqualTo(player2.getId());
     }
 
     @Test

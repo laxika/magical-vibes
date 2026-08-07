@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNam
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBlockUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
@@ -46,18 +46,20 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantBeBlockedUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
+import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
@@ -101,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
@@ -115,8 +118,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -294,6 +296,23 @@ public class GameQueryService {
         if (bf == null) return false;
         for (Permanent perm : bf) {
             if (perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The keyword-matching sibling of {@link #playerBattlefieldHasStaticEffect}: {@code true} when the
+     * player controls a permanent whose STATIC slot grants them {@code keyword}.
+     */
+    private boolean playerBattlefieldGrantsControllerKeyword(GameData gameData, UUID playerId, Keyword keyword) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof GrantControllerKeywordEffect grant
+                            && grant.keyword() == keyword)) {
                 return true;
             }
         }
@@ -1365,6 +1384,28 @@ public class GameQueryService {
                 .anyMatch(e -> e instanceof TargetingRestrictionEffect r
                         && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
                         && r.mode() == TargetColorMode.ANY);
+    }
+
+    /**
+     * Returns {@code true} if {@code controllerId} controls a permanent whose static effects let
+     * them target opponents' hexproof creatures as though they didn't have hexproof (Glaring
+     * Spotlight). Only hexproof is lifted — shroud and protection still apply.
+     */
+    public boolean ignoresOpponentCreatureHexproof(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -3191,19 +3232,20 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player has shroud (cannot be the target of spells or
-     * abilities), granted by a permanent they control with {@link GrantControllerShroudEffect}.
+     * abilities), granted by a permanent they control with a {@link GrantControllerKeywordEffect}
+     * for {@link Keyword#SHROUD}.
      */
     public boolean playerHasShroud(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerShroudEffect.class);
+        return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.SHROUD);
     }
 
     /**
      * Returns {@code true} if the player has hexproof (cannot be the target of spells or
      * abilities opponents control), granted by a permanent they control with
-     * {@link GrantControllerHexproofEffect}.
+     * a {@link GrantControllerKeywordEffect} for {@link Keyword#HEXPROOF}.
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerHexproofEffect.class);
+        return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
     }
 
     /**
@@ -3508,11 +3550,22 @@ public class GameQueryService {
      * An Aura whose effects are being ignored this turn (Volrath's Curse) is skipped entirely.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
+        return hasAuraWithEffect(gameData, creature, effectClass::isInstance);
+    }
+
+    /**
+     * Predicate-matching form of {@link #hasAuraWithEffect(GameData, Permanent, Class)}, for effects
+     * where the class alone is not the question — a parameterized restriction such as
+     * {@link EnchantedCreatureCantAttackOrBlockEffect} must also be asked which half of it applies.
+     * The matcher sees only effects that are actually active, so it never has to repeat the
+     * attachment, ignored-Aura or {@link EnchantedPermanentConditionalEffect} handling.
+     */
+    public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Predicate<CardEffect> effectMatcher) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && !p.isAuraEffectsIgnoredThisTurn()
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
+                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectMatcher)));
     }
 
     /**
@@ -3586,7 +3639,7 @@ public class GameQueryService {
 
     /**
      * Returns the total additional generic mana the controller must pay to declare this creature as an
-     * attacker: every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it (e.g.
+     * attacker: every {@link CombatTaxKind#ATTACK} aura attached to it (e.g.
      * Brainwash — {3}) plus every {@link AttackCostEffect} on the creature itself (e.g. Phyrexian
      * Marauder — {1} per +1/+1 counter).
      */
@@ -3602,56 +3655,44 @@ public class GameQueryService {
 
     /**
      * Returns the total additional generic mana the controller must pay to declare this creature as an
-     * attacker, summed over every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it
+     * attacker, summed over every {@link CombatTaxKind#ATTACK} Aura attached to it
      * (e.g. Brainwash — {3}).
      */
     public int getEnchantedCreatureAttackTax(GameData gameData, Permanent creature) {
-        int[] total = {0};
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantAttackUnlessPaysEffect tax) {
-                    total[0] += tax.amount();
-                }
-            }
-        });
-        return total[0];
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.ATTACK);
     }
 
     /**
      * Returns the additional generic mana the defending player must pay for each creature they declare as a
-     * blocker of this attacking creature, summed over every
-     * {@link EnchantedCreatureCantBeBlockedUnlessPaysEffect} aura attached to it (e.g. Awesome Presence — {3}).
+     * blocker of this attacking creature, summed over every {@link CombatTaxKind#BE_BLOCKED_BY} Aura
+     * attached to it (e.g. Awesome Presence — {3}).
      */
     public int getEnchantedCreatureBlockTax(GameData gameData, Permanent creature) {
-        int[] total = {0};
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantBeBlockedUnlessPaysEffect tax) {
-                    total[0] += tax.amountPerBlocker();
-                }
-            }
-        });
-        return total[0];
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.BE_BLOCKED_BY);
     }
 
     /**
      * Returns the additional generic mana the enchanted creature's controller must pay for each
-     * block declared by that creature, summed over every matching Aura attached to it.
+     * block declared by that creature, summed over every {@link CombatTaxKind#BLOCK_WITH} Aura
+     * attached to it (e.g. Oppressive Rays — {3}).
      */
     public int getEnchantedCreatureBlockerTax(GameData gameData, Permanent creature) {
+        return getEnchantedCreatureCombatTax(gameData, creature, CombatTaxKind.BLOCK_WITH);
+    }
+
+    /**
+     * Sums the {@link EnchantedCreatureCombatTaxEffect} amounts of the given {@code kind} across every
+     * Aura attached to {@code creature}. Auras carrying a different kind contribute nothing, so a card
+     * taxing several actions at once (Oppressive Rays) is charged once per action.
+     */
+    private int getEnchantedCreatureCombatTax(GameData gameData, Permanent creature, CombatTaxKind kind) {
         int[] total = {0};
         gameData.forEachPermanent((playerId, aura) -> {
             if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
                 return;
             }
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EnchantedCreatureCantBlockUnlessPaysEffect tax) {
+                if (effect instanceof EnchantedCreatureCombatTaxEffect tax && tax.kind() == kind) {
                     total[0] += tax.amount();
                 }
             }
@@ -3703,13 +3744,14 @@ public class GameQueryService {
         return total[0];
     }
 
-    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
-        if (effectClass.isInstance(effect)) return true;
+    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect,
+                                   Predicate<CardEffect> effectMatcher) {
+        if (effectMatcher.test(effect)) return true;
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
             CardEffect activeEffect = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
-            return effectClass.isInstance(activeEffect);
+            return activeEffect != null && effectMatcher.test(activeEffect);
         }
         return false;
     }
@@ -3976,6 +4018,30 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the flat bonus added to damage a source with any of {@code sourceColors} would deal to a
+     * player, from {@link AdditionalDamageToPlayersFromColorSourcesEffect} permanents anywhere on the
+     * battlefield (Tok-Tok, Volcano Born). Multiple instances stack additively. Returns {@code 0} when
+     * no such permanent is on the battlefield or the source shares none of their colours.
+     *
+     * <p>Source-colour scoped, so it is applied at the two player damage entry points, where the source
+     * colours have already been resolved through {@link #getDamageSourceColor} (Ghostly Flame).
+     */
+    public int getDamageToPlayerColorSourceBonus(GameData gameData, Set<CardColor> sourceColors) {
+        if (sourceColors == null || sourceColors.isEmpty()) return 0;
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, p) -> {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
+                        && !Collections.disjoint(e.colors(), sourceColors)) {
+                    bonus[0] += e.amount();
+                }
+            }
+        });
+        return bonus[0];
+    }
+
+    /**
      * True if {@code playerId} is enchanted by a Curse carrying
      * {@link EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect} (Overwhelming Splendor):
      * that player may activate only mana abilities and loyalty abilities.
@@ -4011,6 +4077,17 @@ public class GameQueryService {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect.class);
+    }
+
+    /**
+     * True if {@code playerId} cannot cast spells because a
+     * {@link PlayersCanCastSpellsOnlyDuringOwnTurnEffect} (Dosan the Falling Leaf) is on the
+     * battlefield and it is not currently that player's turn. Activated abilities are unaffected.
+     */
+    public boolean isLockedOutByOwnTurnOnlySpellRestriction(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
+        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastSpellsOnlyDuringOwnTurnEffect.class);
     }
 
     /**

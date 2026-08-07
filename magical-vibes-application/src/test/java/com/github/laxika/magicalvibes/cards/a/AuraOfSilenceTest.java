@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -323,6 +324,29 @@ class AuraOfSilenceTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Angel's Feather");
         assertThat(harness.getGameData().playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Opponent's artifact creature spells are taxed — an artifact creature is an artifact spell (CR 205.2b)")
+    void opponentArtifactCreaturesCostMore() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Juggernaut()));
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        // Juggernaut is {4}; with the tax it needs {6}, so 5 mana is not enough.
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Juggernaut");
     }
 
     @Test

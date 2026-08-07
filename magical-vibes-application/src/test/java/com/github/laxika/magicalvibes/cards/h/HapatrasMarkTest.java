@@ -35,6 +35,20 @@ class HapatrasMarkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the targeted creature's counters come off")
+    void leavesTheUntargetedCreaturesCountersAlone() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bystander.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        castResolve(target);
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(bystander.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Hexproof wears off at end of turn")
     void hexproofWearsOff() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

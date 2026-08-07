@@ -186,6 +186,16 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.MoveCountersAmountChoice) {
+            // Bioshift: options are 0..N counters. Move them all — the AI only casts it when it
+            // wants the counters on the second creature.
+            List<String> options = interaction.options();
+            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
+            log.info("AI: Moving {} counters between creatures in game {}", chosenNumber, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenNumber));
+            return;
+        }
+
         if (context instanceof ChoiceContext.RemoveCountersForManaChoice) {
             // Storage land mana ability: options are 0..N storage counters. Remove them all for the
             // most mana (the AI only activates the ability when it wants the mana).

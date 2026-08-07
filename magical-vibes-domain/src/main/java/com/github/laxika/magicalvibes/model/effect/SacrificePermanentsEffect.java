@@ -34,7 +34,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                  <em>they</em> control" (Omen of Fire)
  */
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
-        SacrificeRecipient recipient, boolean countPerSacrificingPlayer) implements CardEffect {
+        SacrificeRecipient recipient, boolean countPerSacrificingPlayer)
+        implements CardEffect, CombatDamageTriggerContextEffect {
 
     /** Count evaluated once, from the spell's controller's perspective. */
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
@@ -54,5 +55,14 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
         return recipient == SacrificeRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        // "Whenever this creature deals combat damage to a player, that player sacrifices ..."
+        // (Akki Underminer): the damaged player is bound as the trigger's targetId so the
+        // TARGET_PLAYER recipient resolves without a targeting pipeline. Every other recipient
+        // derives its sacrificers from the controller and needs no bound player.
+        return recipient == SacrificeRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

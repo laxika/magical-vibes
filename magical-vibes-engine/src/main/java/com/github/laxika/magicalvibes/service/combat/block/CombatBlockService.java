@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -341,7 +342,7 @@ public class CombatBlockService {
                 blockerAssignments);
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
-        validateMustBlockIfAbleRequirements(blockContext, attackerBattlefield, defenderBattlefield, blockable,
+        validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
         // Block tax (e.g. Hipparion): the block is legal only if its additional cost can be paid.
@@ -596,6 +597,10 @@ public class CombatBlockService {
         // Global "whenever a creature becomes blocked / blocks a creature" watchers
         // (ON_ANY_CREATURE_BECOMES_BLOCKED) on every battlefield, once per attacker/blocker pair.
         checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
+
+        // Global "whenever one or more creatures block" watchers (ON_ANY_CREATURES_BLOCK) on every
+        // battlefield, once per declaration no matter how many creatures blocked.
+        checkAnyCreaturesBlockTriggers(gameData, blockerAssignments);
 
         // Engine-level flanking triggers (CR 702.25a): whenever a creature with flanking becomes
         // blocked by a creature without flanking, that blocker gets -1/-1 until end of turn. Each
@@ -1277,6 +1282,40 @@ public class CombatBlockService {
         }
     }
 
+    /**
+     * Fires ON_ANY_CREATURES_BLOCK watchers once for the whole declaration when at least one creature
+     * blocked, scanning every battlefield (the watcher's controller need not control any of the
+     * creatures involved). No combatant is baked into the entry — the effects read the board's
+     * blocking state themselves at resolution.
+     */
+    private void checkAnyCreaturesBlockTriggers(GameData gameData, List<BlockerAssignment> blockerAssignments) {
+        if (blockerAssignments.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURES_BLOCK);
+                if (effects.isEmpty()) {
+                    continue;
+                }
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        battlefield.getKey(),
+                        watcher.getCard().getName() + "'s block trigger",
+                        new ArrayList<>(effects),
+                        null,
+                        watcher.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} creatures-block trigger pushed onto stack", gameData.id,
+                        watcher.getCard().getName());
+            }
+        }
+    }
+
     private int getMaxBlocksForCreature(GameData gameData, Permanent creature, List<Permanent> battlefield) {
         // Check for "can block any number of creatures" on the creature itself
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
@@ -1466,9 +1505,12 @@ public class CombatBlockService {
      * "Target creature blocks this turn if able" (Nacatl Hunt-Pride): a creature flagged with
      * {@link Permanent#isMustBlockThisTurnIfAble()} must be declared as a blocker of at least one
      * attacker if it is able to block any of them. The requirement is satisfied vacuously when the
-     * creature can't legally block any declared attacker (evasion, tapped, etc.).
+     * creature can't legally block any declared attacker (evasion, tapped, etc.). The permanent
+     * static form, {@link MustBlockEachCombatEffect} ("this creature blocks each combat if able" —
+     * Watchdog), is enforced on the same path.
      */
-    private void validateMustBlockIfAbleRequirements(BlockLegalityContext blockContext,
+    private void validateMustBlockIfAbleRequirements(GameData gameData,
+                                                     BlockLegalityContext blockContext,
                                                      List<Permanent> attackerBattlefield,
                                                      List<Permanent> defenderBattlefield,
                                                      List<Integer> blockable,
@@ -1480,7 +1522,7 @@ public class CombatBlockService {
 
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (!blocker.isMustBlockThisTurnIfAble() || assignedBlockerIndices.contains(blockerIdx)) {
+            if (assignedBlockerIndices.contains(blockerIdx) || !mustBlockIfAble(gameData, blocker)) {
                 continue;
             }
             for (Permanent attacker : attackerBattlefield) {
@@ -1489,6 +1531,18 @@ public class CombatBlockService {
                 }
             }
         }
+    }
+
+    /**
+     * A creature carries a "blocks if able" requirement either from a one-shot effect this turn
+     * ({@link Permanent#isMustBlockThisTurnIfAble()}) or from a permanent static
+     * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it.
+     */
+    private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
+        return blocker.isMustBlockThisTurnIfAble()
+                || blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustBlockEachCombatEffect.class::isInstance)
+                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class);
     }
 
     private void validateCantBlockAlone(List<Permanent> defenderBattlefield,

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -38,7 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEf
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -288,6 +290,10 @@ public class CombatDamageService {
         processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
 
         processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealt);
+
+        // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
+        // deals combat damage, you draw a card".
+        processDelayedWatchedCreatureCombatDamageTriggers(gameData, state.combatDamageDealt);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
@@ -1650,6 +1656,42 @@ public class CombatDamageService {
     }
 
     /**
+     * Fires the "whenever either of those creatures deals combat damage" delayed triggers registered
+     * by Tamiyo, Field Researcher's +1. {@code combatDamageDealt} already sums each source's damage to
+     * every recipient, so a watched creature that damaged both a blocker and a player triggers once.
+     * The trigger is controlled by the player who activated the ability, not by the creature's
+     * controller, so "you draw a card" always draws for them.
+     */
+    private void processDelayedWatchedCreatureCombatDamageTriggers(GameData gameData,
+                                                                   Map<Permanent, Integer> combatDamageDealt) {
+        if (combatDamageDealt.isEmpty()
+                || !gameData.hasDelayedAction(DelayedWatchedCreaturesCombatDamage.class)) {
+            return;
+        }
+
+        for (DelayedWatchedCreaturesCombatDamage watch
+                : gameData.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class)) {
+            for (var entry : combatDamageDealt.entrySet()) {
+                if (entry.getValue() <= 0 || !watch.watchedPermanentIds().contains(entry.getKey().getId())) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watch.sourceCard(),
+                        watch.controllerId(),
+                        watch.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(watch.effects()),
+                        (UUID) null,
+                        (UUID) null);
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+            }
+        }
+    }
+
+    /**
      * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
      * each source/target combat-damage pair. Each source creature that dealt damage to a creature
      * this step reflects that damage to the damaged creature's controller if a watcher listens.
@@ -1663,7 +1705,7 @@ public class CombatDamageService {
                 UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
                         gameData, source, sourceControllerId, damagedCreatureControllerId,
-                        amountEntry.getKey(), amountEntry.getValue());
+                        amountEntry.getKey(), amountEntry.getValue(), true);
 
                 // Mangara's Equity: "…or a white creature you control". The damaged creature may have
                 // died to the damage; only surviving permanents can be filtered, which is enough —
@@ -1734,8 +1776,11 @@ public class CombatDamageService {
                 CardEffect effectToAdd = effect;
                 if (effect instanceof DamageSourceControllerAwareEffect aware) {
                     effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
-                } else if (effect instanceof DealDamageToTargetOpponentOrPlaneswalkerEffect) {
-                    // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice
+                } else if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
+                        && burn.playerRelation() == PlayerRelation.OPPONENT) {
+                    // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice.
+                    // Only the opponent-only wording can be auto-targeted; the plain "target player"
+                    // form has no single implied player and falls through to the generic tail.
                     boolean hasPlaneswalkers = false;
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -2197,10 +2242,24 @@ public class CombatDamageService {
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
         } else {
+            // Tok-Tok, Volcano Born: an attacker of a matching colour deals that much combat damage
+            // plus N to the defending player instead (CR 614.1). Applied per attacker, before the
+            // redirection and prevention steps, and only for damage that reaches a player.
+            if (damage > 0) {
+                damage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
+                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
+            }
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
+            // Soltari Guerrillas: this attacker's next combat damage to an opponent goes to a creature instead.
+            UUID atkController = gameQueryService.findPermanentController(gameData, atk.getId());
+            if (atkController != null && !atkController.equals(defenderId)) {
+                damage = damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
+                        gameData, defenderId, atk.getId(), damage);
+                processSourceRedirectDamage(gameData);
+            }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
@@ -2371,6 +2430,11 @@ public class CombatDamageService {
         }
         // Gloom Surgeon: prevent all combat damage to this creature; its controller exiles that many cards from library top.
         if (damagePreventionService.applyPreventCombatDamageToSelfAndExile(gameData, target, damage)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        // Armored Transport: prevent all combat damage to this creature dealt by creatures blocking it.
+        if (damagePreventionService.isCombatDamageFromBlockerPrevented(gameData, target, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

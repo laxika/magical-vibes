@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -20,19 +21,21 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
@@ -193,6 +196,12 @@ public class TargetPolarityClassifier {
             return TargetPolarity.NEUTRAL;
         }
 
+        // Phasing: only the targeted form aims at a permanent the AI chose (Reality Ripple, Vision
+        // Charm) — the source and attached forms carry no target and no polarity.
+        if (effect instanceof PhaseOutEffect phaseOut) {
+            return phaseOut.subject() == PhaseOutSubject.TARGET ? TargetPolarity.HARMFUL_REMOVAL : null;
+        }
+
         // Redirect-next-damage: the target is either the object the redirected damage lands on
         // (Zhalfirin Crusader — aim at the opponent) or the object being shielded (Martyrdom,
         // Hazduhr the Abbot — aim at the AI's own board).
@@ -208,10 +217,18 @@ public class TargetPolarityClassifier {
             return TargetPolarity.HARMFUL;
         }
 
-        if (effect instanceof MustAttackThisTurnEffect
-                || effect instanceof TargetCreatureMustAttackSourcePermanentNextTurnEffect
+        if (effect instanceof TargetCreatureMustAttackSourcePermanentNextTurnEffect
                 || effect instanceof GainControlOfTargetEffect) {
             return TargetPolarity.HARMFUL;
+        }
+
+        // One-shot combat requirements split by who benefits: forcing a creature to attack or block is a
+        // punisher aimed at an opponent's creature, while the "must BE blocked" lures help the AI's own.
+        if (effect instanceof SetCombatRequirementThisTurnEffect combatRequirement) {
+            return switch (combatRequirement.requirement()) {
+                case MUST_ATTACK, MUST_ATTACK_EFFECT_CONTROLLER, MUST_BLOCK -> TargetPolarity.HARMFUL;
+                case MUST_BE_BLOCKED, MUST_BE_BLOCKED_BY_ALL -> TargetPolarity.BENEFICIAL;
+            };
         }
 
         // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
@@ -233,7 +250,8 @@ public class TargetPolarityClassifier {
         }
         // Removing counters inverts the sign: stripping -1/-1 counters helps the target,
         // stripping +1/+1 counters hurts it.
-        if (effect instanceof RemoveAllCountersFromTargetPermanentEffect removeAll) {
+        if (effect instanceof RemoveAllCountersEffect removeAll
+                && removeAll.subject() == CounterRemovalSubject.TARGET) {
             if (removeAll.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.BENEFICIAL;
             }
@@ -314,17 +332,14 @@ public class TargetPolarityClassifier {
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("PhaseOutTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
-            entry("DealDamageToAnyTargetEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetCreatureEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetOpponentOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -354,9 +369,6 @@ public class TargetPolarityClassifier {
             entry("MakeTargetAttackingCreatureBlockedEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
-            // Mark for Death: forcing a block is a punisher aimed at an opponent's creature, the
-            // mirror image of the BENEFICIAL "must BE blocked" lure below.
-            entry("MustBlockThisTurnIfAbleEffect", TargetPolarity.HARMFUL),
             entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
@@ -377,14 +389,12 @@ public class TargetPolarityClassifier {
             entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("GrantChosenKeywordToTargetEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
-            entry("MustBeBlockedByAllCreaturesThisTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("MustBeBlockedIfAbleThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),

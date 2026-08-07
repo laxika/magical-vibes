@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.CabalStronghold;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.r.ResonatingLute;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -226,6 +229,26 @@ class DampingSphereTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Land tapped for 2+ spend-restricted mana produces {C} instead")
+    void multiManaLandWithSpendRestrictionProducesColorlessInstead() {
+        harness.addToBattlefield(player1, new DampingSphere());
+        harness.addToBattlefield(player1, new ResonatingLute());
+        harness.addToBattlefield(player1, new Island());
+
+        // Resonating Lute grants the Island "{T}: Add two mana of any one color. Spend this mana only
+        // to cast instant and sorcery spells." Two mana from a land is still two mana (CR 106.6 — the
+        // spend restriction doesn't change the type), so Damping Sphere replaces it with one {C}.
+        harness.activateAbility(player1, 2, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+        for (ManaColor color : ManaColor.COLORS) {
+            assertThat(pool.getInstantSorceryOnlyColored(color)).isZero();
+        }
     }
 
     @Test

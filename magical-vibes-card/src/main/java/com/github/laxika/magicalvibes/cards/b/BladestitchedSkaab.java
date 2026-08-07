@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "231")
+@CardRegistration(set = "INR", collectorNumber = "426")
 public class BladestitchedSkaab extends Card {
 
     public BladestitchedSkaab() {

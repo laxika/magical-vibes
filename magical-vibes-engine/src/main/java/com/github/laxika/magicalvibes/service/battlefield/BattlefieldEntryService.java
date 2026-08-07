@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -60,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -205,6 +208,8 @@ public class BattlefieldEntryService {
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+            applyAdditionalEnterCountersThisTurn(gameData, controllerId, permanent);
+            applyControlledCreaturesEnterWithSourcePowerCounters(gameData, controllerId, permanent);
         } finally {
             restoreHiddenBattlefields(gameData, hidden);
         }
@@ -976,17 +981,22 @@ public class BattlefieldEntryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        List<ControlledCreaturesEnterWithAdditionalCountersEffect> effects = battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
-                .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
+        record SourcedCounters(CardSubtype subtype, int count) {}
+        List<SourcedCounters> effects = battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
+                        .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
+                        .map(effect -> new SourcedCounters(
+                                effect.subtype() != null ? effect.subtype() : source.getChosenSubtype(),
+                                effect.count())))
+                .filter(sourced -> sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
 
         EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
         int additionalCounters = effects.stream()
-                .filter(effect -> hasSubtype(resolved, effect.subtype()))
-                .mapToInt(ControlledCreaturesEnterWithAdditionalCountersEffect::count)
+                .filter(sourced -> hasSubtype(resolved, sourced.subtype()))
+                .mapToInt(SourcedCounters::count)
                 .sum();
 
         if (additionalCounters > 0) {
@@ -997,6 +1007,63 @@ public class BattlefieldEntryService {
         }
     }
 
+    /**
+     * Replacement effect (MTG Rule 614.1c) recorded on the game state for the rest of the turn
+     * (Zameck Guildmage): each creature entering under {@code controllerId}'s control gets the
+     * recorded number of additional +1/+1 counters. Unlike the battlefield-static variant this
+     * keeps working after the source leaves, and applies to every creature — not just "other" ones.
+     */
+    private void applyAdditionalEnterCountersThisTurn(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
+
+        int additionalCounters = gameData.additionalEnterCountersThisTurn.getOrDefault(controllerId, 0);
+        if (additionalCounters <= 0) return;
+
+        additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, additionalCounters);
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
+        log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a turn-long effect",
+                gameData.id, permanent.getCard().getName(), additionalCounters);
+    }
+
+    /**
+     * Replacement effect (MTG Rule 614.1c) for Master Biomancer: each other creature the source's
+     * controller controls enters with additional +1/+1 counters equal to the source's power and with
+     * an extra subtype in addition to its other types. "Other" is implicit — the entering permanent
+     * is not on the battlefield yet.
+     * <p>
+     * The subtype grant is applied even when counters can't be placed (Solemnity), since the two
+     * halves of the replacement are independent.
+     */
+    private void applyControlledCreaturesEnterWithSourcePowerCounters(GameData gameData, UUID controllerId,
+                                                                      Permanent permanent) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null || battlefield.isEmpty()) return;
+
+        boolean noCounters = gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId);
+        int additionalCounters = 0;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof ControlledCreaturesEnterWithSourcePowerCountersEffect e)) continue;
+                if (!permanent.getGrantedSubtypes().contains(e.addedSubtype())) {
+                    permanent.getGrantedSubtypes().add(e.addedSubtype());
+                }
+                additionalCounters += Math.max(0, gameQueryService.getEffectivePower(gameData, source));
+            }
+        }
+
+        if (additionalCounters > 0 && !noCounters) {
+            additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, additionalCounters);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
+            log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a source-power static effect",
+                    gameData.id, permanent.getCard().getName(), additionalCounters);
+        }
+    }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
         handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
@@ -1098,6 +1165,60 @@ public class BattlefieldEntryService {
                 return;
             }
             // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
+        }
+
+        // "As this creature enters, sacrifice any number of creatures. This creature's power becomes
+        // their total power and its toughness their total toughness" (CR 614.1c, Dracoplasm).
+        boolean needsSacrificeForPowerToughness = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect);
+        if (needsSacrificeForPowerToughness) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — sacrifice any number of creatures.");
+                return;
+            }
+            // No other creatures — nothing is sacrificed; the creature enters as a 0/0.
+        }
+
+        // "As this creature enters, sacrifice any number of permanents. It enters with that many
+        // +1/+1 counters on it" (CR 614.1c, Shimatsu the Bloodcloaked). Resolved before ETB triggers;
+        // the entering permanent itself isn't offered.
+        SacrificePermanentsAsEntersForCountersEffect sacForCounters =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(e -> e instanceof SacrificePermanentsAsEntersForCountersEffect)
+                        .map(e -> (SacrificePermanentsAsEntersForCountersEffect) e)
+                        .findFirst().orElse(null);
+        if (sacForCounters != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered)
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            p, sacForCounters.filter(), filterContext))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.SacrificeAsEntersForCounters(justEntered.getId(),
+                                sacForCounters.countersPerPermanent(), controllerId, card, targetId,
+                                wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — sacrifice any number of permanents.");
+                return;
+            }
+            // Nothing to sacrifice — it enters with no counters; ETB triggers proceed.
         }
 
         // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a
@@ -1405,7 +1526,8 @@ public class BattlefieldEntryService {
                     ? enteredBf.getLast() : null;
             boolean enteredFromGraveyard = justEnteredPermanent != null
                     && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
-            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard
+            boolean enteredFromExile = justEnteredPermanent != null && justEnteredPermanent.isEnteredFromExile();
+            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard || enteredFromExile
                     || card.hasType(CardType.LAND);
 
             // A surviving gate-conditional ETB (Metalcraft, Morbid, Raid, … — the gate was met

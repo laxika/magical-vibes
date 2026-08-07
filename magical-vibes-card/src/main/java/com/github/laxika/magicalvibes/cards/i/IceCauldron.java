@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteManaSpentForActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -42,7 +42,7 @@ public class IceCauldron extends Card {
         // amount of mana. Spend this mana only to cast the last card exiled with Ice Cauldron.
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(
-                        new RemoveChargeCountersFromSourceCost(1),
+                        new RemoveCounterFromSourceCost(1, CounterType.CHARGE),
                         new AddNotedManaForLastExiledCardEffect()
                 ),
                 "{T}, Remove a charge counter from Ice Cauldron: Add this artifact's last noted type and amount of mana. Spend this mana only to cast the last card exiled with Ice Cauldron."));

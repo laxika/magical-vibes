@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -12,6 +15,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +32,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final PermanentControlSupport permanentControlSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,6 +74,15 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(), e.powerOverride(), e.toughnessOverride());
+                e.additionalKeywords(), e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
+                e.powerOverride(), e.toughnessOverride());
+
+        // Soul Separator's second token: a black Zombie whose P/T are the exiled card's printed P/T.
+        if (e.createZombieTokenWithExiledCardStats()) {
+            CreateTokenEffect zombie = new CreateTokenEffect("Zombie", targetCard.getPower(), targetCard.getToughness(),
+                    CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of());
+            entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
+                    gameData, entry.getControllerId(), zombie, 1, entry.getCard().getSetCode()));
+        }
     }
 }

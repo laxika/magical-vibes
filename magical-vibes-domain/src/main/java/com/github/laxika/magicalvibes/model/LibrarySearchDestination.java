@@ -37,6 +37,11 @@ public enum LibrarySearchDestination {
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a
      *  {@link PendingPileSeparation} with {@link CardPileDisposition#GIFTS_UNGIVEN}. */
     GIFTS_UNGIVEN_POOL,
+    /** Signal the Clans — the revealed creature cards are held out of every zone in
+     *  {@link LibrarySearchParams#accumulatedCards()} until the search ends. If exactly three cards
+     *  with different names were revealed, one of them is chosen at random and put into the
+     *  searcher's hand; every other revealed card is shuffled back into the library. */
+    SIGNAL_THE_CLANS_POOL,
     /** Aladdin's Lamp — put the chosen looked-at card back on top of the library and the rest on the
      *  bottom in a random order, then draw a card (the chosen one). The final draw is a real draw
      *  event (fires draw triggers), routed back through {@code DrawService.resolveDrawCard}. */

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfDidNotAttackAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -46,7 +47,7 @@ public class Norritt extends Card {
                 true,
                 null,
                 List.of(
-                        new MustAttackThisTurnEffect(false),
+                        new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK),
                         new DestroyTargetIfDidNotAttackAtEndStepEffect()),
                 "{T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That creature attacks this turn if able. Destroy it at the beginning of the next end step if it didn't attack this turn. Activate only before attackers are declared.",
                 new PermanentPredicateTargetFilter(

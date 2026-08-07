@@ -65,6 +65,29 @@ class SadisticGleeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The counter lands on the enchanted creature, not on the creature that died")
+    void counterLandsOnlyOnTheEnchantedCreature() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        enchantGlee(host);
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, victim.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(victim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bystander.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Counters accumulate across multiple creature deaths")
     void countersAccumulate() {
         Permanent host = addCreatureReady(player1, new GrizzlyBears());

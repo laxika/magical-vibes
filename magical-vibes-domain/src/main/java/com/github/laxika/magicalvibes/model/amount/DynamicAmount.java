@@ -54,6 +54,7 @@ public sealed interface DynamicAmount permits
         GreatestPowerAmongControlled,
         HalvedRoundedUp,
         HalfControllerLifeRoundedUp,
+        HighestLifeTotalAmongPlayers,
         HighestOpponentLifeTotal,
         IfSourceAttacking,
         ImprintedCardManaValue,

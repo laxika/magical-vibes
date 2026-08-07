@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -200,6 +201,14 @@ public class Card {
      */
     private Condition flashCastCondition;
 
+    /**
+     * Card-specific "this Equipment can be attached only to …" restriction (Konda's Banner), or
+     * null when any creature may be equipped. Unlike the equip ability's target filter this is a
+     * continuous requirement: an Equipment attached to a permanent that stops matching becomes
+     * unattached as a state-based action (CR 704.5n).
+     */
+    private PermanentPredicate attachRestriction;
+
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
     /** Cached effect-only lists, invalidated on addEffect. */
@@ -298,6 +307,7 @@ public class Card {
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
+        this.attachRestriction = source.attachRestriction;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
@@ -395,6 +405,7 @@ public class Card {
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
     public void setFlashCastCondition(Condition flashCastCondition) { assertMutable(); this.flashCastCondition = flashCastCondition; }
+    public void setAttachRestriction(PermanentPredicate attachRestriction) { assertMutable(); this.attachRestriction = attachRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
 

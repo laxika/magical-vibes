@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * <p>Two-phase: the first resolution begins the creature-type choice and pauses (re-running once the
  * choice completes via {@code rerunCurrentEffectAfterInteraction}); the re-entry reads and clears
  * {@code GameData.chosenSpellSubtype}, counts, and applies the boost. Boost sibling of
- * {@link DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler}.</p>
+ * {@link DealDamageEqualToChosenTypeCountEffectHandler}.</p>
  */
 @Slf4j
 @Component

@@ -30,10 +30,20 @@ public class ManaPool {
      * when the pool holds both tagged and untagged mana of that color.
      */
     private final EnumMap<ManaColor, Integer> hasteGrantingMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Mana carrying the rider "if that mana is spent on an instant or sorcery spell, that spell can't
+     * be countered" (Boseiju, Who Shelters All). Like {@link #hasteGrantingMana} this is a tag on a
+     * subset of the regular {@link #pool} — the mana itself is unrestricted — and is never counted
+     * towards any total. {@link #remove(ManaColor)} spends the tagged mana first, so the caster always
+     * gets the rider when the pool holds both tagged and untagged mana of that color.
+     */
+    private final EnumMap<ManaColor, Integer> uncounterableGrantingMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
     /** Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). */
     private int artifactAbilityOnlyColorless;
     private int myrOnlyColorless;
+    /** Colorless mana spendable only to cast legendary spells (Untaidake, the Cloud Keeper). */
+    private int legendarySpellOnlyColorless;
     private int restrictedRed;
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
@@ -101,6 +111,7 @@ public class ManaPool {
             spellOnlyMana.put(color, 0);
             persistentMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
+            uncounterableGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
@@ -117,10 +128,12 @@ public class ManaPool {
         spellOnlyMana.putAll(source.spellOnlyMana);
         persistentMana.putAll(source.persistentMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
+        uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
+        this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
@@ -180,11 +193,13 @@ public class ManaPool {
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
+            uncounterableGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
         artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
+        legendarySpellOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
@@ -243,6 +258,7 @@ public class ManaPool {
         total += artifactOnlyColorless;
         total += artifactAbilityOnlyColorless;
         total += myrOnlyColorless;
+        total += legendarySpellOnlyColorless;
         total += restrictedRed;
         total += kickedOnlyGreen;
         total += instantSorceryOnlyColorless;
@@ -338,6 +354,11 @@ public class ManaPool {
         if (hasteGranting > 0) {
             hasteGrantingMana.put(color, hasteGranting - 1);
         }
+        // Uncounterable-granting mana (Boseiju, Who Shelters All) likewise goes first.
+        int uncounterableGranting = uncounterableGrantingMana.getOrDefault(color, 0);
+        if (uncounterableGranting > 0) {
+            uncounterableGrantingMana.put(color, uncounterableGranting - 1);
+        }
         // Clamp creature mana so it never exceeds total for this color
         int total = pool.getOrDefault(color, 0);
         int creature = creatureMana.getOrDefault(color, 0);
@@ -350,6 +371,9 @@ public class ManaPool {
         }
         if (hasteGrantingMana.getOrDefault(color, 0) > total) {
             hasteGrantingMana.put(color, total);
+        }
+        if (uncounterableGrantingMana.getOrDefault(color, 0) > total) {
+            uncounterableGrantingMana.put(color, total);
         }
     }
 
@@ -373,6 +397,28 @@ public class ManaPool {
 
     public int getHasteGrantingMana(ManaColor color) {
         return hasteGrantingMana.getOrDefault(color, 0);
+    }
+
+    /**
+     * Adds mana carrying the "spent on an instant or sorcery spell → that spell can't be countered"
+     * rider (Boseiju, Who Shelters All). The caller must also add the same amount to the regular pool
+     * via {@link #add(ManaColor, int)}; this only records the rider tag on that subset.
+     */
+    public void addUncounterableGrantingMana(ManaColor color, int amount) {
+        uncounterableGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total tagged uncounterable-granting mana still in the pool, across all colors. */
+    public int getUncounterableGrantingManaTotal() {
+        int total = 0;
+        for (int value : uncounterableGrantingMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public int getUncounterableGrantingMana(ManaColor color) {
+        return uncounterableGrantingMana.getOrDefault(color, 0);
     }
 
     /**
@@ -485,6 +531,18 @@ public class ManaPool {
 
     public void removeMyrOnlyColorless(int amount) {
         myrOnlyColorless = Math.max(0, myrOnlyColorless - amount);
+    }
+
+    public int getLegendarySpellOnlyColorless() {
+        return legendarySpellOnlyColorless;
+    }
+
+    public void addLegendarySpellOnlyColorless(int amount) {
+        legendarySpellOnlyColorless += amount;
+    }
+
+    public void removeLegendarySpellOnlyColorless(int amount) {
+        legendarySpellOnlyColorless = Math.max(0, legendarySpellOnlyColorless - amount);
     }
 
     public int getRestrictedRed() {
@@ -817,10 +875,13 @@ public class ManaPool {
             int spellOnly = spellOnlyMana.getOrDefault(color, 0);
             spellOnlyMana.put(color, Math.min(spellOnly, total));
             hasteGrantingMana.put(color, Math.min(hasteGrantingMana.getOrDefault(color, 0), total));
+            uncounterableGrantingMana.put(color,
+                    Math.min(uncounterableGrantingMana.getOrDefault(color, 0), total));
         }
         artifactOnlyColorless = 0;
         artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
+        legendarySpellOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
@@ -859,7 +920,8 @@ public class ManaPool {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
                 amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
-                        + instantSorceryOnlyColorless + xCostOnlyColorless + cumulativeUpkeepOnlyColorless;
+                        + legendarySpellOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless
+                        + cumulativeUpkeepOnlyColorless;
             }
             if (color == ManaColor.RED) {
                 amount += restrictedRed;

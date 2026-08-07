@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +20,7 @@ public class BurningSunsAvatar extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be an opponent or planeswalker"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetOpponentOrPlaneswalkerEffect(3));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT));
 
         // Deals 3 damage to up to one target creature
         target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(3));

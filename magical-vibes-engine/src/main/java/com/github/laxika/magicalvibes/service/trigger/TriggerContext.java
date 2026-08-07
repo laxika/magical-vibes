@@ -126,10 +126,12 @@ public sealed interface TriggerContext {
                          int dyingCreatureToughness) implements TriggerContext {}
 
     /**
-     * Context for ON_EQUIPPED_CREATURE_DIES triggers.
+     * Context for ON_EQUIPPED_CREATURE_DIES triggers. {@code dyingCard} is the card that died,
+     * needed by effects that act on it in the graveyard (Oathkeeper, Takeno's Daisho).
      */
     record EquippedCreatureDeath(UUID dyingCreatureId,
-                                 UUID dyingCreatureControllerId) implements TriggerContext {}
+                                 UUID dyingCreatureControllerId,
+                                 Card dyingCard) implements TriggerContext {}
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.

@@ -149,6 +149,21 @@ class GolemArtisanTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chosen keyword lands on the target, not on Golem Artisan itself")
+    void keywordLandsOnlyOnTheTarget() {
+        Permanent golem = addGolemReady(player1);
+        Permanent target = addArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FLYING");
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Resolving keyword ability can grant trample")
     void resolvingKeywordAbilityGrantsTrample() {
         addGolemReady(player1);

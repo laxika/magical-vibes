@@ -1,0 +1,137 @@
+package com.github.laxika.magicalvibes.cards.u;
+
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class UnearthlyBlizzardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Up to three target creatures can't block this turn")
+    void threeTargetsCantBlock() {
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature3 = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature1.getId(), creature2.getId(), creature3.getId()));
+        harness.passBothPriorities();
+
+        assertThat(creature1.isCantBlockThisTurn()).isTrue();
+        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(creature3.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target fewer than three creatures")
+    void canTargetFewerThanThree() {
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(creature1.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target more than three creatures")
+    void cannotTargetMoreThanThree() {
+        Permanent c1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c3 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c4 = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(c1.getId(), c2.getId(), c3.getId(), c4.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must target between");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(fountainId)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Targeted creature actually cannot block")
+    void targetedCreatureCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(blocker.getId()));
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Skips targets that left the battlefield before resolution")
+    void skipsRemovedTargets() {
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature1);
+
+        harness.passBothPriorities();
+
+        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UnearthlyBlizzard()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Unearthly Blizzard");
+    }
+}

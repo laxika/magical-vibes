@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "82")
+@CardRegistration(set = "INR", collectorNumber = "366")
 public class RiseFromTheTides extends Card {
 
     public RiseFromTheTides() {

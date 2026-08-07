@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -60,7 +61,7 @@ public class WrennAndSeven extends Card {
         ));
 
         // −8: Return all permanent cards from your graveyard to your hand. You get an emblem with
-        // "You have no maximum hand size." (GrantPermanentNoMaxHandSizeEffect = rest-of-game, like Praetor's Counsel.)
+        // "You have no maximum hand size." (REST_OF_GAME, like Praetor's Counsel.)
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
@@ -69,7 +70,7 @@ public class WrennAndSeven extends Card {
                                 .filter(new CardIsPermanentPredicate())
                                 .returnAll(true)
                                 .build(),
-                        new GrantPermanentNoMaxHandSizeEffect()
+                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
                 ),
                 "\u22128: Return all permanent cards from your graveyard to your hand. You get an emblem with \"You have no maximum hand size.\""
         ));

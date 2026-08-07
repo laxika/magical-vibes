@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExactLifeLoseGameThenAdjustLi
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "136")
+@CardRegistration(set = "INR", collectorNumber = "391")
 public class Triskaidekaphobia extends Card {
 
     public Triskaidekaphobia() {

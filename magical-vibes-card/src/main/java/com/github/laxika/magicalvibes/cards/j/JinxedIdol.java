@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "208")
+@CardRegistration(set = "TMP", collectorNumber = "293")
 public class JinxedIdol extends Card {
 
     public JinxedIdol() {

@@ -81,6 +81,15 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness), color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
     }
 
+    /**
+     * Copy of this blueprint with a different token effect map, all other fields preserved. Used to
+     * bake a runtime id into an authored token effect (Tatsumasa's death-return, which must know the
+     * exiled card it brings back).
+     */
+    public CreateTokenEffect withTokenEffects(Map<EffectSlot, CardEffect> newTokenEffects) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, newTokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+    }
+
     /** Canonical shape with a dynamic token count and printed power/toughness */
     public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName, int power, int toughness,
                              CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes,

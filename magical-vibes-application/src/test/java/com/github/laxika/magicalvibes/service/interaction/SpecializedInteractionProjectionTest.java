@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.InteractionShape;
@@ -100,7 +101,8 @@ class SpecializedInteractionProjectionTest {
                         List.of(0, 1),
                         2,
                         List.of(),
-                        1));
+                        1,
+                        HandChoiceDestination.DISCARD));
         InteractionPromptMessage continuedReveal = prompt(
                 new PendingInteraction.RevealCardsDiscardChoice(
                         opponentId,
@@ -110,7 +112,8 @@ class SpecializedInteractionProjectionTest {
                         List.of(1),
                         1,
                         List.of(UUID.randomUUID()),
-                        1));
+                        1,
+                        HandChoiceDestination.DISCARD));
         InteractionPromptMessage discard = prompt(
                 new PendingInteraction.RevealCardsDiscardChoice(
                         controllerId,
@@ -120,7 +123,8 @@ class SpecializedInteractionProjectionTest {
                         List.of(0),
                         1,
                         List.of(),
-                        1));
+                        1,
+                        HandChoiceDestination.DISCARD));
 
         assertThat(initialReveal.prompt()).isEqualTo("Choose 2 cards to reveal.");
         assertThat(continuedReveal.prompt()).isEqualTo("Choose another card to reveal.");

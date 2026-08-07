@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToExileEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,8 +23,8 @@ public class NightmareIncursion extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardsToExileEffect(
+                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER),
-                        true));
+                        null, LibrarySearchDestination.EXILE, true));
     }
 }

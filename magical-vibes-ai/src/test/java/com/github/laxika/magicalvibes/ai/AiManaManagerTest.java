@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,23 +11,24 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -227,7 +227,7 @@ class AiManaManagerTest {
         // Tap + remove a charge counter: add one mana of any color (like Sphere of the Suns)
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new RemoveChargeCountersFromSourceCost(1), new AwardAnyColorManaEffect()),
+                List.of(new RemoveCounterFromSourceCost(1, CounterType.CHARGE), new AwardAnyColorManaEffect()),
                 "{T}, Remove a charge counter: Add one mana of any color."));
         return card;
     }
@@ -526,12 +526,12 @@ class AiManaManagerTest {
          * no way to pay for, and the engine rejected the cast with the sources already tapped.
          */
         @Test
-        @DisplayName("ignores AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        @DisplayName("ignores chosen-subtype any-color mana — its mana is spend-restricted")
         void chosenSubtypeManaIsNotCounted() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorChosenSubtypeCreatureManaEffect());
+            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1783,7 +1783,7 @@ class AiManaManagerTest {
             auraCard.setName("Blight");
             auraCard.setType(CardType.ENCHANTMENT);
             auraCard.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
-                    new DestroyEnchantedPermanentEffect());
+                    new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(plains.getId());
             gd.playerBattlefields.get(player2Id).add(aura);
@@ -1818,7 +1818,7 @@ class AiManaManagerTest {
                 card.setName(name);
                 card.setType(CardType.LAND);
                 card.addActivatedAbility(new ActivatedAbility(
-                        true, null, List.of(new AwardAnyColorChosenSubtypeCreatureManaEffect()),
+                        true, null, List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE)),
                         "{T}: Add one mana of any color. Spend this mana only to cast a creature "
                                 + "spell of the chosen type."));
                 Permanent perm = new Permanent(card);
@@ -2514,12 +2514,12 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("skips AwardAnyColorChosenSubtypeCreatureManaEffect — its mana is spend-restricted")
+        @DisplayName("skips chosen-subtype any-color mana — its mana is spend-restricted")
         void skipsChosenSubtypeMana() {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorChosenSubtypeCreatureManaEffect());
+            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
             ManaPool pool = new ManaPool();
 
             manager.addCardManaToPool(card, pool);

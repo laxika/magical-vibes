@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "9")
+@CardRegistration(set = "INR", collectorNumber = "333")
 public class AngelicPurge extends Card {
 
     public AngelicPurge() {

@@ -53,6 +53,22 @@ class StaveOffTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the target gains protection, not the caster's other creatures")
+    void protectionLandsOnlyOnTheTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setHand(player1, List.of(new StaveOff()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+        assertThat(bystander.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
     @DisplayName("Protection wears off at end of turn")
     void protectionWearsOff() {
         harness.addToBattlefield(player1, new GrizzlyBears());

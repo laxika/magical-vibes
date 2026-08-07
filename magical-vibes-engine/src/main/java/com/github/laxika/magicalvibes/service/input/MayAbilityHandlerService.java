@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -320,7 +320,7 @@ public class MayAbilityHandlerService {
                             || e instanceof BoostSelfEffect
                             || e instanceof ImprintDyingCreatureEffect
                             || e instanceof ExileFromHandToImprintEffect
-                            || e instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect
+                            || e instanceof ReturnDyingCreatureToBattlefieldEffect
                             || e instanceof BecomeCopyOfDyingCreatureEffect);
             if (needsSelfTarget) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
@@ -675,7 +675,7 @@ public class MayAbilityHandlerService {
 
     private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
         if (innerEffect == null) return;
-        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || (innerEffect instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || (innerEffect instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldEffect;
         if (needsSelfTarget && pendingEntry.getTargetId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
             if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetId(p.getId()); break; } } }

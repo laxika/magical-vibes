@@ -169,6 +169,8 @@ class IceCageTest extends BaseCardTest {
         // Ice Cage should be destroyed
         harness.assertNotOnBattlefield(player1, "Ice Cage");
         harness.assertInGraveyard(player1, "Ice Cage");
+        // "Destroy this Aura" destroys the Aura only — the creature it cages is released, not killed.
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     // ===== Creature can attack/block after Ice Cage is destroyed =====

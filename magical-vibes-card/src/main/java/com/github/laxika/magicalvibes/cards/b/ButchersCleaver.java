@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "217")
+@CardRegistration(set = "INR", collectorNumber = "256")
+@CardRegistration(set = "INR", collectorNumber = "440")
 public class ButchersCleaver extends Card {
 
     public ButchersCleaver() {

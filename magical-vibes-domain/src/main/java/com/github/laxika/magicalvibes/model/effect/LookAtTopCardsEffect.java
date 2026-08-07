@@ -139,6 +139,16 @@ public record LookAtTopCardsEffect(
     }
 
     /**
+     * You may reveal one matching card and put it into your hand; the rest go on the bottom of the
+     * library in a random order (no player reorder).
+     */
+    public static LookAtTopCardsEffect mayRevealOneToHandRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.HAND, true);
+    }
+
+    /**
      * Reveal the top {@code lookCount} cards publicly; you may put one matching card into your
      * hand; the rest go into your graveyard (Grisly Salvage).
      */

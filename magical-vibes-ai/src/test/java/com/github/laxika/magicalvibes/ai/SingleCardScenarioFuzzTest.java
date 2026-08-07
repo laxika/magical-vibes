@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -207,7 +206,6 @@ class SingleCardScenarioFuzzTest {
         for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
             if (e instanceof ChooseOneEffect
                     || e instanceof SacrificeCreatureCost
-                    || e instanceof SacrificeArtifactCost
                     || e instanceof SacrificePermanentCost
                     || e instanceof ExileCardFromGraveyardCost) {
                 return true;

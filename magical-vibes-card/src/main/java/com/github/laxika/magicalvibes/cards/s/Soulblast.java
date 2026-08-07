@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 
 @CardRegistration(set = "10E", collectorNumber = "236")
+@CardRegistration(set = "CHK", collectorNumber = "190")
 public class Soulblast extends Card {
 
     public Soulblast() {

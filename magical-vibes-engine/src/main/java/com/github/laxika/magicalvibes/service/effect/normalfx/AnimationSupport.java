@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -72,7 +73,8 @@ public class AnimationSupport {
      *
      * <p>Supports "up to N target" abilities (Fendeep Summoner) by iterating over
      * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
-     * self/target animation still reads {@code entry.getTargetId()}.
+     * self/target animation still reads {@code entry.getTargetId()}. A SELF-scope animation queued by
+     * a triggered ability carries no target at all and falls back to {@code entry.getSourcePermanentId()}.
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
@@ -81,6 +83,10 @@ public class AnimationSupport {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
+            // A triggered self-animation carries the source only as sourcePermanentId — activated
+            // abilities bind it as the target, triggers do not (Jade Idol).
+            targetIds = List.of(entry.getSourcePermanentId());
         } else {
             return;
         }
@@ -362,6 +368,10 @@ public class AnimationSupport {
 
         target.getGrantedKeywords().addAll(effect.grantedKeywords());
 
+        // The animation has no duration, so the granted card types must survive turn cleanup too
+        // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
+        target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
+
         if (effect.animatedColor() != null) {
             target.getGrantedColors().add(effect.animatedColor());
         }
@@ -495,6 +505,7 @@ public class AnimationSupport {
         log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
         fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+        fireEquipmentTransformTriggers(gameData, self);
         return true;
     }
 
@@ -508,6 +519,41 @@ public class AnimationSupport {
         log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
 
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
+        fireEquipmentTransformTriggers(gameData, self);
+    }
+
+    /**
+     * Fires {@link EffectSlot#ON_EQUIPPED_CREATURE_TRANSFORMS} abilities on every Equipment attached to
+     * the permanent that just transformed ("When equipped creature transforms, ..." — Neglected Heirloom).
+     */
+    private void fireEquipmentTransformTriggers(GameData gameData, Permanent transformed) {
+        gameData.forEachPermanent((controllerId, equipment) -> {
+            if (!transformed.getId().equals(equipment.getAttachedTo())) {
+                return;
+            }
+            if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                return;
+            }
+
+            Card equipmentCard = equipment.getCard();
+            List<CardEffect> effects = equipmentCard.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_TRANSFORMS);
+            if (effects.isEmpty()) {
+                return;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    equipmentCard,
+                    controllerId,
+                    equipmentCard.getName() + "'s transform ability",
+                    effects,
+                    null,
+                    equipment.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(equipmentCard, "'s transform ability triggers."));
+            log.info("Game {} - {} transform trigger pushed onto stack (equipped creature transformed)",
+                    gameData.id, equipmentCard.getName());
+        });
     }
 
     /**

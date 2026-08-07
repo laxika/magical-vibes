@@ -83,6 +83,23 @@ class FormOfTheDragonTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("End step touches only the controller's life total, not the opponent's")
+    void endStepLeavesOpponentLifeAlone() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 13);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto stack
+        harness.passBothPriorities(); // resolve trigger
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
     // ===== Static: creatures without flying can't attack you =====
 
     @Test

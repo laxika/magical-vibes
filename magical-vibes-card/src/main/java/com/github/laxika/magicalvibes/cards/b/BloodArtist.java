@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "97")
+@CardRegistration(set = "INR", collectorNumber = "326")
+@CardRegistration(set = "INR", collectorNumber = "372")
 @CardRegistration(set = "AVR", collectorNumber = "86")
 public class BloodArtist extends Card {
 

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "142")
+@CardRegistration(set = "INR", collectorNumber = "312")
 public class BedlamReveler extends Card {
 
     public BedlamReveler() {

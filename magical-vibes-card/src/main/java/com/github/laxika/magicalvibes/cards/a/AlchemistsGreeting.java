@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "140")
+@CardRegistration(set = "INR", collectorNumber = "393")
 public class AlchemistsGreeting extends Card {
 
     public AlchemistsGreeting() {

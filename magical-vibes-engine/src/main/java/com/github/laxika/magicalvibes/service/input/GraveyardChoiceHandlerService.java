@@ -103,6 +103,18 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        // Phyrexian Grimoire: the opponent only picks which of the two cards is exiled — nothing
+        // moves yet. Record it and resume the paused resolution so the handler can move both cards.
+        if (gameData.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume) {
+            gameData.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.phyrexianGrimoireChosenCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();

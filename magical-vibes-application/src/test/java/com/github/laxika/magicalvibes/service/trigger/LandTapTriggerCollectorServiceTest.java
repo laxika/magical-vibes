@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -24,6 +26,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.List;
 
@@ -63,6 +67,9 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private PermanentControlSupport permanentControlSupport;
 
     @InjectMocks
     private LandTapTriggerCollectorService sut;
@@ -462,6 +469,7 @@ class LandTapTriggerCollectorServiceTest {
         @Test
         @DisplayName("begins color choice for any-color mana when enchanted land is tapped")
         void beginsColorChoiceForAnyColorMana() {
+            when(amountEvaluationService.evaluate(any(), any(), any())).thenReturn(1);
             Permanent fertileGround = createPermanent("Fertile Ground");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             fertileGround.setAttachedTo(forest.getId());
@@ -795,6 +803,57 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_TAPS_LAND — CreateTokenForTargetPlayerEffect")
+    class CreateTokenForOpponentOnSelfTapped {
+
+        private final CreateTokenForTargetPlayerEffect effect = new CreateTokenForTargetPlayerEffect(
+                new CreateTokenEffect("Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
+
+        @Test
+        @DisplayName("creates the token for the opponent when the source land itself is tapped")
+        void createsTokenForOpponent() {
+            Permanent orchard = createLandPermanent("Forbidden Orchard", ManaColor.COLORLESS);
+            var ctx = new TriggerContext.LandTap(player1Id, orchard.getId());
+
+            when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
+
+            boolean result = registry.dispatch(
+                    match(orchard, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(permanentControlSupport).applyCreateToken(eq(gd), eq(player2Id), eq(effect.tokenEffect()), any());
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+
+        @Test
+        @DisplayName("does not trigger when a different land is tapped")
+        void ignoresOtherLands() {
+            Permanent orchard = createLandPermanent("Forbidden Orchard", ManaColor.COLORLESS);
+            var ctx = new TriggerContext.LandTap(player1Id, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(orchard, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("does not trigger when an opponent taps it (Piracy)")
+        void ignoresOpponentTap() {
+            Permanent orchard = createLandPermanent("Forbidden Orchard", ManaColor.COLORLESS);
+            var ctx = new TriggerContext.LandTap(player2Id, orchard.getId());
+
+            boolean result = registry.dispatch(
+                    match(orchard, player1Id, effect),
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();

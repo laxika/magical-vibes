@@ -38,6 +38,21 @@ class BlindingAngelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The skip lands on the damaged player, not the trigger's controller, and on no other queue")
+    void flagsOnlyTheDamagedPlayersCombatPhase() {
+        Permanent angel = addReadyCreature(new BlindingAngel());
+        angel.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextTurnCount).isEmpty();
+        assertThat(gd.skipNextUntapStepCount).isEmpty();
+        assertThat(gd.skipNextDrawStepCount).isEmpty();
+    }
+
+    @Test
     @DisplayName("No flag when Blinding Angel is blocked and deals no damage to a player")
     void noFlagWhenBlocked() {
         Permanent angel = addReadyCreature(new BlindingAngel());

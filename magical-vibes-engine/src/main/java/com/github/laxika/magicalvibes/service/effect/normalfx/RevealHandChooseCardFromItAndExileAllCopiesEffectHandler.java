@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandChooseCardFromItAndExileAllCopiesEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class RevealHandChooseCardFromItAndExileAllCopiesEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,6 +27,8 @@ public class RevealHandChooseCardFromItAndExileAllCopiesEffectHandler implements
         var e = (RevealHandChooseCardFromItAndExileAllCopiesEffect) effect;
 
         playerInputService.beginRevealHandChooseCardFromItAndExileAllCopiesChoice(
-                gameData, entry.getControllerId(), entry.getTargetId(), e.excludedTypes(), entry.getCard());
+                gameData, entry.getControllerId(), entry.getTargetId(),
+                card -> predicateEvaluationService.matchesCardPredicate(card, e.choosableFilter(), null),
+                CardPredicateUtils.describeFilter(e.choosableFilter()), entry.getCard());
     }
 }

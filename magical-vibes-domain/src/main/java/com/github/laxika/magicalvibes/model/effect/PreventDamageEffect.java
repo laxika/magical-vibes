@@ -22,7 +22,8 @@ import java.util.Set;
  * @param combatOnly      combat-only window for the target-creature scopes (Foxfire)
  * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
- * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+ * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS};
+ *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  */
@@ -65,8 +66,14 @@ public record PreventDamageEffect(
         if ((exemptPredicate != null) != (scope == PreventionScope.ALL_COMBAT_EXCEPT)) {
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
         }
-        if ((victimPredicate != null) != (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS)) {
-            throw new IllegalArgumentException("victimPredicate is exactly the ALL_TO_MATCHING_PERMANENTS parameter: " + scope);
+        boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
+        if (victimPredicate != null && !acceptsVictimPredicate) {
+            throw new IllegalArgumentException(
+                    "victimPredicate is only the ALL_TO_MATCHING_PERMANENTS / NEXT_TO_TARGET_CREATURE parameter: " + scope);
+        }
+        if (victimPredicate == null && scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS) {
+            throw new IllegalArgumentException("ALL_TO_MATCHING_PERMANENTS requires a victimPredicate");
         }
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
             throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
@@ -111,6 +118,16 @@ public record PreventDamageEffect(
     /** "Prevent the next {@code amount} damage that would be dealt to target creature" (Soldevi Heretic). */
     public static PreventDamageEffect nextToTargetCreature(int amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET_CREATURE, new Fixed(amount), false, null, null, null);
+    }
+
+    /**
+     * "Prevent the next {@code amount} damage that would be dealt to target [restricted] creature"
+     * (Eiganjo Castle — target legendary creature). {@code victimPredicate} narrows the creature-only
+     * {@code TargetSpec} so an illegal creature can never be chosen.
+     */
+    public static PreventDamageEffect nextToTargetCreature(int amount, PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_TARGET_CREATURE, new Fixed(amount), false, null, null, victimPredicate);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to target player or planeswalker" (Wandering Mage). */
@@ -211,7 +228,9 @@ public record PreventDamageEffect(
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
             case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetPredicates.creature());
-            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(TargetPredicates.creature());
+            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(victimPredicate == null
+                    ? TargetPredicates.creature()
+                    : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetPredicates.permanent());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "49")
+@CardRegistration(set = "INR", collectorNumber = "302")
 public class VanquishTheHorde extends Card {
 
     public VanquishTheHorde() {

@@ -20,18 +20,17 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -103,6 +102,28 @@ class CastingCostServiceTest {
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
     }
 
+    /**
+     * Stubs the mocked predicate service to really evaluate the card-type predicates these tests
+     * build, so a scope merge cannot pass by accident of an always-true mock.
+     */
+    private void evaluateCardTypePredicates() {
+        lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+    }
+
+    private static CardAnyOfPredicate instantOrSorcery() {
+        return new CardAnyOfPredicate(List.of(
+                new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)));
+    }
+
+    private static boolean matchesCardType(Card card, CardPredicate predicate) {
+        return switch (predicate) {
+            case CardTypePredicate p -> card.hasType(p.cardType());
+            case CardAnyOfPredicate p -> p.predicates().stream().anyMatch(inner -> matchesCardType(card, inner));
+            case null, default -> false;
+        };
+    }
+
     @Nested
     @DisplayName("getCastCostModifier — handler-dispatched cost modifiers")
     class GetCastCostModifierTests {
@@ -114,8 +135,9 @@ class CastingCostServiceTest {
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
             taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY), 1));
+                    new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
+            evaluateCardTypePredicates();
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -142,8 +164,10 @@ class CastingCostServiceTest {
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
             taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT), 1));
+                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+                            CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player1Id).add(new Permanent(taxCard));
+            evaluateCardTypePredicates();
 
             Card instant = new Card();
             instant.setName("Lightning Bolt");
@@ -202,8 +226,10 @@ class CastingCostServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            new Fixed(2), CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            evaluateCardTypePredicates();
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -230,8 +256,10 @@ class CastingCostServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            new Fixed(2), CostModificationScope.SELF));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
+            evaluateCardTypePredicates();
 
             Card creature = new Card();
             creature.setName("Grizzly Bears");
@@ -293,7 +321,8 @@ class CastingCostServiceTest {
             taxCard.setName("Thorn of Amethyst");
             taxCard.setType(CardType.ARTIFACT);
             taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1));
+                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+                            CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
 
             when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(inv -> {
@@ -370,7 +399,7 @@ class CastingCostServiceTest {
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
             thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY), 1));
+                    new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
 
             // Player has a SELF-scoped reducer for instants: -1
@@ -382,11 +411,7 @@ class CastingCostServiceTest {
                             new CardTypePredicate(CardType.INSTANT), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
-                Card card = invocation.getArgument(0);
-                CardTypePredicate pred = invocation.getArgument(1);
-                return card.hasType(pred.cardType());
-            });
+            evaluateCardTypePredicates();
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -443,7 +468,8 @@ class CastingCostServiceTest {
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
             thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT), 2));
+                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 2,
+                            CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
 
             // Player has a SELF-scoped reducer for instants: -3
@@ -480,8 +506,10 @@ class CastingCostServiceTest {
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(5)));
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            new Fixed(5), CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            evaluateCardTypePredicates();
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -531,8 +559,10 @@ class CastingCostServiceTest {
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
             taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT), 1));
+                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+                            CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
+            evaluateCardTypePredicates();
 
             Card instant = new Card();
             instant.setName("Lightning Bolt");
@@ -558,7 +588,7 @@ class CastingCostServiceTest {
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
             stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect(predicate, 2));
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
 
             Card dinoCard = new Card();
             dinoCard.setName("Dinosaur");
@@ -583,7 +613,7 @@ class CastingCostServiceTest {
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
             stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect(predicate, 2));
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
 
             Card bearCard = new Card();
             bearCard.setName("Bear");
@@ -659,8 +689,8 @@ class CastingCostServiceTest {
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
             stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect(
-                            new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2));
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, true));
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of())).isZero();
         }
@@ -871,14 +901,15 @@ class CastingCostServiceTest {
         }
 
         @Test
-        @DisplayName("SacrificeArtifactCost — false with no artifact, true with one")
+        @DisplayName("SacrificePermanentCost (artifact) — false with no artifact, true with one")
         void sacrificeArtifactCost() {
-            Card spell = spellWith(new SacrificeArtifactCost());
+            var filter = new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate();
+            Card spell = spellWith(new SacrificePermanentCost(filter, "an artifact", false));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
             Permanent artifact = new Permanent(graveyardCard("Trinket", CardType.ARTIFACT));
             gd.playerBattlefields.get(player1Id).add(artifact);
-            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, artifact, filter)).thenReturn(true);
 
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }

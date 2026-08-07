@@ -5,6 +5,14 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever this creature or another creature you control enters, …" — like
+     *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
+     *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
+     *  without the self-exclusion. The entering permanent rides along as the trigger's
+     *  {@code triggeringPermanentId} so an effect like
+     *  {@code EnteringCreatureFightsTargetCreatureEffect} knows which creature "that creature" is.
+     *  Used by Gruul Ragebeast. */
+    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever a nontoken creature enters under your control" (excludes this permanent and tokens).
      *  Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the entering permanent's id is preserved on
      *  any queued may-pay ability (mirrors {@link #ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD}), so a
@@ -37,6 +45,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * battlefield by an effect.
      */
     ON_CONTROLLER_PLAYS_LAND,
+    /**
+     * "Whenever an opponent plays a land" — the opponent-side mirror of
+     * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
+     * merely enters the battlefield. Use {@link #ON_OPPONENT_LAND_ENTERS_BATTLEFIELD} for the
+     * enters-based version. Dirtcowl Wurm.
+     */
+    ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
@@ -106,6 +121,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Thraximundar. */
     ON_ANY_CREATURE_SACRIFICED,
     ON_BECOMES_TARGET_OF_SPELL,
+    /** Triggers when this permanent becomes the target of an Aura spell (any player's — the Aura's
+     *  controller is irrelevant). Spells only; an Aura already on the battlefield being moved by an
+     *  ability never triggers it. The trigger belongs to the targeted permanent's controller and goes
+     *  on the stack with {@code sourcePermanentId} set. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}. Used by Fugitive Druid
+     *  (pair with {@code DrawCardEffect}). */
+    ON_BECOMES_TARGET_OF_AURA_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
     ON_ANY_CREATURE_DIES,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
@@ -247,6 +269,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} for resolution. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
     ON_EQUIPPED_CREATURE_DIES,
+    /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
+     *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
+     *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
+    ON_EQUIPPED_CREATURE_TRANSFORMS,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
@@ -368,6 +394,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
+    /** Triggers at the beginning of each player's first main phase (any player's turn), not only
+     *  the controller's. Checked in {@code StepTriggerService.handlePrecombatMainTriggers} by
+     *  scanning all battlefields; the trigger is controlled by the source's controller while the
+     *  active player is carried as the stack entry's target. Used by Eladamri's Vineyard. */
+    EACH_PRECOMBAT_MAIN_TRIGGERED,
     /** Triggers at the beginning of each of the controller's postcombat main phases.
      *  Checked in {@code StepTriggerService.handlePostcombatMainTriggers}. */
     POSTCOMBAT_MAIN_TRIGGERED,
@@ -682,6 +713,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the effect names is baked as the non-targeting {@code targetId} on the stack entry, with the
      *  attacker as {@code sourcePermanentId}. Checked in {@code CombatBlockService}. Used by No Quarter. */
     ON_ANY_CREATURE_BECOMES_BLOCKED,
+    /** Global watcher: triggers once each time blockers are declared and at least one creature
+     *  blocked, regardless of who controls the blockers. Unlike
+     *  {@link #ON_ANY_CREATURE_BECOMES_BLOCKED} it fires a single time no matter how many
+     *  attacker/blocker pairs were created. Fires on every permanent with this slot across all
+     *  battlefields; no {@code targetId} is set, so effects act on the board (e.g. an all-matching
+     *  sacrifice filtered by {@code PermanentIsBlockingPredicate}). Checked in
+     *  {@code CombatBlockService}. Used by Tide of War. */
+    ON_ANY_CREATURES_BLOCK,
     /** Triggers whenever a permanent is returned to a player's hand (bounced from the battlefield),
      *  regardless of who controls this permanent or owns the returned one. Fires on every permanent
      *  with this slot across all battlefields, once per returned permanent. The player the permanent

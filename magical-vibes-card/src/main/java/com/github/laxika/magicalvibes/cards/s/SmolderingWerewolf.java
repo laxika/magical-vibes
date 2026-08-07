@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "171")
+@CardRegistration(set = "INR", collectorNumber = "465")
 public class SmolderingWerewolf extends Card {
 
     public SmolderingWerewolf() {

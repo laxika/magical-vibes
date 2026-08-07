@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "88")
@@ -20,6 +21,6 @@ public class PraetorsCounsel extends Card {
         // Exile Praetor's Counsel. (handled by StackResolutionService as spell disposition)
         addEffect(EffectSlot.SPELL, new ExileSpellEffect());
         // You have no maximum hand size for the rest of the game.
-        addEffect(EffectSlot.SPELL, new GrantPermanentNoMaxHandSizeEffect());
+        addEffect(EffectSlot.SPELL, new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME));
     }
 }

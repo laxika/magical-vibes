@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "199")
+@CardRegistration(set = "INR", collectorNumber = "412")
 public class GrappleWithThePast extends Card {
 
     public GrappleWithThePast() {

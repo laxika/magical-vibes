@@ -73,8 +73,9 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * Builds the Aura face as a runtime copy — live cards are frozen, so the printed face cannot be
-     * mutated. The Licid ability is dropped ("loses this ability") and replaced by the end-effect
-     * payment; the STATIC effects come along untouched.
+     * mutated. Only the Licid ability itself is dropped ("loses this ability"), replaced in place by
+     * the end-effect payment; any other activated ability (Nurturing Licid's "{G}: Regenerate
+     * enchanted creature") and the STATIC effects come along untouched.
      */
     private Card auraForm(Card creatureForm, String endCost) {
         Card copy = creatureForm.createRuntimeCopy();
@@ -82,8 +83,9 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
         copy.setSubtypes(List.of(CardSubtype.AURA));
         copy.setPower(null);
         copy.setToughness(null);
-        copy.getActivatedAbilities().clear();
-        copy.addActivatedAbility(new ActivatedAbility(
+        copy.getActivatedAbilities().removeIf(ability -> ability.getEffects().stream()
+                .anyMatch(LicidBecomeAuraEffect.class::isInstance));
+        copy.getActivatedAbilities().addFirst(new ActivatedAbility(
                 false,
                 endCost,
                 List.of(new LicidEndEffect()),

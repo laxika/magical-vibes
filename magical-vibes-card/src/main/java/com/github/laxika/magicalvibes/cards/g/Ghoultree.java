@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "115")
 @CardRegistration(set = "INR", collectorNumber = "198")
+@CardRegistration(set = "INR", collectorNumber = "411")
 public class Ghoultree extends Card {
 
     public Ghoultree() {

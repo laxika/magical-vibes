@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouCont
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -74,7 +73,6 @@ public class AdditionalSpellCostService {
             SacrificeAllPermanentsYouControlCost.class,
             SacrificeCreatureCost.class,
             SacrificeCreatureOrPayManaCost.class,
-            SacrificeArtifactCost.class,
             SacrificePermanentCost.class,
             SacrificeMultiplePermanentsCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
@@ -108,7 +106,6 @@ public class AdditionalSpellCostService {
             boolean sacrificeAllPermanents,
             boolean sacrificeCreature,
             SacrificeCreatureOrPayManaCost sacrificeCreatureOrPayManaCost,
-            boolean sacrificeArtifact,
             SacrificePermanentCost sacrificePermanentCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
@@ -124,7 +121,7 @@ public class AdditionalSpellCostService {
             DiscardCardTypeCost discardCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
             boolean discardHand,
-            boolean discardXCards,
+            DiscardXCardsCost discardXCardsCost,
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
             RepeatableAdditionalManaCost repeatableManaCost
@@ -133,14 +130,13 @@ public class AdditionalSpellCostService {
         public boolean any() {
             return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
                     || sacrificeCreatureOrPayManaCost != null
-                    || sacrificeArtifact
                     || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || returnAnyNumberCost != null
                     || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
-                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCards
+                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null;
         }
@@ -204,7 +200,6 @@ public class AdditionalSpellCostService {
         boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
         boolean sacCreature = effects.removeIf(SacrificeCreatureCost.class::isInstance);
         SacrificeCreatureOrPayManaCost sacOrPay = removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
-        boolean sacArtifact = effects.removeIf(SacrificeArtifactCost.class::isInstance);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
@@ -222,11 +217,11 @@ public class AdditionalSpellCostService {
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
-        boolean discardXCards = effects.removeIf(DiscardXCardsCost.class::isInstance);
+        DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, sacArtifact, permCost, multiPermCost,
+        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
@@ -285,9 +280,6 @@ public class AdditionalSpellCostService {
                 }
                 case PutCounterOnControlledCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case SacrificeArtifactCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gameData, p))) return false;
                 }
                 case SacrificePermanentCost cost -> {
                     if (battlefield.stream().noneMatch(p ->
@@ -421,10 +413,6 @@ public class AdditionalSpellCostService {
                         + costs.discardCardOrPayManaCost().manaCost()
                         + " to cast " + card.getName());
             }
-        }
-        if (costs.sacrificeArtifact()) {
-            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
-                    "an artifact", p -> gameQueryService.isArtifact(p));
         }
         if (costs.sacrificePermanentCost() != null) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
@@ -889,9 +877,19 @@ public class AdditionalSpellCostService {
      * Validates the "discard X cards" additional cast cost (Abandon Hope) against the announced X,
      * without mutating anything. Returns the post-spell-removal hand indices that would be
      * discarded. Kept out of {@link #validateAll} because only the cast path knows the announced X.
+     * When the cost carries a predicate ("discard X land cards" — Scorched Earth), every chosen
+     * card must match it.
      */
     public List<Integer> validateDiscardXCardsCost(GameData gameData, Player player, Card card, int announcedX,
                                                    List<Integer> discardHandCardIndices, int spellCardIndex) {
+        return validateDiscardXCardsCost(gameData, player, card, peek(card).discardXCardsCost(), announcedX,
+                discardHandCardIndices, spellCardIndex);
+    }
+
+    /** As {@link #validateDiscardXCardsCost}, for callers that already extracted the cost. */
+    public List<Integer> validateDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
+                                                   int announcedX, List<Integer> discardHandCardIndices,
+                                                   int spellCardIndex) {
         if (announcedX < 0) {
             throw new IllegalStateException("X cannot be negative for " + card.getName());
         }
@@ -919,6 +917,11 @@ public class AdditionalSpellCostService {
                     ? discardHandCardIndex - 1 : discardHandCardIndex;
             if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
                 throw new IllegalStateException("Must discard cards to cast " + card.getName());
+            }
+            Card toDiscard = hand.get(effectiveIndex);
+            if (cost != null && cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(toDiscard, cost.predicate(), toDiscard.getId())) {
+                throw new IllegalStateException("Discarded cards must be " + cost.label());
             }
             effectiveIndices.add(effectiveIndex);
         }

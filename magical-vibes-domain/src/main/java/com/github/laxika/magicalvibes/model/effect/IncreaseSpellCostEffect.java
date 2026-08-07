@@ -3,8 +3,22 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Increases the casting cost of matching spells for all players by the given amount.
- * E.g. Thalia, Guardian of Thraben: predicate = not-creature, amount = 1.
+ * Increases the casting cost of matching spells by the given amount of generic mana.
+ * Applied as a static effect from a permanent on the battlefield.
+ *
+ * <p>The {@code predicate} determines which spells are taxed; the {@code scope} determines whose
+ * spells are taxed. It is the tax-side mirror of {@link ReduceCastCostForMatchingSpellsEffect}
+ * and shares its {@link CostModificationScope}.
+ *
+ * <p>Examples:
+ * <ul>
+ *   <li>Thalia, Guardian of Thraben: {@code (CardNotPredicate(CardTypePredicate(CREATURE)), 1, ALL)}</li>
+ *   <li>Derelor: {@code (CardColorPredicate(BLACK), 1, SELF)} — "Black spells you cast cost {B} more",
+ *       the colored pip modeled as +1 generic</li>
+ *   <li>Aura of Silence: {@code (artifactOrEnchantment, 2, OPPONENT)}</li>
+ * </ul>
  */
-public record IncreaseSpellCostEffect(CardPredicate predicate, int amount) implements CardEffect {
+public record IncreaseSpellCostEffect(CardPredicate predicate,
+                                      int amount,
+                                      CostModificationScope scope) implements CardEffect {
 }

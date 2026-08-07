@@ -195,12 +195,18 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed) {
             handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx) {
+            handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
             handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
             handleChooseFivePermanentsSearchSameName(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DevourSacrifice ctx) {
             handleDevourSacrifice(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness ctx) {
+            handleSacrificeCreaturesSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters ctx) {
+            handleSacrificeAsEntersForCounters(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PayManaPerCreatureUntap ctx) {
             handlePayManaPerCreatureUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap ctx) {
@@ -781,6 +787,36 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /**
+     * Mana Seism: the chosen permanents are sacrificed, then the controller adds one mana of the
+     * context's color for each permanent actually sacrificed.
+     */
+    private void handleSacrificePermanentsAddManaPerSacrificed(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed context) {
+        int sacrificed = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (sacrificed > 0) {
+            gameData.playerManaPools.get(playerId).add(context.color(), sacrificed);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " adds " + sacrificed + " " + context.color().getCode() + "."));
+            log.info("Game {} - {} adds {} {}", gameData.id, playerName, sacrificed, context.color());
+        } else {
+            gameLogService.append(gameData, GameLog.text(playerName + " sacrifices no permanents."));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private int totalEffectivePower(GameData gameData, List<UUID> permanentIds) {
         int total = 0;
         for (UUID permId : permanentIds) {
@@ -1282,6 +1318,79 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume the entry: run ETB triggers now that the devour counters/count are set.
+        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
+                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    /**
+     * Dracoplasm: sacrifice the chosen creatures and set the entering permanent's base power and
+     * toughness to their totals, read from their last known battlefield values before they leave.
+     * The stamp is a durable layer-7b base-P/T override, so counters and boosts apply on top of it.
+     */
+    private void handleSacrificeCreaturesSetEnteringPowerToughness(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+
+        int totalPower = 0;
+        int totalToughness = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                totalPower += gameQueryService.getEffectivePower(gameData, perm);
+                totalToughness += gameQueryService.getEffectiveToughness(gameData, perm);
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (entering != null) {
+            entering.setBasePowerOverriddenPermanently(true);
+            entering.setPermanentBasePowerOverride(totalPower);
+            entering.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
+            entering.setBaseToughnessOverriddenPermanently(true);
+            entering.setPermanentBaseToughnessOverride(totalToughness);
+            entering.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+            gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                    " becomes " + totalPower + "/" + totalToughness + "."));
+        }
+
+        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
+                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    private void handleSacrificeAsEntersForCounters(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                    MultiPermanentChoiceContext.SacrificeAsEntersForCounters context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+
+        int sacrificed = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (entering != null && sacrificed > 0 && !gameQueryService.cantHaveCounters(gameData, entering)) {
+            int added = context.countersPerPermanent() * sacrificed;
+            added = gameQueryService.doublePlusOnePlusOneCounters(gameData, playerId, added);
+            entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
+            gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                    " enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
+        }
+
+        // Resume the entry: run ETB triggers now that the counters are set.
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
 

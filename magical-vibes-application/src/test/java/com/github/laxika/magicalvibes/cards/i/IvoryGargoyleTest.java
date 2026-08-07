@@ -47,6 +47,18 @@ class IvoryGargoyleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The death trigger queues a draw-step skip on its controller and nothing else")
+    void queuesNothingButTheControllersDrawStepSkip() {
+        killGargoyle(player1);
+
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextTurnCount).isEmpty();
+        assertThat(gd.skipNextUntapStepCount).isEmpty();
+        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+    }
+
+    @Test
     @DisplayName("Only one draw step is skipped per death")
     void skipsOnlyOneDrawStep() {
         killGargoyle(player1);

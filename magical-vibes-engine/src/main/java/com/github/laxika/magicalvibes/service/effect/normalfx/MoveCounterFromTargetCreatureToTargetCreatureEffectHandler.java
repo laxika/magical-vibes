@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +52,22 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             return;
         }
 
-        boolean moveAll = ((MoveCounterFromTargetCreatureToTargetCreatureEffect) effect).moveAll();
+        MoveCounterFromTargetCreatureToTargetCreatureEffect moveEffect =
+                (MoveCounterFromTargetCreatureToTargetCreatureEffect) effect;
+        boolean moveAll = moveEffect.moveAll();
+
+        if (moveEffect.anyNumber()) {
+            // "Move any number of [type] counters" (Bioshift) — the controller picks how many, so
+            // pause for a number choice; ChoiceHandlerService performs the move on the answer.
+            int available = source.getCounterCount(moveEffect.counterType());
+            if (available <= 0) {
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " has no counters to move."));
+                return;
+            }
+            playerInputService.beginMoveCountersAmountChoice(gameData, entry.getControllerId(), source.getId(),
+                    destination.getId(), moveEffect.counterType(), entry.getCard().getName(), available);
+            return;
+        }
 
         if (moveAll) {
             // "Move all counters" — move every counter of every kind.

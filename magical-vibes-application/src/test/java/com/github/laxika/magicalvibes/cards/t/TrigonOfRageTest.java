@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,7 +57,7 @@ class TrigonOfRageTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isTrue();
         assertThat(ability.getEffects())
                 .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
+                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
                 .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte
                         && bte.powerBoost().equals(new Fixed(3)) && bte.toughnessBoost().equals(new Fixed(0)));
     }

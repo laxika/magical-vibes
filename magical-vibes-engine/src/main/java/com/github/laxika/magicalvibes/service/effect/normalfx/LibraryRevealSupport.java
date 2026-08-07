@@ -67,21 +67,37 @@ public class LibraryRevealSupport {
                 "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
+    /** Every distinct creature card name across all zones, sorted alphabetically (Wood Sage). */
+    public List<String> collectCreatureCardNamesInGame(GameData gameData) {
+        return collectCardNamesInGame(gameData, card -> matchesCardTypes(card, Set.of(CardType.CREATURE)));
+    }
+
     public List<String> collectAllCardNamesInGame(GameData gameData) {
+        return collectCardNamesInGame(gameData, card -> true);
+    }
+
+    private List<String> collectCardNamesInGame(GameData gameData, java.util.function.Predicate<Card> candidate) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of())
+            gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
+                    .filter(p -> candidate.test(p.getCard()))
                     .forEach(p -> names.add(p.getCard().getName()));
-            gameData.playerHands.getOrDefault(pid, List.of())
+            gameData.playerHands.getOrDefault(pid, List.of()).stream()
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of())
+            gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerDecks.getOrDefault(pid, List.of())
+            gameData.playerDecks.getOrDefault(pid, List.of()).stream()
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
-            gameData.getPlayerExiledCards(pid)
+            gameData.getPlayerExiledCards(pid).stream()
+                    .filter(candidate)
                     .forEach(c -> names.add(c.getName()));
         }
-        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
+        gameData.stack.stream()
+                .filter(se -> candidate.test(se.getCard()))
+                .forEach(se -> names.add(se.getCard().getName()));
         return new ArrayList<>(names);
     }
 

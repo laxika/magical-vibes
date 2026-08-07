@@ -61,6 +61,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {}
 
     /**
+     * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
+     * then created under {@code copyControllerId}'s control from {@code sourceCard}.
+     */
+    record OpponentChoosesCreatureTheyControlToCopy(
+            UUID choosingPlayerId,
+            UUID copyControllerId,
+            Card sourceCard
+    ) implements PermanentChoiceContext {}
+
+    /**
      * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of
      * {@code victimControllerId}'s to gain control of for {@code duration}, keyed to {@code sourcePermanentId}.
      */
@@ -222,8 +232,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Targeted "whenever a permanent enters" trigger (e.g. Reaper King — "Whenever another Scarecrow
      *  you control enters, destroy target permanent."). The controller chooses the target when the
-     *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow. */
-    record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+     *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow.
+     *  {@code enteringPermanentId} is the permanent whose entry caused the trigger; it becomes the
+     *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
+     *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
+    record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
+                               UUID enteringPermanentId) implements PermanentChoiceContext {
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+        }
+    }
 
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
      *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains

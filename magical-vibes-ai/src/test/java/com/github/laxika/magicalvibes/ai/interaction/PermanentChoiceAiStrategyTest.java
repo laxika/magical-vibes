@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -175,7 +176,8 @@ class PermanentChoiceAiStrategyTest {
             Permanent expensiveArtifact = artifact("Expensive", "{4}");
             gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(outlet, cheapArtifact, expensiveArtifact));
 
-            var context = sacrificeCostChoice(outlet.getId(), new SacrificeArtifactCost());
+            var context = sacrificeCostChoice(outlet.getId(),
+                    new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
             strategy.answer(permanentChoice(aiPlayerId,
                     List.of(outlet.getId(), cheapArtifact.getId(), expensiveArtifact.getId()), context),
                     context());

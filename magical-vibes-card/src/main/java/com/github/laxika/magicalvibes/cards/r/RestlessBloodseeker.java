@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "128")
+@CardRegistration(set = "INR", collectorNumber = "463")
 public class RestlessBloodseeker extends Card {
 
     public RestlessBloodseeker() {

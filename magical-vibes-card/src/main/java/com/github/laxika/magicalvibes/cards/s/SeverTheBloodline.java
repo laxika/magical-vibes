@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "115")
 @CardRegistration(set = "INR", collectorNumber = "130")
+@CardRegistration(set = "INR", collectorNumber = "389")
 public class SeverTheBloodline extends Card {
 
     public SeverTheBloodline() {

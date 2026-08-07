@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Capability interface for effects that make a player gain a single evaluated amount of life. Lets
@@ -17,4 +18,15 @@ public interface LifeGainEffect extends CardEffect {
      * X paid, "for each …", …).
      */
     DynamicAmount lifeGainAmount();
+
+    /**
+     * True when this configuration gains no life at all, which its own components already settle —
+     * an effect whose life gain is an optional rider reports {@code Fixed(0)} when the rider is off
+     * ({@link RevealTopCardOfLibraryEffect} without a land bonus). A consumer that only asks "does
+     * this card gain life" must consult this rather than {@code instanceof LifeGainEffect}, or it
+     * scores a plain reveal as a lifegain spell.
+     */
+    default boolean gainsNoLife() {
+        return lifeGainAmount() instanceof Fixed fixed && fixed.value() == 0;
+    }
 }

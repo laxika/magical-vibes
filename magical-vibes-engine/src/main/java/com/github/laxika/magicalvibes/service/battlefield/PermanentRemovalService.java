@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -692,6 +694,48 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Liesa, Forgotten Archangel: true when a player other than {@code controllerId} controls a
+     * permanent with "if a creature an opponent controls would die, exile it instead".
+     */
+    private boolean opponentExilesDyingCreatures(GameData gameData, UUID controllerId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Frostwielder: true when any permanent on the battlefield has "if a creature dealt damage by
+     * this creature this turn would die, exile it instead" and damaged {@code dying} this turn.
+     */
+    private boolean damagerExilesDyingCreature(GameData gameData, Permanent dying) {
+        UUID cardId = dying.getCard().getId();
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent source : battlefield) {
+                if (source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance)
+                        && gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Sends a removed permanent's card to the graveyard and fires all death/graveyard triggers.
      */
     private void processGraveyardAndTriggers(GameData gameData, Permanent target,
@@ -703,7 +747,9 @@ public class PermanentRemovalService {
         boolean wentToGraveyard = false;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
-        boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard());
+        boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
+                || (wasCreature && opponentExilesDyingCreatures(gameData, controllerId))
+                || (wasCreature && damagerExilesDyingCreature(gameData, target));
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
@@ -736,7 +782,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedReturnOnDeath(gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
-                triggerCollectionService.triggerDelayedCreateTokenOnDeath(gameData, target.getCard().getId());
+                triggerCollectionService.triggerDelayedEffectOnDeath(gameData, target.getCard().getId());
                 collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);
             }

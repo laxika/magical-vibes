@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+
 public interface CardEffect {
 
     /**
@@ -18,6 +20,16 @@ public interface CardEffect {
      * so the component is honoured.</p>
      */
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
+
+    /**
+     * Which players this effect may target, for the effects whose wording narrows the player half
+     * of an otherwise shared {@link TargetSpec} — "target <em>opponent</em> or planeswalker" against
+     * "target <em>player</em> or planeswalker", which declare the same
+     * {@code TargetPredicates.playerOrPlaneswalker()}. The declared target cannot tell them apart,
+     * so a reader that builds a player target list must consult this rather than infer the
+     * restriction from the spec's shape.
+     */
+    default PlayerRelation targetPlayerRelation() { return PlayerRelation.ANY; }
 
     /**
      * Returns {@code true} if this effect is a characteristic-defining ability

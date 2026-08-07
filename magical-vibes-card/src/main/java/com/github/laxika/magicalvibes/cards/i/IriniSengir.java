@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -24,6 +25,6 @@ public class IriniSengir extends Card {
                         new CardAnyOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.GREEN),
                                 new CardColorPredicate(CardColor.WHITE))))),
-                2));
+                2, CostModificationScope.ALL));
     }
 }

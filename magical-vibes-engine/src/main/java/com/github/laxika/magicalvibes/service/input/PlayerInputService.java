@@ -509,6 +509,34 @@ public class PlayerInputService {
     }
 
     /**
+     * Bioshift: prompt {@code playerId} for how many {@code counterType} counters (0..{@code max})
+     * to move from one target creature onto the other. {@link ChoiceHandlerService} performs the
+     * move on the answer.
+     */
+    public void beginMoveCountersAmountChoice(GameData gameData, UUID playerId, UUID fromPermanentId,
+                                              UUID toPermanentId, CounterType counterType,
+                                              String sourceCardName, int max) {
+        ChoiceContext.MoveCountersAmountChoice choiceContext = new ChoiceContext.MoveCountersAmountChoice(
+                fromPermanentId, toPermanentId, counterType, sourceCardName);
+
+        List<String> options = java.util.stream.IntStream.rangeClosed(0, Math.max(0, max))
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterName = switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> counterType.name().toLowerCase().replace('_', ' ');
+        };
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                sourceCardName + " — move how many " + counterName + " counters (0-" + Math.max(0, max) + ")?"));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose how many {} counters to move (0-{})",
+                gameData.id, playerName, counterType, max);
+    }
+
+    /**
      * Quarry Hauler: prompt {@code playerId} to add or remove one counter of the FIRST kind in
      * {@code remainingKinds} on {@code targetId}. {@link ChoiceHandlerService} applies the answer and
      * re-invokes this with the remaining kinds until every kind has been resolved.
@@ -811,18 +839,57 @@ public class PlayerInputService {
     }
 
     /**
-     * Shimian Specter: {@code targetPlayerId} reveals their hand and the controller chooses a card
-     * in it that isn't of an excluded type. The pick reuses the Thought Hemorrhage answer flow with
-     * {@code damagePerCard = 0}, so every copy of the chosen name is exiled from the target's hand,
-     * graveyard, and library and they shuffle. Unlike that card the options come from the revealed
-     * hand only, so no interaction begins when the hand holds no legal card.
+     * Mindblaze, first prompt: the controller chooses a card name. {@link #beginRevealLibraryNumberGuessChoice}
+     * follows once the name is in.
+     */
+    public void beginRevealLibraryNameGuessChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                                  List<CardType> excludedTypes, int damage, Card sourceCard) {
+        ChoiceContext.RevealLibraryNameGuessChoice choiceContext =
+                new ChoiceContext.RevealLibraryNameGuessChoice(targetPlayerId, choosingPlayerId, excludedTypes, damage, sourceCard);
+
+        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+        String prompt = "Choose a non" + excludedLabel + " card name.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
+
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card name (reveal library, guess count)", gameData.id, playerName);
+    }
+
+    /**
+     * Mindblaze, second prompt: the controller chooses a number greater than 0. The offered range
+     * stops at the target's library size — a larger guess can never match the number of cards in
+     * that library, so it is outcome-identical to any losing guess in range.
+     */
+    public void beginRevealLibraryNumberGuessChoice(GameData gameData, ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
+        List<Card> library = gameData.playerDecks.get(ctx.targetPlayerId());
+        int max = Math.max(1, library == null ? 1 : library.size());
+
+        List<String> options = java.util.stream.IntStream.rangeClosed(1, max)
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                ctx.controllerId(), null, null, ctx, options,
+                "Choose a number greater than 0 for \"" + ctx.chosenName() + "\"."));
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        log.info("Game {} - Awaiting {} to choose a number for \"{}\"", gameData.id, playerName, ctx.chosenName());
+    }
+
+    /**
+     * Shimian Specter / Lobotomy: {@code targetPlayerId} reveals their hand and the controller
+     * chooses a card in it accepted by {@code choosable}. The pick reuses the Thought Hemorrhage
+     * answer flow with {@code damagePerCard = 0}, so every copy of the chosen name is exiled from
+     * the target's hand, graveyard, and library and they shuffle. Unlike that card the options come
+     * from the revealed hand only, so no interaction begins when the hand holds no legal card.
      */
     public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
-                                                                       UUID targetPlayerId, List<CardType> excludedTypes,
-                                                                       Card sourceCard) {
+                                                                       UUID targetPlayerId, Predicate<Card> choosable,
+                                                                       String choosableLabel, Card sourceCard) {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         List<String> cardNames = hand == null ? List.of() : hand.stream()
-                .filter(card -> !hasExcludedType(card, excludedTypes))
+                .filter(choosable)
                 .map(Card::getName)
                 .distinct()
                 .sorted()
@@ -835,10 +902,9 @@ public class PlayerInputService {
         }
 
         ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
-                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes, 0, sourceCard);
+                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, List.of(), 0, sourceCard);
 
-        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-        String prompt = "Choose a non" + excludedLabel + " card from " + targetName + "'s revealed hand.";
+        String prompt = "Choose a " + choosableLabel + " from " + targetName + "'s revealed hand.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 choosingPlayerId, null, null, choiceContext, cardNames, prompt));
 

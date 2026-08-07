@@ -77,7 +77,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
+        damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter, e.exileInsteadOfDie());
 
         if (e.damagesPlayers()) {
             for (UUID playerId : gameData.orderedPlayerIds) {

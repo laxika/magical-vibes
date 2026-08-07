@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -113,7 +114,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 Card topCard = createCard("Grizzly Bears");
                 gd.playerDecks.get(player2Id).add(topCard);
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect();
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Aven Windreader"),
                         player1Id, "Aven Windreader", List.of(effect), 0,
                         player2Id, null);
@@ -127,7 +128,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
             @Test
             @DisplayName("Empty library logs appropriately")
             void emptyLibraryLogged() {
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect();
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Aven Windreader"),
                         player1Id, "Aven Windreader", List.of(effect), 0,
                         player2Id, null);
@@ -144,7 +145,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 Card topCard = createCard("Forest", CardType.LAND);
                 gd.playerDecks.get(player2Id).add(topCard);
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(1);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER, 1);
                 Card source = createCard("Prophecy", CardType.SORCERY);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, source,
                         player1Id, "Prophecy", List.of(effect), 0,
@@ -160,7 +161,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
             void noLifeGainOnNonLand() {
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
-                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(1);
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.TARGET_PLAYER, 1);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Prophecy", CardType.SORCERY),
                         player1Id, "Prophecy", List.of(effect), 0,
                         player2Id, null);
@@ -168,5 +169,24 @@ class RevealTopCardOfLibraryEffectHandlerTest {
                 revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
 
                 verifyNoInteractions(lifeSupport);
+            }
+
+            @Test
+            @DisplayName("Controller owner reveals the controller's own top card even when the entry carries a target")
+            void controllerOwnerIgnoresTargetId() {
+                gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+                gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
+
+                RevealTopCardOfLibraryEffect effect = new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER);
+                StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Cruel Deceiver"),
+                        player1Id, "Cruel Deceiver", List.of(effect), 0,
+                        player2Id, null);
+
+                revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Llanowar Elves")));
+                verify(gameLogService, never()).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Grizzly Bears")));
             }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "215")
+@CardRegistration(set = "TMP", collectorNumber = "199")
 public class SandstoneWarrior extends Card {
 
     public SandstoneWarrior() {

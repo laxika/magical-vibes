@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,6 +24,6 @@ public class ManticoreOfTheGauntlet extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be an opponent or planeswalker"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DealDamageToTargetOpponentOrPlaneswalkerEffect(3));
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT));
     }
 }

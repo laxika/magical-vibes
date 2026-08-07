@@ -43,6 +43,20 @@ class FreyalisesWindsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The wind counter lands only on the permanent that became tapped")
+    void windCounterLandsOnlyOnTheTappedPermanent() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new FreyalisesWinds());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        tapAndResolve(bears);
+
+        assertThat(bears.getCounterCount(CounterType.WIND)).isEqualTo(1);
+        assertThat(spider.getCounterCount(CounterType.WIND)).isZero();
+        assertThat(winds.getCounterCount(CounterType.WIND)).isZero();
+    }
+
+    @Test
     @DisplayName("Wind counters accumulate across separate taps")
     void windCountersAccumulate() {
         harness.addToBattlefield(player1, new FreyalisesWinds());

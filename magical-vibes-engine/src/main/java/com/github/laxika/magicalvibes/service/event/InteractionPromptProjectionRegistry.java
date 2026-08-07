@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -534,10 +535,15 @@ public class InteractionPromptProjectionRegistry {
             case BOTTOM -> "the bottom of";
             case PLAYER_CHOICE -> "top or bottom of";
         };
-        String prompt = interaction.shuffleIn()
-                ? "Choose " + interaction.maxCount() + " card(s) to shuffle into your library."
-                : "Choose " + interaction.maxCount() + " card(s) to put on " + destination
-                        + " your library.";
+        String prompt;
+        if (interaction.shuffleIn()) {
+            prompt = "Choose " + interaction.maxCount() + " card(s) to shuffle into your library.";
+        } else if (interaction.swapWithLibraryTop()) {
+            prompt = "Choose any number of cards to exile face down and swap for the top of your library.";
+        } else {
+            prompt = "Choose " + interaction.maxCount() + " card(s) to put on " + destination
+                    + " your library.";
+        }
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.cards()),
@@ -720,6 +726,11 @@ public class InteractionPromptProjectionRegistry {
         }
         String targetName =
                 gameData.playerIdToName.getOrDefault(interaction.targetPlayerId(), "that player");
+        if (interaction.destination() == HandChoiceDestination.EXILE) {
+            return interaction.remainingCount() < interaction.discardCount()
+                    ? "Choose another revealed card to exile."
+                    : "Choose a revealed card to exile.";
+        }
         if (interaction.remainingCount() < interaction.discardCount()) {
             return "Choose another card for " + targetName + " to discard.";
         }

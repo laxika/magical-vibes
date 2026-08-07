@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.*;
-import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,17 +35,26 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         ReorderTopCardsOfLibraryEffect reorder = (ReorderTopCardsOfLibraryEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
+        UUID deckOwnerId = resolveDeckOwner(entry, reorder.owner(), controllerId);
+        List<Card> deck = gameData.playerDecks.get(deckOwnerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        // "their library" reads correctly only when the decider owns the deck; otherwise name the
+        // owner. Derived from the resolved ids rather than the owner axis, so targeting yourself
+        // ("target player" includes you) still reads as your own library.
+        boolean ownLibrary = deckOwnerId.equals(controllerId);
+        String libraryOf = ownLibrary ? "their library" : gameData.playerIdToName.get(deckOwnerId) + "'s library";
 
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": library is empty, nothing to reorder."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ownLibrary
+                    ? ": library is empty, nothing to reorder."
+                    : ": " + gameData.playerIdToName.get(deckOwnerId) + "'s library is empty, nothing to reorder."));
             return;
         }
 
         if (count == 1) {
             gameLogService.append(gameData,
-                    GameLog.text(gameData.playerIdToName.get(controllerId) + " looks at the top card of their library."));
+                    GameLog.text(controllerName + " looks at the top card of " + libraryOf + "."));
             return;
         }
 
@@ -50,12 +62,18 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         deck.subList(0, count).clear();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
-                controllerId, topCards, false, controllerId,
-                "Put these cards back on top of your library in any order (top to bottom)."));
+                controllerId, topCards, false, deckOwnerId,
+                "Put these cards back on top of " + (ownLibrary ? "your" : "the")
+                        + " library in any order (top to bottom)."));
 
-        String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
-        gameLogService.append(gameData, GameLog.text(logMsg));
-        log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
-    
+        gameLogService.append(gameData, GameLog.text(
+                controllerName + " looks at the top " + count + " cards of " + libraryOf + "."));
+        log.info("Game {} - {} reordering top {} cards of {}", gameData.id, controllerName, count, libraryOf);
+    }
+
+    /** Falls back to the controller when a target-player form resolves without a target. */
+    private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner, UUID controllerId) {
+        if (owner != LibraryOwner.TARGET_PLAYER) return controllerId;
+        return entry.getTargetId() != null ? entry.getTargetId() : controllerId;
     }
 }

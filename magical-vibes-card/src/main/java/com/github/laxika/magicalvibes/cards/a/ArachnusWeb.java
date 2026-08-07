@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "163")
@@ -23,6 +24,6 @@ public class ArachnusWeb extends Card {
                 // destroy this Aura.
                 .addEffect(EffectSlot.END_STEP_TRIGGERED,
                         new ConditionalEffect(new EnchantedCreaturePowerAtLeast(4),
-                                new DestroySourcePermanentEffect()));
+                                new DestroyReferencedPermanentEffect(PermanentReference.SOURCE)));
     }
 }

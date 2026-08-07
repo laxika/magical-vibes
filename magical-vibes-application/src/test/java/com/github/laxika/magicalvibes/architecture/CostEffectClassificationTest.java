@@ -51,7 +51,6 @@ class CostEffectClassificationTest {
             "PutTypedCounterOnSourceCost",
             "ReduceActivationCostPerCounterEffect",
             "RemoveAllCountersAsCostEffect",
-            "RemoveChargeCountersFromSourceCost",
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",
@@ -68,7 +67,6 @@ class CostEffectClassificationTest {
             "TapEnchantedPermanentCost",
             "TapTwoCreaturesSharingTypeCost",
             "TapMultiplePermanentsCost",
-            "TapXPermanentsCost",
             "UntapMultiplePermanentsCost");
 
     /**

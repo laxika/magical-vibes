@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
@@ -89,8 +88,8 @@ public class AttackLegalityService {
                 && !canAttackAsThoughHasteFromOwnStatic(gameData, creature)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !canAttackDespiteDefender(gameData, creature)) return false;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
+        if (gameQueryService.hasAuraWithEffect(gameData, creature,
+                e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsAttacking())) return false;
         if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;

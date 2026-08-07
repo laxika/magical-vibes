@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToSpecificValueEffect;
+import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -27,7 +28,7 @@ public class SorinMarkov extends Card {
         // −3: Target opponent's life total becomes 10.
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new SetTargetPlayerLifeToSpecificValueEffect(10)),
+                List.of(new SetLifeTotalEffect(10, SetLifeTotalRecipient.TARGET_PLAYER)),
                 "−3: Target opponent's life total becomes 10.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

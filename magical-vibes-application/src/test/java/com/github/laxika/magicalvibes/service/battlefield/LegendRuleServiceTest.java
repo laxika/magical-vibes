@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -163,6 +165,46 @@ class LegendRuleServiceTest {
             assertThat(result1).isFalse();
             assertThat(result2).isFalse();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Legend rule exemption (Brothers Yamazaki)")
+    class Exemption {
+
+        private Card exemptLegend() {
+            Card card = createLegendaryCreature("Brothers Yamazaki");
+            card.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
+            return card;
+        }
+
+        @Test
+        @DisplayName("Exactly two on the battlefield are exempt")
+        void exactlyTwoAreExempt() {
+            addPermanent(player1Id, exemptLegend());
+            addPermanent(player1Id, exemptLegend());
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
+        }
+
+        @Test
+        @DisplayName("A third copy anywhere on the battlefield switches the exemption back off")
+        void thirdCopyEndsExemption() {
+            addPermanent(player1Id, exemptLegend());
+            addPermanent(player1Id, exemptLegend());
+            addPermanent(player2Id, exemptLegend());
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A same-named copy without the exemption still triggers the legend rule")
+        void nonExemptCopyStillViolates() {
+            addPermanent(player1Id, exemptLegend());
+            addPermanent(player1Id, createLegendaryCreature("Brothers Yamazaki"));
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
         }
     }
 

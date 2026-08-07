@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -57,7 +58,7 @@ public class TradingPost extends Card {
         // {1}, {T}, Sacrifice an artifact: Draw a card.
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}",
-                List.of(new SacrificeArtifactCost(), new DrawCardEffect(1)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new DrawCardEffect(1)),
                 "{1}, {T}, Sacrifice an artifact: Draw a card."
         ));
     }

@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -365,10 +365,10 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnEnchantedCreatureEffect =====
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnReferencedPermanentEffect =====
 
     @Nested
-    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnEnchantedCreatureEffect")
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnReferencedPermanentEffect")
     class EnchantedPermanentTapCounter {
 
         @Test
@@ -376,7 +376,7 @@ class MiscTriggerCollectorServiceTest {
         void putsTriggeredAbilityOnStack() {
             Permanent aura = createPermanent("Spirit Shackle");
             Permanent tappedPerm = createPermanent("Grizzly Bears");
-            var effect = new PutCounterOnEnchantedCreatureEffect(CounterType.MINUS_ZERO_MINUS_TWO);
+            var effect = new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ZERO_MINUS_TWO);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             boolean result = registry.dispatch(

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -233,6 +234,10 @@ public class CombatAttackService {
 
         // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
         validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
+
+        // Magnetic Web: "if a creature with a magnet counter attacks, all creatures with magnet
+        // counters attack if able"
+        validateCounterBearersAttackTogether(gameData, playerId, attackable, uniqueIndices);
 
         // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
         if (attackerIndices.isEmpty() && !attackable.isEmpty() && isOpponentForcedToAttack(gameData, playerId)) {
@@ -1255,6 +1260,58 @@ public class CombatAttackService {
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
                 throw new IllegalStateException(creature.getCard().getName()
                         + " must also attack when another creature you control attacks");
+            }
+        }
+    }
+
+    /**
+     * Magnetic Web (CR 508.1d): while a permanent with a
+     * {@link CreaturesWithCounterAttackTogetherEffect} is on the battlefield, declaring an attacker
+     * that carries the named counter turns "attacks if able" on for every other creature the active
+     * player controls with such a counter. Waived under an attack tax for the same reason as
+     * {@link #validateAttacksAlongsideOtherCreature} (CR 508.1d never forces a player to pay a cost).
+     */
+    private void validateCounterBearersAttackTogether(GameData gameData, UUID playerId,
+                                                      List<Integer> attackableIndices,
+                                                      Set<Integer> declaredAttackerIndices) {
+        if (declaredAttackerIndices.isEmpty()) {
+            return;
+        }
+        if (castingCostService.getAttackPaymentPerCreature(gameData, playerId) > 0
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return;
+        }
+
+        Set<CounterType> activeCounterTypes = EnumSet.noneOf(CounterType.class);
+        for (List<Permanent> bf : gameData.playerBattlefields.values()) {
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CreaturesWithCounterAttackTogetherEffect together) {
+                        activeCounterTypes.add(together.counterType());
+                    }
+                }
+            }
+        }
+        if (activeCounterTypes.isEmpty()) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        for (CounterType counterType : activeCounterTypes) {
+            boolean bearerAttacking = declaredAttackerIndices.stream()
+                    .anyMatch(idx -> battlefield.get(idx).getCounterCount(counterType) > 0);
+            if (!bearerAttacking) {
+                continue;
+            }
+            for (int idx : attackableIndices) {
+                if (declaredAttackerIndices.contains(idx)) {
+                    continue;
+                }
+                Permanent creature = battlefield.get(idx);
+                if (creature.getCounterCount(counterType) > 0) {
+                    throw new IllegalStateException(creature.getCard().getName()
+                            + " must also attack when a creature with such a counter attacks");
+                }
             }
         }
     }

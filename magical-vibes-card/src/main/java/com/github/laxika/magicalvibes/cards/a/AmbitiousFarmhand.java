@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "8")
+@CardRegistration(set = "INR", collectorNumber = "448")
 public class AmbitiousFarmhand extends Card {
 
     public AmbitiousFarmhand() {

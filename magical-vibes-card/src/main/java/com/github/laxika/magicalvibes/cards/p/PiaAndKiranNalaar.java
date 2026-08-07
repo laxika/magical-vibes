@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,8 @@ public class PiaAndKiranNalaar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new SacrificeArtifactCost(), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
+                        new DealDamageToAnyTargetEffect(2)),
                 "{2}{R}, Sacrifice an artifact: Pia and Kiran Nalaar deals 2 damage to any target."
         ));
     }

@@ -96,6 +96,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
 
     /**
      * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
@@ -360,6 +361,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Echo Chamber: the opponent picked which of their creatures the controller gets a copy of. */
+    public void handleOpponentChoosesCreatureTheyControlToCopy(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy context) {
+        opponentChoosesCreatureTheyControlTokenCopyEffectHandler.completeChoice(gameData, permanentId, context);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

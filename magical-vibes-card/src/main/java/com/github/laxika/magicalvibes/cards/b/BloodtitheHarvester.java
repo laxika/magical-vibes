@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "233")
+@CardRegistration(set = "INR", collectorNumber = "427")
 public class BloodtitheHarvester extends Card {
 
     public BloodtitheHarvester() {

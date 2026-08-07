@@ -73,6 +73,25 @@ class ThornbiteStaffTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The untap trigger reaches the equipped creature, not the Staff itself")
+    void untapsTheEquippedCreatureAndNotTheStaff() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.tap();
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        staff.tap();
+
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castCruelEdictAtPlayer2();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(staff.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Untap trigger fizzles while the Staff is unattached")
     void untapTriggerFizzlesWhenUnattached() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());

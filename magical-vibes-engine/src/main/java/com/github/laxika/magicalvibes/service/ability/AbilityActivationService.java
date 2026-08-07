@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.ability.cost.ArtifactSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
@@ -28,7 +27,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHa
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
-import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
 import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
@@ -64,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -86,7 +86,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -96,7 +95,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSo
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -107,7 +105,6 @@ import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import lombok.RequiredArgsConstructor;
@@ -159,6 +156,7 @@ public class AbilityActivationService {
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameMutationCoordinator mutationCoordinator;
+    private final TapCostSupport tapCostSupport;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -881,7 +879,7 @@ public class AbilityActivationService {
 
         // Identify permanent-choice costs (e.g. return lands to hand)
         List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
-                .map(e -> toPermanentChoiceCostHandler(e, null, 0))
+                .map(e -> toPermanentChoiceCostHandler(gameData, e, null, 0))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -1037,7 +1035,7 @@ public class AbilityActivationService {
         ActivatedAbility ability = effectiveGraveyardAbilities(gameData, card, playerId).get(idx);
 
         PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(
-                context.costEffect(), null, 0, context.chosenSoFar());
+                gameData, context.costEffect(), null, 0, context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -1055,7 +1053,7 @@ public class AbilityActivationService {
 
         List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
         chosenSoFar.add(chosenPermanentId);
-        handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0, chosenSoFar);
+        handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), null, 0, chosenSoFar);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
         if (remaining > 0) {
@@ -1771,14 +1769,14 @@ public class AbilityActivationService {
         UUID sourceId = permanent.getId();
         final int xValueForCost = effectiveXValue;
         List<PermanentChoiceCostHandler> permanentChoiceCosts = new ArrayList<>(abilityEffects.stream()
-                .map(e -> toPermanentChoiceCostHandler(e, sourceId, xValueForCost))
+                .map(e -> toPermanentChoiceCostHandler(gameData, e, sourceId, xValueForCost))
                 .filter(Objects::nonNull)
                 .toList());
         CastingCostService.ImposedSacrificeRequirement imposedTax =
                 castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
         if (!imposedTax.isEmpty()) {
             PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
-                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    gameData, new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
                     sourceId, xValueForCost);
             if (imposedHandler != null) {
                 permanentChoiceCosts.add(imposedHandler);
@@ -1906,11 +1904,6 @@ public class AbilityActivationService {
                 .findFirst();
 
         boolean discardHandCost = abilityEffects.stream().anyMatch(e -> e instanceof DiscardHandCost);
-
-        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
-                .map(e -> (RemoveChargeCountersFromSourceCost) e)
-                .findFirst();
 
         // Validate X for Prototype Portal-style abilities here rather than in the shared legality
         // check alone: when the same ability's exile cost just imprinted a card (re-entry after the
@@ -2048,18 +2041,6 @@ public class AbilityActivationService {
             String counterWord = count == 1 ? "a " + counterLabel + " counter" : count + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
-        }
-
-        // Pay remove-charge-counter cost
-        if (removeChargeCost.isPresent()) {
-            int required = removeChargeCost.get().count();
-            permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - required);
-            
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " removes " + required + " charge counter(s) from ")
-                    .card(permanent.getCard())
-                    .text(" (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).")
-                    .build());
         }
 
         // Pay put-counter cost: put counters on the source (e.g. "Put a -1/-1 counter on this creature: ...")
@@ -2212,24 +2193,24 @@ public class AbilityActivationService {
                 effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetIds, damageAssignments);
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue) {
-        return toPermanentChoiceCostHandler(effect, sourcePermanentId, xValue, List.of());
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,
+                                                            UUID sourcePermanentId, int xValue) {
+        return toPermanentChoiceCostHandler(gameData, effect, sourcePermanentId, xValue, List.of());
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue,
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,
+                                                            UUID sourcePermanentId, int xValue,
                                                             List<UUID> chosenSoFar) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
-        if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameLogService, sourcePermanentId);
-        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -2268,9 +2249,9 @@ public class AbilityActivationService {
 
     /**
      * Remembers the land sacrificed to pay a {@link SacrificePermanentCost} when the ability adds
-     * mana of a type that land could produce (Squandered Resources). The land's card is stored on
-     * the source so the mana effect can still scan its abilities after the land has left the
-     * battlefield.
+     * mana of a type that land could produce (Squandered Resources) or grants landwalk of its land
+     * types (Excavator). The land's card is stored on the source so the effect can still read it
+     * after the land has left the battlefield.
      */
     private void recordSacrificedLandCard(CardEffect costEffect, Permanent source, int abilityIndex,
                                           Permanent sacrificed) {
@@ -2284,7 +2265,8 @@ public class AbilityActivationService {
             return;
         }
         if (abilities.get(abilityIndex).getEffects().stream()
-                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect)) {
+                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect
+                        || e instanceof GrantLandwalkOfSacrificedLandToTargetEffect)) {
             source.setChosenCard(sacrificed.getCard());
         }
     }
@@ -2338,7 +2320,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated ability no longer has the required cost");
         }
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -2400,7 +2382,7 @@ public class AbilityActivationService {
         // need the just-paid permanent threaded into the handler for the remaining choices.
         List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
         chosenSoFar.add(chosenPermanentId);
-        handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), chosenSoFar);
+        handler = toPermanentChoiceCostHandler(gameData, context.costEffect(), context.sourcePermanentId(), context.xValue(), chosenSoFar);
         if (remaining > 0) {
             if (!handler.canPayRemaining(gameData, playerId, remaining)) {
                 throw new IllegalStateException("Not enough permanents remaining");
@@ -2609,6 +2591,12 @@ public class AbilityActivationService {
             }
         }
 
+        // Soul Ransom: only opponents of the source permanent's controller may activate this ability.
+        if (ability.isActivatableOnlyByOpponents()
+                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()))) {
+            throw new IllegalStateException("Only your opponents may activate this ability");
+        }
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
@@ -2672,7 +2660,7 @@ public class AbilityActivationService {
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
         UUID sourceId = permanent.getId();
         for (CardEffect effect : abilityEffects) {
-            PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(effect, sourceId, xValue);
+            PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, effect, sourceId, xValue);
             if (handler != null) {
                 handler.validateCanPay(gameData, playerId);
             }
@@ -2681,7 +2669,7 @@ public class AbilityActivationService {
                 castingCostService.getImposedSacrificeRequirementForAbility(gameData, ability.getManaCost());
         if (!imposedTax.isEmpty()) {
             PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
-                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    gameData, new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
                     sourceId, xValue);
             if (imposedHandler != null) {
                 imposedHandler.validateCanPay(gameData, playerId);
@@ -2862,18 +2850,6 @@ public class AbilityActivationService {
             }
         }
 
-        // Remove-charge-counter cost availability
-        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
-                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
-                .map(e -> (RemoveChargeCountersFromSourceCost) e)
-                .findFirst();
-        if (removeChargeCost.isPresent()) {
-            int required = removeChargeCost.get().count();
-            if (permanent.getCounterCount(CounterType.CHARGE) < required) {
-                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getCounterCount(CounterType.CHARGE) + ")");
-            }
-        }
-
         // Imprinted-copy X requirement — unless this same ability's exile cost sets the imprint
         // during payment, in which case the check runs after that cost (validateImprintedCopyXValue)
         if (exileGraveyardCost == null || !exileGraveyardCost.imprintOnSource()) {
@@ -2993,6 +2969,11 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING_OR_BLOCKING) {
                 if (!permanent.isAttacking() && !permanent.isBlocking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking or blocking");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN) {
+                if (playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during an opponent's turn");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT) {

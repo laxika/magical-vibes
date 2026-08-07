@@ -16,28 +16,30 @@ import java.util.UUID;
 /**
  * Handles the {@link TapMultiplePermanentsCost} — the player must tap N untapped permanents
  * matching a {@link com.github.laxika.magicalvibes.model.filter.PermanentPredicate} filter
- * (e.g. "Tap five untapped Myr you control"). Unlike the single-tap handler, {@link #requiredCount()}
- * returns the count from the cost record, and the player may be prompted multiple times.
+ * (e.g. "Tap five untapped Myr you control", or "Tap X untapped Knights you control" where X is the
+ * value announced at activation). Unlike the single-tap handler, {@link #requiredCount()} returns
+ * that count, and the player may be prompted multiple times.
+ *
+ * <p>The cost's {@link com.github.laxika.magicalvibes.model.amount.DynamicAmount} count is evaluated
+ * by the caller and passed in, because {@link #requiredCount()} has no game state to evaluate it
+ * against.
  */
 public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandler {
 
     private final TapMultiplePermanentsCost cost;
+    private final int requiredCount;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
-    public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
-                                           GameLogService gameLogService,
-                                           TriggerCollectionService triggerCollectionService) {
-        this(cost, predicateEvaluationService, gameLogService, triggerCollectionService, null);
-    }
-
-    public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
+    public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, int requiredCount,
+                                           PredicateEvaluationService predicateEvaluationService,
                                            GameLogService gameLogService,
                                            TriggerCollectionService triggerCollectionService,
                                            UUID sourcePermanentId) {
         this.cost = cost;
+        this.requiredCount = requiredCount;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
@@ -45,13 +47,13 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
     }
 
     @Override public CardEffect costEffect() { return cost; }
-    @Override public int requiredCount() { return cost.count(); }
+    @Override public int requiredCount() { return requiredCount; }
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
         List<UUID> validIds = getValidChoiceIds(gameData, playerId);
-        if (validIds.size() < cost.count()) {
-            throw new IllegalStateException("Not enough untapped permanents to tap (need " + cost.count() + ", have " + validIds.size() + ")");
+        if (validIds.size() < requiredCount) {
+            throw new IllegalStateException("Not enough untapped permanents to tap (need " + requiredCount + ", have " + validIds.size() + ")");
         }
     }
 

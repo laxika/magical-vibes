@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+@CardRegistration(set = "INR", collectorNumber = "337")
 @CardRegistration(set = "INR", collectorNumber = "17")
 @CardRegistration(set = "AVR", collectorNumber = "10")
 public class CatharsCrusade extends Card {

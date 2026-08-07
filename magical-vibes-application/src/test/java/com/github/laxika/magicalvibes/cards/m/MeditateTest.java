@@ -54,6 +54,16 @@ class MeditateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Skipping a turn leaves the untap, draw and combat-phase queues alone")
+    void queuesNothingButTheTurnSkip() {
+        castMeditate();
+
+        assertThat(gd.skipNextUntapStepCount).isEmpty();
+        assertThat(gd.skipNextDrawStepCount).isEmpty();
+        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+    }
+
+    @Test
     @DisplayName("The caster's next turn is skipped")
     void skipsNextTurn() {
         castMeditate();

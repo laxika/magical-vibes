@@ -255,7 +255,7 @@ class HardAiDecisionEngineTest {
     // ===== Sacrifice cost checks =====
 
     @Test
-    @DisplayName("Hard AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    @DisplayName("Hard AI skips spell with a sacrifice-an-artifact cost when no artifact on battlefield")
     void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
         FakeConnection aiConn = new FakeConnection("ai-hard-test");
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");

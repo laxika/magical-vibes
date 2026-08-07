@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
 
@@ -18,8 +19,9 @@ public class IllusionaryPresence extends Card {
 
         // At the beginning of your upkeep, choose a land type. This creature gains landwalk of the
         // chosen type until end of turn.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new GrantChosenKeywordToSelfEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new GrantChosenKeywordEffect(
                 List.of(Keyword.PLAINSWALK, Keyword.ISLANDWALK, Keyword.SWAMPWALK,
-                        Keyword.MOUNTAINWALK, Keyword.FORESTWALK)));
+                        Keyword.MOUNTAINWALK, Keyword.FORESTWALK),
+                GrantScope.SELF));
     }
 }

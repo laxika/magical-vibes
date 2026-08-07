@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -109,6 +110,11 @@ public class GameData {
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentOnX = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Permanents whose once-per-your-turn graveyard cast permission has already been used this turn
+     * (Gisa and Geralf), keyed by the granting permanent's id.
+     */
+    public final Set<UUID> oncePerTurnGraveyardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
@@ -224,8 +230,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → whether it re-enters tapped, to return it to the battlefield under its owner's control if it dies this turn (Graceful Reprieve, Supernatural Stamina). */
     public final Map<UUID, Boolean> creaturesReturnedToBattlefieldOnDeathThisTurn = new ConcurrentHashMap<>();
-    /** Delayed trigger: creature card ID → token registrations to resolve if it dies this turn (Skeletonize). */
-    public final Map<UUID, List<DelayedTokenOnDeath>> creatureCreatingTokenOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Delayed trigger: creature card ID → effect registrations to resolve if it dies this turn (Skeletonize, Initiate of Blood). */
+    public final Map<UUID, List<DelayedEffectOnDeath>> creatureTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
@@ -268,6 +274,12 @@ public class GameData {
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
+    /**
+     * Per-player count of additional +1/+1 counters that creatures entering under that player's
+     * control receive for the rest of this turn (Zameck Guildmage). Turn-long replacement effect
+     * (CR 614.1c) that survives the source leaving the battlefield.
+     */
+    public final Map<UUID, Integer> additionalEnterCountersThisTurn = new ConcurrentHashMap<>();
     /** Per-controller, per-color additive damage bonus this turn (e.g. The Flame of Keld Chapter III). */
     public final Map<UUID, Map<CardColor, Integer>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
@@ -533,6 +545,13 @@ public class GameData {
      */
     public final List<OpponentGraveyardLifeLossWatcher> opponentGraveyardLifeLossWatchers =
             Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Active "whenever you gain life this turn, each opponent loses that much life" delayed triggers
+     * (Vizkopa Guildmage). One entry per activation, so repeated activations stack. Cleared at turn
+     * cleanup.
+     */
+    public final List<LifeGainOpponentLifeLossWatcher> lifeGainOpponentLifeLossWatchers =
+            Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -551,6 +570,9 @@ public class GameData {
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Soltari Guerrillas: redirect the next combat damage a specific source would deal to an opponent onto a fixed creature. */
+    public final List<SourceNextCombatDamageToOpponentRedirectShield> sourceNextCombatDamageToOpponentRedirectShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
@@ -714,6 +736,11 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** "Whenever you cast a creature spell this turn, draw a card" delayed triggers (Glimpse of
+     *  Nature). The value is how many cards that player draws per creature spell cast; cleared at
+     *  end of turn. */
+    public final Map<UUID, Integer> creatureSpellCastDrawsThisTurn = new ConcurrentHashMap<>();
 
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
@@ -1852,7 +1879,9 @@ public class GameData {
     /**
      * Total lands the given player may play this turn: the normal one, plus any additional grants
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
-     * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player).
+     * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player), plus
+     * the {@code amount} of each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player
+     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only).
      */
     public int getMaxLandsThisTurn(UUID playerId) {
         int extraFromStatics = 0;
@@ -1863,6 +1892,8 @@ public class GameData {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics++;
+                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
+                        extraFromStatics += additional.amount();
                     }
                 }
             }
@@ -2235,6 +2266,7 @@ public class GameData {
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
+        copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
@@ -2348,11 +2380,13 @@ public class GameData {
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
+        copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
+        copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.damagePreventionLifeGainShields.addAll(this.damagePreventionLifeGainShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
@@ -2489,8 +2523,8 @@ public class GameData {
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
         copy.creaturesReturnedToBattlefieldOnDeathThisTurn.putAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
-        this.creatureCreatingTokenOnDeathThisTurn.forEach((k, v) ->
-                copy.creatureCreatingTokenOnDeathThisTurn.put(k, new ArrayList<>(v)));
+        this.creatureTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
+                copy.creatureTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);
@@ -2535,6 +2569,10 @@ public class GameData {
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
         copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
                 this.graveyardTargetOperation.resolutionTimeForgottenLoreResume;
+        copy.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume =
+                this.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume;
+        copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
+                this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -2629,6 +2667,7 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
@@ -2691,6 +2730,7 @@ public class GameData {
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));
+        copy.oncePerTurnGraveyardCastPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardCastPermissionsUsedThisTurn);
 
         // --- Spell-cast payment tracking (X / converge / colors spent) ---
         copy.spellCastManaSpent.putAll(this.spellCastManaSpent);

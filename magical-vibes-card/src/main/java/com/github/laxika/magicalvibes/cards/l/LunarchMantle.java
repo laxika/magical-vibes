@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "31")
+@CardRegistration(set = "INR", collectorNumber = "344")
 public class LunarchMantle extends Card {
 
     public LunarchMantle() {

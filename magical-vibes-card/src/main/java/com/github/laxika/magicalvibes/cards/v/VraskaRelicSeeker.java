@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToSpecificValueEffect;
+import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,7 +53,7 @@ public class VraskaRelicSeeker extends Card {
         // −10: Target player's life total becomes 1.
         addActivatedAbility(new ActivatedAbility(
                 -10,
-                List.of(new SetTargetPlayerLifeToSpecificValueEffect(1)),
+                List.of(new SetLifeTotalEffect(1, SetLifeTotalRecipient.TARGET_PLAYER)),
                 "\u221210: Target player's life total becomes 1.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.ANY),

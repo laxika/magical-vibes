@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "51")
 @CardRegistration(set = "INR", collectorNumber = "60")
+@CardRegistration(set = "INR", collectorNumber = "457")
 public class DelverOfSecrets extends Card {
 
     public DelverOfSecrets() {

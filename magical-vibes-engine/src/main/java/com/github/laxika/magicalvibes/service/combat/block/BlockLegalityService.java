@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffec
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -199,7 +200,7 @@ public class BlockLegalityService {
             return BlockDenial.CANT_BE_BLOCKED;
         }
         BlockLegalityContext.BlockerFacts blk = blockerFacts(context, blocker);
-        if (atk.shadow() != blk.shadow()) {
+        if (atk.shadow() != blk.shadow() && !(atk.shadow() && blk.blocksShadowAsThoughShadow())) {
             return BlockDenial.SHADOW;
         }
         if (atk.flying() && !blk.flying() && !blk.reach()) {
@@ -349,7 +350,8 @@ public class BlockLegalityService {
      */
     private boolean hasUnmetBlockRequirement(BlockLegalityContext context, Permanent creature) {
         GameData gameData = context.gameData;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+        if (gameQueryService.hasAuraWithEffect(gameData, creature,
+                e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())) {
             return true;
         }
         UUID controllerId = null;
@@ -454,8 +456,12 @@ public class BlockLegalityService {
         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions = null;
         boolean cantBlockStatic = false;
         boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
+        boolean blocksShadowAsThoughShadow = false;
         Integer cantBlockPowerAtLeast = null;
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBlockCreaturesWithShadowEffect) {
+                blocksShadowAsThoughShadow = true;
+            }
             if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
                 if (attackerFilterRestrictions == null) {
                     attackerFilterRestrictions = new ArrayList<>(2);
@@ -488,6 +494,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.REACH),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.HORSEMANSHIP),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.SHADOW),
+                blocksShadowAsThoughShadow,
                 gameQueryService.isArtifact(blocker),
                 gameQueryService.getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,

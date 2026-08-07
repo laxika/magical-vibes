@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +52,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{2}");
         assertThat(ability.getEffects())
                 .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
+                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
                 .anyMatch(e -> e instanceof TargetPlayerGainsLifeEffect tp && tp.amount().equals(new Fixed(3)));
     }
 

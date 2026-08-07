@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
@@ -166,7 +167,8 @@ class PendingInteractionContractTest {
             assertThat(revealedHand.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction revealDiscard = new PendingInteraction.RevealCardsDiscardChoice(
-                    chooser, target, chooser, false, List.of(0), 1, List.of(), 1);
+                    chooser, target, chooser, false, List.of(0), 1, List.of(), 1,
+                    HandChoiceDestination.DISCARD);
             assertThat(revealDiscard.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction attackers = new PendingInteraction.AttackerDeclaration(chooser);

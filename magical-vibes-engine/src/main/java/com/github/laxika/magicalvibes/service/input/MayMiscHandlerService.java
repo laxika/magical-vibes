@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -465,6 +466,48 @@ public class MayMiscHandlerService {
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top (Believe)",
                     gameData.id, player.getUsername(), topCard.getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Unexpected Results, land branch: "you may put it onto the battlefield and return Unexpected
+     * Results to its owner's hand". Both halves are one choice, so a decline leaves the land on top
+     * of the library and lets the sorcery go to the graveyard as normal. Putting the land onto the
+     * battlefield is not a land play, so it neither uses up the turn's land drop nor fires
+     * plays-a-land triggers.
+     */
+    public void handleUnexpectedResultsLandChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID controllerId = player.getId();
+        Card land = ability.sourceCard();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to put ", land, " onto the battlefield."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (deck.isEmpty() || !deck.getFirst().getId().equals(land.getId())) {
+            gameLogService.append(gameData, GameLog.cardThen(land, " is no longer on top of the library."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        deck.removeFirst();
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(land));
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " puts ", land, " onto the battlefield."));
+        log.info("Game {} - {} puts {} onto the battlefield (Unexpected Results)",
+                gameData.id, player.getUsername(), land.getName());
+        battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, land, null, false);
+
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null && parked.getCard().getId().equals(ability.targetCardId())) {
+            parked.setReturnToHandAfterResolving(true);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

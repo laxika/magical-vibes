@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -487,7 +486,7 @@ class SpellCastingServiceTest {
             Card sorcery = createSorcery("Test Stomp", "{2}{G}");
             sorcery.target(2, 2);
             var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
-            sorcery.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingControlledPermanentEffect(predicate, 2));
+            sorcery.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.GREEN, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
