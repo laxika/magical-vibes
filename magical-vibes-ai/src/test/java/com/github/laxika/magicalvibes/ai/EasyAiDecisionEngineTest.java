@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -67,6 +68,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -970,6 +972,70 @@ class EasyAiDecisionEngineTest {
         verify(messageHandler).handleDeclareAttackers(captor.capture());
 
         assertThat(captor.getValue().attackerIndices()).hasSizeLessThanOrEqualTo(2);
+    }
+
+    // ===== Rejected attacker declarations =====
+
+    /**
+     * Two 2/2s facing an empty board, so the Easy AI's own pick is the whole team and the
+     * fallback ladder is what changes the declaration.
+     */
+    private void giveAiTwoUnopposedAttackers() {
+        gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
+
+        for (int i = 0; i < 2; i++) {
+            Permanent creature = new Permanent(new Card());
+            TestCards.mutableCard(creature).setName("Bear " + i);
+            TestCards.mutableCard(creature).setType(CardType.CREATURE);
+            TestCards.mutableCard(creature).setPower(2);
+            TestCards.mutableCard(creature).setToughness(2);
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+        }
+
+        when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0, 1));
+        when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
+                .thenReturn(List.of());
+        when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
+    }
+
+    @Test
+    @DisplayName("A rejected attacker declaration falls back to attacking with nothing")
+    void fallsBackToNoAttackersWhenDeclarationRejected() throws Exception {
+        giveAiTwoUnopposedAttackers();
+
+        AtomicInteger attempts = new AtomicInteger();
+        when(messageHandler.handleDeclareAttackers(any()))
+                .thenAnswer(invocation -> attempts.incrementAndGet() == 1 ? "Okk can't attack" : null);
+
+        createEngine().handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+        ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
+        verify(messageHandler, times(2)).handleDeclareAttackers(captor.capture());
+        assertThat(captor.getAllValues().get(0).attackerIndices()).isNotEmpty();
+        assertThat(captor.getAllValues().get(1).attackerIndices()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When attacking with nothing is rejected too, the AI attacks with everything able")
+    void fallsBackToEveryAttackerWhenNoAttackersAlsoRejected() throws Exception {
+        giveAiTwoUnopposedAttackers();
+
+        AtomicInteger attempts = new AtomicInteger();
+        when(messageHandler.handleDeclareAttackers(any()))
+                .thenAnswer(invocation -> attempts.incrementAndGet() < 3
+                        ? "Creature at index 1 must attack this combat"
+                        : null);
+
+        createEngine().handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+        ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
+        verify(messageHandler, times(3)).handleDeclareAttackers(captor.capture());
+        assertThat(captor.getAllValues().get(1).attackerIndices()).isEmpty();
+        assertThat(captor.getAllValues().get(2).attackerIndices()).containsExactly(0, 1);
     }
 
     // ===== ExileNCardsFromGraveyardCost (e.g. Skaab Ruinator) =====

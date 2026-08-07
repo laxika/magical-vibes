@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
@@ -18,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,6 +30,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -263,6 +268,82 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void declaresAttackersForMindslaveredPlayer() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player controlled = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent berserkers = mindslavedAttackerDeclaration(harness);
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(berserkers.isAttacking()).isTrue();
+        assertThat(gameData.playerBattlefields.get(aiPlayer.getId())).noneMatch(Permanent::isAttacking);
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        assertThat(controlled.getId()).isEqualTo(gameData.activePlayerId);
+    }
+
+    /**
+     * Hands the AI seat control of player1's turn through a real Mindslaver activation and stops in
+     * that turn's declare-attackers step, returning the controlled player's must-attack creature.
+     *
+     * <p>The engine addresses the attacker decision to the controller while the interaction stays
+     * owned by the controlled player, so the AI has to declare from a battlefield that is not its
+     * own. The controlled player is deliberately given more permanents than the AI seat and the
+     * must-attack creature is put last, so an engine reading its own battlefield can only produce
+     * indices that name something else — or nothing at all.
+     */
+    private Permanent mindslavedAttackerDeclaration(GameTestHarness harness) {
+        GameData gameData = harness.getGameData();
+        Player controlled = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Set<TurnStep> mainPhaseStops = Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
+        for (Player player : List.of(controlled, aiPlayer)) {
+            gameData.playerAutoStopSteps.put(player.getId(), ConcurrentHashMap.newKeySet());
+            gameData.playerAutoStopSteps.get(player.getId()).addAll(mainPhaseStops);
+        }
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(aiPlayer, new Mindslaver());
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 4);
+        harness.activateAbility(aiPlayer, 0, null, controlled.getId());
+        harness.passBothPriorities();
+
+        // Roll into the controlled player's turn, where the control actually takes effect.
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passBothPriorities();
+        assertThat(gameData.activePlayerId).isEqualTo(controlled.getId());
+        assertThat(gameData.mindControlledPlayerId).isEqualTo(controlled.getId());
+        assertThat(gameData.mindControllerPlayerId).isEqualTo(aiPlayer.getId());
+
+        Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ownBears.setSummoningSick(false);
+
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(controlled, new Forest()).setSummoningSick(false);
+        }
+        Permanent berserkers = harness.addToBattlefieldAndReturn(controlled, new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        return berserkers;
     }
 
     /**

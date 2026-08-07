@@ -2241,8 +2241,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
         if (availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(
-                    new DeclareAttackersRequest(List.of(), null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
         }
 
@@ -2261,9 +2260,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
-            final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(
-                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
             return;
         }
 
@@ -2277,9 +2274,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Attack + pump is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
-            final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(
-                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
             return;
         }
 
@@ -2298,9 +2293,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);
-            final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(
-                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
             return;
         }
 
@@ -2322,9 +2315,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Cap attackers to what we can afford given attack tax, and tap mana to pay
                 attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
-                final List<Integer> finalAttackerIndices = attackerIndices;
-                send(() -> gameActions.handleDeclareAttackers(
-                        new DeclareAttackersRequest(finalAttackerIndices, null)));
+                sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
                 return;
             }
         } catch (Exception e) {
@@ -2362,9 +2353,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
 
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
-        final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(
-                new DeclareAttackersRequest(finalAttackerIndices, null)));
+        sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
     }
 
     @Override

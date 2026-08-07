@@ -44,6 +44,8 @@ final class FuzzLogWatcher extends AppenderBase<ILoggingEvent> {
     private static final List<String> LEGALITY_DISAGREEMENT_MARKERS = List.of(
             "PlayCard failed silently",
             "ActivateAbility failed silently",
+            "Attacker declaration threw",
+            "Attacker declaration rejected",
             "Blocker declaration threw",
             "Blocker declaration rejected");
     /**

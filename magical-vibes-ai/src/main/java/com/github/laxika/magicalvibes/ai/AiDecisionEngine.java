@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
@@ -866,6 +867,63 @@ public abstract class AiDecisionEngine {
 
         private Permanent attacker(BlockerAssignment assignment) {
             return attackerBattlefield.get(assignment.attackerIndex());
+        }
+    }
+
+    /**
+     * Declares attackers, recovering from an engine rejection so a legality disagreement can
+     * never leave the declare-attackers step waiting forever.
+     *
+     * <p>The engine validates a declaration as a unit, so a rejection leaves the step still
+     * awaiting one — and unlike a rejected cast, there is no later priority pass to try again
+     * from. The two families of rejection want opposite fallbacks: restrictions (CR 508.1c —
+     * "can't attack alone", "can't attack unless …") are never disobeyed by attacking with
+     * nothing, and requirements (CR 508.1d — "attacks each combat if able") are all obeyed by
+     * attacking with everything able. Requirements are only enforced when attacking is free
+     * ({@code CombatAttackService.getMustAttackIndices} yields nothing under an attack tax), so
+     * the all-in fallback never has a cost left to float.
+     */
+    protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
+        String rejection = attemptAttackerDeclaration(request);
+        if (rejection == null) {
+            return;
+        }
+        log.warn("AI: Attacker declaration rejected in game {}: {}; falling back to a legal declaration.",
+                gameId, rejection);
+
+        if (!request.attackerIndices().isEmpty()) {
+            rejection = attemptAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
+            if (rejection == null) {
+                return;
+            }
+        }
+
+        GameData gameData = gameRegistry.get(gameId);
+        if (gameData == null) {
+            return;
+        }
+        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndices(
+                gameData, activeDecisionPlayerId(gameData));
+        if (!allAttackable.isEmpty()) {
+            rejection = attemptAttackerDeclaration(new DeclareAttackersRequest(allAttackable, null));
+            if (rejection == null) {
+                return;
+            }
+        }
+        log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+    }
+
+    /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */
+    private String attemptAttackerDeclaration(DeclareAttackersRequest request) {
+        GameData gameData = gameRegistry.get(gameId);
+        if (gameData == null || gameData.status == GameStatus.FINISHED) {
+            return null;
+        }
+        try {
+            return gameActions.handleDeclareAttackers(request);
+        } catch (Exception e) {
+            log.warn("AI: Attacker declaration threw in game {}: {}", gameId, e.getMessage(), e);
+            return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
         }
     }
 

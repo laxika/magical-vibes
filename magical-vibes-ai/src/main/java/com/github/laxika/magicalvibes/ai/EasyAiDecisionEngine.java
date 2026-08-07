@@ -440,7 +440,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
         if (battlefield == null || availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(List.of(), null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
         }
 
@@ -501,8 +501,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
 
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
-        final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(finalAttackerIndices, null)));
+        sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
     }
 
     @Override

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -91,6 +92,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -475,6 +477,80 @@ class HardAiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nekrataal");
+    }
+
+    // ===== Mindslaver-controlled turn =====
+
+    /**
+     * Hands player2's seat control of player1's turn through a real Mindslaver activation and
+     * stops in that turn's declare-attackers step, returning the controlled player's must-attack
+     * creature.
+     *
+     * <p>The engine addresses the attacker decision to the controller while the interaction stays
+     * owned by the controlled player, so the AI has to declare from a battlefield that is not its
+     * own. The controlled player is deliberately given more permanents than the AI seat and the
+     * must-attack creature is put last, so an engine reading its own battlefield can only produce
+     * indices that name something else — or nothing at all.
+     */
+    private Permanent mindslavedAttackerDeclaration() {
+        Set<TurnStep> mainPhaseStops = Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
+        gd.playerAutoStopSteps.put(player1.getId(), ConcurrentHashMap.newKeySet());
+        gd.playerAutoStopSteps.get(player1.getId()).addAll(mainPhaseStops);
+        gd.playerAutoStopSteps.put(player2.getId(), ConcurrentHashMap.newKeySet());
+        gd.playerAutoStopSteps.get(player2.getId()).addAll(mainPhaseStops);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new Mindslaver());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        // Roll into the controlled player's turn, where the control actually takes effect.
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passBothPriorities();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.mindControlledPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.mindControllerPlayerId).isEqualTo(player2.getId());
+
+        Permanent ownBears = new Permanent(new GrizzlyBears());
+        ownBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(ownBears);
+
+        for (int i = 0; i < 3; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(forest);
+        }
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.stack.clear();
+        harness.beginAttackerDeclarationInput();
+        return berserkers;
+    }
+
+    @Test
+    @DisplayName("Hard AI attacks from the Mindslavered player's battlefield, not its own")
+    void declaresAttackersForMindslaveredPlayer() {
+        Permanent berserkers = mindslavedAttackerDeclaration();
+
+        FakeConnection aiConn = new FakeConnection("ai-hard-mindslaver-test");
+        harness.getSessionManager().registerPlayer(aiConn, player2.getId(), "Bob");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player2, harness.getGameRegistry(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+        assertThat(berserkers.isAttacking()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(Permanent::isAttacking);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     // ===== Must-attack =====

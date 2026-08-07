@@ -803,10 +803,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleAttackers(GameData gameData) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
+        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
         if (battlefield == null || availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(List.of(), null)));
+            sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
         }
 
@@ -819,7 +820,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Ensure creatures with "attacks each combat if able" are included
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
         // CR 508.1c: if only one attacker selected and it can't attack alone, try to
@@ -847,8 +848,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         log.info("Random AI: Declaring {} of {} attackers in game {}",
                 attackerIndices.size(), availableIndices.size(), gameId);
-        final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(finalAttackerIndices, null)));
+        sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
     }
 
     // ===== Combat: Random Blockers =====

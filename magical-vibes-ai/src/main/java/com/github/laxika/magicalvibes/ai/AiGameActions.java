@@ -170,9 +170,15 @@ public class AiGameActions {
         }
     }
 
-    public void handleDeclareAttackers(DeclareAttackersRequest request) {
+    /**
+     * Declares attackers, returning the engine's rejection reason or {@code null} when the
+     * declaration was accepted. A rejection is an AI/engine legality disagreement rather than a
+     * recoverable game event, so the caller both falls back to a legal declaration and surfaces
+     * the reason.
+     */
+    public String handleDeclareAttackers(DeclareAttackersRequest request) {
         GameData gameData = game();
-        if (gameData == null) return;
+        if (gameData == null) return null;
         try {
             Map<Integer, UUID> attackTargets = null;
             if (request.attackTargets() != null) {
@@ -182,8 +188,10 @@ public class AiGameActions {
                 }
             }
             gameService.declareAttackers(gameData, aiPlayer, request.attackerIndices(), attackTargets);
+            return null;
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.info("AI: engine rejected declareAttackers in game {}: {}", gameId, e.getMessage());
+            return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
         }
     }
 

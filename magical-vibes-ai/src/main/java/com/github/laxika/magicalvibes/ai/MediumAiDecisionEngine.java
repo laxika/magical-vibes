@@ -433,9 +433,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
 
         log.info("AI (Medium): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
-        final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(
-                new DeclareAttackersRequest(finalAttackerIndices, null)));
+        sendAttackerDeclaration(new DeclareAttackersRequest(attackerIndices, null));
     }
 
     @Override
