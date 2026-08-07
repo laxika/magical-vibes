@@ -3,7 +3,12 @@
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner claude
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner grok
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner codex
+#   .\scripts\implement-cards.ps1 sos 1 5 -Runner muse
 #   .\scripts\implement-cards.ps1 sos 1 5 -Effort xhigh
+#
+# The muse runner drives the claude CLI against Meta's Muse endpoint and needs
+# $env:MODEL_API_KEY to be set first:
+#   $env:MODEL_API_KEY = "<your key>"
 
 param(
     # The set code to implement cards from, e.g. "sos".
@@ -19,19 +24,20 @@ param(
     [int] $To,
 
     # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok),
-    # or "codex".
-    [ValidateSet("claude", "grok", "codex")]
+    # "codex", or "muse" (the claude CLI pointed at Meta's Muse endpoint).
+    [ValidateSet("claude", "grok", "codex", "muse")]
     [string] $Runner = "claude",
 
     # Model override. Defaults depend on -Runner:
     #   claude -> claude-opus-5
     #   grok   -> cursor-grok-4.5-high
     #   codex  -> gpt-5.6-sol
+    #   muse   -> muse-spark-1.2-contributor
     [string] $Model,
 
-    # Reasoning effort for the claude and codex runners. Defaults to "medium"
-    # for codex and "low" for claude. Ignored by -Runner grok, which encodes
-    # effort in the model name instead.
+    # Reasoning effort for the claude, codex and muse runners. Defaults to
+    # "medium" for codex and "low" for the others. Ignored by -Runner grok,
+    # which encodes effort in the model name instead.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
     [string] $Effort
 )
@@ -47,6 +53,7 @@ if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpac
     $Model = switch ($Runner) {
         "grok" { "cursor-grok-4.5-high" }
         "codex" { "gpt-5.6-luna" }
+        "muse" { "muse-spark-1.2-contributor" }
         default { "claude-opus-5" }
     }
 }
@@ -67,6 +74,22 @@ $cliName = switch ($Runner) {
 if (-not (Get-Command $cliName -ErrorAction SilentlyContinue)) {
     Write-Error "The '$cliName' CLI was not found on PATH."
     exit 1
+}
+
+if ($Runner -eq "muse") {
+    if ([string]::IsNullOrWhiteSpace($env:MODEL_API_KEY)) {
+        Write-Error "The muse runner needs an API key. Set it first with: `$env:MODEL_API_KEY = `"<your key>`""
+        exit 1
+    }
+
+    $env:ANTHROPIC_BASE_URL = "https://api.meta.ai"
+    $env:ANTHROPIC_AUTH_TOKEN = $env:MODEL_API_KEY
+    $env:ANTHROPIC_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = $Model
+    $env:CLAUDE_CODE_SUBAGENT_MODEL = $Model
+    $env:ENABLE_TOOL_SEARCH = "true"
 }
 
 $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and implement the code immediately. If I instruct you to implement a card do it even if it require substantial work. be brief with your responses, only mention that is important, save tokens when possible."

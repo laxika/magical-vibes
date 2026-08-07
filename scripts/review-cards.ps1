@@ -2,6 +2,11 @@
 #   .\scripts\review-cards.ps1 sos 1 5
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner claude
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner grok
+#   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
+#
+# The muse runner drives the claude CLI against Meta's Muse endpoint and needs
+# $env:MODEL_API_KEY to be set first:
+#   $env:MODEL_API_KEY = "<your key>"
 
 param(
     # The set code to review cards from, e.g. "sos".
@@ -16,13 +21,15 @@ param(
     [Parameter(Mandatory = $true, Position = 2)]
     [int] $To,
 
-    # Which CLI to run: "claude" (default) or "grok" (Cursor agent with Grok).
-    [ValidateSet("claude", "grok")]
+    # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok), or
+    # "muse" (the claude CLI pointed at Meta's Muse endpoint).
+    [ValidateSet("claude", "grok", "muse")]
     [string] $Runner = "claude",
 
     # Model override. Defaults depend on -Runner:
     #   claude -> claude-opus-4-8
     #   grok   -> cursor-grok-4.5-high
+    #   muse   -> muse-spark-1.2-contributor
     [string] $Model
 )
 
@@ -34,13 +41,33 @@ if ($From -gt $To) {
 }
 
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
-    $Model = if ($Runner -eq "grok") { "cursor-grok-4.5-high" } else { "claude-opus-4-8" }
+    $Model = switch ($Runner) {
+        "grok" { "cursor-grok-4.5-high" }
+        "muse" { "muse-spark-1.2-contributor" }
+        default { "claude-opus-4-8" }
+    }
 }
 
 $cliName = if ($Runner -eq "grok") { "agent" } else { "claude" }
 if (-not (Get-Command $cliName -ErrorAction SilentlyContinue)) {
     Write-Error "The '$cliName' CLI was not found on PATH."
     exit 1
+}
+
+if ($Runner -eq "muse") {
+    if ([string]::IsNullOrWhiteSpace($env:MODEL_API_KEY)) {
+        Write-Error "The muse runner needs an API key. Set it first with: `$env:MODEL_API_KEY = `"<your key>`""
+        exit 1
+    }
+
+    $env:ANTHROPIC_BASE_URL = "https://api.meta.ai"
+    $env:ANTHROPIC_AUTH_TOKEN = $env:MODEL_API_KEY
+    $env:ANTHROPIC_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $Model
+    $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = $Model
+    $env:CLAUDE_CODE_SUBAGENT_MODEL = $Model
+    $env:ENABLE_TOOL_SEARCH = "true"
 }
 
 $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. Implementation is read-only: do not edit card classes, effects, predicates, or docs - only delete a stale pass result file when required. Tests are encouraged: when oracle coverage is below 100% or you spot realistic edge cases, ADD focused harness tests (do not rewrite existing ones unless clearly wrong). New failing tests that confirm a bug are good - leave them and report FAIL. Be brief; save tokens when possible. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
