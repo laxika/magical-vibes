@@ -432,6 +432,13 @@ sealed interface `model/amount/DynamicAmount` has one small record per derivatio
 - `CountersOnLinkedPermanent(CounterType counterType, UUID linkedPermanentId)` � counters
   of that type on a specific permanent identified by ID (0 if it has left the battlefield);
   for token CDAs referencing another permanent, e.g. Gutter Grime's Ooze tokens
+- `CountersOnGrantingPermanent(CounterType counterType)` � counters of that type on the
+  permanent that granted the activated ability being resolved (the Aura/Equipment, not the
+  activating creature). `grantingPermanentId` is null on the card definition and bound at
+  activation time from `ActivatedAbility.getGrantSourcePermanentId()` in
+  `ActivatedAbilityExecutionService.snapshotEffects` (Archery Training's "{T}: … deals X
+  damage … where X is the number of arrow counters on Archery Training"). Evaluates to 0
+  while unbound
 - `GreatestPowerAmongControlled()` � greatest effective power among creatures the
   controller controls (0 if none)
 - `AttachmentsOnSource(boolean countAuras, boolean countEquipment)` � Auras/Equipment

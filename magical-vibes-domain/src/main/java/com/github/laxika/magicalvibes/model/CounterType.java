@@ -4,6 +4,7 @@ public enum CounterType {
     AGE,
     AIM,
     ANY,
+    ARROW,
     ARROWHEAD,
     AWAKENING,
     BLAZE,

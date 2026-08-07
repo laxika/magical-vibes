@@ -30,6 +30,7 @@ public sealed interface DynamicAmount permits
         ChosenPermanentPower,
         ControllerLifeTotal,
         CountersOnLinkedPermanent,
+        CountersOnGrantingPermanent,
         CountersOnSource,
         CreatureDeathsThisTurn,
         CreatureSubtypeDeathsThisTurn,

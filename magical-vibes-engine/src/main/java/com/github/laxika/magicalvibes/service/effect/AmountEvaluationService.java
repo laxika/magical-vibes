@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
+import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -202,6 +203,11 @@ public class AmountEvaluationService {
                     countDevouredCreaturesOfSubtype(ctx, d.subtype());
             case CountersOnLinkedPermanent c ->
                     countCountersOnLinkedPermanent(gameData, c);
+            case CountersOnGrantingPermanent c ->
+                    // Bound to a CountersOnLinkedPermanent at activation (Archery Training); an
+                    // unbound evaluation is 0 (estimation contexts that never saw an activation).
+                    c.grantingPermanentId() == null ? 0 : countCountersOnLinkedPermanent(gameData,
+                            new CountersOnLinkedPermanent(c.counterType(), c.grantingPermanentId()));
             case ControllerLifeTotal ignored ->
                     // Null controller happens transiently while the source is still entering the
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals

@@ -56,6 +56,10 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -445,6 +449,19 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
+            } else if (effect instanceof DealDamageToAnyTargetEffect dd
+                    && dd.damage() instanceof CountersOnGrantingPermanent counters) {
+                // Archery Training: the granted "{T}: … deals X damage … where X is the number of
+                // arrow counters on Archery Training" — the counters live on the granting Aura, not
+                // on the creature activating the ability, so bind the granting permanent at activation.
+                snapshotEffects.add(new DealDamageToAnyTargetEffect(
+                        new CountersOnLinkedPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
+                        dd.cantRegenerate(), dd.exileInsteadOfDie(), dd.targetGroup(), dd.unpreventableWhen()));
+            } else if (effect instanceof DealDamageToTargetCreatureEffect dc
+                    && dc.damage() instanceof CountersOnGrantingPermanent counters) {
+                snapshotEffects.add(new DealDamageToTargetCreatureEffect(
+                        new CountersOnLinkedPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
+                        dc.unpreventable()));
             } else {
                 snapshotEffects.add(effect);
             }
