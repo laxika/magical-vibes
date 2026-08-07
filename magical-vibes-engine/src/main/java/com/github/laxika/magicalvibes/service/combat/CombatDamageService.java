@@ -1679,7 +1679,7 @@ public class CombatDamageService {
                 UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
                         gameData, source, sourceControllerId, damagedCreatureControllerId,
-                        amountEntry.getKey(), amountEntry.getValue());
+                        amountEntry.getKey(), amountEntry.getValue(), true);
 
                 // Mangara's Equity: "…or a white creature you control". The damaged creature may have
                 // died to the damage; only surviving permanents can be filtered, which is enough —
@@ -2213,6 +2213,13 @@ public class CombatDamageService {
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
         } else {
+            // Tok-Tok, Volcano Born: an attacker of a matching colour deals that much combat damage
+            // plus N to the defending player instead (CR 614.1). Applied per attacker, before the
+            // redirection and prevention steps, and only for damage that reaches a player.
+            if (damage > 0) {
+                damage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
+                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
+            }
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);

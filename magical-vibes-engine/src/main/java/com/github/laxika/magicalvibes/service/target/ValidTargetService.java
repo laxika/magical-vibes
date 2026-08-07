@@ -38,11 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -283,6 +279,9 @@ public class ValidTargetService {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty() ? Set.copyOf(alreadySelectedIds) : Set.of();
+        // Source-relative player predicates ("dealt damage by this creature this turn") key their
+        // per-turn records by permanent id, so resolve the ability's own permanent up front.
+        UUID abilitySourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(gameData, sourceCard.getId());
 
         // A filterless group ability ("each of up to six targets") declares no per-position filters
         // but still announces a group, so it takes the multi-target path too — mirroring the
@@ -300,7 +299,7 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -312,7 +311,7 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId, abilitySourcePermanentId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -338,7 +337,7 @@ public class ValidTargetService {
                         && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
-                        if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
+                        if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
                             validPlayerIds.add(playerId);
                         }
                     }
@@ -412,7 +411,7 @@ public class ValidTargetService {
 
         if (targetsPlayer && !gameQueryService.isPeaceTalksActive(gameData)) {
             for (UUID playerId : gameData.playerIds) {
-                if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
+                if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
                     validPlayerIds.add(playerId);
                 }
             }
@@ -608,6 +607,15 @@ public class ValidTargetService {
     }
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId) {
+        return isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, null);
+    }
+
+    /**
+     * Source-aware variant. {@code sourcePermanentId} is the permanent an activated ability comes
+     * from, needed by source-relative player predicates ("dealt damage by this creature this turn").
+     */
+    private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
+                                        UUID sourcePermanentId) {
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;
@@ -620,30 +628,19 @@ public class ValidTargetService {
 
         // PlayerPredicateTargetFilter (e.g. "target opponent")
         if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
-                && !matchesPlayerPredicate(gameData, controllerId, playerId, playerFilter.predicate())) {
+                && !targetLegalityService.matchesPlayerPredicate(
+                        gameData, controllerId, playerId, playerFilter.predicate(), sourcePermanentId)) {
             return false;
         }
 
         // Any-target restriction: the player side is checked against the player predicate.
         if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
-                && !matchesPlayerPredicate(gameData, controllerId, playerId, anyFilter.playerPredicate())) {
+                && !targetLegalityService.matchesPlayerPredicate(
+                        gameData, controllerId, playerId, anyFilter.playerPredicate(), sourcePermanentId)) {
             return false;
         }
 
         return true;
-    }
-
-    private boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID playerId, PlayerPredicate predicate) {
-        return switch (predicate) {
-            case PlayerRelationPredicate rel -> switch (rel.relation()) {
-                case ANY -> true;
-                case SELF -> controllerId.equals(playerId);
-                case OPPONENT -> !controllerId.equals(playerId);
-            };
-            case PlayerDealtDamageThisTurnPredicate ignored -> gameData.playersDealtDamageThisTurn.contains(playerId);
-            case PlayerLostLifeThisTurnPredicate ignored ->
-                    gameData.lifeLostThisTurn.getOrDefault(playerId, 0) > 0;
-        };
     }
 
     private boolean isValidAbilityPermanentTarget(GameData gameData, Card sourceCard, ActivatedAbility ability,
@@ -970,6 +967,8 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+        } else if (effect instanceof ReturnCardFromGraveyardEffect e && e.filter() != null) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }

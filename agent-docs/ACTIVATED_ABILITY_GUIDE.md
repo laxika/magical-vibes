@@ -504,6 +504,13 @@ new EquipActivatedAbility(manaCost)
 
 Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `WhispersilkCloak` ({2})
 
+For "this Equipment can be attached only to …" use the three-argument overload
+`new EquipActivatedAbility(manaCost, restrictionPredicate, failureMessage)`, which ANDs the
+predicate onto the "creature you control" filter, **and** call `setAttachRestriction(predicate)` on
+the card so the same requirement is enforced continuously — an Equipment whose host stops matching
+becomes unattached as a state-based action (CR 704.5n, `AuraAttachmentService`). Konda's Banner
+(legendary creature only).
+
 ---
 
 ### 10. Full constructor (all parameters)
@@ -897,6 +904,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Aura slot: the creature this aura is attached to attacks and isn't blocked. Fires alongside `ON_ATTACKS_UNBLOCKED` in `CombatBlockService.collectUnblockedAttackTriggers` (scanning auras attached to each unblocked attacker); the enchanted attacker is baked as the non-targeting `sourcePermanentId` and the defending player as `targetId`. Used by Cloak of Confusion (`AssignNoCombatDamageAndDefendingPlayerDiscardsEffect`) |
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` | Whenever a creature you control becomes blocked. Fires once per blocked attacker, on every permanent with this slot on the blocked creature's controller's battlefield. The blocked creature is set as the non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it". Wrap in `TriggeringCardConditionalEffect` to filter by the blocked creature. Checked in `CombatBlockService`. Used by Unstoppable Ash |
 | `ON_ANY_CREATURE_BECOMES_BLOCKED` | Global watcher: whenever ANY creature becomes blocked, regardless of controller. Fires once per attacker/blocker pair on every permanent with this slot across all battlefields. Effects must implement `BlockPairConditionalEffect`; `CombatBlockService` evaluates `firesForPair(attackerPower, blockerPower)` at trigger time and bakes the `actsOn()` participant in as the non-targeting `targetId` (attacker as `sourcePermanentId`). Used by No Quarter |
+| `ON_ANY_CREATURES_BLOCK` | Global watcher: whenever one or more creatures block. Fires **once per block declaration** (not per pair, unlike `ON_ANY_CREATURE_BECOMES_BLOCKED`) on every permanent with this slot across all battlefields, and only when at least one creature blocked. No `targetId` is set — effects read the board's blocking state themselves (`PermanentIsBlockingPredicate` / `PermanentIsBlockedPredicate`). Checked in `CombatBlockService`. Used by Tide of War |
 | `ON_ANY_PERMANENT_RETURNED_TO_HAND` | Whenever a permanent is returned to a player's hand (bounced from the battlefield). Fires on every permanent with this slot across all battlefields, once per returned permanent. The owner the permanent returned to is the non-targeting `targetId`, so a player-directed effect (e.g. `DiscardEffect(1, TARGET_PLAYER)`) acts on "that player". Fired from `PermanentRemovalService.removePermanentToHand` via `TriggerCollectionService.checkPermanentReturnedToHandTriggers`. Used by Warped Devotion |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player. Fires once per combat damage step, so double strike can trigger in both first-strike and regular damage steps |
 | `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per damaged creature; the damaged creature is baked as non-targeting `targetId` so effects like `DestroyTargetPermanentEffect` / `PutCounterOnTargetPermanentEffect` act on "that creature" |

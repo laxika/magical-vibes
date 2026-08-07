@@ -18,7 +18,7 @@ public class TheGitrogMonster extends Card {
                 new SacrificeUnlessSacrificeOwnPermanentEffect(new PermanentIsLandPredicate(), "a land"));
 
         // You may play an additional land on each of your turns.
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect());
+        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
 
         // Whenever one or more land cards are put into your graveyard from anywhere, draw a card.
         addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new DrawCardEffect(1));

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -51,7 +53,7 @@ public class LegendRuleService {
         }
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
-            if (entry.getValue().size() >= 2) {
+            if (entry.getValue().size() >= 2 && !allExempt(gameData, battlefield, entry.getKey())) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
                 playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
@@ -59,6 +61,34 @@ public class LegendRuleService {
             }
         }
         return false;
+    }
+
+    /**
+     * Whether every permanent with {@code name} on this battlefield carries a currently-active
+     * {@link LegendRuleExemptionEffect} (Brothers Yamazaki). The count handed to the exemption spans
+     * all players' battlefields, because the wordings that grant it ("if there are exactly two
+     * permanents named ~ on the battlefield") are not controller-scoped.
+     */
+    private boolean allExempt(GameData gameData, List<Permanent> battlefield, String name) {
+        int totalWithName = countOnBattlefield(gameData, name);
+        return battlefield.stream()
+                .filter(perm -> name.equals(perm.getCard().getName()))
+                .allMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(LegendRuleExemptionEffect.class::isInstance)
+                        .map(LegendRuleExemptionEffect.class::cast)
+                        .anyMatch(exemption -> exemption.exemptFromLegendRule(totalWithName)));
+    }
+
+    private int countOnBattlefield(GameData gameData, String name) {
+        int count = 0;
+        for (List<Permanent> permanents : gameData.playerBattlefields.values()) {
+            for (Permanent perm : permanents) {
+                if (name.equals(perm.getCard().getName())) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /**

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -208,7 +209,9 @@ public class AuraAttachmentService {
      * Why the attachment is illegal on its current host, or {@code null} while it is legal.
      * Hexproof and shroud are deliberately not checked — they restrict targeting, not staying
      * attached. Equipment ignores the equip ability's "creature you control" restriction:
-     * attachment only requires the host to be a creature (CR 301.5c).
+     * attachment only requires the host to be a creature (CR 301.5c) and, when the card declares
+     * one, to satisfy its {@code attachRestriction} ("can be attached only to a legendary
+     * creature").
      */
     private String illegalAttachmentReason(GameData gameData, Permanent attachment, UUID controllerId, boolean isAura) {
         UUID attachedTo = attachment.getAttachedTo();
@@ -242,6 +245,11 @@ public class AuraAttachmentService {
             }
             if (!gameQueryService.isCreature(gameData, host)) {
                 return "equipped permanent is no longer a creature";
+            }
+            PermanentPredicate attachRestriction = attachment.getCard().getAttachRestriction();
+            if (attachRestriction != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, host, attachRestriction)) {
+                return "it can be attached only to a legal permanent";
             }
             return null;
         }

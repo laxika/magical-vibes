@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -220,6 +221,8 @@ public class DamagePreventionService {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
+            if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAttachedCreatureEffect.class)) return 0;
             // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
             if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) return 0;

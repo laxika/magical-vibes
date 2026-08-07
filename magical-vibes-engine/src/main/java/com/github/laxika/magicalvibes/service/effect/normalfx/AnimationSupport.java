@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -72,7 +73,8 @@ public class AnimationSupport {
      *
      * <p>Supports "up to N target" abilities (Fendeep Summoner) by iterating over
      * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
-     * self/target animation still reads {@code entry.getTargetId()}.
+     * self/target animation still reads {@code entry.getTargetId()}. A SELF-scope animation queued by
+     * a triggered ability carries no target at all and falls back to {@code entry.getSourcePermanentId()}.
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
@@ -81,6 +83,10 @@ public class AnimationSupport {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
+            // A triggered self-animation carries the source only as sourcePermanentId — activated
+            // abilities bind it as the target, triggers do not (Jade Idol).
+            targetIds = List.of(entry.getSourcePermanentId());
         } else {
             return;
         }

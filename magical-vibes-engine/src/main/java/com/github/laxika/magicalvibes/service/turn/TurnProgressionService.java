@@ -371,7 +371,7 @@ public class TurnProgressionService {
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
-        gameData.creatureCreatingTokenOnDeathThisTurn.clear();
+        gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatPhasesOnly = 0;
         gameData.combatPhasesThisTurn = 0;

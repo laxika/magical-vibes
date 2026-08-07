@@ -34,6 +34,11 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted && ability.targetCardId() != null) {
+            if (isExclusive(ability)) {
+                // "Cast a spell from among those cards" — one offer per exiled card was queued, so
+                // withdraw the siblings; only a single spell may be cast (Shell of the Last Kappa).
+                gameData.pendingMayAbilities.removeIf(pending -> pending != ability && isExclusive(pending));
+            }
             exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to play " , ability.sourceCard(), "."));
@@ -41,5 +46,10 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
                     player.getUsername(), ability.sourceCard().getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    private boolean isExclusive(PendingMayAbility ability) {
+        return ability.effects().stream()
+                .anyMatch(effect -> effect instanceof MayPlayExiledCardWithoutPayingManaCostEffect e && e.exclusive());
     }
 }

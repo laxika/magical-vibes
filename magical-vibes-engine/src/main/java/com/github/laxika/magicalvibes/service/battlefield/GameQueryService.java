@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
@@ -98,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantB
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
@@ -3917,6 +3919,30 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the flat bonus added to damage a source with any of {@code sourceColors} would deal to a
+     * player, from {@link AdditionalDamageToPlayersFromColorSourcesEffect} permanents anywhere on the
+     * battlefield (Tok-Tok, Volcano Born). Multiple instances stack additively. Returns {@code 0} when
+     * no such permanent is on the battlefield or the source shares none of their colours.
+     *
+     * <p>Source-colour scoped, so it is applied at the two player damage entry points, where the source
+     * colours have already been resolved through {@link #getDamageSourceColor} (Ghostly Flame).
+     */
+    public int getDamageToPlayerColorSourceBonus(GameData gameData, Set<CardColor> sourceColors) {
+        if (sourceColors == null || sourceColors.isEmpty()) return 0;
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, p) -> {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
+                        && !Collections.disjoint(e.colors(), sourceColors)) {
+                    bonus[0] += e.amount();
+                }
+            }
+        });
+        return bonus[0];
+    }
+
+    /**
      * True if {@code playerId} is enchanted by a Curse carrying
      * {@link EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect} (Overwhelming Splendor):
      * that player may activate only mana abilities and loyalty abilities.
@@ -3952,6 +3978,17 @@ public class GameQueryService {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
         return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastAndActivateOnlyDuringOwnTurnEffect.class);
+    }
+
+    /**
+     * True if {@code playerId} cannot cast spells because a
+     * {@link PlayersCanCastSpellsOnlyDuringOwnTurnEffect} (Dosan the Falling Leaf) is on the
+     * battlefield and it is not currently that player's turn. Activated abilities are unaffected.
+     */
+    public boolean isLockedOutByOwnTurnOnlySpellRestriction(GameData gameData, UUID playerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(playerId)) return false;
+        return anyBattlefieldHasStaticEffect(gameData, PlayersCanCastSpellsOnlyDuringOwnTurnEffect.class);
     }
 
     /**

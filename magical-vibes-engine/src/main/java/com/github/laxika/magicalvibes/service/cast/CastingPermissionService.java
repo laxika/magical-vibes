@@ -134,6 +134,9 @@ public class CastingPermissionService {
         // City of Solitude: players can cast spells only during their own turns.
         if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, playerId)) return true;
 
+        // Dosan the Falling Leaf: players can cast spells only during their own turns.
+        if (gameQueryService.isLockedOutByOwnTurnOnlySpellRestriction(gameData, playerId)) return true;
+
         if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

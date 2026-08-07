@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -39,6 +41,9 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -63,6 +68,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -819,6 +825,48 @@ class ValidTargetServiceTest {
 
             assertThat(response.validPermanentIds()).isEmpty();
             assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+        }
+
+        @Test
+        @DisplayName("'dealt damage by this creature this turn' offers only the players that source damaged")
+        void offersOnlySourceDamagedPlayers() {
+            Card sourceCard = createCreatureCard();
+            Permanent source = addPermanentToBattlefield(player1Id, sourceCard);
+            gameData.combatDamageToPlayersThisTurn
+                    .computeIfAbsent(source.getId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(player2Id);
+            ActivatedAbility ability = damagedPlayerLifeLossAbility();
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPlayerIds()).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("'dealt damage by this creature this turn' offers nobody when that source damaged nobody")
+        void offersNobodyWhenSourceDamagedNobody() {
+            Card sourceCard = createCreatureCard();
+            Permanent source = addPermanentToBattlefield(player1Id, sourceCard);
+            Permanent other = addPermanentToBattlefield(player1Id, createCreatureCard());
+            // Another permanent's damage must not qualify its victim for this source's ability.
+            gameData.combatDamageToPlayersThisTurn
+                    .computeIfAbsent(other.getId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(player2Id);
+            assertThat(source.getId()).isNotEqualTo(other.getId());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, damagedPlayerLifeLossAbility(), player1Id, 0);
+
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        private ActivatedAbility damagedPlayerLifeLossAbility() {
+            return new ActivatedAbility(false, "{B}",
+                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
+                    "Target player dealt damage by this creature this turn loses 1 life",
+                    new PlayerPredicateTargetFilter(new PlayerDamagedBySourceThisTurnPredicate(),
+                            "Target player must have been dealt damage by this creature this turn"));
         }
 
         @Test
@@ -1801,6 +1849,25 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, null);
 
             assertThat(response.validGraveyardCardIds()).containsExactly(ownInstant.getId());
+        }
+
+        @Test
+        @DisplayName("an ability's ReturnCardFromGraveyard target enumeration honours the effect's card filter")
+        void abilityGraveyardTargets_filteredByReturnEffectFilter() {
+            Card source = createCard();
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}",
+                    List.of(ReturnCardFromGraveyardEffect.builder()
+                            .destination(GraveyardChoiceDestination.HAND)
+                            .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                            .filter(new CardTypePredicate(CardType.CREATURE))
+                            .targetGraveyard(true)
+                            .build()),
+                    "{1}: Return target creature card from a graveyard to your hand.");
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, source, ability, player1Id, 0);
+
+            assertThat(response.validGraveyardCardIds()).containsExactly(gyCreature.getId());
         }
 
         @Test

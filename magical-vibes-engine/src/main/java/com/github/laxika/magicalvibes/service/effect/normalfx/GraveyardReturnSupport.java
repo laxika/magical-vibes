@@ -1294,7 +1294,7 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves a {@link ReturnDyingCreatureToBattlefieldAndAttachSourceEffect} by returning a
+     * Resolves a {@link ReturnDyingCreatureToBattlefieldEffect} by returning a
      * creature that just died back to the battlefield and attaching the source equipment to it.
      * Used by equipment with triggered abilities like Nim Deathmantle. Fizzles if the dying
      * card is no longer in a graveyard.

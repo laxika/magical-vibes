@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
@@ -60,6 +62,7 @@ import java.util.stream.IntStream;
 public class DrawService {
 
     private final GameQueryService gameQueryService;
+    private final ExileService exileService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
@@ -70,12 +73,14 @@ public class DrawService {
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
 
     public DrawService(GameQueryService gameQueryService,
+                       ExileService exileService,
                        GameLogService gameLogService,
                        GameOutcomeService gameOutcomeService,
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler) {
         this.gameQueryService = gameQueryService;
+        this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.gameOutcomeService = gameOutcomeService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
@@ -166,6 +171,14 @@ public class DrawService {
         Permanent enduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
         if (enduringRenewalSource != null) {
             resolveRevealTopCreatureToGraveyardElseDraw(gameData, playerId, enduringRenewalSource);
+            return;
+        }
+
+        // Uba Mask — "If a player would draw a card, that player exiles that card face up instead."
+        // Global, mandatory: the exiled card carries an end-of-turn play permission for that player.
+        Permanent ubaMaskSource = findUbaMaskSource(gameData);
+        if (ubaMaskSource != null) {
+            resolveUbaMaskDrawReplacement(gameData, playerId, ubaMaskSource);
             return;
         }
 
@@ -262,6 +275,49 @@ public class DrawService {
             }
         }
         return false;
+    }
+
+    private Permanent findUbaMaskSource(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
+                if (hasEffect) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Uba Mask replacement: the card that would have been drawn is exiled face up instead, tracked
+     * against Uba Mask, and the player who would have drawn it may play it this turn (normal timing
+     * and costs). An empty library exiles nothing and does not lose the game — the draw was replaced.
+     */
+    private void resolveUbaMaskDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCard(gameData, playerId, exiled, source.getId());
+        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles ").card(exiled)
+                .text(" face up with ").card(source.getCard())
+                .text(" instead of drawing (may play it this turn).").build());
+        log.info("Game {} - {} exiles {} face up with Uba Mask instead of drawing",
+                gameData.id, playerName, exiled.getName());
     }
 
     private Card findZursWeirdingSourceCard(GameData gameData) {

@@ -8,11 +8,14 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -433,6 +436,50 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
+        @DisplayName("Equipment becomes unattached when the host stops matching its attach restriction")
+        void equipmentUnattachesWhenAttachRestrictionFails() {
+            Permanent host = createCreature("No Longer Legendary");
+            var restriction = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
+            Permanent equipment = createEquipmentWithAttachRestriction("Konda's Banner", restriction);
+            equipment.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, host)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, host, restriction)).thenReturn(false);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(equipment.getAttachedTo()).isNull();
+            assertThat(result.anyChange()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Equipment stays attached while the host still matches its attach restriction")
+        void equipmentStaysWhenAttachRestrictionHolds() {
+            Permanent host = createCreature("Kamahl, Pit Fighter");
+            var restriction = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
+            Permanent equipment = createEquipmentWithAttachRestriction("Konda's Banner", restriction);
+            equipment.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, host)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, host, restriction)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(equipment.getAttachedTo()).isEqualTo(host.getId());
+            assertThat(result.anyChange()).isFalse();
+        }
+
+        @Test
         @DisplayName("Legally equipped equipment stays attached")
         void legalEquipmentStaysAttached() {
             Permanent host = createCreature("Grizzly Bears");
@@ -514,6 +561,14 @@ class AuraAttachmentServiceTest {
         Card card = createCard(name);
         card.setType(CardType.ARTIFACT);
         card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        return new Permanent(card);
+    }
+
+    private Permanent createEquipmentWithAttachRestriction(String name, PermanentPredicate restriction) {
+        Card card = createCard(name);
+        card.setType(CardType.ARTIFACT);
+        card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        card.setAttachRestriction(restriction);
         return new Permanent(card);
     }
 }

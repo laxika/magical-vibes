@@ -643,17 +643,21 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext) {
+        return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, false);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
-            return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext));
+            return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             ManaPool rewritten = new ManaPool(pool);
             applyWhiteAsAnyColor(rewritten);
-            return canPay(rewritten, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext);
+            return canPay(rewritten, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext);
         }
         boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
         boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
-        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext) {
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext && !legendarySpellOnlyContext) {
             return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
         }
         Set<CardSubtype> creatureCtx = hasCreatureCtx ? subtypeCreatureContext : Set.of();
@@ -699,6 +703,9 @@ public class ManaCost {
         }
         if (artifactAbilityOnlyContext) {
             totalUsable += pool.getArtifactAbilityOnlyColorless();
+        }
+        if (legendarySpellOnlyContext) {
+            totalUsable += pool.getLegendarySpellOnlyColorless();
         }
         if (myrContext) {
             totalUsable += pool.getMyrOnlyColorless();
@@ -1147,15 +1154,19 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext) {
+        pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, false);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
-            applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext));
+            applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             applyWhiteAsAnyColor(pool);
         }
         boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
         boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
-        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext) {
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext && !legendarySpellOnlyContext) {
             pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
             return;
         }
@@ -1249,6 +1260,13 @@ public class ManaCost {
                 }
                 remainingGeneric -= fromCreatureSpell;
             }
+        }
+
+        // Spend legendary-spell-only mana for generic costs (fully restricted to this spell)
+        if (legendarySpellOnlyContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getLegendarySpellOnlyColorless());
+            pool.removeLegendarySpellOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
         }
 
         // Spend more-restrictive mana first: Myr-only, then artifact-ability-only, then artifact-only

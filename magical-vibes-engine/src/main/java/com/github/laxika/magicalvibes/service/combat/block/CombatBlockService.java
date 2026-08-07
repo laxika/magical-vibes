@@ -591,6 +591,10 @@ public class CombatBlockService {
         // (ON_ANY_CREATURE_BECOMES_BLOCKED) on every battlefield, once per attacker/blocker pair.
         checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
+        // Global "whenever one or more creatures block" watchers (ON_ANY_CREATURES_BLOCK) on every
+        // battlefield, once per declaration no matter how many creatures blocked.
+        checkAnyCreaturesBlockTriggers(gameData, blockerAssignments);
+
         // Engine-level flanking triggers (CR 702.25a): whenever a creature with flanking becomes
         // blocked by a creature without flanking, that blocker gets -1/-1 until end of turn. Each
         // instance of flanking triggers separately (CR 702.25b), but a card can only carry the
@@ -1267,6 +1271,40 @@ public class CombatBlockService {
                                 gameData.id, watcher.getCard().getName(), subject.getCard().getName());
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Fires ON_ANY_CREATURES_BLOCK watchers once for the whole declaration when at least one creature
+     * blocked, scanning every battlefield (the watcher's controller need not control any of the
+     * creatures involved). No combatant is baked into the entry — the effects read the board's
+     * blocking state themselves at resolution.
+     */
+    private void checkAnyCreaturesBlockTriggers(GameData gameData, List<BlockerAssignment> blockerAssignments) {
+        if (blockerAssignments.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURES_BLOCK);
+                if (effects.isEmpty()) {
+                    continue;
+                }
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        battlefield.getKey(),
+                        watcher.getCard().getName() + "'s block trigger",
+                        new ArrayList<>(effects),
+                        null,
+                        watcher.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} creatures-block trigger pushed onto stack", gameData.id,
+                        watcher.getCard().getName());
             }
         }
     }

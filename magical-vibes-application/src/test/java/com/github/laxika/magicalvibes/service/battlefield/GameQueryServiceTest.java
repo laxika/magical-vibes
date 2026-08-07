@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
@@ -2669,6 +2670,42 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDamageToPlayerColorSourceBonus")
+    class GetDamageToPlayerColorSourceBonus {
+
+        @Test
+        @DisplayName("Adds the bonus when the source shares a colour, whoever controls the permanent")
+        void addsBonusForMatchingSourceColor() {
+            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Adds nothing for a source of another colour or of no colour")
+        void addsNothingForNonMatchingSource() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.GREEN))).isZero();
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of())).isZero();
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, null)).isZero();
+        }
+
+        @Test
+        @DisplayName("Multiple instances stack additively")
+        void multipleInstancesStackAdditively() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+            addPermanent(player2Id, createCreatureWithStaticEffect("Tok-Tok, Volcano Born", 2, 2, CardColor.RED,
+                    new AdditionalDamageToPlayersFromColorSourcesEffect(Set.of(CardColor.RED), 1)));
+
+            assertThat(gqs.getDamageToPlayerColorSourceBonus(gd, Set.of(CardColor.RED))).isEqualTo(2);
         }
     }
 }

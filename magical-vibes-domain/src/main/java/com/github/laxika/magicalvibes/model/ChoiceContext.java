@@ -120,6 +120,22 @@ public sealed interface ChoiceContext {
                                                 Card sourceCard) implements ChoiceContext {}
 
     /**
+     * First half of Mindblaze: the controller picks a card name. The answer chains into
+     * {@link RevealLibraryNumberGuessChoice}, which asks for the number.
+     */
+    record RevealLibraryNameGuessChoice(UUID targetPlayerId, UUID controllerId,
+                                        List<CardType> excludedTypes, int damage,
+                                        Card sourceCard) implements ChoiceContext {}
+
+    /**
+     * Second half of Mindblaze: the controller picks a number greater than 0 for the already
+     * chosen {@code chosenName}. On the answer {@code targetPlayerId} reveals their library, takes
+     * {@code damage} damage if it holds exactly that many cards with that name, and shuffles.
+     */
+    record RevealLibraryNumberGuessChoice(UUID targetPlayerId, UUID controllerId, String chosenName,
+                                          int damage, Card sourceCard) implements ChoiceContext {}
+
+    /**
      * A single protection choice that applies to every permanent in {@code targetIds} — one pick
      * covering all of a spell's targets ("X target creatures gain protection from the chosen
      * color", Prismatic Boon), which for most cards is a one-element list.

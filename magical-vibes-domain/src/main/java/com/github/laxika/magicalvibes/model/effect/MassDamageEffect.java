@@ -18,13 +18,28 @@ public record MassDamageEffect(
         boolean damagesPlayers,
         boolean damagesPlaneswalkers,
         PermanentPredicate filter,
-        boolean perCreatureAmount
+        boolean perCreatureAmount,
+        boolean exileInsteadOfDie
 ) implements BoardWipeEffect {
+
+    public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
+                            boolean damagesPlaneswalkers, PermanentPredicate filter,
+                            boolean perCreatureAmount) {
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount, false);
+    }
 
     /** Canonical single-amount form (the amount is evaluated once, source-relative). */
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
                             boolean damagesPlaneswalkers, PermanentPredicate filter) {
-        this(amount, damagesPlayers, damagesPlaneswalkers, filter, false);
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, false, false);
+    }
+
+    /**
+     * "Deals N damage to each creature. If a creature dealt damage this way would die this turn,
+     * exile it instead" (Yamabushi's Storm).
+     */
+    public static MassDamageEffect exilingDamageToEachCreature(int damage) {
+        return new MassDamageEffect(new Fixed(damage), false, false, null, false, true);
     }
 
     /** Fixed damage to all creatures only (e.g. Pyroclasm) */

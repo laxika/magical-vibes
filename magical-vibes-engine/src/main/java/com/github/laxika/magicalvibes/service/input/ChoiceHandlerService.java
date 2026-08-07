@@ -150,6 +150,14 @@ public class ChoiceHandlerService {
             handleRevealHandDamageAndExileByNameChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.RevealLibraryNameGuessChoice ctx) {
+            handleRevealLibraryNameGuessChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
+            handleRevealLibraryNumberGuessChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, colorName, ctx);
             return;
@@ -2425,6 +2433,68 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones and dealt {} damage",
                 gameData.id, controllerName, exiledCount, cardName, targetName, damage);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Mindblaze's name half: record the name and chain straight into the number prompt. Nothing is
+     * revealed yet — both choices are made before the library is looked at.
+     */
+    private void handleRevealLibraryNameGuessChoice(GameData gameData, String cardName,
+            ChoiceContext.RevealLibraryNameGuessChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        log.info("Game {} - {} chooses card name \"{}\" (reveal library, guess count)", gameData.id, controllerName, cardName);
+
+        playerInputService.beginRevealLibraryNumberGuessChoice(gameData,
+                new ChoiceContext.RevealLibraryNumberGuessChoice(
+                        ctx.targetPlayerId(), ctx.controllerId(), cardName, ctx.damage(), ctx.sourceCard()));
+    }
+
+    /**
+     * Mindblaze's number half: the target reveals their library, takes the damage on an exact
+     * match, and shuffles either way.
+     */
+    private void handleRevealLibraryNumberGuessChoice(GameData gameData, String numberText,
+            ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        int chosenNumber = Integer.parseInt(numberText);
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses the number " + chosenNumber + "."));
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        long matches = library == null ? 0 : library.stream().filter(c -> c.getName().equals(ctx.chosenName())).count();
+
+        if (library == null || library.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty library."));
+        } else {
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(targetName + " reveals their library: "), library).text(".").build());
+        }
+        gameLogService.append(gameData, GameLog.text(targetName + "'s library contains " + matches
+                + " card" + (matches != 1 ? "s" : "") + " named \"" + ctx.chosenName() + "\"."));
+
+        if (matches == chosenNumber) {
+            StackEntry damageEntry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, ctx.sourceCard(), ctx.controllerId(),
+                    ctx.sourceCard().getName(), List.of(), targetPlayerId, (UUID) null);
+            damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, ctx.damage());
+        }
+
+        if (library != null) {
+            Collections.shuffle(library);
+        }
+        gameLogService.append(gameData, GameLog.text(targetName + " shuffles their library."));
+        log.info("Game {} - {} guessed {} copies of \"{}\" in {}'s library; actual {}",
+                gameData.id, controllerName, chosenNumber, ctx.chosenName(), targetName, matches);
 
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

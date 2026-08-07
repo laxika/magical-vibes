@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -33,7 +33,7 @@ public class NimDeathmantle extends Card {
         // Nim Deathmantle to it.
         addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                 new MayPayManaEffect("{4}",
-                        new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect(),
+                        new ReturnDyingCreatureToBattlefieldEffect(true),
                         "Pay {4} to return this creature to the battlefield?"));
 
         // Equip {4}

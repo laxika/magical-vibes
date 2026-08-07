@@ -249,7 +249,7 @@ public class DamageSupport {
                 triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
 
                 // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
-                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage);
+                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage, false);
             }
 
             // Mangara's Equity: "…or a white creature you control" — deliberately outside the gate.
@@ -387,7 +387,7 @@ public class DamageSupport {
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             UUID reflectionTargetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, target.getId(), damage);
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, target.getId(), damage, false);
 
             // Mangara's Equity: "…or a white creature you control"
             triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
@@ -572,8 +572,18 @@ public class DamageSupport {
     }
 
     public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
+        damageAllCreaturesOnBattlefield(gameData, entry, damage, filter, false);
+    }
+
+    /**
+     * Variant that marks every creature actually dealt damage so that if it would die this turn it
+     * is exiled instead (Yamabushi's Storm). Creatures the damage never reaches — protection,
+     * prevention — are left unmarked, as they were not "dealt damage this way".
+     */
+    public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage,
+                                                Predicate<Permanent> filter, boolean exileInsteadOfDie) {
         gameData.forEachBattlefield((playerId, battlefield) ->
-                damageFilteredCreatures(gameData, entry, damage, battlefield, filter)
+                damageFilteredCreatures(gameData, entry, p -> damage, battlefield, filter, exileInsteadOfDie)
         );
     }
 
@@ -592,9 +602,19 @@ public class DamageSupport {
     }
 
     public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
+        damageFilteredCreatures(gameData, entry, damage, permanents, filter, false);
+    }
+
+    public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage,
+                                        Collection<Permanent> permanents, Predicate<Permanent> filter,
+                                        boolean exileInsteadOfDie) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard())) continue;
+            // Mark before the damage lands so lethal damage is replaced by exile straight away.
+            if (exileInsteadOfDie) {
+                p.setExileInsteadOfDieThisTurn(true);
+            }
             dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
         }
     }
@@ -620,6 +640,11 @@ public class DamageSupport {
         Set<CardColor> sourceColors = sourcePermanent == null
                 ? sourceCardColors(source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+        // Tok-Tok, Volcano Born: a source of a matching colour deals that much damage plus N instead.
+        if (rawDamage > 0) {
+            rawDamage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
+                    gameQueryService.getDamageSourceColors(gameData, sourceColors));
+        }
         if (damagePreventionService.isColorDamagePreventedForTarget(gameData, playerId, sourceColors)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));

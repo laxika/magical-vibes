@@ -230,8 +230,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → whether it re-enters tapped, to return it to the battlefield under its owner's control if it dies this turn (Graceful Reprieve, Supernatural Stamina). */
     public final Map<UUID, Boolean> creaturesReturnedToBattlefieldOnDeathThisTurn = new ConcurrentHashMap<>();
-    /** Delayed trigger: creature card ID → token registrations to resolve if it dies this turn (Skeletonize). */
-    public final Map<UUID, List<DelayedTokenOnDeath>> creatureCreatingTokenOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Delayed trigger: creature card ID → effect registrations to resolve if it dies this turn (Skeletonize, Initiate of Blood). */
+    public final Map<UUID, List<DelayedEffectOnDeath>> creatureTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
@@ -724,6 +724,11 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** "Whenever you cast a creature spell this turn, draw a card" delayed triggers (Glimpse of
+     *  Nature). The value is how many cards that player draws per creature spell cast; cleared at
+     *  end of turn. */
+    public final Map<UUID, Integer> creatureSpellCastDrawsThisTurn = new ConcurrentHashMap<>();
 
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
@@ -1839,8 +1844,8 @@ public class GameData {
      * Total lands the given player may play this turn: the normal one, plus any additional grants
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
      * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player), plus
-     * one for each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player themselves
-     * controls (The Gitrog Monster — controller-only).
+     * the {@code amount} of each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player
+     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only).
      */
     public int getMaxLandsThisTurn(UUID playerId) {
         int extraFromStatics = 0;
@@ -1851,8 +1856,8 @@ public class GameData {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics++;
-                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect && pid.equals(playerId)) {
-                        extraFromStatics++;
+                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
+                        extraFromStatics += additional.amount();
                     }
                 }
             }
@@ -2479,8 +2484,8 @@ public class GameData {
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
         copy.creaturesReturnedToBattlefieldOnDeathThisTurn.putAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
-        this.creatureCreatingTokenOnDeathThisTurn.forEach((k, v) ->
-                copy.creatureCreatingTokenOnDeathThisTurn.put(k, new ArrayList<>(v)));
+        this.creatureTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
+                copy.creatureTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);
@@ -2622,6 +2627,7 @@ public class GameData {
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);

@@ -90,7 +90,14 @@ public class Permanent {
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
     @Setter private int timesRegeneratedThisTurn;
-    @Setter private UUID attachedTo;
+    private UUID attachedTo;
+    /**
+     * The last permanent this one was attached to, kept after {@link #attachedTo} is cleared.
+     * Triggers that fire once the host has already left the battlefield (Kusari-Gama's "whenever
+     * equipped creature deals damage …", where the host may have died to the same combat damage)
+     * read it as last-known information.
+     */
+    private UUID lastAttachedTo;
     /**
      * Soulbond pairing (CR 702.94): id of the other creature this permanent is paired with, or
      * {@code null} when unpaired. Cleared when either leaves the battlefield, changes controller,
@@ -515,6 +522,7 @@ public class Permanent {
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
+        this.lastAttachedTo = source.lastAttachedTo;
         this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
@@ -709,6 +717,14 @@ public class Permanent {
     public void rollOverAttackRecord() {
         this.attackedDuringControllersLastTurn = this.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersCurrentTurn = false;
+    }
+
+    /** Remembers the host in {@link #lastAttachedTo} so it survives the detach. */
+    public void setAttachedTo(UUID attachedTo) {
+        if (attachedTo != null) {
+            this.lastAttachedTo = attachedTo;
+        }
+        this.attachedTo = attachedTo;
     }
 
     public void setBlocking(boolean blocking) {

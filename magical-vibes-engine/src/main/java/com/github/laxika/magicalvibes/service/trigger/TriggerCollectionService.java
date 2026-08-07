@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.DelayedTokenOnDeath;
+import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -31,7 +31,14 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
@@ -433,6 +440,21 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} delayed spell-copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             }
+        }
+
+        // "Whenever you cast a creature spell this turn, draw a card" (Glimpse of Nature).
+        // Repeating for the rest of the turn; multiple copies draw one card each.
+        Integer creatureCastDraws = gameData.creatureSpellCastDrawsThisTurn.get(castingPlayerId);
+        if (creatureCastDraws != null && creatureCastDraws > 0 && spellCard.hasType(CardType.CREATURE)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    spellCard,
+                    castingPlayerId,
+                    "Draw a card",
+                    new ArrayList<>(List.of(new DrawCardEffect(creatureCastDraws)))
+            ));
+            log.info("Game {} - creature-spell-cast draw trigger queued for {} ({} cards)",
+                    gameData.id, castingPlayerId, creatureCastDraws);
         }
 
         // "Until end of turn, whenever you cast an instant or sorcery spell, copy it"
@@ -1815,10 +1837,12 @@ public class TriggerCollectionService {
      * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers. When a creature the watcher's
      * controller controls (matching the effect's source filter) deals damage to a creature, the
      * damage-source creature deals that much damage to the damaged creature's controller. Called
-     * once per source/target/damage event (combat and non-combat).
+     * once per source/target/damage event; {@code combatDamage} tells the combat-only listeners
+     * (Sosuke, Son of Seshiro) whether this event was combat damage.
      */
     public void checkAllyDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
-            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage) {
+            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage,
+            boolean combatDamage) {
         if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null || damage <= 0) {
             return;
         }
@@ -1830,18 +1854,19 @@ public class TriggerCollectionService {
             if (watcher.getId().equals(damageSource.getId())) return;
 
             fireAllyDealtDamageToCreatureTrigger(gameData, watcher, damageSource, damageSourceControllerId,
-                    damagedCreatureControllerId, damagedCreatureId, damage);
+                    damagedCreatureControllerId, damagedCreatureId, damage, combatDamage);
         });
 
         // A self-scoped trigger ("Whenever this creature deals damage to a creature, …") triggered
         // when the damage was dealt, so it still goes on the stack when lethal damage back from the
         // blocker has already moved the source off the battlefield.
         fireAllyDealtDamageToCreatureTrigger(gameData, damageSource, damageSource, damageSourceControllerId,
-                damagedCreatureControllerId, damagedCreatureId, damage);
+                damagedCreatureControllerId, damagedCreatureId, damage, combatDamage);
     }
 
     private void fireAllyDealtDamageToCreatureTrigger(GameData gameData, Permanent watcher, Permanent damageSource,
-            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage) {
+            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId, int damage,
+            boolean combatDamage) {
         List<CardEffect> effects = new ArrayList<>(
                 watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
@@ -1914,8 +1939,85 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                 log.info("Game {} - {} will destroy the creature it damaged", gameData.id,
                         watcher.getCard().getName());
+            } else if (effect instanceof DestroyDamagedCreatureAtEndOfCombatEffect delayedDestroy) {
+                // "deals combat damage" — non-combat damage from the same creature does nothing.
+                if (!combatDamage) continue;
+                if (damagedCreatureId == null) continue;
+                if (delayedDestroy.sourceFilter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, delayedDestroy.sourceFilter())) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        damageSourceControllerId,
+                        watcher.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new DestroyTargetPermanentAtEndOfCombatEffect())),
+                        damagedCreatureId,
+                        watcher.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} schedules the damaged creature for destruction at end of combat",
+                        gameData.id, watcher.getCard().getName());
+            } else if (effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect) {
+                // "equipped creature" — the watcher is the Equipment, so it must be attached to
+                // the creature that dealt the damage. The ability triggered when the damage was
+                // dealt, so a host that has already died to the same combat damage (which detaches
+                // the Equipment) still counts, read from last-known attachment.
+                if (!isEquippedBy(gameData, watcher, damageSource)) continue;
+                if (damagedCreatureId == null) continue;
+                if (!wasBlocking(gameData, damageSource, damagedCreatureId, combatDamage)) continue;
+
+                // The Equipment deals that much damage to each other creature defending player controls.
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        damageSourceControllerId,
+                        watcher.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new DealDamageToEachMatchingPermanentEffect(damage,
+                                new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(damagedCreatureId)),
+                                EachPermanentScope.TARGET_PLAYER))),
+                        damagedCreatureControllerId,
+                        watcher.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} deals {} damage to each other creature {} controls", gameData.id,
+                        watcher.getCard().getName(), damage,
+                        gameData.playerIdToName.get(damagedCreatureControllerId));
+            }
         }
-        }
+    }
+
+    /**
+     * Whether the creature that was just dealt damage was a blocking creature. Lethal damage may
+     * already have moved it off the battlefield, in which case the fallback reads the damage source:
+     * a creature only deals combat damage to creatures blocking it while it is attacking.
+     */
+    private boolean isEquippedBy(GameData gameData, Permanent equipment, Permanent host) {
+        if (host.getId().equals(equipment.getAttachedTo())) return true;
+        // Only a host that already left the battlefield may be matched on last-known attachment.
+        return host.getId().equals(equipment.getLastAttachedTo())
+                && gameQueryService.findPermanentById(gameData, host.getId()) == null;
+    }
+
+    /**
+     * Whether the creature that was just dealt damage was a blocking creature. For combat damage the
+     * damage source answers it: a creature deals combat damage to creatures blocking it only while it
+     * is attacking (a blocking creature damages the attacker instead). The damaged creature's own
+     * blocking flag is unusable there — lethal damage may already have removed it from the
+     * battlefield, and combat state is torn down when the creature it blocked dies.
+     */
+    private boolean wasBlocking(GameData gameData, Permanent damageSource, UUID damagedCreatureId, boolean combatDamage) {
+        if (combatDamage) return damageSource.isAttacking();
+        Permanent damaged = gameQueryService.findPermanentById(gameData, damagedCreatureId);
+        return damaged != null && damaged.isBlocking();
     }
 
     // ── Any-creature-dealt-damage triggers ─────────────────────────────
@@ -2906,7 +3008,7 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.EquippedCreatureDeath(dyingCreatureId, dyingCreatureControllerId);
+        var ctx = new TriggerContext.EquippedCreatureDeath(dyingCreatureId, dyingCreatureControllerId, dyingCard);
 
         for (Permanent perm : battlefield) {
             if (!dyingCreatureId.equals(perm.getAttachedTo())) continue;
@@ -3445,26 +3547,29 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Delayed "create token(s) when a creature dealt damage this way dies this turn" (Skeletonize): if
-     * the dying creature's card was registered, push one triggered ability per registration that creates
-     * the token(s) under the recorded controller's control. Fires at most once per registration.
+     * Delayed "when that creature dies this turn, ..." (Skeletonize, Initiate of Blood): if the dying
+     * creature's card was registered, push one triggered ability per registration that resolves the
+     * recorded effect under the recorded controller's control, carrying the registering permanent so
+     * self-referential effects still find it. Fires at most once per registration.
      */
-    public void triggerDelayedCreateTokenOnDeath(GameData gameData, UUID dyingCreatureCardId) {
-        List<DelayedTokenOnDeath> registrations = gameData.creatureCreatingTokenOnDeathThisTurn.remove(dyingCreatureCardId);
+    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingCreatureCardId) {
+        List<DelayedEffectOnDeath> registrations = gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingCreatureCardId);
         if (registrations == null) {
             return;
         }
 
-        for (DelayedTokenOnDeath registration : registrations) {
+        for (DelayedEffectOnDeath registration : registrations) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     registration.sourceCard(),
                     registration.controllerId(),
-                    "Create token (a creature dealt damage this way died)",
-                    new ArrayList<>(List.of(registration.tokenEffect()))
+                    registration.sourceCard().getName() + " triggers (a creature dealt damage this way died)",
+                    new ArrayList<>(List.of(registration.effect())),
+                    null,
+                    registration.sourcePermanentId()
             ));
 
-            log.info("Game {} - Delayed token trigger: {} creates a token (a creature it damaged died this turn)",
+            log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",
                     gameData.id, registration.sourceCard().getName());
         }
     }

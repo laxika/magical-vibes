@@ -37,6 +37,8 @@ public sealed interface PermanentPredicate permits
         PermanentHasSameNameAsSourcePredicate,
         PermanentHasSourceChosenSubtypePredicate,
         PermanentSharesNameWithAnotherPermanentPredicate,
+        PermanentSharesColorWithEquippedCreaturePredicate,
+        PermanentSharesCreatureTypeWithEquippedCreaturePredicate,
         PermanentHasSubtypePredicate,
         PermanentHasSupertypePredicate,
         PermanentInCombatWithSourcePredicate,

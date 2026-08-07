@@ -93,6 +93,14 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
     }
 
     /**
+     * Myojin of Life's Web: "Put any number of creature cards from your hand onto the battlefield."
+     * Declinable HandCardChoice; each put re-offers until decline / no matches, entering untapped.
+     */
+    public static PutCardToBattlefieldEffect anyNumber(CardPredicate predicate, String label) {
+        return new PutCardToBattlefieldEffect(predicate, label, false, false, false, false, false, false, false, true);
+    }
+
+    /**
      * Wrenn and Seven: "Put any number of land cards from your hand onto the battlefield tapped."
      * Declinable HandCardChoice; each put re-offers until decline / no matches (no draw).
      */

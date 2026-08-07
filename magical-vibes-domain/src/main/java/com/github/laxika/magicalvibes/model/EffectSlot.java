@@ -673,6 +673,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the effect names is baked as the non-targeting {@code targetId} on the stack entry, with the
      *  attacker as {@code sourcePermanentId}. Checked in {@code CombatBlockService}. Used by No Quarter. */
     ON_ANY_CREATURE_BECOMES_BLOCKED,
+    /** Global watcher: triggers once each time blockers are declared and at least one creature
+     *  blocked, regardless of who controls the blockers. Unlike
+     *  {@link #ON_ANY_CREATURE_BECOMES_BLOCKED} it fires a single time no matter how many
+     *  attacker/blocker pairs were created. Fires on every permanent with this slot across all
+     *  battlefields; no {@code targetId} is set, so effects act on the board (e.g. an all-matching
+     *  sacrifice filtered by {@code PermanentIsBlockingPredicate}). Checked in
+     *  {@code CombatBlockService}. Used by Tide of War. */
+    ON_ANY_CREATURES_BLOCK,
     /** Triggers whenever a permanent is returned to a player's hand (bounced from the battlefield),
      *  regardless of who controls this permanent or owns the returned one. Fires on every permanent
      *  with this slot across all battlefields, once per returned permanent. The player the permanent

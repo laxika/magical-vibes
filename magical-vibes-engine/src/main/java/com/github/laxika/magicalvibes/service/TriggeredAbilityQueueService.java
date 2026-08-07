@@ -147,6 +147,24 @@ public class TriggeredAbilityQueueService {
         gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
 
         if (matchingCards.isEmpty()) {
+            if (target.maxTargets() > 1) {
+                // "Any number of target cards" is legally satisfied by zero targets, so the trigger
+                // still goes on the stack and its non-targeting half still resolves (Iname, Life
+                // Aspect's "you may exile it").
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.dyingCard(),
+                        pending.controllerId(),
+                        pending.dyingCard().getName() + "'s ability",
+                        new ArrayList<>(pending.effects()),
+                        List.of()
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                        "'s death trigger triggers targeting no cards."));
+                log.info("Game {} - {} death graveyard trigger pushed with 0 targets",
+                        gameData.id, pending.dyingCard().getName());
+                return false;
+            }
             gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                     "'s death trigger has no valid graveyard targets."));
             log.info("Game {} - {} death graveyard trigger skipped (no valid targets)",
@@ -164,8 +182,11 @@ public class TriggeredAbilityQueueService {
             case CONTROLLERS_GRAVEYARD -> "your graveyard";
         };
         String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
-                pending.dyingCard().getName() + "'s ability — Choose target " + filterLabel + " from " + zoneLabel
+        int maxTargets = Math.min(target.maxTargets(), matchingCards.size());
+        String countLabel = maxTargets > 1 ? "up to " + maxTargets + " target " : "target ";
+        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
+                pending.dyingCard().getName() + "'s ability — Choose " + countLabel + filterLabel
+                        + (maxTargets > 1 ? "s" : "") + " from " + zoneLabel
                         + " " + target.destination() + ".");
 
         gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColo
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -230,8 +232,16 @@ public class ActivatedAbilityExecutionService {
                 .findFirst();
         if (removeAllCounters.isPresent()) {
             CounterType counterType = removeAllCounters.get().counterType();
-            effectiveXValue = permanent.getCounterCount(counterType);
-            permanent.setCounterCount(counterType, 0);
+            // Hankyu keeps its aim counters on the Equipment while the equipped creature activates
+            // the ability, so the cost is paid from the granting Equipment.
+            Permanent counterSource = permanent;
+            if (removeAllCounters.get().fromGrantingEquipment() && ability.getGrantSourcePermanentId() != null) {
+                counterSource = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            }
+            if (counterSource != null) {
+                effectiveXValue = counterSource.getCounterCount(counterType);
+                counterSource.setCounterCount(counterType, 0);
+            }
         }
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
@@ -304,7 +314,7 @@ public class ActivatedAbilityExecutionService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent);
+        List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent, ability);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, and isn't a loyalty ability.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
@@ -335,6 +345,19 @@ public class ActivatedAbilityExecutionService {
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue);
+            // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
+            // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
+            // watchers must see it exactly as they see a printed ON_TAP land.
+            if (ability.isRequiresTap() && permanent.getCard().hasType(CardType.LAND)) {
+                int stackBeforeLandTapTriggers = gameData.stack.size();
+                triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
+                if (gameData.stack.size() > stackBeforeLandTapTriggers) {
+                    List<StackEntry> deferredLandTapTriggers = new ArrayList<>(
+                            gameData.stack.subList(stackBeforeLandTapTriggers, gameData.stack.size()));
+                    gameData.stack.subList(stackBeforeLandTapTriggers, gameData.stack.size()).clear();
+                    gameData.pendingManaAbilityTriggers.addAll(deferredLandTapTriggers);
+                }
+            }
             // CR 603.3: Triggered abilities from mana-ability costs (sacrifice, tap)
             // wait until the next time a player would receive priority before going
             // on the stack.  This prevents them from blocking sorcery-speed spell
@@ -400,13 +423,18 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
-    private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent) {
+    private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent, ActivatedAbility ability) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect effect : abilityEffects) {
             if (effect instanceof CostEffect) {
                 continue;
             }
-            if (effect instanceof CantBlockSourceEffect) {
+            if (effect instanceof PutCountersOnGrantingEquipmentEffect grantCounters) {
+                // Bind the granting Equipment now (Hankyu): at resolution the ability's source is the
+                // equipped creature, and the Equipment may no longer be attached to it.
+                snapshotEffects.add(new PutCountersOnGrantingEquipmentEffect(grantCounters.counterType(),
+                        grantCounters.count(), ability.getGrantSourcePermanentId()));
+            } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof MustBlockSourceEffect) {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
@@ -615,6 +643,8 @@ public class ActivatedAbilityExecutionService {
                 arm.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
+            } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
+                aug.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
                 addNotedManaForLastExiledCard(gameData, player, permanent);
             } else if (effect instanceof AddNotedManaEffect) {
@@ -950,6 +980,8 @@ public class ActivatedAbilityExecutionService {
                 total += arm.amount();
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 total += ahg.amount();
+            } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
+                total += aug.amount();
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (!colors.isEmpty()) {

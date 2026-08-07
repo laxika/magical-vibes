@@ -359,10 +359,12 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
-        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly
+        // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
+        boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
         boolean canAfford = hasRestricted
-                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly)
+                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, false, legendarySpellOnly)
                 : cost.canPay(pool, additionalCost);
         if (canAfford && card.isRequiresCreatureMana()) {
             canAfford = cost.canPayCreatureOnly(pool, additionalCost);
