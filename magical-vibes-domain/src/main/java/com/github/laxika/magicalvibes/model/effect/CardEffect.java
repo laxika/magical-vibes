@@ -45,4 +45,13 @@ public interface CardEffect {
      * of the normal death-trigger path and collected from the sacrifice path instead.
      */
     default boolean onlyTriggersOnSacrifice() { return false; }
+
+    /**
+     * Returns {@code true} if this effect resolves against the permanent its source Aura/Equipment
+     * is attached to rather than against a chosen target. The activation path captures that attached
+     * permanent as the ability's target before any sacrifice cost severs the attachment, so the
+     * effect still finds it at resolution ("Sacrifice this Aura: Return enchanted creature to its
+     * owner's hand." — Phantom Wings).
+     */
+    default boolean resolvesAgainstAttachedPermanent() { return false; }
 }

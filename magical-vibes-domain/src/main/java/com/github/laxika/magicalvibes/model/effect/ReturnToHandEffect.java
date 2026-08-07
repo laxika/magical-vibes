@@ -121,6 +121,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
     }
 
     @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return scope == BounceScope.ENCHANTED;
+    }
+
+    @Override
     public RemovalKind removalKind() {
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.

@@ -290,6 +290,7 @@ public class PermanentCounterSupport {
                 grantFungusCounterAbilities(target);
                 yield "fungus";
             }
+            case FUSE -> { target.setCounterCount(CounterType.FUSE, target.getCounterCount(CounterType.FUSE) + count); yield "fuse"; }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
             case MAGNET -> { target.setCounterCount(CounterType.MAGNET, target.getCounterCount(CounterType.MAGNET) + count); yield "magnet"; }

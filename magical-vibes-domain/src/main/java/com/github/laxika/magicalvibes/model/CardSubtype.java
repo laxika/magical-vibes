@@ -48,6 +48,7 @@ public enum CardSubtype {
     REBEL("Rebel"),
     KNIGHT("Knight"),
     SPIRIT("Spirit"),
+    SQUIRREL("Squirrel"),
     STARFISH("Starfish"),
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),

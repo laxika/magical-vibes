@@ -85,16 +85,18 @@ public class LibrarySearchSupport {
     }
 
     /**
-     * Starts the next pending "each player may search for up to N creature cards to hand" search
-     * from the follow-up's remaining-searchers list; the advanced remainder rides the begun search.
-     * Each searcher may take up to {@code followUp.eachPlayerCreatureToHandCount()} creature cards,
-     * revealing them to hand, then shuffles. Returns true if a search was initiated, false if no
-     * searcher remains (empty library / no creatures / Leonin Arbiter players are skipped). Used by
-     * Weird Harvest.
+     * Starts the next pending "each player may search for up to N cards to hand" search from the
+     * follow-up's remaining-searchers list; the advanced remainder rides the begun search. Each
+     * searcher may take up to {@code followUp.eachPlayerToHandCount()} cards to hand, then shuffles;
+     * when {@code followUp.eachPlayerToHandCreatureOnly()} the search is restricted to creature cards
+     * and the taken cards are revealed. Returns true if a search was initiated, false if no searcher
+     * remains (empty library / no matching cards / Leonin Arbiter players are skipped). Used by
+     * Weird Harvest (creature-only) and Noble Benefactor (any card).
      */
-    public boolean startNextEachPlayerCreatureToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
-        int count = followUp.eachPlayerCreatureToHandCount();
-        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerCreatureToHandSearches());
+    public boolean startNextEachPlayerToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        int count = followUp.eachPlayerToHandCount();
+        boolean creatureOnly = followUp.eachPlayerToHandCreatureOnly();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerToHandSearches());
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
             String playerName = gameData.playerIdToName.get(nextPlayerId);
@@ -109,25 +111,28 @@ public class LibrarySearchSupport {
                 continue;
             }
 
-            List<Card> creatures = deck.stream()
-                    .filter(card -> card.hasType(CardType.CREATURE))
-                    .toList();
+            List<Card> choices = creatureOnly
+                    ? deck.stream().filter(card -> card.hasType(CardType.CREATURE)).toList()
+                    : deck;
 
-            if (creatures.isEmpty()) {
+            if (choices.isEmpty()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
                 continue;
             }
 
-            String prompt = "You may search your library for up to " + count + " creature card"
-                    + (count == 1 ? "" : "s") + " to reveal and put into your hand.";
-            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(creatures))
-                    .reveals(true)
+            String prompt = creatureOnly
+                    ? "You may search your library for up to " + count + " creature card"
+                            + (count == 1 ? "" : "s") + " to reveal and put into your hand."
+                    : "You may search your library for up to " + count + " card"
+                            + (count == 1 ? "" : "s") + " to put into your hand.";
+            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(choices))
+                    .reveals(creatureOnly)
                     .canFailToFind(true)
                     .remainingCount(count)
                     .destination(LibrarySearchDestination.HAND)
-                    .filterPredicate(new CardTypePredicate(CardType.CREATURE))
-                    .followUp(followUp.withRemainingEachPlayerCreatureToHandSearches(remaining))
+                    .filterPredicate(creatureOnly ? new CardTypePredicate(CardType.CREATURE) : null)
+                    .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
                     .build();
 
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));

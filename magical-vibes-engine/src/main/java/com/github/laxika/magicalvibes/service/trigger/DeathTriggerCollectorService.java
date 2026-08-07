@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
@@ -486,6 +488,10 @@ public class DeathTriggerCollectorService {
             resolvedMay = new MayEffect(
                     new ExileTriggeringCreatureAndTrackWithSourceEffect(cd.dyingCard().getId()),
                     may.prompt());
+        } else if (may.wrapped() instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
+            // Angelic Renewal and friends: the may-ability queue drops the stack entry's
+            // triggering-card id, so bind the dying card onto the wrapped effect here.
+            resolvedMay = new MayEffect(aware.boundToDyingCard(cd.dyingCard().getId()), may.prompt());
         }
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay, null, match.permanent().getId());
         return true;
@@ -1164,6 +1170,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathDamageController(TriggerMatchContext match,
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
+        // Dingus Staff: bake the dying creature's controller as targetId for TRIGGERING_PERMANENT_CONTROLLER.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                cd.dyingCreatureControllerId(),
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1588,6 +1612,22 @@ public class DeathTriggerCollectorService {
         ));
         logSelfLeaves(match);
         return true;
+    }
+
+    /**
+     * "When this permanent leaves the battlefield, you gain life equal to [something about this
+     * permanent]." The source is gone by resolution time, so a source-relative amount (e.g.
+     * {@code CountersOnSource(AGE)} for Revered Unicorn) is evaluated here against the leaving
+     * permanent and frozen into a fixed amount before the ordinary self-leaves routing runs.
+     */
+    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesGainLife(TriggerMatchContext match,
+            GainLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        AmountContext amountContext = new AmountContext(sl.controllerId(), match.permanent(), null, 0, 0);
+        int amount = amountEvaluationService.evaluate(match.gameData(), effect.amount(), amountContext);
+        GainLifeEffect frozen = new GainLifeEffect(new Fixed(amount), effect.recipient(), effect.targetsPlayer());
+        return handleSelfLeavesDefault(match, frozen, ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)

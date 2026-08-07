@@ -147,9 +147,10 @@ public class ExampleCard extends Card {
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
   - `addCastingOption(new AlternateHandCast(List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(COLOR), "label"))))` — exile a matching card from hand rather than pay mana (Scars of the Veteran). Paid via cast-request `discardHandCardIndex` (exiled, no discard triggers)
+  - `addCastingOption(new AlternateHandCast(List.of(new ExileTopCardsFromGraveyardCastingCost(new CardColorPredicate(COLOR), "label", N))))` — exile the top N matching cards of **your graveyard** rather than pay mana (Spinning Darkness, `BLACK`/3). The cards are determined, not chosen: `SpellCastingService.findTopMatchingGraveyardCards` walks the graveyard from the top (the list's tail) and takes the first N matches, skipping non-matching cards. No cast-request payload, so — like evoke/prowl/overload — it must be forced explicitly via `GameService.playCardWithAlternateCost` (harness `castWithAlternateCost(player, cardIndex, targetId)`)
 - Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new SacrificePermanentsCost(1, PermanentIsCreaturePredicate())), true))` — trailing `true` = `reduceManaBySacrificedManaValue` (generic only)
-  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`)
+  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`, `ExileCardsFromHandCastingCost`, `ExileTopCardsFromGraveyardCastingCost`)
   - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
   - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
   - Example (mana + return basic land — the Alara Reborn Borderposts): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FieldmistBorderpost.java` uses `new ReturnPermanentsCost(1, new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), new PermanentHasSupertypePredicate(CardSupertype.BASIC))))`
@@ -555,6 +556,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |
 | `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CameUnderControlThisTurn(), wrapped)` | yes | yes | - | source is still summoning sick (came under your control this turn); usually wrapped in `NotCondition` |
+| `ConditionalEffect(new SourceEnteredBattlefieldThisTurn(), wrapped)` | yes | yes | - | source entered the battlefield this turn (scans `permanentsEnteredBattlefieldThisTurn`, survives control changes unlike `CameUnderControlThisTurn`); Fungus Elemental gate |
 | `ConditionalEffect(new AllOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (end step) | compound intervening-if — met only when every inner condition holds (Erg Raiders: `DidntAttack` + `NotCondition(CameUnderControlThisTurn)`) |
 | `ConditionalEffect(new AnyOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (ETB) | compound intervening-if OR — met when at least one inner condition holds (Desert's Hold: `ControlsPermanent(DESERT)` or `GraveyardCardThreshold(1, DESERT)`) |
 | `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
@@ -574,6 +576,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |
+| `ConditionalEffect(new ActivePlayerControlsPermanent(filter), wrapped)` | - | yes | yes (each-player upkeep) | "if **that player** controls a [filter]" on `EACH_UPKEEP_TRIGGERED` — scoped to `gameData.activePlayerId`, not the source's controller (Urborg Stalker). Checked as intervening-if in `StepTriggerService` and re-checked at resolution |
 | `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
 | `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
 | `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "161")
+@CardRegistration(set = "WTH", collectorNumber = "129")
 public class GaeasBlessing extends Card {
 
     public GaeasBlessing() {

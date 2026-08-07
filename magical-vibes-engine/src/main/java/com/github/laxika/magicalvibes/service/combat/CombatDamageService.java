@@ -2202,7 +2202,7 @@ public class CombatDamageService {
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
-            damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+            damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId());
             processEyeForAnEyeReflections(gameData);
             if (damagePreventionService.isColorDamagePreventedForTarget(
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk))) {
@@ -2292,7 +2292,7 @@ public class CombatDamageService {
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
-                damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+                damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId);
                 processEyeForAnEyeReflections(gameData);
                 // Battletide Alchemist: the defending player prevents up to (Clerics they control) of this attacker's damage.
                 int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
@@ -2412,7 +2412,7 @@ public class CombatDamageService {
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
-        damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
+        damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage, target.getId());
         processEyeForAnEyeReflections(gameData);
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
         damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(

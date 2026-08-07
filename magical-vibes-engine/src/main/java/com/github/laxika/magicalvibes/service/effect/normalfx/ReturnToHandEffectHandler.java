@@ -84,10 +84,14 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveEnchanted(GameData gameData, StackEntry entry) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) {
+        // The Aura is normally still on the battlefield (Sun Clasp), but a "Sacrifice this Aura:"
+        // cost (Phantom Wings) removes it before the ability resolves — the activation path captured
+        // the attached creature as the entry's target for exactly that case.
+        UUID enchantedId = (aura != null && aura.isAttached()) ? aura.getAttachedTo() : entry.getTargetId();
+        if (enchantedId == null) {
             return;
         }
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchanted == null) {
             return;
         }

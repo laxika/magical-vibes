@@ -14,11 +14,17 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * {@link com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat}, drained
  * in {@code CombatService.processEndOfCombatDamage()}. The source card is captured so the damage
  * still happens with last-known information if the source left the battlefield in the meantime.
+ * <p>
+ * As a {@link CombatOpponentReferencingEffect} it also serves the Sawtooth Ogre wording "whenever
+ * this creature blocks or becomes blocked by a creature, this creature deals N damage to that
+ * creature at end of combat": on {@code ON_BLOCK} the blocked attacker is baked into the
+ * non-targeting trigger, and on {@code ON_BECOMES_BLOCKED} with {@code TriggerMode.PER_BLOCKER}
+ * each blocker is.
  *
  * @param damage the amount of damage the source deals at end of combat
  */
 public record DealDamageToTargetCreatureAtEndOfCombatEffect(DynamicAmount damage)
-        implements DamageDealingEffect {
+        implements DamageDealingEffect, CombatOpponentReferencingEffect {
 
     public DealDamageToTargetCreatureAtEndOfCombatEffect(int damage) {
         this(new Fixed(damage));

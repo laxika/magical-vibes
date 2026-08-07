@@ -896,6 +896,18 @@ public class CombatBlockService {
                 graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
                         attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
                 pushed++;
+            } else if (!effects.isEmpty() && attacker.getCard().getSpellTargets().size() > 1) {
+                // "destroy target creature and target land" (Goblin Grenadiers): two positional target
+                // groups, so the single-target may/attack pipelines can't collect them. Reuse the ETB
+                // slot-by-slot picker — the targets are chosen as the trigger goes on the stack
+                // (CR 603.3d) and the "you may sacrifice it" is still made at resolution.
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        attacker.getCard(), activeId, effects, attacker.getId(), List.of(), 0, 0));
+                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                        "'s unblocked-attack ability triggers."));
+                log.info("Game {} - {} unblocked-attack multi-target trigger queued", gameData.id,
+                        attacker.getCard().getName());
+                pushed++;
             } else if (!effects.isEmpty()) {
                 // Permanent-targeting "you may" (Dwarven Vigilantes / Gaze of Pain shape): the may's
                 // creature target is chosen at resolution after accepting. Push via queueMayAbility

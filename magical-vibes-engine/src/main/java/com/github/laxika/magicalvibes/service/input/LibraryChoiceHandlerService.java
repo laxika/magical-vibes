@@ -90,7 +90,7 @@ public class LibraryChoiceHandlerService {
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.NaturalBalanceSupport naturalBalanceSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
 
@@ -285,6 +285,17 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            // "Exile any number of them" (Ancestral Knowledge): re-open the same pick over what is
+            // left until the controller declines, which then falls through to the reorder-to-top
+            // disposal below.
+            if (librarySearch.repeatUntilDecline() && chosenCard != null && !sourceCards.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        librarySearch.withCards(new ArrayList<>(sourceCards)),
+                        librarySearch.prompt(),
+                        true));
+                return;
+            }
+
             // Two-bounded-pick (Gift of the Gargantuan / Benefaction of Rhonas): after the first
             // pick, run the second-type pick over the same looked-at cards before disposing the rest.
             if (followUp.secondBoundedPick() != null
@@ -402,12 +413,12 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(shuffleLog));
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
-            if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
+            if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
-            if (naturalBalanceSupport.advance(gameData, followUp)) return;
+            if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
         }
@@ -918,7 +929,7 @@ public class LibraryChoiceHandlerService {
                     stateBasedActionService.performStateBasedActions(gameData);
                 }
                 // The multi-pick ran dry, but any queued follow-up work still has to happen.
-                if (naturalBalanceSupport.advance(gameData, followUp)) return;
+                if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
                 finishSearchAndResume(gameData);
                 return;
             }
@@ -1019,12 +1030,12 @@ public class LibraryChoiceHandlerService {
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
-        if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
-        if (naturalBalanceSupport.advance(gameData, followUp)) return;
+        if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
     }
 

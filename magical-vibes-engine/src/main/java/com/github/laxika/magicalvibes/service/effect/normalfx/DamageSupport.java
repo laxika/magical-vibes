@@ -157,7 +157,7 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from
             // the chosen source to any target; red rider queues reflected damage)
-            rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
+            rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage, target.getId());
             processEyeForAnEyeReflections(gameData);
             // Shadowbane: the chosen source's next damage to the protected player's creatures.
             rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
@@ -702,7 +702,7 @@ public class DamageSupport {
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
-                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage);
+                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage, playerId);
                 processEyeForAnEyeReflections(gameData);
             }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);

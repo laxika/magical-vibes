@@ -19,6 +19,7 @@ import java.util.List;
  */
 @CardRegistration(set = "7ED", collectorNumber = "19")
 @CardRegistration(set = "6ED", collectorNumber = "23")
+@CardRegistration(set = "WTH", collectorNumber = "17")
 public class HeavyBallista extends Card {
 
     public HeavyBallista() {

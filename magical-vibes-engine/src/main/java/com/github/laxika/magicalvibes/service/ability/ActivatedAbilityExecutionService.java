@@ -199,13 +199,15 @@ public class ActivatedAbilityExecutionService {
 
         UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null) {
-            boolean attachedSelfRegenerate = (permanent.getCard().isAura()
+            boolean capturesAttachedPermanent = (permanent.getCard().isAura()
                     || permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                     && abilityEffects.stream()
-                    .anyMatch(e -> e instanceof RegenerateEffect && e.targetSpec().selfTargeting());
-            if (attachedSelfRegenerate) {
+                    .anyMatch(e -> (e instanceof RegenerateEffect && e.targetSpec().selfTargeting())
+                            || e.resolvesAgainstAttachedPermanent());
+            if (capturesAttachedPermanent) {
                 // "Sacrifice this Aura: Regenerate enchanted creature." / "{2}: Regenerate equipped
-                // creature." Capture the attached creature now, before a sacrifice cost removes the
+                // creature." / "Sacrifice this Aura: Return enchanted creature to its owner's hand."
+                // Capture the attached creature now, before a sacrifice cost removes the
                 // attachment and its attachedTo link.
                 effectiveTargetId = permanent.getAttachedTo();
             } else if (abilityEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting())) {

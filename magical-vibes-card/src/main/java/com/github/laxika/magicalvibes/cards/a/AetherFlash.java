@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
+@CardRegistration(set = "WTH", collectorNumber = "88")
 @CardRegistration(set = "7ED", collectorNumber = "172")
 @CardRegistration(set = "6ED", collectorNumber = "163")
 public class AetherFlash extends Card {

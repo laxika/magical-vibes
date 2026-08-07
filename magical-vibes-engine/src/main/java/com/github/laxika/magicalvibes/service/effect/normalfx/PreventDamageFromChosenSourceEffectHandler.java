@@ -97,6 +97,16 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 prompt = "Choose a source. The next time it would deal damage to you and/or creatures you control"
                         + " this turn, prevent that damage. If that source is black, you gain that much life.";
             }
+            case NEXT_DAMAGE_TO_ENCHANTED -> {
+                UUID enchantedId = findEnchantedCreatureId(gameData, entry);
+                if (enchantedId == null) {
+                    return;
+                }
+                context = new PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice(
+                        controllerId, enchantedId);
+                prompt = "Choose a source. The next time it would deal damage to enchanted creature this turn,"
+                        + " prevent that damage.";
+            }
             case ALL_DAMAGE_THIS_TURN -> {
                 context = new PermanentChoiceContext.PreventDamageSourceChoice(controllerId, e.controllerOnly());
                 prompt = e.controllerOnly()
@@ -108,6 +118,24 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
 
         gameData.interaction.setPermanentChoiceContext(context);
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds, prompt);
+    }
+
+    /**
+     * Resolves "enchanted creature" for the ability's source Aura. The Aura is usually sacrificed to
+     * pay the activation cost, so the live permanent is gone by resolution; the attachment is read
+     * from the last-known snapshot (CR 608.2h) with a live lookup as fallback.
+     */
+    private UUID findEnchantedCreatureId(GameData gameData, StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
+        Permanent aura = sourceId == null ? null : gameQueryService.findPermanentById(gameData, sourceId);
+        UUID attachedTo = aura != null ? aura.getAttachedTo() : null;
+        if (attachedTo == null && entry.getSourcePermanentSnapshot() != null) {
+            attachedTo = entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
+        if (attachedTo == null) {
+            return null;
+        }
+        return gameQueryService.findPermanentById(gameData, attachedTo) == null ? null : attachedTo;
     }
 
     private List<UUID> collectValidSourceIds(GameData gameData, PermanentPredicate sourceFilter) {

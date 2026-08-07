@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * over disjoint player sets: players with six or more lands sacrifice down to five (they choose
  * which of their lands to sacrifice), players with four or fewer may search for up to five minus
  * their land count basic land cards. Both halves are queued in APNAP order (CR 101.4) and run
- * through {@link NaturalBalanceSupport}, searches first.
+ * through {@link BasicLandSearchQueueSupport}, searches first.
  */
 @Component
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
     private static final int TARGET_LANDS = 5;
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final NaturalBalanceSupport naturalBalanceSupport;
+    private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +41,7 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
         List<LibrarySearchFollowUp.BasicLandsPick> searchers = new ArrayList<>();
         List<PendingForcedSacrifice> sacrificers = new ArrayList<>();
 
-        for (UUID playerId : orderedApnap(gameData)) {
+        for (UUID playerId : basicLandSearchQueueSupport.apnapOrder(gameData)) {
             List<Permanent> lands = lands(gameData, playerId);
             if (lands.size() > TARGET_LANDS) {
                 List<UUID> landIds = lands.stream().map(Permanent::getId).toList();
@@ -51,7 +51,7 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        naturalBalanceSupport.advance(gameData, LibrarySearchFollowUp.naturalBalance(searchers, sacrificers));
+        basicLandSearchQueueSupport.advance(gameData, LibrarySearchFollowUp.basicLandSearches(searchers, sacrificers));
     }
 
     private List<Permanent> lands(GameData gameData, UUID playerId) {
@@ -63,20 +63,5 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
         return battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, isLand))
                 .toList();
-    }
-
-    /** Active player first, then every other player in seating order (CR 101.4 APNAP). */
-    private List<UUID> orderedApnap(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        List<UUID> ordered = new ArrayList<>();
-        if (gameData.orderedPlayerIds.contains(activePlayerId)) {
-            ordered.add(activePlayerId);
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(activePlayerId)) {
-                ordered.add(playerId);
-            }
-        }
-        return ordered;
     }
 }

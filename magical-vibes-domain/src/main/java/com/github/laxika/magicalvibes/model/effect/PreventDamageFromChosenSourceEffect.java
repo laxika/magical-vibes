@@ -105,6 +105,16 @@ public record PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES, true, false, null, null, false, false, false);
     }
 
+    /**
+     * Kithkin Armor: the chosen source's next damage to the creature this Aura is attached to is
+     * prevented. The Aura is typically sacrificed to pay for the ability, so the attachment is read
+     * from the stack entry's last-known source snapshot.
+     */
+    public static PreventDamageFromChosenSourceEffect nextDamageToEnchantedCreature() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ENCHANTED, false, false, null, null, false, false, false);
+    }
+
     /** Auriok Replica: prevent all damage the chosen source would deal to you this turn. */
     public static PreventDamageFromChosenSourceEffect allDamageToYou() {
         return new PreventDamageFromChosenSourceEffect(

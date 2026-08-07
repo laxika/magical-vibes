@@ -303,8 +303,8 @@ public class AdditionalSpellCostService {
                                     || (cost.alternateType() != null && c.hasType(cost.alternateType())))
                                     && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
                 }
-                case ExileXCardsFromGraveyardCost ignored -> {
-                    if (graveyard.isEmpty()) return false;
+                case ExileXCardsFromGraveyardCost cost -> {
+                    if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
                 }
                 case DiscardCardTypeCost cost -> {
                     if (discardCostIndices(gameData, playerId, card, cost).isEmpty()) return false;
@@ -808,6 +808,10 @@ public class AdditionalSpellCostService {
         for (int idx : exileGraveyardCardIndices) {
             if (idx < 0 || idx >= graveyard.size()) {
                 throw new IllegalStateException("Invalid graveyard card index: " + idx);
+            }
+            if (cost.requiredType() != null && !graveyard.get(idx).hasType(cost.requiredType())) {
+                throw new IllegalStateException("Must exile " + cost.requiredType().name().toLowerCase()
+                        + " cards from your graveyard to cast " + card.getName());
             }
         }
     }

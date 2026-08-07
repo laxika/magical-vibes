@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "221")
+@CardRegistration(set = "WTH", collectorNumber = "124")
 public class DenseFoliage extends Card {
 
     public DenseFoliage() {

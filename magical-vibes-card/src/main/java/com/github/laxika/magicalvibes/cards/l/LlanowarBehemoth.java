@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "252")
 @CardRegistration(set = "8ED", collectorNumber = "261")
+@CardRegistration(set = "WTH", collectorNumber = "132")
 public class LlanowarBehemoth extends Card {
 
     public LlanowarBehemoth() {

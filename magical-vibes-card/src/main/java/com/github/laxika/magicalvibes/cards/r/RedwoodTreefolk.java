@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "183")
 @CardRegistration(set = "6ED", collectorNumber = "247")
 @CardRegistration(set = "7ED", collectorNumber = "264")
+@CardRegistration(set = "WTH", collectorNumber = "138")
 public class RedwoodTreefolk extends Card {
 }

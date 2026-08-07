@@ -609,9 +609,21 @@ public class GameActionAvailabilityService {
                     && gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                             .anyMatch(c -> c.hasType(CardType.LAND));
 
+            boolean isMayCastTopInstantOrSorcery = flashback.isEmpty()
+                    && !isDisturb
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && !grantedHavengulCast
+                    && !isGrantedGraveyardPlay
+                    && !isGraveyardCast
+                    && !isGrantedGraveyardCast
+                    && !isGrantedCyclingGraveyardCast
+                    && !isRetrace
+                    && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card);
+
             if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
-                    && !isGrantedCyclingGraveyardCast) {
+                    && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
                 continue;
             }
 
@@ -635,7 +647,7 @@ public class GameActionAvailabilityService {
                 manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
-                    || isGrantedCyclingGraveyardCast) {
+                    || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
                 manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
             } else {
                 manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);

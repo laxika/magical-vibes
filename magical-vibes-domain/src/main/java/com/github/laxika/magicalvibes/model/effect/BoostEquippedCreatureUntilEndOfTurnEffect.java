@@ -18,4 +18,14 @@ public record BoostEquippedCreatureUntilEndOfTurnEffect(
         DynamicAmount powerBoost,
         DynamicAmount toughnessBoost
 ) implements CardEffect {
+
+    /**
+     * The boost is applied to the attached creature, so a sacrifice cost on the same ability
+     * ("Sacrifice this Aura: Enchanted creature gets +3/+3 until end of turn." — Briar Shield)
+     * must capture that creature at activation time, before the attachment is severed.
+     */
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return true;
+    }
 }

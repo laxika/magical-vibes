@@ -117,6 +117,11 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
 
         int count = evaluateCount(gameData, entry, e, playerId);
+        if (count <= 0) {
+            // A dynamic count can evaluate to zero ("for each creature put into your graveyard this
+            // turn" with no deaths) — nothing is sacrificed and no choice is prompted.
+            return;
+        }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || battlefield.isEmpty()) {

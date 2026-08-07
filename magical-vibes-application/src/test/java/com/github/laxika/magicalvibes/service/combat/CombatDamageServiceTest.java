@@ -102,6 +102,8 @@ class CombatDamageServiceTest {
                 new com.github.laxika.magicalvibes.service.state.StateBasedActionService(
                         gameOutcomeService, gameQueryService, gameLogService,
                         permanentRemovalService, graveyardService,
+                        new com.github.laxika.magicalvibes.service.battlefield.CreatureControlService(
+                                gameLogService, gameQueryService),
                         new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameLogService,
                                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class)),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
@@ -249,7 +251,7 @@ class CombatDamageServiceTest {
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
-                eq(gameData), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), anyInt(), any(UUID.class)))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))

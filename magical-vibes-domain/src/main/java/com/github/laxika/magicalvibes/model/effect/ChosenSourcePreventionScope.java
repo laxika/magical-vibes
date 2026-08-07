@@ -18,6 +18,13 @@ public enum ChosenSourcePreventionScope {
      */
     NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES,
 
+    /**
+     * "The next time it would deal damage to enchanted creature this turn, prevent that damage."
+     * The protected permanent is the creature the ability's source Aura is attached to, read from
+     * the last-known snapshot so a sacrifice cost doesn't lose it (Kithkin Armor).
+     */
+    NEXT_DAMAGE_TO_ENCHANTED,
+
     /** "Prevent all damage it would deal this turn" (to you only, or to anything). */
     ALL_DAMAGE_THIS_TURN
 }

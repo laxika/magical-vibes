@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "258")
+@CardRegistration(set = "WTH", collectorNumber = "142")
 public class TranquilGrove extends Card {
 
     public TranquilGrove() {

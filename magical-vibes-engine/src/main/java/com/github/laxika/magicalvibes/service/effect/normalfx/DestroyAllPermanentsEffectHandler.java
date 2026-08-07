@@ -47,7 +47,10 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         var e = (DestroyAllPermanentsEffect) effect;
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                // CR 608.2b: filters that ask about the source (e.g. "creatures blocking it") still
+                // need it after a sacrifice cost removed it from the battlefield.
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         // "Destroy all other creatures" (Martial Coup): spare permanents this same resolution just
         // created, so the Soldier tokens made moments earlier survive the wipe.

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -40,6 +41,8 @@ class ForcedCostOrElseOpponentTokenSetCodeTest {
     @Mock
     private LibraryExileSupport libraryExileSupport;
     @Mock
+    private DrawService drawService;
+    @Mock
     private AmountEvaluationService amountEvaluationService;
 
     private ForcedCostOrElseEffectHandler handler;
@@ -60,7 +63,7 @@ class ForcedCostOrElseOpponentTokenSetCodeTest {
         gd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
         handler = new ForcedCostOrElseEffectHandler(
                 destructionSupport, gameQueryService, predicateEvaluationService,
-                playerInputService, libraryExileSupport, amountEvaluationService);
+                playerInputService, libraryExileSupport, null, null, null, drawService, amountEvaluationService);
     }
 
     @Test

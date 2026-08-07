@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfC
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSu
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,6 +54,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -88,6 +91,7 @@ public class CombatService {
     private final StateBasedActionService stateBasedActionService;
     private final TapUntapSupport tapUntapSupport;
     private final ExileAndReturnTransformedService exileAndReturnTransformedService;
+    private final PhasingService phasingService;
 
     /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
     private static final GainControlOfTargetEffect CONTROL_OPPONENT_EFFECT =
@@ -237,6 +241,23 @@ public class CombatService {
             log.info("Game {} - {} tapped and untap-locked at end of combat", gameData.id,
                     perm.getCard().getName());
         }
+    }
+
+    /**
+     * Phases out every permanent scheduled for end-of-combat phasing (e.g. by Teferi's Veil's
+     * "whenever a creature you control attacks, it phases out at end of combat"). Attachments follow
+     * indirectly (CR 702.26g) and each permanent is removed from combat (CR 506.4); because it
+     * phased out directly it phases in during its controller's next untap step (CR 702.26a).
+     */
+    public void processEndOfCombatPhaseOuts(GameData gameData) {
+        List<Permanent> phasingOut = gameData.drainDelayedActions(PhaseOutAtEndOfCombat.class).stream()
+                .map(action -> gameQueryService.findPermanentById(gameData, action.permanentId()))
+                .filter(Objects::nonNull)
+                .toList();
+        if (phasingOut.isEmpty()) {
+            return;
+        }
+        phasingService.phaseOut(gameData, phasingOut);
     }
 
     /**
@@ -476,14 +497,17 @@ public class CombatService {
             if (target == null) {
                 continue;
             }
-            // Source must still be on the battlefield and controlled by the gaining player.
-            Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
-            if (source == null
-                    || !action.newControllerId().equals(gameData.findControllerOf(source))) {
-                continue;
+            // A source-linked duration needs the source still on the battlefield under the gaining
+            // player; a permanent gain is independent of the source.
+            if (action.duration().isSourceLinked()) {
+                Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
+                if (source == null
+                        || !action.newControllerId().equals(gameData.findControllerOf(source))) {
+                    continue;
+                }
             }
             creatureControlService.applyControlEffect(gameData, action.newControllerId(), target,
-                    CONTROL_OPPONENT_EFFECT, ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD.toEffectDuration(),
+                    CONTROL_OPPONENT_EFFECT, action.duration().toEffectDuration(),
                     action.sourcePermanentId(), action.sourceCardName());
         }
     }

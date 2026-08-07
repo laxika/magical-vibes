@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoL
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "1")
+@CardRegistration(set = "WTH", collectorNumber = "2")
 public class AlabasterDragon extends Card {
 
     public AlabasterDragon() {

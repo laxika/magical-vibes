@@ -201,6 +201,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** "Choose a source you control and flip a coin. If you win the flip, the next time that source
+     *  would deal damage this turn, it deals double that damage instead. If you lose the flip, the next
+     *  time it would deal damage this turn, prevent that damage." (Desperate Gambit). The coin is
+     *  flipped once the source has been chosen. */
+    record DoubleOrPreventNextDamageFromSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** "The next time a source of your choice would deal damage to enchanted creature this turn,
+     *  prevent that damage." (Kithkin Armor). {@code protectedPermanentId} is the creature the
+     *  sacrificed Aura was attached to; only damage dealt to it consumes the shield. */
+    record PreventNextDamageFromSourceToPermanentChoice(UUID controllerId,
+                                                        UUID protectedPermanentId) implements PermanentChoiceContext {}
+
     /** "The next time a source of your choice would deal damage to you and/or creatures you control
      *  this turn, prevent that damage. If damage from a black source is prevented this way, you gain
      *  that much life." (Shadowbane). */

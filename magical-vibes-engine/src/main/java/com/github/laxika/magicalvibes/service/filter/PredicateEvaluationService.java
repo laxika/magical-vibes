@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceCont
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -107,6 +108,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
@@ -507,6 +509,8 @@ public class PredicateEvaluationService {
                             && !gameData.currentStep.isBeforeBlockersDeclared()
                             && permanent.isAttacking()
                             && !isBlocked(gameData, permanent);
+            case PermanentBlockedOrWasBlockedThisTurnPredicate ignored ->
+                    gameData != null && gameData.combatBlockOpponentIdsThisTurn.containsKey(permanent.getId());
             case PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate p -> {
                 if (gameData == null) {
                     yield false;
@@ -567,6 +571,20 @@ public class PredicateEvaluationService {
                     permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
                     permanent.getCard().getManaValue() >= minManaValuePredicate.minManaValue();
+            case PermanentManaValueEqualsSourceCountersPredicate equalsSourceCounters -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
+                    yield false;
+                }
+                yield permanent.getCard().getManaValue()
+                        == sourcePermanent.getCounterCount(equalsSourceCounters.counterType());
+            }
             case PermanentManaValueAtMostOwnCountersPredicate atMostOwnCounters ->
                     permanent.getCard().getManaValue()
                             <= permanent.getCounterCount(atMostOwnCounters.counterType());
@@ -824,8 +842,13 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null) {
                     yield false;
                 }
+                // On an attached Aura the ability speaks about the enchanted creature ("creatures
+                // blocking enchanted creature", Coils of the Medusa): an Aura is never blocked itself.
+                UUID blockedId = sourcePermanent.getCard().isAura() && sourcePermanent.isAttached()
+                        ? sourcePermanent.getAttachedTo()
+                        : sourcePermanent.getId();
                 yield permanent.isBlocking()
-                        && permanent.getBlockingTargetIds().contains(sourcePermanent.getId());
+                        && permanent.getBlockingTargetIds().contains(blockedId);
             }
             case PermanentInCombatWithSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

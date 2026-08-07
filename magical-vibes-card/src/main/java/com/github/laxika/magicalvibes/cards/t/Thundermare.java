@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "224")
 @CardRegistration(set = "POR", collectorNumber = "152")
+@CardRegistration(set = "WTH", collectorNumber = "116")
 public class Thundermare extends Card {
 
     public Thundermare() {

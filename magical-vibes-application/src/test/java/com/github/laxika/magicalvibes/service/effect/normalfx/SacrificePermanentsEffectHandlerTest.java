@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -264,6 +265,21 @@ class SacrificePermanentsEffectHandlerTest {
 
             verify(gameLogService).append(gd, GameLog.text("Player2 has no matching permanents to sacrifice."));
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
+
+        @Test
+        @DisplayName("A dynamic count of zero sacrifices nothing and prompts no choice")
+        void zeroCountIsNoOp() {
+            Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
+            stubCount(0);
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, player2Id), landSac());
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(),
+                    anyInt(), any(), anyString());
         }
     }
 

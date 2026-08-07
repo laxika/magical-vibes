@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Retrace;
@@ -661,6 +662,29 @@ public class SpellCastingService {
     }
 
     /**
+     * Casts a card for an alternative cost whose components carry no cast-request payload — one the
+     * caster either pays in full or not at all, with nothing to choose (e.g. Spinning Darkness's
+     * "exile the top three black cards of your graveyard"). Like evoke and prowl, such a cost cannot
+     * be inferred from the request, so this entry point forces it explicitly.
+     */
+    public void playCardWithAlternateCost(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                          UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        try {
+            playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
+                    null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false, false);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            if (attempted != null && !hand.contains(attempted)
+                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
+                hand.add(Math.min(cardIndex, hand.size()), attempted);
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Casts a card for its prowl cost (CR 702.75). Like evoke, prowl is a pure-mana alternate hand
      * cost that must be forced explicitly. The prowl availability condition (dealt combat damage
      * with the required creature type this turn) is validated inside {@code playCardInternal}.
@@ -1038,6 +1062,11 @@ public class SpellCastingService {
                         discardHandCardIndex, cardIndex);
             }
 
+            var exileGraveyardCost = altCast.getCost(ExileTopCardsFromGraveyardCastingCost.class);
+            if (exileGraveyardCost.isPresent()) {
+                findTopMatchingGraveyardCards(gameData, playerId, card, exileGraveyardCost.get());
+            }
+
             var manaCost = altCast.getCost(ManaCastingCost.class);
             if (manaCost.isPresent()) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1368,6 +1397,22 @@ public class SpellCastingService {
                         + effectiveXValue + ", have " + matchingCount + ")");
             }
         }
+        ReturnTargetCardsFromGraveyardToHandEffect xScaledToHandEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                        .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                        .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
+                        .findFirst().orElse(null);
+        if (xScaledToHandEffect != null && effectiveXValue > 0) {
+            long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, xScaledToHandEffect.filter(), card.getId()))
+                    .count();
+            if (effectiveXValue > matchingCount) {
+                throw new IllegalStateException("Not enough matching cards in graveyard (need "
+                        + effectiveXValue + ", have " + matchingCount + ")");
+            }
+        }
 
         hand.remove(cardIndex);
 
@@ -1674,6 +1719,22 @@ public class SpellCastingService {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, targetId,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (graveyardToHandEffect != null && graveyardToHandEffect.xScaled()) {
+                // "Return X target creature cards from your graveyard to your hand" (Shattered
+                // Crypt): exactly X targets, chosen before the spell goes on the stack. X rides on
+                // the resulting stack entry so riders such as "you lose X life" read the same X.
+                if (resolvedXValue > 0) {
+                    graveyardTargetingService.handleExactNGraveyardSpellTargeting(
+                            gameData, playerId, card, entryType, resolvedXValue,
+                            graveyardToHandEffect.filter(), "to your hand");
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
+                }
+                // X=0: no targets, but the spell still resolves (losing 0 life)
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
                         null, Map.of(), null, List.of(), List.of()
                 ));
             } else if (graveyardToHandEffect != null) {
@@ -2790,9 +2851,16 @@ public class SpellCastingService {
                         : Optional.empty();
         boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermissionSourceId.isPresent();
 
+        // Bösium Strip: cast the top instant/sorcery of your graveyard until end of turn
+        boolean isMayCastTopInstantOrSorcery = flashbackOpt.isEmpty() && !isDisturb
+                && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+                && !isGrantedGraveyardPlay && !isGraveyardCast && !isGrantedGraveyardCast
+                && !isGrantedCyclingGraveyardCast && !isRetrace
+                && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card);
+
         if (flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
-                && !isGrantedCyclingGraveyardCast) {
+                && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
@@ -2854,8 +2922,8 @@ public class SpellCastingService {
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedHavengulCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
-                isGraveyardCast, isRetrace, isDisturb, isGrantedCyclingGraveyardCast, effectiveXValue, additionalCost,
-                tapPermanentIds, retraceDiscardHandCardIndex);
+                isGraveyardCast, isRetrace, isDisturb, isGrantedCyclingGraveyardCast, isMayCastTopInstantOrSorcery,
+                effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
         if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
@@ -3122,8 +3190,13 @@ public class SpellCastingService {
             }
         }
         // Retrace (CR 702.81) keeps the normal graveyard disposition — unlike flashback it is not
-        // exiled after resolving, so it can be retraced again.
-        stackEntry.setCastWithFlashback(!isRetrace);
+        // exiled after resolving, so it can be retraced again. Bösium Strip uses the exile-instead
+        // replacement without granting the flashback keyword.
+        if (isMayCastTopInstantOrSorcery) {
+            stackEntry.setExileInsteadOfGraveyard(true);
+        } else {
+            stackEntry.setCastWithFlashback(!isRetrace);
+        }
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(stackEntry);
 
@@ -3996,6 +4069,7 @@ public class SpellCastingService {
                                                 boolean grantedHavengulCast, boolean isGrantedGraveyardCast,
                                                 boolean isGrantedGraveyardPlay, boolean isGraveyardCast,
                                                 boolean isRetrace, boolean isDisturb, boolean isGrantedCyclingGraveyardCast,
+                                                boolean isMayCastTopInstantOrSorcery,
                                                 int effectiveXValue, int additionalCost,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         UUID playerId = player.getId();
@@ -4008,7 +4082,7 @@ public class SpellCastingService {
         boolean usesNormalManaCost = (isGraveyardCast && graveyardAlternateManaCost == null)
                 || grantedFlashback || emblemFlashback || grantedHavengulCast
                 || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
-                || isGrantedCyclingGraveyardCast;
+                || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery;
         int manaSpent = 0;
 
         // Retrace (CR 702.81): as an additional cost, discard a land card from hand. Validated
@@ -4252,6 +4326,25 @@ public class SpellCastingService {
                     gameData.id, player.getUsername(), toExile.getName());
         }
 
+        // Exile the top matching cards of the caster's graveyard (determined, not chosen)
+        var exileGraveyardCost = altCast.getCost(ExileTopCardsFromGraveyardCastingCost.class);
+        if (exileGraveyardCost.isPresent()) {
+            List<Card> toExile = findTopMatchingGraveyardCards(gameData, playerId, card, exileGraveyardCost.get());
+            for (Card graveyardCard : toExile) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
+                exileService.exileCard(gameData, playerId, graveyardCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(graveyardCard)
+                        .text(" from their graveyard for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
+            log.info("Game {} - {} exiles {} cards from graveyard as alternate casting cost",
+                    gameData.id, player.getUsername(), toExile.size());
+        }
+
         // Pay mana (for alternate costs that include a mana component)
         var manaCostOpt = altCast.getCost(ManaCastingCost.class);
         if (manaCostOpt.isEmpty()) {
@@ -4298,6 +4391,32 @@ public class SpellCastingService {
             throw new IllegalStateException("Exiled card must be " + label);
         }
         return spellStillInHand ? discardHandCardIndex : effectiveIndex;
+    }
+
+    /**
+     * Resolves the cards an {@link ExileTopCardsFromGraveyardCastingCost} would exile: the topmost
+     * matching cards of the caster's graveyard, top first (the graveyard list's tail is its top).
+     * Throws if there are not enough matching cards, so this doubles as the cost's validation.
+     */
+    private List<Card> findTopMatchingGraveyardCards(GameData gameData, UUID playerId, Card card,
+                                                     ExileTopCardsFromGraveyardCastingCost cost) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Card> matching = new ArrayList<>();
+        if (graveyard != null) {
+            for (int i = graveyard.size() - 1; i >= 0 && matching.size() < cost.count(); i--) {
+                Card candidate = graveyard.get(i);
+                if (cost.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(candidate, cost.predicate(), candidate.getId())) {
+                    matching.add(candidate);
+                }
+            }
+        }
+        if (matching.size() < cost.count()) {
+            String label = cost.label() != null ? cost.label() + " cards" : "cards";
+            throw new IllegalStateException("Must exile the top " + cost.count() + " " + label
+                    + " of your graveyard to cast " + card.getName());
+        }
+        return matching;
     }
 
     public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card) {

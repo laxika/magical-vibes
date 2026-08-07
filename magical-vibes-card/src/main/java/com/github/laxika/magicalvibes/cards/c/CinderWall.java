@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndOfCombatEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "182")
+@CardRegistration(set = "WTH", collectorNumber = "94")
 public class CinderWall extends Card {
 
     public CinderWall() {

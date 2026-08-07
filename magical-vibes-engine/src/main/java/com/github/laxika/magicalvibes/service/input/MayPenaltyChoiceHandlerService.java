@@ -87,6 +87,7 @@ public class MayPenaltyChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibraryExileSupport libraryExileSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardTopExileSupport graveyardTopExileSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapTargetCreatureUnlessControllerPaysLifeEffectHandler tapTargetCreatureUnlessControllerPaysLifeEffectHandler;
@@ -101,6 +102,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -1326,6 +1328,14 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but the library ran short — fall through to the penalty.
         }
 
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost graveyardCost) {
+            if (graveyardTopExileSupport.exileTopMatching(gameData, sourceControllerId, graveyardCost.requiredType())) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
             // Nothing can make this cost unpayable, so accepting always pays it in full.
             UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
@@ -1333,6 +1343,26 @@ public class MayPenaltyChoiceHandlerService {
                 destructionSupport.createTokenForPlayer(gameData, opponentId, tokenCost.tokenTemplate(),
                         ability.sourceCard().getName(), ability.sourceCard().getSetCode());
             }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.DrawCardsCost drawCost) {
+            // Nothing can make this cost unpayable, so accepting always pays it in full.
+            for (int i = 0; i < drawCost.count(); i++) {
+                drawService.resolveDrawCard(gameData, sourceControllerId);
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
+            // The counters go on the source itself, so nothing can make this cost unpayable.
+            StackEntry counterEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                    ability.sourceCard().getName() + "'s ability", List.of(effect),
+                    ability.targetCardId(), ability.sourcePermanentId());
+            forcedCostOrElseEffectHandler.payCounterOnSourceCost(gameData, counterEntry, counterCost);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1364,6 +1394,21 @@ public class MayPenaltyChoiceHandlerService {
                 return;
             }
             // Accepted but no longer enough to return — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost returnFromGraveyardCost) {
+            if (forcedCostOrElseEffectHandler.hasMatchingGraveyardCard(gameData, sourceControllerId,
+                    returnFromGraveyardCost.predicate())) {
+                // The graveyard-choice completion continues the game itself (resolveAutoPass), and
+                // this effect is the last one on its stack entry, so clear the paused resolution state.
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+                clearAnyPlayerPayState(gameData);
+                forcedCostOrElseEffectHandler.beginGraveyardReturnToHandChoice(gameData, sourceControllerId,
+                        returnFromGraveyardCost.predicate());
+                return;
+            }
+            // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
         }
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {

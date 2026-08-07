@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBl
 
 @CardRegistration(set = "7ED", collectorNumber = "243")
 @CardRegistration(set = "6ED", collectorNumber = "228")
+@CardRegistration(set = "WTH", collectorNumber = "127")
 public class FamiliarGround extends Card {
 
     public FamiliarGround() {

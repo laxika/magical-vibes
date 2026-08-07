@@ -884,6 +884,27 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePreventNextDamageFromSourceToPermanentChoice(GameData gameData, UUID permanentId,
+                                                                    PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.sourceNextDamageToAnyTargetShields.add(
+                com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.forRecipient(
+                        permanentId, ctx.protectedPermanentId()));
+
+        Permanent protectedPermanent = gameQueryService.findPermanentById(gameData, ctx.protectedPermanentId());
+        String protectedName = protectedPermanent != null ? protectedPermanent.getCard().getName() : "the enchanted creature";
+        gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenPermanent.getCard(),
+                " would deal damage to " + protectedName + " this turn, that damage is prevented."));
+        log.info("Game {} - {} chose {} as next-damage-to-permanent prevention source", gameData.id,
+                gameData.playerIdToName.get(ctx.controllerId()), chosenPermanent.getCard().getName());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handlePreventNextDamageFromSourceToAnyTargetChoice(GameData gameData, UUID permanentId,
                                                                    PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
@@ -904,6 +925,38 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage-to-any-target prevention source", gameData.id,
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Desperate Gambit: the source has been chosen, so flip the coin now. A won flip installs the
+     * doubling variant of the same one-shot any-target shield; a lost flip installs the plain
+     * prevention variant.
+     */
+    public void handleDoubleOrPreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
+                                                                PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        boolean wonFlip = java.util.concurrent.ThreadLocalRandom.current().nextBoolean();
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String sourceName = chosenPermanent.getCard().getName();
+        gameLogService.append(gameData, GameLog.text(wonFlip
+                ? playerName + " wins the coin flip for Desperate Gambit."
+                : playerName + " loses the coin flip for Desperate Gambit."));
+
+        gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
+                ? com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.doubling(permanentId)
+                : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
+
+        gameLogService.append(gameData, GameLog.text(wonFlip
+                ? "The next time " + sourceName + " would deal damage this turn, it deals double that damage instead."
+                : "The next time " + sourceName + " would deal damage this turn, that damage is prevented."));
+        log.info("Game {} - {} chose {} for Desperate Gambit (won flip: {})", gameData.id, playerName, sourceName,
+                wonFlip);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

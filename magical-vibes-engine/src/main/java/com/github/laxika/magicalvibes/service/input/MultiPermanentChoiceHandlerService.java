@@ -145,6 +145,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage ctx) {
             handleGainControlOfPermanentAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage ctx) {
+            handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
@@ -294,6 +296,33 @@ public class MultiPermanentChoiceHandlerService {
             } else {
                 gameLogService.append(gameData,
                         GameLog.text("The ability has no effect (source no longer controlled)."));
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage context) {
+        if (permanentIds.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(playerId) + " chooses no " + context.choiceNoun() + " to destroy."));
+        } else {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null && permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+                gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
+                log.info("Game {} - {} destroyed by unblocked-attack trigger", gameData.id, target.getCard().getName());
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+
+            // The rider applies whether or not the permanent survived — the source still assigns no
+            // combat damage this turn once a permanent was chosen.
+            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            if (source != null) {
+                gameData.creaturesPreventedFromDealingCombatDamage.add(context.sourcePermanentId());
+                gameLogService.append(gameData,
+                        GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
             }
         }
 

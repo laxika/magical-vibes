@@ -28,6 +28,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final LibraryExileSupport libraryExileSupport;
+    private final GraveyardTopExileSupport graveyardTopExileSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -105,6 +109,49 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost graveyardCost) {
+            // "Sacrifice this creature unless you exile the top creature card of your graveyard"
+            // (Barrow Ghoul): no matching card means the cost can't be paid, so the penalty
+            // resolves without a prompt.
+            if (graveyardTopExileSupport.findTopMatching(gameData, entry.getControllerId(),
+                    graveyardCost.requiredType()) == null) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Exile the top "
+                                + graveyardExileLabel(graveyardCost.requiredType()) + "card of your graveyard?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            graveyardTopExileSupport.exileTopMatching(gameData, entry.getControllerId(),
+                    graveyardCost.requiredType());
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost returnFromGraveyardCost) {
+            // "Sacrifice this creature unless you return a basic land card from your graveyard to
+            // your hand" (Harvest Wurm): no matching card means the cost can't be paid, so the
+            // penalty resolves without a prompt.
+            if (!hasMatchingGraveyardCard(gameData, entry.getControllerId(), returnFromGraveyardCost.predicate())) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            String label = com.github.laxika.magicalvibes.model.filter.CardPredicateUtils
+                    .describeFilter(returnFromGraveyardCost.predicate());
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Return a " + label + " from your graveyard to your hand?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            beginGraveyardReturnToHandChoice(gameData, entry.getControllerId(), returnFromGraveyardCost.predicate());
+            return;
+        }
+
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
             // "Have an opponent create a … token" (Varchild's War-Riders): nothing can make this
             // unpayable, so the only question is whether the controller wants to pay.
@@ -118,6 +165,38 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             }
             createOpponentTokens(gameData, entry.getControllerId(), tokenCost, entry.getCard().getName(),
                     entry.getCard().getSetCode());
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.DrawCardsCost drawCost) {
+            // "Cumulative upkeep — Draw a card" (Psychic Vortex): drawing from an empty library is
+            // still a legal payment, so this cost can never be unpayable.
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Draw " + drawCost.count() + " card(s)?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            for (int i = 0; i < drawCost.count(); i++) {
+                drawService.resolveDrawCard(gameData, entry.getControllerId());
+            }
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
+            // "Cumulative upkeep — Put a -1/-1 counter on this creature" (Aboroth): the payment only
+            // touches the source, so it can never be unpayable — the controller just chooses.
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Put " + counterCost.count() + " "
+                                + permanentCounterSupport.counterTypeName(counterCost.counterType())
+                                + " counter(s) on it?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            payCounterOnSourceCost(gameData, entry, counterCost);
             return;
         }
 
@@ -201,6 +280,57 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             destructionSupport.createTokenForPlayer(gameData, opponentId, cost.tokenTemplate(), sourceName,
                     sourceSetCode);
         }
+    }
+
+    /**
+     * Pays a {@link com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost}: the
+     * counters go on the source permanent itself (Aboroth's cumulative upkeep). Shared with the
+     * may-prompt accept path. No-op if the source has already left the battlefield.
+     */
+    public void payCounterOnSourceCost(GameData gameData, StackEntry entry,
+            com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, cost.counterType(), cost.count());
+    }
+
+    /** Whether the player's graveyard holds at least one card matching {@code predicate}. */
+    public boolean hasMatchingGraveyardCard(GameData gameData, UUID playerId,
+            com.github.laxika.magicalvibes.model.filter.CardPredicate predicate) {
+        List<com.github.laxika.magicalvibes.model.Card> graveyard = gameData.playerGraveyards.get(playerId);
+        return graveyard != null && graveyard.stream()
+                .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, predicate, null));
+    }
+
+    /**
+     * Pays a {@link com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandCost}:
+     * the payer picks one matching graveyard card, which goes to its owner's hand. Mandatory — the
+     * payer already committed to the cost by accepting the may prompt. Shared with that accept path.
+     */
+    public void beginGraveyardReturnToHandChoice(GameData gameData, UUID playerId,
+            com.github.laxika.magicalvibes.model.filter.CardPredicate predicate) {
+        List<com.github.laxika.magicalvibes.model.Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; graveyard != null && i < graveyard.size(); i++) {
+            if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), predicate, null)) {
+                matchingIndices.add(i);
+            }
+        }
+        String label = com.github.laxika.magicalvibes.model.filter.CardPredicateUtils.describeFilter(predicate);
+        interactionHandlerRegistry.begin(gameData,
+                com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardChoice
+                        .builder(playerId, matchingIndices,
+                                com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.HAND,
+                                "Choose a " + label + " to return to your hand.")
+                        .mandatory(true)
+                        .build());
+    }
+
+    /** "creature " / "" — the type words in an exile-from-graveyard prompt. */
+    private String graveyardExileLabel(com.github.laxika.magicalvibes.model.CardType requiredType) {
+        return requiredType == null ? "" : requiredType.name().toLowerCase() + " ";
     }
 
     /** Seating order rotated so the active player is first (APNAP). */

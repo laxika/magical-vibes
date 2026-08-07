@@ -76,7 +76,8 @@ class CardEffectTargetingConsistencyTest {
             // Pre-resolved: the affected player is carried as the stack entry's target — the
             // spell-level player target (Moonhold) or the trigger's damaged player (Stigma Lasher) —
             // and the handler reads entry.getTargetId(); never enters trigger-target collection.
-            "TargetPlayerCantCastCreatureSpellsThisTurnEffect",
+            "TargetPlayerCantCastSpellTypesThisTurnEffect",
+            "TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect",
             "TargetPlayerCantGainLifeRestOfGameEffect",
             "TargetPlayerCantPlayLandsThisTurnEffect",
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads

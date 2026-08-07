@@ -8,6 +8,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "235")
 @CardRegistration(set = "6ED", collectorNumber = "218")
+@CardRegistration(set = "WTH", collectorNumber = "122")
 public class CallOfTheWild extends Card {
 
     public CallOfTheWild() {

@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -86,7 +87,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentT
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.AllArtifactsUpkeepSacrificeUnlessPayEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
@@ -937,7 +938,8 @@ public class StepTriggerService {
                         && (conditional.condition() instanceof NoSpellsCastLastTurn
                                 || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn
                                 || conditional.condition() instanceof ControllerLostLifeLastTurn
-                                || conditional.condition() instanceof OpponentLostLifeLastTurn)) {
+                                || conditional.condition() instanceof OpponentLostLifeLastTurn
+                                || conditional.condition() instanceof ActivePlayerControlsPermanent)) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
                         continue;
@@ -1223,12 +1225,13 @@ public class StepTriggerService {
     }
 
     /**
-     * Energy Flux grants every artifact "At the beginning of your upkeep, sacrifice this artifact
-     * unless you pay {N}." If any {@link AllArtifactsUpkeepSacrificeUnlessPayEffect} is on the
-     * battlefield (regardless of who controls it), this pushes one
-     * {@link ForcedCostOrElseEffect} pay-or-sacrifice trigger per artifact the active player
-     * controls, sourced at that artifact so the "pay {N}" prompt and the {@link SacrificeSelfEffect}
-     * penalty both act on the individual artifact.
+     * Energy Flux and Pendrell Mists grant a class of permanents "At the beginning of your upkeep,
+     * sacrifice this permanent unless you pay {N}." For every
+     * {@link AllPermanentsUpkeepSacrificeUnlessPayEffect} on the battlefield (regardless of who
+     * controls it), this pushes one {@link ForcedCostOrElseEffect} pay-or-sacrifice trigger per
+     * matching permanent the active player controls, sourced at that permanent so the "pay {N}"
+     * prompt and the {@link SacrificeSelfEffect} penalty both act on the individual permanent.
+     * Grants stack: a permanent matching two grants gets a trigger from each.
      *
      * @param gameData       the current game state to modify
      * @param activePlayerId the player whose upkeep is being processed
@@ -1236,42 +1239,43 @@ public class StepTriggerService {
      */
     private void handleGrantedArtifactSacrificeTriggers(GameData gameData, UUID activePlayerId,
                                                         List<Permanent> battlefield) {
-        String manaCost = null;
+        List<AllPermanentsUpkeepSacrificeUnlessPayEffect> grants = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AllArtifactsUpkeepSacrificeUnlessPayEffect grant) {
-                        manaCost = grant.manaCost();
-                        break;
+                    if (effect instanceof AllPermanentsUpkeepSacrificeUnlessPayEffect grant) {
+                        grants.add(grant);
                     }
                 }
-                if (manaCost != null) break;
             }
-            if (manaCost != null) break;
         }
-        if (manaCost == null) return;
+        if (grants.isEmpty()) return;
 
         for (Permanent perm : new ArrayList<>(battlefield)) {
-            if (!gameQueryService.isArtifact(gameData, perm)) continue;
+            for (AllPermanentsUpkeepSacrificeUnlessPayEffect grant : grants) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, perm, grant.filter())) {
+                    continue;
+                }
 
-            ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                    new PayManaCost(manaCost),
-                    new ArrayList<>(List.of(new SacrificeSelfEffect())),
-                    true);
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    activePlayerId,
-                    perm.getCard().getName() + "'s upkeep ability",
-                    new ArrayList<>(List.of(payOrSacrifice)),
-                    (UUID) null,
-                    perm.getId()));
+                ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
+                        new PayManaCost(grant.manaCost()),
+                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                        true);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        activePlayerId,
+                        perm.getCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(List.of(payOrSacrifice)),
+                        (UUID) null,
+                        perm.getId()));
 
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-            log.info("Game {} - Energy Flux upkeep sacrifice trigger pushed for {}",
-                    gameData.id, perm.getCard().getName());
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                log.info("Game {} - granted upkeep sacrifice trigger pushed for {}",
+                        gameData.id, perm.getCard().getName());
+            }
         }
     }
 
@@ -2175,6 +2179,37 @@ public class StepTriggerService {
             log.info("Game {} - {} postcombat main trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
         }
+    }
+
+    /**
+     * Scans every battlefield for {@code END_OF_COMBAT_TRIGGERED} abilities and pushes them onto
+     * the stack as the end of combat step begins (CR 511.2). Unlike the postcombat-main scan this
+     * runs on all players' permanents, because "at end of combat" is not restricted to the
+     * controller's own turn. The triggers are non-targeting.
+     *
+     * @param gameData the current game state to modify
+     */
+    public void handleEndOfCombatTriggers(GameData gameData) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.END_OF_COMBAT_TRIGGERED);
+            if (effects == null || effects.isEmpty()) {
+                return;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    playerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    (UUID) null,
+                    perm.getId()
+            ));
+
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} end-of-combat trigger pushed onto stack",
+                    gameData.id, perm.getCard().getName());
+        });
     }
 
     /**

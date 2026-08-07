@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoomsdayEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "121")
+@CardRegistration(set = "WTH", collectorNumber = "66")
 public class Doomsday extends Card {
 
     public Doomsday() {

@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceTo
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfFromBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
@@ -231,8 +231,8 @@ public class DamagePreventionService {
                     .anyMatch(PreventAllCombatDamageToSelfEffect.class::isInstance)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
-            // Mark of Asylum: "Prevent all noncombat damage that would be dealt to creatures you control."
-            if (!isCombatDamage && hasNoncombatCreatureDamagePreventionSource(gameData, permanent)) return 0;
+            // Mark of Asylum / Inner Sanctum: "Prevent all [noncombat] damage that would be dealt to creatures you control."
+            if (hasCreatureDamagePreventionSource(gameData, permanent, isCombatDamage)) return 0;
             // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
             // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
             // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
@@ -358,18 +358,22 @@ public class DamagePreventionService {
     }
 
     /**
-     * Mark of Asylum-style protection: returns true when the given creature's controller controls a
-     * permanent carrying {@link PreventNoncombatDamageToCreaturesYouControlEffect}. Noncombat damage
-     * dealt to such a creature is fully prevented by the caller (combat damage is unaffected).
+     * Mark of Asylum / Inner Sanctum / Bubble Matrix-style protection: returns true when some permanent
+     * on the battlefield carries a {@link PreventDamageToCreaturesEffect} covering this damage to the
+     * given creature. Mark of Asylum's variant ({@code noncombatOnly}) leaves combat damage untouched;
+     * Inner Sanctum's covers both but only for creatures its controller controls, while Bubble Matrix's
+     * ({@code allCreatures}) covers every creature regardless of controller. Damage matched here is
+     * fully prevented by the caller.
      */
-    private boolean hasNoncombatCreatureDamagePreventionSource(GameData gameData, Permanent creature) {
+    private boolean hasCreatureDamagePreventionSource(GameData gameData, Permanent creature, boolean isCombatDamage) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(e -> e instanceof PreventNoncombatDamageToCreaturesYouControlEffect);
+        return gameData.playerBattlefields.entrySet().stream()
+                .anyMatch(entry -> entry.getValue().stream()
+                        .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                        .anyMatch(e -> e instanceof PreventDamageToCreaturesEffect prevent
+                                && !(isCombatDamage && prevent.noncombatOnly())
+                                && (prevent.allCreatures() || controllerId.equals(entry.getKey()))));
     }
 
     /**
@@ -598,18 +602,33 @@ public class DamagePreventionService {
      * the entire next damage event it would deal to any target (player, planeswalker, or creature) is
      * prevented and the shield is consumed. When the shield carries Honorable Passage's rider and the
      * source is red, schedules that much damage at the source's controller via
-     * {@link GameData#pendingEyeForAnEyeReflections}. Returns the remaining damage.
+     * {@link GameData#pendingEyeForAnEyeReflections}. A shield that names a recipient (Kithkin Armor)
+     * only fires when {@code recipientId} matches it. A shield with a non-zero
+     * {@code damageMultiplier} (Desperate Gambit's won flip) multiplies the event instead of
+     * preventing it — a replacement, so it applies even while damage can't be prevented. Returns the
+     * remaining damage.
      */
-    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage) {
-        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
+                                                            UUID recipientId) {
         if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
             return damage;
         }
+        boolean preventable = gameQueryService.isDamagePreventable(gameData);
         var it = gameData.sourceNextDamageToAnyTargetShields.iterator();
         while (it.hasNext()) {
             var shield = it.next();
             if (!shield.sourceId().equals(sourcePermanentId)) {
                 continue;
+            }
+            if (shield.recipientId() != null && !shield.recipientId().equals(recipientId)) {
+                continue;
+            }
+            if (shield.damageMultiplier() != 0) {
+                it.remove();
+                return damage * shield.damageMultiplier();
+            }
+            if (!preventable) {
+                return damage;
             }
             it.remove();
             if (shield.damageRedSourceController()) {

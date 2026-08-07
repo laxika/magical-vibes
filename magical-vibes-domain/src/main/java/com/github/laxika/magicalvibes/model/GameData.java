@@ -242,6 +242,13 @@ public class GameData {
      * into its owner's graveyard ("When you lose control of this artifact, ...").
      */
     public final Map<UUID, UUID> exiledCardsToGraveyardOnControlLossWatch = new ConcurrentHashMap<>();
+    /**
+     * Debt of Loyalty: permanent id → the player who gains control of it because its regeneration
+     * shield was just spent. Regeneration happens inside the state-based-action sweep, which is
+     * iterating the battlefields, so the control change (which moves the permanent between
+     * battlefield lists) is queued here and applied once that sweep is done.
+     */
+    public final Map<UUID, UUID> pendingRegenerationControlChanges = new ConcurrentHashMap<>();
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
@@ -369,6 +376,8 @@ public class GameData {
     public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
+    /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
+    public final EachPlayerPayManaState eachPlayerPayMana = new EachPlayerPayManaState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
@@ -651,8 +660,8 @@ public class GameData {
     /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players who can't cast creature spells this turn (e.g. Moonhold). Cleared at end of turn. */
-    public final Set<UUID> playersCantCastCreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
+    /** Card types each player can't cast this turn (e.g. Moonhold, Abeyance). Cleared at end of turn. */
+    public final Map<UUID, Set<CardType>> playersCantCastSpellTypesThisTurn = new ConcurrentHashMap<>();
 
     /** Players who can't cast noncreature spells this turn (e.g. Aurelia's Fury). Cleared at end of turn. */
     public final Set<UUID> playersCantCastNoncreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
@@ -660,6 +669,10 @@ public class GameData {
     /** Players who can't activate abilities this turn — including mana abilities (e.g. Sen Triplets).
      *  Cleared at end of turn. */
     public final Set<UUID> playersCantActivateAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't activate abilities that aren't mana abilities this turn (e.g. Abeyance).
+     *  Cleared at end of turn. */
+    public final Set<UUID> playersCantActivateNonManaAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Sen Triplets: while set, {@link #senControllerPlayerId} may play lands and cast spells from
      *  {@link #senControlledPlayerId}'s hand this turn (that hand is also revealed to the controller,
@@ -702,6 +715,11 @@ public class GameData {
     /** Player IDs that may pay 1 life to add {C} any time they could activate a mana ability until end
      *  of turn (Channel). Cleared at end of turn. */
     public final Set<UUID> mayPayLifeForColorlessManaUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Player IDs that may cast the top card of their graveyard if it is an instant or sorcery until
+     *  end of turn (Bösium Strip). Spells cast this way exile instead of going to a graveyard.
+     *  Cleared at end of turn. */
+    public final Set<UUID> mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
 
@@ -2299,6 +2317,12 @@ public class GameData {
         copy.eachPlayerPayLife.lifePaid.putAll(this.eachPlayerPayLife.lifePaid);
         copy.eachPlayerPayLife.currentPlayerId = this.eachPlayerPayLife.currentPlayerId;
         copy.eachPlayerPayLife.sourceSetCode = this.eachPlayerPayLife.sourceSetCode;
+        copy.eachPlayerPayMana.active = this.eachPlayerPayMana.active;
+        copy.eachPlayerPayMana.order.addAll(this.eachPlayerPayMana.order);
+        copy.eachPlayerPayMana.index = this.eachPlayerPayMana.index;
+        copy.eachPlayerPayMana.manaPaid.putAll(this.eachPlayerPayMana.manaPaid);
+        copy.eachPlayerPayMana.currentPlayerId = this.eachPlayerPayMana.currentPlayerId;
+        copy.eachPlayerPayMana.sourceSetCode = this.eachPlayerPayMana.sourceSetCode;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;
@@ -2653,9 +2677,10 @@ public class GameData {
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
-        copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
+        copy.playersCantCastSpellTypesThisTurn.putAll(this.playersCantCastSpellTypesThisTurn);
         copy.playersCantCastNoncreatureSpellsThisTurn.addAll(this.playersCantCastNoncreatureSpellsThisTurn);
         copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
+        copy.playersCantActivateNonManaAbilitiesThisTurn.addAll(this.playersCantActivateNonManaAbilitiesThisTurn);
         copy.senControllerPlayerId = this.senControllerPlayerId;
         copy.senControlledPlayerId = this.senControlledPlayerId;
 
@@ -2751,6 +2776,8 @@ public class GameData {
         copy.spellsGrantedHasteOnEntry.addAll(this.spellsGrantedHasteOnEntry);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
+        copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn
+                .addAll(this.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn);
         copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);
 
         // --- Damage prevention / redirection still pending ---

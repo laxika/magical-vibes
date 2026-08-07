@@ -626,6 +626,24 @@ public class GameService {
         }
     }
 
+    /**
+     * Casts a card for an alternative cost that carries no cast-request payload and nothing to
+     * choose (e.g. Spinning Darkness's "exile the top three black cards of your graveyard").
+     */
+    public void playCardWithAlternateCost(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                          UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithAlternateCost(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId,
+                    damageAssignments, targetIds != null ? targetIds : List.of());
+        }
+    }
+
     /** Casts a card for its overload cost (CR 702.96a). Overloaded spells never take targets (CR 702.96b). */
     public void playCardWithOverload(GameData gameData, Player player, int cardIndex, Integer xValue) {
         Player actionPlayer = player;

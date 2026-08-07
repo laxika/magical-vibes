@@ -131,6 +131,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventNextDamageFromSourceChoice(gameData, permanentId, preventNextSource);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
             battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
+        } else if (context instanceof PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice doubleOrPrevent) {
+            battlefieldHandler.handleDoubleOrPreventNextDamageFromSourceChoice(gameData, permanentId, doubleOrPrevent);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice preventNextPermanent) {
+            battlefieldHandler.handlePreventNextDamageFromSourceToPermanentChoice(gameData, permanentId, preventNextPermanent);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice preventNextYouAndCreatures) {
             battlefieldHandler.handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(gameData, permanentId, preventNextYouAndCreatures);
         } else if (context instanceof PermanentChoiceContext.EyeForAnEyeSourceChoice eyeForAnEye) {

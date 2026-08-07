@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "9ED", collectorNumber = "44")
 @CardRegistration(set = "6ED", collectorNumber = "42")
+@CardRegistration(set = "WTH", collectorNumber = "25")
 public class SerrasBlessing extends Card {
 
     public SerrasBlessing() {

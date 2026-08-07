@@ -391,6 +391,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning every
      *  battlefield other than the active player's. Used by Sentinel of the Eternal Watch. */
     OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
+    /** "At end of combat, …" — triggers as the end of combat step begins (CR 511.2), for every
+     *  combat phase on any player's turn, not only the controller's. Fires on every permanent
+     *  carrying this slot across all battlefields. Checked in
+     *  {@code StepTriggerService.handleEndOfCombatTriggers}, called from
+     *  {@code TurnProgressionService} right after {@code CombatService.clearCombatState}. The
+     *  trigger is queued as a non-targeting triggered ability. Used by Heat Stroke. */
+    END_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,

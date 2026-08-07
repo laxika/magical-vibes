@@ -34,11 +34,14 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) {
+        java.util.UUID attachedId = equipment != null ? equipment.getAttachedTo() : entry.getTargetId();
+        if (attachedId == null) {
+            // The source left the battlefield (e.g. its own sacrifice cost) and no attached
+            // permanent was captured at activation.
             log.info("Game {} - {} trigger fizzles: equipment no longer attached", gameData.id, sourceName);
             return;
         }
-        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, attachedId);
         if (equippedCreature == null) {
             log.info("Game {} - {} trigger fizzles: equipped creature no longer on battlefield", gameData.id, sourceName);
             return;

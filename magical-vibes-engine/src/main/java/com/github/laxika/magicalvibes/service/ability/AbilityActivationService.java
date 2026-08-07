@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
@@ -688,6 +689,7 @@ public class AbilityActivationService {
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
         // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, null);
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, null);
         validateNotBlockedByCombatActionLock(gameData, null);
 
         // Validate target for effects that need one
@@ -875,6 +877,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Identify permanent-choice costs (e.g. return lands to hand)
@@ -1198,6 +1201,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
@@ -1371,6 +1375,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
@@ -1960,6 +1965,12 @@ public class AbilityActivationService {
         if (exileNGraveyardCostToPay != null) {
             payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
         }
+
+        abilityEffects.stream()
+                .filter(ExileTopCardOfGraveyardCost.class::isInstance)
+                .map(ExileTopCardOfGraveyardCost.class::cast)
+                .findFirst()
+                .ifPresent(cost -> payTopOfGraveyardExileCost(gameData, player, cost.requiredType()));
 
         // Pay remove-counter cost: remove counters respecting counter type
         if (removeCounterCost.isPresent()) {
@@ -2609,6 +2620,7 @@ public class AbilityActivationService {
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Activation timing restrictions (e.g. "Activate only during your upkeep")
@@ -2724,6 +2736,16 @@ public class AbilityActivationService {
             String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(),
                     exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
+        }
+
+        // Exile-top-card-of-graveyard cost needs a non-empty graveyard (Alms)
+        boolean topGraveyardExileUnpayable = abilityEffects.stream()
+                .filter(ExileTopCardOfGraveyardCost.class::isInstance)
+                .map(ExileTopCardOfGraveyardCost.class::cast)
+                .anyMatch(cost -> topMatchingGraveyardCard(
+                        gameData.playerGraveyards.get(playerId), cost.requiredType()) == null);
+        if (topGraveyardExileUnpayable) {
+            throw new IllegalStateException("No card in graveyard to exile");
         }
 
         if (abilityEffects.stream().anyMatch(ExileInstantOrSorcerySpellCost.class::isInstance)
@@ -3649,6 +3671,38 @@ public class AbilityActivationService {
                 gameData.id, player.getUsername(), toExile.size(), typeName);
     }
 
+    /**
+     * Pays an "Exile the top card of your graveyard" activation cost. The top card is the one most
+     * recently put into the graveyard, i.e. the last element of the append-ordered list.
+     */
+    private void payTopOfGraveyardExileCost(GameData gameData, Player player, CardType requiredType) {
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        Card exiled = topMatchingGraveyardCard(graveyard, requiredType);
+        if (exiled == null) {
+            throw new IllegalStateException("No card in graveyard to exile");
+        }
+        graveyard.remove(exiled);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        exileService.exileCard(gameData, playerId, exiled);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", exiled, " from the top of their graveyard as an activation cost."));
+    }
+
+    /** Topmost (most recently added) graveyard card matching {@code requiredType}; null = any. */
+    private Card topMatchingGraveyardCard(List<Card> graveyard, CardType requiredType) {
+        if (graveyard == null) {
+            return null;
+        }
+        for (int i = graveyard.size() - 1; i >= 0; i--) {
+            Card card = graveyard.get(i);
+            if (requiredType == null || card.hasType(requiredType)) {
+                return card;
+            }
+        }
+        return null;
+    }
+
     private String graveyardExileFilterLabel(CardType requiredType, CardSubtype requiredSubtype) {
         return graveyardExileFilterLabel(requiredType, null, requiredSubtype);
     }
@@ -3786,6 +3840,18 @@ public class AbilityActivationService {
         if (gameQueryService.playerCantActivateNonManaOrLoyaltyAbilities(gameData, playerId)) {
             throw new IllegalStateException(
                     "You can only activate mana abilities and loyalty abilities (Overwhelming Splendor)");
+        }
+    }
+
+    /**
+     * Abeyance: a player locked out this turn can't activate abilities that aren't mana abilities
+     * (loyalty abilities included). {@code ability} is the activated ability being played, or
+     * {@code null} for activations that are never mana abilities (e.g. an ON_SACRIFICE ability).
+     */
+    private void validateNotBlockedByNonManaAbilityLock(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability != null && isManaAbility(ability)) return;
+        if (gameData.playersCantActivateNonManaAbilitiesThisTurn.contains(playerId)) {
+            throw new IllegalStateException("You can't activate abilities that aren't mana abilities this turn");
         }
     }
 

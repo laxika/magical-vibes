@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "144")
+@CardRegistration(set = "WTH", collectorNumber = "74")
 public class MischievousPoltergeist extends Card {
 
     public MischievousPoltergeist() {

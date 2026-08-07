@@ -40,6 +40,8 @@ import org.springframework.stereotype.Component;
  *       (Psychic Surgery, Puresight Merrow).</li>
  *   <li>{@code EXILE_ONE} — mandatory exile of one looked-at card, rest back on top in any order
  *       (Sealed Fate).</li>
+ *   <li>{@code MAY_EXILE_ANY_NUMBER} — the may-exile pick repeats until the controller declines,
+ *       then the rest go back on top in any order (Ancestral Knowledge).</li>
  *   <li>{@code MAY_SHUFFLE} — the looked-at names go into a may-ability prompt wrapping
  *       {@link ShuffleLibraryEffect} (Visions; the cards stay on top, no reordering).</li>
  *   <li>{@code PUT_ONE_INTO_GRAVEYARD} — mandatory pick of one card for that player's graveyard,
@@ -99,9 +101,11 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             case LOOK_ONLY -> resolveLookOnly(gameData, entry, requested, controllerId, targetPlayerId, deck,
                     actual, controllerName, targetName);
             case MAY_EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
-                    deck, actual, controllerName, targetName, true);
+                    deck, actual, controllerName, targetName, true, false);
             case EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
-                    deck, actual, controllerName, targetName, false);
+                    deck, actual, controllerName, targetName, false, false);
+            case MAY_EXILE_ANY_NUMBER -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
+                    deck, actual, controllerName, targetName, true, true);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName);
             case PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry, controllerId,
@@ -162,16 +166,19 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     /**
      * Optional ({@code optional=true}, Psychic Surgery / Puresight Merrow) or mandatory
      * ({@code optional=false}, Sealed Fate) exile of one looked-at card; the rest go back on top
-     * in any order.
+     * in any order. With {@code anyNumber} the pick repeats after every exile until the controller
+     * declines or the cards run out (Ancestral Knowledge).
      */
     private void resolveExileOne(GameData gameData, StackEntry entry, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName,
-            boolean optional) {
+            boolean optional, boolean anyNumber) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         List<Card> sourceCards = new ArrayList<>(topCards);
-        String prompt = (optional ? "You may exile one of these cards." : "Exile one of these cards.")
+        String prompt = (anyNumber
+                ? "You may exile any number of these cards, one at a time."
+                : optional ? "You may exile one of these cards." : "Exile one of these cards.")
                 + " The rest will be put on top of the library.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
@@ -180,6 +187,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                         .sourceCards(sourceCards)
                         .reorderRemainingToTop(true)
                         .shuffleAfterSelection(false)
+                        .repeatUntilDecline(anyNumber)
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.EXILE)
                         .build(),

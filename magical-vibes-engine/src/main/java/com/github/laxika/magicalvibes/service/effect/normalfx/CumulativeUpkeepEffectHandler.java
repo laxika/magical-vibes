@@ -4,15 +4,21 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +36,7 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +61,7 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
         // along with the sacrifice on the unpaid branch.
         List<CardEffect> unpaid = new ArrayList<>();
         unpaid.add(new SacrificeSelfEffect());
-        unpaid.addAll(e.unpaidEffects());
+        unpaid.addAll(snapshotAgeRelativeAmounts(gameData, entry, self, e.unpaidEffects()));
 
         ForcedCostOrElseEffect payOrSacrifice;
         if (e.isSacrificeCost()) {
@@ -63,6 +70,11 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
         } else if (e.opponentTokenPerAge() != null) {
             payOrSacrifice = new ForcedCostOrElseEffect(
                     new OpponentCreatesTokensCost(ageCounters, e.opponentTokenPerAge()), unpaid, true);
+        } else if (e.counterTypePerAge() != null) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new PutTypedCounterOnSourceCost(e.counterTypePerAge(), ageCounters), unpaid, true);
+        } else if (e.drawCardsPerAge()) {
+            payOrSacrifice = new ForcedCostOrElseEffect(new DrawCardsCost(ageCounters), unpaid, true);
         } else if (e.exileTopCardsPerAge()) {
             payOrSacrifice = new ForcedCostOrElseEffect(
                     new ExileTopCardOfLibraryCost(ageCounters), unpaid, true);
@@ -73,5 +85,23 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
                     new PayManaCost(totalCost, null, true, totalLife), unpaid, true);
         }
         forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrSacrifice);
+    }
+
+    /**
+     * Freezes source-relative amounts in the unpaid-branch effects into constants while the source
+     * is still on the battlefield. The sacrifice runs first on that branch, so by the time the
+     * companion "when a player doesn't pay …" effect resolves the age counters are gone —
+     * Heart of Bogardan's "X is twice the number of age counters on this enchantment minus 2" has
+     * to be read from last-known information (CR 608.2h).
+     */
+    private List<CardEffect> snapshotAgeRelativeAmounts(GameData gameData, StackEntry entry, Permanent self,
+            List<CardEffect> effects) {
+        AmountContext context = AmountContext.forStackEntry(entry, self);
+        return effects.stream()
+                .map(fx -> fx instanceof DealDamageToTargetAndTheirCreaturesEffect damage
+                        ? new DealDamageToTargetAndTheirCreaturesEffect(new Fixed(Math.max(0,
+                                amountEvaluationService.evaluate(gameData, damage.amount(), context))))
+                        : fx)
+                .toList();
     }
 }

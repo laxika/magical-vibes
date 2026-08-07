@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -60,6 +62,34 @@ public class CreatureControlService {
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), null, null, duration, 0));
         recomputeControl(gameData, target);
+    }
+
+    /**
+     * Applies the control changes queued by a spent Debt of Loyalty regeneration shield
+     * ({@link GameData#pendingRegenerationControlChanges}). Regeneration is resolved inside the
+     * state-based-action sweep, which iterates the battlefield lists this moves permanents between,
+     * so the change is queued there and flushed here once the sweep is done.
+     *
+     * @return true when at least one control change was applied
+     */
+    public boolean applyPendingRegenerationControlChanges(GameData gameData) {
+        if (gameData.pendingRegenerationControlChanges.isEmpty()) {
+            return false;
+        }
+        List<UUID> permanentIds = new ArrayList<>(gameData.pendingRegenerationControlChanges.keySet());
+        boolean applied = false;
+        for (UUID permanentId : permanentIds) {
+            UUID newControllerId = gameData.pendingRegenerationControlChanges.remove(permanentId);
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null || newControllerId == null) {
+                continue;
+            }
+            applyControlEffect(gameData, newControllerId, permanent,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                    null, "Debt of Loyalty");
+            applied = true;
+        }
+        return applied;
     }
 
     /**

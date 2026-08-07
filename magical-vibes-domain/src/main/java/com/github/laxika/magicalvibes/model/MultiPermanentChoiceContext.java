@@ -60,6 +60,16 @@ public sealed interface MultiPermanentChoiceContext {
                                                          String choiceNoun) implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * "Destroy the chosen permanent the defending player controls and [source] assigns no combat
+     * damage this turn." (Goblin Vandal — artifacts.) {@code sourcePermanentId} is the attacking
+     * source creature and {@code choiceNoun} the noun used in the game log.
+     */
+    record DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(UUID sourcePermanentId,
+                                                                          String choiceNoun)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Transform [source] and attach it to a creature the damaged player controls. */
     record TransformAndAttach(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }

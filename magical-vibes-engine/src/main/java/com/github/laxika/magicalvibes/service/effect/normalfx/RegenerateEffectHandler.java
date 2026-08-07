@@ -49,6 +49,9 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                     if (regenerate.putMinusOneCounterOnRegenerate()) {
                         perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() + 1);
                     }
+                    if (regenerate.gainControlOnRegenerate() && entry.getControllerId() != null) {
+                        perm.getGainControlRegenerationShields().add(entry.getControllerId());
+                    }
                 }
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));

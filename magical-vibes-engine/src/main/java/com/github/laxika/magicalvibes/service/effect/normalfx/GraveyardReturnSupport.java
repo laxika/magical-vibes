@@ -127,6 +127,32 @@ public class GraveyardReturnSupport {
         return predicateEvaluationService.checkTargetFilter(auraFilter, host, filterContext).isEmpty();
     }
 
+    /**
+     * Exiles the source card from its controller's graveyard when the effect declares
+     * {@code exileSourceFromGraveyard} ("exile it, then …" — Moldgraf Monstrosity, Sylvan
+     * Hierophant). A no-op when the source card has already left the graveyard.
+     */
+    private void exileSourceFromGraveyardIfRequested(GameData gameData, ReturnCardFromGraveyardEffect effect,
+                                                     UUID controllerId, UUID sourceCardId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (!effect.exileSourceFromGraveyard() || graveyard == null || sourceCardId == null) {
+            return;
+        }
+        Card sourceCard = graveyard.stream()
+                .filter(c -> c.getId().equals(sourceCardId))
+                .findFirst()
+                .orElse(null);
+        if (sourceCard == null) {
+            return;
+        }
+        graveyard.remove(sourceCard);
+        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+        exileService.exileCard(gameData, controllerId, sourceCard);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", sourceCard, " from graveyard."));
+        log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
+    }
+
     public void resolvePreTargeted(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                     UUID controllerId, UUID sourceCardId) {
         resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, entry.getTargetId());
@@ -134,6 +160,10 @@ public class GraveyardReturnSupport {
 
     public void resolvePreTargetedById(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                         UUID controllerId, UUID sourceCardId, UUID targetCardId) {
+        // "Exile it, then return another target creature card …" (Sylvan Hierophant): the self-exile
+        // happens first and is not contingent on the return actually working.
+        exileSourceFromGraveyardIfRequested(gameData, effect, controllerId, sourceCardId);
+
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
@@ -466,20 +496,7 @@ public class GraveyardReturnSupport {
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         // Exile the source card from graveyard before selecting random cards (e.g. Moldgraf Monstrosity)
-        if (effect.exileSourceFromGraveyard() && graveyard != null && sourceCardId != null) {
-            Card sourceCard = graveyard.stream()
-                    .filter(c -> c.getId().equals(sourceCardId))
-                    .findFirst()
-                    .orElse(null);
-            if (sourceCard != null) {
-                graveyard.remove(sourceCard);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
-                exileService.exileCard(gameData, controllerId, sourceCard);
-                String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles " , sourceCard, " from graveyard."));
-                log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
-            }
-        }
+        exileSourceFromGraveyardIfRequested(gameData, effect, controllerId, sourceCardId);
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";

@@ -294,17 +294,21 @@ class GameDataDeepCopyTest {
         gd.cardsGrantedFlashbackUntilEndOfTurn.add(cardId);
         gd.mayTapLandsForSpellsUntilEndOfTurn.add(player1.getId());
         gd.playersWithFlashUntilEndOfTurn.add(player1.getId());
+        gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.add(player1.getId());
 
         GameData copy = gd.simulationCopy();
 
         assertThat(copy.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
         assertThat(copy.mayTapLandsForSpellsUntilEndOfTurn).contains(player1.getId());
         assertThat(copy.playersWithFlashUntilEndOfTurn).contains(player1.getId());
+        assertThat(copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).contains(player1.getId());
 
         copy.cardsGrantedFlashbackUntilEndOfTurn.clear();
         copy.playersWithFlashUntilEndOfTurn.clear();
+        copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
         assertThat(gd.playersWithFlashUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).contains(player1.getId());
     }
 
     @Test

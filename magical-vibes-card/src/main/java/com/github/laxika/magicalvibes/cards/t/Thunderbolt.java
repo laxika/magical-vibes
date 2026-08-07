@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "159")
+@CardRegistration(set = "WTH", collectorNumber = "115")
 public class Thunderbolt extends Card {
 
     public Thunderbolt() {

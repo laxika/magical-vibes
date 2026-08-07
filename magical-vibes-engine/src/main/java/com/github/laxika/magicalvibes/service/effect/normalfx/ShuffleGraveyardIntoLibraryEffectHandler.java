@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -35,11 +36,19 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
+        CardPredicate filter = ((ShuffleGraveyardIntoLibraryEffect) effect).filter();
+
         // Tokens in the graveyard cease to exist rather than travel (CR 111.7), so a graveyard
         // holding nothing else moves no cards at all.
-        List<Card> moving = graveyardService.takeGraveyardCardsForZoneChange(gameData, targetPlayerId);
+        List<Card> moving = filter == null
+                ? graveyardService.takeGraveyardCardsForZoneChange(gameData, targetPlayerId)
+                : graveyardService.takeMatchingGraveyardCardsForZoneChange(
+                        gameData, targetPlayerId, filter,
+                        entry.getCard() == null ? null : entry.getCard().getId());
         if (moving.isEmpty()) {
-            String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
+            String logEntry = filter == null
+                    ? playerName + "'s graveyard is empty. Library is shuffled."
+                    : playerName + " has no matching cards in their graveyard. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
@@ -49,7 +58,9 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
         deck.addAll(moving);
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
 
-        String logEntry = playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(count) + ") into their library.";
+        String logEntry = filter == null
+                ? playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(count) + ") into their library."
+                : playerName + " shuffles " + LibraryShuffleSupport.pluralCards(count) + " from their graveyard into their library.";
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);

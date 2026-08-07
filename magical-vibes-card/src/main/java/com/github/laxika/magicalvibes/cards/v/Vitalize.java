@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "265")
+@CardRegistration(set = "WTH", collectorNumber = "145")
 public class Vitalize extends Card {
 
     public Vitalize() {

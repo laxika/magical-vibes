@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
@@ -194,6 +196,10 @@ public class ConditionEvaluationService {
             }
             case SourceEnteredThisTurn ignored ->
                     sourceEnteredThisTurn(gameData, ctx);
+            case SourceEnteredBattlefieldThisTurn ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && sourceEnteredBattlefieldThisTurn(gameData, source);
+            }
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
             case Delirium ignored ->
@@ -296,6 +302,8 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
             case CardsInHandAtMost c ->
                     countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
+            case ActivePlayerControlsPermanent c ->
+                    activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerHandAtLeast c ->
                     countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
             case ActivePlayerHandAtMost c ->
@@ -806,6 +814,13 @@ public class ConditionEvaluationService {
         return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
     }
 
+    private boolean activePlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (gameData.activePlayerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
+    }
+
     private boolean controlsAnotherMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
         if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -1181,6 +1196,12 @@ public class ConditionEvaluationService {
         return entered.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, c.predicate(), null))
                 .count();
+    }
+
+    private boolean sourceEnteredBattlefieldThisTurn(GameData gameData, Permanent source) {
+        return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(card -> card.getId().equals(source.getCard().getId()));
     }
 
     private boolean sourceHasSubtype(GameData gameData, ConditionContext ctx, CardSubtype subtype) {

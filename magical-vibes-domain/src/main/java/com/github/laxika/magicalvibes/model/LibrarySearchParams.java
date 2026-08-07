@@ -39,7 +39,8 @@ public record LibrarySearchParams(
         List<String> excludedCardNames,
         boolean grantHaste,
         boolean exileAtEndStep,
-        AnimatePermanentsEffect animateFound
+        AnimatePermanentsEffect animateFound,
+        boolean repeatUntilDecline
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -64,7 +65,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                animateFound);
+                animateFound, repeatUntilDecline);
     }
 
     public static class Builder {
@@ -97,6 +98,7 @@ public record LibrarySearchParams(
         private boolean grantHaste;
         private boolean exileAtEndStep;
         private AnimatePermanentsEffect animateFound;
+        private boolean repeatUntilDecline;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -234,6 +236,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder repeatUntilDecline(boolean repeatUntilDecline) {
+            this.repeatUntilDecline = repeatUntilDecline;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -241,7 +248,7 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    animateFound);
+                    animateFound, repeatUntilDecline);
         }
     }
 }

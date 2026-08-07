@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "178")
+@CardRegistration(set = "WTH", collectorNumber = "102")
 public class FitOfRage extends Card {
 
     public FitOfRage() {

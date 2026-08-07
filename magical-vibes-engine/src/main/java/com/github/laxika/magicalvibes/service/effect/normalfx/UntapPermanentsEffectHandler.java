@@ -50,6 +50,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ATTACKED_CREATURES -> resolveAttackedCreatures(gameData, entry);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
+            case ALL_PERMANENTS -> resolveAllPermanents(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported untap scope: " + e.scope());
         }
     }
@@ -260,6 +261,25 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count[0] + " creature(s)."));
         log.info("Game {} - {} untaps {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
+    }
+
+    private void resolveAllPermanents(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
+            if (!p.isTapped()) return;
+
+            tapUntapSupport.untapPermanent(gameData, p);
+            count[0]++;
+        });
+
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count[0] + " permanent(s)."));
+        log.info("Game {} - {} untaps {} permanent(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     private void resolveAttackedCreatures(GameData gameData, StackEntry entry) {

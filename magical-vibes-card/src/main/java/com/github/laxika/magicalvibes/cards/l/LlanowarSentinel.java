@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "275")
+@CardRegistration(set = "WTH", collectorNumber = "134")
 public class LlanowarSentinel extends Card {
 
     public LlanowarSentinel() {

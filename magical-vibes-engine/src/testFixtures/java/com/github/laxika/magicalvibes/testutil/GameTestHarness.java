@@ -476,6 +476,15 @@ public class GameTestHarness {
         gameService.playCardWithProwl(gameData, player, cardIndex, 0, targetId, null, List.of());
     }
 
+    /**
+     * Casts a spell for a payload-free alternative cost (e.g. Spinning Darkness's "exile the top
+     * three black cards of your graveyard rather than pay this spell's mana cost").
+     */
+    public void castWithAlternateCost(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardWithAlternateCost(gameData, player, cardIndex, 0, targetId, null, List.of());
+    }
+
     /** Casts a spell for its overload cost (CR 702.96a). Overloaded spells take no targets. */
     public void castWithOverload(Player player, int cardIndex) {
         castWithOverload(player, cardIndex, 0);
@@ -639,6 +648,17 @@ public class GameTestHarness {
      */
     public void castSorceryWithDiscards(Player player, int cardIndex, int xValue, List<UUID> targetIds,
                                         List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of(), false,
+                null, null, List.of(), null, List.of(), false, null, discardHandCardIndices);
+    }
+
+    /**
+     * Casts an X instant with an X-scaled multi-target group that pays a "discard X cards"
+     * additional cost (Firestorm). {@code discardHandCardIndices} are pre-removal hand indices.
+     */
+    public void castInstantForXWithDiscards(Player player, int cardIndex, int xValue, List<UUID> targetIds,
+                                            List<Integer> discardHandCardIndices) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of(), false,
                 null, null, List.of(), null, List.of(), false, null, discardHandCardIndices);

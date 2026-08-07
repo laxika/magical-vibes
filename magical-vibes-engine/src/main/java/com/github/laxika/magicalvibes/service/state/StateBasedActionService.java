@@ -39,6 +39,7 @@ public class StateBasedActionService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
+    private final com.github.laxika.magicalvibes.service.battlefield.CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
@@ -89,6 +90,11 @@ public class StateBasedActionService {
             // an unrelated sweep happened to run.
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
+
+            // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
+            // Applied here, outside the battlefield iteration in the destroy pass that spent the
+            // shield, because a control change moves the permanent between battlefield lists.
+            anyPerformed |= creatureControlService.applyPendingRegenerationControlChanges(gameData);
         } while (anyPerformed && ++passes < MAX_SBA_PASSES);
 
         if (passes >= MAX_SBA_PASSES) {

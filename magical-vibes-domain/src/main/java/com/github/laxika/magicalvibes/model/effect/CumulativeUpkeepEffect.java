@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
@@ -14,7 +15,9 @@ import java.util.List;
  * age counter (Polar Kraken — "Sacrifice a land") or {@link #exileTopCardsPerAge}: exile one card
  * from the top of the controller's library per age counter (Thought Lash), or
  * {@link #opponentTokenPerAge}: have an opponent create one token per age counter (Varchild's
- * War-Riders).
+ * War-Riders), or {@link #drawCardsPerAge}: draw one card per age counter (Psychic Vortex), or
+ * {@link #counterTypePerAge}: put one counter of that type on the permanent itself per age counter
+ * (Aboroth — "Put a -1/-1 counter on this creature").
  *
  * <p>{@link #unpaidEffects} models a companion "when a player doesn't pay this permanent's
  * cumulative upkeep …" triggered ability (Thought Lash): those effects resolve alongside the
@@ -28,6 +31,10 @@ import java.util.List;
  *     counter; mutually exclusive with the mana and sacrifice costs
  * @param opponentTokenPerAge blueprint for a token an opponent creates once per age counter, or
  *     null; mutually exclusive with every other cost
+ * @param drawCardsPerAge when true the cost is "draw a card" per age counter; mutually exclusive
+ *     with every other cost
+ * @param counterTypePerAge counter put on the permanent itself once per age counter, or null;
+ *     mutually exclusive with every other cost
  * @param unpaidEffects extra effects resolved when the cost isn't paid, on top of the sacrifice
  */
 public record CumulativeUpkeepEffect(
@@ -36,12 +43,26 @@ public record CumulativeUpkeepEffect(
         int lifePerAge,
         boolean exileTopCardsPerAge,
         CreateTokenEffect opponentTokenPerAge,
+        boolean drawCardsPerAge,
+        CounterType counterTypePerAge,
         List<CardEffect> unpaidEffects)
         implements CardEffect {
 
     public CumulativeUpkeepEffect {
         unpaidEffects = unpaidEffects == null ? List.of() : List.copyOf(unpaidEffects);
-        if (opponentTokenPerAge != null) {
+        if (counterTypePerAge != null) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null || drawCardsPerAge) {
+                throw new IllegalArgumentException(
+                        "A put-a-counter cumulative upkeep takes no other cost");
+            }
+        } else if (drawCardsPerAge) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null) {
+                throw new IllegalArgumentException(
+                        "A draw-a-card cumulative upkeep takes no other cost");
+            }
+        } else if (opponentTokenPerAge != null) {
             if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge) {
                 throw new IllegalArgumentException(
                         "An opponent-token cumulative upkeep takes no other cost");
@@ -68,22 +89,36 @@ public record CumulativeUpkeepEffect(
 
     /** Cumulative upkeep — Pay N life (Glacial Chasm); no mana component. */
     public static CumulativeUpkeepEffect life(int lifePerAge) {
-        return new CumulativeUpkeepEffect("", null, lifePerAge, false, null, List.of());
+        return new CumulativeUpkeepEffect("", null, lifePerAge, false, null, false, null, List.of());
     }
 
     /** Cumulative upkeep {mana} — e.g. {@code new CumulativeUpkeepEffect("{1}")}. */
     public CumulativeUpkeepEffect(String costPerAge) {
-        this(costPerAge, null, 0, false, null, List.of());
+        this(costPerAge, null, 0, false, null, false, null, List.of());
     }
 
     /** Cumulative upkeep — Pay {mana} and N life (Infernal Darkness). */
     public CumulativeUpkeepEffect(String costPerAge, int lifePerAge) {
-        this(costPerAge, null, lifePerAge, false, null, List.of());
+        this(costPerAge, null, lifePerAge, false, null, false, null, List.of());
+    }
+
+    /**
+     * Cumulative upkeep {mana}, with extra effects that resolve when the cost isn't paid — the
+     * "when a player doesn't pay this permanent's cumulative upkeep, …" companion trigger
+     * (Heart of Bogardan).
+     */
+    public static CumulativeUpkeepEffect withUnpaidEffects(String costPerAge, List<CardEffect> unpaidEffects) {
+        return new CumulativeUpkeepEffect(costPerAge, null, 0, false, null, false, null, unpaidEffects);
     }
 
     /** Cumulative upkeep — sacrifice a permanent matching {@code filter} per age counter. */
     public static CumulativeUpkeepEffect sacrifice(PermanentPredicate filter) {
-        return new CumulativeUpkeepEffect(null, filter, 0, false, null, List.of());
+        return new CumulativeUpkeepEffect(null, filter, 0, false, null, false, null, List.of());
+    }
+
+    /** Cumulative upkeep — Draw a card (Psychic Vortex); one card per age counter. */
+    public static CumulativeUpkeepEffect drawCard() {
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, true, null, List.of());
     }
 
     /**
@@ -91,7 +126,7 @@ public record CumulativeUpkeepEffect(
      * the cost isn't paid (Thought Lash).
      */
     public static CumulativeUpkeepEffect exileTopCard(List<CardEffect> unpaidEffects) {
-        return new CumulativeUpkeepEffect(null, null, 0, true, null, unpaidEffects);
+        return new CumulativeUpkeepEffect(null, null, 0, true, null, false, null, unpaidEffects);
     }
 
     /**
@@ -99,7 +134,15 @@ public record CumulativeUpkeepEffect(
      * War-Riders).
      */
     public static CumulativeUpkeepEffect opponentToken(CreateTokenEffect token) {
-        return new CumulativeUpkeepEffect(null, null, 0, false, token, List.of());
+        return new CumulativeUpkeepEffect(null, null, 0, false, token, false, null, List.of());
+    }
+
+    /**
+     * Cumulative upkeep — put one counter of {@code counterType} on this permanent per age counter
+     * (Aboroth — "Put a -1/-1 counter on this creature").
+     */
+    public static CumulativeUpkeepEffect putCounterOnSelf(CounterType counterType) {
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, counterType, List.of());
     }
 
     public boolean isSacrificeCost() {

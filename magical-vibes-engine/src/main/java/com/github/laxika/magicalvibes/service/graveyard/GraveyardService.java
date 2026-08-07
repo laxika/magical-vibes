@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -479,6 +480,7 @@ public class GraveyardService {
             performRegeneration(gameData, perm);
             spendOpponentDrawRegenerationShield(gameData, perm);
             spendMinusOneCounterRegenerationShield(gameData, perm);
+            spendGainControlRegenerationShield(gameData, perm);
             return true;
         }
         return false;
@@ -552,6 +554,27 @@ public class GraveyardService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                 gameData, perm, amount, controllerId);
+    }
+
+    /**
+     * Debt of Loyalty: a regeneration shield granted by that spell hands its controller control of the
+     * creature once the shield is actually spent. Plain shields are consumed first, so a rider shield is
+     * only spent when the remaining shields are all rider shields.
+     */
+    private void spendGainControlRegenerationShield(GameData gameData, Permanent perm) {
+        List<UUID> shields = perm.getGainControlRegenerationShields();
+        if (shields.size() <= perm.getRegenerationShield()) {
+            return;
+        }
+        UUID newControllerId = shields.remove(shields.size() - 1);
+        if (newControllerId == null) {
+            return;
+        }
+        // Queued rather than applied here: regeneration usually happens inside the state-based-action
+        // sweep, which is iterating the battlefield lists this would move the permanent between.
+        gameData.pendingRegenerationControlChanges.put(perm.getId(), newControllerId);
+        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                " comes under " + gameData.playerIdToName.get(newControllerId) + "'s control."));
     }
 
     private void performRegeneration(GameData gameData, Permanent perm) {
@@ -1008,6 +1031,40 @@ public class GraveyardService {
         }
         List<Card> moving = graveyard.stream().filter(card -> !card.isToken()).toList();
         clearGraveyard(gameData, ownerId);
+        return moving;
+    }
+
+    /**
+     * Filtered sibling of {@link #takeGraveyardCardsForZoneChange(GameData, UUID)}: only the
+     * non-token cards matching {@code filter} leave the graveyard, everything else stays put.
+     * Used by partial shuffle-back effects such as Barishi's "shuffle all creature cards from your
+     * graveyard into your library".
+     */
+    public List<Card> takeMatchingGraveyardCardsForZoneChange(GameData gameData, UUID ownerId,
+                                                              CardPredicate filter, UUID sourceCardId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        if (graveyard == null || graveyard.isEmpty()) {
+            return List.of();
+        }
+        List<Card> moving = graveyard.stream()
+                .filter(card -> !card.isToken())
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId))
+                .toList();
+        if (moving.isEmpty()) {
+            return List.of();
+        }
+        graveyard.removeAll(moving);
+        for (Card card : moving) {
+            Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+            if (tracked != null) {
+                tracked.remove(card.getId());
+            }
+            Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+            if (allTracked != null) {
+                allTracked.remove(card.getId());
+            }
+        }
+        notifyCardsLeftGraveyard(gameData, ownerId);
         return moving;
     }
 }

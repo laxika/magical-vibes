@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "55")
+@CardRegistration(set = "WTH", collectorNumber = "30")
 public class Abduction extends Card {
 
     public Abduction() {

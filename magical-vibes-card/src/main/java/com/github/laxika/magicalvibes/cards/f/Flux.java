@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "55")
+@CardRegistration(set = "WTH", collectorNumber = "39")
 public class Flux extends Card {
 
     public Flux() {

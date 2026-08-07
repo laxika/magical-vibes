@@ -156,10 +156,8 @@ public class CastingPermissionService {
 
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
-        // Moonhold etc.: per-turn "can't cast creature spells" restriction on a player.
-        if (gameData.playersCantCastCreatureSpellsThisTurn.contains(playerId)) {
-            restricted.add(CardType.CREATURE);
-        }
+        // Moonhold / Abeyance etc.: per-turn "can't cast spells of these types" restriction on a player.
+        restricted.addAll(gameData.playersCantCastSpellTypesThisTurn.getOrDefault(playerId, Set.of()));
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
@@ -732,6 +730,24 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /**
+     * Bösium Strip: until end of turn, the player may cast the top card of their graveyard if it is
+     * an instant or sorcery (normal mana cost; exile instead of graveyard on resolution).
+     */
+    public boolean canCastTopInstantOrSorceryFromGraveyard(GameData gameData, UUID playerId, Card card) {
+        if (!gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.contains(playerId)) {
+            return false;
+        }
+        if (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY)) {
+            return false;
+        }
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null || graveyard.isEmpty()) {
+            return false;
+        }
+        return graveyard.getLast().getId().equals(card.getId());
     }
 
     /**

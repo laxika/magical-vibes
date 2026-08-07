@@ -88,6 +88,7 @@ public class DestructionSupport {
     private final ExileSelfEffectHandler exileSelfEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
+    private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -554,6 +555,18 @@ public class DestructionSupport {
             } else if (elseEffect instanceof DestroyReferencedPermanentEffect destroySource
                     && destroySource.reference() == PermanentReference.SOURCE) {
                 destroySource(gameData, entry, destroySource.cannotBeRegenerated());
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect damageAndCreatures) {
+                // "When a player doesn't pay this enchantment's cumulative upkeep, this enchantment
+                // deals X damage to target player or planeswalker and each creature that player
+                // controls" (Heart of Bogardan). The companion trigger has no target on this path,
+                // so the source controller's opponent takes it.
+                UUID victim = gameQueryService.getOpponentId(gameData, entry.getControllerId());
+                if (victim != null) {
+                    UUID previousTarget = entry.getTargetId();
+                    entry.setTargetId(victim);
+                    damageTargetAndTheirCreaturesHandler.resolve(gameData, entry, damageAndCreatures);
+                    entry.setTargetId(previousTarget);
+                }
             } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player
                 // exiles all cards from their library" (Thought Lash).

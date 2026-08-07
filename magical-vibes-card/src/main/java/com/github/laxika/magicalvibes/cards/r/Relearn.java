@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "93")
+@CardRegistration(set = "WTH", collectorNumber = "51")
 public class Relearn extends Card {
 
     public Relearn() {

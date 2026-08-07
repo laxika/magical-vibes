@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "16")
+@CardRegistration(set = "WTH", collectorNumber = "15")
 public class GerrardsWisdom extends Card {
 
     public GerrardsWisdom() {

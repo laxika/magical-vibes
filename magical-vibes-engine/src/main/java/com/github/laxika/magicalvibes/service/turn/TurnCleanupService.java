@@ -183,6 +183,7 @@ public class TurnCleanupService {
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.setMinusOneCounterRegenerationShield(0);
+            p.getGainControlRegenerationShields().clear();
         });
 
         gameData.playerDamagePreventionShields.clear();
@@ -241,9 +242,10 @@ public class TurnCleanupService {
         gameData.landSubtypeFixedManaColorThisTurn.clear();
         gameData.allLandsFixedManaColorThisTurn = null;
         gameData.playersCantPlayLandsThisTurn.clear();
-        gameData.playersCantCastCreatureSpellsThisTurn.clear();
+        gameData.playersCantCastSpellTypesThisTurn.clear();
         gameData.playersCantCastNoncreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();
+        gameData.playersCantActivateNonManaAbilitiesThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
@@ -254,6 +256,7 @@ public class TurnCleanupService {
         gameData.spellsGrantedHasteOnEntry.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
+        gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "41")
+@CardRegistration(set = "WTH", collectorNumber = "24")
 public class Serenity extends Card {
 
     public Serenity() {

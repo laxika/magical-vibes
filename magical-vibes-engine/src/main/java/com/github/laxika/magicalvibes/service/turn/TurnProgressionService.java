@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttac
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
@@ -85,7 +86,8 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class))) {
+                    || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatTaps(gameData);
             combatService.processEndOfCombatExiles(gameData);
@@ -99,6 +101,7 @@ public class TurnProgressionService {
             combatService.processEndOfCombatDamage(gameData);
             combatService.processEndOfCombatControlGains(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
+            combatService.processEndOfCombatPhaseOuts(gameData);
             gameData.priorityPassedBy.clear();
             return;
         }
@@ -185,6 +188,7 @@ public class TurnProgressionService {
                 handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
                 combatService.clearCombatState(gameData);
+                stepTriggerService.handleEndOfCombatTriggers(gameData);
             } else if (next == TurnStep.END_STEP) {
                 stepTriggerService.handleEndStepTriggers(gameData);
             } else if (next == TurnStep.CLEANUP) {

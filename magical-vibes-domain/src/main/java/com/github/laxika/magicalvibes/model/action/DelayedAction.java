@@ -21,6 +21,7 @@ public sealed interface DelayedAction permits
         DelayedPermanentAction,
         SacrificeAtEndOfCombat,
         TapAndSkipUntapAtEndOfCombat,
+        PhaseOutAtEndOfCombat,
         DealDamageToPermanentAtEndOfCombat,
         DestroyCombatOpponentsAtEndOfCombat,
         DestroyEquipmentAtEndOfCombat,

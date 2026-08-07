@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "96")
 @CardRegistration(set = "8ED", collectorNumber = "98")
 @CardRegistration(set = "M10", collectorNumber = "69")
+@CardRegistration(set = "WTH", collectorNumber = "52")
 public class SageOwl extends Card {
 
     public SageOwl() {

@@ -86,6 +86,11 @@ public class Permanent {
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
     @Setter private int minusOneCounterRegenerationShield;
+    /** Controller ids of this permanent's {@link #regenerationShield}s that carry Debt of Loyalty's
+     *  rider — when such a shield is actually used, that player gains control of this permanent.
+     *  Plain shields are consumed first, so a rider shield is only spent once it is all that is left.
+     *  Cleared at turn cleanup alongside {@link #regenerationShield}. */
+    private final List<UUID> gainControlRegenerationShields = new ArrayList<>();
     /** How many times this permanent has regenerated this turn (CR 701.15). Incremented every time a
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
@@ -538,6 +543,7 @@ public class Permanent {
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
+        this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.lastAttachedTo = source.lastAttachedTo;

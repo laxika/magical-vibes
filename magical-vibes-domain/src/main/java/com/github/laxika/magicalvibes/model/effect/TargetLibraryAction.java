@@ -9,6 +9,11 @@ public enum TargetLibraryAction {
     LOOK_ONLY,
     /** The controller may exile one of the looked-at cards; the rest go back on top (Psychic Surgery, Puresight Merrow). */
     MAY_EXILE_ONE,
+    /**
+     * The controller may exile any number of the looked-at cards, one pick at a time; declining ends
+     * the picks and the rest go back on top in any order (Ancestral Knowledge).
+     */
+    MAY_EXILE_ANY_NUMBER,
     /** The controller may have the target player shuffle their library (Visions). */
     MAY_SHUFFLE,
     /** The controller puts one of the looked-at cards into that player's graveyard; the rest go back on top (Cruel Fate, Wu Spy). */
