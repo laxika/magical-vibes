@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "223")
-public class MishraSelfReplicator extends Card {
+public class MishrasSelfReplicator extends Card {
 
-    public MishraSelfReplicator() {
+    public MishrasSelfReplicator() {
         // Whenever you cast a historic spell, you may pay {1}. If you do, create a token
         // that's a copy of Mishra's Self-Replicator. (Artifacts, legendaries, and Sagas are historic.)
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(

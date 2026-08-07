@@ -71,4 +71,16 @@ class SulfurousSpringsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Colored mana abilities are mana abilities and do not use the stack")
+    void coloredManaAbilitiesDoNotUseStack() {
+        harness.addToBattlefield(player1, new SulfurousSprings());
+        GameData gd = harness.getGameData();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

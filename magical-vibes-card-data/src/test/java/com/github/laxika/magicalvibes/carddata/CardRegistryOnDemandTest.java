@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.carddata;
 
+import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -55,8 +56,10 @@ class CardRegistryOnDemandTest {
         assertThat(loader.loadedSetCodes).hasSize(1);
         String preferredSet = loader.loadedSetCodes.getFirst();
         String collectorNumber = CardScanner.collectorNumberOf(Pacifism.class, preferredSet).orElseThrow();
-        assertThat(first.getName()).isEqualTo(preferredSet + " #" + collectorNumber);
-        assertThat(second.getName()).isEqualTo(preferredSet + " #" + collectorNumber);
+        // The printing marker rides on the card text rather than the name, because the registry
+        // now rejects oracle data whose name does not match the class it is being registered on.
+        assertThat(first.getCardText()).isEqualTo(preferredSet + " #" + collectorNumber);
+        assertThat(second.getCardText()).isEqualTo(preferredSet + " #" + collectorNumber);
 
         // The catalog lookup below only proves anything if it names a set construction did not load.
         assertThat(preferredSet).isNotEqualTo(CardSet.SET_10E.getCode());
@@ -84,10 +87,15 @@ class CardRegistryOnDemandTest {
         assertThat(loader.loadedSetCodes).containsExactly("DKA", "DKA");
     }
 
+    /**
+     * Serves each printing the name of the class it is registered on — anything else is rejected as
+     * a misfiled registration — and identifies the printing the data came from in the card text.
+     */
     private static final class RecordingLoader implements OracleLoader {
 
         private final List<String> loadedSetCodes = new ArrayList<>();
         private final Set<String> setsFailingNextLoad = new HashSet<>();
+        private final Map<CardSet, List<CardPrinting>> printings = CardScanner.scan();
 
         void failNextLoadOf(String setCode) {
             setsFailingNextLoad.add(setCode);
@@ -101,21 +109,24 @@ class CardRegistryOnDemandTest {
             }
 
             Map<String, OracleData> fronts = new HashMap<>();
-            for (String collectorNumber : implementedCollectorNumbers) {
-                fronts.put(collectorNumber, oracle(setCode + " #" + collectorNumber));
+            for (CardPrinting printing : printings.get(CardSet.findByCode(setCode))) {
+                if (implementedCollectorNumbers.contains(printing.collectorNumber())) {
+                    fronts.put(printing.collectorNumber(), oracle(printing.simpleCardClassName(),
+                            setCode + " #" + printing.collectorNumber()));
+                }
             }
 
             Map<String, OracleData> backs = new HashMap<>();
             if (setCode.equals("DKA") && implementedCollectorNumbers.contains("140")) {
-                backs.put("140", oracle("Ravager of the Fells"));
+                backs.put("140", oracle("Ravager of the Fells", null));
             }
             return new SetOracleData(setCode, implementedCollectorNumbers.size(),
                     Map.of(), fronts, backs, Map.of());
         }
 
-        private static OracleData oracle(String name) {
+        private static OracleData oracle(String name, String cardText) {
             return new OracleData(name, CardType.ENCHANTMENT, Set.of(), "{1}{W}", null, List.of(),
-                    List.of(), Set.of(), List.of(), null, null, null, Set.of(), null, null, null);
+                    List.of(), Set.of(), List.of(), cardText, null, null, Set.of(), null, null, null);
         }
     }
 }

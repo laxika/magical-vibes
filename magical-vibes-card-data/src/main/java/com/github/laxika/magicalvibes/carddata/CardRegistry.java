@@ -13,17 +13,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +47,7 @@ import java.util.stream.Collectors;
 public class CardRegistry implements CardCatalog {
 
     private static final Logger LOG = Logger.getLogger(CardRegistry.class.getName());
+    private static final Pattern NON_IDENTIFIER = Pattern.compile("[^a-z0-9]");
 
     private final OracleLoader loader;
     private final OracleLoadMode loadMode;
@@ -183,12 +187,13 @@ public class CardRegistry implements CardCatalog {
                 continue;
             }
 
+            OracleData back = data.backFaceByCollectorNumber().get(printing.collectorNumber());
+            verifyOracleNameMatchesClass(cardSet, printing, front, back);
             Card.registerOracle(printing.simpleCardClassName(), front);
 
             if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
                 Card tempCard = constructForRegistration(printing);
                 String backFaceClassName = tempCard.getBackFaceClassName();
-                OracleData back = data.backFaceByCollectorNumber().get(printing.collectorNumber());
                 if (backFaceClassName != null && back != null) {
                     // If-absent: the back face may name a standalone card class (prepare spells
                     // reuse the real spell class), whose own printing registers richer data that
@@ -201,6 +206,74 @@ public class CardRegistry implements CardCatalog {
         if (!data.tokenImages().isEmpty()) {
             CardPrintingRegistry.registerTokenImages(cardSet.getCode(), data.tokenImages());
         }
+    }
+
+    /**
+     * Rejects oracle data that arrived for a card class under another card's name.
+     *
+     * <p>A {@code @CardRegistration} collector number is typed by hand, and a wrong one is invisible
+     * at every layer below this: the class keeps its own engine logic but silently takes on some
+     * other card's name, cost, type and text, and the printing it was meant to claim is simply
+     * never implemented. Disperse carried M15 #82 for a while, which is Void Snare — whichever of
+     * its five printings loaded last decided what Disperse claimed to be, and the only symptom was
+     * an unrelated test failing intermittently. Checking the loaded name against the class name
+     * turns that whole class of typo into a set-load failure at the registration that caused it.
+     *
+     * <p>The comparison ignores case and every character a Java identifier cannot hold. Beyond that
+     * it accepts only the spellings the card classes actually use, all of which exist in numbers:
+     * an accented letter folded onto its base letter (Séance → {@code Seance}) or dropped outright
+     * (Dandân → {@code DandN}); a legendary named by the part before the comma (Slimefoot, the
+     * Stowaway → {@code Slimefoot}); and a double-faced card named after its front face alone
+     * ({@code JaceVrynsProdigy}) or after both faces ({@code LoyalCatharUnhallowedCathar}).
+     */
+    private static void verifyOracleNameMatchesClass(
+            CardSet cardSet, CardPrinting printing, OracleData front, OracleData back) {
+        String backName = back == null ? null : back.name();
+        if (front.name() == null
+                || matchesClassName(printing.simpleCardClassName(), front.name(), backName)) {
+            return;
+        }
+        throw new IllegalStateException(cardSet.getCode() + " #" + printing.collectorNumber()
+                + " is \"" + front.name() + "\", but that printing is registered on "
+                + printing.cardClassName() + ". Correct the @CardRegistration collector number, or"
+                + " rename the class if it is the class name that is wrong.");
+    }
+
+    static boolean matchesClassName(String simpleClassName, String frontName, String backName) {
+        String actual = identifierChars(simpleClassName);
+
+        for (String front : nameStems(frontName)) {
+            if (readsAs(actual, front)) {
+                return true;
+            }
+            for (String back : nameStems(backName)) {
+                if (readsAs(actual, front + back)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** A face's name, plus its part before the comma when it is a legendary's. */
+    private static List<String> nameStems(String name) {
+        if (name == null) {
+            return List.of();
+        }
+        String beforeComma = name.split(",")[0];
+        return name.equals(beforeComma) ? List.of(name) : List.of(name, beforeComma);
+    }
+
+    /** Whether a card name reduces to the same identifier characters as a class name already has. */
+    private static boolean readsAs(String classNameChars, String cardName) {
+        return classNameChars.equals(identifierChars(cardName))
+                || classNameChars.equals(
+                        identifierChars(Normalizer.normalize(cardName, Normalizer.Form.NFKD)));
+    }
+
+    /** Lowercases and drops everything a Java identifier cannot contain, accented letters included. */
+    private static String identifierChars(String value) {
+        return NON_IDENTIFIER.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
     }
 
     @Override

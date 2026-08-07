@@ -19,14 +19,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MishraSelfReplicatorTest extends BaseCardTest {
+class MishrasSelfReplicatorTest extends BaseCardTest {
 
     // ===== Trigger: casting historic spells =====
 
     @Test
     @DisplayName("Casting an artifact triggers may ability prompt")
     void castingArtifactTriggersMayPrompt() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
@@ -37,7 +37,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a legendary creature triggers may ability prompt")
     void castingLegendaryTriggersMayPrompt() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new AdelizTheCinderWind()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -51,7 +51,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a non-historic spell does not trigger")
     void nonHistoricDoesNotTrigger() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -66,7 +66,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent casting historic spell does not trigger controller's Self-Replicator")
     void opponentHistoricDoesNotTrigger() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -85,7 +85,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting and paying {1} creates a token copy of Self-Replicator")
     void acceptingMayCreatesTokenCopy() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -110,7 +110,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability does not create a token")
     void decliningMayDoesNotCreateToken() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
@@ -126,7 +126,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Token copy has the same triggered ability as the original")
     void tokenCopyHasSameAbility() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -148,7 +148,7 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     @Test
     @DisplayName("Source leaving battlefield before resolution still creates token via last-known info")
     void sourceLeftBattlefieldStillCreatesToken() {
-        harness.addToBattlefield(player1, new MishraSelfReplicator());
+        harness.addToBattlefield(player1, new MishrasSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
