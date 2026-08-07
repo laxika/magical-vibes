@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1044,20 +1045,39 @@ public abstract class AiDecisionEngine {
 
 
     /**
-     * Returns the maximum X value allowed by graveyard creature requirements.
+     * Returns the maximum X value allowed by graveyard card requirements.
      * For cards with {@link ExileCreaturesFromGraveyardAndCreateTokensEffect},
-     * X cannot exceed the number of creature cards in the caster's graveyard.
-     * Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
+     * X cannot exceed the number of creature cards in the caster's graveyard; for cards with
+     * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
+     * exceed the number of graveyard cards matching that effect's filter. Both mirror the engine's
+     * own cast-time validation in {@code SpellCastingService}, so the AI never proposes an X the
+     * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
-        boolean needsGraveyardCreatures = card.getEffects(EffectSlot.SPELL).stream()
+        List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
+        boolean needsGraveyardCreatures = spellEffects.stream()
                 .anyMatch(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance);
-        if (!needsGraveyardCreatures) {
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect = spellEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
+                .findFirst().orElse(null);
+        if (!needsGraveyardCreatures && returnEffect == null) {
             return Integer.MAX_VALUE;
         }
-        return (int) gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of()).stream()
-                .filter(c -> c.hasType(CardType.CREATURE))
-                .count();
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        int maxX = Integer.MAX_VALUE;
+        if (needsGraveyardCreatures) {
+            maxX = (int) graveyard.stream()
+                    .filter(c -> c.hasType(CardType.CREATURE))
+                    .count();
+        }
+        if (returnEffect != null) {
+            maxX = Math.min(maxX, (int) graveyard.stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, returnEffect.filter(), card.getId()))
+                    .count());
+        }
+        return maxX;
     }
 
     /**

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.Guile;
+import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
 import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
@@ -1095,6 +1096,63 @@ class AiDecisionEngineTest {
         // AI should cast with X capped at 1 (graveyard creature count), not X=3 (max mana)
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("AI does not cast Return to the Ranks when graveyard is empty")
+    void doesNotCastReturnToTheRanksWithEmptyGraveyard() {
+        giveAiPriority();
+        giveAiPlains(3); // Return to the Ranks costs {X}{W}{W}
+
+        harness.setHand(aiPlayer, List.of(new ReturnToTheRanks()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        // AI should not cast - no creature cards to return, so every X above 0 is illegal
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("AI does not cast Return to the Ranks when no graveyard creature matches the filter")
+    void doesNotCastReturnToTheRanksWithoutMatchingGraveyardCreature() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        // Air Elemental is a creature but its mana value exceeds the effect's limit of 2
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new AirElemental());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+
+        harness.setHand(aiPlayer, List.of(new ReturnToTheRanks()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        // AI should not cast - no graveyard card matches the effect filter
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("AI caps Return to the Ranks X at the number of matching graveyard cards")
+    void capsReturnToTheRanksXAtMatchingGraveyardCardCount() {
+        giveAiPriority();
+        giveAiPlains(5); // Enough mana for X=3, but only 1 matching card in graveyard
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new AirElemental());
+
+        harness.setHand(aiPlayer, List.of(new ReturnToTheRanks()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        // AI cast the spell - card was removed from hand, game awaits graveyard selection
+        assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
+
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Return to the Ranks");
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
     }
 
