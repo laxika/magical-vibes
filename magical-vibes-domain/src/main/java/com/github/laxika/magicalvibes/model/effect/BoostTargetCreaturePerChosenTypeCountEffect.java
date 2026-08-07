@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code GameData.chosenSpellSubtype}); the effect then re-runs, counts the controller's permanents
  * of that type (Changeling-aware), and applies a {@code (count * powerPer)/(count * toughnessPer)}
  * modifier to the target creature until end of turn. Boost sibling of
- * {@link DealDamageToTargetCreatureEqualToChosenTypeCountEffect} and
+ * {@link DealDamageEqualToChosenTypeCountEffect} and
  * {@link DrawCardPerChosenTypeCountEffect}.</p>
  */
 public record BoostTargetCreaturePerChosenTypeCountEffect(int powerPer, int toughnessPer) implements CardEffect {

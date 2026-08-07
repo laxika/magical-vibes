@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -17,30 +19,35 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DealDamageToTargetCreatureEqualToChosenTypeCountEffect} (Coordinated Barrage):
- * prompts the controller to choose a creature type, then deals damage to the target creature equal
+ * Resolves {@link DealDamageEqualToChosenTypeCountEffect} (Roar of the Crowd, Coordinated Barrage):
+ * prompts the controller to choose a creature type, then deals damage to the declared target equal
  * to the number of permanents the controller controls of that type (Changeling-aware).
  *
  * <p>Two-phase: the first resolution begins the creature-type choice and pauses (re-running once
  * the choice completes via {@code rerunCurrentEffectAfterInteraction}); the re-entry reads and
- * clears {@code GameData.chosenSpellSubtype}, counts, and deals the damage.</p>
+ * clears {@code GameData.chosenSpellSubtype}, counts, and deals the damage. The declared target
+ * picks the damage path — an "any target" declaration can land on a player or a planeswalker and
+ * so routes through {@code resolveAnyTargetDamage}, a creature declaration through
+ * {@code resolveCreatureTargetDamage}.</p>
  */
 @Component
 @RequiredArgsConstructor
-public class DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler implements NormalEffectHandlerBean {
+public class DealDamageEqualToChosenTypeCountEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
+    private final GameOutcomeService gameOutcomeService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DealDamageToTargetCreatureEqualToChosenTypeCountEffect.class;
+        return DealDamageEqualToChosenTypeCountEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (DealDamageEqualToChosenTypeCountEffect) effect;
         UUID controllerId = entry.getControllerId();
 
         if (gameData.chosenSpellSubtype == null) {
@@ -67,6 +74,16 @@ public class DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler imple
         }
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
-        damageSupport.resolveCreatureTargetDamage(gameData, entry, rawDamage);
+
+        if (TargetPredicates.creature().equals(e.declaredTarget())) {
+            damageSupport.resolveCreatureTargetDamage(gameData, entry, rawDamage);
+            return;
+        }
+
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+        damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+        // Only the any-target form can reduce a player's life total, so only it can end the game here.
+        gameOutcomeService.checkWinCondition(gameData);
     }
 }

@@ -51,7 +51,7 @@ reverts one of them is a regression:
 | `SacrificeSelfThenEffectHandler` (absorbed the `SacrificeSelfAndDrawCards` / `SacrificeSelfAndTargetPlayerDiscards` / `SacrificeSelfThenDealDamageToTargetPlayer` handlers in Step 2) | Fire `checkAllyPermanentSacrificedTriggers`, call `removeOrphanedAuras`, and gate the payload on the removal succeeding ("If you do"). **Never** re-express this as `SequenceEffect.of(SacrificeSelfEffect(), payload)` — a sequence splices its steps unconditionally |
 | `AttachSourceEquipmentToTargetCreatureEffectHandler`, `AttachTargetEquipmentToTargetCreatureEffectHandler` | Success path logs an attach message, not a fizzle message |
 | `CopySpellForEachOtherSubtypePermanentEffectHandler` | Has the `isCantBeCopied()` guard (CR 707.10) |
-| `DealDamageToTargetCreatureEqualToChosenTypeCountEffectHandler` | Applies `applyDamageMultiplier` |
+| `DealDamageEqualToChosenTypeCountEffectHandler` (absorbed the `DealDamageToAnyTargetEqualToChosenTypeCount` / `DealDamageToTargetCreatureEqualToChosenTypeCount` handlers) | Applies `applyDamageMultiplier` |
 | `DestroyEachTargetPermanentEffectHandler`, `DestroyPermanentsTargetPlayerControlsEffectHandler` | Route through `DestructionSupport.destroyBatchCollecting` so deaths are simultaneous |
 | `UntapPermanentsEffectHandler.resolveChosenControlled` (absorbed the `UntapUpToControlledPermanentsEffect` handler in Step 11) | Prompts the controller via `MultiPermanentChoiceContext.UntapChosenPermanents` — does not untap the first N in battlefield order |
 | `ExileTargetPermanentAndImprintEffect` | `TargetSpec.harmful`, not `benign` |
@@ -83,7 +83,7 @@ high-churn or needs a design call and is optional.
 | 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
 | 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
 | 15 | Reveal / reorder library batch | 2 | LOW | **DONE** — both premises held. Three corrections: the two `boolean targetPlayer` flags became one shared `LibraryOwner` enum (which keeps the reorder family's nine own-library call sites untouched); the reveal's `@ValidatesTarget` validator had to be branched or the Deceivers would demand a player target; and `Fixed(0)` is honest to the *amount*-reading `LifeGainEffect` consumers but not to the two presence-checking ones, so the capability gained a `gainsNoLife()` default |
-| 16 | Damage target-category batch | 3 | LOW | TODO |
+| 16 | Damage target-category batch | 3 | LOW | **DONE** — all three premises held. The audit's "3" is the *net* count (5 records + 5 handlers deleted, 2 records + 1 enum + 2 handlers added) and its row-1 card count is three low (17, not 14). Three corrections: both proposed `boolean`s became enums (`PlayerRelation` reused, new `DamagedPermanentScope`), the all-creatures survivor had to be **renamed** or its name would lie, and the row-3 handlers diverged on two axes the audit missed (a null-target guard and `checkWinCondition`) |
 | 17 | Exile-top-cards families | 7 | LOW–MED | TODO |
 | 18 | Enchanted-creature aura batch | 3 | LOW–MED | TODO |
 | 19 | Entering-creature conditionals + `GrantEffectTo*` | 5 | LOW–MED | TODO |
@@ -1351,28 +1351,107 @@ and `RevealTopCardPutLandsIntoGraveyardRepeatEffect` (each moves cards or repeat
 
 ---
 
-### Step 16 — Damage target-category batch
+### Step 16 — Damage target-category batch — **DONE**
 
-| Target | Absorbs | Cards |
-|---|---|---|
-| `DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount, boolean opponentOnly)` | `DealDamageToTargetOpponentOrPlaneswalkerEffect` | 14 |
-| `DealDamageToAllCreaturesTargetControlsEffect(int, boolean mustAttack, boolean includePlaneswalkers)` | `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect` | 1 |
-| `DealDamageEqualToChosenTypeCountEffect(TargetPredicate declaredTarget)` | both chosen-type-count effects | 1 + 1 |
+**Shipped**
+```java
+public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount,
+                                                           PlayerRelation playerRelation) implements CardEffect
+// sugar: (DynamicAmount), (int) -> ANY; (int, PlayerRelation)
+// PlayerRelation is the EXISTING model/filter enum; SELF is rejected in the compact constructor
 
-**Notes**
-- Player-or-planeswalker: the records are identical (one `DynamicAmount`, same
-  `TargetSpec.harmful(TargetPredicates.playerOrPlaneswalker())`), and the two handlers are **byte-for-byte identical**
-  apart from the class name and one comment word. The only real difference is external:
-  `@ValidatesTarget(DealDamageToTargetOpponentOrPlaneswalkerEffect.class)` in
-  `service/validate/DamageTargetValidators.java:30`, which rejects the controller — exactly what the
-  boolean encodes. Also update `service/combat/CombatDamageService.java:1711` and
-  `service/trigger/DamageTriggerCollectorService.java:154` (`instanceof X` → `instanceof X e && e.opponentOnly()`).
-- All-creatures: handlers are copies; the sole divergence is the type gate
-  (`if (!isCreature) continue;` vs `if (!isCreature && !hasType(PLANESWALKER)) continue;`).
-- Chosen-type-count: both records are no-component; the handlers share the entire two-phase
-  creature-type-choice protocol verbatim and differ only in the final
-  `resolveAnyTargetDamage(...)` vs `resolveCreatureTargetDamage(...)`. The multiplier bug is already
-  fixed — both now call `applyDamageMultiplier`, so this is a clean merge.
+public record DealDamageToPermanentsTargetControlsEffect(int damage,
+                                                         DamagedPermanentScope scope,
+                                                         boolean damagedCreaturesMustAttackThisTurn) implements CardEffect
+// sugar: (int), (int, boolean), (int, DamagedPermanentScope)
+// enum DamagedPermanentScope { CREATURES, CREATURES_AND_PLANESWALKERS }
+
+public record DealDamageEqualToChosenTypeCountEffect(TargetPredicate declaredTarget) implements CardEffect
+// declaredTarget must be TargetPredicates.creature() or anyTarget(); anything else throws
+```
+
+Five records and five handlers deleted; two records + one enum + two handlers added. Cards (22):
+Thumbscrews, Scalding Tongs, Razortip Whip, Scuttling Doom Engine, Rakdos's Return, Zealot of the
+God-Pharaoh, Vampiric Touch, Stolen Grain, Manticore of the Gauntlet, Kiss of Death, Inferno Jet,
+Goblin Lyre, Final Strike, Collective Defiance, Burning Sun's Avatar, Burning Fields,
+Sun-Crowned Hunters; Aggravate, Chandra's Fury, Radiating Lightning, Simoon,
+Chandra, Bold Pyromancer; Roar of the Crowd, Coordinated Barrage. The player-or-planeswalker
+survivor's ~30 existing call sites were untouched — `(int)` and `(DynamicAmount)` still mean `ANY`.
+
+**What held** — all three premises. The two player-or-planeswalker handlers really are byte-for-byte
+identical bar the class name and one comment word ("activation cost" / "casting cost"), and the
+three external sites named in the plan are the whole story: nothing else in the engine, AI, view or
+wire protocol distinguished them. The all-creatures handlers really do differ only in the type gate.
+The chosen-type-count handlers really do share the whole two-phase choice protocol, and the
+`applyDamageMultiplier` fix in the regression table is preserved on both paths.
+
+**What the audit missed / got wrong**
+- **The Step Index's "3" is a net count.** 5 records + 5 handlers were deleted and 2 records + 2
+  handlers added, and row 1's card count is 17, not 14.
+- **Both proposed `boolean`s became enums.** `boolean opponentOnly` reuses the existing
+  `model/filter/PlayerRelation` rather than adding an unlabelled flag to 17 call sites —
+  `PlayerRelation.SELF` is rejected in the compact constructor as Step 9 rejected `SOURCE`, since no
+  printed card makes its controller the only legal target of a targeted burn spell. The all-creatures
+  row would have needed **two adjacent booleans** (`new …(1, true, false)`), so the new axis is
+  `DamagedPermanentScope` and the old flag stays a boolean behind it.
+- **The all-creatures survivor had to be renamed.** Step 12's lesson applies verbatim:
+  `DealDamageToAllCreaturesTargetControlsEffect` lies the moment planeswalkers fold in, hence
+  `DealDamageToPermanentsTargetControlsEffect`.
+- **The chosen-type-count handlers diverged on two more axes.** Only the any-target one had a
+  `targetId == null` guard and a `gameOutcomeService.checkWinCondition` call (and the
+  `GameOutcomeService` injection to go with it). Both are preserved on the any-target branch only:
+  the creature branch cannot reduce a player's life total, so calling the win check there would let
+  an unrelated 0-life player lose at a moment they previously did not.
+- **`@ValidatesTarget` is class-keyed, like `@CollectsTrigger`.** Folding the two records makes the
+  opponent-only validator run for the plain "target player" form too, so its whole body is gated on
+  `playerRelation() == OPPONENT`. `TargetValidationService:63` treats a null validator and a no-op
+  validator identically, so the `ANY` form validates exactly as it did — via the spec alone.
+
+**Other call sites updated**
+- `CombatDamageService:1753` and the `@CollectsTrigger` in `DamageTriggerCollectorService:155` both
+  re-key to the merged class and gate on `OPPONENT`. Only the opponent wording has a single implied
+  player to auto-target. The collector's non-`OPPONENT` arm calls `addDealtDamageEntry` directly —
+  that is what the slot's `CardEffect.class` default collector (`DamageTriggerCollectorService:618`)
+  used to do for the `ANY` form, and returning `false` instead would have skipped it. Inert today:
+  Sun-Crowned Hunters is the only card with either form in `ON_DEALT_DAMAGE`.
+- `TargetPolarityClassifier` loses two of its four name-keyed entries — both merges collapse a pair
+  that already mapped to the same `HARMFUL_DAMAGE`, so no `instanceof` branch was needed.
+- `ChoiceHandlerService:696` (Relic Bind's damage mode) and
+  `DamageTargetPlayerOrPlaneswalkerUnlessPaysHandler:68` (Quenchable Fire's delayed damage) both
+  **construct** the survivor at runtime; the `(int)` / `(DynamicAmount)` sugar keeps them `ANY`,
+  which is what both cards print.
+- `BoostTargetCreaturePerChosenTypeCountEffect` / its handler and `DrawCardPerChosenTypeCountEffect`
+  name the deleted chosen-type-count record in their "sibling of" javadoc; re-pointed.
+
+**Deliberate deltas** — none. Every game-log string, every damage path and every validation outcome
+is unchanged for all 22 cards. `DamagedPermanentScope.CREATURES_AND_PLANESWALKERS` keeps the
+absorbed handler's **printed** `hasType(PLANESWALKER)` test rather than the layer-aware
+`GameQueryService.isPlaneswalker`, matching `DamageSupport.isAnyTargetDamageRecipient`'s documented
+reason: the destination it feeds, `dealCreatureDamage`'s CR 306.8 loyalty branch, keys off the
+printed line too.
+
+**Tests** — no test referenced any of the five deleted classes by name, and all 22 cards had test
+classes. Both `PlayerRelation` branches were already pinned in one direction each
+(`InfernoJetTest.cannotTargetSelf` for `OPPONENT`,
+`SunCrownedHuntersTest.controllerDoesNotTakeDamage` for the auto-target path) and both scopes in one
+direction (`ChandraBoldPyromancerTest.minusSevenDeals10DamageToAll` kills the planeswalker,
+`AggravateTest.damagesAndForcesAttack` sets the flag). Added the missing mirrors — the assertions a
+`switch` merge needs, one per axis:
+`ObeliskOfAlaraTest.redAbilityCanTargetItsOwnController` (the now class-keyed opponent validator must
+not reject the `ANY` form — the strongest case, since that ability has no card-level target filter to
+fall back on), `RadiatingLightningTest.leavesTheTargetPlayersPlaneswalkerAlone` plus a
+`noneMatch(isMustAttackThisTurn)` on the existing each-creature test (`CREATURES` must not drift into
+either of the other record's components), and `CoordinatedBarrageTest.cannotTargetAPlayer` (the
+`creature()` declaration must not widen to CR 115.4's "any target" — the reverse direction is already
+pinned by `RoarOfTheCrowdTest.dealsDamageToPlayerEqualToChosenTypeCount`, which a creature-path
+misroute would zero out).
+
+**Kept separate**: `DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect` carries its own
+`boolean opponentOnly` but is a multi-target shape with a creature rider, not this family;
+`DealDamageToEachMatchingPermanentEffect` (predicate-driven, `EachPermanentScope`) and
+`DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect` (divides one amount) both already own
+their own axes; `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect` does its own
+discard first.
 
 ---
 

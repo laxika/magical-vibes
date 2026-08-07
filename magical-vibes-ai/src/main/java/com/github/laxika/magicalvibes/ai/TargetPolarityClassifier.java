@@ -330,12 +330,10 @@ public class TargetPolarityClassifier {
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
-            entry("DealDamageToAnyTargetEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetCreatureEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetOpponentOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),

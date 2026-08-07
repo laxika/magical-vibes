@@ -17,7 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
@@ -152,11 +153,18 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTargetOpponentOrPlaneswalkerEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
-    private boolean handleDealtDamageTargetOpponentOrPlaneswalker(TriggerMatchContext match,
-            DealDamageToTargetOpponentOrPlaneswalkerEffect trigger, TriggerContext ctx) {
+    @CollectsTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    private boolean handleDealtDamageTargetPlayerOrPlaneswalker(TriggerMatchContext match,
+            DealDamageToTargetPlayerOrPlaneswalkerEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         GameData gameData = match.gameData();
+        if (trigger.playerRelation() != PlayerRelation.OPPONENT) {
+            // Only the opponent-only wording has a single implied player to auto-target; the plain
+            // "target player" form queues as an ordinary trigger, exactly as the default collector
+            // handled it before this class absorbed its opponent-only sibling.
+            addDealtDamageEntry(gameData, dc.damagedCreature(), trigger, dc.damageDealt());
+            return true;
+        }
         UUID controllerId = gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId());
         if (controllerId == null) return false;
 

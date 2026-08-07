@@ -120,6 +120,24 @@ class CoordinatedBarrageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a player — the damage is declared at a creature, not at any target")
+    void cannotTargetAPlayer() {
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new CoordinatedBarrage()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         Permanent attacker = new Permanent(new GrizzlyBears());

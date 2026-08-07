@@ -39,7 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEf
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -1750,8 +1751,11 @@ public class CombatDamageService {
                 CardEffect effectToAdd = effect;
                 if (effect instanceof DamageSourceControllerAwareEffect aware) {
                     effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
-                } else if (effect instanceof DealDamageToTargetOpponentOrPlaneswalkerEffect) {
-                    // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice
+                } else if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
+                        && burn.playerRelation() == PlayerRelation.OPPONENT) {
+                    // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice.
+                    // Only the opponent-only wording can be auto-targeted; the plain "target player"
+                    // form has no single implied player and falls through to the generic tail.
                     boolean hasPlaneswalkers = false;
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> bf = gameData.playerBattlefields.get(pid);

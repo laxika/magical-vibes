@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 /**
  * Thumbscrews — "At the beginning of your upkeep, if you have five or more cards in hand,
@@ -21,6 +22,6 @@ public class Thumbscrews extends Card {
     public Thumbscrews() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new CardsInHandAtLeast(5),
-                new DealDamageToTargetOpponentOrPlaneswalkerEffect(1)));
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT)));
     }
 }
