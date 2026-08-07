@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AzusaLostButSeekingTest extends BaseCardTest {
 
@@ -48,7 +49,10 @@ class AzusaLostButSeekingTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.playLand(player1, 0);
         harness.playLand(player1, 0);
-        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
 
         assertThat(forestCount()).isEqualTo(3);
         harness.assertInHand(player1, "Forest");
