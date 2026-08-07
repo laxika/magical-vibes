@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +24,8 @@ class DaysUndoingTest extends BaseCardTest {
         harness.setHand(player2, List.of(handCard));
         gd.playerGraveyards.get(player2.getId()).add(graveyardCard);
 
-        fillDeck(player1, 20);
-        fillDeck(player2, 20);
+        harness.setLibrary(player1, deckOf(20));
+        harness.setLibrary(player2, deckOf(20));
 
         cast();
 
@@ -34,7 +33,14 @@ class DaysUndoingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSizeGreaterThanOrEqualTo(7);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).noneMatch(c -> c == handCard);
+
+        // Both of player 2's cards left for the library, so each is now either still in it or was
+        // drawn straight back out of it. Which one happened is up to the shuffle, so the assertion
+        // is that they are somewhere in library + hand and that the library grew by exactly the two
+        // of them — asserting either card's individual zone would be asserting a coin flip.
+        List<Card> libraryAndHand = new ArrayList<>(gd.playerDecks.get(player2.getId()));
+        libraryAndHand.addAll(gd.playerHands.get(player2.getId()));
+        assertThat(libraryAndHand).contains(handCard, graveyardCard).hasSize(22);
     }
 
     @Test
@@ -42,8 +48,8 @@ class DaysUndoingTest extends BaseCardTest {
     void endsTheTurnOnYourTurn() {
         harness.setHand(player1, List.of(new DaysUndoing()));
         harness.setHand(player2, List.of());
-        fillDeck(player1, 20);
-        fillDeck(player2, 20);
+        harness.setLibrary(player1, deckOf(20));
+        harness.setLibrary(player2, deckOf(20));
 
         cast();
 
@@ -60,10 +66,11 @@ class DaysUndoingTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void fillDeck(Player player, int count) {
-        List<Card> deck = gd.playerDecks.computeIfAbsent(player.getId(), id -> new ArrayList<>());
+    private List<Card> deckOf(int count) {
+        List<Card> deck = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             deck.add(new GrizzlyBears());
         }
+        return deck;
     }
 }

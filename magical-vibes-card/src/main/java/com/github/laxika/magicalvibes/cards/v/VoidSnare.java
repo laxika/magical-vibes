@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.d;
+package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,13 +8,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
-@CardRegistration(set = "M14", collectorNumber = "51")
-@CardRegistration(set = "SOM", collectorNumber = "31")
-@CardRegistration(set = "MOR", collectorNumber = "31")
-@CardRegistration(set = "ORI", collectorNumber = "54")
-public class Disperse extends Card {
+@CardRegistration(set = "M15", collectorNumber = "82")
+public class VoidSnare extends Card {
 
-    public Disperse() {
+    public VoidSnare() {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
