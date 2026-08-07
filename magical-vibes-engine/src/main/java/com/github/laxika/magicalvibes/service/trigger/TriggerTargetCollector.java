@@ -119,13 +119,15 @@ public class TriggerTargetCollector {
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
-        // "Target opponent or planeswalker" (Scalding Tongs) narrows both sides on its own, without
-        // a card-level filter: players are opponents only, permanents are planeswalkers only.
-        boolean playerOrPlaneswalkerOnly = !effects.isEmpty() && effects.stream()
+        // An effect narrows the player half on its own only when it says so through
+        // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
+        // The declared target cannot express it: playerOrPlaneswalker() is shared with "target
+        // player or planeswalker" (Goblin Razerunners), where the controller is a legal choice.
+        boolean effectsAreOpponentOnly = !effects.isEmpty() && effects.stream()
                 .map(e -> unwrap(e, options))
-                .allMatch(e -> e.targetSpec().declares(TargetPredicates.playerOrPlaneswalker()));
+                .allMatch(e -> e.targetPlayerRelation() == PlayerRelation.OPPONENT);
 
-        boolean opponentOnly = isOpponentRestricted(targetFilter) || playerOrPlaneswalkerOnly;
+        boolean opponentOnly = isOpponentRestricted(targetFilter) || effectsAreOpponentOnly;
 
         List<UUID> validTargets = new ArrayList<>();
 

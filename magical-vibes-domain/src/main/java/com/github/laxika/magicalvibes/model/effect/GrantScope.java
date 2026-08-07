@@ -42,6 +42,11 @@ public enum GrantScope {
      * subtype it stops boosting itself as well.
      */
     ALL_CREATURES_INCLUDING_SELF,
+    /**
+     * All permanents on the battlefield <em>except</em> the source permanent itself, regardless of
+     * controller. There is no self-including counterpart: pair this with {@link #SELF} when the
+     * source must be affected too.
+     */
     ALL_PERMANENTS,
     ENCHANTED_PLAYER_CREATURES,
     OWN_LANDS,

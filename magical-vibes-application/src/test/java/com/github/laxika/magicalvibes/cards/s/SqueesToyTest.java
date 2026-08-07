@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SqueesToyTest extends BaseCardTest {
 
-    private int indexOf(Permanent permanent) {
-        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    private int indexOf(Player controller, Permanent permanent) {
+        return gd.playerBattlefields.get(controller.getId()).indexOf(permanent);
     }
 
     private Permanent addToy() {
@@ -31,7 +32,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        harness.activateAbility(player1, indexOf(toy), null, targetId);
+        harness.activateAbility(player1, indexOf(player1, toy), null, targetId);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Grizzly Bears").getDamagePreventionShield()).isEqualTo(1);
@@ -48,10 +49,10 @@ class SqueesToyTest extends BaseCardTest {
         pyromancer.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(pyromancer);
 
-        harness.activateAbility(player1, indexOf(toy), null, bears.getId());
+        harness.activateAbility(player1, indexOf(player1, toy), null, bears.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player2, indexOf(pyromancer), null, bears.getId());
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, bears.getId());
         harness.passBothPriorities();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(0);
@@ -63,7 +64,7 @@ class SqueesToyTest extends BaseCardTest {
     void cannotTargetPlayer() {
         Permanent toy = addToy();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(toy), null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, toy), null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -74,7 +75,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
 
-        harness.activateAbility(player1, indexOf(toy), null, bears.getId());
+        harness.activateAbility(player1, indexOf(player1, toy), null, bears.getId());
         harness.passBothPriorities();
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
 

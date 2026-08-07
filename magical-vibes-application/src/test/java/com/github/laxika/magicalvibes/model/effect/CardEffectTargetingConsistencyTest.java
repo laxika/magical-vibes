@@ -89,6 +89,10 @@ class CardEffectTargetingConsistencyTest {
             // (Gwafa Hazid, Profiteer) — reads the targeted permanent from entry.getTargetId(); never
             // contributes a chosen player target.
             "TargetPermanentControllerDrawsCardEffect",
+            // Piggyback: rides on the permanent target chosen for the sibling destroy effect
+            // (Starke of Rath) — reads that permanent's controller from entry.getTargetId() to hand
+            // them the source; never contributes a target of its own.
+            "TargetPermanentControllerGainsControlOfSourceEffect",
             // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
             "TargetPlayerMayPayManaOrLifeEffect",

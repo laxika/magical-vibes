@@ -46,4 +46,9 @@ public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount,
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(TargetPredicates.playerOrPlaneswalker());
     }
+
+    @Override
+    public PlayerRelation targetPlayerRelation() {
+        return playerRelation;
+    }
 }

@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EladamriLordOfLeavesTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Other Elf creatures you control have forestwalk and shroud")
+    @DisplayName("Other Elf creatures have forestwalk and shroud")
     void grantsToOwnElves() {
         gd.playerBattlefields.get(player1.getId()).add(new Permanent(new EladamriLordOfLeaves()));
         Permanent elves = new Permanent(new LlanowarElves());

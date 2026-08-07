@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EnergizerTest extends BaseCardTest {
 
@@ -32,7 +33,9 @@ class EnergizerTest extends BaseCardTest {
     void cannotActivateWithoutMana() {
         Permanent energizer = addEnergizerReady(player1);
 
-        harness.activateAbility(player1, 0, null, null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
 
         assertThat(energizer.isTapped()).isFalse();
         assertThat(energizer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(0);
