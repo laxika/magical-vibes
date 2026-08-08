@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -60,7 +61,7 @@ class DesperateGambitTest extends BaseCardTest {
     void nextNoncombatDamageIsDoubledOrPrevented() {
         castGambit(player1);
         Permanent pyromancer = addReadyPyromancer(player1);
-        Permanent victim = addReadyBears(player2);
+        Permanent victim = addReadyHillGiant(player2);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, pyromancer.getId());
@@ -191,6 +192,13 @@ class DesperateGambitTest extends BaseCardTest {
 
     private Permanent addReadyPyromancer(Player player) {
         Permanent perm = new Permanent(new ProdigalPyromancer());
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private Permanent addReadyHillGiant(Player player) {
+        Permanent perm = new Permanent(new HillGiant());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

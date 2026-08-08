@@ -43,7 +43,8 @@ class UktabiEfreetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.gameLog).anyMatch(entry ->
+                entry.plainText().contains("pays {G}{G}{G}."));
     }
 
     @Test

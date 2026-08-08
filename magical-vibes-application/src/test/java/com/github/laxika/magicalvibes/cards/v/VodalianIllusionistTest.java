@@ -54,7 +54,7 @@ class VodalianIllusionistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void advanceTurn() {

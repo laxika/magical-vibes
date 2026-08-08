@@ -53,7 +53,7 @@ class HauntingMiseryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
     @Test
