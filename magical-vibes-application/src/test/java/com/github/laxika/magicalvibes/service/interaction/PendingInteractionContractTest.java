@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
+import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
@@ -59,6 +60,7 @@ class PendingInteractionContractTest {
             PendingPileSeparation.class,
             PendingEachPlayerLibraryExile.class,
             PendingGuildFeud.class,
+            PendingThranTomeChoice.class,
             PendingInteraction.RevealedFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
