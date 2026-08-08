@@ -53,6 +53,7 @@ public sealed interface Condition permits
         ControllerOwnTurnCountAtMost,
         ControllerTurn,
         ControlsAnotherPermanent,
+        ControlsDistinctPermanentNamesCount,
         ControlsOtherPermanentCount,
         ControlsPermanent,
         ControlsPermanentCount,

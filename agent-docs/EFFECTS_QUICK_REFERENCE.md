@@ -3,6 +3,8 @@
 Compact lookup: effect name + constructor signature, organized by category.
 For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
+`EachPlayerSacrificesOneOfEachTypeEffect()` — each player chooses an artifact, creature, enchantment, land, and planeswalker in active-player order; a multi-typed permanent may satisfy more than one type, and choosing it more than once has the same result as choosing it once. All chosen permanents are sacrificed together. Used by Release (Catch // Release)
+
 `PutAttackingCreaturesOnTopOrBottomOfLibraryEffect()` — for each attacking creature, its owner chooses top or bottom of their library; resolution prompts each owner through the shared multi-permanent choice flow (Aetherspouts).
 
 - `PreventAllDamageToTargetFromChosenColorEffect()` — activated ability: on resolution, choose a color, then prevent all damage from that color to the target creature, player, or planeswalker until end of turn (Avacyn, Guardian Angel). Uses a target-specific turn-scoped shield and does not grant protection.
@@ -276,6 +278,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MayPayTapPermanentsEffect(TapMultiplePermanentsCost, CardEffect, String prompt[, CardEffect elseEffect])` — "you may tap N permanents". `wrapped` may be `null` when tapping is the whole payment; `elseEffect` is the "if you don't" half (Koskun Falls: upkeep tap-a-creature else `SacrificeSelfEffect`)
 - `ConditionalEffect(new Metalcraft(), CardEffect)` — 3+ artifacts
 - `ConditionalEffect(new Coven(), CardEffect)` — 3+ creatures with different powers
+- `ConditionalEffect(new ControlsDistinctPermanentNamesCount(minCount, filter), CardEffect)` — at least `minCount` matching permanents with different names (Maze's End)
 - `ConditionalEffect(new SpellManaSpentAtLeast(minMana), wrapped)` — mana spent to cast triggering spell >= N
 - `ConditionalEffect(new SpellXAtLeast(minX), wrapped)` — resolving spell/ability's chosen X (entry `xValue`) >= N (Martial Coup "If X is 5 or more")
 - `ConditionalEffect(new Morbid(), CardEffect)` — creature died this turn
@@ -1571,6 +1574,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `RegisterNextRedInstantSorceryCopyEffect()` — mana-ability rider: copy the next **red** instant/sorcery cast before mana drains (Pyromancer’s Goggles, paired with `AwardManaEffect(ManaColor.RED)`)
 - `CopyNextInstantOrSorceryCastThisTurnEffect()` — one-shot delayed trigger: "when you next cast an instant or sorcery spell this turn, copy that spell" (Chandra, the Firebrand −2). Turn-scoped `GameData.pendingNextInstantSorceryCopyThisTurnCount`, cleared at end of turn
 - `DrawOnCreatureSpellCastThisTurnEffect()` - repeating delayed trigger: "whenever you cast a creature spell this turn, draw a card" (Glimpse of Nature). Turn-scoped `GameData.creatureSpellCastDrawsThisTurn`, cleared at end of turn
+- `DrawOnCreatureEntersThisTurnEffect()` - repeating optional delayed trigger: "whenever a creature enters this turn, you may draw a card" (Beck). Stores one source card per registration in `GameData.creatureEntersDrawSourcesThisTurn`, fires for every creature including tokens and opposing creatures, and clears at end of turn
 - `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, TapMultiplePermanentsCost)` — ON_CONTROLLER_CASTS_SPELL: copy cast instant/sorcery; optional tap cost wraps `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` (Aziza, Mage Tower Captain). Pass `null` tap cost and wrap in `MayEffect` for a free "you may copy that spell" (Swarm Intelligence)
 - `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, TapMultiplePermanentsCost)` — ON_CONTROLLER_CASTS_SPELL: copy cast instant/sorcery; optional tap cost wraps `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` (Aziza, Mage Tower Captain). Pass `null` tap cost and wrap in `MayEffect` for a free "you may copy that spell" (Swarm Intelligence). `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, Zone)` = mandatory copy restricted to spells cast from that zone, e.g. `Zone.LIBRARY` for "whenever you cast an instant or sorcery spell from your library, copy it" (Melek, Izzet Paragon)
 - `StormEffect()` — Storm keyword. Place in the `ON_SELF_CAST` slot; at cast time queues a `StormCopyEffect` that copies the spell once per spell cast before it this turn (all players). Each copy may choose new targets (Dragonstorm)

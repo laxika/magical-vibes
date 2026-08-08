@@ -4133,6 +4133,33 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Fires turn-scoped delayed triggers registered by Beck. Each registration is a separate
+     * optional draw trigger, including for tokens and creatures controlled by the other player.
+     */
+    public void checkCreatureEntersThisTurnTriggers(GameData gameData, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        List<UUID> controllers = new ArrayList<>(gameData.orderedPlayerIds);
+        int activePlayerIndex = controllers.indexOf(gameData.activePlayerId);
+        if (activePlayerIndex > 0) {
+            List<UUID> apnapControllers = new ArrayList<>(controllers.subList(activePlayerIndex, controllers.size()));
+            apnapControllers.addAll(controllers.subList(0, activePlayerIndex));
+            controllers = apnapControllers;
+        }
+
+        for (UUID controllerId : controllers) {
+            List<Card> sources = gameData.creatureEntersDrawSourcesThisTurn.get(controllerId);
+            if (sources == null) continue;
+            for (Card sourceCard : new ArrayList<>(sources)) {
+                gameData.queueMayAbility(sourceCard, controllerId,
+                        new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                log.info("Game {} - {} triggers for creature entering (may draw)",
+                        gameData.id, sourceCard.getName());
+            }
+        }
+    }
+
+    /**
      * "Whenever a creature enchanted player controls enters" (ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD).
      * Scans every battlefield for player-enchanting Curse auras attached to the entering creature's controller
      * and queues one triggered ability each, controlled by the Aura's controller ("you"). The enchanted player

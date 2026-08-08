@@ -3,27 +3,28 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
-@CardRegistration(set = "GTC", collectorNumber = "244")
-@CardRegistration(set = "DGM", collectorNumber = "153")
-public class OrzhovGuildgate extends Card {
+@CardRegistration(set = "DGM", collectorNumber = "142")
+public class OrzhovCluestone extends Card {
 
-    public OrzhovGuildgate() {
-        // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-
-        // {T}: Add {W} or {B}.
+    public OrzhovCluestone() {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardManaOfColorsEffect(List.of(ManaColor.WHITE, ManaColor.BLACK))),
                 "{T}: Add {W} or {B}."
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{W}{B}",
+                List.of(new SacrificeSelfCost(), new DrawCardEffect()),
+                "{W}{B}, {T}, Sacrifice Orzhov Cluestone: Draw a card."
         ));
     }
 }

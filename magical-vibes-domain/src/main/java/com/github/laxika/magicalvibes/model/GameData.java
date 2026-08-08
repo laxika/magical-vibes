@@ -814,6 +814,9 @@ public class GameData {
      *  end of turn. */
     public final Map<UUID, Integer> creatureSpellCastDrawsThisTurn = new ConcurrentHashMap<>();
 
+    /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
+    public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
+
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
      * controller's precombat main phases for the rest of the game.
@@ -2801,6 +2804,8 @@ public class GameData {
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
+        this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
+                copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);

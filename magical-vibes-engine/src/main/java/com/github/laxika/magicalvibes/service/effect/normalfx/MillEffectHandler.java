@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -43,7 +45,15 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
 
         switch (mill.recipient()) {
             case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
-            case TARGET_PLAYER -> graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), count);
+            case TARGET_PLAYER -> {
+                List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
+                if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+                    targetPlayerIds = Collections.singletonList(entry.getTargetId());
+                }
+                for (UUID targetPlayerId : targetPlayerIds) {
+                    graveyardService.resolveMillPlayer(gameData, targetPlayerId, count);
+                }
+            }
             case EACH_OPPONENT -> {
                 UUID controllerId = entry.getControllerId();
                 for (UUID playerId : gameData.orderedPlayerIds) {

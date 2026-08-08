@@ -272,6 +272,7 @@ public class TurnCleanupService {
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();
+        gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.conspiredSpellIds.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,

@@ -1397,6 +1397,7 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);

@@ -3,25 +3,28 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
-@CardRegistration(set = "RTR", collectorNumber = "237")
-@CardRegistration(set = "DGM", collectorNumber = "146")
-public class AzoriusGuildgate extends Card {
+@CardRegistration(set = "DGM", collectorNumber = "136")
+public class AzoriusCluestone extends Card {
 
-    public AzoriusGuildgate() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-
+    public AzoriusCluestone() {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardManaOfColorsEffect(List.of(ManaColor.WHITE, ManaColor.BLUE))),
                 "{T}: Add {W} or {U}."
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{W}{U}",
+                List.of(new SacrificeSelfCost(), new DrawCardEffect()),
+                "{W}{U}, {T}, Sacrifice Azorius Cluestone: Draw a card."
         ));
     }
 }

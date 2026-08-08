@@ -388,6 +388,23 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Release-style choice: the current player chooses one permanent for the current card type.
+     * The current player's picks and the already completed players' picks are carried separately so
+     * a multi-typed permanent can be chosen for more than one listed type.
+     */
+    record EachPlayerSacrificeOneOfEachTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                  int typeIndex, java.util.List<UUID> accumulatedIds,
+                                                  java.util.List<UUID> currentPlayerIds,
+                                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerSacrificeOneOfEachTypeChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            accumulatedIds = java.util.List.copyOf(accumulatedIds);
+            currentPlayerIds = java.util.List.copyOf(currentPlayerIds);
+        }
+    }
+
+    /**
      * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
      * controls to phase out (one pass of land / artifact / creature). Completion phases them out
      * then advances to the next pass via {@code EquipoiseSupport}.

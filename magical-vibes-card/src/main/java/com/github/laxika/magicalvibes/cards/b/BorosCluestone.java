@@ -3,27 +3,28 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
-@CardRegistration(set = "GTC", collectorNumber = "239")
-@CardRegistration(set = "DGM", collectorNumber = "147")
-public class BorosGuildgate extends Card {
+@CardRegistration(set = "DGM", collectorNumber = "137")
+public class BorosCluestone extends Card {
 
-    public BorosGuildgate() {
-        // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-
-        // {T}: Add {R} or {W}.
+    public BorosCluestone() {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.WHITE))),
                 "{T}: Add {R} or {W}."
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{R}{W}",
+                List.of(new SacrificeSelfCost(), new DrawCardEffect()),
+                "{R}{W}, {T}, Sacrifice Boros Cluestone: Draw a card."
         ));
     }
 }

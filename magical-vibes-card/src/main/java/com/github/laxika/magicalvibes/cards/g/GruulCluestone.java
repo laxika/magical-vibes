@@ -3,25 +3,28 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 
-@CardRegistration(set = "GTC", collectorNumber = "243")
-@CardRegistration(set = "DGM", collectorNumber = "150")
-public class GruulGuildgate extends Card {
+@CardRegistration(set = "DGM", collectorNumber = "140")
+public class GruulCluestone extends Card {
 
-    public GruulGuildgate() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-
+    public GruulCluestone() {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.GREEN))),
                 "{T}: Add {R} or {G}."
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{R}{G}",
+                List.of(new SacrificeSelfCost(), new DrawCardEffect()),
+                "{R}{G}, {T}, Sacrifice Gruul Cluestone: Draw a card."
         ));
     }
 }

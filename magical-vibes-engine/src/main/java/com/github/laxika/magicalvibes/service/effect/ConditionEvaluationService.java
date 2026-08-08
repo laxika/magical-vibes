@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -249,6 +250,8 @@ public class ConditionEvaluationService {
                     controlsMatchingPermanent(gameData, ctx, c.filter());
             case ControlsAnotherPermanent c ->
                     controlsAnotherMatchingPermanent(gameData, ctx, c.filter());
+            case ControlsDistinctPermanentNamesCount c ->
+                    countControlledMatchingPermanentNames(gameData, ctx, c.filter()) >= c.minCount();
             case OpponentControlsPermanent c ->
                     opponentControlsMatchingPermanent(gameData, ctx, c.filter());
             case AnyPlayerControlsPermanent c ->
