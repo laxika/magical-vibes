@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -74,6 +75,9 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private UntapLockReleaseService untapLockReleaseService;
+
+    @Mock
+    private AuraCopyService auraCopyService;
 
     @InjectMocks
     private PermanentRemovalService prs;

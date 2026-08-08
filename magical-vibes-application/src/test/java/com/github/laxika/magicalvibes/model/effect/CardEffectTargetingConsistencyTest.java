@@ -79,7 +79,13 @@ class CardEffectTargetingConsistencyTest {
             "TargetPlayerCantCastSpellTypesThisTurnEffect",
             "TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect",
             "TargetPlayerCantGainLifeRestOfGameEffect",
+            // Piggyback: reads the player-or-planeswalker target selected for the companion effect
+            // on Flames of the Blood Hand; it never contributes a target of its own.
+            "TargetPlayerCantGainLifeThisTurnEffect",
             "TargetPlayerCantPlayLandsThisTurnEffect",
+            // Piggyback: reads the spell target selected for Counterspell on Render Silent; it
+            // never contributes a separate spell or player target.
+            "TargetSpellControllerCantCastSpellsThisTurnEffect",
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",

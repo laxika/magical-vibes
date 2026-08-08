@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -37,8 +36,8 @@ class AuraBarbsTest extends BaseCardTest {
     void damagesEachEnchantmentController() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player2, new HowlingMine());
-        harness.addToBattlefield(player2, new HowlingMine());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player2, new AngelicChorus());
 
         castAuraBarbs();
 

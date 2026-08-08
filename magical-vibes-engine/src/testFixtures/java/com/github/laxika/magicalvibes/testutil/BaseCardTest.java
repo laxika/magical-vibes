@@ -161,6 +161,9 @@ public abstract class BaseCardTest {
         if (gd.interaction.isAwaitingInput()) {
             return;
         }
+        if (gd.currentStep.ordinal() > TurnStep.DECLARE_BLOCKERS.ordinal()) {
+            return;
+        }
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

@@ -54,7 +54,7 @@ class MazeAbominationTest extends BaseCardTest {
         // 4/4: 3 damage is not lethal on its own, so only deathtouch can destroy it.
         Permanent blocker = addCreatureReady(player2, new AirElemental());
         blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
 
         resolveCombat();
 

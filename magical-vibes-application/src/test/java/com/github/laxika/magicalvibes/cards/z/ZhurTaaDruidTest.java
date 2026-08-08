@@ -25,6 +25,7 @@ class ZhurTaaDruidTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

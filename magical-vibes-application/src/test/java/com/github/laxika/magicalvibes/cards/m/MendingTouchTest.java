@@ -83,6 +83,7 @@ class MendingTouchTest extends BaseCardTest {
     @DisplayName("Mending Touch cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MendingTouch()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

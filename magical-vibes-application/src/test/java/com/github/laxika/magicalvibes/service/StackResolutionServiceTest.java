@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -87,6 +88,7 @@ class StackResolutionServiceTest {
     @Mock private StateTriggerService stateTriggerService;
     @Mock private ExileService exileService;
     @Mock private GameMutationCoordinator mutationCoordinator;
+    @Mock private AuraCopyService auraCopyService;
 
     @InjectMocks
     private StackResolutionService svc;
