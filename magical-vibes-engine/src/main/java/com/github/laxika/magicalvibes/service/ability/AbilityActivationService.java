@@ -3178,6 +3178,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during an upkeep step");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_DRAW_STEP) {
+                if (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.DRAW) {
+                    throw new IllegalStateException("This ability can only be activated during your draw step");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_UPKEEP) {
                 if (gameData.currentStep != TurnStep.UPKEEP || playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated during an opponent's upkeep");

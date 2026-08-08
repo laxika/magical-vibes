@@ -38,6 +38,7 @@ public enum ActivationTimingRestriction {
     ONLY_DURING_YOUR_TURN,
     ONLY_DURING_YOUR_UPKEEP,
     ONLY_DURING_ANY_UPKEEP,
+    ONLY_DURING_YOUR_DRAW_STEP,
     /** Activate only during an upkeep step of a turn whose active player is not you. Trade Caravan. */
     ONLY_DURING_OPPONENTS_UPKEEP,
     /**

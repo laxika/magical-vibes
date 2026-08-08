@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "344")
+@CardRegistration(set = "WTH", collectorNumber = "157")
 public class SteelGolem extends Card {
 
     public SteelGolem() {

@@ -633,7 +633,8 @@ public class BattlefieldEntryService {
      *
      * <p>Returns {@code false} when the permanent must not be placed right now — either it went to
      * the graveyard (no legal sacrifice available) or the controller is being prompted to choose
-     * one, in which case entry resumes in {@link #completeSacrificePermanentToEnter}.
+     * one, in which case entry resumes in {@link #completeSacrificePermanentToEnter} or
+     * {@link #completeSacrificePermanentsToEnter}.
      */
     private boolean applySacrificePermanentToEnter(GameData gameData, UUID controllerId, Permanent permanent) {
         if (permanent.isEntryCostPaid()) {
@@ -650,8 +651,18 @@ public class BattlefieldEntryService {
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter()))
                 .map(Permanent::getId)
                 .toList();
-        if (sacrificeable.isEmpty()) {
+        if (sacrificeable.size() < effect.count()) {
             putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, effect);
+            return false;
+        }
+        if (effect.count() > 1) {
+            playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                    new ArrayList<>(sacrificeable), effect.count(),
+                    new MultiPermanentChoiceContext.SacrificePermanentsToEnter(
+                            controllerId, permanent, effect.count()),
+                    permanent.getCard().getName() + " — Sacrifice " + effect.description()
+                            + " to have " + permanent.getCard().getName()
+                            + " enter (choose none to decline).");
             return false;
         }
         gameData.interaction.setPermanentChoiceContext(
@@ -669,6 +680,16 @@ public class BattlefieldEntryService {
      * permanent has already been sacrificed by the caller and the parked permanent now enters.
      */
     public void completeSacrificePermanentToEnter(GameData gameData, UUID controllerId, Permanent permanent, boolean sacrificed) {
+        if (!sacrificed) {
+            putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, null);
+            return;
+        }
+        permanent.setEntryCostPaid(true);
+        putPermanentOntoBattlefield(gameData, controllerId, permanent);
+    }
+
+    public void completeSacrificePermanentsToEnter(GameData gameData, UUID controllerId, Permanent permanent,
+                                                   boolean sacrificed) {
         if (!sacrificed) {
             putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, null);
             return;

@@ -724,6 +724,10 @@ public class GameData {
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
     public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Player IDs that may cast spells of a given type as though they had flash until end of turn.
+     *  Cleared at end of turn. */
+    public final Map<UUID, Set<CardType>> cardTypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
+
     /** Pending "the next spell of this type you cast this turn can be cast as though it had flash"
      *  grants (Quicken), keyed by player. Each list element is one unconsumed grant; a grant is
      *  consumed by {@link #recordSpellCast} when a matching spell is cast. Cleared at end of turn. */
@@ -1862,6 +1866,19 @@ public class GameData {
                 .add(cardType);
     }
 
+    /** Adds an unlimited flash permission for spells of the given type until end of turn. */
+    public void addCardTypeFlashGrant(UUID playerId, CardType cardType) {
+        cardTypeFlashGrantsThisTurn
+                .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
+                .add(cardType);
+    }
+
+    /** Returns true if the player may cast spells of the card's type as though they had flash. */
+    public boolean hasCardTypeFlashGrant(UUID playerId, Card card) {
+        Set<CardType> grants = cardTypeFlashGrantsThisTurn.get(playerId);
+        return grants != null && grants.stream().anyMatch(card::hasType);
+    }
+
     /**
      * Returns true if the player holds an unconsumed next-spell flash grant matching this card's types.
      */
@@ -2861,6 +2878,10 @@ public class GameData {
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
+        this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsThisTurn.put(k, ConcurrentHashMap.newKeySet()));
+        this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
+                copy.cardTypeFlashGrantsThisTurn.get(k).addAll(v));
         this.nextSpellFlashGrantsThisTurn.forEach((k, v) ->
                 copy.nextSpellFlashGrantsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->

@@ -9,12 +9,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * Replacement effect (CR 614) registered in {@code EffectSlot.STATIC} and applied by
  * {@code BattlefieldEntryService} before the permanent is placed. The controller chooses which
- * matching permanent to sacrifice, and may decline (the card then goes to its owner's graveyard);
- * with no matching permanent there is no prompt and the card goes straight to the graveyard.
+ * matching permanents to sacrifice, and may decline (the card then goes to its owner's graveyard);
+ * with fewer than the required number of matching permanents there is no prompt and the card goes
+ * straight to the graveyard.
  *
  * @param filter      which permanents the controller may sacrifice (e.g. untapped Mountain)
+ * @param count       how many matching permanents must be sacrificed for the permanent to enter
  * @param description human-readable name of the sacrifice, used in the prompt
  */
-public record SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate filter, String description)
+public record SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate filter, int count, String description)
         implements ReplacementEffect {
+
+    public SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate filter, String description) {
+        this(filter, 1, description);
+    }
+
+    public SacrificePermanentAsEntersOrGraveyardEffect {
+        if (count < 1) {
+            throw new IllegalArgumentException("count must be positive");
+        }
+    }
 }

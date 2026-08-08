@@ -30,6 +30,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_YOUR_TURN` | Activate only during your turn (any phase/step, instant speed) |
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_DURING_ANY_UPKEEP` | Abilities usable during any player's upkeep step (only checks `currentStep == UPKEEP`, not the active player). Pair with `.withActivatableByAnyPlayer()` for "any player may activate this ability but only during any upkeep step" (Infinite Hourglass) |
+| `ONLY_DURING_YOUR_DRAW_STEP` | Abilities usable only during the activating player's draw step (`currentStep == DRAW` and activator == active player). Pair with `.withActivatableByAnyPlayer()` for "any player may activate this ability but only during their draw step" (Well of Knowledge) |
 | `ONLY_DURING_OPPONENTS_UPKEEP` | Abilities usable only during an upkeep step of a turn whose active player is not the activating player (`currentStep == UPKEEP` **and** activator != active player). Trade Caravan |
 | `ONLY_DURING_OPPONENTS_TURN` | Activate only during a turn whose active player is not the activating player (`activator != gameData.activePlayerId`). Ghost Town's "Activate only if it's not your turn." |
 | `ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT` | Abilities usable only during a turn whose active player is not the activating player **and** only in a step before the combat phase (`TurnStep.isBeforeCombat()` — untap/upkeep/draw/precombat main). Maddening Imp |

@@ -42,6 +42,7 @@ public enum CounterType {
     DEFENSE,
     DEPLETION,
     MANNEQUIN,
+    MINING,
     MUSIC,
     MUSTER,
     MINUS_ONE_MINUS_ONE,

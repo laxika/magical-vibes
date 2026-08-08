@@ -129,6 +129,16 @@ public class MultiPermanentChoiceHandlerService {
                     + powerCtx.requiredPower());
         }
 
+        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter enterCtx) {
+            if (!permanentIds.isEmpty() && permanentIds.size() != enterCtx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + enterCtx.requiredCount()
+                        + " permanents or none to decline");
+            }
+            if (permanentIds.stream().anyMatch(id -> gameQueryService.findPermanentById(gameData, id) == null)) {
+                throw new IllegalStateException("A selected permanent no longer exists");
+            }
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
@@ -209,6 +219,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeCreaturesSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters ctx) {
             handleSacrificeAsEntersForCounters(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter ctx) {
+            handleSacrificePermanentsToEnter(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PayManaPerCreatureUntap ctx) {
             handlePayManaPerCreatureUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap ctx) {
@@ -1425,6 +1437,24 @@ public class MultiPermanentChoiceHandlerService {
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    private void handleSacrificePermanentsToEnter(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                  MultiPermanentChoiceContext.SacrificePermanentsToEnter context) {
+        if (!permanentIds.isEmpty()) {
+            for (UUID permId : permanentIds) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permId);
+                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+
+        battlefieldEntryService.completeSacrificePermanentsToEnter(
+                gameData, context.controllerId(), context.enteringPermanent(), !permanentIds.isEmpty());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
     }
 

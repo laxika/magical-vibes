@@ -37,9 +37,11 @@ on what the mana may pay for.
 | Grant flash to the next spell of a type + cantrip | `q/Quicken.java` | SPELL GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.SORCERY) + DrawCardEffect(1) — one pending grant, consumed by the next sorcery cast this turn |
 | Empower the next creature spell (flash + uncounterable + counter) | `s/SavageSummoning.java` | STATIC CantBeCounteredEffect + SPELL GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.CREATURE) + SPELL EmpowerNextCreatureSpellThisTurnEffect(true, 1) |
 | Utility land (grant flash for the turn) | `a/AlchemistsRefuge.java` | colorless mana ability + `{G}{U}`,`{T}`: GrantFlashToSpellsThisTurnEffect — controller may cast spells this turn as though they had flash |
+| Utility land (grant creature-spell flash for the turn) | `w/WindingCanyons.java` | colorless mana ability + `{2}`,`{T}`: GrantFlashToCardTypeThisTurnEffect(CardType.CREATURE) — controller may cast creature spells this turn as though they had flash |
 | Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (FlickerEffect.exileTargetReturnAtEndStep(true) + PermanentIsAttackingPredicate) |
 | Utility land (self legend rule) | `s/ShelteredValley.java` | STATIC SacrificeOtherPermanentsWithSameNameOnEnterEffect + UPKEEP_TRIGGERED ConditionalEffect(ControlsPermanentCountAtMost(3, PermanentIsLandPredicate), GainLifeEffect(1)) + `{T}`: Add `{C}` |
 | Utility land (sacrifice-to-enter) | `b/BalduvianTradingPost.java` | STATIC SacrificePermanentAsEntersOrGraveyardEffect(Mountain + not tapped, "an untapped Mountain") + {T}: two AwardManaEffect ({C}{R}) + {1},{T}: DealDamageToTargetCreatureEffect(1) with PermanentIsAttackingPredicate |
+| Utility land (sacrifice two lands to enter) | `l/LotusVale.java` | STATIC SacrificePermanentAsEntersOrGraveyardEffect(land + not tapped, 2, "two untapped lands") + {T}: AwardAnyColorManaEffect(3) |
 | Utility land (destroy + each player search) | `f/FieldOfRuin.java` | colorless mana ability + {2},{T},Sacrifice: DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect + opponent nonbasic land filter (PermanentAllOfPredicate: land + not basic + not controlled by source controller) |
 
 ## Spells

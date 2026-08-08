@@ -325,6 +325,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** A permanent entering by sacrificing an exact number of matching permanents, or declining. */
+    record SacrificePermanentsToEnter(UUID controllerId, Permanent enteringPermanent, int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Magnetic Mountain: the acting player ({@code actingPlayerId}, the player whose upkeep it is)
      * chose any number of their tapped blue creatures (up to what they can afford). They pay
