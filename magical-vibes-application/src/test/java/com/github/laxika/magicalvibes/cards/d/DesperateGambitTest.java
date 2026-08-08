@@ -79,7 +79,7 @@ class DesperateGambitTest extends BaseCardTest {
     void onlyTheNextDamageEventIsAffected() {
         castGambit(player1);
         Permanent pyromancer = addReadyPyromancer(player1);
-        Permanent victim = addReadyBears(player2);
+        Permanent victim = addReadyHillGiant(player2);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, pyromancer.getId());

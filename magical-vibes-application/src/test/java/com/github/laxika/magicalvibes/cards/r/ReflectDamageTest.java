@@ -94,6 +94,7 @@ class ReflectDamageTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
 
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         goblin.setAttacking(true);
         resolveCombat(player2);
         harness.assertLife(player1, 18);
