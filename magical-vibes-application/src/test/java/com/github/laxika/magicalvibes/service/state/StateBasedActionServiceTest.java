@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -76,6 +77,8 @@ class StateBasedActionServiceTest {
     private LegendRuleService legendRuleService;
     @Mock
     private BattleDefeatSupport battleDefeatSupport;
+    @Mock
+    private CreatureControlService creatureControlService;
 
     @InjectMocks
     private StateBasedActionService sut;

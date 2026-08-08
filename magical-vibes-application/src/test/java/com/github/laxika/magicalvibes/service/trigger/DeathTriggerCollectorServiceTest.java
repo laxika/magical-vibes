@@ -1001,6 +1001,20 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("Target player damage queues a death-trigger target choice")
+        void targetPlayerDamageQueuesDeathTriggerTarget() {
+            Card watcher = createCreature("Rage Thrower", 4, 2);
+            var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER2_ID, 1, 1);
+
+            svc.handleAnyCreatureDeathDamageController(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        }
+
+        @Test
         @DisplayName("BecomeCopyOfDyingCreature queues a pay-mana may ability with the dying card baked in")
         void becomeCopyQueuesMayPayAbility() {
             Card puca = createCreature("Cemetery Puca", 1, 2);

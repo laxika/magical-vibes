@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEff
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
@@ -1173,8 +1174,12 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
-        // Dingus Staff: bake the dying creature's controller as targetId for TRIGGERING_PERMANENT_CONTROLLER.
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        if (effect.recipient() != DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
+            return handleAnyCreatureDeathDefault(match, effect, ctx);
+        }
+
+        // Dingus Staff: bake the dying creature's controller as targetId.
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

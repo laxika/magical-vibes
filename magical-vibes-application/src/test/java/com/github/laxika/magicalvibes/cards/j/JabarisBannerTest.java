@@ -67,7 +67,7 @@ class JabarisBannerTest extends BaseCardTest {
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(attackerIndex, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
