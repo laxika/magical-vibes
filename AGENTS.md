@@ -1,4 +1,5 @@
 - Do not start committing changes until I tell you to do so.
+- If you commit changes (after being instructed) make sure to attribute yourself.
 - In commit messages and descriptions, never write out full card set names — refer to a set only by its short set code (e.g. `INR`).
 - You should always work on the main branch!
 - Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
