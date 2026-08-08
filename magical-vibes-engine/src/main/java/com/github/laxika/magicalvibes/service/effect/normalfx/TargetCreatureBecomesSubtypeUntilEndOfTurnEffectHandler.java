@@ -51,6 +51,23 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             return;
         }
 
+        if (e.scope() == GrantScope.OWN_CREATURES) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            int count = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        permanent.setTransientCreatureTypeOverride(e.subtype());
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " creature(s) into " + e.subtype().getDisplayName()
+                            + "s until end of turn.").build());
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;

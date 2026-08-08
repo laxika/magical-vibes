@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSo
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
+import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
@@ -277,6 +278,8 @@ public class AmountEvaluationService {
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalToughnessOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
+            case LastDiscardedCardManaValue ignored ->
+                    gameData.lastDiscardedCardManaValue;
             case ImprintedCardManaValue ignored ->
                     imprintedCardManaValue(gameData, ctx);
             case ImprintedCreaturePower ignored ->

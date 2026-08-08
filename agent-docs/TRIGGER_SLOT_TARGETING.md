@@ -149,6 +149,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_SELF_CAST` (targeting variants) | `TriggerCollectionService.checkSpellCastTriggers` | Spell-target (single); multi-target (`maxTargets > 1`) reuses `ETBTokenMultiTargetTrigger` |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
+| `ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
@@ -169,7 +170,7 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
 `ON_COMBAT_DAMAGE_TO_PLAYER`, `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
-`ON_SELF_DEALS_DAMAGE`, `ON_BECOMES_BLOCKED` (only the non-targeting flavour; a
+`ON_SELF_DEALS_DAMAGE`, `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE`, `ON_BECOMES_BLOCKED` (only the non-targeting flavour; a
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
 `DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,
 `ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
@@ -249,6 +250,8 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
+`ON_SELF_EVOLVES` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
+actually places the +1/+1 counter),
 `ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
 on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
@@ -414,8 +417,10 @@ trigger.
 
 The predicate an effect carries in its `targetSpec()` (read via `EffectResolution.targetPredicateOf`,
 which also honours the `PutCounterOnTargetPermanentEffect.targetPredicate` component dual) is honoured
-**only** by End-step (and Saga chapter) pipelines. Death and Attack ignore it entirely — put the
-predicate on the card's `TargetFilter` instead. The end-step pipeline will also unwrap
+by the End-step (and Saga chapter), Attack, Upkeep and Death pipelines. Death honours it because a
+granted death trigger has no card-level filter of its own — the dying creature's card is not the card
+that granted the ability (Showstopper). For a card's own death trigger either place works; the
+card's `TargetFilter` is still the conventional home. The end-step pipeline will also unwrap
 `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before inspecting the wrapped effect's
 targeting (`targetSpec()` category + predicate).
 
@@ -475,6 +480,13 @@ multi-target (Karn's Temporal Sundering's bare "target player" group).
   `TriggerTargetCollector.collect` — it unwraps any `ConditionalEffect` generically.
 - **"My attack trigger uses a `targetSpec()` predicate and it's ignored."** Move the predicate onto the
   card's `TargetFilter` — attack (and death) read only the card-level filter.
+- **"My trigger's two target groups affect each other's targets."** A trigger with more than one
+  `target(...)` group must go through the slot-by-slot walker
+  (`ETBTokenTargetService.processNextETBTokenMultiTargetTrigger`) so each group is prompted, and
+  declined, separately — beginning-of-combat triggers route there via `hasMultipleTargetGroups`
+  (Boros Battleshaper). The walker records how many targets each group actually took in
+  `StackEntry.targetGroupSizes`; without that a declined "up to N" group would leave the flat target
+  list sliced one group short, handing group 1's target to group 0's effect.
 - **"My effect gets no valid targets offered even though the filter matches."** The effect probably
   leaves `targetSpec()` at `NONE`. The `CardEffectTargetingConsistencyTest`
   catches this for effects named `Target*Effect`, but not for other naming conventions.

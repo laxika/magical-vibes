@@ -52,7 +52,7 @@ public record ExileGraveyardCardsEffect(
         return switch (scope) {
             case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
-            case TARGET_PLAYER_ENTIRE -> TargetSpec.benign(TargetPredicates.player());
+            case TARGET_PLAYER_ENTIRE, TARGET_PLAYER_ALL_MATCHING -> TargetSpec.benign(TargetPredicates.player());
             default -> TargetSpec.NONE;
         };
     }

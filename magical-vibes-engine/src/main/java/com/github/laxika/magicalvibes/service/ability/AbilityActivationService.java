@@ -332,6 +332,7 @@ public class AbilityActivationService {
         if (permanent.getCard().hasType(CardType.LAND)) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
+        triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
         List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
@@ -907,6 +908,21 @@ public class AbilityActivationService {
                     + exileNGraveyardCost.count() + ")");
         }
 
+        // Mill-controller activation cost (Rot Farm Skeleton: "Mill four cards"). CR 701.17b — a
+        // player can't pay a cost that mills more cards than their library holds.
+        MillControllerCost graveyardMillCost = ability.getEffects().stream()
+                .filter(MillControllerCost.class::isInstance)
+                .map(MillControllerCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (graveyardMillCost != null) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null || deck.size() < graveyardMillCost.count()) {
+                throw new IllegalStateException("Not enough cards in library to mill (need "
+                        + graveyardMillCost.count() + ")");
+            }
+        }
+
         // Discard-card(s) activation cost (Eternalize—{cost}, Discard a card / Haunted Dead Discard two):
         // validate up front that enough legal cards exist before paying any cost, so an unpayable
         // discard makes activation illegal without side effects (CR 602.2a).
@@ -931,6 +947,12 @@ public class AbilityActivationService {
                     castingCostService.getGraveyardActivatedAbilityCostReduction(gameData, playerId, card),
                     new ManaCost(abilityCost).getGenericCost());
             payManaCost(gameData, playerId, abilityCost, xValue, false, false, null, -reduction);
+        }
+
+        // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
+        // source card (and the ability's own self-return) untouched.
+        if (graveyardMillCost != null) {
+            graveyardService.resolveMillPlayer(gameData, playerId, graveyardMillCost.count());
         }
 
         // Pay the exile-N-cards-from-graveyard cost
@@ -993,7 +1015,7 @@ public class AbilityActivationService {
     public List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
         List<ActivatedAbility> abilities = new ArrayList<>(card.getGraveyardActivatedAbilities());
         if (card.hasType(CardType.CREATURE)) {
-            abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, ownerId));
+            abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, ownerId, card));
         }
         return abilities;
     }

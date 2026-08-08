@@ -405,6 +405,10 @@ public class GameData {
     /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
     public PendingGraveyardAbilityActivation pendingGraveyardAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
+    /** Player IDs that have already taken their first draw of their own draw step this turn. Used by
+     *  Notion Thief-style replacements that exempt "the first card they draw in each of their draw
+     *  steps". Cleared at end-of-turn cleanup. */
+    public final Set<UUID> drawStepFirstDrawTaken = ConcurrentHashMap.newKeySet();
     /** Aladdin's Lamp — a one-shot, turn-scoped delayed replacement of a player's next draw this
      *  turn: "instead look at the top X cards of your library, put all but one on the bottom in a
      *  random order, then draw a card." Keyed by drawing player id, value = X. Consumed on the next
@@ -416,10 +420,6 @@ public class GameData {
      *  replacement applies to one draw). Consumed in {@code DrawService.resolveDrawCard} and
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
-    /** Players who have already taken their first draw during their own draw step this turn. Used by
-     *  {@code DrawService} to exempt that draw from "except the first one you draw in each of your
-     *  draw steps" draw doublers (Alhammarret's Archive). Cleared at end-of-turn cleanup. */
-    public final Set<UUID> drawStepFirstDrawTaken = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
      *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
@@ -507,6 +507,8 @@ public class GameData {
     public final Map<UUID, UUID> permanentsPreventedFromDealingDamageUntilNextTurn = new ConcurrentHashMap<>();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
+    public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
@@ -858,6 +860,11 @@ public class GameData {
     /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
+
+    /** Mana value of the most recently discarded card (any player, any source), recorded by the
+     *  central discard hook. Read by {@code LastDiscardedCardManaValue} so a later effect of the same
+     *  spell can scale off the card just discarded (Blast of Genius). */
+    public int lastDiscardedCardManaValue;
 
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
      *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
@@ -2380,6 +2387,7 @@ public class GameData {
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
+        copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -2454,13 +2462,14 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
-        copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
+        copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
         this.pendingNextDrawFromExiledPile.forEach((k, v) ->
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
+        copy.lastDiscardedCardManaValue = this.lastDiscardedCardManaValue;
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));

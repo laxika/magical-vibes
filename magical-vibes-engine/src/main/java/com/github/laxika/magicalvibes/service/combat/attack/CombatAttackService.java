@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
@@ -1332,7 +1333,9 @@ public class CombatAttackService {
         }
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            if (gameQueryService.hasAuraWithEffect(gameData, attacker,
+            boolean selfRestricted = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
+            if (selfRestricted || gameQueryService.hasAuraWithEffect(gameData, attacker,
                     EnchantedCreatureCanOnlyAttackAloneEffect.class)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can only attack alone");
             }

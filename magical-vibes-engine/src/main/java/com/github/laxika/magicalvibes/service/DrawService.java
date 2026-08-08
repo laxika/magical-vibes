@@ -24,12 +24,14 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -46,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -73,6 +76,7 @@ public class DrawService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     // @Lazy: handler → InputCompletionService → … can reach back into draw/resolution paths.
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
+    private final LifeSupport lifeSupport;
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -80,7 +84,8 @@ public class DrawService {
                        GameOutcomeService gameOutcomeService,
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
-                       @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler) {
+                       @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
+                       @Lazy LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -88,6 +93,7 @@ public class DrawService {
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
+        this.lifeSupport = lifeSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -97,6 +103,11 @@ public class DrawService {
             log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
             return;
         }
+
+        // Mark this draw as the player's turn-based draw-step draw before any replacement is applied,
+        // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
+        // see a stable answer even if their source enters play later in the turn.
+        boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
 
         // Aladdin's Lamp — one-shot, turn-scoped delayed replacement of this player's next draw:
         // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
@@ -213,6 +224,23 @@ public class DrawService {
             return;
         }
 
+        // Notion Thief — if an opponent of the source's controller would draw a card except the first
+        // one they draw in each of their draw steps, that player skips the draw and the controller
+        // draws a card instead.
+        if (!firstDrawStepDraw) {
+            Card notionThief = findOpponentExtraDrawsRedirectedSourceCard(gameData, playerId);
+            if (notionThief != null) {
+                UUID thiefController = gameQueryService.getOpponentId(gameData, playerId);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
+                        .card(notionThief)
+                        .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
+                        .build());
+                performDrawCard(gameData, thiefController);
+                return;
+            }
+        }
+
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -225,15 +253,21 @@ public class DrawService {
             return;
         }
 
-        // Alhammarret's Archive exempts "the first one you draw in each of your draw steps"; mark that
-        // draw as taken here so later draws this turn are doubled.
-        boolean firstOwnDrawStepDraw = gameData.currentStep == TurnStep.DRAW
-                && playerId.equals(gameData.activePlayerId)
-                && gameData.drawStepFirstDrawTaken.add(playerId);
+        // Blood Scrivener: if you would draw a card while you have no cards in hand, instead you
+        // draw two cards and you lose 1 life. The hand is checked as the draw would happen, so only
+        // the first draw of a multi-card draw sees an empty hand.
+        Card bloodScrivenerSource = findEmptyHandDrawExtraSourceCard(gameData, playerId);
+        if (bloodScrivenerSource != null && isHandEmpty(gameData, playerId)) {
+            performDrawCard(gameData, playerId);
+            performDrawCard(gameData, playerId);
+            lifeSupport.applyLifeLoss(gameData, playerId, 1, bloodScrivenerSource.getName());
+            return;
+        }
 
-        // Thought Reflection / Alhammarret's Archive: if you would draw a card, draw two cards instead.
+        // Thought Reflection / Alhammarret's Archive: if you would draw a card, draw two cards
+        // instead, except for the first card drawn during the controller's own draw step.
         boolean doubles = findDoubleDrawSourceCard(gameData, playerId) != null
-                || (!firstOwnDrawStepDraw && findExceptFirstDoubleDrawSourceCard(gameData, playerId) != null);
+                || (!firstDrawStepDraw && findExceptFirstDoubleDrawSourceCard(gameData, playerId) != null);
         if (doubles) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw two cards instead."));
@@ -340,6 +374,59 @@ public class DrawService {
                 if (hasEffect) {
                     return permanent.getCard();
                 }
+            }
+        }
+        return null;
+    }
+
+    private boolean isHandEmpty(GameData gameData, UUID playerId) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        return hand == null || hand.isEmpty();
+    }
+
+    private Card findEmptyHandDrawExtraSourceCard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof EmptyHandDrawExtraCardAndLoseLifeEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Records that {@code playerId} is taking a draw during their own draw step, returning whether
+     * this is the first such draw this turn.
+     */
+    private boolean markFirstDrawStepDraw(GameData gameData, UUID playerId) {
+        if (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.DRAW) {
+            return false;
+        }
+        return gameData.drawStepFirstDrawTaken.add(playerId);
+    }
+
+    /** The opponent-controlled Notion Thief-style source that steals {@code playerId}'s extra draws. */
+    private Card findOpponentExtraDrawsRedirectedSourceCard(GameData gameData, UUID playerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        if (opponentId == null) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect);
+            if (hasEffect) {
+                return permanent.getCard();
             }
         }
         return null;

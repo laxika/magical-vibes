@@ -66,8 +66,11 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     }
 
     private String describe(LockTargetPermanentEffect lock) {
-        if (lock.locksBlocking() || lock.locksActivatedAbilities()) {
+        if (lock.locksActivatedAbilities()) {
             return "can't attack or block and its activated abilities can't be activated";
+        }
+        if (lock.locksBlocking()) {
+            return lock.locksAttacking() ? "can't attack or block" : "can't block";
         }
         return "can't attack this turn";
     }

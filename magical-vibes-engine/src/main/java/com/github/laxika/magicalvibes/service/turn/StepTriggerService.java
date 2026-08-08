@@ -88,7 +88,9 @@ import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -2036,20 +2038,26 @@ public class StepTriggerService {
             }
         }
 
-        drainAddManaAtNextMainPhase(gameData);
+        drainAddManaAtNextMainPhase(gameData, true);
     }
 
     /**
      * Fires delayed "add mana at the beginning of your next main phase" abilities for the active
      * player. Called on entry to both precombat and postcombat main (Conduit of Storms schedules
      * during combat for the postcombat main; Scattering Stroke may schedule for either).
+     *
+     * @param precombatMain whether this is the precombat ("first") main phase — entries scheduled by
+     *                      a "next first main phase" wording (Plasm Capture) stay queued otherwise
      */
-    public void drainAddManaAtNextMainPhase(GameData gameData) {
+    public void drainAddManaAtNextMainPhase(GameData gameData, boolean precombatMain) {
         UUID mainPhasePlayerId = gameData.activePlayerId;
         List<AddManaAtNextMainPhase> manaRewards = gameData.drainDelayedActions(
-                AddManaAtNextMainPhase.class, a -> a.controllerId().equals(mainPhasePlayerId));
+                AddManaAtNextMainPhase.class,
+                a -> a.controllerId().equals(mainPhasePlayerId) && (precombatMain || !a.firstMainOnly()));
         for (AddManaAtNextMainPhase reward : manaRewards) {
-            CardEffect manaEffect = new AwardManaEffect(reward.color(), reward.amount());
+            CardEffect manaEffect = reward.anyColorCombination()
+                    ? new AwardManaOfColorsEffect(ManaColor.COLORS, reward.amount())
+                    : new AwardManaEffect(reward.color(), reward.amount());
             if (reward.optional()) {
                 manaEffect = new MayEffect(
                         manaEffect,
@@ -3800,9 +3808,12 @@ public class StepTriggerService {
                     .orElseThrow();
             graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
                     gameData, controllerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
-        } else if (needsPermanentTarget && etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(perm.getCard())) {
-            // "up to two target creatures" — reuse the slot-by-slot multi-target walker
-            // (shared with ETB / self-cast / attack triggers) so each target is chosen separately.
+        } else if (needsPermanentTarget
+                && (etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(perm.getCard())
+                    || etbTokenTargetService.hasMultipleTargetGroups(perm.getCard()))) {
+            // "up to two target creatures", or two independently filtered target groups (Boros
+            // Battleshaper) — reuse the slot-by-slot multi-target walker (shared with ETB /
+            // self-cast / attack triggers) so each target is chosen separately.
             gameData.queueInteraction(
                     new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             perm.getCard(), controllerId,

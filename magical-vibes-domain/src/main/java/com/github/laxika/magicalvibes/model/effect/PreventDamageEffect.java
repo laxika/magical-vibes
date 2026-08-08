@@ -200,6 +200,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to you this turn" (Riot Control) — the player only. */
+    public static PreventDamageEffect allToController() {
+        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER, null, false, null, null, null);
+    }
+
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     public static PreventDamageEffect allToControllerFromAttackers() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null, null);

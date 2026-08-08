@@ -46,6 +46,10 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DiscardEffect) effect;
 
+        // Clear the last-discarded snapshot so a trailing LastDiscardedCardManaValue on the same
+        // spell reads this discard only, and stays 0 when nothing is discarded (empty hand).
+        gameData.lastDiscardedCardManaValue = 0;
+
         // Source-relative amounts (e.g. CountersOnSource for Shrine of Limitless Power) use the
         // live source permanent when still on the battlefield, else the last-known snapshot
         // (sacrificed as an activation cost). X-based amounts (Mind Shatter) read xValue.

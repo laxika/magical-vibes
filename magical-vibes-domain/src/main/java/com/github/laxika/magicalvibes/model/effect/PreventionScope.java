@@ -46,6 +46,9 @@ public enum PreventionScope {
     ALL_BY_SELF,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn" (Safe Passage). */
     ALL_TO_CONTROLLER_AND_CREATURES,
+    /** "Prevent all damage that would be dealt to you this turn" (Riot Control). Unlike
+     *  {@link #ALL_TO_CONTROLLER_AND_CREATURES} the controller's creatures are not shielded. */
+    ALL_TO_CONTROLLER,
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */

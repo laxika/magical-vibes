@@ -233,6 +233,8 @@ public class DamagePreventionService {
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             // Mark of Asylum / Inner Sanctum: "Prevent all [noncombat] damage that would be dealt to creatures you control."
             if (hasCreatureDamagePreventionSource(gameData, permanent, isCombatDamage)) return 0;
+            // Emmara Tandris: "Prevent all damage that would be dealt to creature tokens you control."
+            if (gameQueryService.isAllDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
             // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
             // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
             // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
@@ -412,6 +414,8 @@ public class DamagePreventionService {
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
+        // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
+        if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) return 0;
         // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
         damage = applyHalfDamagePrevention(gameData, playerId, damage);
         if (damage <= 0) return 0;

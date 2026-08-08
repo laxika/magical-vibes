@@ -1,0 +1,91 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class NotionThiefTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An opponent's extra draw is skipped and the controller draws instead")
+    void stealsOpponentExtraDraw() {
+        harness.addToBattlefield(player1, new NotionThief());
+        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new Forest())));
+        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Forest");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The opponent's first draw-step draw is not stolen")
+    void doesNotStealDrawStepDraw() {
+        harness.addToBattlefield(player1, new NotionThief());
+        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new Forest(), new GrizzlyBears())));
+        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
+
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("A second draw during the opponent's draw step is stolen")
+    void stealsSecondDrawStepDraw() {
+        harness.addToBattlefield(player1, new NotionThief());
+        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(new Forest(), new GrizzlyBears())));
+        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
+
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DRAW);
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("The controller's own draws are unaffected")
+    void doesNotAffectControllerDraws() {
+        harness.addToBattlefield(player1, new NotionThief());
+        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
+        harness.setHand(player1, List.of(new Peek()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+    }
+}

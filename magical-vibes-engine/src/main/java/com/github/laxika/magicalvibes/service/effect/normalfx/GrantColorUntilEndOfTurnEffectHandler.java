@@ -50,7 +50,23 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) blue until end of turn.").build());
+                    .text(" makes " + count + " creature(s) " + colorName(e) + " until end of turn.").build());
+            return;
+        }
+
+        if (e.scope() == GrantScope.OWN_CREATURES) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            int count = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        applyEffect(gameData, entry, e, permanent);
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " creature(s) " + colorName(e) + " until end of turn.").build());
             return;
         }
 
@@ -76,11 +92,15 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
 
         applyEffect(gameData, entry, e, target);
 
-        String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
+        String colorName = colorName(e);
         String suffix = e.additive() ? " in addition to its other colors until end of turn." : " until end of turn.";
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + suffix).build());
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
+    }
+
+    private String colorName(GrantColorUntilEndOfTurnEffect e) {
+        return e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
     }
 
     private void applyEffect(GameData gameData, StackEntry entry, GrantColorUntilEndOfTurnEffect e, Permanent target) {

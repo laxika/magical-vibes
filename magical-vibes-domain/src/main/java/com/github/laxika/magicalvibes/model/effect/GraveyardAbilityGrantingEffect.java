@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Capability interface for static effects that grant a graveyard-activated ability to creature cards
@@ -10,6 +11,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
  */
 public interface GraveyardAbilityGrantingEffect extends CardEffect {
 
-    /** The graveyard-activated ability granted to each owned creature card in the graveyard. */
-    ActivatedAbility grantedGraveyardAbility();
+    /**
+     * The graveyard-activated ability granted to {@code card}, or {@code null} when this grant does
+     * not apply to it. Most grants are card-independent; a card-derived cost (Varolz, the Scar-Striped
+     * grants scavenge for a cost equal to the card's mana cost) reads it from {@code card}.
+     */
+    ActivatedAbility grantedGraveyardAbilityFor(Card card);
 }

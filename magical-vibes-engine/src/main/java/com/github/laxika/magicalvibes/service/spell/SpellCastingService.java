@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -112,6 +113,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -358,6 +360,11 @@ public class SpellCastingService {
                     insertAt += chosen.effects().size();
                 }
 
+                // Split cards with fuse are modes with their own total cost (CR 709.3, CR 702.102c):
+                // the chosen half's cost replaces the card's printed cost on the runtime copy, so
+                // every downstream cost modifier / payment step sees the cost actually being paid.
+                applyModeManaCost(card, chosenModes);
+
                 card.clearRuntimeSpellTargets();
                 card.setCastTimeTargetFilter(null);
 
@@ -398,6 +405,41 @@ public class SpellCastingService {
             }
         }
         return effectiveXValue;
+    }
+
+    /**
+     * Rejects a player handed to a modal mode that only targets permanents.
+     * <p>
+     * {@code TargetLegalityService} skips its target-type check for modal cards because the card's
+     * SPELL slot still holds the raw {@code ChooseOneEffect}, which exposes no target types. Here the
+     * chosen mode's effects are already unwrapped, so their {@code targetSpec()}s answer the question
+     * — a mode that admits no player (Far's bounce) must not accept one.
+     */
+    private static void validateModalTargetKind(GameData gameData, boolean wasModal,
+                                                List<CardEffect> resolvedSpellEffects, UUID targetId) {
+        if (!wasModal || targetId == null || !gameData.playerIds.contains(targetId)) {
+            return;
+        }
+        Set<TargetType> allowed = EffectResolution.computeAllowedTargets(
+                resolvedSpellEffects, List.of(), false, false);
+        if (!allowed.contains(TargetType.PLAYER)) {
+            throw new IllegalStateException("This spell cannot target players");
+        }
+    }
+
+    /**
+     * Applies a chosen mode's own total mana cost to the card being cast, when it declares one.
+     * Only single-mode selections carry a cost (split halves and the fuse mode are mutually
+     * exclusive choices of one {@code ChooseOneEffect}); ordinary modals leave the cost untouched.
+     */
+    private static void applyModeManaCost(Card card, List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+        if (chosenModes.size() != 1) {
+            return;
+        }
+        String modeCost = chosenModes.getFirst().manaCost();
+        if (modeCost != null) {
+            card.setManaCost(modeCost);
+        }
     }
 
     /**
@@ -895,7 +937,20 @@ public class SpellCastingService {
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
+        String printedManaCost = card.getManaCost();
         effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
+        // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
+        // the cost the playability pre-check cleared — that check only needs *some* mode to be
+        // affordable — so the mode actually chosen has to be paid for here.
+        if (!usingAlternateCost && !Objects.equals(printedManaCost, card.getManaCost())) {
+            ManaPool modePool = gameData.playerManaPools.get(playerId);
+            ManaCost modeCost = card.getParsedManaCost();
+            int modeAdditionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+            if (modeCost != null && !modeCost.canPay(modePool, modeAdditionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay " + card.getManaCost()
+                        + " for " + card.getName());
+            }
+        }
         // Overload (CR 702.96a) rewrites "target" to "each" as the spell is cast, so the resolved
         // effect list — not the card's printed union targeting — decides whether a target is needed.
         if (overloaded) {
@@ -1258,6 +1313,7 @@ public class SpellCastingService {
                     targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD);
                 }
             } else {
+                validateModalTargetKind(gameData, wasModal, filteredSpellEffects, targetId);
                 targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
@@ -3515,7 +3571,7 @@ public class SpellCastingService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from the top of their library."));
         log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.LIBRARY);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);

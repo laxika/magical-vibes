@@ -514,6 +514,9 @@ public class CombatBlockService {
             log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
 
+        // Global "whenever a creature blocks" watchers, once per blocking creature.
+        checkAnyCreatureBlocksTriggers(gameData, defenderBattlefield, blockerAssignments);
+
         // Check for "when this creature becomes blocked" triggers (active player's / AP's)
         Set<Integer> blockedAttackerIndices = new LinkedHashSet<>();
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -1323,6 +1326,47 @@ public class CombatBlockService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                 log.info("Game {} - {} creatures-block trigger pushed onto stack", gameData.id,
                         watcher.getCard().getName());
+            }
+        }
+    }
+
+    /**
+     * Fires ON_ANY_CREATURE_BLOCKS watchers once per blocking creature (a creature that blocks
+     * several attackers still blocks only once), scanning every battlefield — the watcher's
+     * controller need not control the blocker. The blocking creature is baked in as the trigger's
+     * non-targeting {@code targetId} so "that creature['s controller]" effects can read it.
+     */
+    private void checkAnyCreatureBlocksTriggers(GameData gameData,
+                                                List<Permanent> defenderBattlefield,
+                                                List<BlockerAssignment> blockerAssignments) {
+        Set<Integer> blockerIndices = new LinkedHashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            blockerIndices.add(assignment.blockerIndex());
+        }
+        for (int blockerIndex : blockerIndices) {
+            Permanent blocker = defenderBattlefield.get(blockerIndex);
+            for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+                for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                    List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_BLOCKS);
+                    if (effects.isEmpty()) {
+                        continue;
+                    }
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            watcher.getCard(),
+                            battlefield.getKey(),
+                            watcher.getCard().getName() + "'s block trigger",
+                            new ArrayList<>(effects),
+                            blocker.getId(),
+                            watcher.getId()
+                    );
+                    // "That creature" wording references the blocker without targeting it.
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                    log.info("Game {} - {} any-creature-blocks trigger pushed onto stack for {}",
+                            gameData.id, watcher.getCard().getName(), blocker.getCard().getName());
+                }
             }
         }
     }

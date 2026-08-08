@@ -158,6 +158,14 @@ public class StackEntry {
      */
     private boolean targetIdsFromAssignments;
     /**
+     * How many targets each declared target group actually contributed to the flat {@link #targetIds}
+     * list, in group order. Only set by the slot-by-slot trigger walker, which lets a controller
+     * decline an optional ("up to N") group — there the default assumption that every group consumed
+     * its full {@code maxTargets} would shift the later groups' slices onto the wrong targets. Empty
+     * means "unknown", which keeps the positional slicing every ordinary multi-target spell uses.
+     */
+    @Setter private List<Integer> targetGroupSizes = List.of();
+    /**
      * Flat target positions that became illegal while this entry was resolving. Keeping positions
      * instead of removing IDs preserves target-group boundaries when an earlier target becomes
      * illegal (CR 608.2b).
@@ -603,7 +611,10 @@ public class StackEntry {
             if (!isTargetGroupActive(g.getIndex())) {
                 continue;
             }
-            int size = Math.min(Math.max(g.getMaxTargets(), 0), targetIds.size() - consumed);
+            int declared = g.getIndex() < targetGroupSizes.size()
+                    ? targetGroupSizes.get(g.getIndex())
+                    : g.getMaxTargets();
+            int size = Math.min(Math.max(declared, 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
                 List<UUID> legalTargets = new ArrayList<>(size);
                 for (int i = consumed; i < consumed + size; i++) {

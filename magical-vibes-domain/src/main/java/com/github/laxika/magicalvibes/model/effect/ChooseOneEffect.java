@@ -119,10 +119,15 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
      * ({@code 1, 1, false}). Pass {@code xScaledTargets=true} with {@code minTargets=0} for
      * "up to X target …" modes (Profane Command's fear mode) — the paid X bounds the count via
      * {@link com.github.laxika.magicalvibes.model.Card#targetX}.
+     * <p>
+     * {@code manaCost} is a per-mode total mana cost that replaces the card's printed cost when this
+     * mode is chosen. It is {@code null} for ordinary modals (every mode costs the same) and is used
+     * by split cards with fuse (CR 709.3 / CR 702.102c): each half is a mode paying that half's cost
+     * and the fuse mode pays both halves combined.
      */
     public record ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
                                   List<TargetFilter> targetFilters, int minTargets, int maxTargets,
-                                  boolean xScaledTargets) {
+                                  boolean xScaledTargets, String manaCost) {
         public ChooseOneOption {
             if (minTargets < 0) {
                 throw new IllegalArgumentException("minTargets must be >= 0");
@@ -133,24 +138,24 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         }
 
         public ChooseOneOption(String label, CardEffect effect) {
-            this(label, List.of(effect), null, null, 1, 1, false);
+            this(label, List.of(effect), null, null, 1, 1, false, null);
         }
 
         public ChooseOneOption(String label, CardEffect effect, TargetFilter targetFilter) {
-            this(label, List.of(effect), targetFilter, null, 1, 1, false);
+            this(label, List.of(effect), targetFilter, null, 1, 1, false, null);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects) {
-            this(label, effects, null, null, 1, 1, false);
+            this(label, effects, null, null, 1, 1, false, null);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter) {
-            this(label, effects, targetFilter, null, 1, 1, false);
+            this(label, effects, targetFilter, null, 1, 1, false, null);
         }
 
         /** Multi-target mode: one target filter per effect, mapped positionally. */
         public ChooseOneOption(String label, List<CardEffect> effects, List<TargetFilter> targetFilters) {
-            this(label, effects, null, targetFilters, 1, 1, false);
+            this(label, effects, null, targetFilters, 1, 1, false, null);
         }
 
         /**
@@ -158,7 +163,13 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
          * {@code cap} is only a sanity ceiling; the effective max is {@code min(X, cap)}.
          */
         public static ChooseOneOption upToXTargets(String label, CardEffect effect, TargetFilter filter, int cap) {
-            return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true);
+            return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true, null);
+        }
+
+        /** This mode with its own total mana cost (split-card half / fuse mode). */
+        public ChooseOneOption withManaCost(String manaCost) {
+            return new ChooseOneOption(label, effects, targetFilter, targetFilters,
+                    minTargets, maxTargets, xScaledTargets, manaCost);
         }
 
         /** Backward-compatible accessor for single-effect modes (returns the first effect). */

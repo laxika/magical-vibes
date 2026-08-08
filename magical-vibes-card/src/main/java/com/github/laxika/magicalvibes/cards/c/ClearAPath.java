@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "136")
+@CardRegistration(set = "DGM", collectorNumber = "32")
 public class ClearAPath extends Card {
 
     public ClearAPath() {

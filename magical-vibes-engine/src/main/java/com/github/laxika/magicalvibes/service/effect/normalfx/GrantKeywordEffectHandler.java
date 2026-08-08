@@ -54,12 +54,18 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
+                // Layer-6 floating effect as well as the legacy bucket, so a grant resolving after
+                // an "all creatures you control lose all abilities" on the same entry survives it
+                // (CR 613.7 timestamp order) — Dragonshift overloaded.
                 bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                        entry.getCard().getName(), null, entry.getControllerId(), grant,
+                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
                 count++;
             }
 
             String keywordNames = formatKeywords(grant.keywords());
-            
+
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count);
             return;

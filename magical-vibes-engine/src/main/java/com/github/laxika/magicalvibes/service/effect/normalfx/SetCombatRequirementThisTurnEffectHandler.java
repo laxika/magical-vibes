@@ -73,6 +73,22 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
 
                 log.info("Game {} - {} must block this turn if able", gameData.id, target.getCard().getName());
             }
+            case MUST_ATTACK_OR_BLOCK -> {
+                // A creature can only attack on its controller's turn and only block on someone
+                // else's, so "attacks or blocks this combat" leaves its controller no real choice —
+                // resolve the disjunction to whichever half is available this combat.
+                boolean controllerIsActivePlayer = gameData.activePlayerId != null
+                        && gameData.activePlayerId.equals(gameQueryService.findPermanentController(gameData, target.getId()));
+                if (controllerIsActivePlayer) {
+                    target.setMustAttackThisTurn(true);
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " attacks this combat if able."));
+                } else {
+                    target.setMustBlockThisTurnIfAble(true);
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " blocks this combat if able."));
+                }
+                log.info("Game {} - {} attacks or blocks this combat if able (attacking: {})",
+                        gameData.id, target.getCard().getName(), controllerIsActivePlayer);
+            }
             case MUST_BE_BLOCKED -> {
                 target.setMustBeBlockedThisTurn(true);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must be blocked this turn if able."));

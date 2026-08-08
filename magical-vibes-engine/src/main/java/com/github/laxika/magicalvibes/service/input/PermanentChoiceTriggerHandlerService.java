@@ -1203,10 +1203,13 @@ public class PermanentChoiceTriggerHandlerService {
         List<UUID> updatedChosen;
         int nextGroupIdx;
         int nextChosenInGroup;
+        List<Integer> updatedGroupSizes = etbMtt.groupSizes();
         if (groupDone) {
             updatedChosen = etbMtt.chosenTargetsSoFar();
             nextGroupIdx = groupIdx + 1;
             nextChosenInGroup = 0;
+            updatedGroupSizes = new ArrayList<>(updatedGroupSizes);
+            updatedGroupSizes.add(chosenInGroup);
             log.info("Game {} - {} ETB multi-target trigger ended group {} after {} target(s)",
                     gameData.id, etbMtt.sourceCard().getName(), groupIdx, chosenInGroup);
         } else {
@@ -1226,7 +1229,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
-                updatedChosen, nextGroupIdx, nextChosenInGroup));
+                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes)));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 

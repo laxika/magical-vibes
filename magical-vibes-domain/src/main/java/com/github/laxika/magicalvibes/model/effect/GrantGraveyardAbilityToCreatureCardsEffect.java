@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Static effect that grants a graveyard-activated ability to every creature card in its controller's
@@ -17,7 +18,7 @@ public record GrantGraveyardAbilityToCreatureCardsEffect(ActivatedAbility abilit
         implements GraveyardAbilityGrantingEffect {
 
     @Override
-    public ActivatedAbility grantedGraveyardAbility() {
+    public ActivatedAbility grantedGraveyardAbilityFor(Card card) {
         return ability;
     }
 }

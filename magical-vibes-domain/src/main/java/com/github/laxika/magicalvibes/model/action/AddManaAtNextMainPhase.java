@@ -15,6 +15,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  *
  * <p>When {@code thisTurnOnly} is true, the delayed action is cleared at cleanup if it never fired
  * ("at the beginning of your next main phase this turn").
+ *
+ * <p>When {@code anyColorCombination} is true the mana is "in any combination of colors" — the
+ * controller picks a color per mana and {@code color} is ignored (Plasm Capture). When
+ * {@code firstMainOnly} is true the trigger fires only on a precombat main phase ("your next
+ * <em>first</em> main phase"), not on a postcombat main.
  */
 public record AddManaAtNextMainPhase(
         UUID controllerId,
@@ -22,10 +27,17 @@ public record AddManaAtNextMainPhase(
         int amount,
         Card sourceCard,
         boolean optional,
-        boolean thisTurnOnly) implements DelayedAction {
+        boolean thisTurnOnly,
+        boolean anyColorCombination,
+        boolean firstMainOnly) implements DelayedAction {
 
     /** Scattering Stroke-style: optional, persists until the controller's next main phase. */
     public AddManaAtNextMainPhase(UUID controllerId, ManaColor color, int amount, Card sourceCard) {
-        this(controllerId, color, amount, sourceCard, true, false);
+        this(controllerId, color, amount, sourceCard, true, false, false, false);
+    }
+
+    public AddManaAtNextMainPhase(UUID controllerId, ManaColor color, int amount, Card sourceCard,
+                                  boolean optional, boolean thisTurnOnly) {
+        this(controllerId, color, amount, sourceCard, optional, thisTurnOnly, false, false);
     }
 }

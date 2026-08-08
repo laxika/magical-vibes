@@ -27,6 +27,9 @@ public record LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration)
         if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
             return TargetSpec.benign(TargetPredicates.player());
         }
+        if (scope == GrantScope.OWN_CREATURES) {
+            return TargetSpec.NONE;
+        }
         return duration == EffectDuration.UNTIL_END_OF_TURN
                 ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }

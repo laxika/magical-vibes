@@ -527,10 +527,13 @@ public class GraveyardReturnSupport {
                 graveyard.remove(randomCard);
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
 
-                if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                    gameData.addCardToHand(controllerId, randomCard);
-                } else {
+                boolean toBattlefield = effect.battlefieldIfCreatureElseHand()
+                        ? randomCard.hasType(CardType.CREATURE)
+                        : effect.destination() != GraveyardChoiceDestination.HAND;
+                if (toBattlefield) {
                     putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+                } else {
+                    gameData.addCardToHand(controllerId, randomCard);
                 }
                 returnedCards.add(randomCard);
             }
@@ -539,7 +542,9 @@ public class GraveyardReturnSupport {
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
+        String destText = effect.battlefieldIfCreatureElseHand()
+                ? "hand or the battlefield"
+                : effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
         GameLog.Builder builder = GameLog.builder().text(playerName + " returns ");
         appendCardList(builder, returnedCards);
         builder.text(" at random from graveyard to " + destText + ".");

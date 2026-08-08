@@ -592,6 +592,38 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    /**
+     * Blaze Commando: "Whenever an instant or sorcery spell you control deals damage, ...". The
+     * source/controller gating is done by the dispatcher; here the watcher permanent simply queues
+     * its ability once for the batched damage event.
+     */
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    private boolean handleAllyInstantOrSorceryDealsDamage(TriggerMatchContext match, CardEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
+
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                watcher.getId());
+        // Snapshot the damage dealt so an EventValue amount can read it back at resolution.
+        entry.setEventValue(sd.totalDamage());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE trigger fires ({} damage from {})",
+                gameData.id, watcher.getCard().getName(), sd.totalDamage(), sd.sourceCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)
     private boolean handleSelfDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;

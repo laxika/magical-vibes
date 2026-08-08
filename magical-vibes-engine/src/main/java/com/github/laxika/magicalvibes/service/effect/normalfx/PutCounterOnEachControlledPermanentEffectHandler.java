@@ -56,7 +56,9 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             if (amount <= 0) return;
         }
 
-        FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
+        FilterContext ctx = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentSnapshot(source);
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
         List<Permanent> minusOneTargets = new ArrayList<>();

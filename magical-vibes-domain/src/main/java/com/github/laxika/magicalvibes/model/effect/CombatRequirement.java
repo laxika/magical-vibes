@@ -25,6 +25,14 @@ public enum CombatRequirement {
      */
     MUST_BLOCK,
 
+    /**
+     * "Target creature attacks or blocks this combat if able" (Boros Battleshaper). A player never
+     * both attacks and blocks in the same combat, so the disjunction collapses at resolution: the
+     * creature is stamped {@link #MUST_ATTACK} when its controller is the active player (blocking is
+     * not available to it this combat) and {@link #MUST_BLOCK} otherwise.
+     */
+    MUST_ATTACK_OR_BLOCK,
+
     /** "Target creature must be blocked this turn if able" (Emergent Growth). */
     MUST_BE_BLOCKED,
 

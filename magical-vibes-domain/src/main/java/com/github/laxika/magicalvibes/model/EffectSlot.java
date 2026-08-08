@@ -2,6 +2,13 @@ package com.github.laxika.magicalvibes.model;
 
 public enum EffectSlot {
     ON_TAP,
+    /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
+     *  mana-ability tap path in {@code AbilityActivationService}, so unlike
+     *  {@link #ON_ALLY_PERMANENT_BECOMES_TAPPED} it does not fire when the permanent is tapped to
+     *  attack or by an opponent's effect. Being a mana-ability trigger it is deferred into
+     *  {@code GameData.pendingManaAbilityTriggers} until a player would next receive priority
+     *  (CR 603.3). */
+    ON_SELF_TAPPED_FOR_MANA,
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
@@ -509,6 +516,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
+     *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
+     *  lands (no counter, no trigger). Used by Renegade Krasis. */
+    ON_SELF_EVOLVES,
     /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
      *  mirror of {@link #ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT}, restricted to the controller's own
      *  placements ("Whenever you put one or more -1/-1 counters on this creature"). Fired once per
@@ -666,6 +677,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (sourcePermanentId), so self-scoped effects like {@code GrantKeywordEffect(FIRST_STRIKE, SELF)}
      *  apply to the blocker. Checked in {@code CombatBlockService}. Used by Lairwatch Giant. */
     ON_BLOCKS_MULTIPLE_CREATURES,
+    /** Global watcher slot: triggers whenever any creature blocks, whoever controls it ("Whenever a
+     *  creature blocks"). Fires once per blocking creature during the declare-blockers step, even if
+     *  that creature blocks several attackers, and is checked on every battlefield. The blocking
+     *  creature is baked in as the trigger's (non-targeting) {@code targetId}, so
+     *  {@code LoseLifeEffect(N, TARGET_PERMANENT_CONTROLLER)} hits "that creature's controller".
+     *  Checked in {@code CombatBlockService}. Used by Carnage Gladiator. */
+    ON_ANY_CREATURE_BLOCKS,
     /** Triggers when a creature is championed with this permanent (i.e. exiled by this permanent's
      *  Champion ability). Fired from {@code PermanentChoiceBattlefieldHandlerService.handleChampionCreature}
      *  right after the championed creature is exiled. Effects that target a player are routed through
@@ -746,6 +764,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code EffectResolutionService} flushes). Queued via
      *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Justice. */
     ON_ANY_SOURCE_DEALS_DAMAGE,
+    /** Triggers whenever an instant or sorcery spell its controller controls deals damage — "Whenever
+     *  an instant or sorcery spell you control deals damage, ...". Fires once per damage event no
+     *  matter how many objects the spell damaged simultaneously (all of it is one batched event), and
+     *  the summed total is snapshotted onto the queued ability's {@code eventValue}. Shares the
+     *  batched non-combat choke point that drives {@link #ON_ANY_SOURCE_DEALS_DAMAGE}
+     *  ({@code DamageSupport} accumulates, {@code EffectResolutionService} flushes) via
+     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Blaze Commando. */
+    ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE,
     /** Triggers whenever <em>this permanent itself</em> deals damage (combat or non-combat) to
      *  anything — a creature, a player, or a planeswalker. Unlike {@link #ON_ANY_SOURCE_DEALS_DAMAGE}
      *  (a global watcher that reacts to every source), this fires only for the damage the source keyed
@@ -815,5 +841,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  creature paths) via
      *  {@code TriggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers}.
      *  Used by Mangara's Equity. */
-    ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT
+    ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+    /** Triggers whenever a creature deals combat damage to this permanent's controller — "Whenever a
+     *  creature deals combat damage to you, ...". Fires on the watcher permanent, once per damaging
+     *  creature per combat damage step, from
+     *  {@code TriggerCollectionService.checkDamageDealtToControllerTriggers} (combat branch only).
+     *  Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU} (immediate, permanent sources of any kind,
+     *  combat or not) this slot is creature- and combat-only and puts a real triggered ability on the
+     *  stack whose {@code targetId} is the damaging creature, so {@code DestroyTargetPermanentEffect}
+     *  resolves as "destroy that creature" without targeting. Used by Teysa, Envoy of Ghosts. */
+    ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU
 }

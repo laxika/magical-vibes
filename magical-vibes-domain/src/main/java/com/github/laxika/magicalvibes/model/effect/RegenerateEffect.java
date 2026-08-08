@@ -29,7 +29,7 @@ public record RegenerateEffect(
         boolean putMinusOneCounterOnRegenerate,
         boolean regeneratesEnchantedCreature,
         boolean gainControlOnRegenerate
-) implements RegenerationEffect {
+) implements RegenerationEffect, AttachedPermanentSelfTargetingEffect {
 
     public RegenerateEffect() {
         this(false, false, false, false, false);

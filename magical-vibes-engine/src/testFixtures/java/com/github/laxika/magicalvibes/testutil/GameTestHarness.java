@@ -775,6 +775,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, modeIndex, null, null, targetIds, List.of());
     }
 
+    /** Cast a modal sorcery, choosing the mode at {@code modeIndex} and passing multiple targets. */
+    public void castModalSorcery(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, modeIndex, null, null, targetIds, List.of());
+    }
+
     /** Cast a modal sorcery that chooses multiple modes (e.g. Austere Command). */
     public void castSorceryWithModes(Player player, int cardIndex, int choicesRequired, int... modeIndices) {
         ensurePriority(player);

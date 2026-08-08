@@ -24,6 +24,14 @@ public enum GraveyardExileScope {
     /** Exiles the ENTIRE graveyard of a TARGET player. */
     TARGET_PLAYER_ENTIRE,
 
+    /**
+     * Exiles ALL cards matching the filter from a TARGET player's graveyard (Crypt Incursion).
+     * A {@code null} filter exiles the whole graveyard. {@code count} is unused; the number of
+     * cards exiled this way lands on the entry's event value for a following {@code EventValue}
+     * reader.
+     */
+    TARGET_PLAYER_ALL_MATCHING,
+
     /** Exiles all cards from EVERY player's graveyard. */
     ALL_PLAYERS,
 

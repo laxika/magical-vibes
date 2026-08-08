@@ -112,6 +112,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
+| `PermanentManaValueAtMostXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null) | `xValue` |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power | `gameData` + `sourceCardId` |
 | `PermanentPowerAtMostSourcePowerPredicate` | `()` | creatures with power <= source permanent's effective power (Earthshaker Khenra's ETB "target creature with power less than or equal to this creature's power" — source-relative so a 4/4 Eternalize token can target up to power 4) | `gameData` + `sourceCardId` |
 | `PermanentPowerAtMostSourceCountersPredicate` | `(CounterType)` | creatures with power <= the number of counters of that type on the source permanent (Legacy's Allure: "target creature with power less than or equal to the number of treasure counters on this enchantment"). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone, so it works for abilities that sacrifice the source as a cost (CR 608.2b) | `gameData` + `sourceCardId` |
@@ -137,6 +138,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches | FilterContext needs |
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
+| `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
 | `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence) | none |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |

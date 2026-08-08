@@ -1029,6 +1029,9 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        // Graveyard cards whose "whenever one or more creatures you control deal combat damage"
+        // trigger has already fired for this damage event — such a trigger fires only once no
+        // matter how many creatures connected.
         for (var entry : combatDamageDealtToPlayer.entrySet()) {
             Permanent creature = entry.getKey();
             int damageDealt = entry.getValue();
@@ -1367,7 +1370,8 @@ public class CombatDamageService {
      * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
      * combat damage to a player, put a +1/+1 counter on it."
      */
-    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId, int damageDealt,
+    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
+                                                               UUID defenderId, int damageDealt,
                                                                Set<UUID> firedBatchedAllyTriggerSources) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (attackerBattlefield == null) return;
@@ -1418,6 +1422,9 @@ public class CombatDamageService {
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
+                        continue;
+                    }
+                    if (trigger.oneOrMoreDealers() && !firedBatchedAllyTriggerSources.add(card.getId())) {
                         continue;
                     }
                     StackEntry se = new StackEntry(

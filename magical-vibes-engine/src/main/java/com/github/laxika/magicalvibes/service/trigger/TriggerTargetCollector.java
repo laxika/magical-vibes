@@ -81,14 +81,19 @@ public class TriggerTargetCollector {
      * @param useEffectTargetPredicate when {@code true}, effects' own targeting predicate (read via
      *                                 {@code EffectResolution.targetPredicateOf}) further filters
      *                                 permanent candidates (in addition to the card-level target
-     *                                 filter). Used by end-step triggers.
+     *                                 filter). Used by end-step and death triggers — a death
+     *                                 trigger granted by another card (Showstopper's "creatures you
+     *                                 control gain 'when this creature dies, it deals 2 damage to
+     *                                 target creature an opponent controls'") has no card-level
+     *                                 filter to carry its restriction, since the dying creature's
+     *                                 card is not the card that granted the ability.
      */
     public record Options(boolean creaturesOnly,
                           boolean supportControlledFilter,
                           boolean unwrapConditional,
                           boolean useEffectTargetPredicate) {
 
-        public static final Options DEATH = new Options(true, true, false, false);
+        public static final Options DEATH = new Options(true, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, false, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);

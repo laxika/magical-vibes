@@ -215,6 +215,7 @@ public class TurnCleanupService {
         gameData.pendingSourceDamageForReflection.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
@@ -229,6 +230,7 @@ public class TurnCleanupService {
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
         gameData.drawStepFirstDrawTaken.clear();

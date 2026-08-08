@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActi
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -545,16 +546,22 @@ public class GameQueryService {
      * Computes the graveyard-activated abilities granted to creature cards owned by the given player
      * by static effects on that player's battlefield (e.g. Sedris, the Traitor King grants unearth
      * {2}{B} to each creature card in its controller's graveyard). Scans the owner's battlefield for
-     * permanents carrying {@link GrantGraveyardAbilityToCreatureCardsEffect}.
+     * permanents carrying {@link GraveyardAbilityGrantingEffect}. The abilities are computed for
+     * {@code card} because a grant may derive its cost from the card (Varolz, the Scar-Striped grants
+     * scavenge for a cost equal to the card's mana cost); a grant that does not apply is skipped.
      */
-    public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCreatureCard(GameData gameData, UUID ownerId) {
+    public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCreatureCard(GameData gameData, UUID ownerId,
+                                                                                      Card card) {
         List<ActivatedAbility> result = new ArrayList<>();
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) return result;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GraveyardAbilityGrantingEffect g) {
-                    result.add(g.grantedGraveyardAbility());
+                    ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
+                    if (granted != null) {
+                        result.add(granted);
+                    }
                 }
             }
         }
@@ -4425,6 +4432,29 @@ public class GameQueryService {
         if (gameData.allDamagePreventionPredicates.isEmpty()) return false;
         return gameData.allDamagePreventionPredicates.stream()
                 .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, p));
+    }
+
+    /**
+     * Emmara Tandris: returns {@code true} when the given creature's controller controls a permanent
+     * carrying a {@link PreventAllDamageToCreaturesYouControlEffect} whose filter the creature matches
+     * (a {@code null} filter covers every creature that player controls). Both combat and noncombat
+     * damage dealt to such a creature is fully prevented by the caller.
+     */
+    public boolean isAllDamageToControlledCreaturePrevented(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PreventAllDamageToCreaturesYouControlEffect prevent
+                        && (prevent.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, creature, prevent.filter()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

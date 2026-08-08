@@ -492,9 +492,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * signals "done with this group" — only valid once the group's minimum has been met.
      * {@code sourcePermanentId} is null for cast-time (ON_SELF_CAST) triggers.
      */
+    /**
+     * Slot-by-slot target walk shared by ETB / self-cast / attack / beginning-of-combat triggers.
+     *
+     * <p>{@code groupSizes} records how many targets each already-finished group actually took, so a
+     * declined "up to one" group contributes a 0 rather than silently shifting the later groups'
+     * slices of the flat target list (see {@code StackEntry.targetsForGroup}). The legacy constructor
+     * leaves it empty, which keeps the positional {@code maxTargets} slicing.</p>
+     */
     record ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
-                                      int currentGroupIndex, int chosenInCurrentGroup) implements PermanentChoiceContext {}
+                                      int currentGroupIndex, int chosenInCurrentGroup,
+                                      List<Integer> groupSizes) implements PermanentChoiceContext {
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, List.of());
+        }
+    }
 
     /** Saga chapter ability that targets a permanent (e.g. Phyrexian Scriptures chapter I).
      *  {@code targetFilters} restricts valid targets (e.g. "creature an opponent controls"); null/empty = any creature. */

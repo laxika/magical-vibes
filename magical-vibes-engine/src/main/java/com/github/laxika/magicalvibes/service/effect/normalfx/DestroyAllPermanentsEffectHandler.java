@@ -50,7 +50,10 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 .withSourceControllerId(entry.getControllerId())
                 // CR 608.2b: filters that ask about the source (e.g. "creatures blocking it") still
                 // need it after a sacrifice cost removed it from the battlefield.
-                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                // X-relative filters ("each nonland permanent with mana value X or less") read the
+                // X paid when the spell was cast (CR 601.2b).
+                .withXValue(entry.getXValue());
 
         // "Destroy all other creatures" (Martial Coup): spare permanents this same resolution just
         // created, so the Soldier tokens made moments earlier survive the wipe.

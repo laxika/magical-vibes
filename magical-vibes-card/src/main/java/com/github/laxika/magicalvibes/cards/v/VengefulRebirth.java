@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.RecordReturnedGraveyardCardValueEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnedGraveyardCardValue;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,7 +32,7 @@ public class VengefulRebirth extends Card {
 
         // If you return a nonland card to your hand this way, record its mana value as the event
         // value. Unbound so the resolver keeps targetId on the returned graveyard card.
-        addEffect(EffectSlot.SPELL, new RecordReturnedGraveyardCardManaValueEffect());
+        addEffect(EffectSlot.SPELL, new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.NONLAND_MANA_VALUE));
 
         // ... Vengeful Rebirth deals damage equal to that card's mana value to any target. Bound to
         // the any-target group (group 0) so the position accepts players and the AI reads it as

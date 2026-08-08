@@ -171,6 +171,10 @@ import lombok.Builder;
  *                             {@link RemoveLinkedPermanentEffect} trigger can still name "that creature"
  *                             after the ability that put it there has finished; only meaningful on the
  *                             pre-targeted {@code BATTLEFIELD} path
+ * @param battlefieldIfCreatureElseHand {@code true} to route each returned card per its type — creature
+ *                             cards go to the battlefield, everything else goes to the controller's hand
+ *                             (e.g. Deadbridge Chant); only honoured on the {@link #returnAtRandom} path,
+ *                             where it overrides {@link #destination}
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -214,7 +218,8 @@ public record ReturnCardFromGraveyardEffect(
         int plusOneCounterCount,
         CounterType enterWithCounter,
         int enterWithCounterCount,
-        boolean linkToSource
+        boolean linkToSource,
+        boolean battlefieldIfCreatureElseHand
 ) implements CardEffect {
 
     /**

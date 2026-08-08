@@ -226,7 +226,7 @@ public class TargetPolarityClassifier {
         // punisher aimed at an opponent's creature, while the "must BE blocked" lures help the AI's own.
         if (effect instanceof SetCombatRequirementThisTurnEffect combatRequirement) {
             return switch (combatRequirement.requirement()) {
-                case MUST_ATTACK, MUST_ATTACK_EFFECT_CONTROLLER, MUST_BLOCK -> TargetPolarity.HARMFUL;
+                case MUST_ATTACK, MUST_ATTACK_EFFECT_CONTROLLER, MUST_BLOCK, MUST_ATTACK_OR_BLOCK -> TargetPolarity.HARMFUL;
                 case MUST_BE_BLOCKED, MUST_BE_BLOCKED_BY_ALL -> TargetPolarity.BENEFICIAL;
             };
         }

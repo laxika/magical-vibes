@@ -103,12 +103,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
@@ -552,6 +554,14 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= creatureCount;
             }
+            case PermanentManaValueAtMostXPredicate ignored -> {
+                // Before X is known (target enumeration / static filters) treat every permanent as
+                // potentially matching, since X can be any non-negative integer.
+                if (filterContext == null || filterContext.xValue() == null) {
+                    yield true;
+                }
+                yield permanent.getCard().getManaValue() <= filterContext.xValue();
+            }
             case PermanentManaValueEqualsXPredicate ignored -> {
                 // When xValue is null (e.g. during valid-target checks before X is chosen),
                 // any creature is potentially valid since X can be any non-negative integer.
@@ -691,6 +701,10 @@ public class PredicateEvaluationService {
             }
             case PermanentNotPredicate notPredicate ->
                     !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
+            case PermanentIsSourcePermanentPredicate ignored -> {
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                yield sourcePermanent != null && sourcePermanent.getId().equals(permanent.getId());
+            }
             case PermanentIsSourceCardPredicate ignored ->
                     sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
             case PermanentIsSpecificPermanentPredicate specific ->

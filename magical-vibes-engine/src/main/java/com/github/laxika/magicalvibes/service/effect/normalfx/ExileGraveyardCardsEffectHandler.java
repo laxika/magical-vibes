@@ -53,6 +53,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetAnyGraveyardCards(gameData, entry, e);
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
             case TARGET_PLAYER_ENTIRE -> resolveTargetPlayerEntire(gameData, entry);
+            case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry);
             case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry);
             case EACH_OPPONENT_KEEP -> resolveEachOpponentKeep(gameData, entry, e);
@@ -261,6 +262,45 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
+    }
+
+    /**
+     * "Exile all [matching] cards from target player's graveyard" (Crypt Incursion). The number of
+     * cards exiled this way is recorded as the entry's event value so a following effect can read
+     * "for each card exiled this way" via {@code EventValue}.
+     */
+    private void resolveTargetPlayerAllMatching(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
+        UUID targetPlayerId = entry.getTargetId();
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        List<Card> toExile = new ArrayList<>();
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (e.filter() == null || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+                    toExile.add(card);
+                }
+            }
+        }
+
+        entry.setEventValue(toExile.size());
+
+        if (toExile.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
+            return;
+        }
+
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        for (Card card : toExile) {
+            exileService.exileCard(gameData, targetPlayerId, card);
+        }
+
+        GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
+        appendCardList(builder, toExile);
+        builder.text(" from their graveyard.");
+        gameLogService.append(gameData, builder.build());
+        log.info("Game {} - {} cards exiled from {}'s graveyard", gameData.id, toExile.size(), playerName);
     }
 
     private void resolveAllGraveyards(GameData gameData, StackEntry entry) {

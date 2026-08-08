@@ -36,7 +36,7 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
         var e = (RemoveAllCountersEffect) effect;
         UUID subjectId = e.subject() == CounterRemovalSubject.SOURCE && entry.getSourcePermanentId() != null
                 ? entry.getSourcePermanentId()
-                : entry.getTargetId();
+                : targetOf(entry, effect);
         Permanent subject = gameQueryService.findPermanentById(gameData, subjectId);
         if (subject == null) {
             entry.setEventValue(0);
@@ -51,5 +51,15 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
             String counterName = permanentCounterSupport.counterTypeName(e.counterType());
             gameLogService.append(gameData, GameLog.builder().card(subject.getCard()).text(" removes all its " + counterName + " counters (" + removed + ").").build());
         }
+    }
+
+    /**
+     * The targeted subject: this effect's own target group when it is bound to one (Give // Take's
+     * fuse mode chooses two creatures, so the flat list position matters), otherwise the entry's
+     * lone target.
+     */
+    private static UUID targetOf(StackEntry entry, CardEffect effect) {
+        var groupTargets = entry.targetsForEffect(effect);
+        return groupTargets.isEmpty() ? entry.getTargetId() : groupTargets.getFirst();
     }
 }

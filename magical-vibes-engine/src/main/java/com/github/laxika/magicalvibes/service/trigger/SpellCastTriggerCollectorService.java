@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.PossibilityStormCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PossibilityStormExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -131,6 +133,23 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new KnowledgePoolExileAndCastEffect(
+                        sc.spellCard().getId(), match.permanent().getId(), sc.castingPlayerId())))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = PossibilityStormCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handlePossibilityStormCast(TriggerMatchContext match,
+            PossibilityStormCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) return false;
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new PossibilityStormExileAndCastEffect(
                         sc.spellCard().getId(), match.permanent().getId(), sc.castingPlayerId())))
         ));
         return true;
@@ -403,6 +422,10 @@ public class SpellCastTriggerCollectorService {
             CopyControllerCastSpellOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
 
+        if (trigger.requiredCastZone() != null && sc.castZone() != trigger.requiredCastZone()) {
+            return false;
+        }
+
         if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) {
             return false;
@@ -558,7 +581,7 @@ public class SpellCastTriggerCollectorService {
     private boolean handleCastFromGraveyardTrigger(TriggerMatchContext match,
             CastFromGraveyardTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (sc.castFromHand()) return false;
+        if (sc.castZone() != Zone.GRAVEYARD) return false;
 
         boolean needsAnyTarget = trigger.resolvedEffects().stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER) || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));

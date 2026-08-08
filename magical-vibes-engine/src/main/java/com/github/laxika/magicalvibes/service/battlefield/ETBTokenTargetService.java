@@ -151,7 +151,8 @@ public class ETBTokenTargetService {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                        pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -165,7 +166,8 @@ public class ETBTokenTargetService {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                        pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -220,7 +222,8 @@ public class ETBTokenTargetService {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                        pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -263,10 +266,38 @@ public class ETBTokenTargetService {
                 List.of(),
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
+        etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         gameData.stack.add(etbEntry);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",
                 gameData.id, card.getName(), pending.chosenTargetsSoFar().size());
+    }
+
+    /**
+     * Appends the number of targets a just-finished group actually took to the running per-group
+     * tally, so a declined "up to N" group is recorded as the 0 it was rather than being assumed to
+     * have consumed its full {@code maxTargets} when the flat target list is sliced back apart.
+     *
+     * @param sizes  the tally for the groups finished so far
+     * @param size   how many targets the group that just finished took
+     * @return a new immutable tally with {@code size} appended
+     */
+    private static List<Integer> withGroupSize(List<Integer> sizes, int size) {
+        List<Integer> updated = new ArrayList<>(sizes);
+        updated.add(size);
+        return List.copyOf(updated);
+    }
+
+    /**
+     * True when the card declares more than one target group, so its targets must be walked group by
+     * group (each group has its own filter and its own bound effects) even when no single group takes
+     * more than one target — Boros Battleshaper's two independent "up to one target creature" groups.
+     *
+     * @param card the source card whose target groups to inspect
+     * @return whether slot-by-slot walking is required for multiple groups
+     */
+    public boolean hasMultipleTargetGroups(Card card) {
+        return card.getSpellTargets().size() > 1;
     }
 
     public boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {

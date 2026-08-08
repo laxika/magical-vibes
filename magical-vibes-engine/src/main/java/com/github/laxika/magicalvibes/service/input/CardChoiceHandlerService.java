@@ -515,13 +515,17 @@ public class CardChoiceHandlerService {
             // No second-band match — fall through and discard only what was already chosen.
         }
 
-        if (remainingChoices > 0 && !targetHand.isEmpty()) {
-            // More cards to choose — update valid indices and prompt again
-            List<Integer> newValidIndices = new ArrayList<>();
-            for (int i = 0; i < targetHand.size(); i++) {
+        // A choosableFilter (Reap Intellect) keeps its restriction on every follow-up pick.
+        CardPredicate choosableFilter = revealedHandChoice.choosableFilter();
+        List<Integer> newValidIndices = new ArrayList<>();
+        for (int i = 0; i < targetHand.size(); i++) {
+            if (choosableFilter == null
+                    || predicateEvaluationService.matchesCardPredicate(targetHand.get(i), choosableFilter, null)) {
                 newValidIndices.add(i);
             }
+        }
 
+        if (remainingChoices > 0 && !newValidIndices.isEmpty()) {
             String prompt;
             if (discardMode) {
                 prompt = "Choose another card to discard.";
@@ -533,132 +537,198 @@ public class CardChoiceHandlerService {
             // Matching the legacy mid-flow re-begin, sourcePermanentId is not carried across picks.
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
-                    discardMode, exileMode, chosenCards, null, prompt, false, false));
+                    discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
+                    false, null, null, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames()));
         } else {
-            // All cards chosen
-            gameData.interaction.clearAwaitingInput();
-
-            if (discardMode) {
-                // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.
-                if (revealedHandChoice.gainLifeToChooserEqualToChosenToughness()) {
-                    int toughness = chosenCards.stream()
-                            .mapToInt(c -> c.getToughness() != null ? c.getToughness() : 0)
-                            .sum();
-                    lifeSupport.applyGainLife(gameData, player.getId(), toughness);
-                }
-
-                // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
-                List<Card> replacedCards = new ArrayList<>();
-                for (Card discarded : chosenCards) {
-                    if (hasEnterBattlefieldOnDiscardEffect(discarded) && gameData.discardCausedByOpponent) {
-                        Permanent permanent = new Permanent(discarded);
-                        battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
-                        replacedCards.add(discarded);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                targetName + " discards ", discarded, " — it enters the battlefield instead."));
-                        log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
-                                gameData.id, targetName, discarded.getName());
-                    } else {
-                        graveyardService.discardCard(gameData, targetPlayerId, discarded);
-                    }
-                }
-
-                List<Card> normallyDiscarded = chosenCards.stream()
-                        .filter(c -> !replacedCards.contains(c))
-                        .toList();
-                if (!normallyDiscarded.isEmpty()) {
-                    String cardNames = String.join(", ", normallyDiscarded.stream().map(Card::getName).toList());
-                    gameLogService.append(gameData,
-                            appendCards(GameLog.builder().text(targetName + " discards "), normallyDiscarded)
-                                    .text(".").build());
-                    log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
-                }
-
-                for (Card discarded : chosenCards) {
-                    triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
-                }
-
-                for (Card replaced : replacedCards) {
-                    if (replaced.hasType(CardType.CREATURE)) {
-                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
-                    }
-                }
-            } else if (exileMode) {
-                // Exile chosen cards
-                for (Card exiled : chosenCards) {
-                    exileService.exileCard(gameData, targetPlayerId, exiled);
-                }
-
-                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-                gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(player.getUsername() + " exiles "), chosenCards)
-                                .text(" from " + targetName + "'s hand.").build());
-                log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
-
-                // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
-                UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
-                if (sourcePermanentId != null) {
-                    for (Card exiled : chosenCards) {
-                        gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
-                                new PendingExileReturn(exiled, targetPlayerId, false, true));
-                    }
-                }
-            } else if (bottomThenDrawMode) {
-                // Vendilion Clique: reveal chosen card, put it on the bottom of the library, then draw a card.
-                List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-                for (Card chosen : chosenCards) {
-                    deck.addLast(chosen);
-                }
-
-                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-                gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(targetName + " reveals "), chosenCards)
-                                .text(", puts it on the bottom of their library, then draws a card.").build());
-                log.info("Game {} - {} bottoms {} from {}'s hand and {} draws", gameData.id,
-                        player.getUsername(), cardNames, targetName, targetName);
-
-                drawService.resolveDrawCard(gameData, targetPlayerId);
-            } else {
-                // Put chosen cards on top of library
-                List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-
-                // Insert in reverse order so first chosen ends up on top
-                for (int i = chosenCards.size() - 1; i >= 0; i--) {
-                    deck.addFirst(chosenCards.get(i));
-                }
-
-                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-                gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(player.getUsername() + " puts "), chosenCards)
-                                .text(" on top of " + targetName + "'s library.").build());
-                log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
-            }
-
-            // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-                triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-                return;
-            }
-
-            // Resume resolving remaining effects on the same spell/ability
-            // (e.g. Thoughtseize: choose + discard a nonland card, then "you lose 2 life")
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry,
-                        gameData.pendingEffectResolutionIndex);
-            }
-
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
+    }
+
+    /**
+     * Applies the batch action of a completed {@link PendingInteraction.RevealedHandChoice} (discard
+     * / exile / bottom-then-draw / put on top of library) and resumes the interrupted resolution.
+     */
+    private void finishRevealedHandChoice(GameData gameData, Player player,
+                                          PendingInteraction.RevealedHandChoice revealedHandChoice,
+                                          List<Card> chosenCards) {
+        UUID targetPlayerId = revealedHandChoice.targetPlayerId();
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        boolean discardMode = revealedHandChoice.discardMode();
+        boolean exileMode = revealedHandChoice.exileMode();
+        boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
+
+        gameData.interaction.clearAwaitingInput();
+
+        if (discardMode) {
+            // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.
+            if (revealedHandChoice.gainLifeToChooserEqualToChosenToughness()) {
+                int toughness = chosenCards.stream()
+                        .mapToInt(c -> c.getToughness() != null ? c.getToughness() : 0)
+                        .sum();
+                lifeSupport.applyGainLife(gameData, player.getId(), toughness);
+            }
+
+            // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
+            List<Card> replacedCards = new ArrayList<>();
+            for (Card discarded : chosenCards) {
+                if (hasEnterBattlefieldOnDiscardEffect(discarded) && gameData.discardCausedByOpponent) {
+                    Permanent permanent = new Permanent(discarded);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                    replacedCards.add(discarded);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            targetName + " discards ", discarded, " — it enters the battlefield instead."));
+                    log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                            gameData.id, targetName, discarded.getName());
+                } else {
+                    graveyardService.discardCard(gameData, targetPlayerId, discarded);
+                }
+            }
+
+            List<Card> normallyDiscarded = chosenCards.stream()
+                    .filter(c -> !replacedCards.contains(c))
+                    .toList();
+            if (!normallyDiscarded.isEmpty()) {
+                String cardNames = String.join(", ", normallyDiscarded.stream().map(Card::getName).toList());
+                gameLogService.append(gameData,
+                        appendCards(GameLog.builder().text(targetName + " discards "), normallyDiscarded)
+                                .text(".").build());
+                log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+            }
+
+            for (Card discarded : chosenCards) {
+                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
+            }
+
+            for (Card replaced : replacedCards) {
+                if (replaced.hasType(CardType.CREATURE)) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
+                }
+            }
+        } else if (exileMode) {
+            // Exile chosen cards
+            for (Card exiled : chosenCards) {
+                exileService.exileCard(gameData, targetPlayerId, exiled);
+            }
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(player.getUsername() + " exiles "), chosenCards)
+                            .text(" from " + targetName + "'s hand.").build());
+            log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+
+            // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
+            UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
+            if (sourcePermanentId != null) {
+                for (Card exiled : chosenCards) {
+                    gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                            new PendingExileReturn(exiled, targetPlayerId, false, true));
+                }
+            }
+
+            if (revealedHandChoice.exileAllCopiesOfChosenNames()) {
+                exileSameNamedCopies(gameData, player, targetPlayerId, chosenCards);
+            }
+        } else if (bottomThenDrawMode) {
+            // Vendilion Clique: reveal chosen card, put it on the bottom of the library, then draw a card.
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+            for (Card chosen : chosenCards) {
+                deck.addLast(chosen);
+            }
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(targetName + " reveals "), chosenCards)
+                            .text(", puts it on the bottom of their library, then draws a card.").build());
+            log.info("Game {} - {} bottoms {} from {}'s hand and {} draws", gameData.id,
+                    player.getUsername(), cardNames, targetName, targetName);
+
+            drawService.resolveDrawCard(gameData, targetPlayerId);
+        } else {
+            // Put chosen cards on top of library
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+
+            // Insert in reverse order so first chosen ends up on top
+            for (int i = chosenCards.size() - 1; i >= 0; i--) {
+                deck.addFirst(chosenCards.get(i));
+            }
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(player.getUsername() + " puts "), chosenCards)
+                            .text(" on top of " + targetName + "'s library.").build());
+            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+        }
+
+        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+            return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        // (e.g. Thoughtseize: choose + discard a nonland card, then "you lose 2 life")
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Exiles every card sharing a name with one of {@code chosenCards} from the target's hand,
+     * graveyard, and library, then shuffles that library (Reap Intellect's follow-up search).
+     */
+    private void exileSameNamedCopies(GameData gameData, Player player, UUID targetPlayerId, List<Card> chosenCards) {
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<String> names = chosenCards.stream().map(Card::getName).distinct().toList();
+
+        int exiledCount = exileNamedCardsFromZone(gameData, targetPlayerId, gameData.playerHands.get(targetPlayerId), names);
+
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        int fromGraveyard = exileNamedCardsFromZone(gameData, targetPlayerId, graveyard, names);
+        if (fromGraveyard > 0) {
+            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        }
+        exiledCount += fromGraveyard;
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        exiledCount += exileNamedCardsFromZone(gameData, targetPlayerId, library, names);
+        if (library != null) {
+            java.util.Collections.shuffle(library);
+        }
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCount
+                + " card" + (exiledCount != 1 ? "s" : "") + " with the same name from " + targetName
+                + "'s hand, graveyard, and library. " + targetName + " shuffles their library."));
+        log.info("Game {} - {} exiled {} same-named card(s) from {}'s zones", gameData.id,
+                player.getUsername(), exiledCount, targetName);
+    }
+
+    private int exileNamedCardsFromZone(GameData gameData, UUID ownerId, List<Card> zone, List<String> names) {
+        if (zone == null) {
+            return 0;
+        }
+        List<Card> toExile = zone.stream().filter(c -> names.contains(c.getName())).toList();
+        zone.removeAll(toExile);
+        toExile.forEach(card -> exileService.exileCard(gameData, ownerId, card));
+        return toExile.size();
     }
 
     /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */
     private void handleRevealedHandChoiceDeclined(GameData gameData, Player player,
                                                   PendingInteraction.RevealedHandChoice revealedHandChoice) {
+        // "Up to X" flows that already picked something still apply the batch action for those picks.
+        if (!revealedHandChoice.chosenCards().isEmpty()) {
+            finishRevealedHandChoice(gameData, player, revealedHandChoice, revealedHandChoice.chosenCards());
+            return;
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         String targetName = gameData.playerIdToName.get(revealedHandChoice.targetPlayerId());

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -476,6 +477,13 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            // SequenceEffect splices its steps into the resolution list; each step must keep the
+            // sequence's target group (fuse halves that bundle multi-step one-target instructions).
+            case SequenceEffect e -> {
+                for (CardEffect step : e.steps()) {
+                    registerEffectTargetIndex(step, targetIndex);
+                }
+            }
             // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control
             // dies") are unwrapped to their inner effect when the trigger is serviced, so the inner
             // effect must resolve to the same declared target group — otherwise the card-level target
@@ -830,12 +838,21 @@ public class Card {
      * card itself.
      */
     public void addScavenge(String cost) {
-        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+        addGraveyardActivatedAbility(scavengeAbility(cost));
+    }
+
+    /**
+     * Builds the scavenge graveyard-activated ability for {@code cost}. Shared by {@link
+     * #addScavenge(String)} and by static effects that grant scavenge to cards in a graveyard
+     * (Varolz, the Scar-Striped grants it with a cost equal to each card's mana cost).
+     */
+    public static ActivatedAbility scavengeAbility(String cost) {
+        return new ActivatedAbility(false, cost,
                 List.of(new ExileSelfFromGraveyardCost(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourceCardPower())),
                 "Scavenge " + cost + " (" + cost + ", Exile this card from your graveyard: Put a number of "
                         + "+1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
-                TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED));
+                TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED);
     }
 
     public String getBackFaceClassName() {

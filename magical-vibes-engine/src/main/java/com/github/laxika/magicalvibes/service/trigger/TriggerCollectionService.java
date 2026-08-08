@@ -177,7 +177,17 @@ public class TriggerCollectionService {
     }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFromHand) {
-        var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castFromHand);
+        checkSpellCastTriggers(gameData, spellCard, castingPlayerId,
+                castFromHand ? Zone.HAND : Zone.GRAVEYARD);
+    }
+
+    /**
+     * Zone-carrying form: {@code castZone} is the zone the spell was cast from, so triggers that
+     * care about a specific origin (cast from a graveyard, cast from the top of a library) can tell
+     * them apart instead of sharing one "not from hand" flag.
+     */
+    public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone) {
+        var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone);
 
         // Opening hand reveal delayed triggers (Chancellor cycle)
         if (!gameData.openingHandRevealTriggers.isEmpty()
@@ -716,6 +726,11 @@ public class TriggerCollectionService {
         gameData.cardsDiscardedThisTurn.merge(discardingPlayerId, 1, Integer::sum);
         // Also remember which specific cards were discarded (cycling is a discard) so a later effect can
         // return them from the graveyard (Shadow of the Grave).
+        // Remember the mana value of the card just discarded, so a later effect of the same spell can
+        // scale off it (Blast of Genius's "damage equal to the discarded card's mana value").
+        if (discardedCard != null) {
+            gameData.lastDiscardedCardManaValue = discardedCard.getManaValue();
+        }
         if (discardedCard != null && !discardedCard.isToken()) {
             gameData.cardsDiscardedOrCycledThisTurn
                     .computeIfAbsent(discardingPlayerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -922,7 +937,9 @@ public class TriggerCollectionService {
 
         boolean hasTrigger = false;
         for (Permanent perm : damagedPlayerBattlefield) {
-            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()) {
+            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()
+                    || (isCombatDamage
+                            && !perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty())) {
                 hasTrigger = true;
                 break;
             }
@@ -931,6 +948,10 @@ public class TriggerCollectionService {
 
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent == null) return;
+
+        if (isCombatDamage) {
+            queueCreatureCombatDamageToYouTriggers(gameData, damagedPlayerId, sourcePermanent);
+        }
 
         var ctx = new TriggerContext.DamageToController(damagedPlayerId, sourcePermanentId, isCombatDamage);
 
@@ -944,6 +965,31 @@ public class TriggerCollectionService {
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Puts every {@link EffectSlot#ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU} ability on the damaged
+     * player's battlefield onto the stack when a creature dealt them combat damage. The whole slot
+     * becomes one triggered ability per watching permanent whose {@code targetId} is the damaging
+     * creature, so "destroy that creature" is expressed with {@code DestroyTargetPermanentEffect}
+     * while the ability itself does not target (CR 115.10a).
+     */
+    private void queueCreatureCombatDamageToYouTriggers(GameData gameData, UUID damagedPlayerId,
+                                                        Permanent sourceCreature) {
+        if (!gameQueryService.isCreature(gameData, sourceCreature)) return;
+
+        for (Permanent perm : new ArrayList<>(gameData.playerBattlefields.get(damagedPlayerId))) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU);
+            if (effects.isEmpty()) continue;
+
+            StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), damagedPlayerId,
+                    perm.getCard().getName() + "'s triggered ability", List.copyOf(effects),
+                    sourceCreature.getId(), perm.getId());
+            se.setNonTargeting(true);
+            gameData.stack.add(se);
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    "'s combat damage trigger goes on the stack."));
         }
     }
 
@@ -1106,6 +1152,20 @@ public class TriggerCollectionService {
             }
         });
 
+        // Blaze Commando: "whenever an instant or sorcery spell you control deals damage" — only the
+        // spell's controller's battlefield watches, and only instant/sorcery sources qualify.
+        if (sourceCard.hasType(CardType.INSTANT) || sourceCard.hasType(CardType.SORCERY)) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield != null) {
+                for (Permanent perm : List.copyOf(battlefield)) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)) {
+                        var match = new TriggerMatchContext(gameData, perm, sourceControllerId, effect);
+                        registry.dispatch(match, EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE, effect, ctx);
+                    }
+                }
+            }
+        }
+
         // Self triggers (El-Hajjâj): only the damage source's own "whenever this creature deals
         // damage" abilities fire. Keyed off the source card (not a battlefield scan) so it still
         // triggers when the source died dealing that damage.
@@ -1147,6 +1207,35 @@ public class TriggerCollectionService {
                 registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }
         }
+    }
+
+    /**
+     * Handles {@link EffectSlot#ON_SELF_TAPPED_FOR_MANA} — "Whenever you tap this permanent for
+     * mana, …" (Zhur-Taa Druid). Only the tapped permanent's own card is scanned, and only the
+     * mana-ability tap path calls this, so tapping to attack or an opponent's forced tap never
+     * triggers it. The caller defers the queued trigger like every other mana-ability trigger
+     * (CR 603.3).
+     *
+     * @param gameData        the current game state
+     * @param tappedPermanent the permanent that was just tapped for mana
+     * @param controllerId    the controller of that permanent (also the player who tapped it)
+     */
+    public void checkSelfTappedForManaTriggers(GameData gameData, Permanent tappedPermanent, UUID controllerId) {
+        List<CardEffect> effects = tappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_TAPPED_FOR_MANA);
+        if (effects.isEmpty()) return;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                tappedPermanent.getCard(),
+                controllerId,
+                tappedPermanent.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                null,
+                tappedPermanent.getId());
+        entry.setTriggeringPermanentId(tappedPermanent.getId());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(tappedPermanent.getCard()));
+        log.info("Game {} - {} triggers on being tapped for mana", gameData.id, tappedPermanent.getCard().getName());
     }
 
     public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
@@ -4619,6 +4708,12 @@ public class TriggerCollectionService {
     private void dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {
         if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
         for (CardEffect effect : perm.getCard().getEffects(slot)) {
+            var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+            registry.dispatch(match, slot, effect, ctx);
+        }
+        // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight
+        // giving other creatures you control extort) fire off the permanent that has them.
+        for (CardEffect effect : grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot)) {
             var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
             registry.dispatch(match, slot, effect, ctx);
         }

@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
@@ -202,13 +203,18 @@ public class ActivatedAbilityExecutionService {
             boolean capturesAttachedPermanent = (permanent.getCard().isAura()
                     || permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                     && abilityEffects.stream()
-                    .anyMatch(e -> (e instanceof RegenerateEffect && e.targetSpec().selfTargeting())
+                    .anyMatch(e -> (e instanceof AttachedPermanentSelfTargetingEffect && e.targetSpec().selfTargeting())
+                            || (e instanceof RegenerateEffect && e.targetSpec().selfTargeting())
                             || e.resolvesAgainstAttachedPermanent());
             if (capturesAttachedPermanent) {
                 // "Sacrifice this Aura: Regenerate enchanted creature." / "{2}: Regenerate equipped
                 // creature." / "Sacrifice this Aura: Return enchanted creature to its owner's hand."
                 // Capture the attached creature now, before a sacrifice cost removes the
                 // attachment and its attachedTo link.
+                // "Sacrifice this Aura: Regenerate enchanted creature." / "{2}: Regenerate equipped
+                // creature." / "Return this Aura to its owner's hand: Put two +1/+1 counters on
+                // enchanted creature." Capture the attached creature now, before a sacrifice or
+                // bounce cost removes the attachment and its attachedTo link.
                 effectiveTargetId = permanent.getAttachedTo();
             } else if (abilityEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting())) {
                 effectiveTargetId = permanent.getId();

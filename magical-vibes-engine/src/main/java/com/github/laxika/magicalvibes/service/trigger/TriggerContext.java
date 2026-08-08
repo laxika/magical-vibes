@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.UUID;
 
@@ -15,7 +16,21 @@ public sealed interface TriggerContext {
     /**
      * Context for spell-cast triggers (ON_ANY_PLAYER_CASTS_SPELL, ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
      */
-    record SpellCast(Card spellCard, UUID castingPlayerId, boolean castFromHand) implements TriggerContext {}
+    record SpellCast(Card spellCard, UUID castingPlayerId, Zone castZone) implements TriggerContext {
+
+        /**
+         * Legacy hand/not-hand form. {@code false} maps to {@link Zone#GRAVEYARD}, matching what the
+         * non-hand cast sites (graveyard, exile, free-cast) meant before zones were carried; the
+         * library-top cast path passes {@link Zone#LIBRARY} explicitly instead.
+         */
+        public SpellCast(Card spellCard, UUID castingPlayerId, boolean castFromHand) {
+            this(spellCard, castingPlayerId, castFromHand ? Zone.HAND : Zone.GRAVEYARD);
+        }
+
+        public boolean castFromHand() {
+            return castZone == Zone.HAND;
+        }
+    }
 
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually

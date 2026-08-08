@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseEachPlayerCas
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostExceptOnControllersTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenNameSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForMatchingSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler;
@@ -37,6 +38,7 @@ public final class CostModificationTestRegistry {
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));
         registry.register(new ReduceCastCostForMatchingSpellsEffectHandler(predicateEvaluationService, amountEvaluationService));
+        registry.register(new ReduceCastCostForChosenNameSpellsEffectHandler());
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
         return registry;

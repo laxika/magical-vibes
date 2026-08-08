@@ -65,7 +65,8 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
             case EXILE -> {
                 UUID sourcePermanentId = e.returnOnSourceLeave() ? entry.getSourcePermanentId() : null;
                 playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
-                        e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId);
+                        e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
+                        e.upTo(), e.exileAllCopiesOfChosenNames());
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
         }

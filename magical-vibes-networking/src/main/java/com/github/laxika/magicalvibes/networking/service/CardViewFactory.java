@@ -211,7 +211,7 @@ public class CardViewFactory {
                         || EffectResolution.needsTarget(option.effects(), List.of(), false, false));
         int targetCount = option.targetFilters() != null ? option.targetFilters().size()
                 : (needsTarget || needsSpellTarget ? 1 : 0);
-        return new ModalOptionView(option.label(), needsTarget, needsSpellTarget, targetCount);
+        return new ModalOptionView(option.label(), needsTarget, needsSpellTarget, targetCount, option.manaCost());
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

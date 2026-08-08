@@ -92,6 +92,10 @@ not through the handler registry.
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
   permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less for each +1/+1 counter
   on this creature" — Herald of War).
+- `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
+  `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
+  whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
+  because the matching name lives on the source permanent, which the `CardPredicate` path does not carry.
 - `cast/costmod/IncreaseSpellCostEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostEffect(CardPredicate, int, CostModificationScope)`, the tax-side mirror of
   `ReduceCastCostForMatchingSpellsEffect`; scopes by the same `SELF`/`OPPONENT`/`ALL` and returns

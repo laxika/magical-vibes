@@ -196,6 +196,9 @@ export interface ModalOptionView {
   needsTarget: boolean;
   needsSpellTarget: boolean;
   targetCount: number;
+  /** The mode's own total cost (a split card's half or its fuse mode); null when every mode
+   *  costs the card's printed cost. */
+  manaCost: string | null;
 }
 
 /** One attributed contribution of a continuous effect to a permanent's characteristics —

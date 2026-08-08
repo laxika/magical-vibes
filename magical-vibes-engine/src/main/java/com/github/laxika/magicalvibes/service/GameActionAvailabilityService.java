@@ -295,6 +295,35 @@ public class GameActionAvailabilityService {
         return cost != null && cost.hasX() ? cost.calculateMaxX(pool) : null;
     }
 
+    /**
+     * The mana costs this card could actually be cast for. Normally just its printed cost; a modal
+     * spell whose modes declare their own totals (a split card with fuse — CR 709.3, CR 702.102c)
+     * adds one candidate per mode, and keeps the printed cost only when some mode declares none.
+     */
+    private static List<ManaCost> castableCosts(Card card) {
+        ManaCost printed = card.getParsedManaCost();
+        ChooseOneEffect modal = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst().orElse(null);
+        if (modal == null || modal.options().stream().allMatch(o -> o.manaCost() == null)) {
+            return List.of(printed);
+        }
+        List<ManaCost> costs = new ArrayList<>();
+        boolean anyUsesPrintedCost = false;
+        for (ChooseOneEffect.ChooseOneOption option : modal.options()) {
+            if (option.manaCost() == null) {
+                anyUsesPrintedCost = true;
+            } else {
+                costs.add(new ManaCost(option.manaCost()));
+            }
+        }
+        if (anyUsesPrintedCost) {
+            costs.add(printed);
+        }
+        return costs;
+    }
+
     private boolean isPlayableAsSpell(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                       int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
         if (card.getManaCost() == null) {
@@ -335,12 +364,14 @@ public class GameActionAvailabilityService {
             return true;
         }
 
-        ManaCost cost = card.getParsedManaCost();
+        // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
+        // total) — it is castable if any one of them is payable, so every candidate is tried below.
+        List<ManaCost> candidateCosts = castableCosts(card);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
                 + additionalGenericCost;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
-                && cost.canPayAsGeneric(pool, 0, additionalCost)) {
+                && candidateCosts.stream().anyMatch(c -> c.canPayAsGeneric(pool, 0, additionalCost))) {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
@@ -363,15 +394,20 @@ public class GameActionAvailabilityService {
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
-        boolean canAfford = hasRestricted
-                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, false, legendarySpellOnly)
-                : cost.canPay(pool, additionalCost);
-        if (canAfford && card.isRequiresCreatureMana()) {
-            canAfford = cost.canPayCreatureOnly(pool, additionalCost);
+        for (ManaCost cost : candidateCosts) {
+            boolean canAfford = hasRestricted
+                    ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
+                    instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
+                    creatureSpellOnly, false, legendarySpellOnly)
+                    : cost.canPay(pool, additionalCost);
+            if (canAfford && card.isRequiresCreatureMana()) {
+                canAfford = cost.canPayCreatureOnly(pool, additionalCost);
+            }
+            if (canAfford) {
+                return true;
+            }
         }
-        if (canAfford) {
-            return true;
-        }
+        ManaCost cost = card.getParsedManaCost();
 
         if (card.getKeywords().contains(Keyword.CONVOKE)
                 || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE)) {

@@ -54,11 +54,13 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        // Single-target abilities carry one targetId; multi-target ones ("any number of target
-        // players each draw twenty cards", Jace, Memory Adept) carry a flat legal-target list.
-        List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
-                ? Collections.singletonList(entry.getTargetId())
-                : entry.getTargetIds();
+        // Prefer the effect's bound target group so fuse / multi-group spells only draw for this
+        // half's player(s). Unbound multi-target ("any number of target players each draw…") still
+        // fans over the flat list via targetsForEffect; single-target casts fall back to targetId.
+        List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
+        if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+            targetPlayerIds = Collections.singletonList(entry.getTargetId());
+        }
         for (UUID targetPlayerId : targetPlayerIds) {
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, targetPlayerId);

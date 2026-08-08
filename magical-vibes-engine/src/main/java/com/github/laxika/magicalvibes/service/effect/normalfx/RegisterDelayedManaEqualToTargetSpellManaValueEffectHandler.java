@@ -50,8 +50,9 @@ public class RegisterDelayedManaEqualToTargetSpellManaValueEffectHandler impleme
         if (manaValue <= 0) return;
 
         UUID controllerId = entry.getControllerId();
-        gameData.queueDelayedAction(
-                new AddManaAtNextMainPhase(controllerId, e.color(), manaValue, entry.getCard()));
+        gameData.queueDelayedAction(new AddManaAtNextMainPhase(
+                controllerId, e.color(), manaValue, entry.getCard(),
+                e.optional(), false, e.anyColorCombination(), e.firstMainOnly()));
 
         log.info("Game {} - {} schedules {} {} at their next main phase (clash win)",
                 gameData.id, gameData.playerIdToName.get(controllerId), manaValue, e.color());

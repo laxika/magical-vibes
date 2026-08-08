@@ -174,7 +174,7 @@ public class TurnProgressionService {
                 stepTriggerService.handlePostcombatMainTriggers(gameData);
                 // Conduit of Storms / Emrakul: "add mana at the beginning of your next main phase this turn"
                 // after attacking — the next main is postcombat.
-                stepTriggerService.drainAddManaAtNextMainPhase(gameData);
+                stepTriggerService.drainAddManaAtNextMainPhase(gameData, false);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {

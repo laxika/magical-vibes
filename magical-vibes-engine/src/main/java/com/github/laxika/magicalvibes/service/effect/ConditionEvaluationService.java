@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
@@ -129,6 +130,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
+import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -283,6 +285,11 @@ public class ConditionEvaluationService {
             case ControllerLifeAtMost c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) <= c.threshold();
+            case AnOpponentLifeAtMost c ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .filter(pid -> !pid.equals(ctx.controllerId()))
+                            .anyMatch(pid -> gameData.getLife(pid) <= c.threshold());
             case EachPlayerLifeAtMost c ->
                     gameData.orderedPlayerIds.stream()
                             .allMatch(pid -> gameData.playerLifeTotals.getOrDefault(pid, 20) <= c.threshold());
@@ -493,6 +500,10 @@ public class ConditionEvaluationService {
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
+            }
+            case SourceIsToken ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.getCard().isToken();
             }
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);

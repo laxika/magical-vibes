@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,11 +32,28 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // Multi-target: an unbound effect reads the whole flat target list, so a single instance
+        // covers both of Hidden Strings' "target permanent … another target permanent" groups.
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null) {
+                    tapOrUntap(gameData, entry, target);
+                }
+            }
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
+        tapOrUntap(gameData, entry, target);
+    }
+
+    private void tapOrUntap(GameData gameData, StackEntry entry, Permanent target) {
         if (target.isTapped()) {
             target.untap();
             triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);

@@ -327,7 +327,7 @@ public class PlayerInteractionSupport {
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId) {
         resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
-                discardMode, exileMode, sourcePermanentId, 0);
+                discardMode, exileMode, sourcePermanentId, false, false, 0);
     }
 
     /**
@@ -339,7 +339,32 @@ public class PlayerInteractionSupport {
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              CardPredicate filter, boolean discardMode, boolean exileMode,
                                              UUID sourcePermanentId, int declineFallbackDiscardCount) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, false, false, declineFallbackDiscardCount);
+    }
 
+    public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                             CardPredicate filter, boolean discardMode, boolean exileMode,
+                                             UUID sourcePermanentId, boolean optional,
+                                             boolean exileAllCopiesOfChosenNames) {
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional,
+                exileAllCopiesOfChosenNames, 0);
+    }
+
+    /**
+     * {@code optional} lets the caster stop early ("choose up to X cards", Reap Intellect) and
+     * {@code exileAllCopiesOfChosenNames} extends the exile to every same-named card in the
+     * target's hand, graveyard, and library.
+     */
+    public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                             CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId,
+                                             boolean optional, boolean exileAllCopiesOfChosenNames,
+                                             int declineFallbackDiscardCount) {
+
+        boolean effectiveOptional = optional || declineFallbackDiscardCount > 0;
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -392,24 +417,24 @@ public class PlayerInteractionSupport {
 
         int cardsToChoose = Math.min(count, validIndices.size());
 
-        boolean optional = declineFallbackDiscardCount > 0;
+        boolean choiceOptional = effectiveOptional;
         String choicePrompt;
         if (!includedTypes.isEmpty()) {
             String typeNames = includedTypes.stream()
                     .map(CardType::getDisplayName)
                     .reduce((a, b) -> a + " or " + b)
                     .orElse("card");
-            choicePrompt = (optional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
+            choicePrompt = (choiceOptional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
                     + " card to " + actionVerb + ".";
         } else {
-            choicePrompt = (optional ? "You may choose a nonland card to " : "Choose a nonland card to ")
+            choicePrompt = (choiceOptional ? "You may choose a nonland card to " : "Choose a nonland card to ")
                     + actionVerb + ".";
         }
         // sourcePermanentId tracks exile-until-source-leaves effects (e.g. Kitesail Freebooter)
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
-                List.of(), sourcePermanentId, choicePrompt, false, optional, false, null, null,
-                declineFallbackDiscardCount));
+                List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
+                null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
