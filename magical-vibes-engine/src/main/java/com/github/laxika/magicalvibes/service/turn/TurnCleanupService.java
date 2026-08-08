@@ -211,6 +211,7 @@ public class TurnCleanupService {
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.eyeForAnEyeShields.clear();
         gameData.reflectDamageToSourceControllerShields.clear();
+        gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
@@ -226,6 +227,7 @@ public class TurnCleanupService {
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.playersCantGainLifeThisTurn = false;
+        gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
@@ -260,7 +262,7 @@ public class TurnCleanupService {
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
-        gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
+        gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);
         }

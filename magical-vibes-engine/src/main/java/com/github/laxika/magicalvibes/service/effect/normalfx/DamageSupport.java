@@ -137,6 +137,11 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, sourcePermId, rawDamage);
             processEyeForAnEyeReflections(gameData);
             if (rawDamage <= 0) return;
+            // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
+            rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
+                    gameData, sourcePermId, target.getId(), rawDamage);
+            processSourceRedirectDamage(gameData);
+            if (rawDamage <= 0) return;
         }
         // Saving Grace: redirect all damage this turn to a permanent you control onto the enchanted creature.
         if (targetControllerId != null) {
@@ -684,6 +689,10 @@ public class DamageSupport {
         rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(
                 gameData, entry.getSourcePermanentId(), rawDamage);
         processEyeForAnEyeReflections(gameData);
+        // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
+        rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
+                gameData, entry.getSourcePermanentId(), null, rawDamage);
+        processSourceRedirectDamage(gameData);
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, playerId, null, rawDamage);
         processSourceRedirectDamage(gameData);

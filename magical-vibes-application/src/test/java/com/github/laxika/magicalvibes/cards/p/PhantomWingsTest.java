@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PhantomWingsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolving Phantom Wings attaches it and gives the creature flying")
+    @DisplayName("Resolving Phantom Wings attaches it and grants flying")
     void resolvingAttachesAndGrantsFlying() {
         Permanent bears = new Permanent(new GrizzlyBears());
         gd.playerBattlefields.get(player1.getId()).add(bears);
@@ -31,6 +31,7 @@ class PhantomWingsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Phantom Wings")
+                        && p.isAttached()
                         && bears.getId().equals(p.getAttachedTo()));
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
@@ -61,7 +62,6 @@ class PhantomWingsTest extends BaseCardTest {
         wings.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(wings);
 
-        // wings is index 1 on the battlefield (bears is index 0)
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
@@ -69,6 +69,24 @@ class PhantomWingsTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Phantom Wings");
+        harness.assertInGraveyard(player1, "Phantom Wings");
+    }
+
+    @Test
+    @DisplayName("The creature returns to its owner's hand, not the Aura controller's")
+    void returnsToOwnerHand() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        Permanent wings = new Permanent(new PhantomWings());
+        wings.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(wings);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Phantom Wings");
     }
 

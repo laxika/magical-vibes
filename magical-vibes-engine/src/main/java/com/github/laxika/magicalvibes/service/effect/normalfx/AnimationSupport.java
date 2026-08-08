@@ -75,10 +75,20 @@ public class AnimationSupport {
      * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
      * self/target animation still reads {@code entry.getTargetId()}. A SELF-scope animation queued by
      * a triggered ability carries no target at all and falls back to {@code entry.getSourcePermanentId()}.
+     *
+     * <p>ENCHANTED_PERMANENT scope animates the permanent the source Aura is attached to, re-derived
+     * at resolution and ignoring any target on the entry (the Genju cycle's "enchanted Plains becomes
+     * a 2/5 white Spirit creature until end of turn"); it does nothing if the Aura is gone or unattached.
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+        if (effect.scope() == GrantScope.ENCHANTED_PERMANENT) {
+            UUID enchantedId = enchantedPermanentIdOf(gameData, entry);
+            if (enchantedId == null) {
+                return;
+            }
+            targetIds = List.of(enchantedId);
+        } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
@@ -97,6 +107,15 @@ public class AnimationSupport {
                 animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
+    }
+
+    /** The permanent the resolving Aura is attached to, or null if the Aura left or is unattached. */
+    private UUID enchantedPermanentIdOf(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() == null) {
+            return null;
+        }
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return aura == null ? null : aura.getAttachedTo();
     }
 
     /**

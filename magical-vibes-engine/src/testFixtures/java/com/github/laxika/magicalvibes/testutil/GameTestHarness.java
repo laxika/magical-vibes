@@ -418,6 +418,12 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), exileGraveyardCardIndices);
     }
 
+    /** Casts the graveyard card at {@code graveyardCardIndex} at a single target. */
+    public void castFromGraveyardTargeting(Player player, int graveyardCardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId);
+    }
+
     public void castFromGraveyard(Player player, UUID graveyardCardId) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardId, null, null, List.of(), null, null);
@@ -685,6 +691,16 @@ public class GameTestHarness {
     }
 
     /**
+     * Cast a targeted {X} instant using an exile-from-hand alternate casting cost (Shining Shoal —
+     * the exiled card's mana value must equal {@code xValue}).
+     */
+    public void castInstantWithAlternateExileFromHand(Player player, int cardIndex, int xValue, UUID targetId,
+                                                      int exileHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, targetId, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, exileHandCardIndex);
+    }
+
+    /**
      * Cast a divided-damage instant using an exile-from-hand alternate casting cost (Pyrokinesis).
      * {@code exileHandCardIndex} is the pre-removal hand index of the card to exile.
      */
@@ -897,8 +913,19 @@ public class GameTestHarness {
     }
 
     public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices) {
+        castWithSplice(player, cardIndex, targetId, spliceHandCardIndices, List.of());
+    }
+
+    /**
+     * Casts with splice where some spliced card has a non-mana "tap a permanent" splice cost
+     * (Hundred-Talon Strike): {@code spliceCostPermanentIds} holds one permanent id per such card,
+     * in the order those cards appear in {@code spliceHandCardIndices}.
+     */
+    public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices,
+                               List<UUID> spliceCostPermanentIds) {
         ensurePriority(player);
-        gameService.playCardWithSplice(gameData, player, cardIndex, 0, targetId, null, List.of(), spliceHandCardIndices);
+        gameService.playCardWithSplice(gameData, player, cardIndex, 0, targetId, null, List.of(),
+                spliceHandCardIndices, spliceCostPermanentIds);
     }
 
     public void castFromLibraryTop(Player player) {

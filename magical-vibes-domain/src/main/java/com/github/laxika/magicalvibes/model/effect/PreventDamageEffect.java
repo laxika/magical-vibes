@@ -53,7 +53,8 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_ENCHANTED
                 || scope == PreventionScope.NEXT_TO_TARGET
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
-                || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER;
+                || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
+                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
         }
@@ -133,6 +134,16 @@ public record PreventDamageEffect(
     /** "Prevent the next {@code amount} damage that would be dealt to target player or planeswalker" (Wandering Mage). */
     public static PreventDamageEffect nextToTargetPlayerOrPlaneswalker(int amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER, new Fixed(amount), false, null, null, null);
+    }
+
+    /**
+     * "Prevent the next {@code amount} damage that would be dealt to each creature and each player
+     * this turn" (Kitsune Palliator). Non-targeting; only creatures on the battlefield as the
+     * ability resolves are shielded.
+     */
+    public static PreventDamageEffect nextToEachCreatureAndPlayer(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt this turn." */

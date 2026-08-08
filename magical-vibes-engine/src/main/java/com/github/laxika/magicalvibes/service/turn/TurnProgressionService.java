@@ -77,7 +77,8 @@ public class TurnProgressionService {
                 && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DelayedPermanentAction.class,
                             a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                                    || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT)
+                                    || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
+                                    || a.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT)
                     || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
@@ -102,6 +103,7 @@ public class TurnProgressionService {
             combatService.processEndOfCombatControlGains(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             combatService.processEndOfCombatPhaseOuts(gameData);
+            combatService.processEndOfCombatReturnsToHand(gameData);
             gameData.priorityPassedBy.clear();
             return;
         }

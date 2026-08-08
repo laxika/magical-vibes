@@ -69,7 +69,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -455,6 +457,11 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
             } else if (effect instanceof AwardChosenColorManaEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new AwardManaEffect(ManaColor.valueOf(permanent.getChosenColor().name())));
+            } else if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ENCHANTED
+                    && permanent.getAttachedTo() != null) {
+                // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
+                // sacrifices itself as a cost), and the ability still uses last known information.
+                snapshotEffects.add(ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo()));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
             } else if (effect instanceof DealDamageToAnyTargetEffect dd

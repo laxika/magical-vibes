@@ -47,6 +47,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case NEXT_TO_ENCHANTED -> nextToEnchanted(gameData, entry, e);
             case NEXT_TO_TARGET, NEXT_TO_TARGET_CREATURE, NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER ->
                     nextToTarget(gameData, entry, e);
+            case NEXT_TO_EACH_CREATURE_AND_PLAYER -> nextToEachCreatureAndPlayer(gameData, entry, e);
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));
@@ -164,6 +165,27 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 "The next " + amount + " damage that would be dealt to ", enchanted.getCard(), " this turn is prevented."));
         log.info("Game {} - Enchanted prevention shield {} added to permanent {}", gameData.id, amount,
                 enchanted.getCard().getName());
+    }
+
+    private void nextToEachCreatureAndPlayer(GameData gameData, StackEntry entry, PreventDamageEffect e) {
+        int amount = evaluate(gameData, entry, e);
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.setDamagePreventionShield(permanent.getDamagePreventionShield() + amount);
+                }
+            }
+        });
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int currentShield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
+            gameData.playerDamagePreventionShields.put(playerId, currentShield + amount);
+        }
+
+        gameLogService.append(gameData, GameLog.text(
+                "The next " + amount + " damage that would be dealt to each creature and each player this turn is prevented."));
+        log.info("Game {} - Prevention shield {} added to every creature and player", gameData.id, amount);
     }
 
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {

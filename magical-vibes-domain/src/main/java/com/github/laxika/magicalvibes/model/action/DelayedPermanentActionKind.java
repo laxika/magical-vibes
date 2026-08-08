@@ -14,7 +14,8 @@ public enum DelayedPermanentActionKind {
     DESTROY_AT_END_STEP(Op.DESTROY, " is destroyed at end step."),
     RETURN_TO_HAND_AT_END_STEP(Op.RETURN_TO_HAND, " is returned to its owner's hand."),
     EXILE_TOKEN_AT_END_OF_COMBAT(Op.EXILE, " token is exiled."),
-    DESTROY_AT_END_OF_COMBAT(Op.DESTROY, " is destroyed.");
+    DESTROY_AT_END_OF_COMBAT(Op.DESTROY, " is destroyed."),
+    RETURN_TO_HAND_AT_END_OF_COMBAT(Op.RETURN_TO_HAND, " is returned to its owner's hand.");
 
     /** The zone-change operation the drain loop applies to the scheduled permanent. */
     public enum Op { EXILE, SACRIFICE, DESTROY, RETURN_TO_HAND }

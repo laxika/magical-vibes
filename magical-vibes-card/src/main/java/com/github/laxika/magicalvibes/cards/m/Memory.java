@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 
 /**
  * Memory — back half of Commit // Memory.
@@ -17,7 +17,7 @@ public class Memory extends Card {
 
     public Memory() {
         // Each player shuffles their hand and graveyard into their library, then draws seven cards.
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesHandAndGraveyardIntoLibraryEffect());
+        addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
         addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{4}{U}{U}"));

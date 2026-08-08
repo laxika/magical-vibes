@@ -675,6 +675,42 @@ public class DamagePreventionService {
     }
 
     /**
+     * Applies one-shot Opal-Eye shields: if a shield matches this source, the entire next damage event
+     * it would deal (to any recipient) is instead dealt to the shield's destination permanent. The
+     * redirected event is queued in {@link GameData#pendingSourceRedirectDamage} for the caller's
+     * {@code processSourceRedirectDamage}. This is a redirection (replacement) effect, not prevention,
+     * so it applies even when damage can't be prevented. The shield is left in place while the
+     * destination is no longer a creature on the battlefield, and damage dealt to the destination
+     * itself is left alone — redirecting to itself is a no-op that would skip its own damage triggers.
+     *
+     * @param damagedPermanentId the permanent being damaged, or {@code null} when the damage is to a player
+     * @return the remaining damage after redirection (0 if redirected)
+     */
+    public int applySourceNextDamageRedirectToPermanent(GameData gameData, UUID sourcePermanentId,
+                                                        UUID damagedPermanentId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention.
+        if (damage <= 0 || sourcePermanentId == null
+                || gameData.sourceNextDamageRedirectToPermanentShields.isEmpty()) {
+            return damage;
+        }
+        var it = gameData.sourceNextDamageRedirectToPermanentShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (!shield.sourceId().equals(sourcePermanentId)) continue;
+            UUID destinationId = shield.destinationPermanentId();
+            // Redirecting damage to the destination itself is a no-op; deal it normally.
+            if (destinationId.equals(damagedPermanentId)) continue;
+            Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
+            if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(
+                    new SourceDamageRedirectShield(null, sourcePermanentId, damage, destinationId));
+            return 0;
+        }
+        return damage;
+    }
+
+    /**
      * Applies one-shot Eye for an Eye reflection shields: if a shield matches this (player, source),
      * the shield is consumed and an equal reflected damage event is scheduled back at the source's
      * controller in {@link GameData#pendingEyeForAnEyeReflections}. This is a reflection (replacement)

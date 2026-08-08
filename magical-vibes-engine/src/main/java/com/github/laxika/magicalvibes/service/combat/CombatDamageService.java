@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -68,6 +70,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -103,6 +106,7 @@ public class CombatDamageService {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final LifeSupport lifeSupport;
+    private final GraveyardTargetingService graveyardTargetingService;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
@@ -1224,14 +1228,29 @@ public class CombatDamageService {
                     continue;
                 }
 
+                // "exile up to N target cards from that player's graveyard" (Skullsnatcher): the
+                // targets are chosen from the damaged player's graveyard as the trigger goes on the
+                // stack, so the targeting service owns pushing the entry (and its own logging).
+                if (effect instanceof GraveyardCardChoosingEffect graveyardChoice) {
+                    graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
+                            creature.getCard(), List.of(effect), creature.getId(), defenderId, graveyardChoice);
+                    continue;
+                }
+
                 // Graveyard-targeting return ("return target card from your graveyard to your hand",
                 // e.g. Charnelhoard Wurm): choose the graveyard target as the trigger goes on the
                 // stack via the shared SpellGraveyardTargetTrigger flow (drained by AutoPassService).
                 // The trigger path allows an empty selection, so "you may return target" reads as
                 // up-to-one (decline = choose 0) with no MayEffect wrapper.
                 if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    // "from that player's graveyard" (Ink-Eyes): an opponent-graveyard scope on a
+                    // combat damage trigger means the damaged player's graveyard specifically, so the
+                    // choice is narrowed to them rather than every opponent.
+                    UUID graveyardOwnerId =
+                            effect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                                    ? defenderId : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect))));
+                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect)), graveyardOwnerId));
                     gameLogService.append(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
                     continue;
                 }
@@ -2208,6 +2227,9 @@ public class CombatDamageService {
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
+            // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
+            damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), pw.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId());
             processEyeForAnEyeReflections(gameData);
@@ -2270,6 +2292,9 @@ public class CombatDamageService {
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
+            // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
+            damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), null, damage);
+            processSourceRedirectDamage(gameData);
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
             processSourceRedirectDamage(gameData);
@@ -2413,6 +2438,9 @@ public class CombatDamageService {
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
+        // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
+        damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, source.getId(), target.getId(), damage);
+        processSourceRedirectDamage(gameData);
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets
         damage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), source.getId(), damage);
         processSourceRedirectDamage(gameData);

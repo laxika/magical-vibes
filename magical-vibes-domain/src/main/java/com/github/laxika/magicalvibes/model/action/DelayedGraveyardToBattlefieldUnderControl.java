@@ -20,6 +20,8 @@ import java.util.UUID;
  * @param counterAmount                number of {@code counterType} counters to enter with
  * @param grantColor                   when non-null, permanently granted "in addition to its other colors"
  * @param grantSubtype                 when non-null, permanently granted "in addition to its other types"
+ * @param requireSourceOnBattlefield   when true nothing returns unless {@code sourcePermanentId} is
+ *                                     still on the battlefield (Shirei, Shizo's Caretaker)
  */
 public record DelayedGraveyardToBattlefieldUnderControl(
         UUID cardId,
@@ -29,11 +31,12 @@ public record DelayedGraveyardToBattlefieldUnderControl(
         CounterType counterType,
         int counterAmount,
         CardColor grantColor,
-        CardSubtype grantSubtype
+        CardSubtype grantSubtype,
+        boolean requireSourceOnBattlefield
 ) implements DelayedAction {
 
     /** Seraph: plain return linked to the source permanent, no counters and no grants. */
     public DelayedGraveyardToBattlefieldUnderControl(UUID cardId, UUID controllerId, UUID sourcePermanentId) {
-        this(cardId, controllerId, sourcePermanentId, true, null, 0, null, null);
+        this(cardId, controllerId, sourcePermanentId, true, null, 0, null, null, false);
     }
 }

@@ -114,7 +114,9 @@ class CombatDamageServiceTest {
                 gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
-                lifeSupport, combatAttackService, combatTriggerService,
+                lifeSupport,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
+                combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
@@ -230,6 +232,10 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
+        // Opal-Eye redirect is likewise a pass-through here — no such shield is set up.
+        lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
+                eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         // Saving Grace redirect (CR 614) is a pass-through here — no redirect shields are set up.
         // damagedPermanentId is null on the player path, so match it with any() rather than any(UUID.class).
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "BOK", collectorNumber = "46")
 @CardRegistration(set = "WTH", collectorNumber = "49")
 public class PhantomWings extends Card {
 
@@ -28,7 +29,7 @@ public class PhantomWings extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), ReturnToHandEffect.enchanted()),
-                "Sacrifice this Aura: Return enchanted creature to its owner's hand."
-        ));
+                 "Sacrifice this Aura: Return enchanted creature to its owner's hand."
+         ));
     }
 }

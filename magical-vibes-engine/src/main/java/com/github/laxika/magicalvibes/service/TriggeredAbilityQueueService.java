@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -839,13 +840,22 @@ public class TriggeredAbilityQueueService {
                     scope = GraveyardSearchScope.ALL_GRAVEYARDS;
                     break;
                 }
+                if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
+                    // Ink-Eyes, Servant of Oni: creature card from an opponent's graveyard, narrowed
+                    // to the damaged player by the pending trigger's graveyardOwnerId.
+                    filter = steal.filter();
+                    scope = GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                    break;
+                }
             }
 
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;
 
-            List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, pending.controllerId());
+            List<UUID> searchPlayerIds = pending.graveyardOwnerId() != null
+                    ? List.of(pending.graveyardOwnerId())
+                    : scope.graveyardOwners(gameData.orderedPlayerIds, pending.controllerId());
 
             List<Card> matchingCards = new ArrayList<>();
             for (UUID playerId : searchPlayerIds) {
@@ -887,7 +897,7 @@ public class TriggeredAbilityQueueService {
             }
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            String zoneLabel = switch (scope) {
+            String zoneLabel = pending.graveyardOwnerId() != null ? "that player's graveyard" : switch (scope) {
                 case ALL_GRAVEYARDS -> "a graveyard";
                 case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";

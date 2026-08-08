@@ -165,6 +165,22 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers}.
      *  Used by Kothophed, Soul Hoarder. */
     ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent (of any type, any player's) is put into a graveyard from the
+     *  battlefield. Fires for destroy, sacrifice, state-based death, etc. The source permanent never
+     *  sees its own death (it has already left the battlefield), so "other than ~" is implicit.
+     *  Supports gating via {@code TriggeringCardConditionalEffect} on the dead permanent's card.
+     *  Checked in {@code PermanentRemovalService.processGraveyardAndTriggers} via
+     *  {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}. Used by Yomiji,
+     *  Who Bars the Way (pair with {@code ReturnTriggeringCardToOwnerHandEffect}). */
+    ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent (of any type, any player's) is put into an <em>opponent's</em>
+     *  graveyard from the battlefield — the graveyard's owner, not the permanent's controller, is
+     *  what makes it an opponent's graveyard. The triggered ability's {@code targetId} is baked to
+     *  that graveyard owner, so a {@code LoseLifeEffect(N, TARGET_PLAYER)} reads as "that player
+     *  loses N life". Checked in {@code PermanentRemovalService.processGraveyardAndTriggers} via
+     *  {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}. Used by Patron of
+     *  the Nezumi. */
+    ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers when a land the controller owns is put into their graveyard from the battlefield
      *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
      *  the graveyard owner controls. */

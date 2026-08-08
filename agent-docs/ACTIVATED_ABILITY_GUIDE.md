@@ -713,6 +713,30 @@ they are built explicitly too; `isCyclingAbility()` still recognises them by the
 
 Cards: `DesertCerodon` (plain), the Sojourners and Resounding cycles (with an extra effect)
 
+#### Ninjutsu
+
+Ninjutsu is `addNinjutsu("{2}{U}{U}")` — do not build it by hand. It registers a hand ability
+flagged `ActivatedAbility.isNinjutsuAbility()` carrying a single `NinjutsuEffect`, and that flag is
+what makes `AbilityActivationService.activateNinjutsuAbility` take over: it pays the mana, returns
+the unblocked attacking creature named by `targetId` (a **cost**, not a target — the generic
+targeting validation is skipped) to its owner's hand, and leaves the source card in hand, revealed,
+until the ability resolves (CR 702.49a/b).
+
+`NinjutsuEffectHandler` then moves the card from hand onto the battlefield tapped and attacking the
+same defender the returned creature was attacking — that defender is captured at activation time and
+baked into the `NinjutsuEffect(attackTargetId)` snapshot, because the returned attacker is gone by
+resolution (CR 702.49c). The ninja was never declared as an attacker, so no attack triggers or attack
+legality checks run.
+
+Only a creature matching `PermanentIsUnblockedAttackingPredicate` **on the activating player's own
+battlefield** is a legal cost; that predicate already refuses steps before declare blockers.
+
+```java
+addNinjutsu("{2}{U}{U}");
+```
+
+Cards: `HigureTheStillWind`
+
 #### Hand ability targeting graveyard cards (Faerie Macabre)
 
 A "Discard this card: ..." hand ability whose effect targets cards in graveyards (not a battlefield
@@ -787,6 +811,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `IncreaseActivationCostPerCounterEffect` | `(CounterType, int increasePerCounter)` | raises the generic activation cost by N per counter of that type on the source, counted at activation time. Pair with a printed `{0}` cost for "{X}: … X is the number of [type] counters on this permanent" (Chromatic Armor). Mirror of `ReduceActivationCostPerCounterEffect` (Diary of Dreams) |
 | `PutCounterOnControlledCreatureCost` | `(CounterType counterType, int count)` | "Put a -1/-1 counter on a creature you control: ..." — puts counter(s) on any creature you control (not just the source), chosen via the `PermanentChoiceCostHandler` pattern (auto-selects when only one creature exists, prompts when multiple). Also valid as a SPELL-slot cost (Scarscale Ritual). Hatchet Bully |
 | `ReturnCardFromGraveyardToHandCost` | `(CardPredicate predicate)` | Payable side of `ForcedCostOrElseEffect` only. "sacrifice this unless you return a [predicate] card from your graveyard to your hand" — Harvest Wurm (`CardPredicateUtils.basicLand()`). No matching graveyard card ⇒ unpayable, penalty resolves with no prompt; accepting opens a mandatory `GraveyardChoice` to `HAND` |
+| `RemoveCounterFromControlledPermanentCost` | `()` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "sacrifice this unless you remove a counter from a permanent you control" — any permanent you control carrying at least one counter of any kind is a legal choice (including the source). One candidate pays automatically, several prompt a permanent choice; on a permanent with several counter kinds the first kind present is removed. No counters at all = unpayable, so the penalty resolves with no prompt. Chisei, Heart of Oceans |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java
@@ -928,7 +953,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any artifact (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. |
 | `ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any enchantment (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. Used by Femeref Enchantress with `DrawCardEffect`. |
 | `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | An artifact is put into an opponent's graveyard from the battlefield. Only fires when the graveyard owner is an opponent of this permanent's controller. Supports MayEffect wrapping. |
-| `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any land (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. Used by Dingus Egg with `DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)` — target pre-set to the land's controller at trigger time. |
+| `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any land (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. Used by Dingus Egg with `DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)` — target pre-set to the land's controller at trigger time. Any other effect uses the generic collector (no target pre-set), e.g. Akki Raider with `BoostSelfEffect(1, 0)`. |
 | `ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A permanent of **any** type an opponent of this permanent's controller controls is put into a graveyard from the battlefield. Fired once per removal in `PermanentRemovalService.processGraveyardAndTriggers` via `TriggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers`; the collector bakes the dying card id + that opponent's id into the effect. Used by Prince of Thralls with `StealDyingOpponentPermanentUnlessPaysLifeEffect(3)`. |
 | `ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A permanent of **any** type **owned** by a player other than this permanent's controller is put into a graveyard from the battlefield. Ownership-based, not control-based (a stolen permanent still counts for its owner). Fired in `PermanentRemovalService.processGraveyardAndTriggers` via `TriggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers`. Used by Kothophed, Soul Hoarder with `SequenceEffect.of(DrawCardEffect(1), LoseLifeEffect(1))`. |
 | `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | A creature card is put into your graveyard from anywhere (battlefield, hand, library, stack, exile). Uses printed card types (tokens never fire; a creature card that was a noncreature permanent still does). Fires on permanents the graveyard owner controls. Checked in `GraveyardService.addCardToGraveyard`. Used by Soulcipher Board (`SequenceEffect` of `RemoveCounterFromSourceEffect(OMEN, 1)` + `ConditionalEffect(NotCondition(SourceCounterThreshold(1, OMEN)), TransformSelfEffect)`). |
@@ -958,6 +983,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANY_SOURCE_DEALS_DAMAGE` | Global watcher: any source (creature or spell) deals damage to anything. Fires on every permanent with this slot across all battlefields; carries `TriggerContext.SourceDealsDamage` (source card, source controller, summed total). Damage one source deals simultaneously is summed into one trigger. Effect: `ReflectSourceDamageToItsControllerEffect(color)` (Justice). Driven from `CombatDamageService` (per source) and `EffectResolutionService` (non-combat flush) |
 | `ON_SELF_DEALS_DAMAGE` | "Whenever this creature deals damage, ..." — fires only for the damage **this** permanent deals (combat or non-combat, to a creature/player/planeswalker). Shares the summed choke point behind `ON_ANY_SOURCE_DEALS_DAMAGE` but keyed off the source card, so it still triggers when the source dies dealing that damage; the summed total is snapshotted onto the trigger's `eventValue`. Read it with an `EventValue` amount: `GainLifeEffect(new EventValue())` ("you gain that much life" — El-Hajjâj) |
 | `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE` | "Whenever an instant or sorcery spell you control deals damage, ..." — fires once per damage event no matter how many objects the spell damaged simultaneously, only for spells their controller controls. Shares the batched non-combat choke point behind `ON_ANY_SOURCE_DEALS_DAMAGE`; the summed total is snapshotted onto the trigger's `eventValue`. Blaze Commando |
+| `ON_SELF_DEALS_DAMAGE` | "Whenever this creature deals damage, ..." — fires only for the damage **this** permanent deals (combat or non-combat, to a creature/player/planeswalker). Shares the summed choke point behind `ON_ANY_SOURCE_DEALS_DAMAGE` but keyed off the source card, so it still triggers when the source dies dealing that damage; the summed total is snapshotted onto the trigger's `eventValue`. Read it with an `EventValue` amount: `GainLifeEffect(new EventValue())` ("you gain that much life" — El-Hajjâj)  Granted instances of this slot (`Permanent.addTemporaryTriggeredEffect`/`addPersistentTriggeredEffect`) are collected too — the Genju cycle grants the animated land "whenever this creature deals damage, its controller gains that much life" until end of turn.|
 | `ON_ALLY_PERMANENT_SACRIFICED` | A permanent you control is sacrificed (not this one — "another") |
 | `ON_ANY_CREATURE_SACRIFICED` | Global watcher: any player sacrifices a creature ("Whenever a player sacrifices a creature"). Fires on every permanent with this slot across all battlefields, once per sacrificed creature (last-known info); the trigger belongs to the scanning permanent's controller. A wrapped `MayEffect(PutCountersOnSourceEffect(1,1,1))` resolves onto the source (like Scavenger Drake's `ON_ANY_CREATURE_DIES`). Fired from both sacrifice choke points (`DestructionSupport.sacrificeAndLog` for edict/chosen sacrifices, `checkAllyPermanentSacrificedTriggers` for sacrifice-self / sacrifice-as-cost). Used by Thraximundar |
 | `ON_BECOMES_TARGET_OF_SPELL` | This permanent becomes target of a spell |

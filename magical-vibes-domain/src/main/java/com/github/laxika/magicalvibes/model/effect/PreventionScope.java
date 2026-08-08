@@ -24,6 +24,10 @@ public enum PreventionScope {
      *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
      *  declare a player-or-planeswalker {@code TargetSpec} and a creature can never be chosen. */
     NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER,
+    /** "Prevent the next N damage that would be dealt to each creature and each player this turn" (Kitsune Palliator).
+     *  Non-targeting: every creature on the battlefield as the ability resolves gets its own next-N
+     *  shield and every player gets one too; creatures entering later are unaffected. */
+    NEXT_TO_EACH_CREATURE_AND_PLAYER,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */

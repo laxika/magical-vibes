@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
@@ -40,7 +40,7 @@ public class JaceTheLivingGuildpact extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new EachPlayerShufflesHandAndGraveyardIntoLibraryEffect(),
+                        new EachPlayerShufflesZonesIntoLibraryEffect(),
                         new DrawCardEffect(7)
                 ),
                 "−8: Each player shuffles their hand and graveyard into their library. You draw seven cards."

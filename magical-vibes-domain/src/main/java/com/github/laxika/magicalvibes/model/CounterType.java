@@ -35,6 +35,7 @@ public enum CounterType {
     ICE,
     INFECTION,
     INVITATION,
+    KI,
     LANDMARK,
     LOYALTY,
     MAGNET,

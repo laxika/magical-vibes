@@ -14,4 +14,8 @@ public final class LibraryShuffleSupport {
     public static String pluralCards(int count) {
         return count + " card" + (count != 1 ? "s" : "");
     }
+
+    public static String pluralPermanents(int count) {
+        return count + " permanent" + (count != 1 ? "s" : "");
+    }
 }

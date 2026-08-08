@@ -213,6 +213,17 @@ public sealed interface TriggerContext {
     record OtherPlayerOwnedPermanentGraveyard(Card dyingCard, UUID ownerId) implements TriggerContext {}
 
     /**
+     * Context for ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Yomiji, Who Bars
+     * the Way).
+     *
+     * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
+     * @param dyingControllerId  the player who controlled the permanent on the battlefield
+     * @param graveyardOwnerId   the owner of the graveyard the card was put into
+     */
+    record AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
+                                 UUID graveyardOwnerId) implements TriggerContext {}
+
+    /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
      *
      * @param landCard          the land card that was put into the graveyard from the battlefield

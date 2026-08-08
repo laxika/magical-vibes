@@ -22,25 +22,41 @@ import java.util.List;
  * "that player may pay {3}") and the active player under {@code EACH_UPKEEP_TRIGGERED} (Pillar
  * Tombs of Aku: "that player may sacrifice a creature"). Mutually exclusive with
  * {@code anyPlayerMayPay}.
+ *
+ * <p>When {@code payerIsDefendingPlayer} is true the prompt goes to the defending player of the
+ * attack that triggered the ability — the attacked player, or the attacked planeswalker's
+ * controller, read from the {@code ON_ATTACK} trigger's {@code attackedTargetId} (Ogre Marauder:
+ * "unless defending player sacrifices a creature of their choice"). Mutually exclusive with the
+ * other payer flags.
  */
 public record ForcedCostOrElseEffect(
         CostEffect forcedCost,
         List<CardEffect> elseEffects,
         boolean optional,
         boolean anyPlayerMayPay,
-        boolean payerIsEnchantedController
+        boolean payerIsEnchantedController,
+        boolean payerIsDefendingPlayer
 ) implements CardEffect {
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects) {
-        this(forcedCost, elseEffects, false, false, false);
+        this(forcedCost, elseEffects, false, false, false, false);
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional) {
-        this(forcedCost, elseEffects, optional, false, false);
+        this(forcedCost, elseEffects, optional, false, false, false);
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional,
                                   boolean anyPlayerMayPay) {
-        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false);
+        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false, false);
+    }
+
+    /**
+     * "…unless defending player [pays the cost]" on an {@code ON_ATTACK} trigger — the defending
+     * player is asked, and declining (or being unable to pay) resolves the else effects.
+     */
+    public static ForcedCostOrElseEffect defendingPlayerMayPay(CostEffect forcedCost,
+                                                               List<CardEffect> elseEffects) {
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true);
     }
 
     /**
@@ -50,6 +66,6 @@ public record ForcedCostOrElseEffect(
      */
     public static ForcedCostOrElseEffect enchantedControllerMayPay(CostEffect forcedCost,
                                                                    List<CardEffect> elseEffects) {
-        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true);
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false);
     }
 }

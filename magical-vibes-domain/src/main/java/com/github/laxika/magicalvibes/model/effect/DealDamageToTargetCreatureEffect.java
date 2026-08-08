@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param damage          the amount of damage to deal
  * @param unpreventable   when true, the damage can't be prevented (e.g. Combust)
- * @param targetPredicate an optional narrowing of the legal creature target ("target creature an
- *                        opponent controls" — Showstopper); {@code null} for any creature
+ * @param targetPredicate optional extra restriction on the targeted creature (for example,
+ *                        "target creature an opponent controls" or "target Spirit creature");
+ *                        {@code null} for plain "target creature"
  */
 public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unpreventable,
                                                PermanentPredicate targetPredicate)

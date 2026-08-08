@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,17 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetEffect) effect;
+
+        if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
+            Permanent aura = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            Permanent enchanted = aura == null || aura.getAttachedTo() == null ? null
+                    : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            if (enchanted != null) {
+                grantTo(gameData, entry, e, enchanted);
+            }
+            return;
+        }
 
         List<UUID> ids = entry.targetsForEffect(effect);
         if (ids.isEmpty() && entry.getTargetId() != null) {

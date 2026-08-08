@@ -2797,6 +2797,14 @@ public class StepTriggerService {
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
                 String sourceName = sourcePermanent != null ? sourcePermanent.getCard().getName() : "Delayed return";
 
+                // Shirei: "if Shirei is still on the battlefield". The permanent id is matched, so a
+                // Shirei that left and returned is a new object and the return does not happen.
+                if (pending.requireSourceOnBattlefield() && sourcePermanent == null) {
+                    log.info("Game {} - Delayed return under control for card {} skipped (source left the battlefield)",
+                            gameData.id, pending.cardId());
+                    continue;
+                }
+
                 permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
                 Permanent permanent = new Permanent(cardToReturn);
                 permanent.setEnteredFromGraveyardOwnerId(ownerId);

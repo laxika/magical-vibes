@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,18 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // On a multi-target card each "you may" is bound to its own target group, so the pending
+        // ability must carry that group's target rather than the entry's lone one. A bound group
+        // with no legal target left does nothing (CR 608.2b) — don't even prompt.
+        UUID targetId = entry.getTargetId();
+        List<UUID> groupTargets = entry.targetsForBoundEffectGroup(e);
+        if (groupTargets != null && !entry.getTargetIds().isEmpty()) {
+            if (groupTargets.isEmpty()) {
+                return;
+            }
+            targetId = groupTargets.getFirst();
+        }
+
         // CR 603.5 — "you may" choice happens at resolution time.
         // Set flag so the resolution loop re-runs this effect after the player responds.
         gameData.resolvingMayEffectFromStack = true;
@@ -39,7 +52,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getControllerId(),
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
-                entry.getTargetId(),
+                targetId,
                 null,
                 entry.getSourcePermanentId()
         ));

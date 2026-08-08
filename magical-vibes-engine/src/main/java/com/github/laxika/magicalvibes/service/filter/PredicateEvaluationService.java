@@ -580,7 +580,8 @@ public class PredicateEvaluationService {
                 yield permanent.getCard().getManaValue() == filterContext.xValue();
             }
             case PermanentMaxManaValueXPredicate ignored -> {
-                // With no chosen X yet (target enumeration), any permanent is potentially valid.
+                // Same permissive fallback as the equals-X sibling: with no X chosen yet, every
+                // permanent is potentially legal because X can be arbitrarily large.
                 if (filterContext == null || filterContext.xValue() == null) {
                     yield true;
                 }

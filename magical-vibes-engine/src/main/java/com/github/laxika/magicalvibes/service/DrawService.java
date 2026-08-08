@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -176,6 +177,15 @@ public class DrawService {
         Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
         if (revealCreaturesSource != null) {
             resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
+            return;
+        }
+
+        // Tomorrow, Azami's Familiar — "If you would draw a card, look at the top three cards of your
+        // library instead. Put one of those cards into your hand and the rest on the bottom of your
+        // library in any order." Mandatory replacement for the drawing controller.
+        Permanent lookChooseOneSource = findLookAtTopChooseOneToHandDrawReplacementSource(gameData, playerId);
+        if (lookChooseOneSource != null) {
+            resolveLookAtTopChooseOneToHandDrawReplacement(gameData, playerId, lookChooseOneSource);
             return;
         }
 
@@ -510,6 +520,82 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Permanent findLookAtTopChooseOneToHandDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Tomorrow, Azami's Familiar replacement: look at the top {@code lookCount} cards of the drawing
+     * player's library, put one of them into their hand and the rest on the bottom of their library in
+     * any order (an async {@link PendingInteraction.LibraryRevealChoice} that both picks the kept card
+     * and orders the leftovers).
+     *
+     * <p>The draw is replaced entirely, so the kept card is put into hand rather than "drawn" (no draw
+     * triggers, no cards-drawn bookkeeping), and an empty library does not lose the game — the player
+     * simply looks at nothing.
+     */
+    private void resolveLookAtTopChooseOneToHandDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
+        // A prior look from the same multi-card draw is still awaiting a choice; don't stack another
+        // interaction over it (consistent with Sages of the Anima's multi-draw handling).
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        int lookCount = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect)
+                .map(effect -> ((LookAtTopCardsChooseOneToHandDrawReplacementEffect) effect).lookCount())
+                .findFirst().orElse(0);
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        int actual = deck == null ? 0 : Math.min(lookCount, deck.size());
+        if (actual == 0) {
+            // Library empty — the draw is replaced, so nothing happens and the player does not lose.
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " looks at no cards."));
+            log.info("Game {} - {} looks at no cards for {} (empty library)",
+                    gameData.id, playerName, source.getCard().getName());
+            return;
+        }
+
+        List<Card> looked = new ArrayList<>();
+        for (int i = 0; i < actual; i++) {
+            looked.add(deck.removeFirst());
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " looks at the top " + actual + " card" + (actual == 1 ? "" : "s")
+                        + " of their library with ", source.getCard(), "."));
+        log.info("Game {} - {} looks at top {} cards for {}",
+                gameData.id, playerName, actual, source.getCard().getName());
+
+        if (actual == 1) {
+            // Only one card to look at — it goes to hand, nothing is left for the bottom.
+            gameData.addCardToHand(playerId, looked.getFirst());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " puts ", looked.getFirst(), " into their hand."));
+            return;
+        }
+
+        List<UUID> cardIds = looked.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                playerId, looked, cardIds, false, true, true, false, false, 0, null, 1,
+                "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {

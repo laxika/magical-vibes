@@ -48,8 +48,9 @@ public class GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect
             return;
         }
 
-        gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
-                new GameData.GraveyardCreatureCastPermission(entry.getSourcePermanentId(), entry.getControllerId()));
+        gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
+                new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(), entry.getControllerId(),
+                        true, false));
 
         
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard, " to be cast from a graveyard this turn."));

@@ -687,6 +687,20 @@ public class StackEntry {
         return targetsForGroup(group);
     }
 
+    /**
+     * The targets chosen for the target group the given effect is bound to, or {@code null} when the
+     * effect is not bound to any group.
+     *
+     * <p>Unlike {@link #targetsForEffect} this never falls back to the flat target list, so a caller
+     * can distinguish "bound, but its group's target is gone" (empty list) from "unbound" ({@code null})
+     * — the distinction a multi-target card needs when each target drives its own effect.</p>
+     */
+    public List<UUID> targetsForBoundEffectGroup(CardEffect effect) {
+        Card targeting = targetingCard();
+        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        return group < 0 ? null : targetsForGroup(group);
+    }
+
     private static List<UUID> assignmentTargetIds(Map<UUID, Integer> assignments) {
         return assignments == null || assignments.isEmpty()
                 ? List.of()

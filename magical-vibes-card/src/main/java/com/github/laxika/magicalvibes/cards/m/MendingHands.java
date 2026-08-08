@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "29")
+@CardRegistration(set = "BOK", collectorNumber = "15")
 public class MendingHands extends Card {
 
     public MendingHands() {

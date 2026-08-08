@@ -1273,7 +1273,8 @@ public class MayPenaltyChoiceHandlerService {
         // anyPlayerMayPay / payerIsEnchantedController, ability.controllerId is the payer being
         // asked and forcedCostOrElseSourceControllerId holds the real source controller.
         UUID decidingPlayerId = ability.controllerId();
-        UUID sourceControllerId = (effect.anyPlayerMayPay() || effect.payerIsEnchantedController())
+        UUID sourceControllerId = (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
+                || effect.payerIsDefendingPlayer())
                 && gameData.forcedCostOrElseSourceControllerId != null
                 ? gameData.forcedCostOrElseSourceControllerId
                 : decidingPlayerId;
@@ -1367,6 +1368,22 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
+            List<UUID> candidates =
+                    destructionSupport.collectPermanentIdsWithAnyCounter(gameData, sourceControllerId);
+            if (!candidates.isEmpty()) {
+                // More than one candidate pauses for a permanent choice, whose completion continues
+                // the game itself — only auto-pass when the counter came off immediately.
+                forcedCostOrElseEffectHandler.removeCounterFromChosenPermanent(gameData, sourceControllerId,
+                        candidates, ability.sourceCard(), ability.sourcePermanentId(), effect);
+                if (candidates.size() == 1) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but every counter is gone — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sourceControllerId,
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()));
@@ -1414,7 +1431,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
             // payerIsEnchantedController: deciding player is the stack-target payer, not the source
             // controller (Pillar Tombs of Aku / Mind Whip-shaped each-upkeep sacrifice).
-            UUID sacrificingPlayerId = effect.payerIsEnchantedController() ? decidingPlayerId : sourceControllerId;
+            UUID sacrificingPlayerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
+                    ? decidingPlayerId : sourceControllerId;
             UUID sourcePermanentId = ability.sourcePermanentId();
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
                     p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))

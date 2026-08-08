@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -89,6 +91,7 @@ public class DestructionSupport {
     private final LibraryExileSupport libraryExileSupport;
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
+    private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -414,6 +417,37 @@ public class DestructionSupport {
         return ids;
     }
 
+    /**
+     * Permanents the player controls that carry at least one counter of any kind — the legal
+     * choices for {@link com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost}.
+     */
+    public List<UUID> collectPermanentIdsWithAnyCounter(GameData gameData, UUID playerId) {
+        return collectPermanentIds(gameData, playerId,
+                p -> p.getCounters().values().stream().anyMatch(count -> count > 0));
+    }
+
+    /**
+     * Removes one counter from {@code permanent}, taking the first kind present when it carries
+     * several. Returns false when the permanent has no counters left to remove.
+     */
+    public boolean removeOneCounterAndLog(GameData gameData, Permanent permanent, UUID playerId) {
+        CounterType kind = permanent.getCounters().entrySet().stream()
+                .filter(e -> e.getValue() > 0)
+                .map(java.util.Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+        if (kind == null) {
+            return false;
+        }
+        permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " removes a counter from ", permanent.getCard(), "."));
+        log.info("Game {} - {} removes a {} counter from {}", gameData.id, playerName, kind,
+                permanent.getCard().getName());
+        return true;
+    }
+
     public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
         for (UUID permId : ids) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
@@ -484,7 +518,13 @@ public class DestructionSupport {
             return;
         }
 
-        sacrificeAndLog(gameData, target, context.controllerId());
+        if (context.effect().forcedCost() instanceof RemoveCounterFromControlledPermanentCost) {
+            // "unless you remove a counter from a permanent you control" — the chosen permanent
+            // sheds a counter instead of being sacrificed.
+            removeOneCounterAndLog(gameData, target, context.controllerId());
+        } else {
+            sacrificeAndLog(gameData, target, context.controllerId());
+        }
         gameData.forcedCostOrElseSourceControllerId = null;
         gameData.forcedCostOrElseRemainingPlayers.clear();
     }
@@ -518,6 +558,10 @@ public class DestructionSupport {
                 // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
                 // permanent, not the Aura, is sacrificed by its own controller.
                 sacrificeEnchantedHandler.resolve(gameData, entry, sacrificeEnchanted);
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect unblockable) {
+                // "it gains 'this creature can't be blocked' until end of turn unless defending
+                // player sacrifices a creature" (Ogre Marauder) — the attacking source.
+                makeCreatureUnblockableHandler.resolve(gameData, entry, unblockable);
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);

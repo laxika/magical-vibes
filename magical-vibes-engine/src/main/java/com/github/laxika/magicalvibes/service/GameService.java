@@ -673,16 +673,24 @@ public class GameService {
     public void playCardWithSplice(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                    Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
                                    List<Integer> spliceHandCardIndices) {
+        playCardWithSplice(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                spliceHandCardIndices, List.of());
+    }
+
+    public void playCardWithSplice(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                   Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                                   List<Integer> spliceHandCardIndices, List<UUID> spliceCostPermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardWithSplice(gameData, actionPlayer, cardIndex, xValue, targetId,
-                        damageAssignments, targetIds, spliceHandCardIndices))) return;
+                        damageAssignments, targetIds, spliceHandCardIndices, spliceCostPermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithSplice(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(),
-                    spliceHandCardIndices != null ? spliceHandCardIndices : List.of());
+                    spliceHandCardIndices != null ? spliceHandCardIndices : List.of(),
+                    spliceCostPermanentIds != null ? spliceCostPermanentIds : List.of());
         }
     }
 

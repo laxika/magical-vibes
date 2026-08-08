@@ -227,6 +227,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  that source's controller instead." (Reflect Damage). */
     record ReflectDamageToSourceControllerChoice(UUID controllerId) implements PermanentChoiceContext {}
 
+    /** "The next time a source of your choice would deal damage this turn, that damage is dealt to
+     *  this creature instead." (Opal-Eye, Konda's Yojimbo). */
+    record RedirectNextDamageFromChosenSourceToPermanentChoice(UUID controllerId, UUID destinationPermanentId)
+            implements PermanentChoiceContext {}
+
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** Decimator Beetle attack trigger, stage 1: choose the creature you control to remove a counter
@@ -545,8 +550,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                    com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost costEffect,
                                    int remaining) implements PermanentChoiceContext {}
 
-    /** Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle). */
-    record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+    /**
+     * Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle).
+     * {@code graveyardOwnerId} narrows the searched graveyards to a single player — "target creature
+     * card from <em>that player's</em> graveyard" (Ink-Eyes, Servant of Oni, where "that player" is
+     * the one the source dealt combat damage to). {@code null} keeps the effect's own
+     * {@code GraveyardSearchScope}.
+     */
+    record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       UUID graveyardOwnerId) implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
+            this(sourceCard, controllerId, effects, null);
+        }
+    }
 
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
     record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}

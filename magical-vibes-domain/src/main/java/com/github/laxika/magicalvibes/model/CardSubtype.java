@@ -203,6 +203,7 @@ public enum CardSubtype {
     JACKAL("Jackal"),
     SALAMANDER("Salamander"),
     SAMURAI("Samurai"),
+    NINJA("Ninja"),
     SHRINE("Shrine"),
     SAMUT("Samut"),
     ARCANE("Arcane"),

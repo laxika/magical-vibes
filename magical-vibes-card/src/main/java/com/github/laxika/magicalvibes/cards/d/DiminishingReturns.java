@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "65")
@@ -13,7 +13,7 @@ public class DiminishingReturns extends Card {
 
     public DiminishingReturns() {
         // Each player shuffles their hand and graveyard into their library.
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesHandAndGraveyardIntoLibraryEffect());
+        addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
 
         // You exile the top ten cards of your library.
         for (int i = 0; i < 10; i++) {

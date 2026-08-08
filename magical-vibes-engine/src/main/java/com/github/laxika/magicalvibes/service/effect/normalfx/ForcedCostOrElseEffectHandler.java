@@ -83,7 +83,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             }
             // "that player may pay" (Mind Whip): prompt the enchanted permanent's controller
             // carried on the stack entry's targetId, not the Aura's controller.
-            UUID payer = e.payerIsEnchantedController() ? entry.getTargetId() : entry.getControllerId();
+            UUID payer = resolvePayer(gameData, entry, e);
+            if (payer == null) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                     entry.getCard(), payer, List.of(e), prompt,
                     entry.getTargetId(), effectiveCost, entry.getSourcePermanentId()));
@@ -200,6 +204,27 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
+            // "sacrifice this unless you remove a counter from a permanent you control" (Chisei):
+            // with no counters anywhere the cost cannot be paid, so the penalty resolves at once.
+            List<UUID> candidates =
+                    destructionSupport.collectPermanentIdsWithAnyCounter(gameData, entry.getControllerId());
+            if (candidates.isEmpty()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Remove a counter from a permanent you control?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            removeCounterFromChosenPermanent(gameData, entry.getControllerId(), candidates, entry.getCard(),
+                    entry.getSourcePermanentId(), e);
+            return;
+        }
+
         if (e.forcedCost() instanceof SacrificeMultiplePermanentsCost multiCost) {
             resolveMultiplePermanentSacrifice(gameData, entry, e, multiCost);
             return;
@@ -219,7 +244,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 // payerIsEnchantedController: "that player may sacrifice …" — stack targetId is the
                 // payer (enchanted controller / EACH_UPKEEP active player), not the source controller.
                 UUID sourceControllerId = entry.getControllerId();
-                UUID payerId = e.payerIsEnchantedController() ? entry.getTargetId() : sourceControllerId;
+                UUID payerId = resolvePayer(gameData, entry, e);
                 if (payerId == null) {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     return;
@@ -238,7 +263,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 if (e.optional()) {
                     // "You may sacrifice ..." — ask the payer. Declining (handled in
                     // MayPenaltyChoiceHandlerService) resolves the fallback effects.
-                    if (e.payerIsEnchantedController()) {
+                    if (e.payerIsEnchantedController() || e.payerIsDefendingPlayer()) {
                         gameData.forcedCostOrElseSourceControllerId = sourceControllerId;
                     }
                     gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
@@ -263,6 +288,48 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 payerId, entry.getSourcePermanentId(), entry.getCard(), e));
                 playerInputService.beginPermanentChoice(gameData, payerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
+    }
+
+    /**
+     * The player who is asked to pay: the source's controller by default, the stack entry's
+     * {@code targetId} for "that player may …" (Mind Whip / Pillar Tombs of Aku), or the defending
+     * player of the attack that triggered the ability (Ogre Marauder).
+     */
+    private UUID resolvePayer(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
+        if (effect.payerIsEnchantedController()) {
+            return entry.getTargetId();
+        }
+        if (effect.payerIsDefendingPlayer()) {
+            UUID attackedTargetId = entry.getAttackedTargetId();
+            if (attackedTargetId == null) {
+                return null;
+            }
+            return gameData.playerIds.contains(attackedTargetId)
+                    ? attackedTargetId
+                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        }
+        return entry.getControllerId();
+    }
+
+    /**
+     * Pays a {@link com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost}:
+     * a single candidate sheds a counter immediately, several pause for a permanent choice. Shared
+     * with the may-prompt accept path.
+     */
+    public void removeCounterFromChosenPermanent(GameData gameData, UUID payerId, List<UUID> candidates,
+            com.github.laxika.magicalvibes.model.Card sourceCard, UUID sourcePermanentId,
+            ForcedCostOrElseEffect effect) {
+        if (candidates.size() == 1) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, candidates.getFirst());
+            if (permanent != null) {
+                destructionSupport.removeOneCounterAndLog(gameData, permanent, payerId);
+            }
+            return;
+        }
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ForcedCostOrElse(payerId, sourcePermanentId, sourceCard, effect));
+        playerInputService.beginPermanentChoice(gameData, payerId, candidates,
+                "Choose a permanent to remove a counter from.");
     }
 
     /**

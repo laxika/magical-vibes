@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControllerLossWithGameResetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
@@ -45,7 +44,6 @@ public class GameResetLossReplacer implements LossReplacer {
     private static final int RESET_LIFE_TOTAL = 20;
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final ZoneToLibraryService zoneToLibraryService;
     private final LifeSupport lifeSupport;
@@ -70,7 +68,7 @@ public class GameResetLossReplacer implements LossReplacer {
         List<Card> library = gameData.playerDecks.computeIfAbsent(
                 losingPlayerId, id -> Collections.synchronizedList(new ArrayList<>()));
 
-        shuffleOwnedPermanentsAway(gameData, losingPlayerId, library);
+        zoneToLibraryService.moveOwnedPermanentsIntoLibrary(gameData, losingPlayerId);
         zoneToLibraryService.moveHandAndGraveyardIntoLibrary(gameData, losingPlayerId);
 
         LibraryShuffleHelper.shuffleLibrary(gameData, losingPlayerId);
@@ -92,30 +90,6 @@ public class GameResetLossReplacer implements LossReplacer {
                 playerName + " draws " + drawn + (drawn == 1 ? " card" : " cards")
                         + " and their life total becomes " + gameData.getLife(losingPlayerId) + "."));
         return true;
-    }
-
-    /**
-     * Moves every permanent owned by {@code losingPlayerId} — across all battlefields, so stolen
-     * permanents come home too — into that player's library (owner-routed by the removal service).
-     *
-     * <p>Tokens go to the library along with everything else: the ruling says they are shuffled in
-     * and "will leave play", which is a battlefield-to-library move, not a death, so no dies
-     * triggers fire. They are then dropped, because a token ceases to exist once it leaves the
-     * battlefield (CR 111.7) and "there's no point to physically shuffling tokens into your
-     * library because you can't draw them".
-     */
-    private void shuffleOwnedPermanentsAway(GameData gameData, UUID losingPlayerId, List<Card> library) {
-        List<Permanent> owned = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, perm) -> {
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), controllerId);
-            if (ownerId.equals(losingPlayerId)) {
-                owned.add(perm);
-            }
-        });
-
-        permanentRemovalService.removeAllToLibraryBottom(gameData, owned);
-
-        library.removeIf(Card::isToken);
     }
 
     /**

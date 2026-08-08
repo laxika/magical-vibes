@@ -1169,10 +1169,29 @@ public class TriggerCollectionService {
         // Self triggers (El-Hajjâj): only the damage source's own "whenever this creature deals
         // damage" abilities fire. Keyed off the source card (not a battlefield scan) so it still
         // triggers when the source died dealing that damage.
-        for (CardEffect effect : sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)) {
-            var match = new TriggerMatchContext(gameData, null, sourceControllerId, effect);
+        List<CardEffect> selfEffects = new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        // Granted "whenever this creature deals damage" abilities live on the permanent, not the card
+        // (the Genju cycle grants one to the animated land until end of turn).
+        Permanent sourcePermanent = findPermanentByCardId(gameData, sourceCard.getId());
+        if (sourcePermanent != null) {
+            selfEffects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            selfEffects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        }
+        for (CardEffect effect : selfEffects) {
+            var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
             registry.dispatch(match, EffectSlot.ON_SELF_DEALS_DAMAGE, effect, ctx);
         }
+    }
+
+    /** The battlefield permanent whose card has this id, or null once it has left the battlefield. */
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        List<Permanent> found = new ArrayList<>(1);
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (perm.getCard().getId().equals(cardId)) {
+                found.add(perm);
+            }
+        });
+        return found.isEmpty() ? null : found.getFirst();
     }
 
     // ── Land-tap triggers ──────────────────────────────────────────────
@@ -3499,13 +3518,41 @@ public class TriggerCollectionService {
      * (Kothophed, Soul Hoarder). Ownership-based: only watchers controlled by a player other than the
      * dying permanent's owner see it.
      */
-    public void checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard, UUID ownerId) {
+     public void checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard, UUID ownerId) {
         var ctx = new TriggerContext.OtherPlayerOwnedPermanentGraveyard(dyingCard, ownerId);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(ownerId)) return;
-            dispatchSlot(gameData, perm, playerId,
-                    EffectSlot.ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+             dispatchSlot(gameData, perm, playerId,
+                     EffectSlot.ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+        });
+    }
+
+    /**
+     * Fires ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Yomiji, Who Bars the Way)
+     * whenever a permanent of any type is put into a graveyard from the battlefield. Fires on every
+     * permanent still on the battlefield, so the dead permanent never sees its own death. Supports
+     * {@code TriggeringCardConditionalEffect} gating on the dead permanent's card.
+     */
+    public void checkAnyPermanentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard,
+                                                          UUID dyingControllerId, UUID graveyardOwnerId) {
+        var ctx = new TriggerContext.AnyPermanentGraveyard(dyingCard, dyingControllerId, graveyardOwnerId);
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
+            if (perm.getCard().getId().equals(dyingCard.getId())) return;
+            for (CardEffect effect : perm.getCard()
+                    .getEffects(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, dyingCard, gameData, playerId);
+                if (resolved == null) continue;
+                var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
+                registry.dispatch(match, EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+                        resolved, ctx);
+            }
+
+            if (playerId.equals(graveyardOwnerId)) return;
+             dispatchSlot(gameData, perm, playerId,
+                     EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
         });
     }
 

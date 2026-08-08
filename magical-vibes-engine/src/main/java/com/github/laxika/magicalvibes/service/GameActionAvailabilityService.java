@@ -590,30 +590,29 @@ public class GameActionAvailabilityService {
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !grantedFlashback
                     && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
-            boolean grantedHavengulCast = flashback.isEmpty()
+            boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && card.hasType(CardType.CREATURE)
-                    && castingPermissionService.hasHavengulCastPermission(gameData, card, playerId);
+                    && castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId);
             boolean isGrantedGraveyardPlay = flashback.isEmpty()
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && !grantedHavengulCast
+                    && !grantedGraveyardCardCast
                     && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && !grantedHavengulCast
+                    && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay
                     && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
@@ -624,7 +623,7 @@ public class GameActionAvailabilityService {
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && !grantedHavengulCast
+                    && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
@@ -637,7 +636,7 @@ public class GameActionAvailabilityService {
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && !grantedHavengulCast
+                    && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
@@ -649,7 +648,7 @@ public class GameActionAvailabilityService {
                     && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
-                    && !grantedHavengulCast
+                    && !grantedGraveyardCardCast
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
@@ -657,7 +656,7 @@ public class GameActionAvailabilityService {
                     && !isRetrace
                     && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card);
 
-            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
+            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
                     && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
                 continue;
@@ -681,7 +680,7 @@ public class GameActionAvailabilityService {
                 manaCostStr = graveyardAlternateManaCost;
             } else if (isDisturb) {
                 manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
-            } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
+            } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
                     || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
                 manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();

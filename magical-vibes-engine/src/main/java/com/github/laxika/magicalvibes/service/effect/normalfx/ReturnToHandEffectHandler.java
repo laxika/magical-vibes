@@ -59,7 +59,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
-            case ENCHANTED -> resolveEnchanted(gameData, entry);
+            case ENCHANTED -> resolveEnchanted(gameData, entry, e);
         }
     }
 
@@ -82,16 +82,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveEnchanted(GameData gameData, StackEntry entry) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        // The Aura is normally still on the battlefield (Sun Clasp), but a "Sacrifice this Aura:"
-        // cost (Phantom Wings) removes it before the ability resolves — the activation path captured
-        // the attached creature as the entry's target for exactly that case.
-        UUID enchantedId = (aura != null && aura.isAttached()) ? aura.getAttachedTo() : entry.getTargetId();
-        if (enchantedId == null) {
-            return;
+    private void resolveEnchanted(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID hostId = e.enchantedPermanentId();
+        if (hostId == null) {
+            Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            // The Aura may have been sacrificed as a cost; the activation path then captures the
+            // attached creature in the entry target.
+            hostId = aura != null && aura.isAttached() ? aura.getAttachedTo() : entry.getTargetId();
         }
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, hostId);
         if (enchanted == null) {
             return;
         }

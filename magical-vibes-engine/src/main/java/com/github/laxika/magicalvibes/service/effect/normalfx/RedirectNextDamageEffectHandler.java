@@ -36,8 +36,8 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RedirectNextDamageEffect e = (RedirectNextDamageEffect) effect;
-        UUID protectedId = resolveRole(entry, e.protectedRole());
-        UUID destinationId = resolveRole(entry, e.destinationRole());
+        UUID protectedId = resolveRole(gameData, entry, e.protectedRole());
+        UUID destinationId = resolveRole(gameData, entry, e.destinationRole());
         // Without both ends of the redirection there is nothing to install.
         if (protectedId == null || destinationId == null) {
             return;
@@ -80,12 +80,23 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
                 describe(gameData, destinationId, destinationPermanent));
     }
 
-    private UUID resolveRole(StackEntry entry, RedirectRole role) {
+    private UUID resolveRole(GameData gameData, StackEntry entry, RedirectRole role) {
         return switch (role) {
             case SOURCE_PERMANENT -> entry.getSourcePermanentId();
             case TARGET -> entry.getTargetId();
             case CONTROLLER -> entry.getControllerId();
+            case ENCHANTED_PERMANENT -> enchantedPermanentId(gameData, entry);
         };
+    }
+
+    /** The permanent the Aura source is attached to, or {@code null} when it is not attached. */
+    private UUID enchantedPermanentId(GameData gameData, StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
+        if (sourceId == null) {
+            return null;
+        }
+        Permanent aura = gameQueryService.findPermanentById(gameData, sourceId);
+        return aura == null ? null : aura.getAttachedTo();
     }
 
     /** The permanent behind an id, or {@code null} when the id is a player's (or it has left play). */

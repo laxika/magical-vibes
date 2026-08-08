@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -636,6 +637,7 @@ public class GameQueryService {
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
         if (gameData.playersWhoCantGainLifeRestOfGame.contains(playerId)) return false;
+        if (gameData.playersWhoCantGainLifeThisTurn.contains(playerId)) return false;
         if (gameData.playersCantGainLifeThisTurn) return false;
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
     }
@@ -884,6 +886,7 @@ public class GameQueryService {
      */
     public boolean isDamagePreventable(GameData gameData) {
         return !gameData.damageCantBePreventedThisTurn
+                && !gameData.unpreventableDamageInProgress
                 && !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
     }
 
@@ -2550,6 +2553,30 @@ public class GameQueryService {
         }
         if (target.getProtectionFromColorsUntilEndOfTurn().contains(sourceColor)) {
             return true;
+        }
+        if (!bonus.losesAllAbilities()
+                && target.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ProtectionFromColorsOfPermanentsYouControlEffect.class::isInstance)
+                && controlsPermanentOfColor(gameData, target, sourceColor)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Empty-Shrine Kannushi: returns {@code true} if the permanent's controller controls any
+     * permanent (including the asking permanent itself) whose current colors include
+     * {@code color}. Layer-5 aware, so color-changing effects are honoured.
+     */
+    private boolean controlsPermanentOfColor(GameData gameData, Permanent permanent, CardColor color) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        for (Permanent candidate : battlefield) {
+            if (getEffectiveColors(gameData, candidate).contains(color)) {
+                return true;
+            }
         }
         return false;
     }

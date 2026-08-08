@@ -25,16 +25,18 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect;
-        // An emblem (Liliana, Defiant Necromancer's) has no source permanent — that is only needed
-        // for the control-loss sacrifice link, so require it exclusively for that variant.
-        if (entry.getTriggeringCardId() == null
+        // The MayEffect flow (Shirei) does not carry the entry's triggering-card id, so the
+        // collector binds the dying card onto the effect itself.
+        var dyingCardId = e.dyingCardId() != null ? e.dyingCardId() : entry.getTriggeringCardId();
+        // An emblem has no source permanent unless the delayed action must watch its control loss.
+        if (dyingCardId == null
                 || (e.sacrificeOnSourceControlLoss() && entry.getSourcePermanentId() == null)) {
             return;
         }
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
-                entry.getTriggeringCardId(), entry.getControllerId(), entry.getSourcePermanentId(),
+                dyingCardId, entry.getControllerId(), entry.getSourcePermanentId(),
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
-                e.grantColor(), e.grantSubtype()));
+                e.grantColor(), e.grantSubtype(), e.requireSourceOnBattlefield()));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",
                 gameData.id, entry.getCard().getName());
     }

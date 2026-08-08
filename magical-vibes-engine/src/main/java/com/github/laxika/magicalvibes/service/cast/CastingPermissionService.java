@@ -692,9 +692,9 @@ public class CastingPermissionService {
         return Optional.empty();
     }
 
-    public boolean hasHavengulCastPermission(GameData gameData, Card card, UUID playerId) {
-        GameData.GraveyardCreatureCastPermission permission =
-                gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.get(card.getId());
+    public boolean hasGrantedGraveyardCardCastPermission(GameData gameData, Card card, UUID playerId) {
+        GameData.GraveyardCardCastPermission permission =
+                gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
         return permission != null && playerId.equals(permission.castingPlayerId());
     }
 

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
 
     private final StaticEffectSupport support;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,19 +36,21 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))) {
             return;
         }
-        int bushido = bushidoValue(context.target());
+        int bushido = bushidoValue(context, context.target());
         accumulator.addPower(bushido);
         accumulator.addToughness(bushido);
     }
 
-    private int bushidoValue(Permanent permanent) {
+    private int bushidoValue(StaticEffectContext context, Permanent permanent) {
         List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_BLOCK));
         effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
         effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
+        AmountContext amountContext = AmountContext.forStaticEffect(
+                permanent, context.gameData().findControllerOf(permanent));
         return effects.stream()
                 .filter(BushidoEffect.class::isInstance)
                 .map(BushidoEffect.class::cast)
-                .mapToInt(BushidoEffect::amount)
+                .mapToInt(e -> amountEvaluationService.evaluate(context.gameData(), e.amount(), amountContext))
                 .sum();
     }
 }

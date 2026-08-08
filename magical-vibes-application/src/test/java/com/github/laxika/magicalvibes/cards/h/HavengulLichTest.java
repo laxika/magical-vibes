@@ -32,10 +32,10 @@ class HavengulLichTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, shade.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardCreatureCastPermissionsUntilEndOfTurn)
+        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn)
                 .containsEntry(shade.getId(),
-                        new com.github.laxika.magicalvibes.model.GameData.GraveyardCreatureCastPermission(
-                                lich.getId(), player1.getId()));
+                        new com.github.laxika.magicalvibes.model.GameData.GraveyardCardCastPermission(
+                                lich.getId(), player1.getId(), true, false));
 
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castFromGraveyard(player1, shade.getId());
@@ -137,13 +137,13 @@ class HavengulLichTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, shade.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardCreatureCastPermissionsUntilEndOfTurn).isNotEmpty();
+        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isNotEmpty();
         lich.getTemporaryActivatedAbilities().add(shade.getActivatedAbilities().getFirst());
 
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
-        assertThat(gd.graveyardCreatureCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
         assertThat(lich.getTemporaryActivatedAbilities()).isEmpty();
     }
 

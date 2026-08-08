@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -771,6 +772,24 @@ public class Card {
         addHandActivatedAbility(new ActivatedAbility(false, cost,
                 List.of(new DrawCardEffect(1)),
                 "Cycling " + cost + " (" + cost + ", Discard this card: Draw a card.)"));
+    }
+
+    /**
+     * Adds ninjutsu for {@code cost} — "{@code Cost, Reveal this card from your hand, Return an
+     * unblocked attacking creature you control to its owner's hand: Put this card onto the
+     * battlefield from your hand tapped and attacking.}" (CR 702.49a).
+     *
+     * <p>Like cycling this is one call because both halves matter to the engine: ninjutsu functions
+     * only from hand, and {@link ActivatedAbility#isNinjutsuAbility()} is what makes the activation
+     * path pay the return-an-attacker cost, leave the source in hand, and enter it attacking the
+     * same defender the returned creature was attacking (CR 702.49c).
+     */
+    public void addNinjutsu(String cost) {
+        addHandActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(new NinjutsuEffect()),
+                "Ninjutsu " + cost + " (" + cost + ", Return an unblocked attacker you control to hand: "
+                        + "Put this card onto the battlefield from your hand tapped and attacking.)")
+                .withNinjutsu());
     }
 
     /**

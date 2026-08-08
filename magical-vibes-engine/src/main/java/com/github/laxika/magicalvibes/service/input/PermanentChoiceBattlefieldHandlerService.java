@@ -868,6 +868,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleRedirectNextDamageFromChosenSourceToPermanentChoice(GameData gameData, UUID permanentId,
+                                                                          PermanentChoiceContext.RedirectNextDamageFromChosenSourceToPermanentChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.sourceNextDamageRedirectToPermanentShields.add(
+                new com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield(
+                        permanentId, ctx.destinationPermanentId()));
+
+        Permanent destination = gameQueryService.findPermanentById(gameData, ctx.destinationPermanentId());
+        String sourceName = chosenPermanent.getCard().getName();
+        String destinationName = destination != null ? destination.getCard().getName() : "it";
+        gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
+                + "that damage is dealt to " + destinationName + " instead."));
+        log.info("Game {} - {} chose {} as damage redirect source", gameData.id,
+                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleReflectDamageToSourceControllerChoice(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.ReflectDamageToSourceControllerChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);

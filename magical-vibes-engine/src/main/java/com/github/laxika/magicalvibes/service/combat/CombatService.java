@@ -312,6 +312,17 @@ public class CombatService {
     }
 
     /**
+     * Returns all permanents marked for end-of-combat bounce (e.g. by Kaijin of the Vanishing
+     * Touch's block trigger) to their owners' hands. A permanent that already left the battlefield
+     * is skipped.
+     */
+    public void processEndOfCombatReturnsToHand(GameData gameData) {
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
      * Destroys, for each creature scheduled by Venomous Breath, every creature that blocked or was
      * blocked by it this turn. The opponent set is read here rather than at spell resolution, so
      * blocks declared after the spell resolved are included. Respects indestructible and

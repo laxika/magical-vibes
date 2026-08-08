@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.UUID;
+
 /**
  * Returns permanent(s) to their owners' hands. Constructed only through the static factories below,
  * which are the safe, self-documenting way to pair a {@link BounceScope} with the parameters that
@@ -30,12 +32,19 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
     private final PermanentPredicate filter;
     private final int lifeLoss;
     private final int drawCount;
+    private final UUID enchantedPermanentId;
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
+        this(scope, filter, lifeLoss, drawCount, null);
+    }
+
+    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
+                               UUID enchantedPermanentId) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
+        this.enchantedPermanentId = enchantedPermanentId;
     }
 
     public static ReturnToHandEffect target() {
@@ -88,6 +97,19 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
      */
     public static ReturnToHandEffect enchanted() {
         return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0);
+    }
+
+    /**
+     * {@link #enchanted()} with the host permanent already resolved, used as last known information
+     * when the Aura is no longer on the battlefield at resolution (Phantom Wings sacrifices itself
+     * as the activation cost). Bound at activation time by {@code ActivatedAbilityExecutionService}.
+     */
+    public static ReturnToHandEffect enchantedSnapshot(UUID enchantedPermanentId) {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0, enchantedPermanentId);
+    }
+
+    public UUID enchantedPermanentId() {
+        return enchantedPermanentId;
     }
 
     public BounceScope scope() {

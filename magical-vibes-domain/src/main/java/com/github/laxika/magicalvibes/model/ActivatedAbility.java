@@ -112,6 +112,14 @@ public class ActivatedAbility {
      * triggers fire. Set via {@link #withExilesSourceFromHand()}.
      */
     private boolean exilesSourceFromHand;
+    /**
+     * When true this hand-activated ability is a ninjutsu ability (CR 702.49a). Its intrinsic cost
+     * returns an unblocked attacking creature the activating player controls to its owner's hand
+     * instead of discarding the source, and the source card stays in hand — revealed — until the
+     * ability resolves and puts it onto the battlefield tapped and attacking. Set via
+     * {@link #withNinjutsu()}.
+     */
+    private boolean ninjutsuAbility;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -262,6 +270,15 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withExilesSourceFromHand() {
         this.exilesSourceFromHand = true;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking this hand-activated ability as ninjutsu (CR 702.49a). Returns this
+     * ability for chaining.
+     */
+    public ActivatedAbility withNinjutsu() {
+        this.ninjutsuAbility = true;
         return this;
     }
 

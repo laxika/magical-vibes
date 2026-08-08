@@ -71,6 +71,10 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
                         eq(gd), nullable(UUID.class), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(2));
+        // Opal-Eye redirect is likewise a pass-through when no shield is set up.
+        lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
+                        eq(gd), nullable(UUID.class), nullable(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         // Saving Grace redirect (CR 614) is a pass-through in these unit tests — no redirect shields are set up,
         // so it must return the damage unchanged. Called unconditionally by dealDamageToPlayer and (for
         // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().

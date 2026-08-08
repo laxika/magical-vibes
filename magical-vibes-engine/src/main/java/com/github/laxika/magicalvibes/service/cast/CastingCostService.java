@@ -379,7 +379,7 @@ public class CastingCostService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AlternativeCostForSpellsEffect altCost
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
-                            && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                            && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                             && (fromHand || !altCost.fromHandOnly())
                             && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
                             && manaValueCapSatisfied(perm, card, altCost)
@@ -414,7 +414,7 @@ public class CastingCostService {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && altCost.manaValueCapCounter() == null
                         && !altCost.oncePerTurn()
-                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
+                        && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (fromHand || !altCost.fromHandOnly())
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     return new FreeCastSource(null, altCost);
@@ -448,9 +448,10 @@ public class CastingCostService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    ManaCost alternativeManaCost = new ManaCost(altCost.manaCost());
+                    String alternativeCostString = altCost.manaCostFor(card.getManaValue());
+                    ManaCost alternativeManaCost = new ManaCost(alternativeCostString);
                     if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
-                        return altCost.manaCost();
+                        return alternativeCostString;
                     }
                 }
             }

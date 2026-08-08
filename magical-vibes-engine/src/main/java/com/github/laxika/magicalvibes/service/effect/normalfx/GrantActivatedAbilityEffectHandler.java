@@ -52,6 +52,17 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 grantTo(target, e.ability(), e.duration());
                 count++;
             }
+        } else if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
+            // The Genju cycle: the permanent the source Aura is attached to, re-derived at
+            // resolution and without targeting. No creature check — the same ability animates it.
+            Permanent aura = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            Permanent enchanted = aura == null || aura.getAttachedTo() == null ? null
+                    : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            if (enchanted != null) {
+                grantTo(enchanted, e.ability(), e.duration());
+                count++;
+            }
         } else {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
             FilterContext filterContext = FilterContext.of(gameData)

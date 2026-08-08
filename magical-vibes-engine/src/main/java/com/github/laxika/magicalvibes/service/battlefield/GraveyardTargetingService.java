@@ -288,6 +288,26 @@ public class GraveyardTargetingService {
     public void handleUnblockedAttackGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
             GraveyardCardChoosingEffect choosingEffect) {
+        handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
+                defendingPlayerId, choosingEffect, "unblocked-attack", "defending player's graveyard");
+    }
+
+    /**
+     * Combat-damage-trigger targeting for "Whenever this creature deals combat damage to a player,
+     * exile up to N target cards from that player's graveyard" (Skullsnatcher). Same trigger-time
+     * up-to-N selection as the unblocked-attack flow (CR 603.3d), narrowed to the damaged player's
+     * graveyard.
+     */
+    public void handleCombatDamageGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID damagedPlayerId,
+            GraveyardCardChoosingEffect choosingEffect) {
+        handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
+                damagedPlayerId, choosingEffect, "combat damage", "that player's graveyard");
+    }
+
+    private void handleSinglePlayerGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
+            GraveyardCardChoosingEffect choosingEffect, String triggerLabel, String zoneLabel) {
         CardPredicate filter = choosingEffect.graveyardChoiceFilter();
 
         List<Card> matchingCards = new ArrayList<>();
@@ -306,15 +326,15 @@ public class GraveyardTargetingService {
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     controllerId,
-                    card.getName() + "'s unblocked-attack trigger",
+                    card.getName() + "'s " + triggerLabel + " trigger",
                     new ArrayList<>(effects),
                     defendingPlayerId,
                     sourcePermanentId);
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(card,
-                    "'s unblocked-attack ability triggers with no graveyard targets."));
-            log.info("Game {} - {} unblocked-attack graveyard trigger pushed with 0 targets", gameData.id, card.getName());
+                    "'s " + triggerLabel + " ability triggers with no graveyard targets."));
+            log.info("Game {} - {} {} graveyard trigger pushed with 0 targets", gameData.id, card.getName(), triggerLabel);
             return;
         }
 
@@ -325,9 +345,9 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 card.getName() + "'s ability — Choose up to " + maxTargets + " target card"
-                        + (maxTargets != 1 ? "s" : "") + " from defending player's graveyard to exile.");
+                        + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
         gameLogService.append(gameData, GameLog.cardThen(card,
-                "'s unblocked-attack trigger — choose graveyard targets."));
+                "'s " + triggerLabel + " trigger — choose graveyard targets."));
     }
 
     /**

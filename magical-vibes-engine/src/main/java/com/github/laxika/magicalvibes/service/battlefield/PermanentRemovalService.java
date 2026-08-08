@@ -724,17 +724,38 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Frostwielder: true when any permanent on the battlefield has "if a creature dealt damage by
-     * this creature this turn would die, exile it instead" and damaged {@code dying} this turn.
+     * Frostwielder / Kumano's Blessing: true when a permanent that damaged {@code dying} this turn
+     * has "if a creature dealt damage by this creature this turn would die, exile it instead" —
+     * printed on the permanent itself, or on an Aura currently attached to it.
      */
     private boolean damagerExilesDyingCreature(GameData gameData, Permanent dying) {
         UUID cardId = dying.getCard().getId();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
-                if (source.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance)
-                        && gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                if (!gameData.creatureCardsDamagedThisTurnBySourcePermanent
                         .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
+                    continue;
+                }
+                if (hasExileDamagedCreaturesInsteadOfDying(source)
+                        || auraOnSourceExilesDamagedCreatures(gameData, source.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasExileDamagedCreaturesInsteadOfDying(Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance);
+    }
+
+    private boolean auraOnSourceExilesDamagedCreatures(GameData gameData, UUID sourceId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent aura : battlefield) {
+                if (aura.isAttached()
+                        && sourceId.equals(aura.getAttachedTo())
+                        && hasExileDamagedCreaturesInsteadOfDying(aura)) {
                     return true;
                 }
             }
@@ -779,6 +800,9 @@ public class PermanentRemovalService {
             if (wasCreature || target.getCard().hasType(CardType.PLANESWALKER)) {
                 triggerCollectionService.checkAllyCreatureOrPlaneswalkerDeathTriggers(gameData, controllerId, target);
             }
+            // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
+            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
+                    gameData, target.getOriginalCard(), controllerId, ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn

@@ -81,6 +81,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
@@ -1226,6 +1228,14 @@ public class AbilityActivationService {
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
+        // Ninjutsu takes its own path: the source card is not discarded (it stays revealed in hand
+        // until the ability resolves) and targetId names the attacker returned as a cost, not a
+        // target, so the generic targeting validation below does not apply (CR 702.49a/b).
+        if (ability.isNinjutsuAbility()) {
+            activateNinjutsuAbility(gameData, player, card, ability, targetId);
+            return;
+        }
+
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
         targetLegalityService.validateActivatedAbilityTargeting(
                 gameData, playerId, ability, abilityEffects, targetId, null, card, effectiveXValue);
@@ -1312,6 +1322,68 @@ public class AbilityActivationService {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
+     * Activates a ninjutsu ability (CR 702.49a): pays the mana cost and returns the chosen unblocked
+     * attacking creature the activating player controls to its owner's hand, then puts the ability on
+     * the stack.
+     *
+     * <p>The source card stays in hand — revealed until the ability leaves the stack (CR 702.49b) —
+     * because the resolution effect is what moves it to the battlefield. The returned attacker's
+     * attack target is captured here and baked into the {@link NinjutsuEffect} snapshot so the ninja
+     * enters attacking the same player or planeswalker (CR 702.49c); the attacker itself is gone from
+     * the battlefield by the time the ability resolves.
+     *
+     * @param ninjaTargetId the unblocked attacking creature returned to hand as part of the cost
+     */
+    private void activateNinjutsuAbility(GameData gameData, Player player, Card card,
+                                         ActivatedAbility ability, UUID ninjaTargetId) {
+        UUID playerId = player.getId();
+        if (ninjaTargetId == null) {
+            throw new IllegalStateException("Ninjutsu requires an unblocked attacking creature to return");
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        Permanent attacker = battlefield.stream()
+                .filter(p -> p.getId().equals(ninjaTargetId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Ninjutsu requires an unblocked attacker you control"));
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                gameData, attacker, new PermanentIsUnblockedAttackingPredicate())) {
+            throw new IllegalStateException("Ninjutsu requires an unblocked attacker you control");
+        }
+
+        UUID attackTargetId = attacker.getAttackTarget();
+
+        // Mana first: payManaCost throws before mutating the pool if it can't be afforded, so an
+        // unaffordable activation never bounces the attacker.
+        if (ability.getManaCost() != null) {
+            payManaCost(gameData, playerId, ability.getManaCost(), 0, false, false);
+        }
+        permanentRemovalService.removePermanentToHand(gameData, attacker);
+        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " is returned to its owner's hand."));
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ninjutsu ability",
+                List.<CardEffect>of(new NinjutsuEffect(attackTargetId)),
+                0,
+                null,
+                null,
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        ));
+
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates ninjutsu on ", card, "."));
+        log.info("Game {} - {} activates ninjutsu on {}", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
@@ -1810,17 +1882,10 @@ public class AbilityActivationService {
             }
         }
 
-        // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
-        if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
-            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
-                    targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
-        } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
-            targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, targetIds);
-        } else {
-            targetLegalityService.validateActivatedAbilityTargeting(
-                    gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
-        }
-
+        // The variable X of a remove-X-counters cost is announced before targets are checked
+        // (CR 601.2b announces X, CR 601.2c announces targets), so this prompt has to run ahead of
+        // the target legality pass below: a target filter that reads X (Quillmane Baku's "creature
+        // with mana value X or less") would otherwise be evaluated against a placeholder X of 0.
         RemoveXCountersFromSourceCost pendingVariableCounterCost = abilityEffects.stream()
                 .filter(RemoveXCountersFromSourceCost.class::isInstance)
                 .map(RemoveXCountersFromSourceCost.class::cast)
@@ -1836,6 +1901,17 @@ public class AbilityActivationService {
                             + " counters to remove as an activation cost.",
                     permanent.getCard().getName()));
             return;
+        }
+
+        // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
+        if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
+                    targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
+        } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, targetIds);
+        } else {
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
         }
 
         // Pay the loyalty cost only now that full legality, including targets, is confirmed

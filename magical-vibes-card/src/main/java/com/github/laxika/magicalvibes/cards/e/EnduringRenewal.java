@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnduringRenewalDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithOwnHandRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCreatureToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "23")
 public class EnduringRenewal extends Card {
@@ -17,6 +17,6 @@ public class EnduringRenewal extends Card {
         // card, put it into your graveyard. Otherwise, draw a card.
         addEffect(EffectSlot.STATIC, new EnduringRenewalDrawReplacementEffect());
         // Whenever a creature is put into your graveyard from the battlefield, return it to your hand.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ReturnTriggeringCreatureToOwnerHandEffect());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ReturnTriggeringCardToOwnerHandEffect());
     }
 }

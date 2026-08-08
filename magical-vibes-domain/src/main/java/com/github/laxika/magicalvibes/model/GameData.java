@@ -108,6 +108,11 @@ public class GameData {
      * Populated during spell payment and consumed when the spell resolves (e.g. Repel Intruders).
      */
     public final Map<UUID, java.util.EnumSet<ManaColor>> spellCastColorsSpent = new ConcurrentHashMap<>();
+    /**
+     * Names of the cards spliced onto a spell (CR 702.47), keyed by host spell card instance id.
+     * Populated as splice costs are paid and read while the spell is on the stack (Minamo's Meddling).
+     */
+    public final Map<UUID, List<String>> spellCastSplicedNames = new ConcurrentHashMap<>();
     /** Per-color mana removed specifically to pay X (not the rest of the cost). Cleared on resolution. */
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentOnX = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
@@ -493,6 +498,10 @@ public class GameData {
      *  deal to any recipient this turn is dealt to that source's controller instead. Each entry is a
      *  chosen source permanent ID, consumed on first use. */
     public final List<UUID> reflectDamageToSourceControllerShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot redirection shields (Opal-Eye, Konda's Yojimbo): the next damage event the chosen source
+     *  would deal to any recipient this turn is dealt to a fixed permanent instead. */
+    public final List<SourceNextDamageRedirectToPermanentShield> sourceNextDamageRedirectToPermanentShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Pending Eye for an Eye reflected damage to deal after a shield matches (populated by
      *  DamagePreventionService, consumed by the damage-dealing services). */
     public final List<EyeForAnEyeReflection> pendingEyeForAnEyeReflections = Collections.synchronizedList(new ArrayList<>());
@@ -554,6 +563,13 @@ public class GameData {
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
     public boolean playersCantGainLifeThisTurn = false;
     /**
+     * Set for the duration of a single unpreventable damage event ("the damage can't be prevented",
+     * e.g. Flames of the Blood Hand), so the shared prevention gate {@code isDamagePreventable}
+     * turns off for that one event only. Always cleared in a {@code finally} by the effect handler
+     * that raised it — it is never observable outside a resolution.
+     */
+    public boolean unpreventableDamageInProgress = false;
+    /**
      * Number of active "if a creature would deal combat damage to a creature this turn, it deals
      * double that damage instead" replacement effects (Blind Fury). Each one doubles the damage, so
      * the multiplier is {@code 2^count}. Cleared at turn cleanup.
@@ -611,6 +627,8 @@ public class GameData {
     public final Set<UUID> playersWithNoMaximumHandSizeUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players who can't gain life for the rest of the game (e.g. Stigma Lasher). */
     public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
+    /** Players who can't gain life this turn (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
+    public final Set<UUID> playersWhoCantGainLifeThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks source-linked animations (Awakener Druid-style).
      *  Maps animated target permanent UUID → source permanent UUID.
@@ -739,16 +757,26 @@ public class GameData {
      *  Cleared at end of turn. */
     public final Set<UUID> mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
-    public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
+    /**
+     * A one-shot permission to cast a specific graveyard card for its normal cost.
+     *
+     * @param copySourceActivatedAbilities Havengul Lich's rider — when the card is cast this way the
+     *                                     source permanent gains its activated abilities
+     * @param exileInsteadOfGraveyard      Toshiro Umezawa's rider — the resulting spell is exiled
+     *                                     rather than put into a graveyard
+     */
+    public record GraveyardCardCastPermission(UUID sourcePermanentId, UUID castingPlayerId,
+                                              boolean copySourceActivatedAbilities,
+                                               boolean exileInsteadOfGraveyard) {}
 
     /** A turn-scoped grant letting {@code playerId} cast any card matching {@code filter} from
      *  their own graveyard, paying its normal costs. */
     public record GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {}
 
-    /** Targeted creature cards that may be cast from a graveyard this turn.
+    /** Targeted cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
-    public final Map<UUID, GraveyardCreatureCastPermission> graveyardCreatureCastPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, GraveyardCardCastPermission> graveyardCardCastPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Players whose instant/sorcery spells are automatically copied until end of turn
      *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
@@ -1888,6 +1916,18 @@ public class GameData {
         spellCastConvergeValue.remove(spellCardId);
     }
 
+    public void setSpellCastSplicedNames(UUID spellCardId, List<String> names) {
+        spellCastSplicedNames.put(spellCardId, List.copyOf(names));
+    }
+
+    public List<String> getSpellCastSplicedNames(UUID spellCardId) {
+        return spellCastSplicedNames.getOrDefault(spellCardId, List.of());
+    }
+
+    public void clearSpellCastSplicedNames(UUID spellCardId) {
+        spellCastSplicedNames.remove(spellCardId);
+    }
+
     public void setSpellCastColorsSpent(UUID spellCardId, java.util.EnumSet<ManaColor> colorsSpent) {
         spellCastColorsSpent.put(spellCardId, colorsSpent);
     }
@@ -2463,6 +2503,7 @@ public class GameData {
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
         copy.reflectDamageToSourceControllerShields.addAll(this.reflectDamageToSourceControllerShields);
+        copy.sourceNextDamageRedirectToPermanentShields.addAll(this.sourceNextDamageRedirectToPermanentShields);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
         copy.pendingSourceDamageForReflection.putAll(this.pendingSourceDamageForReflection);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
@@ -2698,6 +2739,7 @@ public class GameData {
 
         // --- Permanent "can't gain life" grants (Stigma Lasher) ---
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
+        copy.playersWhoCantGainLifeThisTurn.addAll(this.playersWhoCantGainLifeThisTurn);
 
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
@@ -2812,6 +2854,7 @@ public class GameData {
                 copy.spellCastColorsSpent.put(k, java.util.EnumSet.copyOf(v)));
         this.spellCastManaSpentOnX.forEach((k, v) ->
                 copy.spellCastManaSpentOnX.put(k, new java.util.EnumMap<>(v)));
+        copy.spellCastSplicedNames.putAll(this.spellCastSplicedNames);
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
@@ -2826,7 +2869,7 @@ public class GameData {
         copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn
                 .addAll(this.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn);
-        copy.graveyardCreatureCastPermissionsUntilEndOfTurn.putAll(this.graveyardCreatureCastPermissionsUntilEndOfTurn);
+        copy.graveyardCardCastPermissionsUntilEndOfTurn.putAll(this.graveyardCardCastPermissionsUntilEndOfTurn);
 
         // --- Damage prevention / redirection still pending ---
         copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +19,7 @@ public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler im
 
     private final PreventionSupport preventionSupport;
     private final PlayerInputService playerInputService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,6 +33,9 @@ public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler im
         UUID redirectTargetId = entry.getTargetId();
         if (redirectTargetId == null) return;
 
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
+        if (amount <= 0) return;
+
         List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
 
         if (validIds.isEmpty()) {
@@ -38,8 +44,8 @@ public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler im
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.RedirectDamageSourceChoice(controllerId, e.amount(), redirectTargetId));
+                new PermanentChoiceContext.RedirectDamageSourceChoice(controllerId, amount, redirectTargetId));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
-                "Choose a source. The next " + e.amount() + " damage it would deal to you or your permanents is redirected.");
+                "Choose a source. The next " + amount + " damage it would deal to you or your permanents is redirected.");
     }
 }

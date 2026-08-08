@@ -46,7 +46,15 @@ public class DealDamageToTargetPlayerOrPlaneswalkerEffectHandler implements Norm
                 AmountContext.forStackEntry(entry, source));
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
-        damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+        // "The damage can't be prevented" is scoped to this one damage event, so the flag is raised
+        // only around the resolution itself and always dropped again.
+        boolean previous = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = previous || e.unpreventable();
+        try {
+            damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+        } finally {
+            gameData.unpreventableDamageInProgress = previous;
+        }
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

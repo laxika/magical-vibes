@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -695,6 +696,34 @@ public class AdditionalSpellCostService {
             chosen.add(permanent);
         }
         return chosen;
+    }
+
+    /**
+     * Validates a single "tap an untapped permanent you control" cost (the non-mana splice cost of
+     * Hundred-Talon Strike) without mutating anything. The permanent must exist, be controlled by
+     * the caster, be untapped, and match {@code filter}. Tapping as a cost is not a {@code {T}}
+     * activation cost, so summoning sickness does not matter (CR 302.6 applies to {@code {T}} in
+     * activation costs only).
+     */
+    public Permanent validateSingleTapCost(GameData gameData, Player player, Card card,
+                                           PermanentPredicate filter, UUID tapPermanentId) {
+        if (tapPermanentId == null) {
+            throw new IllegalStateException("A permanent must be chosen to tap for " + card.getName());
+        }
+        Permanent permanent = gameQueryService.findPermanentById(gameData, tapPermanentId);
+        if (permanent == null) {
+            throw new IllegalStateException("Permanent to tap not found on battlefield");
+        }
+        if (!player.getId().equals(gameQueryService.findPermanentController(gameData, tapPermanentId))) {
+            throw new IllegalStateException("Can only tap permanents you control to cast " + card.getName());
+        }
+        if (permanent.isTapped()) {
+            throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
+        }
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
+            throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
+        }
+        return permanent;
     }
 
     /**

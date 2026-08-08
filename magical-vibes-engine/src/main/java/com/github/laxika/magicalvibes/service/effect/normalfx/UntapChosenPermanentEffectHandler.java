@@ -16,8 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link UntapChosenPermanentEffect}: the controller chooses one permanent matching the
- * effect's predicate across every battlefield, and it is untapped when the choice is answered
+ * Resolves {@link UntapChosenPermanentEffect}: the controller — or the entry's target player when
+ * the effect sets {@code targetPlayerChooses} — chooses one permanent matching the effect's
+ * predicate across every battlefield, and it is untapped when the choice is answered
  * (see {@code MultiPermanentChoiceHandlerService.handleUntapChosenPermanent}).
  */
 @Component
@@ -51,8 +52,12 @@ public class UntapChosenPermanentEffectHandler implements NormalEffectHandlerBea
             return;
         }
 
-        playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, 1,
+        UUID chooserId = e.targetPlayerChooses() && entry.getTargetId() != null
+                ? entry.getTargetId()
+                : entry.getControllerId();
+
+        playerInputService.beginMultiPermanentChoice(gameData, chooserId, validIds, 1,
                 new MultiPermanentChoiceContext.UntapChosenPermanent(entry.getCard().getName()),
-                entry.getCard().getName() + "'s ability — Choose a creature or land to untap.");
+                entry.getCard().getName() + "'s ability — Choose a permanent to untap.");
     }
 }
