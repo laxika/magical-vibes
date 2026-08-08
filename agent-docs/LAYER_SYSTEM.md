@@ -366,7 +366,7 @@ pass with the copied identity automatically. "Copy with exceptions" is baked int
 as part of the copiable value: Quicksilver Gargantuan's 7/7 override (with the CR 707.9d skip of
 P/T-defining CDAs), Phyrexian Metamorph's added ARTIFACT type, Evil Twin's added ability
 (`CloneService`), Cryptoplasm's retained upkeep ability (`MayCopyHandlerService`) — so a Clone
-of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The two DURATION copies
+of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The DURATION copies
 — `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (Tilonalli's Skinshifter) and
 `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` (Shapesharer) — register a floating
 `L1_COPY` effect alongside the card swap, and the revert is driven by the step-2 lifecycle:
@@ -374,7 +374,11 @@ of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The two
 wraps the become-copy effect (`Permanent.revertEndOfTurnCopy()`, extracted out of
 `resetModifiers()`), and `TurnProgressionService.advanceTurn` reverts until-next-turn copies off
 the `expireFloatingEffectsAtTurnStart` result, guarded on `copyUntilNextTurnControllerId` so an
-OLDER effect expiring cannot revert a NEWER still-active copy — same game moments as the old
+OLDER effect expiring cannot revert a NEWER still-active copy. A third duration, WHILE ATTACHED
+(`EnchantedCreatureIsCopyOfChosenCreatureEffect` — Metamorphic Alteration), follows the same shape
+via `AuraCopyService`: the swap stores `Permanent.whileAttachedPreCopyCard`, a `WHILE_ATTACHED`
+floating effect is keyed to the Aura, and `PermanentRemovalService` reverts off its expiry
+(`Permanent.revertWhileAttachedCopy()`) — same game moments as the old
 ad-hoc timing (revert at cleanup happens alongside damage removal, per the official Tilonalli
 ruling), pinned by the card tests. Cryptoplasm's copy is INDEFINITE (official ruling: "lasts
 indefinitely") and correctly gets no duration marker. CR 611.2c verified against the official

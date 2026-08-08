@@ -219,6 +219,7 @@ public class TurnCleanupService {
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
+        gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
@@ -264,6 +265,7 @@ public class TurnCleanupService {
             gameData.graveyardPlayPermissions.remove(cardId);
         }
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
+        gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();

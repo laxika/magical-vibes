@@ -57,6 +57,7 @@ public sealed interface Condition permits
         ControlsPermanent,
         ControlsPermanentCount,
         ControlsPermanentCountAtMost,
+        ControlsPermanentsWithDifferentNames,
         ControlledCreaturesTotalPowerAtLeast,
         ControlsCreatureWithGreatestPower,
         ControlsEachCreatureWithGreatestPower,

@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -515,6 +517,8 @@ public class GameData {
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, exile creatures that would enter without having been cast (Hallowed Moonlight). */
     public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who, this turn, exile nontoken creatures that would enter without having been cast (Mistcaller). */
+    public final Set<UUID> playersExilingUncastEnteringNontokenCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /**
@@ -533,6 +537,18 @@ public class GameData {
      * source leaves the battlefield; readers must check that the source is still there.
      */
     public final Map<UUID, Set<UUID>> handsRevealedWhileSourceOnBattlefield = new ConcurrentHashMap<>();
+    /**
+     * Permanents that can't have counters put on them for as long as a given source permanent
+     * remains on the battlefield (Suncleanser's first mode), keyed by that source permanent's id.
+     * Entries stay until the source leaves; readers must check that the source is still there.
+     */
+    public final Map<UUID, Set<UUID>> countersLockedPermanentsWhileSourceOnBattlefield = new ConcurrentHashMap<>();
+    /**
+     * Players who can't get counters for as long as a given source permanent remains on the
+     * battlefield (Suncleanser's second mode), keyed by that source permanent's id. Same lifetime
+     * rule as {@link #countersLockedPermanentsWhileSourceOnBattlefield}.
+     */
+    public final Map<UUID, Set<UUID>> countersLockedPlayersWhileSourceOnBattlefield = new ConcurrentHashMap<>();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
     /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
@@ -725,6 +741,10 @@ public class GameData {
 
     public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
 
+    /** A turn-scoped grant letting {@code playerId} cast any card matching {@code filter} from
+     *  their own graveyard, paying its normal costs. */
+    public record GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {}
+
     /** Targeted creature cards that may be cast from a graveyard this turn.
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
@@ -840,6 +860,12 @@ public class GameData {
     public final Map<UUID, UUID> graveyardPlayPermissions = new ConcurrentHashMap<>();
     /** Graveyard card UUIDs whose play permission expires at end of turn. */
     public final Set<UUID> graveyardPlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Turn-scoped blanket "you may cast [filtered] spells from your graveyard this turn" grants
+     *  (Liliana, Untouched by Death's −3). Unlike {@link #graveyardPlayPermissions} these are not
+     *  keyed by card, so they also cover cards that reach the graveyard later in the turn.
+     *  Cleared at turn cleanup. */
+    public final List<GraveyardCastFilterPermission> graveyardCastFilterPermissionsThisTurn =
+            new CopyOnWriteArrayList<>();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
@@ -2391,6 +2417,8 @@ public class GameData {
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
+        copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
+                .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
@@ -2406,6 +2434,16 @@ public class GameData {
             Set<UUID> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(playerIds);
             copy.handsRevealedWhileSourceOnBattlefield.put(sourceId, copied);
+        });
+        this.countersLockedPermanentsWhileSourceOnBattlefield.forEach((sourceId, permanentIds) -> {
+            Set<UUID> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(permanentIds);
+            copy.countersLockedPermanentsWhileSourceOnBattlefield.put(sourceId, copied);
+        });
+        this.countersLockedPlayersWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
+            Set<UUID> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(playerIds);
+            copy.countersLockedPlayersWhileSourceOnBattlefield.put(sourceId, copied);
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
@@ -2711,6 +2749,7 @@ public class GameData {
         copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
+        copy.graveyardCastFilterPermissionsThisTurn.addAll(this.graveyardCastFilterPermissionsThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);

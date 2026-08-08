@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "71")
+@CardRegistration(set = "M19", collectorNumber = "78")
 public class Switcheroo extends Card {
 
     public Switcheroo() {

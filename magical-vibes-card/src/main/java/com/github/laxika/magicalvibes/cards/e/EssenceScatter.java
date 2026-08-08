@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AKH", collectorNumber = "52")
 @CardRegistration(set = "M13", collectorNumber = "50")
 @CardRegistration(set = "M14", collectorNumber = "55")
+@CardRegistration(set = "M19", collectorNumber = "54")
 public class EssenceScatter extends Card {
 
     public EssenceScatter() {

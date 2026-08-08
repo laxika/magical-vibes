@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "M10", collectorNumber = "71")
 @CardRegistration(set = "M11", collectorNumber = "73")
 @CardRegistration(set = "M13", collectorNumber = "67")
+@CardRegistration(set = "M19", collectorNumber = "74")
 public class Sleep extends Card {
 
     public Sleep() {

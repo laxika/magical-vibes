@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "70")
+@CardRegistration(set = "M19", collectorNumber = "90")
 public class DeathBaron extends Card {
 
     public DeathBaron() {

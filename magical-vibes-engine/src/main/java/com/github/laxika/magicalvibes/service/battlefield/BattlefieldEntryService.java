@@ -334,15 +334,19 @@ public class BattlefieldEntryService {
      * trigger fires.
      *
      * <p>An entering token is exiled too, but a token outside the battlefield ceases to exist
-     * (CR 111.7), so it is simply dropped rather than added to the exile zone.
+     * (CR 111.7), so it is simply dropped rather than added to the exile zone. Mistcaller's narrower
+     * "nontoken creature" wording is tracked separately and leaves entering tokens alone.
      */
     private boolean applyExileUncastEnteringCreature(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
-                || permanent.isCast()
-                || !permanent.getCard().hasType(CardType.CREATURE)) {
+        if (permanent.isCast() || !permanent.getCard().hasType(CardType.CREATURE)) {
             return false;
         }
         Card card = permanent.getCard();
+        boolean applies = !gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
+                || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty());
+        if (!applies) {
+            return false;
+        }
         if (!card.isToken()) {
             UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
             gameData.addToExile(ownerId, card);

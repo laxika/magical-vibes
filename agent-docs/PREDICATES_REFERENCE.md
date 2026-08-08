@@ -79,6 +79,7 @@ filter directly rather than reusing a factory whose wording does not match.
 |-----------|-------------|---------|
 | `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors. **A land never matches**: CR 202.2 gives an object the colors of its mana cost, and a land has none, so Plains is colorless and Anarchy ("destroy all white permanents") leaves it alone. A land's color identity is carried separately as `Card.getColorIdentity()`, which is display-only (it tints the frame) and must never be read by a predicate. This is also why Mistveil Plains and friends do not count themselves toward "two or more white permanents" |
 | `PermanentIsMonocoloredPredicate` | `()` | permanents with exactly one effective color (colorless and multicolored don't match); Defiler of Souls |
+| `PermanentIsColorlessPredicate` | `()` | permanents with zero effective colors (monocolored and multicolored don't match); zero-color counterpart of `PermanentIsMonocoloredPredicate`; Infernal Reckoning ("target colorless creature" via `PermanentAllOfPredicate` with `PermanentIsCreaturePredicate`) |
 | `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
@@ -109,6 +110,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches | FilterContext needs |
 |-----------|-------------|---------|---------------------|
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X (from FilterContext.xValue) | `xValue` |
+| `PermanentPowerLessThanXPredicate` | `()` | creatures with power strictly < X (from FilterContext.xValue). Pair with `SacrificeSelfCost(true)`, which snapshots the source's effective power into the ability's X at payment, for "creatures you control with power less than this creature's power" (Lena, Selfless Champion) — works after the source has left the battlefield, unlike `PermanentPowerLessThanSourcePowerPredicate` | `xValue` |
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |

@@ -3264,6 +3264,61 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * "Whenever a creature or planeswalker you control dies" ({@link EffectSlot#ON_ALLY_CREATURE_OR_PLANESWALKER_DIES}).
+     * Called once per dying permanent that was a creature and/or a planeswalker, so a permanent
+     * that is both only triggers once.
+     */
+    public void checkAllyCreatureOrPlaneswalkerDeathTriggers(GameData gameData, UUID dyingControllerId,
+            Permanent dyingPermanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingControllerId);
+        if (battlefield == null) return;
+
+        Card dyingCard = dyingPermanent.getCard();
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingControllerId,
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            boolean anyEffectFired = false;
+            List<CardEffect> stackEffects = new ArrayList<>();
+
+            for (CardEffect effect : effects) {
+                CardEffect resolvedEffect = unwrapCreatureDeathConditional(
+                        effect, dyingCard, dyingPermanent, gameData, dyingControllerId);
+                if (resolvedEffect == null) continue;
+
+                if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
+                    var match = new TriggerMatchContext(gameData, perm, dyingControllerId, resolvedEffect);
+                    registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES, resolvedEffect, ctx);
+                    anyEffectFired = true;
+                } else {
+                    stackEffects.add(resolvedEffect);
+                }
+            }
+
+            if (!stackEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        dyingControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(stackEffects),
+                        null,
+                        perm.getId()
+                ));
+                anyEffectFired = true;
+            }
+
+            if (anyEffectFired) {
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers (ally creature or planeswalker died)", gameData.id, perm.getCard().getName());
+            }
+        }
+    }
+
     public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;

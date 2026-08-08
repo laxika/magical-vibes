@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndDrawPerCreatureMilledEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndDrawPerTypeMilledEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MillTargetPlayerAndDrawPerCreatureMilledEffectHandler implements NormalEffectHandlerBean {
+public class MillTargetPlayerAndDrawPerTypeMilledEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
     private final DrawService drawService;
@@ -30,12 +29,12 @@ public class MillTargetPlayerAndDrawPerCreatureMilledEffectHandler implements No
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return MillTargetPlayerAndDrawPerCreatureMilledEffect.class;
+        return MillTargetPlayerAndDrawPerTypeMilledEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (MillTargetPlayerAndDrawPerCreatureMilledEffect) effect;
+        var e = (MillTargetPlayerAndDrawPerTypeMilledEffect) effect;
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null) {
             return;
@@ -54,24 +53,24 @@ public class MillTargetPlayerAndDrawPerCreatureMilledEffectHandler implements No
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         Set<Card> inGraveyard = graveyard == null ? Set.of() : new HashSet<>(graveyard);
-        int creatureCount = 0;
+        int matchCount = 0;
         for (Card card : preview) {
-            if (card.hasType(CardType.CREATURE) && inGraveyard.contains(card)) {
-                creatureCount++;
+            if (card.hasType(e.cardType()) && inGraveyard.contains(card)) {
+                matchCount++;
             }
         }
 
         UUID controllerId = entry.getControllerId();
-        for (int i = 0; i < creatureCount; i++) {
+        for (int i = 0; i < matchCount; i++) {
             drawService.resolveDrawCard(gameData, controllerId);
         }
 
-        if (creatureCount > 0) {
+        if (matchCount > 0) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " draws " + creatureCount
-                    + " card" + (creatureCount != 1 ? "s" : "") + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + " draws " + matchCount
+                    + " card" + (matchCount != 1 ? "s" : "") + "."));
         }
-        log.info("Game {} - {} milled {} card(s), {} creature card(s), drawing {}",
-                gameData.id, entry.getCard().getName(), cardsToMill, creatureCount, creatureCount);
+        log.info("Game {} - {} milled {} card(s), {} {} card(s), drawing {}",
+                gameData.id, entry.getCard().getName(), cardsToMill, matchCount, e.cardType(), matchCount);
     }
 }

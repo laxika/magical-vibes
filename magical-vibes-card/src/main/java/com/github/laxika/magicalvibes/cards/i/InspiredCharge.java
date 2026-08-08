@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "19")
+@CardRegistration(set = "M19", collectorNumber = "15")
 public class InspiredCharge extends Card {
 
     public InspiredCharge() {

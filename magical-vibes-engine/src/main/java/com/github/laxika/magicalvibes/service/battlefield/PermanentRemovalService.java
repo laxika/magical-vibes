@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -62,6 +63,7 @@ public class PermanentRemovalService {
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final UntapLockReleaseService untapLockReleaseService;
+    private final AuraCopyService auraCopyService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -71,7 +73,8 @@ public class PermanentRemovalService {
                                    GameQueryService gameQueryService,
                                    GameLogService gameLogService,
                                    ExileService exileService,
-                                   UntapLockReleaseService untapLockReleaseService) {
+                                   UntapLockReleaseService untapLockReleaseService,
+                                   @Lazy AuraCopyService auraCopyService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -81,6 +84,7 @@ public class PermanentRemovalService {
         this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.untapLockReleaseService = untapLockReleaseService;
+        this.auraCopyService = auraCopyService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -672,7 +676,10 @@ public class PermanentRemovalService {
     private RemovedPermanentInfo processRemovalCleanup(GameData gameData, Permanent target, UUID controllerId) {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         gameData.stolenCreatures.remove(target.getId());
-        gameData.expireFloatingEffectsForDepartedSource(target.getId());
+        // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
+        // WHILE_ATTACHED floating effect expires here and drives the enchanted creature's revert.
+        auraCopyService.revertExpiredCopies(gameData,
+                gameData.expireFloatingEffectsForDepartedSource(target.getId()));
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
         untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);
@@ -767,6 +774,11 @@ public class PermanentRemovalService {
             // Any permanent owned by another player is put into a graveyard (Kothophed, Soul Hoarder).
             triggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(
                     gameData, target.getOriginalCard(), ownerId);
+            // "Whenever a creature or planeswalker you control dies" — fires once even when the
+            // dying permanent is both (Ajani's Last Stand).
+            if (wasCreature || target.getCard().hasType(CardType.PLANESWALKER)) {
+                triggerCollectionService.checkAllyCreatureOrPlaneswalkerDeathTriggers(gameData, controllerId, target);
+            }
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn

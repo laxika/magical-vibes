@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "112")
 @CardRegistration(set = "M12", collectorNumber = "104")
+@CardRegistration(set = "M19", collectorNumber = "116")
 public class ReassemblingSkeleton extends Card {
 
     public ReassemblingSkeleton() {

@@ -31,7 +31,8 @@ import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndSt
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.EmblemUpkeepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
@@ -256,13 +258,13 @@ public class StepTriggerService {
      * the active player (Chandra, Roaring Flame's emblem). Emblems are never removed from the game, so
      * the only gate is that the emblem's controller is the player whose upkeep this is.
      */
-    private void collectEmblemUpkeepTriggers(GameData gameData) {
+    private void collectEmblemStepTriggers(GameData gameData, EmblemTriggerStep step) {
         for (Emblem emblem : gameData.emblems) {
             if (!gameData.activePlayerId.equals(emblem.controllerId())) {
                 continue;
             }
             for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemUpkeepTriggerEffect upkeepTrigger)) {
+                if (!(effect instanceof EmblemStepTriggerEffect upkeepTrigger) || upkeepTrigger.step() != step) {
                     continue;
                 }
                 Card source = emblem.sourceCard();
@@ -274,7 +276,7 @@ public class StepTriggerService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.text(
                         description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
-                log.info("Game {} - {} upkeep emblem trigger pushed onto stack", gameData.id, description);
+                log.info("Game {} - {} {} emblem trigger pushed onto stack", gameData.id, description, step);
             }
         }
     }
@@ -289,7 +291,7 @@ public class StepTriggerService {
         // still protected the permanent through the marking player's own untap step.
         expireCantPhaseOut(gameData);
 
-        collectEmblemUpkeepTriggers(gameData);
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.UPKEEP);
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the
@@ -698,6 +700,27 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
                                 gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ControlsPermanentsWithDifferentNames namesCheck) {
+                    // Intervening-if: only trigger if the controller has enough DIFFERENTLY NAMED
+                    // matching permanents (Liliana's Contract — "four or more Demons with different
+                    // names"). The wrapper is pushed intact so resolution re-checks it.
+                    if (conditionEvaluationService.isMet(gameData, namesCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or more differently named matching permanents)",
+                                gameData.id, perm.getCard().getName(), namesCheck.minCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControlsPermanentCountAtMost atMostCheck) {
@@ -2428,6 +2451,8 @@ public class StepTriggerService {
     }
 
     public void handleEndStepTriggers(GameData gameData) {
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
+
         // Elkin Lair: "At the beginning of the next end step, if the player hasn't played the card,
         // they put it into their graveyard." Chronological next end step — no active-player filter.
         if (gameData.hasDelayedAction(ExileToOwnerGraveyardAtNextEndStep.class)) {

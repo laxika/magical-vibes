@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "110")
 @CardRegistration(set = "M10", collectorNumber = "72")
+@CardRegistration(set = "M19", collectorNumber = "75")
 @CardRegistration(set = "POR", collectorNumber = "67")
 public class SnappingDrake extends Card {
 }

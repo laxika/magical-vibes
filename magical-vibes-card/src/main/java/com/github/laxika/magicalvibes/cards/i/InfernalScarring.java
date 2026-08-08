@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "102")
+@CardRegistration(set = "M19", collectorNumber = "103")
 public class InfernalScarring extends Card {
 
     public InfernalScarring() {

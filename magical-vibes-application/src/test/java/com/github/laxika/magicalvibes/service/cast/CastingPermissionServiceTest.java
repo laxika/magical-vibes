@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -350,6 +353,74 @@ class CastingPermissionServiceTest {
             card.setManaCost("{1}{G}");
 
             assertThat(svc.flashTimingRequiresAlternateCast(gd, player1Id, card)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("hasGraveyardPlayPermission — turn-scoped filtered grants")
+    class GraveyardCastFilterPermissions {
+
+        private Card zombieCard() {
+            Card card = new Card();
+            card.setName("Walking Corpse");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{1}{B}");
+            return card;
+        }
+
+        @Test
+        @DisplayName("A matching filter grant permits the cast")
+        void filterGrantPermitsCast() {
+            Card card = zombieCard();
+            CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
+            gd.graveyardCastFilterPermissionsThisTurn.add(
+                    new GameData.GraveyardCastFilterPermission(player1Id, filter));
+            when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(true);
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A non-matching card is not covered by the grant")
+        void nonMatchingCardIsRejected() {
+            Card card = zombieCard();
+            CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
+            gd.graveyardCastFilterPermissionsThisTurn.add(
+                    new GameData.GraveyardCastFilterPermission(player1Id, filter));
+            when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(false);
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Another player's grant does not apply")
+        void grantIsPerPlayer() {
+            Card card = zombieCard();
+            gd.graveyardCastFilterPermissionsThisTurn.add(new GameData.GraveyardCastFilterPermission(
+                    player2Id, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A land is not a spell, so a filter grant never covers it")
+        void landsAreNotCoveredByFilterGrants() {
+            Card land = new Card();
+            land.setName("Swamp");
+            land.setType(CardType.LAND);
+            gd.graveyardCastFilterPermissionsThisTurn.add(new GameData.GraveyardCastFilterPermission(
+                    player1Id, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, land, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A per-card grant still permits the cast without any filter grant")
+        void perCardGrantStillWorks() {
+            Card card = zombieCard();
+            gd.graveyardPlayPermissions.put(card.getId(), player1Id);
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
         }
     }
 }

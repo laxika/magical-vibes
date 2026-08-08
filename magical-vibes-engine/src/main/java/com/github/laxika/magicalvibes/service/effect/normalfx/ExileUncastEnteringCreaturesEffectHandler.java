@@ -22,6 +22,12 @@ public class ExileUncastEnteringCreaturesEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (((ExileUncastEnteringCreaturesEffect) effect).nontokenOnly()) {
+            gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.add(entry.getControllerId());
+            gameLogService.append(gameData, GameLog.text(
+                    "Nontoken creatures that would enter without having been cast are exiled instead this turn."));
+            return;
+        }
         gameData.playersExilingUncastEnteringCreaturesThisTurn.add(entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(
                 "Creatures that would enter without having been cast are exiled instead this turn."));

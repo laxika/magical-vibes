@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "81")
+@CardRegistration(set = "M19", collectorNumber = "84")
 public class WindreaderSphinx extends Card {
 
     public WindreaderSphinx() {

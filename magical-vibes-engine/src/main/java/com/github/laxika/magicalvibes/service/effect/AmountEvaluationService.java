@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTot
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
@@ -232,6 +233,8 @@ public class AmountEvaluationService {
                             : evaluate(gameData, a.otherwise(), ctx);
             case GreatestPowerAmongControlled ignored ->
                     greatestPowerAmongControlled(gameData, ctx);
+            case GreatestManaValueAmongControlled a ->
+                    greatestManaValueAmongControlled(gameData, a, ctx);
             case AttachmentsOnSource a ->
                     countAttachmentsOnSource(gameData, a, ctx);
             case CreaturesBlockedBySource ignored ->
@@ -746,6 +749,25 @@ public class AmountEvaluationService {
             }
         }
         return greatestPower;
+    }
+
+    private int greatestManaValueAmongControlled(
+            GameData gameData, GreatestManaValueAmongControlled amount, AmountContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        FilterContext filterContext = (GameQueryService.isStaticEvaluationActive()
+                ? FilterContext.empty()
+                : FilterContext.of(gameData))
+                .withSourceControllerId(ctx.controllerId());
+        int greatest = 0;
+        for (Permanent permanent : battlefield) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, amount.filter(), filterContext)) {
+                continue;
+            }
+            greatest = Math.max(greatest, permanent.getCard().getManaValue());
+        }
+        return greatest;
     }
 
     private int countAttachmentsOnSource(GameData gameData, AttachmentsOnSource amount, AmountContext ctx) {

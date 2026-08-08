@@ -330,15 +330,23 @@ public class GraveyardChoiceHandlerService {
                     log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                             player.getUsername(), card.getName());
 
-                    // Non-stack flow: create a new stack entry
+                    // Non-stack flow: create a new stack entry. The chosen target is a card in a
+                    // graveyard, so the entry declares that zone — otherwise an effect that really
+                    // does target (Isareth the Awakener's reanimation trigger) would be checked
+                    // against the battlefield on resolution and fizzle.
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             mayAbilitySourceCard,
                             mayAbilityControllerId,
                             mayAbilitySourceCard.getName() + "'s ability",
                             new ArrayList<>(mayAbilityEffects),
+                            0,
                             card.getId(),
-                            mayAbilitySourcePermanentId
+                            mayAbilitySourcePermanentId,
+                            null,
+                            Zone.GRAVEYARD,
+                            null,
+                            null
                     );
                     gameData.stack.add(entry);
                 }

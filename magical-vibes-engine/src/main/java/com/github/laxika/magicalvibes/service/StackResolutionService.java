@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -82,6 +83,7 @@ public class StackResolutionService {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameMutationCoordinator mutationCoordinator;
     private final CardRevealService cardRevealService;
+    private final AuraCopyService auraCopyService;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   CloneService cloneService,
@@ -100,6 +102,7 @@ public class StackResolutionService {
                                   GraveyardReturnSupport graveyardReturnSupport,
                                   GameMutationCoordinator mutationCoordinator,
                                   CardRevealService cardRevealService,
+                                  AuraCopyService auraCopyService,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
         this.cloneService = cloneService;
@@ -118,6 +121,7 @@ public class StackResolutionService {
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.mutationCoordinator = mutationCoordinator;
         this.cardRevealService = cardRevealService;
+        this.auraCopyService = auraCopyService;
         this.paradigmService = paradigmService;
     }
 
@@ -508,6 +512,12 @@ public class StackResolutionService {
                     Permanent justEntered = bf.get(bf.size() - 1);
                     playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
                             auraColorChoice);
+                }
+
+                // Check if aura has "as enters, choose a creature" (e.g. Metamorphic Alteration)
+                if (!gameData.interaction.isAwaitingInput()) {
+                    auraCopyService.beginChooseCreatureOnEnter(gameData, controllerId, perm,
+                            characteristics, entry.getTargetId(), true);
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)

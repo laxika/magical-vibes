@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "54")
+@CardRegistration(set = "M19", collectorNumber = "81")
 public class TotallyLost extends Card {
 
     public TotallyLost() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "56")
+@CardRegistration(set = "M19", collectorNumber = "58")
 public class Ghostform extends Card {
 
     public Ghostform() {

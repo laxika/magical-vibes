@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "63")
+@CardRegistration(set = "M19", collectorNumber = "65")
 public class Omniscience extends Card {
 
     public Omniscience() {

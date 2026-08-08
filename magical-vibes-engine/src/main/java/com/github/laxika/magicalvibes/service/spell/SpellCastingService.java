@@ -2878,7 +2878,7 @@ public class SpellCastingService {
                 && !grantedFlashback
                 && !emblemFlashback
                 && !grantedHavengulCast
-                && castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId);
+                && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
         boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
                 && !isDisturb
                 && !grantedFlashback && !emblemFlashback && !grantedHavengulCast

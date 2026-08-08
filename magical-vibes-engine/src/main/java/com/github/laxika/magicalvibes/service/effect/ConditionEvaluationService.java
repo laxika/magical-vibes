@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
@@ -260,6 +261,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) <= c.maxCount();
+            case ControlsPermanentsWithDifferentNames c ->
+                    countControlledMatchingPermanentNames(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsOtherPermanentCount c ->
                     countOtherControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlledCreaturesTotalPowerAtLeast c ->
@@ -900,6 +903,22 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         return battlefield.stream().filter(p -> matchesPermanent(gameData, p, filter, ctx)).count();
+    }
+
+    /**
+     * Counts the DISTINCT names among the controller's permanents matching the filter — "four or
+     * more Demons with different names" is satisfied by four differently named Demons, not by four
+     * copies of one Demon.
+     */
+    private long countControlledMatchingPermanentNames(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        return battlefield.stream()
+                .filter(p -> matchesPermanent(gameData, p, filter, ctx))
+                .map(p -> p.getCard().getName())
+                .distinct()
+                .count();
     }
 
     private long countOtherControlledMatchingPermanents(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {

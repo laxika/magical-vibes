@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "124")
+@CardRegistration(set = "M19", collectorNumber = "119")
 public class SkymarchBloodletter extends Card {
 
     public SkymarchBloodletter() {

@@ -44,7 +44,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourceControllerId(entry.getControllerId());
+                    .withSourceControllerId(entry.getControllerId())
+                    .withXValue(entry.getXValue());
             int count = 0;
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {

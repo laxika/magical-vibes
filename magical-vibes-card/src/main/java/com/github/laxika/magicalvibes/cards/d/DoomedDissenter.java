@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "87")
+@CardRegistration(set = "M19", collectorNumber = "93")
 public class DoomedDissenter extends Card {
 
     public DoomedDissenter() {

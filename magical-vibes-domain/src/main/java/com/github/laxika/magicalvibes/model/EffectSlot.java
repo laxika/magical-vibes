@@ -62,6 +62,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CASTS_SPELL,
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
+    /**
+     * A creature <b>or planeswalker</b> you control dies (is put into a graveyard from the
+     * battlefield). Superset of {@link #ON_ALLY_CREATURE_DIES}; a permanent that is both a
+     * creature and a planeswalker still fires this slot only once. Ajani's Last Stand.
+     */
+    ON_ALLY_CREATURE_OR_PLANESWALKER_DIES,
     ON_DAMAGED_CREATURE_DIES,
     ON_COMBAT_DAMAGE_TO_PLAYER,
     ON_COMBAT_DAMAGE_TO_CREATURE,

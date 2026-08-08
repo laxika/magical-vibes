@@ -532,7 +532,7 @@ public class GameActionAvailabilityService {
             if (card.hasType(CardType.LAND)
                     && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
                     && (canPlayAnyLandsFromGraveyard
-                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId))) {
+                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId))) {
                 playable.add(i);
             }
         }
@@ -601,7 +601,7 @@ public class GameActionAvailabilityService {
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
-                    && castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId);
+                    && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !isDisturb

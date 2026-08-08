@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -127,6 +128,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -539,6 +541,13 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= xVal;
             }
+            case PermanentPowerLessThanXPredicate ignored -> {
+                int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
+                if (gameData == null) {
+                    yield gameQueryService.powerForStaticFilter(permanent) < xVal;
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent) < xVal;
+            }
             case PermanentPowerAtMostControlledCreatureCountPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) {
                     yield false;
@@ -663,6 +672,25 @@ public class PredicateEvaluationService {
                 combined.addAll(permanent.getTransientColors());
                 combined.addAll(permanent.getGrantedColors());
                 yield combined.size() == 1;
+            }
+            case PermanentIsColorlessPredicate ignored -> {
+                // Colourless = zero effective colours.
+                // Colours come from the same sources as PermanentIsMonocoloredPredicate above.
+                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
+                if (layeredColors != null) {
+                    yield layeredColors.getColors().isEmpty();
+                }
+                if (gameData != null) {
+                    yield gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
+                }
+                if (permanent.isColorOverridden()) {
+                    yield permanent.getTransientColors().isEmpty();
+                }
+                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+                combined.addAll(permanent.getEffectiveColors());
+                combined.addAll(permanent.getTransientColors());
+                combined.addAll(permanent.getGrantedColors());
+                yield combined.isEmpty();
             }
             case PermanentIsMulticoloredPredicate ignored -> {
                 // Multicolored = two or more effective colours (colourless and monocoloured don't match).

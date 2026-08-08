@@ -698,9 +698,25 @@ public class CastingPermissionService {
         return permission != null && playerId.equals(permission.castingPlayerId());
     }
 
-    public boolean hasGraveyardPlayPermission(GameData gameData, UUID cardId, UUID playerId) {
-        UUID permittedPlayer = gameData.graveyardPlayPermissions.get(cardId);
-        return permittedPlayer != null && permittedPlayer.equals(playerId);
+    public boolean hasGraveyardPlayPermission(GameData gameData, Card card, UUID playerId) {
+        UUID permittedPlayer = gameData.graveyardPlayPermissions.get(card.getId());
+        if (permittedPlayer != null && permittedPlayer.equals(playerId)) {
+            return true;
+        }
+        return hasGraveyardCastFilterPermission(gameData, card, playerId);
+    }
+
+    /**
+     * True if a turn-scoped blanket grant (Liliana, Untouched by Death's −3) lets this player cast
+     * {@code card} from their graveyard. Lands are not spells, so they never qualify.
+     */
+    private boolean hasGraveyardCastFilterPermission(GameData gameData, Card card, UUID playerId) {
+        if (!isCastableSpellCard(card)) {
+            return false;
+        }
+        return gameData.graveyardCastFilterPermissionsThisTurn.stream()
+                .anyMatch(permission -> permission.playerId().equals(playerId)
+                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null));
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {

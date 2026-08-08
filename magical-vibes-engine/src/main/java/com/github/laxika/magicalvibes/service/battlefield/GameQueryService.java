@@ -1345,10 +1345,30 @@ public class GameQueryService {
         if (bonus.grantedEffects().stream().anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;
         }
+        if (lockedWhileSourceOnBattlefield(
+                gameData, gameData.countersLockedPermanentsWhileSourceOnBattlefield, permanent.getId())) {
+            return true;
+        }
         // Solemnity: "Counters can't be put on artifacts, creatures, enchantments, or lands."
         // Planeswalkers (that aren't also one of those types) are unaffected and still get loyalty.
         return anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class)
                 && isArtifactCreatureEnchantmentOrLand(gameData, permanent, bonus);
+    }
+
+    /**
+     * Returns {@code true} if {@code subjectId} (a permanent or a player) is locked out of counters
+     * by a Suncleanser-style effect whose source permanent is still on the battlefield. Stale
+     * entries — those whose source has left — are ignored rather than cleaned up, matching the
+     * lifetime rule documented on the {@code …WhileSourceOnBattlefield} maps.
+     */
+    private boolean lockedWhileSourceOnBattlefield(
+            GameData gameData, Map<UUID, Set<UUID>> locks, UUID subjectId) {
+        for (Map.Entry<UUID, Set<UUID>> lock : locks.entrySet()) {
+            if (lock.getValue().contains(subjectId) && findPermanentById(gameData, lock.getKey()) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isArtifactCreatureEnchantmentOrLand(
@@ -1504,6 +1524,10 @@ public class GameQueryService {
     public boolean canPlayerGetPoisonCounters(GameData gameData, UUID playerId) {
         // Solemnity: "Players can't get counters." (poison is the only player counter here.)
         if (anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class)) {
+            return false;
+        }
+        if (lockedWhileSourceOnBattlefield(
+                gameData, gameData.countersLockedPlayersWhileSourceOnBattlefield, playerId)) {
             return false;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

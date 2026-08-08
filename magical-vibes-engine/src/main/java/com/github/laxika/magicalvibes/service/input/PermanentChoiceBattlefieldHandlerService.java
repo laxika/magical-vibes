@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -72,6 +73,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final CipherSupport cipherSupport;
     private final WarpWorldService warpWorldService;
     private final GameLogService gameLogService;
+    private final AuraCopyService auraCopyService;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
@@ -1270,10 +1272,13 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         entering.setChosenPermanentId(chosenCreatureId);
 
-        
         gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
-        log.info("Game {} - {} chooses {} as protected creature", gameData.id,
+        log.info("Game {} - {} chooses {}", gameData.id,
                 entering.getCard().getName(), chosen.getCard().getName());
+
+        // "Enchanted creature is a copy of the chosen creature" (Metamorphic Alteration) applies as
+        // soon as the choice is made, before the Aura's ETB effects run.
+        auraCopyService.applyChosenCreatureCopy(gameData, entering);
 
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());

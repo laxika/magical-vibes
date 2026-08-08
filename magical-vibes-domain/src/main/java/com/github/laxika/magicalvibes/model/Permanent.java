@@ -461,6 +461,14 @@ public class Permanent {
     /** The card to revert to when the temporary copy effect ends.
      *  Only non-null when {@link #copyUntilEndOfTurn} is true. */
     @Setter private Card preCopyCard;
+    /** When true, this permanent is a copy of another creature for as long as the Aura that made it
+     *  one stays attached to it (Metamorphic Alteration). NOT cleared by {@link #resetModifiers()}.
+     *  Reverts to {@link #whileAttachedPreCopyCard} via {@link #revertWhileAttachedCopy()} when that
+     *  Aura's {@code WHILE_ATTACHED} floating layer-1 effect expires. */
+    @Setter private boolean copyWhileAttached;
+    /** The card to revert to when a "while attached" copy ends.
+     *  Only non-null when {@link #copyWhileAttached} is true. */
+    @Setter private Card whileAttachedPreCopyCard;
     /** Activated abilities granted until the controller's next turn begins
      *  (e.g. Song of Freyalise "{T}: Add one mana of any color.").
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
@@ -651,6 +659,8 @@ public class Permanent {
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
+        this.copyWhileAttached = source.copyWhileAttached;
+        this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
         this.animatedUntilNextTurn = source.animatedUntilNextTurn;
         this.untilNextTurnAnimatedPower = source.untilNextTurnAnimatedPower;
@@ -1167,6 +1177,20 @@ public class Permanent {
         }
         this.copyUntilEndOfTurn = false;
         this.preCopyCard = null;
+    }
+
+    /**
+     * Reverts a "while the Aura is attached" copy (Metamorphic Alteration) back to the permanent's
+     * pre-copy card. Driven by the expiry of the Aura's {@code WHILE_ATTACHED} floating layer-1
+     * effect when the Aura leaves the battlefield or becomes unattached. Safe to call more than
+     * once — a second expiry finds the flag already cleared.
+     */
+    public void revertWhileAttachedCopy() {
+        if (this.copyWhileAttached && this.whileAttachedPreCopyCard != null) {
+            this.card = this.whileAttachedPreCopyCard;
+        }
+        this.copyWhileAttached = false;
+        this.whileAttachedPreCopyCard = null;
     }
 
     /**

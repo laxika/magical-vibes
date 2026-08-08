@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -492,6 +493,22 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, gold);
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMonocoloredPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsColorlessPredicate matches a colorless permanent")
+        void colorlessPredicateMatchesColorless() {
+            Permanent perm = addPermanent(player1Id, createCreature("Ornithopter", 0, 2, null));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsColorlessPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsColorlessPredicate rejects a colored permanent")
+        void colorlessPredicateRejectsColored() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsColorlessPredicate())).isFalse();
         }
 
         @Test

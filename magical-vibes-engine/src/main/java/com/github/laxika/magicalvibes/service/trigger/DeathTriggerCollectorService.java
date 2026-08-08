@@ -498,6 +498,15 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES)
+    boolean handleAllyCreatureOrPlaneswalkerMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), may, null,
+                match.permanent().getId());
+        return true;
+    }
+
     // ── ON_EQUIPPED_CREATURE_DIES ──────────────────────────────────────
 
     @CollectsTrigger(value = ReturnDyingCreatureToBattlefieldEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)

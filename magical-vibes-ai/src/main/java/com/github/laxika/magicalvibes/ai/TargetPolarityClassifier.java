@@ -361,6 +361,7 @@ public class TargetPolarityClassifier {
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
+            entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),

@@ -52,6 +52,7 @@ public sealed interface DynamicAmount permits
         FixedIfControlsAllNamed,
         FixedIfTargetMatches,
         FixedIfTargetPlayerControlsMoreLands,
+        GreatestManaValueAmongControlled,
         GreatestPowerAmongControlled,
         HalvedRoundedUp,
         HalfControllerLifeRoundedUp,

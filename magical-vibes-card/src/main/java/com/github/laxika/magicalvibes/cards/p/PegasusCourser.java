@@ -21,6 +21,7 @@ import java.util.List;
  * Whenever Pegasus Courser attacks, another target attacking creature gains flying until end of turn.
  */
 @CardRegistration(set = "DOM", collectorNumber = "29")
+@CardRegistration(set = "M19", collectorNumber = "32")
 public class PegasusCourser extends Card {
 
     public PegasusCourser() {
