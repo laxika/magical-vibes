@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "9")
+@CardRegistration(set = "STH", collectorNumber = "1")
 public class Bandage extends Card {
 
     public Bandage() {

@@ -195,7 +195,15 @@ public class CardChoiceHandlerService {
 
         List<Integer> validIndices = discardChoice.validIndices();
         if (cardIndex == -1 && discardChoice.declinable()) {
-            finishDiscardChoice(gameData, player, player.getId(), discardChoice.followUp());
+            DiscardFollowUp followUp = discardChoice.followUp();
+            if (followUp.enteringPermanent() != null) {
+                gameData.interaction.clearAwaitingInput();
+                battlefieldEntryService.completeDiscardCardToEnter(
+                        gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), false);
+                resumeRemainingEffectsAfterDiscard(gameData);
+            } else {
+                finishDiscardChoice(gameData, player, player.getId(), followUp);
+            }
             return;
         }
         if (!validIndices.contains(cardIndex)) {
@@ -244,6 +252,16 @@ public class CardChoiceHandlerService {
 
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
+
+        DiscardFollowUp followUp = discardChoice.followUp();
+        if (followUp.enteringPermanent() != null) {
+            gameData.interaction.clearAwaitingInput();
+            battlefieldEntryService.completeDiscardCardToEnter(
+                    gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), true);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
 
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
         boolean mayDecline = remainingDiscards > 0

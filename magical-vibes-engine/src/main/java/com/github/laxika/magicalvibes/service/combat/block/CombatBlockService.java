@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BlockPairConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockParticipant;
+import com.github.laxika.magicalvibes.model.effect.BlockedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
@@ -48,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -598,7 +601,8 @@ public class CombatBlockService {
 
         // Global "whenever a creature becomes blocked / blocks a creature" watchers
         // (ON_ANY_CREATURE_BECOMES_BLOCKED) on every battlefield, once per attacker/blocker pair.
-        checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
+        checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield,
+                blockerAssignments, blockedAttackerIndices);
 
         // Global "whenever one or more creatures block" watchers (ON_ANY_CREATURES_BLOCK) on every
         // battlefield, once per declaration no matter how many creatures blocked.
@@ -863,9 +867,19 @@ public class CombatBlockService {
      * most recently registered chooser takes over.
      */
     private UUID blockerDeclarationChooser(GameData gameData, UUID defenderId) {
+        if (hasGlobalBlockerDeclarationControl(gameData)) {
+            return gameData.activePlayerId;
+        }
         List<DelayedBlockerDeclarationControl> controls =
                 gameData.getDelayedActions(DelayedBlockerDeclarationControl.class);
         return controls.isEmpty() ? defenderId : controls.getLast().chooserId();
+    }
+
+    private boolean hasGlobalBlockerDeclarationControl(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(Collection::stream)
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(BlockerDeclarationControlEffect.class::isInstance);
     }
 
 
@@ -1150,6 +1164,7 @@ public class CombatBlockService {
 
         combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
         checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker);
+        checkBlockedCreatureTriggers(gameData, attacker);
     }
 
     /**
@@ -1258,7 +1273,13 @@ public class CombatBlockService {
     private void checkAnyCreatureBecomesBlockedTriggers(GameData gameData,
                                                         List<Permanent> attackerBattlefield,
                                                         List<Permanent> defenderBattlefield,
-                                                        List<BlockerAssignment> blockerAssignments) {
+                                                        List<BlockerAssignment> blockerAssignments,
+                                                        Set<Integer> blockedAttackerIndices) {
+        for (int attackerIndex : blockedAttackerIndices) {
+            Permanent attacker = attackerBattlefield.get(attackerIndex);
+            checkBlockedCreatureTriggers(gameData, attacker);
+        }
+
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
@@ -1292,6 +1313,47 @@ public class CombatBlockService {
                                 gameData.id, watcher.getCard().getName(), subject.getCard().getName());
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Fires global card-conditional becomes-blocked triggers once for each matching blocked
+     * attacker, including attackers controlled by the opponent of the watcher.
+     */
+    private void checkBlockedCreatureTriggers(GameData gameData, Permanent attacker) {
+        UUID attackerControllerId = gameData.findControllerOf(attacker);
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                List<CardEffect> matchingEffects = new ArrayList<>();
+                for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_BECOMES_BLOCKED)) {
+                    if (!(effect instanceof BlockedCreatureTriggerEffect conditional)) {
+                        continue;
+                    }
+                    if (!predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(),
+                            null, gameData, attackerControllerId)) {
+                        continue;
+                    }
+                    matchingEffects.add(conditional.wrapped());
+                }
+                if (matchingEffects.isEmpty()) {
+                    continue;
+                }
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        battlefield.getKey(),
+                        watcher.getCard().getName() + "'s becomes-blocked trigger",
+                        matchingEffects,
+                        attacker.getId(),
+                        attacker.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} global becomes-blocked trigger for {}",
+                        gameData.id, watcher.getCard().getName(), attacker.getCard().getName());
             }
         }
     }
@@ -1597,7 +1659,15 @@ public class CombatBlockService {
         return blocker.isMustBlockThisTurnIfAble()
                 || blocker.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustBlockEachCombatEffect.class::isInstance)
-                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class);
+                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)
+                || hasGlobalMustBlockEachCombat(gameData);
+    }
+
+    private boolean hasGlobalMustBlockEachCombat(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(Collection::stream)
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
     }
 
     private void validateCantBlockAlone(List<Permanent> defenderBattlefield,

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,7 @@ public class UntapStepService {
     private final TapUntapSupport tapUntapSupport;
     private final PhasingService phasingService;
     private final PermanentRemovalService permanentRemovalService;
+    private final UntapPreventionSupport untapPreventionSupport;
 
     /**
      * Performs the untap step for the active player.
@@ -180,8 +182,7 @@ public class UntapStepService {
             battlefield.forEach(p -> {
                 // ENCHANTED-scope DoesntUntapEffect on an attached aura keeps the host tapped.
                 boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
-                boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof DoesntUntapEffect d && d.scope() == TapUntapScope.SELF);
+                boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
                 boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
@@ -391,8 +392,7 @@ public class UntapStepService {
                 continue;
             }
             boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
-            boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof DoesntUntapEffect d && d.scope() == TapUntapScope.SELF);
+            boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
             boolean hasMayNotUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
             boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()

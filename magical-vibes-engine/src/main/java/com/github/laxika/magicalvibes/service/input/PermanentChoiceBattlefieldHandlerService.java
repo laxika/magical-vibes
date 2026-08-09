@@ -85,6 +85,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PopulateSupport populateSupport;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport exileSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
     private final LifeSupport lifeSupport;
@@ -124,6 +125,30 @@ public class PermanentChoiceBattlefieldHandlerService {
             permanentCounterSupport.placeCounterOnPermanent(gameData,
                     new StackEntry(context.sourceCard(), context.controllerId()), other,
                     com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, 1);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Cannibalize: the spell's controller chooses which target to exile; the other gets two +1/+1 counters. */
+    public void handleCannibalizeChoice(GameData gameData, UUID permanentId,
+                                        PermanentChoiceContext.CannibalizeChoice context) {
+        Permanent exiled = gameQueryService.findPermanentById(gameData, permanentId);
+        if (exiled == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        UUID otherId = permanentId.equals(context.firstPermanentId())
+                ? context.secondPermanentId()
+                : context.firstPermanentId();
+
+        exileSupport.exilePermanentAndLog(gameData, exiled, context.sourceCard().getName());
+
+        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
+        if (other != null) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData,
+                    new StackEntry(context.sourceCard(), context.controllerId()), other,
+                    com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 2);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -460,7 +485,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleMaySacrificeForCounterOnSource(GameData gameData, UUID permanentId,
                                                      PermanentChoiceContext.MaySacrificeForCounterOnSource context) {
         maySacrificeForCounterSupport.sacrificeThenAddCounter(
-                gameData, context.controllerId(), permanentId, context.sourcePermanentId());
+                gameData, context.controllerId(), permanentId, context.sourcePermanentId(), context.counterType());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

@@ -26,4 +26,9 @@ public record ReduceEquipCostEffect(int amount) implements ActivatedAbilityCostR
     public boolean appliesTo(ActivatedAbility ability) {
         return ability.getEffects().stream().anyMatch(EquipEffect.class::isInstance);
     }
+
+    @Override
+    public boolean appliesSymmetrically() {
+        return false;
+    }
 }

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -1015,6 +1016,7 @@ public class SpellCastTriggerCollectorService {
         boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
+        boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);
         int spellManaSpentX = needsSpellManaSpentX
                 ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
@@ -1051,7 +1053,22 @@ public class SpellCastTriggerCollectorService {
                     "'s triggered ability triggers — choose a target."));
         } else {
             StackEntry entry;
-            if (selfTarget) {
+            if (countersTriggeringSpell) {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        match.permanent().getCard(),
+                        match.controllerId(),
+                        match.permanent().getCard().getName() + "'s ability",
+                        resolved,
+                        spellManaSpentX,
+                        spellCard.getId(),
+                        match.permanent().getId(),
+                        null,
+                        Zone.STACK,
+                        null,
+                        null
+                );
+            } else if (selfTarget) {
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                             match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,

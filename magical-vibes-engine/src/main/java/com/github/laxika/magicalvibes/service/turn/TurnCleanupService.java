@@ -180,9 +180,11 @@ public class TurnCleanupService {
             p.resetModifiers();
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
+            p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.setMinusOneCounterRegenerationShield(0);
+            p.setPlusOnePlusOneCounterRegenerationShield(0);
             p.getGainControlRegenerationShields().clear();
         });
 
@@ -216,6 +218,7 @@ public class TurnCleanupService {
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
+        gameData.spellsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();

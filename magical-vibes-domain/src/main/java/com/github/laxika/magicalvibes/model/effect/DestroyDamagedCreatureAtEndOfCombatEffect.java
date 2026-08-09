@@ -15,6 +15,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Expanded at trigger-collection time into a
  * {@link DestroyTargetPermanentAtEndOfCombatEffect} stack entry whose non-targeting target is the
  * damaged creature, so the marker itself is never resolved.
+ *
+ * <p>The flags also support the older "whenever this creature deals damage" wording: use
+ * {@link #thisCreature()} for a self-scoped trigger that accepts both combat and noncombat damage.
  */
-public record DestroyDamagedCreatureAtEndOfCombatEffect(PermanentPredicate sourceFilter) implements CardEffect {
+public record DestroyDamagedCreatureAtEndOfCombatEffect(PermanentPredicate sourceFilter,
+                                                        boolean combatDamageOnly,
+                                                        boolean selfOnly) implements CardEffect {
+
+    public DestroyDamagedCreatureAtEndOfCombatEffect(PermanentPredicate sourceFilter) {
+        this(sourceFilter, true, false);
+    }
+
+    public static DestroyDamagedCreatureAtEndOfCombatEffect thisCreature() {
+        return new DestroyDamagedCreatureAtEndOfCombatEffect(null, false, true);
+    }
 }

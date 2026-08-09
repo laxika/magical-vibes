@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record TriggeringCardConditionalEffect(
         CardPredicate predicate,
         CardEffect wrapped
-) implements CardEffect {
+) implements CardEffect, BlockedCreatureTriggerEffect {
 
     @Override
     public TargetSpec targetSpec() {

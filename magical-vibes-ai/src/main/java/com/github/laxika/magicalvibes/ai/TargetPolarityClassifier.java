@@ -421,6 +421,7 @@ public class TargetPolarityClassifier {
             entry("GrantColorUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),

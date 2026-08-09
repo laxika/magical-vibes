@@ -115,6 +115,20 @@ public record PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ENCHANTED, false, false, null, null, false, false, false);
     }
 
+    /** Samite Blessing: the chosen source's next damage to target creature is prevented. */
+    public static PreventDamageFromChosenSourceEffect nextDamageToTargetCreature() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET_CREATURE,
+                false, false, null, null, false, false, false);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET_CREATURE
+                ? TargetSpec.benign(TargetPredicates.creature())
+                : TargetSpec.NONE;
+    }
+
     /** Auriok Replica: prevent all damage the chosen source would deal to you this turn. */
     public static PreventDamageFromChosenSourceEffect allDamageToYou() {
         return new PreventDamageFromChosenSourceEffect(

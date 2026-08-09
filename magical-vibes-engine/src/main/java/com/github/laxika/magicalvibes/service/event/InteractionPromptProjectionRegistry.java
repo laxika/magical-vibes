@@ -101,7 +101,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.TargetedHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.DiscardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
+                (gameData, interaction) -> projectHandChoice(interaction,
+                        ((PendingInteraction.DiscardChoice) interaction).declinable()));
         register(PendingInteraction.ExileFromHandChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ImprintFromHandChoice.class,
@@ -173,9 +174,17 @@ public class InteractionPromptProjectionRegistry {
                     : "Surveil " + count
                             + ": Put cards on top of your library or into your graveyard.";
         } else {
-            prompt = count == 1
-                    ? "Scry 1: Keep on top or put on the bottom of your library."
-                    : "Scry " + count + ": Put cards on the top or bottom of your library.";
+            boolean ownLibrary = interaction.playerId().equals(interaction.libraryOwnerId());
+            String library = ownLibrary
+                    ? "your library"
+                    : gameData.playerIdToName.get(interaction.libraryOwnerId()) + "'s library";
+            prompt = ownLibrary
+                    ? count == 1
+                            ? "Scry 1: Keep on top or put on the bottom of your library."
+                            : "Scry " + count + ": Put cards on the top or bottom of your library."
+                    : count == 1
+                            ? "Keep on top or put on the bottom of " + library + "."
+                            : "Put cards on the top or bottom of " + library + ".";
         }
         return InteractionPromptMessage.scryOrder(
                 cardViews(interaction.cards()), prompt, interaction.toGraveyard());

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "25")
+@CardRegistration(set = "STH", collectorNumber = "17")
 public class Smite extends Card {
 
     public Smite() {

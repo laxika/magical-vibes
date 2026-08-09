@@ -13,6 +13,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * put a -1/-1 counter on it." Same shield-tagging pattern
  * ({@code Permanent.minusOneCounterRegenerationShield}).
  * <p>
+ * {@code putPlusOnePlusOneCounterOnRegenerate} is Skeleton Scavengers' rider: "When it regenerates
+ * this way, put a +1/+1 counter on it." Same shield-tagging pattern.
+ * <p>
  * {@code regeneratesEnchantedCreature} is for an ability that regenerates the creature the source is
  * attached to even though the source is not necessarily an Aura right now — Nurturing Licid keeps
  * "{G}: Regenerate enchanted creature" while it is still a creature, where the ability simply does
@@ -28,40 +31,46 @@ public record RegenerateEffect(
         boolean opponentMayDrawOnRegenerate,
         boolean putMinusOneCounterOnRegenerate,
         boolean regeneratesEnchantedCreature,
-        boolean gainControlOnRegenerate
+        boolean gainControlOnRegenerate,
+        boolean putPlusOnePlusOneCounterOnRegenerate
 ) implements RegenerationEffect, AttachedPermanentSelfTargetingEffect {
 
     public RegenerateEffect() {
-        this(false, false, false, false, false);
+        this(false, false, false, false, false, false);
     }
 
     public RegenerateEffect(boolean targetsPermanent) {
-        this(targetsPermanent, false, false, false, false);
+        this(targetsPermanent, false, false, false, false, false);
     }
 
     public RegenerateEffect(boolean targetsPermanent, boolean opponentMayDrawOnRegenerate) {
-        this(targetsPermanent, opponentMayDrawOnRegenerate, false, false, false);
+        this(targetsPermanent, opponentMayDrawOnRegenerate, false, false, false, false);
     }
 
     public RegenerateEffect(boolean targetsPermanent,
                             boolean opponentMayDrawOnRegenerate,
                             boolean putMinusOneCounterOnRegenerate) {
-        this(targetsPermanent, opponentMayDrawOnRegenerate, putMinusOneCounterOnRegenerate, false, false);
+        this(targetsPermanent, opponentMayDrawOnRegenerate, putMinusOneCounterOnRegenerate, false, false, false);
     }
 
     /** Matopi Golem: regenerate self; put a -1/-1 counter only when the shield is spent. */
     public static RegenerateEffect withMinusOneCounterOnRegenerate() {
-        return new RegenerateEffect(false, false, true, false, false);
+        return new RegenerateEffect(false, false, true, false, false, false);
+    }
+
+    /** Skeleton Scavengers: regenerate self; put a +1/+1 counter only when the shield is spent. */
+    public static RegenerateEffect withPlusOnePlusOneCounterOnRegenerate() {
+        return new RegenerateEffect(false, false, false, false, false, true);
     }
 
     /** Nurturing Licid: regenerate the attached creature, or nothing while unattached. */
     public static RegenerateEffect enchantedCreature() {
-        return new RegenerateEffect(false, false, false, true, false);
+        return new RegenerateEffect(false, false, false, true, false, false);
     }
 
     /** Debt of Loyalty: regenerate target creature; gain control of it only when the shield is spent. */
     public static RegenerateEffect withGainControlOnRegenerate() {
-        return new RegenerateEffect(true, false, false, false, true);
+        return new RegenerateEffect(true, false, false, false, true, false);
     }
 
     @Override

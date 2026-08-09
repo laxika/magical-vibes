@@ -74,7 +74,7 @@ public class ReturnCardsFromControllerGraveyardToHandEffectHandler implements No
         }
 
         gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                controllerId, maxCount, returnEffect.filter(), GraveyardChoiceDestination.HAND, false, true));
+                controllerId, maxCount, returnEffect.filter(), GraveyardChoiceDestination.HAND, false, true, false));
         graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
     }
 }

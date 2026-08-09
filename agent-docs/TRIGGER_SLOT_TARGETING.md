@@ -180,6 +180,7 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
+`ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
 `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 `ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Femeref Enchantress; fires on every permanent with the slot
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),

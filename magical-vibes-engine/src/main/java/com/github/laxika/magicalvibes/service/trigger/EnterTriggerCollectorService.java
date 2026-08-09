@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCre
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -40,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.extern.slf4j.Slf4j;
@@ -63,11 +66,14 @@ public class EnterTriggerCollectorService {
 
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     public EnterTriggerCollectorService(GameLogService gameLogService,
-                                        AmountEvaluationService amountEvaluationService) {
+                                        AmountEvaluationService amountEvaluationService,
+                                        GameQueryService gameQueryService) {
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
+        this.gameQueryService = gameQueryService;
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
@@ -107,16 +113,21 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * The "any other creature enters" default only auto-queues non-targeting triggers (plus the
-     * explicitly handled life-gain / damage triggers below): a generic targeting effect in that
-     * slot is skipped rather than queued with a stray target.
+     * The "any other creature enters" default queues the trigger directly when it needs no target
+     * and routes targeted effects through the normal enter-trigger target choice.
      */
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        if (isTargeting(effect)) {
-            return false;
-        }
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        boolean needsTargetChoice = isTargeting(effect);
+        if (needsTargetChoice) {
+            Card sourceCard = match.permanent().getCard();
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                    findEnteringPermanentId(match, pe.enteringCard())));
+            logTriggered(match);
+            return true;
+        }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         logTriggered(match);
         return true;
@@ -362,6 +373,37 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (become a copy of it)",
                 match.gameData().id, match.permanent().getCard().getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureExileUntilSourceLeaves(TriggerMatchContext match,
+            ExileTriggeringCreatureUntilSourceLeavesEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null
+                || countOtherCreatures(match.gameData(), enteringPermanentId) < effect.minimumOtherCreatures()) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId());
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setNonTargeting(true);
+            match.gameData().enqueueTrigger(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (exile until source leaves)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 
@@ -638,6 +680,17 @@ public class EnterTriggerCollectorService {
         return found[0];
     }
 
+    private int countOtherCreatures(GameData gameData, UUID enteringPermanentId) {
+        int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.getId().equals(enteringPermanentId)
+                    && gameQueryService.isCreature(gameData, permanent)) {
+                count[0]++;
+            }
+        });
+        return count[0];
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────────────────
 
     private void enqueue(TriggerMatchContext match, CardEffect effect, UUID targetPlayerId, int count) {
@@ -666,4 +719,5 @@ public class EnterTriggerCollectorService {
                 || EffectResolution.targetsSpellOnStack(effect)
                 || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
     }
+
 }

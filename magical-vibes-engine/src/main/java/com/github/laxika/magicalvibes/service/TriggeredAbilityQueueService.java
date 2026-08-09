@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
@@ -524,7 +525,8 @@ public class TriggeredAbilityQueueService {
                 }
 
                 // If a target filter is present but no valid targets exist, skip this trigger
-                if (filter != null && validPermanentTargets.isEmpty()) {
+                if (filter != null && !(filter instanceof AnyTargetPredicateTargetFilter)
+                        && validPermanentTargets.isEmpty()) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                     log.info("Game {} - {} spell-target trigger skipped (no valid targets)",
                             gameData.id, pending.sourceCard().getName());
@@ -543,11 +545,22 @@ public class TriggeredAbilityQueueService {
                             gameData.id, pending.sourceCard().getName());
                     continue;
                 }
+            } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
+                validPlayerTargets = validTargetService.filterValidPlayerTargets(
+                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
             } else if (pending.targetFilter() != null) {
                 // Permanent-filtered path: players are not offered.
                 validPlayerTargets = List.of();
             } else {
                 validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            }
+
+            if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter
+                    && validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                log.info("Game {} - {} spell-target trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
             }
 
             String prompt = pending.playerTargetOnly()

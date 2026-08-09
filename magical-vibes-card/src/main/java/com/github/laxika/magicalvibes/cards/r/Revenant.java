@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "160")
 @CardRegistration(set = "ORI", collectorNumber = "117")
+@CardRegistration(set = "STH", collectorNumber = "68")
 public class Revenant extends Card {
 
     public Revenant() {

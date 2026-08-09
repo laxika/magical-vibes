@@ -25,6 +25,9 @@ public enum ChosenSourcePreventionScope {
      */
     NEXT_DAMAGE_TO_ENCHANTED,
 
+    /** "The next time it would deal damage to target creature this turn, prevent that damage." */
+    NEXT_DAMAGE_TO_TARGET_CREATURE,
+
     /** "Prevent all damage it would deal this turn" (to you only, or to anything). */
     ALL_DAMAGE_THIS_TURN
 }

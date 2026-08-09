@@ -6,6 +6,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Graveyard-punisher + permanent handoff | `j/JinxedRing.java` | `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` with `DealDamageToPlayersEffect(1, CONTROLLER)` + activated `SacrificeCreatureCost` and `TargetPlayerGainsControlOfSourceCreatureEffect` targeting an opponent |
 | Enters tapped + X-scaled multi-target sac ability | `r/RunedArch.java` | STATIC `EntersTappedEffect` + `{X}`,`{T}`,`SacrificeSelfCost` ability with `MakeCreatureUnblockableEffect`, a power-≤2 creature `PermanentPredicateTargetFilter`, `minTargets 0` / `maxTargets 100` and `.withXScaledTargets()` — "X target creatures with power 2 or less can't be blocked this turn"; the paid X bounds the target count |
 | Hexproof-piercing static + sac pump | `g/GlaringSpotlight.java` | STATIC `IgnoreOpponentCreatureHexproofEffect` (target opponents' hexproof creatures as though they had none) + `{3}`, `SacrificeSelfCost` ability with `GrantKeywordEffect(HEXPROOF, OWN_CREATURES)` + `MakeAllCreaturesUnblockableEffect.ownCreatures()` |
 | CU + play-a-card self-sac + life ability | `j/JujuBubble.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{1}") + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(null, [SacrificeSelfEffect]) + ON_CONTROLLER_PLAYS_LAND SacrificeSelfEffect + `{2}` GainLifeEffect(1) — "play a card" = cast or land play (not put-onto-battlefield) |

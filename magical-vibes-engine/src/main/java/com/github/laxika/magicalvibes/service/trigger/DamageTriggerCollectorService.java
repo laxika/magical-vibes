@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -244,15 +245,18 @@ public class DamageTriggerCollectorService {
                     controllerId,
                     dc.damagedCreature().getCard().getName() + "'s ability",
                     new ArrayList<>(List.of(trigger)),
-                    null,
+                    dc.damageDealt(),
                     dc.damagedCreature().getId()
             );
             entry.setTargetId(opponentId);
             gameData.stack.add(entry);
         } else {
             // Planeswalkers present — need player choice between opponent and planeswalkers
+            TargetFilter targetFilter = dc.damagedCreature().getCard().getEffectTargetIndex(trigger) >= 0
+                    ? dc.damagedCreature().getCard().getTargetFilter() : null;
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)), false, null
+                    dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)),
+                    false, targetFilter, dc.damageDealt()
             ));
         }
 

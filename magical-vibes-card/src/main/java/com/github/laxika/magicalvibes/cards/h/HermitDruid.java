@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilBasicLandToHandRes
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "202")
+@CardRegistration(set = "STH", collectorNumber = "108")
 public class HermitDruid extends Card {
 
     public HermitDruid() {

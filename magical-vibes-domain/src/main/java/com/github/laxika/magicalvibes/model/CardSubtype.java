@@ -38,6 +38,7 @@ public enum CardSubtype {
     DWARF("Dwarf"),
     RANGER("Ranger"),
     SPIDER("Spider"),
+    SPIKE("Spike"),
     BEAST("Beast"),
     HUMAN("Human"),
     CLERIC("Cleric"),

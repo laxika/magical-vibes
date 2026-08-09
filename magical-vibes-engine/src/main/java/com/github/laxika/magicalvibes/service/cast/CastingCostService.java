@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -243,6 +244,39 @@ public class CastingCostService {
     }
 
     /**
+     * Generic mana removed from the activation cost of {@code sourcePermanent}'s activated ability,
+     * summed over every matching reduction effect on every battlefield. Symmetric — applies
+     * regardless of who controls the source or the reducing permanent.
+     */
+    public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent) {
+        return getActivatedAbilityActivationCostReduction(gameData, sourcePermanent, null);
+    }
+
+    public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,
+                                                          ActivatedAbility ability) {
+        int reduction = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilityCostReducingEffect reducingEffect
+                            && reducingEffect.appliesSymmetrically()
+                            && (ability == null || reducingEffect.appliesTo(ability))
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    sourcePermanent, reducingEffect.affectedPermanents(),
+                                    FilterContext.of(gameData)
+                                            .withSourceCardId(perm.getOriginalCard().getId())
+                                            .withSourceControllerId(pid))) {
+                        reduction += reducingEffect.genericCostReduction();
+                    }
+                }
+            }
+        }
+        return reduction;
+    }
+
+    /**
      * Extra sacrifice-of-matching-permanent requirement imposed by battlefield taxes such as
      * Drought: one sacrifice per matching mana symbol in {@code cost}, summed across every
      * {@link AdditionalSacrificePerManaSymbolTaxEffect} on any battlefield. Symmetric.
@@ -356,6 +390,76 @@ public class CastingCostService {
      */
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card, boolean fromHand) {
         return findFreeCastSource(gameData, playerId, card, fromHand) != null;
+    }
+
+    /**
+     * True when a battlefield permanent offers the shared-color discard alternative for the spell.
+     * The source is symmetric: the effect is available to every spell controller.
+     */
+    public boolean hasSharedColorDiscardAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        if (card.getColors() == null || card.getColors().isEmpty()) {
+            return false;
+        }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(SharedColorDiscardAlternativeCostEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True when the player has a card in hand other than the spell that shares a color with it.
+     */
+    public boolean canPaySharedColorDiscardAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        if (!hasSharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+            return false;
+        }
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        for (Card candidate : hand) {
+            if (candidate.getId().equals(card.getId())) {
+                continue;
+            }
+            if (candidate.getColors() != null && candidate.getColors().stream().anyMatch(card.getColors()::contains)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validates the selected pre-removal hand index and returns its index in the current hand.
+     * This works both before and after the spell itself has been removed from the hand.
+     */
+    public int validateSharedColorDiscardAlternativeCost(GameData gameData, UUID playerId, Card card,
+                                                         Integer discardHandCardIndex, int spellCardIndex) {
+        if (!hasSharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+            throw new IllegalStateException("Shared-color discard alternative cost is not available");
+        }
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (discardHandCardIndex == null || hand == null) {
+            throw new IllegalStateException("Must discard a card sharing a color with " + card.getName());
+        }
+        boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < hand.size()
+                && hand.get(spellCardIndex).getId().equals(card.getId());
+        int effectiveIndex = !spellStillInHand && discardHandCardIndex > spellCardIndex
+                ? discardHandCardIndex - 1 : discardHandCardIndex;
+        int selectedIndex = spellStillInHand ? discardHandCardIndex : effectiveIndex;
+        if (selectedIndex < 0 || selectedIndex >= hand.size()) {
+            throw new IllegalStateException("Must discard a card sharing a color with " + card.getName());
+        }
+        Card selected = hand.get(selectedIndex);
+        if (selected.getId().equals(card.getId())
+                || selected.getColors() == null
+                || selected.getColors().stream().noneMatch(card.getColors()::contains)) {
+            throw new IllegalStateException("Discarded card must share a color with " + card.getName());
+        }
+        return selectedIndex;
     }
 
     /**

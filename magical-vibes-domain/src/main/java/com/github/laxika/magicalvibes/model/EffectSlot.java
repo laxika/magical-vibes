@@ -173,6 +173,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}. Used by Yomiji,
      *  Who Bars the Way (pair with {@code ReturnTriggeringCardToOwnerHandEffect}). */
     ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a nontoken permanent is put into the controller's graveyard from the
+     *  battlefield. Fires only for the graveyard owner, including permanents of any type, and
+     *  excludes tokens. Checked in {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}.
+     *  Used by Jinxed Ring. */
+    ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type, any player's) is put into an <em>opponent's</em>
      *  graveyard from the battlefield — the graveyard's owner, not the permanent's controller, is
      *  what makes it an opponent's graveyard. The triggered ability's {@code targetId} is baked to
@@ -765,7 +770,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the creatures involved. Effects implementing {@code BlockPairConditionalEffect} are filtered
      *  at trigger time against the pair (e.g. "by a creature with lesser power"), and the participant
      *  the effect names is baked as the non-targeting {@code targetId} on the stack entry, with the
-     *  attacker as {@code sourcePermanentId}. Checked in {@code CombatBlockService}. Used by No Quarter. */
+     *  attacker as {@code sourcePermanentId}. A {@code BlockedCreatureTriggerEffect} wrapper instead
+     *  filters the blocked attacker by card predicate and fires once per matching attacker. Checked
+     *  in {@code CombatBlockService}. Used by No Quarter and Spined Sliver. */
     ON_ANY_CREATURE_BECOMES_BLOCKED,
     /** Global watcher: triggers once each time blockers are declared and at least one creature
      *  blocked, regardless of who controls the blockers. Unlike

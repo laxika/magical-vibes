@@ -1861,7 +1861,7 @@ public class AbilityActivationService {
         String abilityCost = ability.getManaCost();
 
         int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
-                gameData, playerId, permanent, ability, targetId, targetIds);
+                gameData, playerId, permanent, ability, targetId, targetIds, effectiveXValue);
 
         // All state-based legality checks, shared with the AI's dry-run query. Nothing is mutated
         // until every check (including targeting below) has passed, so an illegal activation
@@ -2642,6 +2642,13 @@ public class AbilityActivationService {
     private int getActivatedAbilityAdditionalGenericCost(
             GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
             UUID targetId, List<UUID> targetIds) {
+        return getActivatedAbilityAdditionalGenericCost(
+                gameData, playerId, permanent, ability, targetId, targetIds, 0);
+    }
+
+    private int getActivatedAbilityAdditionalGenericCost(
+            GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
+            UUID targetId, List<UUID> targetIds, int effectiveXValue) {
         int additionalGenericCost =
                 castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds)
                         + castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
@@ -2650,17 +2657,24 @@ public class AbilityActivationService {
             return additionalGenericCost;
         }
 
-        int genericCost = new ManaCost(abilityCost).getGenericCost();
+        ManaCost manaCost = new ManaCost(abilityCost);
+        int totalManaCost = manaCost.getManaValue()
+                + effectiveXValue * manaCost.getXSymbolCount();
+        int genericCost = manaCost.getGenericCost();
         int equipReduction = Math.min(
                 castingCostService.getActivatedAbilityCostReduction(gameData, playerId, permanent, ability),
                 genericCost);
         additionalGenericCost -= equipReduction;
+        int battlefieldReduction = Math.min(
+                castingCostService.getActivatedAbilityActivationCostReduction(gameData, permanent, ability),
+                Math.max(0, totalManaCost + additionalGenericCost - 1));
+        additionalGenericCost -= battlefieldReduction;
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ReduceActivationCostPerCounterEffect reduce) {
-                int reduction = Math.min(
+                int counterReduction = Math.min(
                         permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
-                        genericCost);
-                additionalGenericCost -= reduction;
+                        Math.max(0, totalManaCost + additionalGenericCost - 1));
+                additionalGenericCost -= counterReduction;
             }
             if (effect instanceof IncreaseActivationCostPerCounterEffect increase) {
                 additionalGenericCost +=
@@ -3646,6 +3660,15 @@ public class AbilityActivationService {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", paid, " from their hand as an activation cost."));
             log.info("Game {} - {} exiles {} from hand as activation cost", gameData.id, player.getUsername(), paid.getName());
+            return new PaidHandCard(paid.getName(), manaValue);
+        }
+
+        if (cost.putsPaidCardsOnTopOfLibrary()) {
+            gameData.playerDecks.get(player.getId()).addFirst(paid);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", paid, " on top of their library as an activation cost."));
+            log.info("Game {} - {} puts {} from hand on top of their library as an activation cost",
+                    gameData.id, player.getUsername(), paid.getName());
             return new PaidHandCard(paid.getName(), manaValue);
         }
 

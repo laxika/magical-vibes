@@ -182,6 +182,7 @@ const BASE_CARD: Card = {
   transformable: false,
   kickerCost: null,
   buybackCost: null,
+  buybackRequiresSacrifice: false,
   modalChoicesRequired: 0,
   modalChoicesMax: 0,
   modalOptional: false,

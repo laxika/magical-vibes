@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnly
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -420,6 +421,7 @@ public class LayerSystemService {
         ACTIVE_PASS.set(pass);
         boolean computed = false;
         try {
+            synchronizeFullTextCopies(gameData);
             if (CACHE_DISABLED) {
                 computeBoardState(gameData, pass);
             } else {
@@ -440,6 +442,75 @@ public class LayerSystemService {
             }
         }
         return pass;
+    }
+
+    /**
+     * Keeps the mutable runtime identity used by the ordinary engine paths in sync with the
+     * controller's current top creature card. The original card remains on the permanent so the
+     * effect and the retained discard ability can be restored when the graveyard condition stops
+     * holding.
+     */
+    private static void synchronizeFullTextCopies(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            Card topCreature = graveyard == null || graveyard.isEmpty() ? null : graveyard.getLast();
+            if (topCreature != null && !topCreature.hasType(CardType.CREATURE)) {
+                topCreature = null;
+            }
+            for (Permanent permanent : battlefield) {
+                if (!hasFullTextCopyEffect(permanent.getOriginalCard())
+                        || permanent.getFullTextCopySourceCard() == topCreature) {
+                    continue;
+                }
+                if (topCreature == null) {
+                    permanent.setCard(permanent.getOriginalCard());
+                    permanent.setFullTextCopySourceCard(null);
+                } else {
+                    permanent.setCard(buildFullTextCopy(permanent.getOriginalCard(), topCreature));
+                    permanent.setFullTextCopySourceCard(topCreature);
+                }
+            }
+        }
+    }
+
+    private static boolean hasFullTextCopyEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(HaveFullTextOfTopCreatureCardInGraveyardEffect.class::isInstance);
+    }
+
+    private static Card buildFullTextCopy(Card original, Card topCreature) {
+        Card copy = topCreature.createRuntimeCopy();
+        if (original.getOwnerId() != null) {
+            copy.setOwnerId(original.getOwnerId());
+        }
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (var registration : original.getEffectRegistrations(slot)) {
+                boolean alreadyPresent = copy.getEffectRegistrations(slot).stream()
+                        .anyMatch(existing -> existing.effect().equals(registration.effect()));
+                if (!alreadyPresent) {
+                    copy.addEffect(slot, registration.effect(), registration.triggerMode());
+                }
+            }
+        }
+        for (var ability : original.getActivatedAbilities()) {
+            boolean alreadyPresent = copy.getActivatedAbilities().stream()
+                    .anyMatch(existing -> java.util.Objects.equals(existing.getManaCost(), ability.getManaCost())
+                            && java.util.Objects.equals(existing.getDescription(), ability.getDescription())
+                            && existing.getEffects().equals(ability.getEffects()));
+            if (!alreadyPresent) {
+                copy.addActivatedAbility(ability);
+            }
+        }
+        String cardText = copy.getCardText();
+        if (cardText == null || !cardText.contains("{2}: Discard a card.")) {
+            copy.setCardText((cardText == null || cardText.isBlank() ? "" : cardText + "\n")
+                    + "{2}: Discard a card.");
+        }
+        return copy;
     }
 
     public void endPass(Pass pass) {

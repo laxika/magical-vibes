@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,7 +38,11 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         ScryEffect e = (ScryEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        List<Card> deck = gameData.playerDecks.get(controllerId);
+        boolean targetLibrary = e.owner() == LibraryOwner.TARGET_PLAYER;
+        UUID libraryOwnerId = e.owner() == LibraryOwner.TARGET_PLAYER && entry.getTargetId() != null
+                ? entry.getTargetId()
+                : controllerId;
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -57,8 +62,12 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
 
         // 701.22d: Empty library — scry event still occurs (triggers would fire), but nothing to interact with.
         if (count == 0) {
-            String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + scryAmount
-                    + " but their library is empty.";
+            String logMsg = targetLibrary
+                    ? gameData.playerIdToName.get(controllerId) + " looks at the top " + scryAmount
+                            + " cards of " + libraryName(gameData, controllerId, libraryOwnerId)
+                            + ", but it is empty."
+                    : gameData.playerIdToName.get(controllerId) + " scries " + scryAmount
+                            + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
@@ -66,10 +75,26 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.Scry(controllerId, topCards));
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.Scry(controllerId, topCards, false, libraryOwnerId));
 
-        String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
+        String logMsg = targetLibrary
+                ? gameData.playerIdToName.get(controllerId) + " looks at the top " + count
+                        + " cards of " + libraryName(gameData, controllerId, libraryOwnerId) + "."
+                : gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
         gameLogService.append(gameData, GameLog.text(logMsg));
-        log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
+        if (targetLibrary) {
+            log.info("Game {} - {} looks at {} cards of {}", gameData.id,
+                    gameData.playerIdToName.get(controllerId), count,
+                    libraryName(gameData, controllerId, libraryOwnerId));
+        } else {
+            log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
+        }
+    }
+
+    private static String libraryName(GameData gameData, UUID controllerId, UUID libraryOwnerId) {
+        return controllerId.equals(libraryOwnerId)
+                ? "their library"
+                : gameData.playerIdToName.get(libraryOwnerId) + "'s library";
     }
 }

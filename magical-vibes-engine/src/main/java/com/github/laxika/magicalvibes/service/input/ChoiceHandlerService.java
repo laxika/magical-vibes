@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
@@ -365,9 +367,13 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
-            if (gameQueryService.isCreature(gameData, perm)) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
+            boolean needsSubtypeChoice = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
+            if (needsSubtypeChoice) {
+                playerInputService.beginSubtypeChoice(gameData, player.getId(), perm.getId());
+                return;
             }
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
         }
 
         // CR 603.8 — the chosen color can immediately satisfy a state-triggered ability

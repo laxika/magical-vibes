@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +67,8 @@ public class MayMiscHandlerService {
     private final LifeSupport lifeSupport;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
+    @Autowired @Lazy
+    private PermanentCounterSupport permanentCounterSupport;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -190,6 +194,25 @@ public class MayMiscHandlerService {
             drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
 
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.STUDY_COUNTER) {
+            Permanent source = ability.sourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            if (source != null) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, null, source, CounterType.STUDY, 1);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " replaces the draw with ", ability.sourceCard(), "."));
+                log.info("Game {} - {} replaces a draw with a study counter on {}",
+                        gameData.id, player.getUsername(), ability.sourceCard().getName());
+            }
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

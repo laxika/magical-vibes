@@ -3427,6 +3427,17 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
     }
 
+    /** Returns whether a targeted instant or sorcery spell has its damage prevented this turn. */
+    public boolean isDamageFromTargetSpellPrevented(GameData gameData, StackEntry entry) {
+        if (!isDamagePreventable(gameData) || entry == null) {
+            return false;
+        }
+        StackEntryType type = entry.getEntryType();
+        return (type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL)
+                && entry.getCard() != null
+                && gameData.spellsPreventedFromDealingDamage.contains(entry.getCard().getId());
+    }
+
     /**
      * Benevolent Unicorn: total amount by which damage dealt by {@code entry} — a spell dealing
      * damage as itself — is reduced by {@link ReduceSpellDamageEffect} permanents on any
@@ -3711,6 +3722,9 @@ public class GameQueryService {
             return true;
         }
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof EnchantedPermanentConditionalEffect) {
+                continue;
+            }
             if (matchesLureBlockerFilter(gameData, attacker, blocker, effect)) {
                 return true;
             }

@@ -971,6 +971,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_DIES` | A creature you control dies. Supports `TriggeringCardConditionalEffect` wrapping to filter by dying creature predicates (e.g. Slimefoot only triggers for Saprolings, Requiem Angel for non-Spirits) |
 | `ON_ALLY_CREATURE_OR_PLANESWALKER_DIES` | A creature **or planeswalker** you control dies. Same collection shape as `ON_ALLY_CREATURE_DIES` (MayEffect dispatched to a may-ability, other effects batched onto one stack entry) but fired for planeswalker deaths too, and only once for a permanent that is both. Ajani's Last Stand |
 | `ON_ALLY_NONTOKEN_CREATURE_DIES` | A nontoken creature you control dies. Only fires for nontoken creatures (tokens are excluded). Used by Gutter Grime |
+| `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A nontoken permanent of any type is put into your graveyard from the battlefield. Fires only for the graveyard owner, including permanents you do not control, and excludes tokens. Used by Jinxed Ring with `DealDamageToPlayersEffect(1, CONTROLLER)`. |
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |

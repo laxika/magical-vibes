@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "41")
+@CardRegistration(set = "STH", collectorNumber = "22")
 public class WallOfEssence extends Card {
 
     public WallOfEssence() {

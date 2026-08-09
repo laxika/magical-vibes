@@ -364,6 +364,10 @@ public class GameActionAvailabilityService {
             return true;
         }
 
+        if (castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+            return true;
+        }
+
         // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
         // total) — it is castable if any one of them is payable, so every candidate is tried below.
         List<ManaCost> candidateCosts = castableCosts(card);

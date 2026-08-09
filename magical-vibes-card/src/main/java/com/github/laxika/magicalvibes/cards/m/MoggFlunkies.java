@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "143")
+@CardRegistration(set = "STH", collectorNumber = "92")
 public class MoggFlunkies extends Card {
 
     public MoggFlunkies() {

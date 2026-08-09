@@ -1127,6 +1127,25 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (nontoken permanent put into controller's graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     /**
      * Patron of the Nezumi. "That player" is the owner of the graveyard the permanent was put into,
      * so the entry's target is baked to the graveyard owner rather than the dying permanent's

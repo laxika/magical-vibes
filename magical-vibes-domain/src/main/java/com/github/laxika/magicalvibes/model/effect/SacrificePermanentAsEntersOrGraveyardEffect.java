@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param description human-readable name of the sacrifice, used in the prompt
  */
 public record SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate filter, int count, String description)
-        implements ReplacementEffect {
+        implements EntryCostReplacementEffect {
 
     public SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate filter, String description) {
         this(filter, 1, description);
@@ -28,5 +28,15 @@ public record SacrificePermanentAsEntersOrGraveyardEffect(PermanentPredicate fil
         if (count < 1) {
             throw new IllegalArgumentException("count must be positive");
         }
+    }
+
+    @Override
+    public Kind kind() {
+        return Kind.SACRIFICE_PERMANENT;
+    }
+
+    @Override
+    public PermanentPredicate permanentFilter() {
+        return filter;
     }
 }

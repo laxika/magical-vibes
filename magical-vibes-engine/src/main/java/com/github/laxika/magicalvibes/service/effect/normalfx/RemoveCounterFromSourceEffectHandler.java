@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,6 @@ public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandler
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,14 +35,6 @@ public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandler
             return;
         }
 
-        int current = self.getCounterCount(e.counterType());
-        if (current <= 0) {
-            return;
-        }
-        int removed = Math.min(current, e.amount());
-        self.setCounterCount(e.counterType(), current - removed);
-
-        String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-        gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text(" removes " + removed + " " + counterName + " counter(s).").build());
+        permanentCounterSupport.removeCounterFromPermanent(gameData, self, e.counterType(), e.amount());
     }
 }

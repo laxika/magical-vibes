@@ -25,6 +25,8 @@ public class Permanent {
     private final UUID id;
     private Card card;
     private final Card originalCard;
+    /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
+    @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
@@ -76,6 +78,9 @@ public class Permanent {
      *  this permanent at the beginning of the next end step. Consumed alongside {@link #damagePreventionShield}
      *  in {@code DamagePreventionService.applyCreaturePreventionShield}; reset at turn cleanup. */
     @Setter private int damageToCounterPreventionShield;
+    /** Temper-style shield: damage prevented by this shield is converted into +1/+1 counters on this
+     *  permanent as the damage is prevented. Reset at turn cleanup. */
+    @Setter private int damageToPlusOnePlusOneCounterPreventionShield;
     @Setter private int regenerationShield;
     /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
      *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
@@ -86,6 +91,10 @@ public class Permanent {
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
     @Setter private int minusOneCounterRegenerationShield;
+    /** How many of this permanent's {@link #regenerationShield}s carry Skeleton Scavengers' rider —
+     *  when such a shield is actually used, put a +1/+1 counter on this permanent. Plain shields are
+     *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
+    @Setter private int plusOnePlusOneCounterRegenerationShield;
     /** Controller ids of this permanent's {@link #regenerationShield}s that carry Debt of Loyalty's
      *  rider — when such a shield is actually used, that player gains control of this permanent.
      *  Plain shields are consumed first, so a rider shield is only spent once it is all that is left.
@@ -528,6 +537,7 @@ public class Permanent {
         this.id = source.id;
         this.card = source.card;
         this.originalCard = source.originalCard;
+        this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
@@ -548,9 +558,11 @@ public class Permanent {
         this.toughnessModifier = source.toughnessModifier;
         this.damagePreventionShield = source.damagePreventionShield;
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
+        this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
+        this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
         this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;

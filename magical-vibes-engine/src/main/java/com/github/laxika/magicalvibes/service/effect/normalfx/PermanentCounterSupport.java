@@ -310,12 +310,13 @@ public class PermanentCounterSupport {
 
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
-        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " puts " + counterText + " on ", card, "."));
+        Card sourceCard = entry != null ? entry.getCard() : card;
+        gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " puts " + counterText + " on ", card, "."));
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
-                entry.getCard().getName(), count, counterName, card.getName());
+                sourceCard.getName(), count, counterName, card.getName());
 
         // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
-        if (counterType == CounterType.LORE && card.isSaga()) {
+        if (entry != null && counterType == CounterType.LORE && card.isSaga()) {
             triggerSagaChapter(gameData, entry, target);
         }
 
@@ -367,6 +368,23 @@ public class PermanentCounterSupport {
             case AIM -> "aim";
             default -> counterType.name().toLowerCase();
         };
+    }
+
+    public void removeCounterFromPermanent(GameData gameData, Permanent target,
+                                            CounterType counterType, int amount) {
+        int current = target.getCounterCount(counterType);
+        if (current <= 0 || amount <= 0) {
+            return;
+        }
+
+        int removed = Math.min(current, amount);
+        target.setCounterCount(counterType, current - removed);
+        gameLogService.append(gameData, GameLog.builder()
+                .card(target.getCard())
+                .text(" removes " + removed + " " + counterTypeName(counterType) + " counter(s).")
+                .build());
+        log.info("Game {} - {} removes {} {} counter(s)", gameData.id, target.getCard().getName(),
+                removed, counterTypeName(counterType));
     }
 
     private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {

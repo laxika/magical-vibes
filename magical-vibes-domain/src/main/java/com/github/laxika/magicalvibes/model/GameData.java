@@ -515,6 +515,8 @@ public class GameData {
      *  once per source (CR ruling). Combat damage batches separately via {@code combatDamageDealt}. */
     public final Map<UUID, PendingSourceDamage> pendingSourceDamageForReflection = new LinkedHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
+    /** Instant and sorcery spell card IDs whose damage is prevented for the rest of this turn. */
+    public final Set<UUID> spellsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Permanents prevented from dealing damage until a player's next turn (Gideon of the Trials +1),
      *  keyed by prevented permanent id → the player whose next turn ends the prevention. Unlike
      *  {@link #permanentsPreventedFromDealingDamage} these entries survive the cleanup step and are
@@ -2942,6 +2944,7 @@ public class GameData {
 
         // --- Damage prevention / redirection still pending ---
         copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);
+        copy.spellsPreventedFromDealingDamage.addAll(this.spellsPreventedFromDealingDamage);
         copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
         copy.permanentsToTapWhenControlLost.addAll(this.permanentsToTapWhenControlLost);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "108")
 @CardRegistration(set = "M19", collectorNumber = "72")
 @CardRegistration(set = "9ED", collectorNumber = "98")
+@CardRegistration(set = "STH", collectorNumber = "42")
 public class Sift extends Card {
 
     public Sift() {

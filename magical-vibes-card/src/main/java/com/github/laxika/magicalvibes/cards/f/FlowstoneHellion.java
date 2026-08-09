@@ -1,0 +1,21 @@
+package com.github.laxika.magicalvibes.cards.f;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+
+import java.util.List;
+
+@CardRegistration(set = "STH", collectorNumber = "84")
+public class FlowstoneHellion extends Card {
+
+    public FlowstoneHellion() {
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{0}",
+                List.of(new BoostSelfEffect(1, -1)),
+                "{0}: This creature gets +1/-1 until end of turn."
+        ));
+    }
+}

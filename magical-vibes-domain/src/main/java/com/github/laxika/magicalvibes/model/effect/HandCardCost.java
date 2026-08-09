@@ -60,10 +60,21 @@ public interface HandCardCost extends CostEffect {
         return false;
     }
 
+    /** True when paid cards are put on top of their controller's library instead of discarded. */
+    default boolean putsPaidCardsOnTopOfLibrary() {
+        return false;
+    }
+
     /**
-     * The verb used in prompts and the game log ("discard" / "exile").
+     * The verb used in prompts and the game log ("discard" / "exile" / "put on top of your library").
      */
     default String payVerb() {
-        return exilesPaidCards() ? "exile" : "discard";
+        if (exilesPaidCards()) {
+            return "exile";
+        }
+        if (putsPaidCardsOnTopOfLibrary()) {
+            return "put on top of your library";
+        }
+        return "discard";
     }
 }

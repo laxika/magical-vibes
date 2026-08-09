@@ -96,7 +96,7 @@ public class GameViewProjectionFactory {
             }
             List<CardSubtype> playerGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, playerId);
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
-                    .stream().map(c -> cardViewFactory.create(c, playerGranted)).toList();
+                    .stream().map(c -> createHandCardView(gameData, playerId, c, playerGranted)).toList();
             List<CardView> opponentHand = getRevealedOpponentHand(gameData, playerId);
             int mulliganCount = gameData.mulliganCounts.getOrDefault(playerId, 0);
             Map<String, Integer> manaPool = getManaPool(gameData, playerId);
@@ -121,11 +121,11 @@ public class GameViewProjectionFactory {
 
             // Mindslaver: controller sees the controlled player's hand and playable indices
             if (gameData.mindControllerPlayerId != null && playerId.equals(gameData.mindControllerPlayerId)) {
-                UUID controlledId = gameData.mindControlledPlayerId;
+                    UUID controlledId = gameData.mindControlledPlayerId;
                 if (controlledId != null) {
                     List<CardSubtype> controlledGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, controlledId);
                     opponentHand = gameData.playerHands.getOrDefault(controlledId, List.of())
-                            .stream().map(c -> cardViewFactory.create(c, controlledGranted)).toList();
+                            .stream().map(c -> createHandCardView(gameData, controlledId, c, controlledGranted)).toList();
                     playableCardIndices =
                             actionAvailabilityService.getPlayableCardIndices(gameData, controlledId);
                     potentialPlayableCardIndices =
@@ -629,12 +629,27 @@ public class GameViewProjectionFactory {
         return playable;
     }
 
+    private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
+        CardView view = cardViewFactory.create(card, grantedSubtypes);
+        if (view.hasAlternateCastingCost()
+                || !castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
+            return view;
+        }
+        return view.toBuilder()
+                .hasAlternateCastingCost(true)
+                .alternateCostExileHandCount(1)
+                .alternateCostExileHandLabel("a card that shares a color")
+                .alternateCostDiscardsHandCard(true)
+                .build();
+    }
+
     public JoinGame getJoinGame(GameData data, UUID playerId) {
         List<CardSubtype> playerGranted = playerId != null
                 ? gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, playerId)
                 : List.of();
         List<CardView> hand = playerId != null
-                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(c -> cardViewFactory.create(c, playerGranted)).toList()
+                ? data.playerHands.getOrDefault(playerId, List.of()).stream()
+                .map(c -> createHandCardView(data, playerId, c, playerGranted)).toList()
                 : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
         Map<String, Integer> manaPool = getManaPool(data, playerId);

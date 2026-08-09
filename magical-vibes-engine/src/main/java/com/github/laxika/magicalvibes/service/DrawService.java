@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfD
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
@@ -201,6 +203,21 @@ public class DrawService {
         Permanent enduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
         if (enduringRenewalSource != null) {
             resolveRevealTopCreatureToGraveyardElseDraw(gameData, playerId, enduringRenewalSource);
+            return;
+        }
+
+        Permanent counterDrawReplacementSource = findCounterDrawReplacementSource(
+                gameData, playerId, CounterType.STUDY);
+        if (counterDrawReplacementSource != null) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    counterDrawReplacementSource.getCard(),
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.STUDY_COUNTER)),
+                    "Put a study counter on " + counterDrawReplacementSource.getCard().getName()
+                            + " instead of drawing?",
+                    null,
+                    null,
+                    counterDrawReplacementSource.getId()));
             return;
         }
 
@@ -499,6 +516,25 @@ public class DrawService {
                     .anyMatch(effect -> effect instanceof DoubleDrawReplacementEffect);
             if (hasEffect) {
                 return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    private Permanent findCounterDrawReplacementSource(GameData gameData, UUID playerId,
+                                                        CounterType counterType) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(CounterDrawReplacementEffect.class::isInstance)
+                    .map(CounterDrawReplacementEffect.class::cast)
+                    .anyMatch(effect -> effect.counterType() == counterType);
+            if (hasEffect) {
+                return permanent;
             }
         }
         return null;

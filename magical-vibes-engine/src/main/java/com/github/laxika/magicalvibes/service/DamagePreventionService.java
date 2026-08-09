@@ -272,6 +272,22 @@ public class DamagePreventionService {
                 }
                 return 0;
             }
+            // Temper: prevent the next X damage to the target creature and put a +1/+1 counter on it
+            // for each 1 damage prevented this way.
+            int temperShield = permanent.getDamageToPlusOnePlusOneCounterPreventionShield();
+            if (temperShield > 0 && damage > 0) {
+                int temperPrevented = Math.min(temperShield, damage);
+                permanent.setDamageToPlusOnePlusOneCounterPreventionShield(temperShield - temperPrevented);
+                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                    int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, temperPrevented);
+                    if (counters > 0) {
+                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                    }
+                }
+                damage -= temperPrevented;
+                if (damage <= 0) return 0;
+            }
             // Sacred Boon: "Prevent the next N damage... At the beginning of the next end step, put a
             // +0/+1 counter on that creature for each 1 damage prevented this way." Prevented damage is
             // accumulated into a delayed +0/+1 counter trigger drained at the next end step.

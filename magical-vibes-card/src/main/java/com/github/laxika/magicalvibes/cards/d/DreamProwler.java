@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAlone
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "74")
+@CardRegistration(set = "STH", collectorNumber = "29")
 public class DreamProwler extends Card {
 
     public DreamProwler() {

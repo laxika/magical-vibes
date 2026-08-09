@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "10E", collectorNumber = "286")
+@CardRegistration(set = "STH", collectorNumber = "112")
 public class PrimalRage extends Card {
 
     public PrimalRage() {

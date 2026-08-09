@@ -115,9 +115,11 @@ public class DamageSupport {
                 && (entry == null || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
             rawDamage *= gameQueryService.getPermanentDamageMultiplier(gameData, damageSource.getId());
         }
-        // Energy Storm: prevent damage dealt by instant/sorcery spells themselves (not fight/bite
-        // damage from permanents that a spell merely caused to deal damage).
-        if (damageSource == null && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+        // Energy Storm and Hidden Retreat: prevent damage dealt by instant/sorcery spells themselves
+        // (not fight/bite damage from permanents that a spell merely caused to deal damage).
+        if (damageSource == null
+                && (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
+                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry))) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
             return;
@@ -443,7 +445,8 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
-        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
+                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
@@ -638,8 +641,9 @@ public class DamageSupport {
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId);
-        // Energy Storm: prevent all damage dealt by instant and sorcery spells.
-        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+        // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
+                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;

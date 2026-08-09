@@ -107,6 +107,16 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 prompt = "Choose a source. The next time it would deal damage to enchanted creature this turn,"
                         + " prevent that damage.";
             }
+            case NEXT_DAMAGE_TO_TARGET_CREATURE -> {
+                UUID targetId = entry.getTargetId();
+                if (targetId == null) {
+                    return;
+                }
+                context = new PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice(
+                        controllerId, targetId);
+                prompt = "Choose a source. The next time it would deal damage to target creature this turn,"
+                        + " prevent that damage.";
+            }
             case ALL_DAMAGE_THIS_TURN -> {
                 context = new PermanentChoiceContext.PreventDamageSourceChoice(controllerId, e.controllerOnly());
                 prompt = e.controllerOnly()

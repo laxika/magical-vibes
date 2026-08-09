@@ -93,14 +93,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
                                                UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
 
+    /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
+    record CannibalizeChoice(Card sourceCard, UUID controllerId,
+                             UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
     /**
-     * Ravenous Vampire: the controller accepted the upkeep "you may sacrifice a nonartifact creature"
-     * and is picking which one; the sacrifice puts a +1/+1 counter on {@code sourcePermanentId}.
+     * A controller accepted an upkeep "you may sacrifice" choice and is picking which permanent;
+     * the sacrifice puts {@code counterType} on {@code sourcePermanentId}.
      */
-    record MaySacrificeForCounterOnSource(UUID controllerId, UUID sourcePermanentId, Card sourceCard)
-            implements PermanentChoiceContext {}
+    record MaySacrificeForCounterOnSource(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
+                                          CounterType counterType) implements PermanentChoiceContext {
+        public MaySacrificeForCounterOnSource(UUID controllerId, UUID sourcePermanentId, Card sourceCard) {
+            this(controllerId, sourcePermanentId, sourceCard, CounterType.PLUS_ONE_PLUS_ONE);
+        }
+    }
 
     /**
      * Gargantuan Gorilla: the controller accepted the upkeep "you may sacrifice a Forest" and is

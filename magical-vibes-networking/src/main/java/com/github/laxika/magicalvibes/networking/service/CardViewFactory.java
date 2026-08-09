@@ -111,6 +111,15 @@ public class CardViewFactory {
         String alternateCostExileHandLabel = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
                 .map(ExileCardsFromHandCastingCost::label).orElse(null);
 
+        BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof BuybackEffect)
+                .map(e -> (BuybackEffect) e)
+                .findFirst().orElse(null);
+        String buybackCost = buybackEffect == null ? null
+                : buybackEffect.hasManaCost() ? buybackEffect.cost()
+                : buybackEffect.hasSacrificeCost() ? "Sacrifice " + buybackEffect.sacrificeDescription()
+                : null;
+
         return new CardView(
                 card.getId(),
                 card.getName(),
@@ -146,6 +155,7 @@ public class CardViewFactory {
                 alternateCostManaCost,
                 alternateCostExileHandCount,
                 alternateCostExileHandLabel,
+                false,
                 graveyardAbilityViews,
                 handAbilityViews,
                 card.getBackFaceCard() != null,
@@ -158,10 +168,8 @@ public class CardViewFactory {
                             return null;
                         })
                         .findFirst().orElse(null),
-                card.getEffects(EffectSlot.STATIC).stream()
-                        .filter(e -> e instanceof BuybackEffect)
-                        .map(e -> ((BuybackEffect) e).cost())
-                        .findFirst().orElse(null),
+                buybackCost,
+                buybackEffect != null && buybackEffect.hasSacrificeCost(),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),

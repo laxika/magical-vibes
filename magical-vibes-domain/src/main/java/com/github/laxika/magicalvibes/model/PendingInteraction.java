@@ -162,11 +162,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * reject pile goes to the bottom of the library; when true (surveil) it goes to the
      * graveyard. Both variants share the SCRY_ORDER interaction shape and answer.
      */
-    record Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard) implements PendingInteraction {
+    record Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard, UUID libraryOwnerId)
+            implements PendingInteraction {
 
         /** Scry variant: the reject pile goes to the bottom of the library. */
         public Scry(UUID playerId, java.util.List<Card> cards) {
-            this(playerId, cards, false);
+            this(playerId, cards, false, playerId);
+        }
+
+        public Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard) {
+            this(playerId, cards, toGraveyard, playerId);
         }
 
         @Override

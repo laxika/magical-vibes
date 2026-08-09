@@ -1,0 +1,50 @@
+package com.github.laxika.magicalvibes.cards.r;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SavageLands;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class RuinationTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Destroys all nonbasic lands controlled by both players")
+    void destroysAllNonbasicLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new SavageLands());
+        harness.addToBattlefield(player2, new SavageLands());
+        harness.setHand(player1, List.of(new Ruination()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Savage Lands");
+        harness.assertInGraveyard(player2, "Savage Lands");
+    }
+
+    @Test
+    @DisplayName("Does not destroy non-land permanents")
+    void doesNotDestroyNonLands() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Ruination()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+}

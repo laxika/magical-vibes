@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatur
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -1868,14 +1869,17 @@ public class CombatDamageService {
                                 data.controllerId(),
                                 data.card().getName() + "'s ability",
                                 new ArrayList<>(List.of(effectToAdd)),
-                                null,
+                                data.damageDealt(),
                                 data.permanentId()
                         );
                         entry.setTargetId(opponentId);
                         gameData.stack.add(entry);
                     } else {
+                        TargetFilter targetFilter = data.card().getEffectTargetIndex(effectToAdd) >= 0
+                                ? data.card().getTargetFilter() : null;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false, null
+                                data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
+                                false, targetFilter, data.damageDealt()
                         ));
                     }
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
@@ -1918,6 +1922,17 @@ public class CombatDamageService {
             if (data.damageDealt() <= 0) continue;
 
             for (CardEffect effect : data.card().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF)) {
+                if (effect.targetSpec().declaredTarget() != null) {
+                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
+                            ? data.card().getTargetFilter() : null;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            data.card(), data.controllerId(), new ArrayList<>(List.of(effect)), false,
+                            targetFilter, data.damageDealt(), data.permanentId()));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(data.card(), "'s combat-damage trigger fires — choose a target."));
+                    continue;
+                }
+
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         data.card(),

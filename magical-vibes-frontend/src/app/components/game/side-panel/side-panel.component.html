@@ -269,7 +269,11 @@
           } @else if (choice.targeting.alternateCostReturnCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Return {{ choice.targeting.alternateCostReturnCount }} Basic Land</button>
           } @else if (choice.targeting.alternateCostExileHandCount > 0) {
-            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Exile {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card from hand</button>
+            @if (choice.targeting.alternateCostDiscardsHandCard) {
+              <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Discard a card that shares a color from hand</button>
+            } @else {
+              <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Exile {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card from hand</button>
+            }
           }
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>
@@ -278,7 +282,11 @@
 
     @if (choice.targeting.selectingAlternateCostHandCard) {
       <div class="side-prompt prompt-targeting">
-        <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to exile for {{ choice.targeting.alternateCostCardName }}</span>
+        @if (choice.targeting.alternateCostDiscardsHandCard) {
+          <span class="side-prompt-text">Select a card that shares a color in your hand to discard for {{ choice.targeting.alternateCostCardName }}</span>
+        } @else {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostExileHandLabel || 'a' }} card in your hand to exile for {{ choice.targeting.alternateCostCardName }}</span>
+        }
         <div class="side-prompt-buttons">
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>
@@ -325,6 +333,16 @@
           <button class="btn-side-prompt" (click)="choice.targeting.confirmBuyback()">Pay Buyback</button>
           <button class="btn-side-prompt" (click)="choice.targeting.skipBuyback()">Skip Buyback</button>
           <button class="btn-side-prompt" (click)="choice.targeting.cancelBuyback()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingBuybackSacrifice) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Select a land to sacrifice for {{ choice.targeting.buybackSacrificeDescription }}</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmBuybackSacrifice()" [disabled]="choice.targeting.buybackSacrificeSelectedId() == null">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelBuybackSacrifice()">Cancel</button>
         </div>
       </div>
     }

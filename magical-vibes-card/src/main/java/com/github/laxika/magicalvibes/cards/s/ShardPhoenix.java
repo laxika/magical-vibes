@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "217")
+@CardRegistration(set = "STH", collectorNumber = "97")
 public class ShardPhoenix extends Card {
 
     public ShardPhoenix() {

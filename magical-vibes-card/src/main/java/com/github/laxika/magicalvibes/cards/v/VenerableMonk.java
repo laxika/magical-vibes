@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "55")
 @CardRegistration(set = "9ED", collectorNumber = "51")
 @CardRegistration(set = "POR", collectorNumber = "35")
+@CardRegistration(set = "STH", collectorNumber = "21")
 public class VenerableMonk extends Card {
 
     public VenerableMonk() {

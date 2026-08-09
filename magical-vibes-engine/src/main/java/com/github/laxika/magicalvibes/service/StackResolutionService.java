@@ -654,10 +654,22 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
+        // Check if artifact has "as enters" color choice.
+        ChooseColorEffect artifactColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseColorEffect)
+                .map(e -> (ChooseColorEffect) e)
+                .findFirst().orElse(null);
+        if (artifactColorChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null,
+                    artifactColorChoice);
+        }
+
         // Check if artifact has "as enters" creature type choice (e.g. Pillar of Origins)
         boolean needsSubtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
-        if (needsSubtypeChoice) {
+        if (needsSubtypeChoice && !gameData.interaction.isAwaitingInput()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "9ED", collectorNumber = "182")
+@CardRegistration(set = "STH", collectorNumber = "81")
 public class FlameWave extends Card {
 
     public FlameWave() {

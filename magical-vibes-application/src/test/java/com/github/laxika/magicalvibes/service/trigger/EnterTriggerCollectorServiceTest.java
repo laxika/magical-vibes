@@ -78,7 +78,7 @@ class EnterTriggerCollectorServiceTest {
     void setUp() {
         TriggerCollectorRegistry registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
-                new AmountEvaluationService(predicateEvaluationService, gameQueryService)), registry);
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService), gameQueryService), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
@@ -315,14 +315,14 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Any-creature scan skips a generic targeting trigger")
-    void anyCreatureSkipsTargeting() {
+    @DisplayName("Any-creature scan queues a generic targeting trigger for target selection")
+    void anyCreatureQueuesTargeting() {
         addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new DestroyTargetPermanentEffect());
 
         service.checkAnyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2));
 
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
     }
 
     @Test

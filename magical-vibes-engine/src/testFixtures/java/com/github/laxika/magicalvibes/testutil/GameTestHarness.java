@@ -675,6 +675,22 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
     }
 
+    public void castSorceryWithSharedColorDiscard(Player player, int cardIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, List.of(), null, List.of(), false, null, null, null, null, List.of(), false,
+                discardHandCardIndex);
+    }
+
+    public void castSorceryWithSharedColorDiscardAndDiscard(Player player, int cardIndex,
+                                                            int sharedColorDiscardHandCardIndex,
+                                                            int additionalDiscardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, List.of(), null, List.of(), false, additionalDiscardHandCardIndex, null,
+                null, null, List.of(), false, sharedColorDiscardHandCardIndex);
+    }
+
     /** Cast a targeted instant, discarding the hand card at {@code discardHandCardIndex} as an additional cost. */
     public void castInstantWithDiscard(Player player, int cardIndex, UUID targetId, Integer discardHandCardIndex) {
         ensurePriority(player);

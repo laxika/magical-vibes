@@ -68,10 +68,11 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAsEntersOrGraveyardEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -190,7 +191,7 @@ public class BattlefieldEntryService {
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
             return;
         }
-        if (!applySacrificePermanentToEnter(gameData, controllerId, permanent)) {
+        if (!applyEntryCostReplacement(gameData, controllerId, permanent)) {
             return;
         }
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
@@ -636,19 +637,23 @@ public class BattlefieldEntryService {
      * one, in which case entry resumes in {@link #completeSacrificePermanentToEnter} or
      * {@link #completeSacrificePermanentsToEnter}.
      */
-    private boolean applySacrificePermanentToEnter(GameData gameData, UUID controllerId, Permanent permanent) {
+    private boolean applyEntryCostReplacement(GameData gameData, UUID controllerId, Permanent permanent) {
         if (permanent.isEntryCostPaid()) {
             return true;
         }
-        SacrificePermanentAsEntersOrGraveyardEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(SacrificePermanentAsEntersOrGraveyardEffect.class::isInstance)
-                .map(SacrificePermanentAsEntersOrGraveyardEffect.class::cast)
+        EntryCostReplacementEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(EntryCostReplacementEffect.class::isInstance)
+                .map(EntryCostReplacementEffect.class::cast)
                 .findFirst().orElse(null);
         if (effect == null) {
             return true;
         }
+        if (effect.kind() == EntryCostReplacementEffect.Kind.DISCARD_CARD) {
+            return applyDiscardCardToEnter(gameData, controllerId, permanent, effect);
+        }
+
         List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.permanentFilter()))
                 .map(Permanent::getId)
                 .toList();
         if (sacrificeable.size() < effect.count()) {
@@ -671,6 +676,28 @@ public class BattlefieldEntryService {
                 permanent.getCard().getName() + " — Sacrifice " + effect.description()
                         + "? (Choose yourself to decline; " + permanent.getCard().getName()
                         + " is then put into its owner's graveyard.)");
+        return false;
+    }
+
+    private boolean applyDiscardCardToEnter(GameData gameData, UUID controllerId, Permanent permanent,
+                                             EntryCostReplacementEffect effect) {
+        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
+        List<Integer> discardable = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    hand.get(i), effect.cardFilter(), permanent.getCard().getId())) {
+                discardable.add(i);
+            }
+        }
+        if (discardable.isEmpty()) {
+            putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, effect);
+            return false;
+        }
+
+        playerInputService.beginDiscardChoice(gameData, controllerId, discardable,
+                permanent.getCard().getName() + " — Discard " + effect.description()
+                        + " to have it enter (choose no card to decline).", 1,
+                DiscardFollowUp.enteringPermanent(permanent, controllerId), null, true);
         return false;
     }
 
@@ -698,8 +725,18 @@ public class BattlefieldEntryService {
         putPermanentOntoBattlefield(gameData, controllerId, permanent);
     }
 
+    public void completeDiscardCardToEnter(GameData gameData, UUID controllerId, Permanent permanent,
+                                           boolean discarded) {
+        if (!discarded) {
+            putEnteringPermanentIntoGraveyard(gameData, controllerId, permanent, null);
+            return;
+        }
+        permanent.setEntryCostPaid(true);
+        putPermanentOntoBattlefield(gameData, controllerId, permanent);
+    }
+
     private void putEnteringPermanentIntoGraveyard(GameData gameData, UUID controllerId, Permanent permanent,
-                                                    SacrificePermanentAsEntersOrGraveyardEffect effect) {
+                                                    EntryCostReplacementEffect effect) {
         Card card = permanent.getCard();
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
         graveyardService.addCardToGraveyard(gameData, ownerId, card);

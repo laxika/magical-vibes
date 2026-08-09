@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "86")
+@CardRegistration(set = "STH", collectorNumber = "34")
 public class IntruderAlarm extends Card {
 
     public IntruderAlarm() {

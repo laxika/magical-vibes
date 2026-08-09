@@ -95,6 +95,12 @@ export class TargetingChoiceService {
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
     this.buybackCost = '';
+    this.buybackRequiresSacrifice = false;
+    this.choosingBuybackSacrifice = false;
+    this.buybackSacrificeCardIndex = -1;
+    this.buybackSacrificeDescription = '';
+    this.buybackSacrificeSelectedId.set(null);
+    this.pendingBuybackSacrificePermanentId = null;
     this.pendingBuyback = false;
     // Modal mode picker
     this.choosingMode = false;
@@ -126,6 +132,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostDiscardsHandCard = false;
     this.alternateCostSelectedIds.set([]);
     // Graveyard targeting
     this.targetingGraveyard = false;
@@ -252,6 +259,12 @@ export class TargetingChoiceService {
   buybackCardIndex = -1;
   buybackCardName = '';
   buybackCost = '';
+  buybackRequiresSacrifice = false;
+  choosingBuybackSacrifice = false;
+  buybackSacrificeCardIndex = -1;
+  buybackSacrificeDescription = '';
+  buybackSacrificeSelectedId = signal<string | null>(null);
+  private pendingBuybackSacrificePermanentId: string | null = null;
   private pendingBuyback = false;
 
   // --- Flashback state ---
@@ -274,6 +287,7 @@ export class TargetingChoiceService {
   alternateCostManaCost = '';
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
+  alternateCostDiscardsHandCard = false;
   alternateCostSelectedIds = signal<string[]>([]);
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
@@ -419,6 +433,7 @@ export class TargetingChoiceService {
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
+        this.alternateCostDiscardsHandCard = card.alternateCostDiscardsHandCard ?? false;
         return;
       }
 
@@ -447,6 +462,7 @@ export class TargetingChoiceService {
         this.buybackCardIndex = index;
         this.buybackCardName = card.name;
         this.buybackCost = card.buybackCost;
+        this.buybackRequiresSacrifice = card.buybackRequiresSacrifice ?? false;
         return;
       }
 
@@ -571,10 +587,19 @@ export class TargetingChoiceService {
   confirmBuyback(): void {
     this.pendingBuyback = true;
     const savedIndex = this.buybackCardIndex;
+    const requiresSacrifice = this.buybackRequiresSacrifice;
+    const sacrificeDescription = this.buybackCost;
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
     this.buybackCost = '';
+    if (requiresSacrifice) {
+      this.choosingBuybackSacrifice = true;
+      this.buybackSacrificeCardIndex = savedIndex;
+      this.buybackSacrificeDescription = sacrificeDescription;
+      this.buybackSacrificeSelectedId.set(null);
+      return;
+    }
     this.continuePlayCard(savedIndex);
   }
 
@@ -585,6 +610,7 @@ export class TargetingChoiceService {
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
     this.buybackCost = '';
+    this.buybackRequiresSacrifice = false;
     this.continuePlayCard(savedIndex);
   }
 
@@ -593,7 +619,36 @@ export class TargetingChoiceService {
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
     this.buybackCost = '';
+    this.buybackRequiresSacrifice = false;
     this.pendingBuyback = false;
+  }
+
+  toggleBuybackSacrifice(permanentId: string): void {
+    if (!this.choosingBuybackSacrifice) return;
+    this.buybackSacrificeSelectedId.set(
+      this.buybackSacrificeSelectedId() === permanentId ? null : permanentId);
+  }
+
+  confirmBuybackSacrifice(): void {
+    const selectedId = this.buybackSacrificeSelectedId();
+    if (!this.choosingBuybackSacrifice || selectedId == null) return;
+    const savedIndex = this.buybackSacrificeCardIndex;
+    this.pendingBuybackSacrificePermanentId = selectedId;
+    this.choosingBuybackSacrifice = false;
+    this.buybackSacrificeCardIndex = -1;
+    this.buybackSacrificeDescription = '';
+    this.buybackSacrificeSelectedId.set(null);
+    this.buybackRequiresSacrifice = false;
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelBuybackSacrifice(): void {
+    this.choosingBuybackSacrifice = false;
+    this.buybackSacrificeCardIndex = -1;
+    this.buybackSacrificeDescription = '';
+    this.buybackSacrificeSelectedId.set(null);
+    this.pendingBuyback = false;
+    this.pendingBuybackSacrificePermanentId = null;
   }
 
   // ========== Modal mode picker ==========
@@ -831,7 +886,11 @@ export class TargetingChoiceService {
       targetId
     };
     if (this.pendingAlternateExileHandIndex != null) {
-      msg.discardHandCardIndex = this.pendingAlternateExileHandIndex;
+      if (this.alternateCostDiscardsHandCard) {
+        msg.sharedColorDiscardHandCardIndex = this.pendingAlternateExileHandIndex;
+      } else {
+        msg.discardHandCardIndex = this.pendingAlternateExileHandIndex;
+      }
       this.pendingAlternateExileHandIndex = null;
     }
     if (this.pendingPhyrexianLifeCount != null) {
@@ -858,6 +917,10 @@ export class TargetingChoiceService {
       msg.buyback = true;
       this.pendingBuyback = false;
     }
+    if (this.pendingBuybackSacrificePermanentId != null) {
+      msg.sacrificePermanentId = this.pendingBuybackSacrificePermanentId;
+      this.pendingBuybackSacrificePermanentId = null;
+    }
     if (extra) {
       Object.assign(msg, extra);
     }
@@ -869,6 +932,7 @@ export class TargetingChoiceService {
     // keep the immediate path — the server marked them strictly affordable.
     const isZonePlay = msg.flashback || msg.fromExileCardId != null || msg.fromLibraryTop
         || msg.discardHandCardIndex != null
+        || msg.sharedColorDiscardHandCardIndex != null
         || (msg.alternateCostSacrificePermanentIds?.length ?? 0) > 0;
     if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
       return;
@@ -900,7 +964,7 @@ export class TargetingChoiceService {
     if (msg.kicked && card.kickerCost) {
       clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.kickerCost;
     }
-    if (msg.buyback && card.buybackCost) {
+    if (msg.buyback && card.buybackCost && !card.buybackRequiresSacrifice) {
       clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.buybackCost;
     }
 
@@ -1656,6 +1720,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostDiscardsHandCard = false;
     this.alternateCostSelectedIds.set([]);
     this.continuePlayCard(spellIndex);
   }
@@ -1706,6 +1771,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostDiscardsHandCard = false;
     this.alternateCostSelectedIds.set([]);
     this.pendingAlternateExileHandIndex = null;
   }

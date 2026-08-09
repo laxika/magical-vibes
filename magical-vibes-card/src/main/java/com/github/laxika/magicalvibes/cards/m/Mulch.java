@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "196")
+@CardRegistration(set = "STH", collectorNumber = "110")
 public class Mulch extends Card {
 
     public Mulch() {

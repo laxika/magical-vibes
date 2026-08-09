@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
@@ -49,6 +50,27 @@ public class PlayedCardNameTriggerCollectorService {
             PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return collect(match, lp.landCard());
+    }
+
+    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    private boolean handleOpponentPlaysLandDraws(TriggerMatchContext match,
+            DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setTargetId(lp.playingPlayerId());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on an opponent playing a land for that player to draw",
+                match.gameData().id, sourceCard.getName());
+        return true;
     }
 
     /**

@@ -2272,8 +2272,8 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} taps and locks the creature damaged by its equipped creature",
                         gameData.id, watcher.getCard().getName());
             } else if (effect instanceof DestroyDamagedCreatureAtEndOfCombatEffect delayedDestroy) {
-                // "deals combat damage" — non-combat damage from the same creature does nothing.
-                if (!combatDamage) continue;
+                if (delayedDestroy.combatDamageOnly() && !combatDamage) continue;
+                if (delayedDestroy.selfOnly() && !watcher.getId().equals(damageSource.getId())) continue;
                 if (damagedCreatureId == null) continue;
                 if (delayedDestroy.sourceFilter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, delayedDestroy.sourceFilter())) {
@@ -3676,6 +3676,11 @@ public class TriggerCollectionService {
                 var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
                 registry.dispatch(match, EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                         resolved, ctx);
+            }
+
+            if (playerId.equals(graveyardOwnerId) && !dyingCard.isToken()) {
+                dispatchSlot(gameData, perm, playerId,
+                        EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
 
             if (playerId.equals(graveyardOwnerId)) return;

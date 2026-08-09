@@ -489,6 +489,7 @@ public class GraveyardService {
             performRegeneration(gameData, perm);
             spendOpponentDrawRegenerationShield(gameData, perm);
             spendMinusOneCounterRegenerationShield(gameData, perm);
+            spendPlusOnePlusOneCounterRegenerationShield(gameData, perm);
             spendGainControlRegenerationShield(gameData, perm);
             return true;
         }
@@ -563,6 +564,20 @@ public class GraveyardService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                 gameData, perm, amount, controllerId);
+    }
+
+    /**
+     * Skeleton Scavengers: a regeneration shield granted by its ability puts a +1/+1 counter on the
+     * permanent once it is actually spent. Plain shields are consumed first — a rider shield is only
+     * spent once it is all that is left.
+     */
+    private void spendPlusOnePlusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
+        if (perm.getPlusOnePlusOneCounterRegenerationShield() <= perm.getRegenerationShield()) {
+            return;
+        }
+        perm.setPlusOnePlusOneCounterRegenerationShield(perm.getPlusOnePlusOneCounterRegenerationShield() - 1);
+
+        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, perm, 1);
     }
 
     /**

@@ -73,7 +73,12 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             }
         }
 
-        List<Card> deck = gameData.playerDecks.get(player.getId());
+        UUID libraryOwnerId = interaction.libraryOwnerId();
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        boolean ownLibrary = player.getId().equals(libraryOwnerId);
+        String library = ownLibrary
+                ? "their library"
+                : gameData.playerIdToName.get(libraryOwnerId) + "'s library";
 
         // Put top cards on top of library in order (first in list = top of library)
         for (int i = topCardOrder.size() - 1; i >= 0; i--) {
@@ -99,20 +104,30 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         String logMsg;
         if (interaction.toGraveyard()) {
             if (bottomCardOrder.isEmpty()) {
-                logMsg = player.getUsername() + " keeps " + count + " card(s) on top of their library (surveil).";
+                logMsg = player.getUsername() + " keeps " + count + " card(s) on top of " + library + " (surveil).";
             } else if (topCardOrder.isEmpty()) {
                 logMsg = player.getUsername() + " puts " + count + " card(s) into their graveyard (surveil).";
             } else {
-                logMsg = player.getUsername() + " keeps " + topCardOrder.size() + " card(s) on top and puts "
-                        + bottomCardOrder.size() + " into their graveyard (surveil).";
+                logMsg = ownLibrary
+                        ? player.getUsername() + " keeps " + topCardOrder.size() + " card(s) on top and puts "
+                                + bottomCardOrder.size() + " into their graveyard (surveil)."
+                        : player.getUsername() + " keeps " + topCardOrder.size() + " card(s) on top of " + library + " and puts "
+                                + bottomCardOrder.size() + " into their graveyard (surveil).";
             }
         } else if (bottomCardOrder.isEmpty()) {
-            logMsg = player.getUsername() + " puts " + count + " card(s) on top of their library.";
+            logMsg = ownLibrary
+                    ? player.getUsername() + " puts " + count + " card(s) on top of their library."
+                    : player.getUsername() + " puts " + count + " card(s) on top of " + library + ".";
         } else if (topCardOrder.isEmpty()) {
-            logMsg = player.getUsername() + " puts " + count + " card(s) on the bottom of their library.";
+            logMsg = ownLibrary
+                    ? player.getUsername() + " puts " + count + " card(s) on the bottom of their library."
+                    : player.getUsername() + " puts " + count + " card(s) on the bottom of " + library + ".";
         } else {
-            logMsg = player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top and "
-                    + bottomCardOrder.size() + " on the bottom of their library.";
+            logMsg = ownLibrary
+                    ? player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top and "
+                            + bottomCardOrder.size() + " on the bottom of their library."
+                    : player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top of " + library + " and "
+                            + bottomCardOrder.size() + " on the bottom of it.";
         }
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} {} completed: {} top, {} reject", gameData.id, player.getUsername(),

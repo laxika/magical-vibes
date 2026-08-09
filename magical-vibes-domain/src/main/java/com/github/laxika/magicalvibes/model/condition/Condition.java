@@ -105,6 +105,7 @@ public sealed interface Condition permits
         OpponentControlsMoreLands,
         OpponentCastSpellThisTurn,
         OpponentControlsPermanent,
+        OpponentControlsPermanentCount,
         OpponentDealtDamageThisTurn,
         OpponentGraveyardAtLeast,
         OpponentLostLifeLastTurn,

@@ -28,7 +28,19 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               UUID eachPlayerControllerId, int eachPlayerAmount,
                               int graveyardReturnCount, List<Integer> eachPlayerAmounts,
                               UUID boostPermanentId, int boostPower, int boostToughness,
-                              Card thenEffectSourceCard, CardEffect thenEffect) {
+                              Card thenEffectSourceCard, CardEffect thenEffect,
+                              Permanent enteringPermanent, UUID enteringControllerId) {
+
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                           List<UUID> remainingEachPlayerDiscards,
+                           UUID eachPlayerControllerId, int eachPlayerAmount,
+                           int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                           UUID boostPermanentId, int boostPower, int boostToughness,
+                           Card thenEffectSourceCard, CardEffect thenEffect) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
+                eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
+                boostToughness, thenEffectSourceCard, thenEffect, null, null);
+    }
 
     public static final DiscardFollowUp NONE =
             new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, null, null);
@@ -78,6 +90,12 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, sourceCard, thenEffect);
     }
 
+    /** Completes a permanent's entry after the controller discards the required card. */
+    public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, permanent, controllerId);
+    }
+
     /**
      * The same follow-up with the each-player remainder (both choosers and their per-player amounts)
      * advanced past the current chooser.
@@ -85,6 +103,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     public DiscardFollowUp withRemainingEachPlayer(List<UUID> remaining, List<Integer> remainingAmounts) {
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remaining,
                 eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, remainingAmounts,
-                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect);
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                enteringPermanent, enteringControllerId);
     }
 }

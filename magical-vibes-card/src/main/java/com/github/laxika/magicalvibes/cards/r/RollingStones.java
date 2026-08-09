@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "38")
 @CardRegistration(set = "7ED", collectorNumber = "35")
+@CardRegistration(set = "STH", collectorNumber = "11")
 public class RollingStones extends Card {
 
     public RollingStones() {

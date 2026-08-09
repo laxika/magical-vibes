@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
@@ -524,6 +525,8 @@ public class ConditionEvaluationService {
                     anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx, c.minimumCreatureDifference());
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
+            case OpponentControlsPermanentCount c ->
+                    opponentControlsAtLeastMatchingPermanents(gameData, ctx, c.minCount(), c.filter());
             case ChosenColorStrictlyMostCommonAmongOpponentNontokens ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null
@@ -854,6 +857,20 @@ public class ConditionEvaluationService {
             if (battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx))) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean opponentControlsAtLeastMatchingPermanents(GameData gameData, ConditionContext ctx,
+                                                               int minCount, PermanentPredicate filter) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            long count = battlefield.stream()
+                    .filter(p -> matchesPermanent(gameData, p, filter, ctx))
+                    .count();
+            if (count >= minCount) return true;
         }
         return false;
     }

@@ -177,11 +177,13 @@ export interface Card {
   alternateCostManaCost: string | null;
   alternateCostExileHandCount: number;
   alternateCostExileHandLabel: string | null;
+  alternateCostDiscardsHandCard?: boolean;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
   buybackCost: string | null;
+  buybackRequiresSacrifice?: boolean;
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;

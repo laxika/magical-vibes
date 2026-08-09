@@ -1314,6 +1314,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.choosingBuybackSacrifice) {
+      if (perm && isPermanentLand(perm)) {
+        this.choice.targeting.toggleBuybackSacrifice(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.selectingAlternateCostCreatures) {
       if (perm) {
         const canSelectCreature = this.choice.targeting.alternateCostSacrificeCount > 0 && isPermanentCreature(perm);
