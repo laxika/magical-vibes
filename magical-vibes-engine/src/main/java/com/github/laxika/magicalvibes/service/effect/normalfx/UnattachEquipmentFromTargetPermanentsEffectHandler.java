@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,14 +36,18 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
+        List<UUID> targetIds = entry.getTargetIds();
+        if (targetIds == null || targetIds.isEmpty()) {
+            targetIds = entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty()) {
             return;
         }
 
         // Track creatures that need to be sacrificed due to SacrificeOnUnattachEffect
         Set<UUID> sacrificeTargetIds = new LinkedHashSet<>();
 
-        for (UUID targetId : entry.getTargetIds()) {
+        for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;

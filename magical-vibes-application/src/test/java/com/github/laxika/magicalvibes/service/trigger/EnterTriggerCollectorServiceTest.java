@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffec
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -333,5 +335,20 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Ally-artifact scan queues a target choice for an optional targeted effect")
+    void allyArtifactMayTargetQueuesChoice() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target permanent?"));
+
+        Card enteringArtifact = new Card();
+        enteringArtifact.setName("Artifact");
+        enteringArtifact.setType(CardType.ARTIFACT);
+        service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
     }
 }

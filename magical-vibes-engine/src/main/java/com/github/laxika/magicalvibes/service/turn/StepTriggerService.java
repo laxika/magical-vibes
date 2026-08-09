@@ -103,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -1847,6 +1848,15 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            return;
+        }
+
+        if (gameData.skippedStepOrPhasesThisTurn
+                .getOrDefault(activePlayerId, Set.of()).contains(SkipStepOrPhaseKind.DRAW_STEP)) {
+            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} skips draw step (chosen step or phase)", gameData.id,
+                    gameData.playerIdToName.get(activePlayerId));
             return;
         }
 

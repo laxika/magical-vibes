@@ -730,9 +730,13 @@ public class DamageSupport {
                         "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
 
-            // Urza's Armor: the controller prevents a fixed amount of this source's damage.
+            // Urza's Armor and Sphere of Purity: the controller prevents a fixed amount of this source's damage.
             int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(
-                    gameData, playerId, effectiveDamage, gameQueryService.isDamageSourceCreature(gameData, entry, null));
+                    gameData,
+                    playerId,
+                    effectiveDamage,
+                    gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent),
+                    gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent));
             if (fixedPrevented > 0) {
                 effectiveDamage -= fixedPrevented;
                 gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,

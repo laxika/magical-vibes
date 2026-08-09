@@ -77,6 +77,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
@@ -127,6 +128,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
@@ -140,6 +142,13 @@ public class EnterTriggerCollectorService {
         // Always bind the source permanent so a "may put a counter on this creature" wrapper
         // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
         // player unset (null), which is harmless for player-directed wrapped effects.
+        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), match.permanent().getId(),
+                    findEnteringPermanentId(match, pe.enteringCard())));
+            logTriggered(match);
+            return true;
+        }
         match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                 pe.defaultTargetPlayerId(), match.permanent().getId());
         logTriggered(match);

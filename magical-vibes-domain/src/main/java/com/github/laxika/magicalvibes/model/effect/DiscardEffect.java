@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -9,19 +10,33 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * each opponent), {@code random} chooses between the player picking their discards and a random
  * discard, and the {@link DynamicAmount} count covers fixed counts ("discards two cards"), an X
  * value (Mind Shatter), or a source-relative count such as {@code CountersOnSource(CHARGE)}
- * (Shrine of Limitless Power).
+ * (Shrine of Limitless Power). When {@code stopAfterDiscardingType} is non-null, the chosen
+ * discard flow may finish after a matching card, while still allowing the player to choose the
+ * remaining cards up to {@code amount} (Thirst for Knowledge).
  *
- * @param amount    number of cards to discard
- * @param recipient who discards
- * @param random    when {@code true} the discard is at random; when {@code false} the discarding
- *                  player chooses which cards to discard
+ * @param amount                  number of cards to discard
+ * @param recipient               who discards
+ * @param random                  when {@code true} the discard is at random; when {@code false}
+ *                                the discarding player chooses which cards to discard
+ * @param stopAfterDiscardingType matching card type that makes the remaining discard optional;
+ *                                {@code null} for an ordinary discard
  */
-public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random)
+public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
+                            CardType stopAfterDiscardingType)
         implements CombatDamageTriggerContextEffect {
+
+    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random) {
+        this(amount, recipient, random, null);
+    }
 
     /** Fixed count, chosen or random per {@code random}. */
     public DiscardEffect(int amount, DiscardRecipient recipient, boolean random) {
         this(new Fixed(amount), recipient, random);
+    }
+
+    /** Chosen discard that may finish after a matching card. */
+    public DiscardEffect(int amount, DiscardRecipient recipient, CardType stopAfterDiscardingType) {
+        this(new Fixed(amount), recipient, false, stopAfterDiscardingType);
     }
 
     /** Dynamic count, non-random (the discarding player chooses). */

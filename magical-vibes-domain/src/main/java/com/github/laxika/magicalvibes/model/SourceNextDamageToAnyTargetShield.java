@@ -22,6 +22,8 @@ import java.util.UUID;
  *                                   prevention shield), {@code 2} doubles it instead (Desperate
  *                                   Gambit's won flip). A non-zero multiplier is a replacement, not
  *                                   prevention, so it applies even while damage can't be prevented
+ * @param lifeGainPlayerId           player who gains life equal to the prevented damage; null when
+ *                                   the shield has no life-gain rider
  */
 public record SourceNextDamageToAnyTargetShield(
         UUID sourceId,
@@ -29,26 +31,32 @@ public record SourceNextDamageToAnyTargetShield(
         Card passageCard,
         UUID passageControllerId,
         UUID recipientId,
-        int damageMultiplier) {
+        int damageMultiplier,
+        UUID lifeGainPlayerId) {
 
     /** Sanctum Guardian / Circle of Despair: prevention only, no rider. */
     public SourceNextDamageToAnyTargetShield(UUID sourceId) {
-        this(sourceId, false, null, null, null, 0);
+        this(sourceId, false, null, null, null, 0, null);
     }
 
     /** Honorable Passage: any-target prevention plus the red-source rider. */
     public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,
                                              UUID passageControllerId) {
-        this(sourceId, damageRedSourceController, passageCard, passageControllerId, null, 0);
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, null, 0, null);
     }
 
     /** Kithkin Armor: prevention limited to a single protected recipient. */
     public static SourceNextDamageToAnyTargetShield forRecipient(UUID sourceId, UUID recipientId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, recipientId, 0);
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, recipientId, 0, null);
+    }
+
+    /** Awe Strike: source-wide prevention plus life gain for the spell's controller. */
+    public static SourceNextDamageToAnyTargetShield withLifeGain(UUID sourceId, UUID lifeGainPlayerId) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, lifeGainPlayerId);
     }
 
     /** Desperate Gambit's won flip: the next damage event from this source is doubled, not prevented. */
     public static SourceNextDamageToAnyTargetShield doubling(UUID sourceId) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2);
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2, null);
     }
 }

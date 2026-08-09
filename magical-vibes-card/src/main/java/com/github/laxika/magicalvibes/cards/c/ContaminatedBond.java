@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "132")
 @CardRegistration(set = "9ED", collectorNumber = "120")
+@CardRegistration(set = "MRD", collectorNumber = "61")
 public class ContaminatedBond extends Card {
 
     public ContaminatedBond() {

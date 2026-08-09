@@ -36,6 +36,12 @@ public class ExileService {
         gameData.addToExile(ownerId, card, sourcePermanentId, true);
     }
 
+    /** Exiles a card face down while remembering which player exiled it. */
+    public void exileCardFaceDown(GameData gameData, UUID ownerId, Card card, UUID sourcePermanentId,
+                                  UUID exilerId) {
+        gameData.addToExile(ownerId, card, sourcePermanentId, true, exilerId);
+    }
+
     /**
      * Records an exiled card as the imprint of the permanent that exiled it. No-op if the
      * source permanent has already left the battlefield.

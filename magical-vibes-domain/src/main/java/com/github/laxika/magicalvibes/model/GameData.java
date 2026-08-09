@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -273,6 +274,8 @@ public class GameData {
     public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming turns they must skip (Chronatog). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextTurnCount = new ConcurrentHashMap<>();
+    /** Player IDs → steps or phases skipped for the rest of their current turn. */
+    public final Map<UUID, Set<SkipStepOrPhaseKind>> skippedStepOrPhasesThisTurn = new ConcurrentHashMap<>();
     /**
      * Player IDs → number of upcoming untap steps they must skip (Yosei, the Morning Star).
      * Decremented as each is skipped. CR 500.11 / 614.10: the whole step is proceeded past, so no
@@ -461,6 +464,7 @@ public class GameData {
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
+    public PendingUntapOnDiscardType pendingUntapOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     /**
      * Parallel to {@link #extraTurns}: whether the correspondingly-positioned extra turn skips its
@@ -2180,6 +2184,12 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown));
     }
 
+    /** Adds a card to exile with source tracking, face-down status, and its exiling player. */
+    public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown,
+                           UUID exilerId) {
+        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId));
+    }
+
     /**
      * Exile entries displayed tucked under the given permanent: its imprinted card (if still in
      * exile) plus all entries tracked with the permanent as source. An imprinted card that is
@@ -2287,7 +2297,7 @@ public class GameData {
             ExiledCardEntry e = it.next();
             if (e.sourcePermanentId() != null) {
                 it.remove();
-                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown()));
+                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown(), e.exilerId()));
             }
         }
         exiledCards.addAll(updated);
@@ -2891,6 +2901,11 @@ public class GameData {
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
         copy.skipNextUntapStepCount.putAll(this.skipNextUntapStepCount);
+        this.skippedStepOrPhasesThisTurn.forEach((playerId, kinds) -> {
+            Set<SkipStepOrPhaseKind> copiedKinds = ConcurrentHashMap.newKeySet();
+            copiedKinds.addAll(kinds);
+            copy.skippedStepOrPhasesThisTurn.put(playerId, copiedKinds);
+        });
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
@@ -2935,6 +2950,7 @@ public class GameData {
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;
         copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
         copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
+        copy.pendingUntapOnDiscardType = this.pendingUntapOnDiscardType;
         copy.pendingSearchContext = this.pendingSearchContext;
 
         // --- Game-creation config ---

@@ -12,9 +12,14 @@ import java.util.UUID;
  * @param faceDown          whether the card is exiled face down (CR 406.3 — hideaway,
  *                          Grimoire Thief, Necropotence, ...); hidden from opponents
  */
-public record ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown) {
+public record ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
+                              UUID exilerId) {
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId) {
-        this(card, ownerId, sourcePermanentId, false);
+        this(card, ownerId, sourcePermanentId, false, null);
+    }
+
+    public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown) {
+        this(card, ownerId, sourcePermanentId, faceDown, null);
     }
 }

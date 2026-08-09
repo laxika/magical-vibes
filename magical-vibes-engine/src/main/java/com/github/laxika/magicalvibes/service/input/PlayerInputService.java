@@ -124,6 +124,15 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose any target", gameData.id, playerName);
     }
 
+    public void beginPlayerChoice(GameData gameData, UUID playerId, List<UUID> validPlayerIds, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
+                playerId, List.of(), new ArrayList<>(validPlayerIds),
+                gameData.interaction.permanentChoiceContext(), prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a player", gameData.id, playerName);
+    }
+
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
         beginMultiPermanentChoice(gameData, playerId, validIds, maxCount, null, prompt);
     }
@@ -1058,7 +1067,21 @@ public class PlayerInputService {
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount, DiscardFollowUp followUp) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount, followUp);
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount,
+                followUp, null, false);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount,
+                                   DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
+        beginDiscardChoice(gameData, playerId, remainingCount, followUp, stopAfterDiscardingType, false);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount,
+                                   DiscardFollowUp followUp, CardType stopAfterDiscardingType,
+                                   boolean declinable) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount,
+                followUp, stopAfterDiscardingType, declinable);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount) {
@@ -1066,8 +1089,15 @@ public class PlayerInputService {
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount, DiscardFollowUp followUp) {
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, followUp, null, false);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                   int remainingCount, DiscardFollowUp followUp,
+                                   CardType stopAfterDiscardingType, boolean declinable) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
-                playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt));
+                playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt,
+                stopAfterDiscardingType, declinable));
     }
 
     public void processNextMayAbility(GameData gameData) {

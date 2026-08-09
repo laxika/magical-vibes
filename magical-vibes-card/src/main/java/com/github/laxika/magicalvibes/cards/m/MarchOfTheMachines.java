@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "91")
+@CardRegistration(set = "MRD", collectorNumber = "42")
 public class MarchOfTheMachines extends Card {
 
     public MarchOfTheMachines() {

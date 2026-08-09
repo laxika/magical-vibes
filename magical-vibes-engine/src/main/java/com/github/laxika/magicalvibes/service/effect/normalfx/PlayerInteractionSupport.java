@@ -220,6 +220,11 @@ public class PlayerInteractionSupport {
     }
 
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount, DiscardFollowUp followUp) {
+        resolveDiscardCards(gameData, playerId, amount, followUp, null);
+    }
+
+    public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
+                                    DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
@@ -228,7 +233,8 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp);
+        playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp,
+                stopAfterDiscardingType);
 
     }
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {

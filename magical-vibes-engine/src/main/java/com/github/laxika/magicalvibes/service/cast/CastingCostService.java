@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -211,6 +213,33 @@ public class CastingCostService {
             }
         }
         return tax;
+    }
+
+    /**
+     * Generic mana removed from an activated ability's cost by reductions controlled by the
+     * activating player. Only the generic portion of the ability's own mana cost is reducible;
+     * additional costs are handled separately by their respective payment rules.
+     */
+    public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
+                                                Permanent sourcePermanent, ActivatedAbility ability) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) return 0;
+
+        int reduction = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ActivatedAbilityCostReducingEffect reducer
+                        && reducer.appliesTo(ability)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                sourcePermanent, reducer.affectedPermanents(),
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(permanent.getOriginalCard().getId())
+                                        .withSourceControllerId(activatingPlayerId))) {
+                    reduction += reducer.genericCostReduction();
+                }
+            }
+        }
+        return reduction;
     }
 
     /**

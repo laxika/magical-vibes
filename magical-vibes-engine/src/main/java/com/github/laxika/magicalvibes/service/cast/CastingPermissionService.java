@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -835,15 +837,15 @@ public class CastingPermissionService {
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> castableIds = new HashSet<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return castableIds;
-        for (Permanent perm : battlefield) {
-            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
-            if (hasEffect) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    castableIds.add(c.getId());
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
+                        perm.getId(), perm.getCard().getId())) {
+                    if (canAccessExiledEntry(perm, sourceControllerId, entry, playerId)) {
+                        castableIds.add(entry.card().getId());
+                    }
                 }
             }
         }
@@ -856,15 +858,20 @@ public class CastingPermissionService {
      */
     public Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> anyManaIds = new HashSet<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return anyManaIds;
-        for (Permanent perm : battlefield) {
-            boolean hasAnyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect a && a.anyManaType());
-            if (hasAnyMana) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    anyManaIds.add(c.getId());
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
+                        perm.getId(), perm.getCard().getId())) {
+                    boolean anyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                            .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                            .anyMatch(effect -> effect.anyManaType()
+                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId));
+                    if (anyMana) {
+                        anyManaIds.add(entry.card().getId());
+                    }
                 }
             }
         }
@@ -872,15 +879,16 @@ public class CastingPermissionService {
     }
 
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
-            if (hasEffect) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    if (c.getId().equals(cardId)) return true;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
+                        perm.getId(), perm.getCard().getId())) {
+                    if (entry.card().getId().equals(cardId)
+                            && canAccessExiledEntry(perm, sourceControllerId, entry, playerId)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -891,18 +899,39 @@ public class CastingPermissionService {
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
         if (gameData.exilePlayAnyManaType.contains(cardId)) return true;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            boolean hasAnyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect a && a.anyManaType());
-            if (hasAnyMana) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    if (c.getId().equals(cardId)) return true;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
+                        perm.getId(), perm.getCard().getId())) {
+                    if (entry.card().getId().equals(cardId)
+                            && perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                            .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                            .anyMatch(effect -> effect.anyManaType()
+                                    && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId))) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
+    }
+
+    private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,
+                                         ExiledCardEntry entry, UUID playerId) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                .anyMatch(effect -> canAccessExiledEntry(source, sourceControllerId, effect, entry, playerId));
+    }
+
+    private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,
+                                         AllowCastFromCardsExiledWithSourceEffect effect,
+                                         ExiledCardEntry entry, UUID playerId) {
+        return effect.accessScope() == ExileAccessScope.CONTROLLER
+                ? sourceControllerId.equals(playerId)
+                : playerId.equals(entry.exilerId());
     }
 }

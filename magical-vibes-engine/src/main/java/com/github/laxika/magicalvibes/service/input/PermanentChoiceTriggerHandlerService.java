@@ -12,9 +12,13 @@ import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -47,6 +51,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final CreatureControlService creatureControlService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         StackEntry entry;
@@ -788,6 +793,32 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePlayerWithLowestLifeChoice(GameData gameData, UUID playerId,
+                                                  PermanentChoiceContext.PlayerWithLowestLifeChoice context) {
+        Permanent source = findPermanentByCardId(gameData, context.sourceCard().getId());
+        if (source != null) {
+            creatureControlService.applyControlEffect(gameData, playerId, source,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, context.sourceCard().getName());
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(cardId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     public void handleUpkeepMultiPlayerFirstTarget(GameData gameData, UUID firstPlayerId,

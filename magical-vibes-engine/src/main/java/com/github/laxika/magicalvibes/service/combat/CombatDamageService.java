@@ -2373,8 +2373,13 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(battletidePrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
-                // Urza's Armor: the defending player prevents a fixed amount of this attacker's damage.
-                int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, defenderId, damage, true);
+                // Urza's Armor and Sphere of Purity: the defending player prevents a fixed amount of this attacker's damage.
+                int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(
+                        gameData,
+                        defenderId,
+                        damage,
+                        true,
+                        gameQueryService.isArtifact(gameData, atk));
                 if (fixedPrevented > 0) {
                     damage -= fixedPrevented;
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "

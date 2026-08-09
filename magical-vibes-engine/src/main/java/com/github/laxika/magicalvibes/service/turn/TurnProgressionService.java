@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -155,6 +156,8 @@ public class TurnProgressionService {
             gameLogService.append(gameData, GameLog.text(skipLog));
         }
 
+        next = skipChosenPhases(gameData, next);
+
         turnCleanupService.drainManaPools(gameData);
 
         if (next != null) {
@@ -211,6 +214,47 @@ public class TurnProgressionService {
         } else {
             advanceTurn(gameData);
         }
+    }
+
+    private TurnStep skipChosenPhases(GameData gameData, TurnStep next) {
+        Set<SkipStepOrPhaseKind> skipped = gameData.skippedStepOrPhasesThisTurn
+                .getOrDefault(gameData.activePlayerId, Set.of());
+        while (next != null) {
+            if (next == TurnStep.PRECOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
+                logSkippedPhase(gameData, "main phase");
+                next = TurnStep.BEGINNING_OF_COMBAT;
+                continue;
+            }
+            if ((next == TurnStep.BEGINNING_OF_COMBAT || next == TurnStep.END_OF_COMBAT)
+                    && skipped.contains(SkipStepOrPhaseKind.COMBAT_PHASE)) {
+                logSkippedPhase(gameData, "combat phase");
+                if (gameData.additionalCombatPhasesOnly > 0) {
+                    gameData.additionalCombatPhasesOnly--;
+                    next = TurnStep.BEGINNING_OF_COMBAT;
+                } else {
+                    next = TurnStep.POSTCOMBAT_MAIN;
+                }
+                continue;
+            }
+            if (next == TurnStep.POSTCOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
+                logSkippedPhase(gameData, "main phase");
+                if (gameData.additionalCombatMainPhasePairs > 0) {
+                    gameData.additionalCombatMainPhasePairs--;
+                    next = TurnStep.BEGINNING_OF_COMBAT;
+                } else {
+                    next = TurnStep.END_STEP;
+                }
+                continue;
+            }
+            break;
+        }
+        return next;
+    }
+
+    private void logSkippedPhase(GameData gameData, String phaseName) {
+        String message = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their " + phaseName + ".";
+        gameLogService.append(gameData, GameLog.text(message));
+        log.info("Game {} - {}", gameData.id, message);
     }
 
     void advanceTurn(GameData gameData) {

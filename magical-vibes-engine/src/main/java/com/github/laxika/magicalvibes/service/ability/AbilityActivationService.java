@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingAbilityCounterCostActivation;
 import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
@@ -1808,6 +1809,8 @@ public class AbilityActivationService {
         // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
         // pass withdraws and restores symmetrically.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
+        boolean previousBlueSpendPermission = pool != null
+                && pool.isBlueSpendableAsAnyColorForActivatedAbilities();
         if (pool != null) {
             // Refresh the "spend white as red" permission (Sunglasses of Urza) so this ability's cost
             // affordability check and payment honor it.
@@ -1820,6 +1823,9 @@ public class AbilityActivationService {
                     discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
                     exileInstantOrSorcerySpellCardId);
         } finally {
+            if (pool != null) {
+                pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
+            }
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
             }
@@ -1838,6 +1844,11 @@ public class AbilityActivationService {
                 : resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
         if (permanent == null) {
             throw new IllegalStateException("Invalid permanent index");
+        }
+        ManaPool activationPool = gameData.playerManaPools.get(playerId);
+        if (activationPool != null) {
+            activationPool.setBlueSpendableAsAnyColorForActivatedAbilities(
+                    gameQueryService.canSpendBlueManaAsAnyColorForActivatedAbilities(gameData, permanent));
         }
         List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         if (abilities.isEmpty()) {
@@ -2640,6 +2651,10 @@ public class AbilityActivationService {
         }
 
         int genericCost = new ManaCost(abilityCost).getGenericCost();
+        int equipReduction = Math.min(
+                castingCostService.getActivatedAbilityCostReduction(gameData, playerId, permanent, ability),
+                genericCost);
+        additionalGenericCost -= equipReduction;
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ReduceActivationCostPerCounterEffect reduce) {
                 int reduction = Math.min(
@@ -2813,15 +2828,22 @@ public class AbilityActivationService {
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
             ManaCost preCheck = new ManaCost(abilityCost);
+            ManaPool affordabilityPool = manaPool;
+            if (manaPool != null
+                    && gameQueryService.canSpendBlueManaAsAnyColorForActivatedAbilities(gameData, permanent)
+                    && !manaPool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+                affordabilityPool = copyManaPool(manaPool);
+                affordabilityPool.setBlueSpendableAsAnyColorForActivatedAbilities(true);
+            }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
             if (preCheck.hasX()) {
-                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
+                if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
-                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
+                if (!preCheck.canPay(affordabilityPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }
@@ -3494,6 +3516,12 @@ public class AbilityActivationService {
         subtypes.addAll(permanent.getTransientSubtypes());
         subtypes.addAll(permanent.getGrantedSubtypes());
         return subtypes;
+    }
+
+    private ManaPool copyManaPool(ManaPool manaPool) {
+        return manaPool instanceof VirtualManaPool virtualManaPool
+                ? new VirtualManaPool(virtualManaPool)
+                : new ManaPool(manaPool);
     }
 
     /**

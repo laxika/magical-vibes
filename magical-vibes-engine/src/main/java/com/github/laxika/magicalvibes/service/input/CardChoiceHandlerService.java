@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
+import com.github.laxika.magicalvibes.model.PendingUntapOnDiscardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -193,12 +194,17 @@ public class CardChoiceHandlerService {
         }
 
         List<Integer> validIndices = discardChoice.validIndices();
+        if (cardIndex == -1 && discardChoice.declinable()) {
+            finishDiscardChoice(gameData, player, player.getId(), discardChoice.followUp());
+            return;
+        }
         if (!validIndices.contains(cardIndex)) {
             // Invalid index (e.g. player clicked "Decline" sending -1) — re-prompt the discard choice
             // Preserve filtered validIndices/prompt (e.g. DiscardCardThenEffect land-only discard).
             log.warn("Game {} - {} sent invalid discard card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.validIndices(),
-                    discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp());
+                    discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp(),
+                    discardChoice.stopAfterDiscardingType(), discardChoice.declinable());
             return;
         }
 
@@ -233,123 +239,134 @@ public class CardChoiceHandlerService {
         // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
         checkPendingTransformOnCreatureDiscard(gameData, card);
 
+        // Check if a card type discard should untap the source (e.g. Lumengrid Augur)
+        checkPendingUntapOnDiscardType(gameData, card);
+
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
+        boolean mayDecline = remainingDiscards > 0
+                && discardChoice.stopAfterDiscardingType() != null
+                && card.hasType(discardChoice.stopAfterDiscardingType());
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
             inputCompletionService.publishStateAfterInput(gameData);
-            playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards, discardChoice.followUp());
+            playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards,
+                    discardChoice.followUp(), discardChoice.stopAfterDiscardingType(), mayDecline);
         } else {
-            DiscardFollowUp followUp = discardChoice.followUp();
-            gameData.interaction.clearAwaitingInput();
-            finalizePendingReturnToHandOnDiscard(gameData);
+            finishDiscardChoice(gameData, player, playerId, discardChoice.followUp());
+        }
+    }
 
-            // After cleanup discard, apply end-of-turn resets (CR 514.2)
-            if (gameData.cleanupDiscardPending) {
-                gameData.cleanupDiscardPending = false;
-                turnProgressionService.applyCleanupResets(gameData);
-            }
+    private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
+                                    DiscardFollowUp followUp) {
+        gameData.interaction.clearAwaitingInput();
+        finalizePendingReturnToHandOnDiscard(gameData);
 
-            // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
-            if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
-                playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
-                // The queue can drain without prompting anyone (every remaining player has an
-                // empty hand); fall through so the rest of the spell still resolves.
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
+        // After cleanup discard, apply end-of-turn resets (CR 514.2)
+        if (gameData.cleanupDiscardPending) {
+            gameData.cleanupDiscardPending = false;
+            turnProgressionService.applyCleanupResets(gameData);
+        }
 
-            // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-                triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
+        if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
+            playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
+            // The queue can drain without prompting anyone (every remaining player has an
+            // empty hand); fall through so the rest of the spell still resolves.
+            if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
-
-            // Draw cards after "discard up to N, then draw that many" completes
-            if (followUp.rummageDrawCount() > 0) {
-                int drawCount = followUp.rummageDrawCount();
-                for (int i = 0; i < drawCount; i++) {
-                    drawService.resolveDrawCard(gameData, playerId);
-                }
-                String drawPlayerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.text(drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
-            }
-
-            // Untap permanent after "discard a card, then untap [source]" completes
-            if (followUp.untapPermanentId() != null) {
-                UUID permanentId = followUp.untapPermanentId();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                    if (bf == null) continue;
-                    for (Permanent p : bf) {
-                        if (p.getId().equals(permanentId)) {
-                            p.untap();
-                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " untaps."));
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Boost permanent after "discard a card, then this creature gets +X/+Y" completes
-            if (followUp.boostPermanentId() != null) {
-                UUID permanentId = followUp.boostPermanentId();
-                int powerBoost = followUp.boostPower();
-                int toughnessBoost = followUp.boostToughness();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                    if (bf == null) continue;
-                    for (Permanent p : bf) {
-                        if (p.getId().equals(permanentId)) {
-                            p.setPowerModifier(p.getPowerModifier() + powerBoost);
-                            p.setToughnessModifier(p.getToughnessModifier() + toughnessBoost);
-                            gameLogService.append(gameData, GameLog.builder()
-                                    .card(p.getCard())
-                                    .text(String.format(" gets %+d/%+d until end of turn.",
-                                            powerBoost, toughnessBoost))
-                                    .build());
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Return cards from graveyard to hand after "discard X cards, then return a card for
-            // each discarded" completes (Recall). One sequential pick per discarded card; the
-            // graveyard holds at least that many (the cards just discarded), so the choice always
-            // begins. Once the queue empties, GraveyardChoiceHandlerService resumes the remaining
-            // effects (e.g. the trailing ExileSpellEffect).
-            if (followUp.graveyardReturnCount() > 0) {
-                for (int i = 0; i < followUp.graveyardReturnCount(); i++) {
-                    gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                            playerId, 1, null, GraveyardChoiceDestination.HAND, false));
-                }
-                graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
-            if (followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
-                CardEffect thenEffect = followUp.thenEffect();
-                Card sourceCard = followUp.thenEffectSourceCard();
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        playerId,
-                        sourceCard.getName() + "'s effect",
-                        List.of(thenEffect)
-                ));
-                log.info("Game {} - {} discard-then rider pushed for {}",
-                        gameData.id, player.getUsername(), sourceCard.getName());
-            }
-
-            resumeRemainingEffectsAfterDiscard(gameData);
         }
+
+        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+            return;
+        }
+
+        // Draw cards after "discard up to N, then draw that many" completes
+        if (followUp.rummageDrawCount() > 0) {
+            int drawCount = followUp.rummageDrawCount();
+            for (int i = 0; i < drawCount; i++) {
+                drawService.resolveDrawCard(gameData, playerId);
+            }
+            String drawPlayerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
+        }
+
+        // Untap permanent after "discard a card, then untap [source]" completes
+        if (followUp.untapPermanentId() != null) {
+            UUID permanentId = followUp.untapPermanentId();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                if (bf == null) continue;
+                for (Permanent p : bf) {
+                    if (p.getId().equals(permanentId)) {
+                        p.untap();
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " untaps."));
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Boost permanent after "discard a card, then this creature gets +X/+Y" completes
+        if (followUp.boostPermanentId() != null) {
+            UUID permanentId = followUp.boostPermanentId();
+            int powerBoost = followUp.boostPower();
+            int toughnessBoost = followUp.boostToughness();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                if (bf == null) continue;
+                for (Permanent p : bf) {
+                    if (p.getId().equals(permanentId)) {
+                        p.setPowerModifier(p.getPowerModifier() + powerBoost);
+                        p.setToughnessModifier(p.getToughnessModifier() + toughnessBoost);
+                        gameLogService.append(gameData, GameLog.builder()
+                                .card(p.getCard())
+                                .text(String.format(" gets %+d/%+d until end of turn.",
+                                        powerBoost, toughnessBoost))
+                                .build());
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Return cards from graveyard to hand after "discard X cards, then return a card for
+        // each discarded" completes (Recall). One sequential pick per discarded card; the
+        // graveyard holds at least that many (the cards just discarded), so the choice always
+        // begins. Once the queue empties, GraveyardChoiceHandlerService resumes the remaining
+        // effects (e.g. the trailing ExileSpellEffect).
+        if (followUp.graveyardReturnCount() > 0) {
+            for (int i = 0; i < followUp.graveyardReturnCount(); i++) {
+                gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
+                        playerId, 1, null, GraveyardChoiceDestination.HAND, false));
+            }
+            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
+        if (followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
+            CardEffect thenEffect = followUp.thenEffect();
+            Card sourceCard = followUp.thenEffectSourceCard();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    playerId,
+                    sourceCard.getName() + "'s effect",
+                    List.of(thenEffect)
+            ));
+            log.info("Game {} - {} discard-then rider pushed for {}",
+                    gameData.id, player.getUsername(), sourceCard.getName());
+        }
+
+        resumeRemainingEffectsAfterDiscard(gameData);
     }
 
     /**
@@ -1163,6 +1180,24 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} transforms into {}", gameData.id, frontCard.getName(), backFace.getName());
             }
         }
+    }
+
+    private void checkPendingUntapOnDiscardType(GameData gameData, Card discardedCard) {
+        PendingUntapOnDiscardType pending = gameData.pendingUntapOnDiscardType;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingUntapOnDiscardType = null;
+        if (!discardedCard.hasType(pending.requiredType())) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        source.untap();
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+        log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
     }
 
     private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {

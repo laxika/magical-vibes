@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "52")
+@CardRegistration(set = "MRD", collectorNumber = "35")
 public class Fabricate extends Card {
 
     public Fabricate() {

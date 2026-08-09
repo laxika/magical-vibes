@@ -2146,18 +2146,23 @@ public class TriggerCollectionService {
 
         for (CardEffect effect : effects) {
             if (effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect) {
-                if (reflect.sourceFilter() != null
+                if (reflect.combatOnly() && !combatDamage) continue;
+                if (reflect.sourceMustBeWatcher() && !watcher.getId().equals(damageSource.getId())) continue;
+                if (!reflect.sourceMustBeWatcher() && reflect.sourceFilter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, reflect.sourceFilter())) {
                     continue;
                 }
 
-                // The damage-source creature deals that much damage to the damaged creature's controller.
+                // The normal form deals damage; Flayed Nim's self-scoped form causes life loss.
+                CardEffect triggeredEffect = reflect.lifeLoss()
+                        ? new LoseLifeEffect(damage, LoseLifeRecipient.TARGET_PLAYER)
+                        : new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER);
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         damageSource.getCard(),
                         damageSourceControllerId,
                         damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER))),
+                        new ArrayList<>(List.of(triggeredEffect)),
                         damagedCreatureControllerId,
                         damageSource.getId()
                 );
@@ -2165,9 +2170,15 @@ public class TriggerCollectionService {
                 gameData.stack.add(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} reflects {} damage from {} to {}", gameData.id,
-                        watcher.getCard().getName(), damage, damageSource.getCard().getName(),
-                        gameData.playerIdToName.get(damagedCreatureControllerId));
+                if (reflect.lifeLoss()) {
+                    log.info("Game {} - {} causes {} life loss to {}", gameData.id,
+                            watcher.getCard().getName(), damage,
+                            gameData.playerIdToName.get(damagedCreatureControllerId));
+                } else {
+                    log.info("Game {} - {} reflects {} damage to {}", gameData.id,
+                            watcher.getCard().getName(), damage,
+                            gameData.playerIdToName.get(damagedCreatureControllerId));
+                }
             } else if (effect instanceof DamageDamagedCreatureControllerAndSelfEffect punisher) {
                 // "this creature" — fire only when the watcher itself dealt the damage.
                 if (!watcher.getId().equals(damageSource.getId())) continue;
@@ -4486,6 +4497,14 @@ public class TriggerCollectionService {
         if (!enteringCard.hasType(CardType.ARTIFACT)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        UUID enteringPermanentId = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard() == enteringCard) {
+                enteringPermanentId = p.getId();
+                break;
+            }
+        }
+        var ctx = new TriggerContext.PermanentEnters(enteringCard, controllerId, null, 1, enteringPermanentId);
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringCard) continue;
 
@@ -4508,18 +4527,8 @@ public class TriggerCollectionService {
                     }
                 }
 
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        controllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
-                        null,
-                        perm.getId()
-                ));
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
-                        gameData.id, perm.getCard().getName(), enteringCard.getName());
+                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                        resolved, ctx);
             }
         }
     }

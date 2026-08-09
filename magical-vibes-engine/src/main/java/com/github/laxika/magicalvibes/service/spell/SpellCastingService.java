@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -2250,6 +2251,8 @@ public class SpellCastingService {
         resolvedXValue = payAllSacrificeCosts(gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
         payMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
                 selection.sacrificePermanentIds());
+        payEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
+                selection.escalateModeCount(), selection.sacrificePermanentIds());
         if (costs.sacrificeAnyNumberCost() != null) {
             resolvedXValue = paySacrificeAnyNumberOfPermanentsCost(gameData, player, card,
                     costs.sacrificeAnyNumberCost(), selection.sacrificePermanentIds());
@@ -2416,6 +2419,23 @@ public class SpellCastingService {
     private void payMultipleSacrificeCost(GameData gameData, Player player, Card card,
                                           SacrificeMultiplePermanentsCost cost, List<UUID> sacrificePermanentIds) {
         if (cost == null) {
+            return;
+        }
+        for (UUID id : sacrificePermanentIds) {
+            paySingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()));
+        }
+    }
+
+    /** Pays the permanent cost for each mode chosen beyond the first. */
+    private void payEscalateSacrificeCost(GameData gameData, Player player, Card card,
+                                          EscalateSacrificeCost cost, int modesChosen,
+                                          List<UUID> sacrificePermanentIds) {
+        if (cost == null) {
+            return;
+        }
+        int required = cost.count() * Math.max(0, modesChosen - 1);
+        if (required == 0) {
             return;
         }
         for (UUID id : sacrificePermanentIds) {
@@ -2973,7 +2993,8 @@ public class SpellCastingService {
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.discardXCardsCost() != null
                 || additionalCosts.escalateDiscardCost() != null
-                || additionalCosts.escalateManaCost() != null;
+                || additionalCosts.escalateManaCost() != null
+                || additionalCosts.escalateSacrificeCost() != null;
         if (hasUnsupportedAdditionalCost) {
             throw new IllegalStateException("Cannot cast " + castHalf.getName()
                     + " from the graveyard — paying its additional cast cost is not supported from this zone");
@@ -2988,7 +3009,7 @@ public class SpellCastingService {
             // Validate only the sacrifice slice so an exile-N cost (validated above with
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
-                    false, false, true, null, null, null, null, null, null, false, null,
+                    false, false, true, null, null, null, null, null, null, null, false, null,
                     false, null, null, null, null, null, null, false, null, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);

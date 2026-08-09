@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "111")
+@CardRegistration(set = "MRD", collectorNumber = "56")
 public class WanderguardSentry extends Card {
 
     public WanderguardSentry() {

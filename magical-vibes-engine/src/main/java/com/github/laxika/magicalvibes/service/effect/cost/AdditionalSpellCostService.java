@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -76,6 +77,7 @@ public class AdditionalSpellCostService {
             SacrificeCreatureOrPayManaCost.class,
             SacrificePermanentCost.class,
             SacrificeMultiplePermanentsCost.class,
+            EscalateSacrificeCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
             TapAnyNumberOfPermanentsCost.class,
             ReturnAnyNumberOfPermanentsToHandCost.class,
@@ -109,6 +111,7 @@ public class AdditionalSpellCostService {
             SacrificeCreatureOrPayManaCost sacrificeCreatureOrPayManaCost,
             SacrificePermanentCost sacrificePermanentCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
+            EscalateSacrificeCost escalateSacrificeCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
@@ -132,6 +135,7 @@ public class AdditionalSpellCostService {
             return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
                     || sacrificeCreatureOrPayManaCost != null
                     || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
+                    || escalateSacrificeCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || returnAnyNumberCost != null
                     || returnCreatureToHand || putCounterCost != null
@@ -142,9 +146,9 @@ public class AdditionalSpellCostService {
                     || repeatableManaCost != null;
         }
 
-        /** True when the spell has any escalate cost (mana and/or discard). */
+        /** True when the spell has any per-extra-mode cost. */
         public boolean hasEscalate() {
-            return escalateDiscardCost != null || escalateManaCost != null;
+            return escalateDiscardCost != null || escalateManaCost != null || escalateSacrificeCost != null;
         }
     }
 
@@ -156,7 +160,7 @@ public class AdditionalSpellCostService {
      * {@code discardHandCardIndices} pays escalate (one discard per mode beyond the first);
      * {@code escalateModeCount} is the number of modes chosen for that escalate payment (0 when
      * unused). {@code sacrificePermanentIds} pays any multi-permanent cost — a multi-permanent
-     * sacrifice (Phyrexian Tribute's "sacrifice two creatures"), a "tap any number of permanents
+     * sacrifice (Phyrexian Tribute's "sacrifice two creatures" or an entwine sacrifice), a "tap any number of permanents
      * you control" cost (Burn at the Stake), or a "return any number of permanents you control to
      * hand" cost (Infernal Harvest); no spell carries more than one of these. The single-permanent
      * costs keep using {@code sacrificePermanentId}.
@@ -203,6 +207,7 @@ public class AdditionalSpellCostService {
         SacrificeCreatureOrPayManaCost sacOrPay = removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
+        EscalateSacrificeCost escalateSacrificeCost = removeFirst(effects, EscalateSacrificeCost.class);
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
                 removeFirst(effects, SacrificeAnyNumberOfPermanentsCost.class);
         TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
@@ -223,6 +228,7 @@ public class AdditionalSpellCostService {
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
+                escalateSacrificeCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
@@ -322,6 +328,7 @@ public class AdditionalSpellCostService {
                 // playability by itself — concrete mode+payment selections are validated at cast.
                 case EscalateDiscardCost ignored -> { }
                 case EscalateManaCost ignored -> { }
+                case EscalateSacrificeCost ignored -> { }
                 // Sacrificing all creatures / permanents you control is legal with zero.
                 case SacrificeAllCreaturesYouControlCost ignored -> { }
                 case SacrificeAllPermanentsYouControlCost ignored -> { }
@@ -423,6 +430,10 @@ public class AdditionalSpellCostService {
         if (costs.sacrificeMultiplePermanentsCost() != null) {
             validateMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
                     selection.sacrificePermanentIds());
+        }
+        if (costs.escalateSacrificeCost() != null) {
+            validateEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
+                    selection.escalateModeCount(), selection.sacrificePermanentIds());
         }
         if (costs.sacrificeAnyNumberCost() != null) {
             validateSacrificeAnyNumberOfPermanentsCost(gameData, player, card, costs.sacrificeAnyNumberCost(),
@@ -635,6 +646,29 @@ public class AdditionalSpellCostService {
         }
         if (ids.stream().distinct().count() != ids.size()) {
             throw new IllegalStateException("Duplicate sacrifice targets for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+        }
+        return chosen;
+    }
+
+    /**
+     * Validates a sacrifice cost that is paid once for each selected mode beyond the first.
+     */
+    public List<Permanent> validateEscalateSacrificeCost(GameData gameData, Player player, Card card,
+                                                         EscalateSacrificeCost cost, int modesChosen,
+                                                         List<UUID> sacrificePermanentIds) {
+        int required = cost.count() * Math.max(0, modesChosen - 1);
+        List<UUID> ids = sacrificePermanentIds != null ? sacrificePermanentIds : List.of();
+        if (ids.size() != required) {
+            throw new IllegalStateException("Must sacrifice " + required
+                    + " permanents to escalate " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate escalate sacrifice targets for " + card.getName());
         }
         List<Permanent> chosen = new ArrayList<>();
         for (UUID id : ids) {

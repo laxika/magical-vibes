@@ -433,6 +433,83 @@ public class ManaCost {
         }
     }
 
+    /**
+     * Finds a conversion of blue mana that makes the ordinary payment check succeed. Blue mana is
+     * a wildcard only for colored requirements; leaving it blue is always preferable because blue
+     * mana already pays generic costs and blue requirements.
+     */
+    private List<ManaColor> findBlueAsAnyColorPlan(ManaPool pool, Predicate<ManaPool> plainCheck) {
+        ManaPool unchanged = copyManaPool(pool);
+        unchanged.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+        if (plainCheck.test(unchanged)) {
+            return List.of();
+        }
+
+        Set<ManaColor> conversionColors = EnumSet.noneOf(ManaColor.class);
+        conversionColors.addAll(coloredCosts.keySet());
+        for (HybridSymbol hybrid : hybridCosts) {
+            conversionColors.addAll(hybrid.colors());
+        }
+        conversionColors.remove(ManaColor.BLUE);
+        conversionColors.remove(ManaColor.COLORLESS);
+        int maxConversions = Math.min(pool.get(ManaColor.BLUE), coloredCosts.values().stream()
+                .mapToInt(Integer::intValue).sum() + phyrexianCosts.values().stream()
+                .mapToInt(Integer::intValue).sum() + hybridCosts.size());
+        List<ManaColor> colors = new ArrayList<>(conversionColors);
+        for (int count = 1; count <= maxConversions; count++) {
+            List<ManaColor> plan = new ArrayList<>(count);
+            List<ManaColor> result = findBlueAsAnyColorPlan(pool, plainCheck, colors, 0, count, plan);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private List<ManaColor> findBlueAsAnyColorPlan(ManaPool pool, Predicate<ManaPool> plainCheck,
+                                                    List<ManaColor> colors, int start, int remaining,
+                                                    List<ManaColor> plan) {
+        if (remaining == 0) {
+            ManaPool candidate = copyManaPool(pool);
+            for (ManaColor color : plan) {
+                candidate.remove(ManaColor.BLUE);
+                candidate.add(color);
+            }
+            candidate.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+            return plainCheck.test(candidate) ? new ArrayList<>(plan) : null;
+        }
+        for (int i = start; i < colors.size(); i++) {
+            plan.add(colors.get(i));
+            List<ManaColor> result = findBlueAsAnyColorPlan(pool, plainCheck, colors, i, remaining - 1, plan);
+            plan.removeLast();
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private static ManaPool copyManaPool(ManaPool pool) {
+        return pool instanceof VirtualManaPool virtual
+                ? new VirtualManaPool(virtual)
+                : new ManaPool(pool);
+    }
+
+    private boolean canPayWithBlueAsAnyColor(ManaPool pool, Predicate<ManaPool> plainCheck) {
+        return findBlueAsAnyColorPlan(pool, plainCheck) != null;
+    }
+
+    private void applyBlueAsAnyColorForPayment(ManaPool pool, Predicate<ManaPool> plainCheck) {
+        List<ManaColor> plan = findBlueAsAnyColorPlan(pool, plainCheck);
+        if (plan != null) {
+            for (ManaColor color : plan) {
+                pool.remove(ManaColor.BLUE);
+                pool.add(color);
+            }
+        }
+        pool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+    }
+
     /** Converts up to {@code count} white mana in {@code pool} into {@code color}. */
     private static void convertWhiteTo(ManaPool pool, ManaColor color, int count) {
         for (int i = 0; i < count && pool.get(ManaColor.WHITE) > 0; i++) {
@@ -448,6 +525,9 @@ public class ManaCost {
     public boolean canPay(ManaPool pool, int xValue) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue));
+        }
+        if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+            return canPayWithBlueAsAnyColor(pool, p -> canPay(p, xValue));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             ManaPool rewritten = new ManaPool(pool);
@@ -701,6 +781,9 @@ public class ManaCost {
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
+        }
+        if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+            return canPayWithBlueAsAnyColor(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             ManaPool rewritten = new ManaPool(pool);
@@ -974,6 +1057,9 @@ public class ManaCost {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue));
         }
+        if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+            applyBlueAsAnyColorForPayment(pool, p -> canPay(p, xValue));
+        }
         if (pool.isWhiteSpendableAsAnyColor()) {
             applyWhiteAsAnyColor(pool);
         }
@@ -1212,6 +1298,9 @@ public class ManaCost {
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
+        }
+        if (pool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+            applyBlueAsAnyColorForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext, legendarySpellOnlyContext));
         }
         if (pool.isWhiteSpendableAsAnyColor()) {
             applyWhiteAsAnyColor(pool);

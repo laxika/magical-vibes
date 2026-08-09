@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
@@ -109,6 +110,12 @@ public class DrawService {
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
         boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
+
+        Permanent sharedFateSource = findSharedFateSource(gameData);
+        if (sharedFateSource != null) {
+            resolveSharedFateDrawReplacement(gameData, playerId, sharedFateSource);
+            return;
+        }
 
         // Aladdin's Lamp — one-shot, turn-scoped delayed replacement of this player's next draw:
         // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
@@ -329,6 +336,45 @@ public class DrawService {
             }
         }
         return false;
+    }
+
+    private Permanent findSharedFateSource(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof SharedFateDrawReplacement);
+                if (hasEffect) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Shared Fate replaces the draw with a face-down exile from the opponent's library. */
+    private void resolveSharedFateDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+        List<Card> deck = gameData.playerDecks.get(opponentId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s draw is replaced; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCardFaceDown(gameData, opponentId, exiled, source.getId(), playerId);
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles a card face down from an opponent's library with ")
+                .card(source.getCard())
+                .text(" instead of drawing.")
+                .build());
+        log.info("Game {} - {} exiles the top card of an opponent's library face down with Shared Fate",
+                gameData.id, playerName);
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {

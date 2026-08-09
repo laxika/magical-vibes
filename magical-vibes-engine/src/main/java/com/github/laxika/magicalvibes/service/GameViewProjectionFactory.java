@@ -208,7 +208,16 @@ public class GameViewProjectionFactory {
     }
 
     /** Face-down exiled cards of one permanent, revealed only to the viewer controlling it. */
-    record FaceDownReveal(UUID viewerId, List<CardView> cards) {}
+    record FaceDownReveal(UUID viewerId, List<CardView> cards,
+                          Map<UUID, List<CardView>> cardsByViewer) {
+        FaceDownReveal(UUID viewerId, List<CardView> cards) {
+            this(viewerId, cards, Map.of(viewerId, cards));
+        }
+
+        List<CardView> cardsFor(UUID viewerId) {
+            return cardsByViewer.getOrDefault(viewerId, List.of());
+        }
+    }
 
     /**
      * Face-down exiled cards (hideaway lands, Grimoire Thief, ...) keyed by their permanent's id.
@@ -221,12 +230,22 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                List<CardView> cards = data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId()).stream()
-                        .filter(ExiledCardEntry::faceDown)
-                        .map(e -> cardViewFactory.create(e.card()))
-                        .toList();
-                if (!cards.isEmpty()) {
-                    reveals.put(p.getId(), new FaceDownReveal(pid, cards));
+                Map<UUID, List<CardView>> cardsByViewer = new LinkedHashMap<>();
+                for (ExiledCardEntry entry : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
+                    if (!entry.faceDown()) continue;
+                    UUID viewerId = entry.exilerId() != null ? entry.exilerId() : pid;
+                    cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
+                            .add(cardViewFactory.create(entry.card()));
+                }
+                if (!cardsByViewer.isEmpty()) {
+                    UUID legacyViewerId = cardsByViewer.size() == 1
+                            ? cardsByViewer.keySet().iterator().next() : null;
+                    List<CardView> legacyCards = legacyViewerId == null
+                            ? List.of() : cardsByViewer.get(legacyViewerId);
+                    reveals.put(p.getId(), new FaceDownReveal(legacyViewerId, legacyCards,
+                            cardsByViewer.entrySet().stream()
+                                    .collect(java.util.stream.Collectors.toUnmodifiableMap(
+                                            Map.Entry::getKey, e -> List.copyOf(e.getValue())))));
                 }
             }
         }
@@ -245,9 +264,11 @@ public class GameViewProjectionFactory {
             List<PermanentView> viewerSide = new ArrayList<>(side.size());
             for (PermanentView view : side) {
                 FaceDownReveal reveal = reveals.get(view.id());
-                viewerSide.add(reveal != null && reveal.viewerId().equals(viewerId)
-                        ? view.withFaceDownRevealed(reveal.cards())
-                        : view);
+                List<CardView> revealedCards = reveal == null ? List.of() : reveal.cardsFor(viewerId);
+                viewerSide.add(revealedCards.isEmpty()
+                        ? view
+                        : view.withFaceDownRevealed(revealedCards,
+                        Math.max(0, view.faceDownExiledCount() - revealedCards.size())));
             }
             result.add(viewerSide);
         }

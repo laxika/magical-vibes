@@ -837,6 +837,17 @@ public class GameTestHarness {
         castModalSorceryWithModes(player, cardIndex, choicesRequired, choicesRequired, modeIndices, targetIds, null);
     }
 
+    /** Casts a modal sorcery while paying a conditional multi-permanent sacrifice cost. */
+    public void castModalSorceryWithModesAndSacrifices(Player player, int cardIndex,
+                                                       int choicesRequired, int choicesMax,
+                                                       int[] modeIndices, List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, List.of(), List.of(), false, null, null, null, null, null, false,
+                null, null, null, sacrificePermanentIds);
+    }
+
     /**
      * Cast a variable-count modal sorcery (e.g. "choose one or more") with optional escalate
      * discard indices (pre-removal hand indices of cards to discard).

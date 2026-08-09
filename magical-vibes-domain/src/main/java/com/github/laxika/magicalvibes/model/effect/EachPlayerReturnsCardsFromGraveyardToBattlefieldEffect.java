@@ -16,14 +16,28 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * the battlefield with an additional -1/-1 counter on it."
  * → {@code new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(Integer.MAX_VALUE,
  *   new CardTypePredicate(CardType.CREATURE), CounterType.MINUS_ONE_MINUS_ONE)}
+ *
+ * <p>Use the {@code fromBattlefieldThisTurn} overload for effects such as Second Sunrise that
+ * return only cards put into the graveyard from the battlefield this turn.
  */
 public record EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
         int maxCount,
         CardPredicate filter,
-        CounterType enterWithCounter
+        CounterType enterWithCounter,
+        boolean fromBattlefieldThisTurn
 ) implements CardEffect {
 
     public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter) {
-        this(maxCount, filter, null);
+        this(maxCount, filter, null, false);
+    }
+
+    public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
+                                                                   CounterType enterWithCounter) {
+        this(maxCount, filter, enterWithCounter, false);
+    }
+
+    public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
+                                                                   boolean fromBattlefieldThisTurn) {
+        this(maxCount, filter, null, fromBattlefieldThisTurn);
     }
 }

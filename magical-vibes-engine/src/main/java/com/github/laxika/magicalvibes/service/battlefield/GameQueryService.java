@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
@@ -887,6 +888,17 @@ public class GameQueryService {
      */
     public boolean canSpendWhiteManaAsAnyColor(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsAnyColorEffect.class);
+    }
+
+    /**
+     * Returns whether the source creature's activated abilities may use blue mana as mana of any
+     * color, as granted by Quicksilver Elemental.
+     */
+    public boolean canSpendBlueManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source) {
+        return source != null
+                && !hasLostAllAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(SpendBlueManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance);
     }
 
     /**
@@ -2962,6 +2974,21 @@ public class GameQueryService {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
         return source != null && isCreature(gameData, source);
+    }
+
+    /**
+     * Returns {@code true} when the source of a damage event is currently an artifact. A source
+     * permanent uses its effective types; a spell source falls back to the artifact type of its card.
+     */
+    public boolean isDamageSourceArtifact(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source != null) return isArtifact(gameData, source);
+        return entry != null
+                && entry.getEffectiveDamageSourceCard() != null
+                && entry.getEffectiveDamageSourceCard().hasType(CardType.ARTIFACT);
     }
 
     /**

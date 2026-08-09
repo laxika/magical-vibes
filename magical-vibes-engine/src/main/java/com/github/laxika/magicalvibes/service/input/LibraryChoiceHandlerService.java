@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -848,6 +849,8 @@ public class LibraryChoiceHandlerService {
             return;
         } else if (toGraveyard) {
             graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
+        } else if (destination == LibrarySearchDestination.REVEAL_ONLY) {
+            deck.add(chosenCard);
         } else if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -988,6 +991,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_ATTACHED_TO_PERMANENT -> "onto the battlefield";
                 case BATTLEFIELD_ATTACHED_TO_CREATURE -> throw new IllegalStateException("BATTLEFIELD_ATTACHED_TO_CREATURE should be handled earlier");
                 case HAND -> "into their hand";
+                case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
@@ -1036,6 +1040,12 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
+        if (followUp.grimReminderSearch() != null && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(new LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect(
+                            chosenCard.getName(), followUp.grimReminderSearch().lifeLoss())));
+        }
         finishSearchAndResume(gameData);
     }
 

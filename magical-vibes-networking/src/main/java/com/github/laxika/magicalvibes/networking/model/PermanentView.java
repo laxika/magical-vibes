@@ -41,11 +41,11 @@ public record PermanentView(
          *  Myr Welder, ...), shown tucked under it on the battlefield. */
         List<CardView> exiledWithCards,
         /** Cards exiled face down with this permanent (hideaway lands, Grimoire Thief, ...);
-         *  rendered as card backs so hidden information is not leaked. Zero in the controller's
-         *  copy of the view — they receive the cards in {@link #faceDownExiledCards} instead. */
+         *  rendered as card backs so hidden information is not leaked. Zero in a permitted
+         *  player's copy of the view — they receive the cards in {@link #faceDownExiledCards} instead. */
         int faceDownExiledCount,
         /** The face-down exiled cards themselves — populated only in the copy of the view sent
-         *  to the permanent's controller (see {@link #withFaceDownRevealed}); empty for everyone
+         *  to a player allowed to see them (see {@link #withFaceDownRevealed}); empty for everyone
          *  else, who only get {@link #faceDownExiledCount} card backs. */
         List<CardView> faceDownExiledCards
 ) {
@@ -57,13 +57,17 @@ public record PermanentView(
                 modifierLines, exiledWithCards, faceDownExiledCount, faceDownExiledCards);
     }
 
-    /** Controller's copy of this view: the actual face-down cards replace the anonymous
-     *  card-back count. */
+    /** A permitted player's copy of this view: visible face-down cards replace part of the
+     *  anonymous card-back count. */
     public PermanentView withFaceDownRevealed(List<CardView> cards) {
+        return withFaceDownRevealed(cards, 0);
+    }
+
+    public PermanentView withFaceDownRevealed(List<CardView> cards, int remainingHiddenCount) {
         return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
                 powerModifier, toughnessModifier, grantedKeywords, grantedAbilities, removedKeywords, effectivePower,
                 effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
-                modifierLines, exiledWithCards, 0, cards);
+                modifierLines, exiledWithCards, remainingHiddenCount, cards);
     }
 }

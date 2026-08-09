@@ -345,6 +345,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record PlayerWithLowestLifeChoice(Card sourceCard) implements PermanentChoiceContext {}
+
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** {@code targetFilter} overrides the source card's own filter — see {@link UpkeepPlayerTargetTrigger}. */

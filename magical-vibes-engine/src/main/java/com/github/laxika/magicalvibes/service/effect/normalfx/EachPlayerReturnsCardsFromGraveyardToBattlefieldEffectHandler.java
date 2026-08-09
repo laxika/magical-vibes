@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -44,9 +45,13 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                 continue;
             }
 
+            Set<UUID> trackedIds = e.fromBattlefieldThisTurn()
+                    ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
+                    : null;
             List<Card> matching = new ArrayList<>();
             for (Card card : graveyard) {
-                if (predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+                if ((trackedIds == null || trackedIds.contains(card.getId()))
+                        && predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
                     matching.add(card);
                 }
             }
@@ -80,7 +85,8 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                 // Player must choose — add to queue
                 gameData.pendingGraveyardReturnQueue.add(
                         new PendingGraveyardReturnChoice(playerId, e.maxCount(), e.filter(),
-                                GraveyardChoiceDestination.BATTLEFIELD, true));
+                                GraveyardChoiceDestination.BATTLEFIELD, true,
+                                false, e.fromBattlefieldThisTurn()));
             }
         }
 

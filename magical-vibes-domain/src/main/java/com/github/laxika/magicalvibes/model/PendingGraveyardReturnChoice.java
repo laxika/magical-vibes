@@ -18,14 +18,18 @@ import java.util.UUID;
  *                                entry is an independent choice, e.g. Grim Captain's Call)
  * @param mandatory                if {@code true}, the player must choose a card when one is
  *                                available
+ * @param fromBattlefieldThisTurn if {@code true}, only cards tracked as having entered the graveyard
+ *                                from the battlefield this turn are eligible
  */
 public record PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                            GraveyardChoiceDestination destination,
-                                           boolean skipRemainingOnDecline, boolean mandatory) {
+                                           boolean skipRemainingOnDecline,
+                                           boolean mandatory,
+                                           boolean fromBattlefieldThisTurn) {
 
     public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                         GraveyardChoiceDestination destination,
                                         boolean skipRemainingOnDecline) {
-        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false);
+        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false, false);
     }
 }

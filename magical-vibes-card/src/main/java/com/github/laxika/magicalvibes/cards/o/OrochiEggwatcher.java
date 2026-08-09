@@ -40,7 +40,7 @@ public class OrochiEggwatcher extends Card {
         ));
     }
 
-    @Override
+    @java.lang.Override
     public String getBackFaceClassName() {
         return "ShidakoBroodmistress";
     }

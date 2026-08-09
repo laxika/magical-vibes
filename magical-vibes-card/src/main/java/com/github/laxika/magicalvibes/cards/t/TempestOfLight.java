@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "51")
 @CardRegistration(set = "M10", collectorNumber = "36")
 @CardRegistration(set = "9ED", collectorNumber = "50")
+@CardRegistration(set = "MRD", collectorNumber = "28")
 public class TempestOfLight extends Card {
 
     public TempestOfLight() {

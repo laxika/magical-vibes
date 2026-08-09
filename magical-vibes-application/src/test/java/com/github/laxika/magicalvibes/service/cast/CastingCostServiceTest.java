@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -600,6 +603,33 @@ class CastingCostServiceTest {
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
             assertThat(svc.getCastCostModifier(gd, player1Id, instant))
                     .isEqualTo(svc.getCastCostModifier(gd, player1Id, instant, snapshot));
+        }
+    }
+
+    @Nested
+    @DisplayName("Activated ability cost reductions")
+    class ActivatedAbilityCostReductions {
+
+        @Test
+        @DisplayName("Equip cost reduction applies only to equip abilities")
+        void equipCostReductionAppliesOnlyToEquipAbilities() {
+            Card steelshaper = new Card();
+            steelshaper.setName("Auriok Steelshaper");
+            steelshaper.addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(steelshaper));
+
+            Permanent equipment = new Permanent(new Card());
+            ActivatedAbility equipAbility = new EquipActivatedAbility("{2}");
+            ActivatedAbility otherAbility = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{2}", List.of(), "Other ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, equipAbility))
+                    .isEqualTo(1);
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, otherAbility))
+                    .isZero();
         }
     }
 

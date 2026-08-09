@@ -103,6 +103,9 @@ public class ManaPool {
      * {@link ManaCost#canPay}/{@code pay}, which rewrite the pool accordingly before paying.
      */
     private boolean whiteSpendableAsAnyColor;
+    /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
+     * colored requirement of an activated ability of the current source creature. */
+    private boolean blueSpendableAsAnyColorForActivatedAbilities;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -157,6 +160,7 @@ public class ManaPool {
         }
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
         this.whiteSpendableAsAnyColor = source.whiteSpendableAsAnyColor;
+        this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
     }
 
     /** See {@link #whiteSpendableAsRed}. */
@@ -177,6 +181,14 @@ public class ManaPool {
     /** See {@link #whiteSpendableAsAnyColor}. */
     public void setWhiteSpendableAsAnyColor(boolean whiteSpendableAsAnyColor) {
         this.whiteSpendableAsAnyColor = whiteSpendableAsAnyColor;
+    }
+
+    public boolean isBlueSpendableAsAnyColorForActivatedAbilities() {
+        return blueSpendableAsAnyColorForActivatedAbilities;
+    }
+
+    public void setBlueSpendableAsAnyColorForActivatedAbilities(boolean enabled) {
+        this.blueSpendableAsAnyColorForActivatedAbilities = enabled;
     }
 
     public void add(ManaColor color) {

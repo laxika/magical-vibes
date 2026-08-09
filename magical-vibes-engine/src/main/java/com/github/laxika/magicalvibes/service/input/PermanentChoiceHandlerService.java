@@ -197,6 +197,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handlePhasesInTriggerTarget(gameData, permanentId, pit);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
+        } else if (context instanceof PermanentChoiceContext.PlayerWithLowestLifeChoice pwll) {
+            triggerHandler.handlePlayerWithLowestLifeChoice(gameData, permanentId, pwll);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
             triggerHandler.handleUpkeepCopyTrigger(gameData, permanentId, uct);
         } else if (context instanceof PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {

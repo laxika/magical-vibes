@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model;
 
 public enum LibrarySearchDestination {
     HAND,
+    /** Reveal the chosen card, return it to the library, then shuffle. */
+    REVEAL_ONLY,
     BATTLEFIELD,
     BATTLEFIELD_TAPPED,
     EXILE_IMPRINT,

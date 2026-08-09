@@ -1512,11 +1512,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * countdown including the upcoming pick; each answered pick begins a fresh record with
      * the decremented count (this replaces the old {@code InteractionState}
      * {@code discardRemainingCount} field for discards). {@code followUp} is the carry-over
-     * work run when the whole sequence completes; re-begins pass it forward unchanged.
+     * work run when the whole sequence completes; re-begins pass it forward unchanged. When
+     * {@code stopAfterDiscardingType} is set, a matching first pick makes the next pick optional;
+     * {@code declinable} records that optional second pick.
      */
     record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                         int remainingCount, DiscardFollowUp followUp, String prompt)
+                         int remainingCount, DiscardFollowUp followUp, String prompt,
+                         CardType stopAfterDiscardingType, boolean declinable)
             implements PendingInteraction, HandChoice {
+
+        public DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                             int remainingCount, DiscardFollowUp followUp, String prompt) {
+            this(playerId, validIndices, remainingCount, followUp, prompt, null, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -1525,7 +1533,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
+            return new InteractionOptions.CardIndexPick(validIndices, declinable);
         }
     }
 

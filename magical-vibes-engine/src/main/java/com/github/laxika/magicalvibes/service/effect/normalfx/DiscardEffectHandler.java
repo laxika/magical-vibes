@@ -134,7 +134,8 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId,
                     entry.getCard().getName(), amount);
         } else {
-            playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount);
+            playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
+                    DiscardFollowUp.NONE, e.stopAfterDiscardingType());
         }
     }
 

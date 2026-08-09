@@ -25,7 +25,7 @@ public class OnwardVictory extends Card {
                 new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)));
     }
 
-    @Override
+    @java.lang.Override
     public String getBackFaceClassName() {
         return "Victory";
     }
