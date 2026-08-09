@@ -116,6 +116,7 @@ combat damage step is processed.
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
+| `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
@@ -171,6 +172,7 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
 `ON_COMBAT_DAMAGE_TO_PLAYER`, `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
+`ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`,
 `ON_SELF_DEALS_DAMAGE`, `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE`, `ON_BECOMES_BLOCKED` (only the non-targeting flavour; a
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
 `DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,

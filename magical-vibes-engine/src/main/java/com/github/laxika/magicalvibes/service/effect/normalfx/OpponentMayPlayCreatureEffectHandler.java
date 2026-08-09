@@ -21,7 +21,8 @@ public class OpponentMayPlayCreatureEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
-        playerInteractionSupport.applyOpponentMayPlayCreature(gameData, entry.getControllerId());
+        playerInteractionSupport.applyOpponentMayPlayCreature(gameData, entry.getControllerId(),
+                (OpponentMayPlayCreatureEffect) effect);
     
     }
 }

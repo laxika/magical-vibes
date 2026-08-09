@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "BOK", collectorNumber = "118")
 @CardRegistration(set = "UDS", collectorNumber = "97")
 public class SowingSalt extends Card {
 

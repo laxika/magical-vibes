@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import lombok.RequiredArgsConstructor;
@@ -2773,6 +2774,15 @@ public class AbilityActivationService {
             PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, effect, sourceId, xValue);
             if (handler != null) {
                 handler.validateCanPay(gameData, playerId);
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(UnattachSourceEquipmentCost.class::isInstance)) {
+            Permanent equipment = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment == null || !equipment.isAttached()) {
+                throw new IllegalStateException("The granting Equipment is not attached");
             }
         }
         CastingCostService.ImposedSacrificeRequirement imposedTax =

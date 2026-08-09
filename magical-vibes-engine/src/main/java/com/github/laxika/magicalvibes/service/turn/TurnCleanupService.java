@@ -230,6 +230,7 @@ public class TurnCleanupService {
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
+        gameData.permanentDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.drawReplacementTargetToController.clear();

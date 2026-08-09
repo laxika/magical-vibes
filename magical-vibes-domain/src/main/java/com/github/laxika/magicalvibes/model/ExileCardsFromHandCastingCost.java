@@ -33,4 +33,8 @@ public record ExileCardsFromHandCastingCost(CardPredicate predicate, String labe
     public static ExileCardsFromHandCastingCost withManaValueX(CardPredicate predicate, String label) {
         return new ExileCardsFromHandCastingCost(predicate, label, 1, true);
     }
+
+    public ExileCardsFromHandCastingCost(CardPredicate predicate, String label, boolean manaValueEqualsX) {
+        this(predicate, label, 1, manaValueEqualsX);
+    }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -177,8 +178,10 @@ import lombok.Builder;
  *                             cards go to the battlefield, everything else goes to the controller's hand
  *                             (e.g. Deadbridge Chant); only honoured on the {@link #returnAtRandom} path,
  *                             where it overrides {@link #destination}
+ * @param dynamicMaxManaValue dynamic mana-value limit to snapshot when a death trigger is collected;
+ *                             used for abilities such as Kodama of the Center Tree's soulshift X
  */
-@Builder
+@Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
@@ -222,7 +225,8 @@ public record ReturnCardFromGraveyardEffect(
         CounterType enterWithCounter,
         int enterWithCounterCount,
         boolean linkToSource,
-        boolean battlefieldIfCreatureElseHand
+        boolean battlefieldIfCreatureElseHand,
+        DynamicAmount dynamicMaxManaValue
 ) implements CardEffect {
 
     /**

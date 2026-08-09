@@ -1654,6 +1654,24 @@ class GameQueryServiceTest {
         void applyMultiplierNoEffect() {
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("applies a tracked source permanent's damage doubling")
+        void appliesSourcePermanentDamageDoubling() {
+            Permanent source = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Source", 2, 2, CardColor.RED, List.of(CardSubtype.BEAR)));
+            gd.permanentDamageDoublingsThisTurn.put(source.getId(), 1);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    player1Id,
+                    "Source ability",
+                    new ArrayList<>(),
+                    null,
+                    source.getId());
+
+            assertThat(gqs.applyDamageMultiplier(gd, 3, entry)).isEqualTo(6);
+        }
     }
 
     @Nested

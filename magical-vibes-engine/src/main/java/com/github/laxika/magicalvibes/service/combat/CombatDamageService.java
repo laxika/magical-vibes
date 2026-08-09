@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
@@ -97,6 +99,7 @@ public class CombatDamageService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final DamagePreventionService damagePreventionService;
     private final GraveyardService graveyardService;
@@ -1285,11 +1288,7 @@ public class CombatDamageService {
                 // cards" (DrawCardEffect with an EventValue amount, e.g. Hunter's Insight) or "mills
                 // that many cards" (MillEffect with an EventValue amount, e.g. Crosstown Courier)
                 // reads it.
-                if (effect instanceof DiscardEffect
-                        || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
-                        || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)) {
-                    se.setEventValue(damageDealt);
-                }
+                setCombatDamageEventValue(se, effect, damageDealt);
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
@@ -1304,14 +1303,15 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
             }
 
-            checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
+            checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     firedBatchedAllyTriggerSources);
         }
     }
 
-    private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
+    private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
+                                                           UUID defenderId, int damageDealt) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> rawEffects = new ArrayList<>();
@@ -1346,12 +1346,26 @@ public class CombatDamageService {
                             defenderId,
                             perm.getId()
                     );
+                    for (CardEffect effect : effects) {
+                        setCombatDamageEventValue(se, effect, damageDealt);
+                    }
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
                 }
             }
         });
+    }
+
+    private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
+        boolean readsCombatDamage = effect instanceof DiscardEffect
+                || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
+                || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
+                || (effect instanceof CombatDamageAmountAwareEffect amountAware
+                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount()));
+        if (readsCombatDamage) {
+            entry.setEventValue(damageDealt);
+        }
     }
 
     /**

@@ -82,6 +82,58 @@ public class ManaCost {
         this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
     }
 
+    private ManaCost(int genericCost, Map<ManaColor, Integer> coloredCosts,
+                     Map<ManaColor, Integer> phyrexianCosts, List<HybridSymbol> hybridCosts,
+                     int xSymbolCount, boolean cumulativeUpkeepPayment) {
+        this.genericCost = genericCost;
+        this.coloredCosts = new EnumMap<>(coloredCosts);
+        this.phyrexianCosts = new EnumMap<>(phyrexianCosts);
+        this.hybridCosts = List.copyOf(hybridCosts);
+        this.xSymbolCount = xSymbolCount;
+        this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
+    }
+
+    /**
+     * Returns this cost after reducing it by the regular generic and colored components of
+     * {@code reduction}. Matching colored components reduce the same colored requirements first;
+     * unmatched colored components reduce generic mana, as does the generic component.
+     */
+    public ManaCost reducedBy(ManaCost reduction) {
+        if (reduction == null) {
+            return this;
+        }
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        int genericReduction = reduction.genericCost;
+        for (Map.Entry<ManaColor, Integer> entry : reduction.coloredCosts.entrySet()) {
+            int matching = Math.min(remainingColored.getOrDefault(entry.getKey(), 0), entry.getValue());
+            if (matching > 0) {
+                remainingColored.merge(entry.getKey(), -matching, Integer::sum);
+            }
+            genericReduction += entry.getValue() - matching;
+        }
+        for (Map.Entry<ManaColor, Integer> entry : reduction.phyrexianCosts.entrySet()) {
+            int matching = Math.min(remainingColored.getOrDefault(entry.getKey(), 0), entry.getValue());
+            if (matching > 0) {
+                remainingColored.merge(entry.getKey(), -matching, Integer::sum);
+            }
+            genericReduction += entry.getValue() - matching;
+        }
+        return new ManaCost(
+                Math.max(0, genericCost - genericReduction),
+                remainingColored, phyrexianCosts, hybridCosts, xSymbolCount,
+                cumulativeUpkeepPayment);
+    }
+
+    /** Whether this cost can be paid after applying a mana-cost reduction. */
+    public boolean canPayAfterReduction(ManaPool pool, ManaCost reduction) {
+        return reducedBy(reduction).canPay(pool);
+    }
+
+    /** Pays this cost after applying a mana-cost reduction. */
+    public void payAfterReduction(ManaPool pool, ManaCost reduction) {
+        reducedBy(reduction).pay(pool);
+    }
+
     public boolean hasX() {
         return xSymbolCount > 0;
     }

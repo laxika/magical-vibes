@@ -520,7 +520,8 @@ public class CombatAttackService {
                     for (CardEffect effect : nonTargetingMayEffects) {
                         com.github.laxika.magicalvibes.model.effect.MayEffect may =
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
-                        gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId());
+                        gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
+                                attacker.getAttackTarget());
                     }
 
                     if (!otherEffects.isEmpty()) {

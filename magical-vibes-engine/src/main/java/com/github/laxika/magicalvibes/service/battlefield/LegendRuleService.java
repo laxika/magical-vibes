@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +54,9 @@ public class LegendRuleService {
         }
 
         for (Map.Entry<String, List<UUID>> entry : legendaryByName.entrySet()) {
-            if (entry.getValue().size() >= 2 && !allExempt(gameData, battlefield, entry.getKey())) {
+            if (entry.getValue().size() >= 2
+                    && !hasGlobalExemption(gameData)
+                    && !allExempt(gameData, battlefield, entry.getKey())) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey()));
                 playerInputService.beginPermanentChoice(gameData, controllerId, entry.getValue(),
                         "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
@@ -61,6 +64,13 @@ public class LegendRuleService {
             }
         }
         return false;
+    }
+
+    private boolean hasGlobalExemption(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
     }
 
     /**

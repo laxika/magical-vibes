@@ -731,6 +731,31 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
+    private boolean handleEquippedCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect,
+                                                              TriggerContext ctx) {
+        TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
+
+        Permanent equipment = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                equipment.getCard(),
+                match.controllerId(),
+                equipment.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                equipment.getId());
+        entry.setNonTargeting(true);
+        entry.setEventValue(sd.totalDamage());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
+        log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger fires ({} damage by {})",
+                match.gameData().id, equipment.getCard().getName(), sd.totalDamage(), sd.sourceCard().getName());
+        return true;
+    }
+
     private boolean sourceHasColor(Card card, CardColor color) {
         if (card == null || color == null) return false;
         if (card.getColor() == color) return true;

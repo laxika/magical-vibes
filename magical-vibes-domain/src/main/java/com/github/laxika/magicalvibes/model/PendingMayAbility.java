@@ -16,30 +16,40 @@ public record PendingMayAbility(
         UUID sourcePermanentId,
         TapMultiplePermanentsCost tapPermanentsCost,
         int lifeCost,
-        int additionalLifeCost
+        int additionalLifeCost,
+        UUID attackedTargetId
 ) {
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description) {
-        this(sourceCard, controllerId, effects, description, null, null, null, null, 0, 0);
+        this(sourceCard, controllerId, effects, description, null, null, null, null, 0, 0, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description, UUID targetCardId) {
-        this(sourceCard, controllerId, effects, description, targetCardId, null, null, null, 0, 0);
+        this(sourceCard, controllerId, effects, description, targetCardId, null, null, null, 0, 0, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description, UUID targetCardId, String manaCost) {
-        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, null, null, 0, 0);
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, null, null, 0, 0, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description, UUID targetCardId, String manaCost, UUID sourcePermanentId) {
-        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId, null, 0, 0);
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId, null, 0, 0, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description, UUID targetCardId, String manaCost, UUID sourcePermanentId, TapMultiplePermanentsCost tapPermanentsCost) {
-        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId, tapPermanentsCost, 0, 0);
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, 0, 0, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description, UUID targetCardId, String manaCost, UUID sourcePermanentId, int additionalLifeCost) {
-        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId, null, 0, additionalLifeCost);
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                null, 0, additionalLifeCost, null);
+    }
+
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, null);
     }
 }

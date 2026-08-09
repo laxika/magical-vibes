@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -203,6 +204,41 @@ class LegendRuleServiceTest {
         void nonExemptCopyStillViolates() {
             addPermanent(player1Id, exemptLegend());
             addPermanent(player1Id, createLegendaryCreature("Brothers Yamazaki"));
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Global legend rule exemption")
+    class GlobalExemption {
+
+        private Card globalExemption() {
+            Card card = createCreature("Mirror Gallery");
+            card.setType(CardType.ARTIFACT);
+            card.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleEffect());
+            return card;
+        }
+
+        @Test
+        @DisplayName("A global exemption protects duplicate legends")
+        void globalExemptionProtectsDuplicateLegends() {
+            addPermanent(player2Id, globalExemption());
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+
+            assertThat(svc.checkLegendRule(gd, player1Id)).isFalse();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
+        }
+
+        @Test
+        @DisplayName("Removing the global exemption restores the legend rule")
+        void removingGlobalExemptionRestoresLegendRule() {
+            Permanent gallery = addPermanent(player1Id, globalExemption());
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+            addPermanent(player1Id, createLegendaryCreature("Test Legend"));
+
+            gd.playerBattlefields.get(player1Id).remove(gallery);
 
             assertThat(svc.checkLegendRule(gd, player1Id)).isTrue();
         }

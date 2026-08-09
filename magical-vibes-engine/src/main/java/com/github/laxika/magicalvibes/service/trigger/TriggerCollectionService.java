@@ -36,14 +36,20 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipmentTapsAndLocksDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAndSkipUntapDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
@@ -1226,6 +1232,17 @@ public class TriggerCollectionService {
                 registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }
         }
+
+        gameData.forEachPermanent((watcherControllerId, watcher) -> {
+            if (!watcher.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                    || !isEquippedBy(gameData, watcher, sourcePermanentId)) {
+                return;
+            }
+            for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)) {
+                var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
+                registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
+            }
+        });
     }
 
     /**
@@ -2194,6 +2211,55 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                 log.info("Game {} - {} will destroy the creature it damaged", gameData.id,
                         watcher.getCard().getName());
+            } else if (effect instanceof TapAndSkipUntapDamagedCreatureEffect) {
+                // "this creature" — fire only when the watcher itself dealt the damage.
+                if (!watcher.getId().equals(damageSource.getId())) continue;
+                if (damagedCreatureId == null) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        damageSource.getCard(),
+                        damageSourceControllerId,
+                        damageSource.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(
+                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new SkipNextUntapEffect(TapUntapScope.TARGET))),
+                        damagedCreatureId,
+                        damageSource.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} taps and locks the creature it damaged", gameData.id,
+                        watcher.getCard().getName());
+            } else if (effect instanceof EquipmentTapsAndLocksDamagedCreatureEffect) {
+                // "equipped creature" — the watcher is the Equipment, so it must be attached to
+                // the creature that dealt the damage. Last-known attachment is valid when that
+                // creature died to the same damage event.
+                if (!isEquippedBy(gameData, watcher, damageSource)) continue;
+                if (damagedCreatureId == null) continue;
+
+                UUID watcherControllerId = gameData.findControllerOf(watcher);
+                if (watcherControllerId == null) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        watcherControllerId,
+                        watcher.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(
+                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                DoesntUntapEffect.targetWhileSourceOnBattlefield())),
+                        damagedCreatureId,
+                        watcher.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} taps and locks the creature damaged by its equipped creature",
+                        gameData.id, watcher.getCard().getName());
             } else if (effect instanceof DestroyDamagedCreatureAtEndOfCombatEffect delayedDestroy) {
                 // "deals combat damage" — non-combat damage from the same creature does nothing.
                 if (!combatDamage) continue;
@@ -2256,10 +2322,14 @@ public class TriggerCollectionService {
      * a creature only deals combat damage to creatures blocking it while it is attacking.
      */
     private boolean isEquippedBy(GameData gameData, Permanent equipment, Permanent host) {
-        if (host.getId().equals(equipment.getAttachedTo())) return true;
+        return isEquippedBy(gameData, equipment, host.getId());
+    }
+
+    private boolean isEquippedBy(GameData gameData, Permanent equipment, UUID hostId) {
+        if (hostId.equals(equipment.getAttachedTo())) return true;
         // Only a host that already left the battlefield may be matched on last-known attachment.
-        return host.getId().equals(equipment.getLastAttachedTo())
-                && gameQueryService.findPermanentById(gameData, host.getId()) == null;
+        return hostId.equals(equipment.getLastAttachedTo())
+                && gameQueryService.findPermanentById(gameData, hostId) == null;
     }
 
     /**

@@ -320,6 +320,20 @@ public class AmountEvaluationService {
     }
 
     /**
+     * Evaluates a death-trigger amount using the last-known source permanent when the source has
+     * already left the battlefield. This is used for dynamic limits that are fixed as the trigger
+     * is collected, such as Kodama of the Center Tree's soulshift value.
+     */
+    public int evaluateAtDeath(GameData gameData, DynamicAmount amount, UUID controllerId,
+                               Permanent dyingPermanent) {
+        AmountContext context = new AmountContext(controllerId, dyingPermanent, null, 0, 0);
+        if (amount instanceof PermanentCount count) {
+            return countPermanents(gameData, count, context, true);
+        }
+        return evaluate(gameData, amount, context);
+    }
+
+    /**
      * Projects the amount context onto a condition context so {@code FixedIfCondition} can reuse
      * the condition hierarchy. Only the values both contexts carry are transferred; cast-time flags
      * (kicked, buyback, …) are not part of an amount context and read as false.
@@ -457,6 +471,11 @@ public class AmountEvaluationService {
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
+        return countPermanents(gameData, count, ctx, false);
+    }
+
+    private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx,
+                                boolean includeSourceIfAbsent) {
         // In static evaluation the filter context carries a null GameData: type and keyword checks then
         // use intrinsic values, so counting never calls computeStaticBonus on other permanents
         // (which could recurse back into the count being computed). The P/T leaves are exempt —
@@ -490,6 +509,12 @@ public class AmountEvaluationService {
                     matches++;
                 }
             }
+        }
+        if (includeSourceIfAbsent && !count.excludeSource() && ctx.sourcePermanent() != null
+                && isPlayerInScope(gameData, ctx.controllerId(), count.scope(), ctx)
+                && gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
+                && predicateEvaluationService.matchesPermanentPredicate(ctx.sourcePermanent(), count.filter(), filterContext)) {
+            matches++;
         }
         return matches;
     }

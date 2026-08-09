@@ -252,6 +252,7 @@ public class MayAbilityHandlerService {
                     );
                 }
                 entry.setTargetId(ability.targetCardId());
+                entry.setAttackedTargetId(ability.attackedTargetId());
                 gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -340,6 +341,7 @@ public class MayAbilityHandlerService {
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
             }
+            entry.setAttackedTargetId(ability.attackedTargetId());
 
             gameData.stack.add(entry);
 

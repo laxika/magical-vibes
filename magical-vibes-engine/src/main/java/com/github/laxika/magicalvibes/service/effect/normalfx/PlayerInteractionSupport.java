@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -58,6 +59,17 @@ public class PlayerInteractionSupport {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         resolvePlayerMayPlayCreature(gameData, opponentId);
     
+    }
+
+    public void applyOpponentMayPlayCreature(GameData gameData, UUID controllerId,
+                                             OpponentMayPlayCreatureEffect effect) {
+
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        if (effect.predicate() == null) {
+            resolvePlayerMayPlayCreature(gameData, opponentId);
+        } else {
+            resolvePlayerMayPlayCreature(gameData, opponentId, effect.predicate(), effect.label());
+        }
     }
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
         applyPutCardToBattlefield(gameData, playerId, effect, 0, null);
@@ -133,6 +145,32 @@ public class PlayerInteractionSupport {
         String prompt = "You may put a creature card from your hand onto the battlefield.";
         playerInputService.beginCardChoice(gameData, playerId, creatureIndices, prompt);
     
+    }
+
+    private void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId,
+                                              CardPredicate predicate, String label) {
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Integer> validIndices = new ArrayList<>();
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                Card handCard = hand.get(i);
+                if (predicateEvaluationService.matchesCardPredicate(handCard, predicate, handCard.getId())) {
+                    validIndices.add(i);
+                }
+            }
+        }
+
+        if (validIndices.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            String logEntry = playerName + " has no " + label + " cards in hand.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} has no {} cards in hand for creature-choice effect", gameData.id, playerName, label);
+            return;
+        }
+
+        String prompt = "You may put a " + label + " card from your hand onto the battlefield.";
+        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
 

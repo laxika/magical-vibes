@@ -54,7 +54,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName() + " - " + e.prompt(),
                 targetId,
                 null,
-                entry.getSourcePermanentId()
+                entry.getSourcePermanentId(),
+                null,
+                0,
+                0,
+                entry.getAttackedTargetId()
         ));
     
     }

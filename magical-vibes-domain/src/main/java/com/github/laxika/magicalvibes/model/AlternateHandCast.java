@@ -26,19 +26,20 @@ import java.util.Set;
  */
 public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
                                 Condition availabilityCondition, boolean grantsFlash,
-                                boolean reduceManaBySacrificedManaValue) implements CastingOption {
+                                boolean reduceManaBySacrificedManaValue,
+                                boolean reduceManaBySacrificedManaCost) implements CastingOption {
 
     public AlternateHandCast(List<CastingCost> costs) {
-        this(costs, Set.of(), null, false, false);
+        this(costs, Set.of(), null, false, false, false);
     }
 
     public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes) {
-        this(costs, prowlDamageSubtypes, null, false, false);
+        this(costs, prowlDamageSubtypes, null, false, false, false);
     }
 
     /** Convenience constructor for prowl with a single qualifying creature subtype. */
     public AlternateHandCast(List<CastingCost> costs, CardSubtype prowlDamageSubtype) {
-        this(costs, Set.of(prowlDamageSubtype), null, false, false);
+        this(costs, Set.of(prowlDamageSubtype), null, false, false, false);
     }
 
     /**
@@ -46,7 +47,7 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * timing (e.g. Qasali Ambusher's free "as though it had flash" cast).
      */
     public AlternateHandCast(List<CastingCost> costs, Condition availabilityCondition, boolean grantsFlash) {
-        this(costs, Set.of(), availabilityCondition, grantsFlash, false);
+        this(costs, Set.of(), availabilityCondition, grantsFlash, false, false);
     }
 
     /**
@@ -54,7 +55,12 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * sacrificed permanent's mana value.
      */
     public AlternateHandCast(List<CastingCost> costs, boolean reduceManaBySacrificedManaValue) {
-        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue);
+        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue, false);
+    }
+
+    /** Convenience factory for offering alternate costs. */
+    public static AlternateHandCast offering(List<CastingCost> costs) {
+        return new AlternateHandCast(costs, Set.of(), null, true, false, true);
     }
 
     @Override

@@ -1,59 +1,114 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CastingCost;
+import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 /**
- * Static effect declaring that a card has splice — an optional additional cost paid while casting
+ * Static effect declaring that a card has splice, an optional additional cost paid while casting
  * a spell that meets the quality requirement (CR 702.47).
  *
- * <p>"Splice onto [quality] [cost]" means: as you cast a spell with that quality (e.g. Arcane),
- * you may reveal this card from your hand and pay the splice cost. If you do, this card's effects
- * are added to that spell; the spliced card remains in your hand.
+ * <p>Costs are represented as the same composable casting-cost components used by alternate
+ * casting options. The compatibility constructors and accessors keep existing tap, return, and
+ * graveyard-exile splice cards on the same representation as newer splice cards with sacrifice
+ * costs and splice-only effects.
  *
- * <p>A splice cost may also be non-mana: "Tap an untapped white creature you control"
- * (Hundred-Talon Strike, {@code tapCost}) or "Return a blue creature you control to its owner's
- * hand" (Veil of Secrecy, {@code returnCost}). Either way the permanent is chosen when casting the
- * host spell and rides on the {@code spliceCostPermanentIds} list of
- * {@code GameService.playCardWithSplice}, one id per spliced card that has such a cost, in the same
- * order as the spliced cards. Paying this way is a cost, not a {@code {T}} activation cost, so a
- * summoning-sick creature may be tapped. A splice cost has at most one permanent component.
- *
- * <p>{@code exileFromGraveyardCount} covers the third non-mana shape, "Exile four cards from your
- * graveyard" (Horobi's Whisper). The cards are taken from the bottom (oldest) of the caster's
- * graveyard: splice has no client-side choice UI yet, so the engine picks deterministically rather
- * than leaving the cost unpayable. Not enough cards in the graveyard means the cost cannot be paid
- * and the cast is rejected.
- *
- * @param ontoSubtype              the subtype the host spell must have (e.g. {@link CardSubtype#ARCANE})
- * @param cost                     the splice mana cost (e.g. "{2}{R}{R}"); empty when the cost is non-mana
- * @param tapCost                  filter for the untapped permanent that must be tapped, or null when there is none
- * @param returnCost               filter for the permanent that must be returned to its owner's hand, or null
- * @param exileFromGraveyardCount  how many cards must be exiled from the caster's graveyard, or 0 for none
+ * @param ontoSubtype the subtype the host spell must have (e.g. {@link CardSubtype#ARCANE})
+ * @param costs the splice cost components
+ * @param splicedEffects additional effects to add only when this card is spliced; the card's
+ *                      SPELL effects are included as well
  */
-public record SpliceEffect(CardSubtype ontoSubtype, String cost, PermanentPredicate tapCost,
-                           PermanentPredicate returnCost, int exileFromGraveyardCount) implements CardEffect {
+public record SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs,
+                           List<CardEffect> splicedEffects) implements CardEffect {
 
-    public SpliceEffect(CardSubtype ontoSubtype, String cost) {
-        this(ontoSubtype, cost, null, null, 0);
+    public SpliceEffect {
+        costs = List.copyOf(Objects.requireNonNull(costs));
+        splicedEffects = List.copyOf(Objects.requireNonNull(splicedEffects));
     }
 
-    public SpliceEffect(CardSubtype ontoSubtype, String cost, PermanentPredicate tapCost) {
-        this(ontoSubtype, cost, tapCost, null, 0);
+    public SpliceEffect(CardSubtype ontoSubtype, List<CastingCost> costs) {
+        this(ontoSubtype, costs, List.of());
+    }
+
+    public SpliceEffect(CardSubtype ontoSubtype, String manaCost) {
+        this(ontoSubtype, manaCosts(manaCost), List.of());
+    }
+
+    /** Compatibility constructor for "tap an untapped permanent" splice costs. */
+    public SpliceEffect(CardSubtype ontoSubtype, String manaCost, PermanentPredicate tapCost) {
+        this(ontoSubtype, costsWithMana(manaCost, new TapUntappedPermanentsCost(1, tapCost)), List.of());
     }
 
     /** Splice cost whose only component is returning a matching permanent you control to hand. */
     public static SpliceEffect returning(CardSubtype ontoSubtype, PermanentPredicate returnCost) {
-        return new SpliceEffect(ontoSubtype, "", null, returnCost, 0);
+        return new SpliceEffect(ontoSubtype, List.of(new ReturnPermanentsCost(1, returnCost)), List.of());
     }
 
     /** Splice cost whose only component is exiling {@code count} cards from your graveyard. */
     public static SpliceEffect exilingGraveyard(CardSubtype ontoSubtype, int count) {
-        return new SpliceEffect(ontoSubtype, "", null, null, count);
+        return new SpliceEffect(ontoSubtype,
+                List.of(new ExileTopCardsFromGraveyardCastingCost(null, "a card", count)), List.of());
     }
 
-    /** The permanent-choice component of this splice cost, or null when the cost is mana-only. */
+    /** The mana portion of this splice cost, or an empty string when it has no mana component. */
+    public String cost() {
+        return costs.stream()
+                .filter(ManaCastingCost.class::isInstance)
+                .map(ManaCastingCost.class::cast)
+                .map(ManaCastingCost::manaCost)
+                .collect(Collectors.joining());
+    }
+
+    /** The tap filter, or null when this splice cost does not tap a permanent. */
+    public PermanentPredicate tapCost() {
+        return costs.stream()
+                .filter(TapUntappedPermanentsCost.class::isInstance)
+                .map(TapUntappedPermanentsCost.class::cast)
+                .map(TapUntappedPermanentsCost::filter)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** The return filter, or null when this splice cost does not return a permanent. */
+    public PermanentPredicate returnCost() {
+        return costs.stream()
+                .filter(ReturnPermanentsCost.class::isInstance)
+                .map(ReturnPermanentsCost.class::cast)
+                .map(ReturnPermanentsCost::filter)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** The permanent-choice component of this splice cost, or null when it has none. */
     public PermanentPredicate permanentCost() {
-        return tapCost != null ? tapCost : returnCost;
+        PermanentPredicate tap = tapCost();
+        return tap != null ? tap : returnCost();
+    }
+
+    /** The number of cards exiled from the graveyard by this splice cost. */
+    public int exileFromGraveyardCount() {
+        return costs.stream()
+                .filter(ExileTopCardsFromGraveyardCastingCost.class::isInstance)
+                .mapToInt(cost -> ((ExileTopCardsFromGraveyardCastingCost) cost).count())
+                .sum();
+    }
+
+    private static List<CastingCost> manaCosts(String manaCost) {
+        return manaCost == null || manaCost.isBlank() ? List.of() : List.of(new ManaCastingCost(manaCost));
+    }
+
+    private static List<CastingCost> costsWithMana(String manaCost, CastingCost additionalCost) {
+        List<CastingCost> costs = new ArrayList<>(manaCosts(manaCost));
+        costs.add(additionalCost);
+        return costs;
     }
 }

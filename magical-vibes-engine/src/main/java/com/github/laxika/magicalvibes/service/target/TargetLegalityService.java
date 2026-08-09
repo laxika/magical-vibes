@@ -560,6 +560,13 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public void validateSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                       UUID targetId, Zone targetZone, UUID controllerId,
+                                       boolean needsTarget, int xValue) {
+        checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId, needsTarget, xValue)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
         return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card), 0);
     }
@@ -569,6 +576,13 @@ public class TargetLegalityService {
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget, int xValue) {
+        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+                controllerId, needsTarget, xValue);
+    }
+
+    private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                                 UUID targetId, Zone targetZone, UUID controllerId,
+                                                 boolean needsTarget, int xValue) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
             return Optional.of("Invalid target");
@@ -579,10 +593,11 @@ public class TargetLegalityService {
             // unwrapped by SpellCastingService and the mode-specific effects/filters handle
             // validation downstream.  computeAllowedTargets(card) uses the raw (unresolved)
             // ChooseOneEffect which doesn't expose inner target types.
-            boolean isModal = card.getEffects(EffectSlot.SPELL).stream()
+            boolean isModal = spellEffects.stream()
                     .anyMatch(ChooseOneEffect.class::isInstance);
             if (!isModal) {
-                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
+                        spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.isAura(), card.isEnchantPlayer());
 
                 if (target != null && !allowedTargets.contains(TargetType.PERMANENT)) {
                     return Optional.of("This spell can only target players");
@@ -634,7 +649,7 @@ public class TargetLegalityService {
             if (filterReason.isPresent()) return filterReason;
         }
 
-        Optional<String> effectReason = targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.SPELL),
+        Optional<String> effectReason = targetValidationService.checkEffectTargets(spellEffects,
                 new TargetValidationContext(gameData, targetId, targetZone, card));
         if (effectReason.isPresent()) return effectReason;
 

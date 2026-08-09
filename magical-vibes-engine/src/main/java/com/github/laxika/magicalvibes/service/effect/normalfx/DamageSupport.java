@@ -111,6 +111,10 @@ public class DamageSupport {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
+        if (damageSource != null
+                && (entry == null || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
+            rawDamage *= gameQueryService.getPermanentDamageMultiplier(gameData, damageSource.getId());
+        }
         // Energy Storm: prevent damage dealt by instant/sorcery spells themselves (not fight/bite
         // damage from permanents that a spell merely caused to deal damage).
         if (damageSource == null && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {

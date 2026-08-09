@@ -365,9 +365,19 @@ public class GameQueryService {
         if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
             return true;
         }
-        if (permanent.getPersistentRemovedSupertypes().contains(supertype)
-                || !permanent.getCard().getSupertypes().contains(supertype)) {
+        if (permanent.getPersistentRemovedSupertypes().contains(supertype)) {
             return false;
+        }
+        CharacteristicState activeState = gameData != null
+                ? LayerSystemService.activeStateFor(permanent.getId()) : null;
+        if (activeState != null) {
+            return activeState.hasSupertype(supertype);
+        }
+        if (!permanent.getCard().getSupertypes().contains(supertype)) {
+            if (gameData == null) {
+                return false;
+            }
+            return computeStaticBonus(gameData, permanent).grantedSupertypes().contains(supertype);
         }
         if (gameData == null) {
             return true;
@@ -2346,6 +2356,11 @@ public class GameQueryService {
 
         // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
         CharacteristicState state = board.states().get(target.getId());
+        if (state != null) {
+            Set<CardSupertype> layeredGrantedSupertypes = new HashSet<>(state.getSupertypes());
+            layeredGrantedSupertypes.removeAll(target.getCard().getSupertypes());
+            accumulator.getGrantedSupertypes().addAll(layeredGrantedSupertypes);
+        }
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             // A self-including scope (ALL_LANDS_INCLUDING_SELF, ALL_CREATURES_INCLUDING_SELF)
@@ -4227,7 +4242,8 @@ public class GameQueryService {
         }
         UUID controllerId = entry != null ? entry.getControllerId() : null;
         return (damage + bonus) * getDamageMultiplier(gameData)
-                * getControllerDamageMultiplier(gameData, controllerId, entry, false);
+                * getControllerDamageMultiplier(gameData, controllerId, entry, false)
+                * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
     }
 
     /**
@@ -4302,6 +4318,21 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the turn-scoped damage multiplier for a specific permanent. Multiple effects on the
+     * same permanent stack multiplicatively.
+     */
+    public int getPermanentDamageMultiplier(GameData gameData, UUID permanentId) {
+        if (permanentId == null) return 1;
+
+        int doublings = gameData.permanentDamageDoublingsThisTurn.getOrDefault(permanentId, 0);
+        int multiplier = 1;
+        for (int i = 0; i < doublings; i++) {
+            multiplier *= 2;
+        }
+        return multiplier;
+    }
+
+    /**
      * Returns {@code true} if the given stack entry represents an instant or sorcery spell
      * that should have lifelink due to a {@link GrantLifelinkToControllerSpellsByColorEffect}
      * on the controller's battlefield. The spell's color must match the effect's required color.
@@ -4364,6 +4395,7 @@ public class GameQueryService {
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
+        result *= getPermanentDamageMultiplier(gameData, source.getId());
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);

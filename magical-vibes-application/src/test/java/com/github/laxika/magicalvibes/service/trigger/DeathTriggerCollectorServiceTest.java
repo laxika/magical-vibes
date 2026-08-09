@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyi
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -410,6 +412,23 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD);
             Permanent perm = new Permanent(card);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Multi-target graveyard return queues DeathTriggerTarget")
+        void multiTargetGraveyardReturnQueuesDeathTriggerTarget() {
+            Card card = createCreature("Forked-Branch Garami", 4, 4);
+            var effect = new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
+            Permanent perm = new Permanent(card);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+            when(graveyardTargetingSupport.findTarget(List.of(effect))).thenReturn(
+                    new com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.Target(
+                            null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to your hand", 2));
 
             svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 

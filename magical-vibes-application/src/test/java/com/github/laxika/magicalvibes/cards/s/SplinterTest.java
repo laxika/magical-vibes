@@ -75,6 +75,6 @@ class SplinterTest extends BaseCardTest {
 
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
-                .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(IllegalStateException.class);
     }
 }

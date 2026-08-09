@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmen
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
+import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -85,6 +87,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -121,6 +124,7 @@ public class ActivatedAbilityExecutionService {
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final EquipSupport equipSupport;
     private final GameMutationCoordinator mutationCoordinator;
 
     /**
@@ -310,6 +314,21 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        Card unattachedEquipmentCard = null;
+        boolean shouldUnattachEquipment = abilityEffects.stream().anyMatch(UnattachSourceEquipmentCost.class::isInstance);
+        if (shouldUnattachEquipment) {
+            Permanent equipment = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment == null || !equipment.isAttached()) {
+                throw new IllegalStateException("The granting Equipment is not attached");
+            }
+            unattachedEquipmentCard = equipment.getCard();
+            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, equipment.getAttachedTo(), null);
+            equipment.setAttachedTo(null);
+            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        }
+
         List<StackEntry> deferredCostTriggers = List.of();
         if (gameData.stack.size() > stackBeforeCosts) {
             deferredCostTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
@@ -413,6 +432,8 @@ public class ActivatedAbilityExecutionService {
         // Per MTG rulings: "The source of the damage is Blazing Torch, not the equipped creature."
         if (sacrificedEquipmentCard != null && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setDamageSourceCard(sacrificedEquipmentCard);
+        } else if (unattachedEquipmentCard != null && !gameData.stack.isEmpty()) {
+            gameData.stack.getLast().setDamageSourceCard(unattachedEquipmentCard);
         }
         // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
@@ -450,6 +471,12 @@ public class ActivatedAbilityExecutionService {
                 // equipped creature, and the Equipment may no longer be attached to it.
                 snapshotEffects.add(new PutCountersOnGrantingEquipmentEffect(grantCounters.counterType(),
                         grantCounters.count(), ability.getGrantSourcePermanentId()));
+            } else if (effect instanceof TargetPermanentControllerGainsControlOfGrantingEquipmentEffect gainControl) {
+                boolean sourceHadExcludedSubtype = gainControl.excludedSourceSubtype() != null
+                        && GameQueryService.permanentHasSubtype(permanent, gainControl.excludedSourceSubtype());
+                snapshotEffects.add(new TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
+                        gainControl.duration(), gainControl.excludedSourceSubtype(),
+                        ability.getGrantSourcePermanentId(), sourceHadExcludedSubtype));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof MustBlockSourceEffect) {

@@ -505,6 +505,10 @@ new EquipActivatedAbility(manaCost)
 
 Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `WhispersilkCloak` ({2})
 
+For an ability granted by an Equipment that uses "Unattach [this Equipment]" as a cost, use
+`new UnattachSourceEquipmentCost()` before the ability's resolving effects. The activation flow
+detaches the granting Equipment and leaves it on the battlefield.
+
 For "this Equipment can be attached only to …" use the three-argument overload
 `new EquipActivatedAbility(manaCost, restrictionPredicate, failureMessage)`, which ANDs the
 predicate onto the "creature you control" filter, **and** call `setAttachRestriction(predicate)` on

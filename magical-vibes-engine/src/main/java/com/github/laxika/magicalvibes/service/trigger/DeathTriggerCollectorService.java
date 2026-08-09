@@ -84,8 +84,11 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -448,30 +451,53 @@ public class DeathTriggerCollectorService {
     boolean handleDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        CardEffect triggerEffect = snapshotDynamicMaxManaValue(match, effect, sd);
         // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
         // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
         // to a graveyard card choice made as the trigger goes on the stack.
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect))
             ));
         } else {
             // A ConditionalEffect's intervening-"if" may be about the dying permanent itself
             // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
             // permanent has already left the battlefield — turn-scoped trackers are keyed by id.
-            UUID sourcePermanentId = effect instanceof ConditionalEffect ? match.permanent().getId() : null;
+            UUID sourcePermanentId = triggerEffect instanceof ConditionalEffect ? match.permanent().getId() : null;
             match.gameData().stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sd.dyingCard(),
                     sd.controllerId(),
                     sd.dyingCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(List.of(triggerEffect)),
                     null,
                     sourcePermanentId
             ));
         }
         return true;
+    }
+
+    private CardEffect snapshotDynamicMaxManaValue(TriggerMatchContext match, CardEffect effect,
+                                                    TriggerContext.SelfDeath death) {
+        if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
+                || returnEffect.dynamicMaxManaValue() == null) {
+            return effect;
+        }
+
+        Permanent dyingPermanent = death.dyingPermanent() != null
+                ? death.dyingPermanent() : match.permanent();
+        int maxManaValue = amountEvaluationService.evaluateAtDeath(
+                match.gameData(), returnEffect.dynamicMaxManaValue(), death.controllerId(), dyingPermanent);
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
+        CardPredicate filter = returnEffect.filter() == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
+        return returnEffect.toBuilder()
+                .filter(filter)
+                .dynamicMaxManaValue(null)
+                .build();
     }
 
     // ── ON_ALLY_CREATURE_DIES (may effects only — non-may effects are batched by orchestrator) ──

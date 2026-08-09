@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
@@ -1172,6 +1173,12 @@ public class LayerSystemService {
                     states.get(target.permanent().getId()).addSupertype(grant.supertype());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, null, grant.supertype()));
+                }
+            }
+            case GrantSupertypeUntilEndOfTurnEffect grant -> {
+                if (instance.floating() == null) return;
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).addSupertype(grant.supertype());
                 }
             }
             case GrantChosenSubtypeToOwnCreaturesEffect grant -> {

@@ -549,14 +549,17 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * "Whenever a [subtype] creature enters, you may attach this Equipment to it" (Cloak and Dagger).
-     * The subtype gate is applied upstream by {@code TriggeringCardConditionalEffect}; here we resolve
-     * the entering permanent (which may be under any player's control) and queue a "you may attach"
-     * whose {@code targetId} is that creature and {@code sourcePermanentId} is this Equipment.
+     * Resolves an Equipment attachment to the creature that caused the enter trigger. Optional
+     * markers queue the existing may-attach flow; mandatory markers queue a non-targeting stack
+     * entry with the entering permanent already identified.
      */
-    @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAnyCreatureAttachEquipment(TriggerMatchContext match,
+    @CollectsTriggers({
+            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureAttachEquipment(TriggerMatchContext match,
             AttachSourceEquipmentToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
@@ -565,13 +568,27 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to attach to.
             return true;
         }
-        var may = new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
-                "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                enteringPermanentId, match.permanent().getId());
+        if (effect.optional()) {
+            var may = new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
+                    "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(new AttachSourceEquipmentToTargetCreatureEffect())),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+        }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (may attach equipment)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        log.info("Game {} - {} triggers for {} entering ({} attach equipment)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
+                effect.optional() ? "may" : "mandatory");
         return true;
     }
 

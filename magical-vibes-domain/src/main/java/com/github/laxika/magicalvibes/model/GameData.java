@@ -582,6 +582,12 @@ public class GameData {
      */
     public final Map<UUID, Integer> controllerDamageDoublingsThisTurn = new ConcurrentHashMap<>();
     /**
+     * Per-permanent count of effects that double damage dealt by that permanent this turn
+     * (Overblaze). Each instance doubles the damage again, so the multiplier is {@code 2^count}.
+     * Cleared at turn cleanup.
+     */
+    public final Map<UUID, Integer> permanentDamageDoublingsThisTurn = new ConcurrentHashMap<>();
+    /**
      * Active "whenever a card is put into an opponent's graveyard from anywhere this turn, that
      * player loses 1 life" delayed triggers (Duskmantle Guildmage). One entry per activation, so
      * repeated activations stack. Cleared at turn cleanup.
@@ -2310,6 +2316,25 @@ public class GameData {
     }
 
     /**
+     * Puts a resolution-time May ability on the stack while preserving the combat target that
+     * defines a non-targeting defending-player effect.
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, UUID attackedTargetId) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                targetCardId,
+                sourcePermanentId
+        );
+        entry.setAttackedTargetId(attackedTargetId);
+        stack.add(entry);
+    }
+
+    /**
      * Same as {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID)} but also snapshots an
      * {@code eventValue} (e.g. combat damage dealt) onto the stack entry so that the wrapped effect
      * can reference "that many" via an {@code EventValue} amount at resolution time (e.g.
@@ -2511,6 +2536,7 @@ public class GameData {
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
+        copy.permanentDamageDoublingsThisTurn.putAll(this.permanentDamageDoublingsThisTurn);
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);

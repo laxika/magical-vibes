@@ -917,9 +917,8 @@ public class GameTestHarness {
     }
 
     /**
-     * Casts with splice where some spliced card has a non-mana "tap a permanent" splice cost
-     * (Hundred-Talon Strike): {@code spliceCostPermanentIds} holds one permanent id per such card,
-     * in the order those cards appear in {@code spliceHandCardIndices}.
+     * Casts with splice where selected spliced cards have non-mana costs. The permanent ids are
+     * consumed in the order required by those costs.
      */
     public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices,
                                List<UUID> spliceCostPermanentIds) {

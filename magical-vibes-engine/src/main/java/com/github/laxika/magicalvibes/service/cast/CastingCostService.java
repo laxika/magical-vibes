@@ -542,6 +542,13 @@ public class CastingCostService {
         if (manaCost.isPresent()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaCost cost = new ManaCost(manaCost.get().manaCost());
+            if (altCast.reduceManaBySacrificedManaCost() && sacCost.isPresent() && battlefield != null
+                    && sacCost.get().count() == 1) {
+                return battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
+                        .map(this::manaCostOf)
+                        .anyMatch(reduction -> cost.canPayAfterReduction(pool, reduction));
+            }
             // Emerge: optimistically reduce by the highest mana value among sacrificeable permanents.
             int emergeReduction = 0;
             if (altCast.reduceManaBySacrificedManaValue() && sacCost.isPresent() && battlefield != null) {
@@ -555,6 +562,11 @@ public class CastingCostService {
         }
 
         return true;
+    }
+
+    private ManaCost manaCostOf(Permanent permanent) {
+        String manaCost = permanent.getCard().getManaCost();
+        return new ManaCost(manaCost == null ? "{0}" : manaCost);
     }
 
     /**

@@ -100,6 +100,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Phasing", Keyword.PHASING);
         KEYWORD_MAP.put("Buyback", Keyword.BUYBACK);
         KEYWORD_MAP.put("Evolve", Keyword.EVOLVE);
+        KEYWORD_MAP.put("Offering", Keyword.OFFERING);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */
