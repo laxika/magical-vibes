@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "144")
+@CardRegistration(set = "M19", collectorNumber = "255")
 public class RuptureSpire extends Card {
 
     public RuptureSpire() {

@@ -142,6 +142,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (pair with {@code DrawCardEffect}). */
     ON_BECOMES_TARGET_OF_AURA_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+    /** Triggers when the controller of a permanent with this slot becomes the target of a spell or
+     * ability controlled by an opponent. The targeted player is not a permanent, so this is checked
+     * from the player-target paths in {@code TriggerCollectionService}. */
+    ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     ON_ANY_CREATURE_DIES,
     ON_ALLY_NONTOKEN_CREATURE_DIES,
     ON_ANY_NONTOKEN_CREATURE_DIES,
@@ -588,6 +592,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever one or more creature cards leave the controller's graveyard. */
+    ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */

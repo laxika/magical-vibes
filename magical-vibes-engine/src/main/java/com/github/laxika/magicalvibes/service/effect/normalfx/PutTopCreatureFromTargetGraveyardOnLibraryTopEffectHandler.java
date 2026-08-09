@@ -47,7 +47,7 @@ public class PutTopCreatureFromTargetGraveyardOnLibraryTopEffectHandler implemen
         }
 
         graveyard.removeLast();
-        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, topCard);
         graveyardReturnSupport.moveCardToDestination(gameData, targetPlayerId, topCard,
                 GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY, null, null, false);
     }

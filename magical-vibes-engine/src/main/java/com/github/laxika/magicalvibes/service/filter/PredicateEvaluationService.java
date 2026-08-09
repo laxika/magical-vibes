@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
@@ -378,6 +379,9 @@ public class PredicateEvaluationService {
                 }
                 // "Becomes a [creature type]" (Boldwyr Intimidator) replaces every creature subtype
                 // with the single override, overwriting base/transient/granted types and Changeling.
+                if (creatureSubtype && !permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+                    yield permanent.getTransientCreatureTypeOverrides().contains(hasSubtypePredicate.subtype());
+                }
                 if (creatureSubtype && permanent.getTransientCreatureTypeOverride() != null) {
                     yield permanent.getTransientCreatureTypeOverride() == hasSubtypePredicate.subtype();
                 }
@@ -961,6 +965,14 @@ public class PredicateEvaluationService {
                 yield chosenSubtype != null
                         && matchesPermanentPredicate(permanent, new PermanentHasSubtypePredicate(chosenSubtype), filterContext);
             }
+            case PermanentHasSourceChosenNamePredicate ignored -> {
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                }
+                String chosenName = sourcePermanent == null ? null : sourcePermanent.getChosenName();
+                yield chosenName != null && chosenName.equals(permanent.getCard().getName());
+            }
             case PermanentNamedPredicate namedPredicate ->
                     permanent.getCard().getName().equals(namedPredicate.cardName());
             case PermanentNameInPredicate nameInPredicate ->
@@ -1083,6 +1095,11 @@ public class PredicateEvaluationService {
                 CardSubtype chosen = sourceChosenSubtype(context);
                 yield chosen != null
                         && matchesStaticLeaf(permanent, new PermanentHasSubtypePredicate(chosen));
+            }
+            case PermanentHasSourceChosenNamePredicate ignored -> {
+                Permanent source = context == null ? null : context.sourcePermanentSnapshot();
+                String chosenName = source == null ? null : source.getChosenName();
+                yield chosenName != null && chosenName.equals(permanent.getCard().getName());
             }
             case PermanentColorInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -1277,6 +1294,9 @@ public class PredicateEvaluationService {
             return layered.getSubtypes().stream()
                     .filter(gameQueryService::isCreatureSubtype)
                     .collect(java.util.stream.Collectors.toSet());
+        }
+        if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+            return new HashSet<>(permanent.getTransientCreatureTypeOverrides());
         }
         if (permanent.getTransientCreatureTypeOverride() != null) {
             return Set.of(permanent.getTransientCreatureTypeOverride());

@@ -126,9 +126,9 @@ public class StackEntry {
      */
     @Setter private Permanent sourcePermanentSnapshot;
     /**
-     * The permanent chosen while activating this ability (e.g. the creature tapped to pay a
-     * {@code TapCreatureCost}). Read back at resolution by the {@code ChosenPermanentPower} dynamic
-     * amount so an effect can scale to that creature's power as the ability resolves (Impelled Giant).
+     * The permanent chosen while activating an ability or resolving a library selection. Read back
+     * at resolution by the {@code ChosenPermanentPower} dynamic amount so an effect can scale to
+     * that permanent's power as the ability resolves.
      */
     @Setter private UUID chosenPermanentId;
     /**

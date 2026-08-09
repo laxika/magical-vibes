@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "129")
+@CardRegistration(set = "M19", collectorNumber = "139")
 public class Electrify extends Card {
 
     public Electrify() {

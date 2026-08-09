@@ -78,7 +78,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
         if (candidates.size() == 1) {
             Card card = candidates.getFirst();
             graveyard.remove(card);
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
             exileService.exileCard(gameData, controllerId, card);
             gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" from their graveyard (" + sourceName + ").").build());
         } else {

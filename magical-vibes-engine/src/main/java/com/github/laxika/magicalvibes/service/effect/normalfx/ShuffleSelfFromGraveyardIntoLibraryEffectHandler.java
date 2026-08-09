@@ -45,7 +45,7 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
 
         gameData.playerDecks.get(ownerId).add(sourceCard);
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId, sourceCard);
 
         String playerName = gameData.playerIdToName.get(ownerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles ", sourceCard, " into their library."));

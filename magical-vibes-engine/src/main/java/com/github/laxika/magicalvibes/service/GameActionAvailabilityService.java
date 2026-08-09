@@ -100,6 +100,9 @@ public class GameActionAvailabilityService {
         VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
         Map<UUID, List<Integer>> result = new HashMap<>();
         for (Permanent perm : battlefield) {
+            if (perm.isFaceDown()) {
+                continue;
+            }
             List<ActivatedAbility> abilities = perm.getCard().getActivatedAbilities();
             List<Integer> payable = new ArrayList<>();
             VirtualManaPool poolWithoutSource = null;

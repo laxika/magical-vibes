@@ -50,6 +50,7 @@ public enum GrantScope {
     ALL_PERMANENTS,
     ENCHANTED_PLAYER_CREATURES,
     OWN_LANDS,
+    OPPONENT_LANDS,
     /** All lands on the battlefield, regardless of controller (Natural Affinity). */
     ALL_LANDS,
     /**

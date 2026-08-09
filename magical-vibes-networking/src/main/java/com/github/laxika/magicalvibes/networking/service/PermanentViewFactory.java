@@ -73,14 +73,14 @@ public class PermanentViewFactory {
         Set<Keyword> allRemovedKeywords = new HashSet<>(p.getRemovedKeywords());
         allRemovedKeywords.addAll(staticRemovedKeywords);
         // When creature loses all abilities, add card's own keywords to removed set
-        if (losesAllAbilities) {
+        if (losesAllAbilities && !p.isFaceDown()) {
             allRemovedKeywords.addAll(p.getCard().getKeywords());
         }
         // A keyword granted again after the removal/ability loss (later CR 613.7 timestamp) is
         // present in the final layered keyword set and must not be displayed as removed.
         allRemovedKeywords.removeAll(bonusKeywords);
         allKeywords.removeAll(allRemovedKeywords);
-        CardView cardView = cardViewFactory.create(p.getCard());
+        CardView cardView = p.isFaceDown() ? createFaceDownCardView(p) : cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);
@@ -125,6 +125,59 @@ public class PermanentViewFactory {
         );
     }
 
+    private CardView createFaceDownCardView(Permanent permanent) {
+        Set<CardType> cardTypes = EnumSet.copyOf(permanent.getFaceDownCardTypes().isEmpty()
+                ? Set.of(CardType.CREATURE) : permanent.getFaceDownCardTypes());
+        CardType primaryType = cardTypes.contains(CardType.CREATURE)
+                ? CardType.CREATURE : cardTypes.iterator().next();
+        cardTypes.remove(primaryType);
+        return cardViewFactory.create(permanent.getCard()).toBuilder()
+                .name(null)
+                .type(primaryType)
+                .additionalTypes(cardTypes)
+                .supertypes(Set.of())
+                .subtypes(List.of())
+                .cardText(null)
+                .manaCost(null)
+                .power(permanent.getFaceDownPower())
+                .toughness(permanent.getFaceDownToughness())
+                .keywords(Set.of())
+                .hasTapAbility(false)
+                .setCode(null)
+                .collectorNumber(null)
+                .color(null)
+                .colors(List.of())
+                .colorIdentity(List.of())
+                .needsTarget(false)
+                .needsSpellTarget(false)
+                .activatedAbilities(List.of())
+                .loyalty(null)
+                .hasConvoke(false)
+                .hasPhyrexianMana(false)
+                .phyrexianManaCount(0)
+                .token(false)
+                .watermark(null)
+                .hasAlternateCastingCost(false)
+                .alternateCostLifePayment(0)
+                .alternateCostSacrificeCount(0)
+                .alternateCostTapCount(0)
+                .alternateCostReturnCount(0)
+                .alternateCostManaCost(null)
+                .alternateCostExileHandCount(0)
+                .alternateCostExileHandLabel(null)
+                .graveyardActivatedAbilities(List.of())
+                .handActivatedAbilities(List.of())
+                .transformable(false)
+                .kickerCost(null)
+                .buybackCost(null)
+                .modalChoicesRequired(0)
+                .modalChoicesMax(0)
+                .modalOptional(false)
+                .modalOptions(null)
+                .prepareSpell(null)
+                .build();
+    }
+
     private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
         if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()
                 && p.getUntilNextTurnSubtypes().isEmpty()
@@ -152,7 +205,7 @@ public class PermanentViewFactory {
     }
 
     private CardView applyAwakeningCounterSubtype(CardView cardView, Permanent p) {
-        if (p.getCounterCount(CounterType.AWAKENING) <= 0 || p.getCard().hasType(CardType.CREATURE)) {
+        if (p.isFaceDown() || p.getCounterCount(CounterType.AWAKENING) <= 0 || p.getCard().hasType(CardType.CREATURE)) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());

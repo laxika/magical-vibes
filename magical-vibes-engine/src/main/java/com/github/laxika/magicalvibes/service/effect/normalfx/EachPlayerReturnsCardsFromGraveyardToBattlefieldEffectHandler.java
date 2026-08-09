@@ -70,7 +70,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                 try {
                     for (Card card : matching) {
                         graveyard.remove(card);
-                        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
                         graveyardReturnSupport.putCardOntoBattlefield(gameData, playerId, card,
                                 null, null, false, false, e.enterWithCounter());
                         returnedNames.add(card.getName());

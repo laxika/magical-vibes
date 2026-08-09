@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "197")
+@CardRegistration(set = "M19", collectorNumber = "191")
 public class Oakenform extends Card {
 
     public Oakenform() {

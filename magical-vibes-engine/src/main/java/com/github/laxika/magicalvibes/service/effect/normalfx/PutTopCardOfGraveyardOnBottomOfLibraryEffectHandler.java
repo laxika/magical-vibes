@@ -37,7 +37,7 @@ public class PutTopCardOfGraveyardOnBottomOfLibraryEffectHandler implements Norm
         }
 
         Card topCard = graveyard.removeLast();
-        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, topCard);
         graveyardReturnSupport.moveCardToDestination(gameData, controllerId, topCard,
                 GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY, null, null, false);
     }

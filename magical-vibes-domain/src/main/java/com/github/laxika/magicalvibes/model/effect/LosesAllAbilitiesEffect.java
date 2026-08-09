@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Causes permanents matching the given scope to lose all abilities.
  * Keywords, activated abilities, triggered abilities, and static abilities of the
@@ -13,13 +15,23 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by cards like Merfolk Trickster. Resolved by {@code KeywordGrantResolutionService}.
  *
  * @param scope    which permanents are affected (ENCHANTED_CREATURE, TARGET, etc.)
+ * @param filter   optional additional permanent filter
  * @param duration how long the effect lasts
  */
-public record LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration) implements CardEffect {
+public record LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filter,
+                                      EffectDuration duration) implements CardEffect {
 
     /** Convenience constructor defaulting to {@link EffectDuration#CONTINUOUS}. */
     public LosesAllAbilitiesEffect(GrantScope scope) {
-        this(scope, EffectDuration.CONTINUOUS);
+        this(scope, null, EffectDuration.CONTINUOUS);
+    }
+
+    public LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration) {
+        this(scope, null, duration);
+    }
+
+    public LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filter) {
+        this(scope, filter, EffectDuration.CONTINUOUS);
     }
 
     @Override
@@ -29,6 +41,9 @@ public record LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration)
         }
         if (scope == GrantScope.OWN_CREATURES) {
             return TargetSpec.NONE;
+        }
+        if (scope == GrantScope.SELF) {
+            return new TargetSpec(null, false, null, true, 1);
         }
         return duration == EffectDuration.UNTIL_END_OF_TURN
                 ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;

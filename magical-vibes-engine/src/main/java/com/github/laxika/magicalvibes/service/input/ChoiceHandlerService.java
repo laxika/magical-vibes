@@ -1884,7 +1884,7 @@ public class ChoiceHandlerService {
             try {
                 for (Card card : toReturn) {
                     graveyard.remove(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     gameData.addCardToHand(controllerId, card);
                 }
             } finally {
@@ -2448,7 +2448,7 @@ public class ChoiceHandlerService {
             graveyard.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             if (!toExile.isEmpty()) {
-                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, toExile);
             }
             exiledCount += toExile.size();
         }
@@ -2680,7 +2680,7 @@ public class ChoiceHandlerService {
                 gameData.addToExile(targetPlayerId, card);
             }
             if (!toExile.isEmpty()) {
-                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, toExile);
             }
             exiledCount += toExile.size();
         }

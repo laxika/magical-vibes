@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "HOU", collectorNumber = "88")
+@CardRegistration(set = "M19", collectorNumber = "133")
 public class CrashThrough extends Card {
 
     public CrashThrough() {

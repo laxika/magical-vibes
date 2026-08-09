@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "227")
+@CardRegistration(set = "M19", collectorNumber = "243")
 public class RoguesGloves extends Card {
 
     public RoguesGloves() {

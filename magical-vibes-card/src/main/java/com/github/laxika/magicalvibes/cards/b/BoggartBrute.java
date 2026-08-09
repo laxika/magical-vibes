@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Menace (auto-loaded from Scryfall). No card-specific engine logic.
  */
 @CardRegistration(set = "ORI", collectorNumber = "133")
+@CardRegistration(set = "M19", collectorNumber = "131")
 public class BoggartBrute extends Card {
 
     public BoggartBrute() {

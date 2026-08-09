@@ -62,6 +62,9 @@ public class StaticEffectSupport {
             CardSubtype.ISLAND,
             CardSubtype.PLAINS,
             CardSubtype.SWAMP,
+            CardSubtype.DESERT,
+            CardSubtype.GATE,
+            CardSubtype.LOCUS,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
             CardSubtype.AJANI,
@@ -119,12 +122,16 @@ public class StaticEffectSupport {
 
     /**
      * Returns true if the target matches a land-centric scope ({@link GrantScope#OWN_LANDS} /
+     * {@link GrantScope#OPPONENT_LANDS} /
      * {@link GrantScope#ALL_LANDS}) and the optional filter. The land check goes through the
      * recursion-safe static matcher rather than {@code GameQueryService}, which would re-enter
      * static-bonus assembly from inside the static pass.
      */
     public boolean matchesLandScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
         if (scope == GrantScope.OWN_LANDS && !context.targetOnSameBattlefield()) {
+            return false;
+        }
+        if (scope == GrantScope.OPPONENT_LANDS && context.targetOnSameBattlefield()) {
             return false;
         }
         return predicateEvaluationService.matchesStaticLeaf(context.target(), LAND_PREDICATE)

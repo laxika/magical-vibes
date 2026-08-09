@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "137")
+@CardRegistration(set = "M19", collectorNumber = "138")
 public class DragonEgg extends Card {
 
     public DragonEgg() {

@@ -79,10 +79,22 @@ public class PlayerInputService {
                                 UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
                                 com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
                                 String drawAndRepeatLabel, boolean putAnyNumber) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
+                putAnyNumber, false, 0, 0, Set.of());
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                                String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
-                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
-                putAnyNumber));
+                attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes));
     }
 
     /** Flash-style: choose a creature to put onto the battlefield, then pay its cost reduced by N or sacrifice it. */
@@ -739,7 +751,8 @@ public class PlayerInputService {
 
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
-            CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.AURA,
+            CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
+            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
             CardSubtype.EQUIPMENT, CardSubtype.LOCUS
     );
 
@@ -756,6 +769,11 @@ public class PlayerInputService {
      */
     public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
                                        boolean restrictToOpponentHands) {
+        return beginCardNameChoice(gameData, playerId, card, excludedTypes, restrictToOpponentHands, false);
+    }
+
+    public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
+                                       boolean restrictToOpponentHands, boolean nonbasicLandOnly) {
         ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
 
         List<String> cardNames;
@@ -766,6 +784,9 @@ public class PlayerInputService {
                 return false;
             }
             prompt = "Choose the name of a revealed card.";
+        } else if (nonbasicLandOnly) {
+            cardNames = collectNonBasicLandCardNamesInGame(gameData);
+            prompt = "Choose a nonbasic land card name.";
         } else if (excludedTypes.isEmpty()) {
             cardNames = collectAllCardNamesInGame(gameData);
             prompt = "Choose a card name.";

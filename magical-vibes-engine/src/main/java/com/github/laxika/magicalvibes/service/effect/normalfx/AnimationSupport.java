@@ -142,8 +142,14 @@ public class AnimationSupport {
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes a " + power + "/" + toughness + " creature until your next turn."));
+        if (target.isFaceDown()) {
+            gameLogService.append(gameData, GameLog.text(
+                    "A face-down permanent becomes a " + power + "/" + toughness
+                            + " creature until your next turn."));
+        } else {
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " becomes a " + power + "/" + toughness + " creature until your next turn."));
+        }
 
         log.info("Game {} - {} becomes a {}/{} creature until next turn", gameData.id, target.getCard().getName(), power, toughness);
     }

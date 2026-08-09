@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect;
 
 @CardRegistration(set = "MOR", collectorNumber = "136")
+@CardRegistration(set = "M19", collectorNumber = "201")
 public class Scapeshift extends Card {
 
     public Scapeshift() {

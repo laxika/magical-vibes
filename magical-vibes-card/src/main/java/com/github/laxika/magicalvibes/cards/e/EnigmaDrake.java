@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "198")
+@CardRegistration(set = "M19", collectorNumber = "216")
 public class EnigmaDrake extends Card {
 
     public EnigmaDrake() {

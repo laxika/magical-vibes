@@ -286,6 +286,7 @@ public class TurnCleanupService {
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
+        gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)

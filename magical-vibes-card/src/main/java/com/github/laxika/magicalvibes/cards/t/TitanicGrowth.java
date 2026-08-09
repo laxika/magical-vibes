@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "M13", collectorNumber = "195")
 @CardRegistration(set = "M15", collectorNumber = "203")
 @CardRegistration(set = "ORI", collectorNumber = "201")
+@CardRegistration(set = "M19", collectorNumber = "205")
 public class TitanicGrowth extends Card {
 
     public TitanicGrowth() {

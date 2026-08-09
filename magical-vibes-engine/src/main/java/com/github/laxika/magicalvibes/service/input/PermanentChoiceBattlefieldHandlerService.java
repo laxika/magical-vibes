@@ -1147,6 +1147,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
+        UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
+                .map(Permanent::getId)
+                .findFirst()
+                .orElse(null);
+
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -1212,9 +1218,52 @@ public class PermanentChoiceBattlefieldHandlerService {
                         ctx.sourceCard(),
                         ctx.controllerId(),
                         ctx.sourceCard().getName() + "'s effect",
-                        thenEffects
+                        thenEffects,
+                        null,
+                        sourcePermanentId
                 ));
             }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificePermanentAndBoostSelf(GameData gameData, UUID permanentId,
+                                                     PermanentChoiceContext.SacrificePermanentAndBoostSelf ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData,
+                GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        Permanent source = ctx.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+            if (battlefield != null) {
+                source = battlefield.stream()
+                        .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
+        if (source != null) {
+            source.setPowerModifier(source.getPowerModifier() + ctx.power());
+            source.setToughnessModifier(source.getToughnessModifier() + ctx.toughness());
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(source.getCard())
+                    .text(String.format(" gets %+d/%+d until end of turn.", ctx.power(), ctx.toughness()))
+                    .build());
+            log.info("Game {} - {} gets {}/{}", gameData.id, source.getCard().getName(),
+                    ctx.power(), ctx.toughness());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

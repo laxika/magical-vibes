@@ -62,7 +62,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 // Only one match — return it automatically
                 Card card = matching.getFirst();
                 graveyard.remove(card);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                 gameData.addCardToHand(controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);

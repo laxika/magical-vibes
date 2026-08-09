@@ -57,7 +57,7 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
                 if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                     deck.add(card);
                     movedNames.add(card.getName());
-                    graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, card);
                 }
             }
         } finally {

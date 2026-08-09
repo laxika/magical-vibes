@@ -172,7 +172,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             graveyard.remove(card);
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
             putAuraOntoBattlefieldAttached(gameData, host, controllerId, card, "graveyard");
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);

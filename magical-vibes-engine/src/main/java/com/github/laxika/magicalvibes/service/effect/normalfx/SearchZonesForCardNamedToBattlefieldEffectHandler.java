@@ -70,7 +70,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
             if (graveyardMatch.isPresent()) {
                 Card found = graveyardMatch.get();
                 graveyard.remove(found);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, found);
                 if (host == null) {
                     graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, found);
                 } else {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "157")
+@CardRegistration(set = "M19", collectorNumber = "162")
 public class TectonicRift extends Card {
 
     public TectonicRift() {

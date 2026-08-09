@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+
+import java.util.Set;
 
 /**
  * Lets the controller put a card from their hand onto the battlefield.
@@ -38,35 +42,50 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterTapped, boolean maxManaValueBoundedByX,
                                          boolean grantHaste, boolean sacrificeAtEndStep,
                                          boolean attachSourceEquipment, boolean enterAttacking,
-                                         boolean drawAndRepeat, boolean putAnyNumber) implements CardEffect {
+                                         boolean drawAndRepeat, boolean putAnyNumber,
+                                         boolean faceDown, int faceDownPower, int faceDownToughness,
+                                         Set<CardType> faceDownCardTypes) implements CardEffect {
+
+    public PutCardToBattlefieldEffect {
+        faceDownCardTypes = Set.copyOf(faceDownCardTypes);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber, false, 0, 0, Set.of());
+    }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label) {
-        this(predicate, label, false, false, false, false, false, false, false, false);
+        this(predicate, label, false, false, false, false, false, false, false, false, false, 0, 0, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped) {
-        this(predicate, label, enterTapped, false, false, false, false, false, false, false);
+        this(predicate, label, enterTapped, false, false, false, false, false, false, false, false, 0, 0, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false, false, false, false, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false, false, false, false, false, false, 0, 0, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
                                       boolean grantHaste, boolean sacrificeAtEndStep) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, false, false, false, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, false, false, false, false, false, 0, 0, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
                                       boolean grantHaste, boolean sacrificeAtEndStep, boolean attachSourceEquipment) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment, false, false, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment, false, false, false, false, 0, 0, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
                                       boolean grantHaste, boolean sacrificeAtEndStep, boolean attachSourceEquipment,
                                       boolean enterAttacking) {
         this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment,
-                enterAttacking, false, false);
+                enterAttacking, false, false, false, 0, 0, Set.of());
     }
 
     /** Compact ctor used by the Cultivator Colossus re-offer path (drawAndRepeat only). */
@@ -74,7 +93,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                       boolean grantHaste, boolean sacrificeAtEndStep, boolean attachSourceEquipment,
                                       boolean enterAttacking, boolean drawAndRepeat) {
         this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment,
-                enterAttacking, drawAndRepeat, false);
+                enterAttacking, drawAndRepeat, false, false, 0, 0, Set.of());
     }
 
     /**
@@ -106,5 +125,12 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
      */
     public static PutCardToBattlefieldEffect tappedAnyNumber(CardPredicate predicate, String label) {
         return new PutCardToBattlefieldEffect(predicate, label, true, false, false, false, false, false, false, true);
+    }
+
+    public static PutCardToBattlefieldEffect anyNumberFaceDown(int power, int toughness,
+                                                                 Set<CardType> cardTypes) {
+        return new PutCardToBattlefieldEffect(new CardTruePredicate(),
+                "card", false, false, false, false, false, false, false, true,
+                true, power, toughness, cardTypes);
     }
 }

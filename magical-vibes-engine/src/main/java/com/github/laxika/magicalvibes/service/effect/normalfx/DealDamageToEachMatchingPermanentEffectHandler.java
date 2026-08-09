@@ -68,7 +68,9 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
             }
         }
 
-        FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
+        FilterContext ctx = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
         for (Permanent creature : new ArrayList<>(candidates)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
             if (!gameQueryService.isCreature(gameData, creature)) continue;

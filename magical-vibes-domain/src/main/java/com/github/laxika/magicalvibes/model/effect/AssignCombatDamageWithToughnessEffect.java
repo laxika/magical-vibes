@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Static effect: creatures assign combat damage equal to their toughness rather than their power.
  *
@@ -16,12 +18,17 @@ package com.github.laxika.magicalvibes.model.effect;
  *       controller; always uses toughness regardless of power (e.g. Doran, the Siege Tower).</li>
  * </ul>
  */
-public record AssignCombatDamageWithToughnessEffect(GrantScope scope) implements CardEffect {
+public record AssignCombatDamageWithToughnessEffect(GrantScope scope, PermanentPredicate affectedPredicate)
+        implements CardEffect {
+
+    public AssignCombatDamageWithToughnessEffect(GrantScope scope) {
+        this(scope, null);
+    }
 
     /**
      * Backwards-compatible no-arg constructor defaulting to {@link GrantScope#EQUIPPED_CREATURE}.
      */
     public AssignCombatDamageWithToughnessEffect() {
-        this(GrantScope.EQUIPPED_CREATURE);
+        this(GrantScope.EQUIPPED_CREATURE, null);
     }
 }

@@ -174,6 +174,21 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.BATTLEFIELD, true);
     }
 
+    /** You may put one matching card onto the battlefield; the rest go to the bottom randomly. */
+    public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.BATTLEFIELD, true);
+    }
+
+    /** You may put one matching card onto the battlefield tapped; the rest go to the bottom randomly. */
+    public static LookAtTopCardsEffect mayPutOneMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD_TAPPED, true);
+    }
+
     /**
      * You may put any number of matching cards onto the battlefield; the rest go on the bottom of
      * the library in a random order (Nissa, Genesis Mage −10).

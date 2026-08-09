@@ -2,6 +2,10 @@
 
 All paths relative to `cards/`.
 
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Target opponent's library until instant/sorcery + free cast | `c/ChaosWand.java` | `{4}`+tap `ActivatedAbility` with `PlayerPredicateTargetFilter(OPPONENT)` + `RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect()` — the target opponent's library is revealed from the top until an instant or sorcery is found, the controller may cast it for free, and the remaining cards are bottomed randomly |
+
 ## Artifacts
 
 | Pattern | Reference | Notes |
@@ -9,6 +13,7 @@ All paths relative to `cards/`.
 | Graveyard-punisher + permanent handoff | `j/JinxedRing.java` | `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` with `DealDamageToPlayersEffect(1, CONTROLLER)` + activated `SacrificeCreatureCost` and `TargetPlayerGainsControlOfSourceCreatureEffect` targeting an opponent |
 | Enters tapped + X-scaled multi-target sac ability | `r/RunedArch.java` | STATIC `EntersTappedEffect` + `{X}`,`{T}`,`SacrificeSelfCost` ability with `MakeCreatureUnblockableEffect`, a power-≤2 creature `PermanentPredicateTargetFilter`, `minTargets 0` / `maxTargets 100` and `.withXScaledTargets()` — "X target creatures with power 2 or less can't be blocked this turn"; the paid X bounds the target count |
 | Hexproof-piercing static + sac pump | `g/GlaringSpotlight.java` | STATIC `IgnoreOpponentCreatureHexproofEffect` (target opponents' hexproof creatures as though they had none) + `{3}`, `SacrificeSelfCost` ability with `GrantKeywordEffect(HEXPROOF, OWN_CREATURES)` + `MakeAllCreaturesUnblockableEffect.ownCreatures()` |
+| Hexproof-piercing land | `d/DetectionTower.java` | `{1}`, `{T}` `IgnoreOpponentHexproofUntilEndOfTurnEffect` floating exemption (your opponents and their hexproof creatures can be targeted as though they had none until end of turn) + `{T}: Add {C}` |
 | CU + play-a-card self-sac + life ability | `j/JujuBubble.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{1}") + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(null, [SacrificeSelfEffect]) + ON_CONTROLLER_PLAYS_LAND SacrificeSelfEffect + `{2}` GainLifeEffect(1) — "play a card" = cast or land play (not put-onto-battlefield) |
 | Extra loyalty activations + end-step punisher | `t/TheChainVeil.java` | `{4},{T}` `GrantExtraLoyaltyActivationToPlaneswalkersEffect()` (each planeswalker you control gets one extra loyalty activation this turn) + CONTROLLER_END_STEP_TRIGGERED `ConditionalEffect(DidntActivateLoyaltyAbilityThisTurn(), LoseLifeEffect(2))` — intervening-if gated at trigger and resolution |
 | Targeted ETB + activated ability | `c/ContagionClasp.java` | ON_ENTER_BATTLEFIELD PutCounterOnTargetPermanentEffect(MINUS_ONE_MINUS_ONE) + tap+mana ProliferateEffect activated ability |

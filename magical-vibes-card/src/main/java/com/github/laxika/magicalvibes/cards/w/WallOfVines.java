@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "199")
+@CardRegistration(set = "M19", collectorNumber = "210")
 public class WallOfVines extends Card {
 }

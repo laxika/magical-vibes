@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "319")
+@CardRegistration(set = "M19", collectorNumber = "229")
 public class CrucibleOfWorlds extends Card {
 
     public CrucibleOfWorlds() {

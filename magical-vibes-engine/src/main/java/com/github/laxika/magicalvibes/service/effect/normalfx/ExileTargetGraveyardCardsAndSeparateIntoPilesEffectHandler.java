@@ -59,7 +59,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
                     if (ownerGraveyard != null && ownerGraveyard.removeIf(c -> c.getId().equals(cardId))) {
                         exiledCards.add(card);
                         cardOwners.put(cardId, ownerId);
-                        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId, card);
                     }
                 }
             }

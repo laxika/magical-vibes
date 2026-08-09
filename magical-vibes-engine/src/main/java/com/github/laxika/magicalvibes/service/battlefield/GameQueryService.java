@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
@@ -292,6 +293,9 @@ public class GameQueryService {
     }
 
     private boolean hasCardType(Permanent permanent, CardType type) {
+        if (permanent.isFaceDown()) {
+            return permanent.getFaceDownCardTypes().contains(type);
+        }
         return hasCardType(permanent.getCard(), type);
     }
 
@@ -1456,13 +1460,36 @@ public class GameQueryService {
             return false;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return controllerHasFloatingHexproofIgnore(gameData, controllerId);
+    }
+
+    /**
+     * Returns {@code true} if {@code controllerId} has an effect allowing them to target opponents
+     * with hexproof as though they didn't have hexproof (Detection Tower's activated ability).
+     * Only hexproof is lifted — shroud and protection still apply.
+     */
+    public boolean ignoresOpponentPlayerHexproof(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
             return false;
         }
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
-                return true;
+        return controllerHasFloatingHexproofIgnore(gameData, controllerId);
+    }
+
+    private boolean controllerHasFloatingHexproofIgnore(GameData gameData, UUID controllerId) {
+        synchronized (gameData.floatingEffects) {
+            for (var floatingEffect : gameData.floatingEffects) {
+                if (controllerId.equals(floatingEffect.controllerId())
+                        && IgnoreOpponentHexproofUntilEndOfTurnEffect.class.isInstance(floatingEffect.effect())) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1907,10 +1934,16 @@ public class GameQueryService {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AssignCombatDamageWithToughnessEffect acdt) {
                     GrantScope scope = acdt.scope();
-                    if (scope == GrantScope.ALL_OWN_CREATURES) {
+                    boolean matchesPredicate = acdt.affectedPredicate() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(
+                                    creature,
+                                    acdt.affectedPredicate(),
+                                    FilterContext.of(gameData).withSourceControllerId(controllerId));
+                    if (matchesPredicate && scope == GrantScope.ALL_OWN_CREATURES) {
                         return true;
                     }
-                    if (scope == GrantScope.OWN_CREATURES && !p.getId().equals(creature.getId())) {
+                    if (matchesPredicate && scope == GrantScope.OWN_CREATURES
+                            && !p.getId().equals(creature.getId())) {
                         return true;
                     }
                 }
@@ -2470,6 +2503,8 @@ public class GameQueryService {
                 && accumulator.getGrantedColors().isEmpty()
                 && accumulator.getGrantedSubtypes().isEmpty()
                 && accumulator.getGrantedCardTypes().isEmpty()
+                && !accumulator.isSubtypeOverriding()
+                && !accumulator.isLandSubtypeOverriding()
                 && !accumulator.isCardTypeOverriding()
                 && accumulator.getGrantedSupertypes().isEmpty()) {
             return StaticBonus.NONE;
@@ -3926,6 +3961,9 @@ public class GameQueryService {
      * granted subtypes, and the intrinsic Changeling keyword.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        if (!NON_CREATURE_SUBTYPES.contains(subtype) && !permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+            return permanent.getTransientCreatureTypeOverrides().contains(subtype);
+        }
         if (!NON_CREATURE_SUBTYPES.contains(subtype) && permanent.getTransientCreatureTypeOverride() != null) {
             return permanent.getTransientCreatureTypeOverride() == subtype;
         }
@@ -4033,6 +4071,9 @@ public class GameQueryService {
 
     /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
     public Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
+        if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+            return new HashSet<>(permanent.getTransientCreatureTypeOverrides());
+        }
         if (permanent.getTransientCreatureTypeOverride() != null) {
             return Set.of(permanent.getTransientCreatureTypeOverride());
         }

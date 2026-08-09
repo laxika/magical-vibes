@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -91,6 +92,10 @@ public class CardChoiceHandlerService {
         boolean enterAttacking = false;
         boolean drawAndRepeat = false;
         boolean putAnyNumber = false;
+        boolean faceDown = false;
+        int faceDownPower = 0;
+        int faceDownToughness = 0;
+        Set<CardType> faceDownCardTypes = Set.of();
         CardPredicate drawAndRepeatPredicate = null;
         String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
@@ -111,6 +116,10 @@ public class CardChoiceHandlerService {
             putAnyNumber = hc.putAnyNumber();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
+            faceDown = hc.faceDown();
+            faceDownPower = hc.faceDownPower();
+            faceDownToughness = hc.faceDownToughness();
+            faceDownCardTypes = hc.faceDownCardTypes();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -163,7 +172,8 @@ public class CardChoiceHandlerService {
                 resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
-                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction);
+                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                        faceDown, faceDownPower, faceDownToughness, faceDownCardTypes);
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
                 if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
                         && !gameData.interaction.isAwaitingInput()) {
@@ -172,7 +182,8 @@ public class CardChoiceHandlerService {
                     }
                     playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId,
                             new PutCardToBattlefieldEffect(drawAndRepeatPredicate, drawAndRepeatLabel, enterTapped,
-                                    false, false, false, false, false, drawAndRepeat, putAnyNumber));
+                                    false, false, false, false, false, drawAndRepeat, putAnyNumber, faceDown,
+                                    faceDownPower, faceDownToughness, faceDownCardTypes));
                 }
             }
         }
@@ -1067,8 +1078,12 @@ public class CardChoiceHandlerService {
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                              UUID attachEquipmentCardId, boolean enterAttacking,
-                                             Integer sacrificeUnlessPayGenericReduction) {
+                                             Integer sacrificeUnlessPayGenericReduction, boolean faceDown,
+                                             int faceDownPower, int faceDownToughness, Set<CardType> faceDownCardTypes) {
         Permanent permanent = new Permanent(card);
+        if (faceDown) {
+            permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
+        }
         if (enterTapped) {
             permanent.tap();
         }
@@ -1084,12 +1099,19 @@ public class CardChoiceHandlerService {
                 : enterTapped ? " tapped"
                 : enterAttacking ? " attacking"
                 : "";
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " puts ", card, " onto the battlefield" + stateSuffix + "."));
+        if (faceDown) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts a card onto the battlefield face down" + stateSuffix + "."));
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", card, " onto the battlefield" + stateSuffix + "."));
+        }
         log.info("Game {} - {} puts {} onto the battlefield{}", gameData.id, player.getUsername(), card.getName(),
                 stateSuffix);
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        if (!faceDown) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        }
 
         // Deathrender: "…and attach this Equipment to it" — attach the source Equipment to the entered creature.
         if (attachEquipmentCardId != null) {

@@ -592,6 +592,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
     record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
 
+    /** "Sacrifice another permanent. If you do, this creature gets +X/+Y." */
+    record SacrificePermanentAndBoostSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                          int power, int toughness, String permanentDescription) implements PermanentChoiceContext {}
+
     /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */
     record SacrificeCreatureCreateTokensEqualToToughness(UUID controllerId, Card sourceCard,
                                                          com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}

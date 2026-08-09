@@ -1217,8 +1217,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
                           boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
                           boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
-                          String drawAndRepeatLabel, boolean putAnyNumber)
+                          String drawAndRepeatLabel, boolean putAnyNumber,
+                          boolean faceDown, int faceDownPower, int faceDownToughness,
+                          java.util.Set<CardType> faceDownCardTypes)
             implements PendingInteraction, HandChoice {
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                              boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                    enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
+                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of());
+        }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
             this(playerId, validIndices, prompt, false, false, false, null, false, null, false, null, null, false);
@@ -1670,8 +1682,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean selectedToHand, boolean reorderRemainingToBottom,
                                boolean randomRemainingToBottom, boolean remainingToExile,
                                int lifeCostPerSelection,
-                               UUID beneficiaryPlayerId, int maxCount, String prompt)
+                               UUID beneficiaryPlayerId, int maxCount, String prompt,
+                               boolean selectedToBattlefieldTapped)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {

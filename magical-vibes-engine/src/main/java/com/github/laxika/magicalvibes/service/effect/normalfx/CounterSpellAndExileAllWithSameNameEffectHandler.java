@@ -64,12 +64,13 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
 
-        int exiledFromGraveyard = exileMatching(gameData, targetPlayerId, graveyard, spellName);
-        int exiledFromHand = exileMatching(gameData, targetPlayerId, hand, spellName);
-        int exiledFromLibrary = exileMatching(gameData, targetPlayerId, library, spellName);
+        List<Card> exiledGraveyardCards = exileMatching(gameData, targetPlayerId, graveyard, spellName);
+        int exiledFromGraveyard = exiledGraveyardCards.size();
+        int exiledFromHand = exileMatching(gameData, targetPlayerId, hand, spellName).size();
+        int exiledFromLibrary = exileMatching(gameData, targetPlayerId, library, spellName).size();
 
         if (exiledFromGraveyard > 0) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, exiledGraveyardCards);
         }
         if (library != null) {
             Collections.shuffle(library);
@@ -85,8 +86,8 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
                 gameData.id, total, spellName, targetName);
     }
 
-    private int exileMatching(GameData gameData, UUID playerId, List<Card> zone, String name) {
-        if (zone == null) return 0;
+    private List<Card> exileMatching(GameData gameData, UUID playerId, List<Card> zone, String name) {
+        if (zone == null) return List.of();
         List<Card> matches = new ArrayList<>();
         for (Card card : zone) {
             if (card.getName().equals(name)) {
@@ -97,6 +98,6 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         for (Card card : matches) {
             gameData.addToExile(playerId, card);
         }
-        return matches.size();
+        return matches;
     }
 }

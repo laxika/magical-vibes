@@ -235,6 +235,10 @@ public class Permanent {
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
+    private boolean faceDown;
+    private int faceDownPower;
+    private int faceDownToughness;
+    private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
     @Setter private boolean animatedUntilEndOfTurn;
     /** When {@code true}, this permanent is animated as a creature until the combat phase ends
      *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
@@ -303,6 +307,10 @@ public class Permanent {
      *  {@link #transientSubtypes} (additive) and {@link #transientLandTypeOverride} (land types).
      *  Cleared every turn by {@link #resetModifiers()}. */
     @Setter private CardSubtype transientCreatureTypeOverride;
+    /** When non-empty, this creature becomes these creature types until end of turn, replacing all
+     *  its other creature types. The singular field above remains for single-type effects and
+     *  backwards-compatible callers. Cleared every turn by {@link #resetModifiers()}. */
+    private final List<CardSubtype> transientCreatureTypeOverrides = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
@@ -604,6 +612,10 @@ public class Permanent {
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
+        this.faceDown = source.faceDown;
+        this.faceDownPower = source.faceDownPower;
+        this.faceDownToughness = source.faceDownToughness;
+        this.faceDownCardTypes.addAll(source.faceDownCardTypes);
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
@@ -626,6 +638,7 @@ public class Permanent {
         this.colorOverridden = source.colorOverridden;
         this.transientSubtypes.addAll(source.transientSubtypes);
         this.transientCreatureTypeOverride = source.transientCreatureTypeOverride;
+        this.transientCreatureTypeOverrides.addAll(source.transientCreatureTypeOverrides);
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
@@ -688,6 +701,14 @@ public class Permanent {
 
     public Card getOriginalCard() {
         return originalCard;
+    }
+
+    public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
+        this.faceDown = true;
+        this.faceDownPower = power;
+        this.faceDownToughness = toughness;
+        this.faceDownCardTypes.clear();
+        this.faceDownCardTypes.addAll(cardTypes);
     }
 
     public void setCard(Card card) {
@@ -975,7 +996,10 @@ public class Permanent {
         if (permanentlyAnimated) {
             return permanentAnimatedPower;
         }
-        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+        if (faceDown) {
+            return faceDownPower;
+        }
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
             return 8;
         }
         return card.getPower() != null ? card.getPower() : 0;
@@ -998,7 +1022,10 @@ public class Permanent {
         if (permanentlyAnimated) {
             return permanentAnimatedToughness;
         }
-        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+        if (faceDown) {
+            return faceDownToughness;
+        }
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
             return 8;
         }
         return card.getToughness() != null ? card.getToughness() : 0;
@@ -1011,8 +1038,11 @@ public class Permanent {
         if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
             return animatedColor;
         }
-        if (getCounterCount(CounterType.AWAKENING) > 0) {
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return CardColor.GREEN;
+        }
+        if (faceDown) {
+            return null;
         }
         return card.getColor();
     }
@@ -1032,8 +1062,11 @@ public class Permanent {
         if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
             return List.of(animatedColor);
         }
-        if (getCounterCount(CounterType.AWAKENING) > 0) {
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return List.of(CardColor.GREEN);
+        }
+        if (faceDown) {
+            return List.of();
         }
         List<CardColor> intrinsic = card.getColors();
         if (intrinsic != null && !intrinsic.isEmpty()) {
@@ -1048,7 +1081,7 @@ public class Permanent {
         // Changeling grants all creature types; losing all creature types nullifies that grant.
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
-        return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword)
+        return (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)
                 || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword);
     }
@@ -1122,6 +1155,7 @@ public class Permanent {
         this.transientSubtypes.clear();
         this.transientLandTypeOverride = null;
         this.transientCreatureTypeOverride = null;
+        this.transientCreatureTypeOverrides.clear();
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();

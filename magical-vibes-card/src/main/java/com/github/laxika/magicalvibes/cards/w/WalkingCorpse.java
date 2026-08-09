@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "126")
 @CardRegistration(set = "M13", collectorNumber = "116")
+@CardRegistration(set = "M19", collectorNumber = "126")
 public class WalkingCorpse extends Card {
 }

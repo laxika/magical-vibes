@@ -923,6 +923,8 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
+    /** Owners whose graveyards had creature cards leave during a suppressed batch. */
+    public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
     public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
@@ -1001,6 +1003,9 @@ public class GameData {
      *  Cleared at turn cleanup. */
     public final Map<UUID, Integer> damageDealtThisTurnBySource = new ConcurrentHashMap<>();
 
+    /** Tracks source permanent objects that have dealt damage at least once. */
+    public final Set<UUID> permanentsThatHaveDealtDamage = ConcurrentHashMap.newKeySet();
+
     /** Records that {@code sourcePermanentId} dealt {@code amount} damage this turn. No-op when the
      *  source permanent is unknown or the amount is non-positive. */
     public void recordDamageDealtBySource(UUID sourcePermanentId, int amount) {
@@ -1008,6 +1013,7 @@ public class GameData {
             return;
         }
         damageDealtThisTurnBySource.merge(sourcePermanentId, amount, Integer::sum);
+        permanentsThatHaveDealtDamage.add(sourcePermanentId);
     }
 
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
@@ -2623,6 +2629,7 @@ public class GameData {
         this.playersAttackedThisTurn.forEach((k, v) ->
                 copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
         copy.damageDealtThisTurnBySource.putAll(this.damageDealtThisTurnBySource);
+        copy.permanentsThatHaveDealtDamage.addAll(this.permanentsThatHaveDealtDamage);
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
@@ -2864,6 +2871,7 @@ public class GameData {
         copy.graveyardCastFilterPermissionsThisTurn.addAll(this.graveyardCastFilterPermissionsThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
+        copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
 
         // --- Search tax payments (Leonin Arbiter) ---

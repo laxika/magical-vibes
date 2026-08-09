@@ -31,7 +31,7 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
                 Permanent creature = new Permanent(createCard("Grizzly Bears"));
                 gd.playerBattlefields.get(player1Id).add(creature);
 
-                when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any())).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -51,12 +51,32 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
                 Permanent nonMatching = new Permanent(createCard("Mountain"));
                 gd.playerBattlefields.get(player1Id).add(nonMatching);
 
-                when(predicateEvaluationService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(nonMatching), eq(filter), any())).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no a creature to sacrifice")));
+            }
+
+            @Test
+            @DisplayName("Passes the stack entry source to the permanent filter")
+            void passesSourceContextToFilter() {
+                Card card = createCard("Goblin Bombardment");
+                PermanentPredicate filter = new PermanentTruePredicate();
+                SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(filter, null, "a creature");
+                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+                Permanent creature = new Permanent(createCard("Grizzly Bears"));
+                gd.playerBattlefields.get(player1Id).add(creature);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
+                        .thenReturn(true);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(predicateEvaluationService).matchesPermanentPredicate(eq(creature), eq(filter),
+                        argThat(context -> card.getId().equals(context.sourceCardId())
+                                && player1Id.equals(context.sourceControllerId())));
             }
 }

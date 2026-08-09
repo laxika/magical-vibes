@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "279")
 @CardRegistration(set = "AKH", collectorNumber = "285")
+@CardRegistration(set = "M19", collectorNumber = "258")
 public class TimberGorge extends Card {
 
     public TimberGorge() {

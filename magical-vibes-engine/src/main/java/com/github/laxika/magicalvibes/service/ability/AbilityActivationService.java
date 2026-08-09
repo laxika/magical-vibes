@@ -977,7 +977,7 @@ public class AbilityActivationService {
         // ability is put on the stack — prevents the same graveyard card from being activated twice.
         if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)) {
             graveyard.remove(card);
-            graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
             exileService.exileCard(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
@@ -2554,7 +2554,8 @@ public class AbilityActivationService {
     public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
-        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || permanent.isFaceDown()) {
             // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
         } else {
@@ -3844,7 +3845,7 @@ public class AbilityActivationService {
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
         graveyard.removeAll(toExile);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
             exileService.exileCard(gameData, playerId, exiled);
         }
@@ -3945,7 +3946,7 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiled);
         exileService.exileCard(gameData, playerId, exiled);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));

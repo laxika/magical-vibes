@@ -1440,7 +1440,8 @@ public class TargetLegalityService {
             return gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted";
         }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
-                && gameQueryService.playerHasHexproof(gameData, targetPlayerId)) {
+                && gameQueryService.playerHasHexproof(gameData, targetPlayerId)
+                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, sourcePlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
         }
         return null;

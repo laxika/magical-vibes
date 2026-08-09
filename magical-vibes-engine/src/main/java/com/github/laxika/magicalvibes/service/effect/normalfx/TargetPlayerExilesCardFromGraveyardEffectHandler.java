@@ -56,7 +56,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
         if (graveyard.size() == 1) {
             // Auto-exile the only card
             Card card = graveyard.removeFirst();
-            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, card);
             exileService.exileCard(gameData, targetPlayerId, card);
 
             gameLogService.append(gameData, GameLog.textCardText(targetName + " exiles " , card, " from their graveyard."));

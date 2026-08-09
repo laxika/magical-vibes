@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "149")
 @CardRegistration(set = "M15", collectorNumber = "155")
+@CardRegistration(set = "M19", collectorNumber = "152")
 public class LightningStrike extends Card {
 
     public LightningStrike() {

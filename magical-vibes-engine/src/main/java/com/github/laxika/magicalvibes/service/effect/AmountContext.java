@@ -25,8 +25,8 @@ import java.util.UUID;
  *                          (life gained, damage dealt, excess damage); read by {@code EventValue}
  * @param staticEvaluation  whether this evaluation is for a static continuous effect
  * @param chosenPermanentId id of the permanent chosen while activating the ability behind this
- *                          entry (e.g. the creature tapped for a {@code TapCreatureCost}); read by
- *                          {@code ChosenPermanentPower}. {@code null} outside stack resolution
+ *                          entry or during a library selection; read by {@code ChosenPermanentPower}.
+ *                          {@code null} outside stack resolution
  * @param repeatedAdditionalCosts the mana payments chosen for a
  *                          {@code RepeatableAdditionalManaCost} as the spell was cast, one entry
  *                          per repetition; read by {@code RepeatedAdditionalCostCount}. Empty

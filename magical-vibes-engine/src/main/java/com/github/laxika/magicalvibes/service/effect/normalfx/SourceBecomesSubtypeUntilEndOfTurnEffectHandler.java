@@ -33,8 +33,19 @@ public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEf
         if (self == null) {
             return;
         }
-        self.setTransientCreatureTypeOverride(e.subtype());
+        if (e.subtypes().size() == 1) {
+            self.setTransientCreatureTypeOverride(e.subtype());
+            self.getTransientCreatureTypeOverrides().clear();
+        } else {
+            self.setTransientCreatureTypeOverride(null);
+            self.getTransientCreatureTypeOverrides().clear();
+            self.getTransientCreatureTypeOverrides().addAll(e.subtypes());
+        }
+        String typeNames = e.subtypes().stream()
+                .map(subtype -> subtype.getDisplayName())
+                .reduce((left, right) -> left + " and " + right)
+                .orElseThrow();
         gameLogService.append(gameData, GameLog.text(self.getCard().getName()
-                + " becomes a " + e.subtype().getDisplayName() + " until end of turn."));
+                + " becomes a " + typeNames + " until end of turn."));
     }
 }

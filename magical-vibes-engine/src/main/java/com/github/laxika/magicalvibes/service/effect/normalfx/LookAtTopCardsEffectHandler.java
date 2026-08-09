@@ -75,7 +75,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD) {
+        if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD
+                || e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
             resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount);
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             resolvePutOneOnTop(gameData, entry, lookCount);
@@ -133,7 +134,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                             .reorderRemainingToBottom(true)
                             .shuffleAfterSelection(false)
                             .prompt("You may put one of these cards onto the battlefield.")
-                            .destination(LibrarySearchDestination.BATTLEFIELD)
+                            .destination(e.chosenDestination())
                             .build(),
                     "You may put one of these cards onto the battlefield.",
                     true));
@@ -147,7 +148,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds, false, false, !randomBottom, randomBottom, false, 0, null,
-                maxCount, prompt));
+                maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "98")
+@CardRegistration(set = "M19", collectorNumber = "145")
 public class Guttersnipe extends Card {
 
     public Guttersnipe() {

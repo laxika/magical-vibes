@@ -400,7 +400,7 @@ public class GraveyardReturnSupport {
                 for (Card card : toReturn) {
                     graveyard.remove(card);
                     trackedIds.remove(card.getId());
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     if (toBattlefield) {
                         putCardOntoBattlefield(gameData, controllerId, card,
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
@@ -455,7 +455,7 @@ public class GraveyardReturnSupport {
                 }
                 for (Card card : toReturn) {
                     gy.remove(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, gyEntry.getKey());
+                    graveyardService.notifyCardsLeftGraveyard(gameData, gyEntry.getKey(), card);
                     UUID targetPlayerId = (effect.destination() == GraveyardChoiceDestination.HAND || effect.underOwnersControl())
                             ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
@@ -499,6 +499,20 @@ public class GraveyardReturnSupport {
 
         // Exile the source card from graveyard before selecting random cards (e.g. Moldgraf Monstrosity)
         exileSourceFromGraveyardIfRequested(gameData, effect, controllerId, sourceCardId);
+        if (effect.exileSourceFromGraveyard() && graveyard != null && sourceCardId != null) {
+            Card sourceCard = graveyard.stream()
+                    .filter(c -> c.getId().equals(sourceCardId))
+                    .findFirst()
+                    .orElse(null);
+            if (sourceCard != null) {
+                graveyard.remove(sourceCard);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, sourceCard);
+                exileService.exileCard(gameData, controllerId, sourceCard);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles " , sourceCard, " from graveyard."));
+                log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
+            }
+        }
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
@@ -527,7 +541,7 @@ public class GraveyardReturnSupport {
                 Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
                 matchingCards.remove(randomCard);
                 graveyard.remove(randomCard);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, randomCard);
 
                 boolean toBattlefield = effect.battlefieldIfCreatureElseHand()
                         ? randomCard.hasType(CardType.CREATURE)
@@ -733,7 +747,7 @@ public class GraveyardReturnSupport {
                 if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                     cardConsumer.accept(graveyard, card);
                     movedCards.add(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                 }
             }
         } finally {
@@ -813,6 +827,7 @@ public class GraveyardReturnSupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        initializePlaneswalkerLoyalty(permanent, card);
         applyPermanentGrants(permanent, grantColor, grantSubtype);
         if (enterWithCounter != null) {
             permanent.setCounterCount(enterWithCounter, 1);
@@ -887,6 +902,12 @@ public class GraveyardReturnSupport {
         }
     }
 
+    private void initializePlaneswalkerLoyalty(Permanent permanent, Card card) {
+        if (card.hasType(CardType.PLANESWALKER)) {
+            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty() != null ? card.getLoyalty() : 0);
+        }
+    }
+
     public void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
                                                          boolean grantHaste, boolean exileAtEndStep,
                                                          boolean sacrificeAtEndStep,
@@ -903,6 +924,7 @@ public class GraveyardReturnSupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        initializePlaneswalkerLoyalty(permanent, card);
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
@@ -953,7 +975,7 @@ public class GraveyardReturnSupport {
                     List<Card> graveyard = gameData.playerGraveyards.get(pid);
                     if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                         gameData.playerDecks.get(pid).addFirst(card);
-                        graveyardService.notifyCardsLeftGraveyard(gameData, pid);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, pid, card);
                         movedCards.add(card);
                         ownerId = pid;
                         break;
@@ -979,7 +1001,7 @@ public class GraveyardReturnSupport {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                graveyardService.notifyCardsLeftGraveyard(gameData, pid);
+                graveyardService.notifyCardsLeftGraveyard(gameData, pid, card);
                 exileService.exileCard(gameData, pid, card);
                 return true;
             }

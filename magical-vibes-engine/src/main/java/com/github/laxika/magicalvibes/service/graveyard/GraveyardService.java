@@ -966,7 +966,11 @@ public class GraveyardService {
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingOwners) {
                 triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
             }
+            for (UUID ownerId : gameData.graveyardLeaveNotificationPendingCreatureOwners) {
+                triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+            }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
+            gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         }
     }
 
@@ -988,6 +992,31 @@ public class GraveyardService {
         triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
     }
 
+    public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
+        notifyCardsLeftGraveyard(gameData, ownerId);
+        if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
+            notifyCreatureCardsLeftGraveyard(gameData, ownerId);
+        }
+    }
+
+    public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, List<Card> leavingCards) {
+        if (leavingCards == null || leavingCards.isEmpty()) {
+            return;
+        }
+        notifyCardsLeftGraveyard(gameData, ownerId);
+        if (leavingCards.stream().anyMatch(card -> !card.isToken() && card.hasType(CardType.CREATURE))) {
+            notifyCreatureCardsLeftGraveyard(gameData, ownerId);
+        }
+    }
+
+    private void notifyCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        if (gameData.graveyardLeaveNotificationDepth > 0) {
+            gameData.graveyardLeaveNotificationPendingCreatureOwners.add(ownerId);
+            return;
+        }
+        triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+    }
+
     /**
      * Notifies that a single, known card left the given player's graveyard: the batched
      * "one or more cards left your graveyard" event plus the per-card
@@ -995,7 +1024,7 @@ public class GraveyardService {
      * once per creature card and is never batched.
      */
     public void notifyCardLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, leavingCard);
         triggerCollectionService.checkCreatureCardLeavesOpponentGraveyardTriggers(gameData, ownerId, leavingCard);
     }
 
@@ -1021,6 +1050,7 @@ public class GraveyardService {
         if (graveyard == null || graveyard.isEmpty()) {
             return;
         }
+        List<Card> leavingCards = new ArrayList<>(graveyard);
         List<Card> leavingCreatureCards = graveyard.stream().filter(c -> c.hasType(CardType.CREATURE)).toList();
         graveyard.clear();
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
@@ -1031,7 +1061,7 @@ public class GraveyardService {
         if (allTracked != null) {
             allTracked.clear();
         }
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, leavingCards);
         for (Card leaving : leavingCreatureCards) {
             triggerCollectionService.checkCreatureCardLeavesOpponentGraveyardTriggers(gameData, ownerId, leaving);
         }

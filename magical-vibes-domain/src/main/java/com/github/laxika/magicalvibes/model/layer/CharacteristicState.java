@@ -82,31 +82,43 @@ public class CharacteristicState {
      * pass.
      */
     public CharacteristicState(Card card, Permanent permanent) {
-        this.name = card.getName();
-        // Null-tolerant like the color/P/T seeding below: bare test cards carry only a name.
-        if (card.getType() != null) {
-            this.cardTypes.add(card.getType());
+        this.name = permanent.isFaceDown() ? null : card.getName();
+        if (permanent.isFaceDown()) {
+            this.cardTypes.addAll(permanent.getFaceDownCardTypes());
+        } else {
+            // Null-tolerant like the color/P/T seeding below: bare test cards carry only a name.
+            if (card.getType() != null) {
+                this.cardTypes.add(card.getType());
+            }
+            this.cardTypes.addAll(card.getAdditionalTypes());
         }
-        this.cardTypes.addAll(card.getAdditionalTypes());
         this.cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
-        this.supertypes.addAll(card.getSupertypes());
-        this.subtypes.addAll(card.getSubtypes());
+        if (!permanent.isFaceDown()) {
+            this.supertypes.addAll(card.getSupertypes());
+            this.subtypes.addAll(card.getSubtypes());
+        }
         for (CardSubtype granted : permanent.getGrantedSubtypes()) {
             addSubtype(granted);
         }
         // Seed every intrinsic color: a multicolored card ({W/U} hybrid) is all of its colors,
         // not just the first. Legacy animation/awakening/override colors replace this baseline in
         // LayerSystemService.seedLegacyColorAndAbilityState.
-        if (card.getColors() != null && !card.getColors().isEmpty()) {
-            this.colors.addAll(card.getColors());
-        } else if (card.getColor() != null) {
-            this.colors.add(card.getColor());
+        if (!permanent.isFaceDown()) {
+            if (card.getColors() != null && !card.getColors().isEmpty()) {
+                this.colors.addAll(card.getColors());
+            } else if (card.getColor() != null) {
+                this.colors.add(card.getColor());
+            }
         }
         this.colors.addAll(permanent.getGrantedColors());
-        this.keywords.addAll(card.getKeywords());
+        if (!permanent.isFaceDown()) {
+            this.keywords.addAll(card.getKeywords());
+        }
         this.grantedActivatedAbilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        this.basePower = card.getPower() != null ? card.getPower() : 0;
-        this.baseToughness = card.getToughness() != null ? card.getToughness() : 0;
+        this.basePower = permanent.isFaceDown() ? permanent.getFaceDownPower()
+                : card.getPower() != null ? card.getPower() : 0;
+        this.baseToughness = permanent.isFaceDown() ? permanent.getFaceDownToughness()
+                : card.getToughness() != null ? card.getToughness() : 0;
         // +2/+2 counters (e.g. Dwarven Armory) add two to both power and toughness.
         int counterDelta = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)

@@ -75,7 +75,7 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
         for (Card card : toExile) {
             gameData.addToExile(targetPlayerId, card);
         }
-        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, toExile);
 
         // Collect unique card names from the exiled graveyard cards
         Set<String> exiledNames = new java.util.LinkedHashSet<>();

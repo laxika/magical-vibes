@@ -301,6 +301,10 @@ public class StackResolutionService {
         }
         boolean restrictToRevealedCards =
                 effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND;
+        if (effect.nonbasicLandOnly()) {
+            return playerInputService.beginCardNameChoice(
+                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards, true);
+        }
         return playerInputService.beginCardNameChoice(
                 gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
     }

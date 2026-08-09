@@ -206,6 +206,9 @@ public class LibraryChoiceHandlerService {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
+                    }
                     if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
                     }
@@ -360,7 +363,7 @@ public class LibraryChoiceHandlerService {
             }
 
             if (toBattlefield) {
-                stateBasedActionService.performStateBasedActions(gameData);
+                performStateBasedActionsIfResolutionComplete(gameData);
             }
 
             finishSearchAndResume(gameData);
@@ -538,7 +541,7 @@ public class LibraryChoiceHandlerService {
             }
             log.info("Game {} - {} puts {} onto the battlefield under their control from a library search",
                     gameData.id, player.getUsername(), chosenCard.getName());
-            stateBasedActionService.performStateBasedActions(gameData);
+            performStateBasedActionsIfResolutionComplete(gameData);
             finishSearchAndResume(gameData);
             return;
         }
@@ -802,7 +805,7 @@ public class LibraryChoiceHandlerService {
             // controller attach it to a creature they control.
             Permanent equipment = new Permanent(chosenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, equipment);
-            stateBasedActionService.performStateBasedActions(gameData);
+            performStateBasedActionsIfResolutionComplete(gameData);
 
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -929,7 +932,7 @@ public class LibraryChoiceHandlerService {
                 }
                 gameLogService.append(gameData, GameLog.text(logMsg));
                 if (toBattlefield) {
-                    stateBasedActionService.performStateBasedActions(gameData);
+                    performStateBasedActionsIfResolutionComplete(gameData);
                 }
                 // The multi-pick ran dry, but any queued follow-up work still has to happen.
                 if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
@@ -1028,7 +1031,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (toBattlefield) {
-            stateBasedActionService.performStateBasedActions(gameData);
+            performStateBasedActionsIfResolutionComplete(gameData);
         }
 
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
@@ -1133,6 +1136,15 @@ public class LibraryChoiceHandlerService {
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
+
+    private void performStateBasedActionsIfResolutionComplete(GameData gameData) {
+        StackEntry pending = gameData.pendingEffectResolutionEntry;
+        if (pending != null && gameData.pendingEffectResolutionIndex < pending.getEffectsToResolve().size()) {
+            return;
+        }
+        stateBasedActionService.performStateBasedActions(gameData);
+    }
+
     /**
      * Places multiple cards onto the battlefield simultaneously per CR 608.2f.
      * All permanents are added first, then ETB triggers are processed after all are on the battlefield.
@@ -1501,6 +1513,12 @@ public class LibraryChoiceHandlerService {
         for (Card card : selectedCards) {
             Permanent perm = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
+            if (selectedCards.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
+            }
+            if (libraryRevealChoice.selectedToBattlefieldTapped()) {
+                perm.tap();
+            }
 
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
 
@@ -1561,7 +1579,7 @@ public class LibraryChoiceHandlerService {
 
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
 
-        stateBasedActionService.performStateBasedActions(gameData);
+        performStateBasedActionsIfResolutionComplete(gameData);
 
         // Guild Feud: this was one of the two sequential reveals — hand back to the flow, which
         // either begins the second reveal or resolves the closing fight.
@@ -1934,7 +1952,7 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - Punisher reveal resolved: {} to hand, {} exiled ({} paid {} life)",
                 gameData.id, toHand.size(), toExile.size(), opponentName, totalLifeCost);
 
-        stateBasedActionService.performStateBasedActions(gameData);
+        performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
     }
 

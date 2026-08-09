@@ -62,7 +62,7 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             try {
                 for (Card card : matching) {
                     graveyard.remove(card);
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
                     returnedNames.add(card.getName());
                 }

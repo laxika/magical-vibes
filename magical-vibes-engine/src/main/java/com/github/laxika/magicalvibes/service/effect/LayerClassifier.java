@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
@@ -233,6 +234,7 @@ public final class LayerClassifier {
         // Gaea's Liege: lands it has recorded become Forests (CR 305.7 basic-land-type replacement).
         map.put(TrackedLandsBecomeForestEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
+        map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
         // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
         // (losesAllAbilities) additionally strips the artifacts' abilities in layer 6.

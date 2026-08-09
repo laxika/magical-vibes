@@ -2830,7 +2830,7 @@ public class SpellCastingService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         int exiledPower = exiledCard.getPower() != null ? exiledCard.getPower() : 0;
         graveyard.remove((int) exileGraveyardCardIndex);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
         gameData.addToExile(playerId, exiledCard);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " exiles ")
@@ -2858,7 +2858,7 @@ public class SpellCastingService {
         try {
             for (int idx : sortedDescending) {
                 Card exiledCard = graveyard.remove(idx);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
         } finally {
@@ -2890,7 +2890,7 @@ public class SpellCastingService {
         try {
             for (int idx : sortedDescending) {
                 Card exiledCard = graveyard.remove(idx);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
         } finally {

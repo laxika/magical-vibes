@@ -155,7 +155,13 @@ public class AttackLegalityService {
                 for (CardEffect effect : grantor.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof NoDefenderAttackPermissionEffect grant
                             && grant.noDefenderAttackMatcher() != null
-                            && predicateEvaluationService.matchesPermanentPredicate(gameData, creature, grant.noDefenderAttackMatcher())) {
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    creature,
+                                    grant.noDefenderAttackMatcher(),
+                                    FilterContext.of(gameData)
+                                            .withSourceCardId(grantor.getOriginalCard().getId())
+                                            .withSourceControllerId(
+                                                    gameQueryService.findPermanentController(gameData, grantor.getId())))) {
                         return true;
                     }
                 }

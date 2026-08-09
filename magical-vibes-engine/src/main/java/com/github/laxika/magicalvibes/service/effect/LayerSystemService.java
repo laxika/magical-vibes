@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnE
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffe
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -119,11 +121,11 @@ public class LayerSystemService {
             CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
             CardSubtype.MOUNTAIN, CardSubtype.PLAINS);
 
-    /** Land types cleared by a land-type-setting effect (CR 305.7). LOCUS is the only nonbasic
-     *  land type in the {@code CardSubtype} enum today. */
+    /** Land types represented in the {@code CardSubtype} enum. */
     private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
             CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
-            CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.LOCUS);
+            CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.DESERT,
+            CardSubtype.GATE, CardSubtype.LOCUS);
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -624,6 +626,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
+        flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
@@ -662,6 +665,9 @@ public class LayerSystemService {
         h = mix(h, p.getPermanentBasePowerOverrideTimestamp());
         h = mix(h, p.getPermanentBaseToughnessOverride());
         h = mix(h, p.getPermanentBaseToughnessOverrideTimestamp());
+        h = mix(h, p.getFaceDownPower());
+        h = mix(h, p.getFaceDownToughness());
+        h = hashEnums(h, p.getFaceDownCardTypes());
 
         h = hashEnums(h, p.getGrantedKeywords());
         h = hashEnums(h, p.getPersistentGrantedKeywords());
@@ -678,6 +684,7 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
+        h = hashEnums(h, p.getTransientCreatureTypeOverrides());
         // Lands this permanent turned into Forests (Gaea's Liege) drive a layer-4 type grant.
         long forestedSum = 0;
         for (UUID forested : p.getForestedLandIds()) {
@@ -692,6 +699,7 @@ public class LayerSystemService {
         // A chosen color feeds layer 3 (Swirl the Mists rewrites every color word to it) and
         // layers 5/6 (chosen-color protection, Shifting Sky), so it must invalidate the cache.
         h = mix(h, enumOrdinal(p.getChosenColor()));
+        h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
         for (Object ability : p.getPersistentGrantedActivatedAbilities()) {
             h = mix(h, System.identityHashCode(ability));
         }
@@ -862,10 +870,14 @@ public class LayerSystemService {
                         permanent.getTransientRemovedSubtypes()::contains);
             }
             // "Target creature becomes a [creature type]" (Boldwyr Intimidator): strip all creature
-            // subtypes and set the single override type. Applied after lose-all so the override wins.
-            CardSubtype creatureOverride = permanent.getTransientCreatureTypeOverride();
-            if (creatureOverride != null) {
-                setCreatureType(states.get(permanent.getId()), creatureOverride);
+            // subtypes and set the override types. Applied after lose-all so the override wins.
+            if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+                setCreatureTypes(states.get(permanent.getId()), permanent.getTransientCreatureTypeOverrides());
+            } else {
+                CardSubtype creatureOverride = permanent.getTransientCreatureTypeOverride();
+                if (creatureOverride != null) {
+                    setCreatureType(states.get(permanent.getId()), creatureOverride);
+                }
             }
         }
 
@@ -919,6 +931,9 @@ public class LayerSystemService {
         List<EffectInstance> instances = new ArrayList<>();
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (PermanentSlot slot : slots) {
+            if (slot.permanent().isFaceDown()) {
+                continue;
+            }
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
                 if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
                     continue;
@@ -1338,6 +1353,17 @@ public class LayerSystemService {
                     }
                 }
             }
+            case LoseAllLandTypesEffect lose -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(instance, lose.scope(), lose.filter(),
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (!state.hasCardType(CardType.LAND)) continue;
+                    state.removeSubtypesIf(LAND_SUBTYPES::contains);
+                    landTypeOverrides.put(target.permanent().getId(), List.of());
+                    record(board, instance, target, new L4Contribution(List.of(), true, true));
+                }
+            }
             case LandsOfSubtypeBecomeTypeEffect becomes -> {
                 manage(board, instance);
                 for (PermanentSlot target : slots) {
@@ -1592,7 +1618,7 @@ public class LayerSystemService {
         List<PermanentSlot> targets = new ArrayList<>();
         switch (scope) {
             case SELF -> {
-                if (matchesL4Filter(source, filter, board)) {
+                if (matchesL4Filter(source, filter, board, source.permanent())) {
                     targets.add(source);
                 }
             }
@@ -1600,14 +1626,15 @@ public class LayerSystemService {
                 Permanent sourcePermanent = source.permanent();
                 if (sourcePermanent.isAttached()) {
                     PermanentSlot attached = slotsById.get(sourcePermanent.getAttachedTo());
-                    if (attached != null && matchesL4Filter(attached, filter, board)) {
+                    if (attached != null && matchesL4Filter(attached, filter, board, source.permanent())) {
                         targets.add(attached);
                     }
                 }
             }
             case ALL_PERMANENTS -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() != source.permanent() && matchesL4Filter(slot, filter, board)) {
+                    if (slot.permanent() != source.permanent()
+                            && matchesL4Filter(slot, filter, board, source.permanent())) {
                         targets.add(slot);
                     }
                 }
@@ -1620,7 +1647,7 @@ public class LayerSystemService {
                             || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                             || (scope == GrantScope.OPPONENT_CREATURES ? !own : own);
                     if (inScope && isCreatureForL4(slot.permanent(), board.states().get(slot.permanent().getId()))
-                            && matchesL4Filter(slot, filter, board)) {
+                            && matchesL4Filter(slot, filter, board, source.permanent())) {
                         targets.add(slot);
                     }
                 }
@@ -1633,16 +1660,17 @@ public class LayerSystemService {
                     }
                 }
             }
-            case OWN_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF -> {
+            case OWN_LANDS, OPPONENT_LANDS, ALL_LANDS, ALL_LANDS_INCLUDING_SELF -> {
                 for (PermanentSlot slot : slots) {
                     if (slot.permanent() == source.permanent()
                             && scope != GrantScope.ALL_LANDS_INCLUDING_SELF) continue;
                     boolean own = slot.controllerId().equals(source.controllerId());
                     boolean inScope = scope == GrantScope.ALL_LANDS
-                            || scope == GrantScope.ALL_LANDS_INCLUDING_SELF || own;
+                            || scope == GrantScope.ALL_LANDS_INCLUDING_SELF
+                            || (scope == GrantScope.OPPONENT_LANDS ? !own : own);
                     CharacteristicState state = board.states().get(slot.permanent().getId());
                     if (inScope && state != null && state.hasCardType(CardType.LAND)
-                            && matchesL4Filter(slot, filter, board)) {
+                            && matchesL4Filter(slot, filter, board, source.permanent())) {
                         targets.add(slot);
                     }
                 }
@@ -1654,7 +1682,7 @@ public class LayerSystemService {
                         if (slot.permanent() == sourcePermanent) continue;
                         if (slot.controllerId().equals(sourcePermanent.getAttachedTo())
                                 && isCreatureForL4(slot.permanent(), board.states().get(slot.permanent().getId()))
-                                && matchesL4Filter(slot, filter, board)) {
+                                && matchesL4Filter(slot, filter, board, source.permanent())) {
                             targets.add(slot);
                         }
                     }
@@ -1700,9 +1728,16 @@ public class LayerSystemService {
      */
     private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
                                     LayeredBoardState board) {
+        return matchesL4Filter(slot, filter, board, null);
+    }
+
+    private boolean matchesL4Filter(PermanentSlot slot, PermanentPredicate filter,
+                                    LayeredBoardState board, Permanent sourcePermanent) {
         if (filter == null) return true;
         boolean matches = predicateEvaluationService.matchesPermanentPredicate(
-                board.states().get(slot.permanent().getId()), slot.permanent(), filter, null);
+                board.states().get(slot.permanent().getId()), slot.permanent(), filter,
+                sourcePermanent == null ? null : FilterContext.empty()
+                        .withSourcePermanentSnapshot(sourcePermanent));
         board.l4FilterVerdicts()
                 .computeIfAbsent(filter, key -> new HashMap<>())
                 .put(slot.permanent().getId(), matches);
@@ -1770,7 +1805,7 @@ public class LayerSystemService {
         if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
                 && permanent.getAnimatedColor() != null) {
             state.replaceSeedColors(Set.of(permanent.getAnimatedColor()));
-        } else if (permanent.getCounterCount(CounterType.AWAKENING) > 0) {
+        } else if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
             state.replaceSeedColors(Set.of(CardColor.GREEN));
         } else if (permanent.isColorOverridden() && !permanent.getTransientColors().isEmpty()) {
             // Legacy one-shot color override (pre-migration state, e.g. AI simulation copies).
@@ -1783,18 +1818,20 @@ public class LayerSystemService {
         // with any timestamp removes it (protection grants applied later re-add). Seeded with
         // the object's text changes applied (CR 613.2c): Mind Bend rewriting "black" to "blue"
         // on Paladin en-Vec changes what its printed protection protects from.
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
-                ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
-                        TextChangeTransformer.transform(protection, permanent.getTextReplacements(),
-                                globalWordChange);
-                state.addProtectionColors(rewritten.colors());
+        if (!permanent.isFaceDown()) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
+                    ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
+                            TextChangeTransformer.transform(protection, permanent.getTextReplacements(),
+                                    globalWordChange);
+                    state.addProtectionColors(rewritten.colors());
+                }
             }
-        }
-        if (permanent.getChosenColor() != null && permanent.getCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(ProtectionFromChosenColorEffect.class::isInstance)) {
-            state.addProtectionColors(Set.of(permanent.getChosenColor()));
+            if (permanent.getChosenColor() != null && permanent.getCard()
+                    .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(ProtectionFromChosenColorEffect.class::isInstance)) {
+                state.addProtectionColors(Set.of(permanent.getChosenColor()));
+            }
         }
 
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {

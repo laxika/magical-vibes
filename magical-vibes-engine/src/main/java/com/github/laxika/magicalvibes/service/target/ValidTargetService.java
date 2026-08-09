@@ -623,7 +623,9 @@ public class ValidTargetService {
         }
 
         // Player hexproof (only blocks opponents)
-        if (!controllerId.equals(playerId) && gameQueryService.playerHasHexproof(gameData, playerId)) {
+        if (!controllerId.equals(playerId)
+                && gameQueryService.playerHasHexproof(gameData, playerId)
+                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, controllerId)) {
             return false;
         }
 

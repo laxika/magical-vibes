@@ -46,9 +46,12 @@ public class ZoneToLibraryService {
         }
 
         int handCount = drainInto(gameData.playerHands.get(playerId), library);
+        List<Card> leavingGraveyardCards = gameData.playerGraveyards.get(playerId) == null
+                ? List.of()
+                : new ArrayList<>(gameData.playerGraveyards.get(playerId));
         int graveyardCount = drainInto(gameData.playerGraveyards.get(playerId), library);
         if (graveyardCount > 0) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, playerId, leavingGraveyardCards);
         }
         return new MovedCounts(handCount, graveyardCount);
     }
