@@ -348,6 +348,7 @@ public class TargetPolarityClassifier {
             entry("PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
 
@@ -376,6 +377,7 @@ public class TargetPolarityClassifier {
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToControllerEffect", TargetPolarity.HARMFUL),
             entry("TargetDealsPowerDamageToTargetEffect", TargetPolarity.HARMFUL),
+            entry("TargetPlayerGainsControlOfTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.

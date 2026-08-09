@@ -4152,10 +4152,12 @@ public class SpellCastingService {
                                      List<UUID> splicePermanentIds) {
         List<UUID> ids = splicePermanentIds != null ? splicePermanentIds : List.of();
         int requiredPermanentIds = 0;
+        int requiredSacrificeIds = 0;
         for (SpliceEffect splice : spliceCosts) {
             for (CastingCost cost : splice.costs()) {
                 if (cost instanceof SacrificePermanentsCost sacrificeCost) {
                     requiredPermanentIds += sacrificeCost.count();
+                    requiredSacrificeIds += sacrificeCost.count();
                 } else if (cost instanceof TapUntappedPermanentsCost tapCost) {
                     requiredPermanentIds += tapCost.count();
                 } else if (cost instanceof ReturnPermanentsCost returnCost) {
@@ -4168,8 +4170,12 @@ public class SpellCastingService {
             }
         }
         if (ids.size() != requiredPermanentIds) {
-            throw new IllegalStateException("Must choose " + requiredPermanentIds
-                    + " permanents for the splice cost of " + hostSpell.getName());
+            String message = requiredPermanentIds > 0 && requiredPermanentIds == requiredSacrificeIds
+                    ? "Must sacrifice " + requiredPermanentIds + " permanents for the splice cost of "
+                    + hostSpell.getName()
+                    : "Must choose " + requiredPermanentIds + " permanents for the splice cost of "
+                    + hostSpell.getName();
+            throw new IllegalStateException(message);
         }
         if (ids.stream().distinct().count() != ids.size()) {
             throw new IllegalStateException("Duplicate permanents chosen for the splice cost of "

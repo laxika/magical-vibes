@@ -67,6 +67,7 @@ abstract class AbstractDamageHandlerTest {
         amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any())).thenReturn(1);
+        lenient().when(gameQueryService.getPermanentDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         // Reflect Damage is a pass-through when no replacement shield is set up.
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
                         eq(gd), nullable(UUID.class), anyInt()))
