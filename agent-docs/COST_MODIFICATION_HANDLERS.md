@@ -96,6 +96,10 @@ not through the handler registry.
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
   because the matching name lives on the source permanent, which the `CardPredicate` path does not carry.
+- `cast/costmod/ReduceCastCostForChosenSubtypeSpellsEffectHandler.java` — battlefield handler for
+  `ReduceCastCostForChosenSubtypeSpellsEffect(int amount)`; applies only to the source controller's
+  creature spells with the source permanent's chosen creature subtype (Urza's Incubator, {2}). It
+  handles the source-relative subtype and changeling check that a fixed `CardPredicate` cannot carry.
 - `cast/costmod/IncreaseSpellCostEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostEffect(CardPredicate, int, CostModificationScope)`, the tax-side mirror of
   `ReduceCastCostForMatchingSpellsEffect`; scopes by the same `SELF`/`OPPONENT`/`ALL` and returns

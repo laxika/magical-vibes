@@ -13,7 +13,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Exclude the source itself ("return <em>another</em> creature you control") with
  * {@code PermanentNotPredicate(new PermanentIsSourceCardPredicate())} inside the filter.</p>
+ *
+ * @param controllerChooses when true, the resolving ability's controller chooses a permanent
+ *                          controlled by the acting player (Sigil of Sleep)
  */
-public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun)
-        implements CardEffect {
+public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
+                                                            boolean controllerChooses)
+        implements CombatDamageTriggerContextEffect {
+
+    public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun) {
+        this(filter, noun, false);
+    }
+
+    /**
+     * On a damage-to-player trigger, the player whose permanents are selectable is the damaged
+     * player rather than the trigger controller.
+     */
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
+    }
 }

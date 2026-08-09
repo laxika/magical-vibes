@@ -60,6 +60,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> accumulatedChosenIds
     ) implements PermanentChoiceContext {}
 
+    /** Goblin Festival: the ability controller chooses which opponent gains control of the source. */
+    record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
+
     /**
      * Echo Chamber: {@code choosingPlayerId} picks one creature they control; a token copy of it is
      * then created under {@code copyControllerId}'s control from {@code sourceCard}.
@@ -147,12 +151,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                   effect whose amount is an {@code EventValue} can read it at resolution
      *                   (Death's Presence — "X is the power of the creature that died"). {@code null}
      *                   when the trigger carries no such value.
+     * @param sourcePermanentSnapshot last-known information for the permanent whose ability
+     *                                triggered, when the effect reads that permanent after it left
+     *                                the battlefield; {@code null} otherwise.
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
-                              Integer eventValue) implements PermanentChoiceContext {
+                              Integer eventValue, Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
-            this(dyingCard, controllerId, effects, null);
+            this(dyingCard, controllerId, effects, null, null);
+        }
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue) {
+            this(dyingCard, controllerId, effects, eventValue, null);
         }
     }
 

@@ -69,6 +69,10 @@ public sealed interface TriggerContext {
      */
     record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
 
+    /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
+    record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
+                                  int damageDealt) implements TriggerContext {}
+
     /**
      * Context for enchanted-permanent-tap triggers (ON_ENCHANTED_PERMANENT_TAPPED).
      */

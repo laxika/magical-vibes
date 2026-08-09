@@ -2,6 +2,8 @@
 
 All paths relative to `cards/`.
 
+Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; the registrar creates a one-shot echo trigger for the source permanent's current controller.
+
 ## Vanilla creatures (empty body, all from Scryfall)
 
 Reference: `a/AirElemental.java` — no constructor code needed.
@@ -96,6 +98,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
+| ETB drawback (exile unless discard) | `b/BodySnatcher.java` | ExileUnlessDiscardCardTypeEffect |
 | ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |
 | ETB drawback (bounce another creature) | `f/FaerieImpostor.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CREATURE, true) — sacrifice unless return *another* creature you control; excludeSource keeps the source off the choice list, so a lone Impostor auto-sacrifices |

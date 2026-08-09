@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "27")
 @CardRegistration(set = "8ED", collectorNumber = "30")
 @CardRegistration(set = "9ED", collectorNumber = "28")
+@CardRegistration(set = "UDS", collectorNumber = "12")
 public class MasterHealer extends Card {
 
     public MasterHealer() {

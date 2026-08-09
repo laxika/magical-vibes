@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "BOK", collectorNumber = "20")
+@CardRegistration(set = "UDS", collectorNumber = "18")
 public class Scour extends Card {
 
     public Scour() {

@@ -253,7 +253,7 @@ public class DamageSupport {
                 }
 
                 // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-                triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
+                triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
 
                 // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
                 triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, target.getId(), damage, false);
@@ -387,7 +387,7 @@ public class DamageSupport {
             }
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
 
             // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
             Permanent reflectionSource = entry.getSourcePermanentId() != null

@@ -215,6 +215,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx) {
             handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx) {
+            handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
             handleSacrificeCreaturesWithTotalPowerOrSacrificeSource(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped) {
@@ -833,6 +835,28 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleSacrificeAnyNumberAndRecordCount(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount context) {
+        int sacrificed = 0;
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        context.resolvingEntry().setEventValue(sacrificed);
+
+        if (sacrificed == 0) {
+            gameLogService.append(gameData,
+                    GameLog.text(gameData.playerIdToName.get(playerId) + " sacrifices no permanents."));
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

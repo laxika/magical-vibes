@@ -237,10 +237,11 @@ public class GraveyardReturnSupport {
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
 
-        if ((effect.grantHaste() || effect.exileAtEndStep())
+        if ((effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep())
                 && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
-                    effect.grantHaste(), effect.exileAtEndStep(), effect.exileIfLeavesBattlefield());
+                    effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                    effect.exileIfLeavesBattlefield());
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
@@ -459,9 +460,10 @@ public class GraveyardReturnSupport {
                             ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
                         gameData.addCardToHand(targetPlayerId, card);
-                    } else if (effect.grantHaste() || effect.exileAtEndStep()) {
+                    } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
-                                effect.grantHaste(), effect.exileAtEndStep(), effect.exileIfLeavesBattlefield());
+                                effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                                effect.exileIfLeavesBattlefield());
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
@@ -887,6 +889,7 @@ public class GraveyardReturnSupport {
 
     public void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
                                                          boolean grantHaste, boolean exileAtEndStep,
+                                                         boolean sacrificeAtEndStep,
                                                          boolean exileIfLeavesBattlefield) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -912,6 +915,9 @@ public class GraveyardReturnSupport {
         }
         if (exileAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        }
+        if (sacrificeAtEndStep) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -1435,7 +1441,7 @@ public class GraveyardReturnSupport {
         if (next.remainingCount() > 1) {
             gameData.pendingGraveyardReturnQueue.addFirst(
                     new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
-                            next.destination(), next.skipRemainingOnDecline()));
+                            next.destination(), next.skipRemainingOnDecline(), next.mandatory()));
         }
 
         GraveyardChoiceDestination destination = next.destination();
@@ -1444,6 +1450,7 @@ public class GraveyardReturnSupport {
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(next.playerId(), matchingIndices, destination,
                         "Return a " + filterLabel + " from your graveyard to " + destText + ".")
+                .mandatory(next.mandatory())
                 .build());
     }
 

@@ -479,6 +479,8 @@ export interface InteractionPromptNotification {
   searchable?: boolean;
   /** LIST_PICK options to grey out; still legally answerable, so this is presentation only. */
   disabledOptions?: string[];
+  minCount?: number;
+  manaPayment?: boolean;
 }
 
 export interface RevealHandNotification {

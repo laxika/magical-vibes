@@ -52,8 +52,9 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
         }
 
         int maxAllowed = interaction.maxValue();
-        if (chosenValue < 0 || chosenValue > maxAllowed) {
-            throw new IllegalArgumentException("X value must be between 0 and " + maxAllowed);
+        if (chosenValue < interaction.minValue() || chosenValue > maxAllowed) {
+            throw new IllegalArgumentException("Value must be between " + interaction.minValue()
+                    + " and " + maxAllowed);
         }
 
         if (gameData.pendingAbilityCounterCostActivation != null) {

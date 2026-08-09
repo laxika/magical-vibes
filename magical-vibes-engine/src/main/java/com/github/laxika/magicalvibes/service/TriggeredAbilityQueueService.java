@@ -214,10 +214,11 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            TargetFilter selfLeavesFilter = targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    pending.sourceCard().getTargetFilter(),
+                    selfLeavesFilter,
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.END_STEP);
@@ -245,6 +246,17 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} leaves-battlefield trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    private TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+        int targetGroupIndex = effects.stream()
+                .mapToInt(sourceCard::getEffectTargetIndex)
+                .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                .findFirst()
+                .orElse(-1);
+        return targetGroupIndex >= 0
+                ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
+                : null;
     }
 
     /**

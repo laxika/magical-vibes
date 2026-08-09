@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "41")
+@CardRegistration(set = "UDS", collectorNumber = "19")
 public class SerraAdvocate extends Card {
 
     public SerraAdvocate() {

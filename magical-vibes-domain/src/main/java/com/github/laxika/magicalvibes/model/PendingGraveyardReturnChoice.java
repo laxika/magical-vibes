@@ -16,8 +16,16 @@ import java.util.UUID;
  *                                player (used by "each player returns up to N" effects); if
  *                                {@code false}, only the current entry is skipped (used when each
  *                                entry is an independent choice, e.g. Grim Captain's Call)
+ * @param mandatory                if {@code true}, the player must choose a card when one is
+ *                                available
  */
 public record PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                            GraveyardChoiceDestination destination,
-                                           boolean skipRemainingOnDecline) {
+                                           boolean skipRemainingOnDecline, boolean mandatory) {
+
+    public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
+                                        GraveyardChoiceDestination destination,
+                                        boolean skipRemainingOnDecline) {
+        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false);
+    }
 }

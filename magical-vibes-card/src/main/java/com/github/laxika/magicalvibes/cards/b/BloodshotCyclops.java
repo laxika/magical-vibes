@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "179")
 @CardRegistration(set = "7ED", collectorNumber = "176")
+@CardRegistration(set = "UDS", collectorNumber = "77")
 public class BloodshotCyclops extends Card {
 
     public BloodshotCyclops() {

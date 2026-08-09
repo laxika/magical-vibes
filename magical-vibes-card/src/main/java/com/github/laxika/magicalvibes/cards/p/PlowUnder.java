@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "272")
+@CardRegistration(set = "UDS", collectorNumber = "117")
 public class PlowUnder extends Card {
 
     public PlowUnder() {

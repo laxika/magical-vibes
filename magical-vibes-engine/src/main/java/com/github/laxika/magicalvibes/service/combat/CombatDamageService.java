@@ -249,6 +249,7 @@ public class CombatDamageService {
             cardBefore.put(p.getId(), p.getCard());
         }
 
+        Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
@@ -309,7 +310,7 @@ public class CombatDamageService {
         processCombatDamageReceivedTriggers(gameData, dealtDamageTriggerData);
 
         // Process ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-        processAnyCreatureDealtDamageTriggers(gameData, state);
+        processAnyCreatureDealtDamageTriggers(gameData, state, damagedCreatureSnapshots);
 
         // Process ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
         for (var entry : state.defDamageTaken.entrySet()) {
@@ -1746,24 +1747,49 @@ public class CombatDamageService {
     }
 
     /**
-     * Fires ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath) for each creature that
-     * took combat damage this step. Creatures already removed by lethal combat damage are skipped —
-     * they're gone; only surviving damaged creatures are looked up and passed to the trigger scan.
+     * Captures the damaged creatures before state-based actions remove lethal casualties.
      */
-    private void processAnyCreatureDealtDamageTriggers(GameData gameData, CombatDamageState state) {
-        Set<UUID> damagedCreatureIds = new LinkedHashSet<>();
-        for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
-            Map<UUID, Integer> amounts = state.combatDamageAmountsToCreatures.getOrDefault(entry.getKey(), Map.of());
-            for (UUID targetId : entry.getValue()) {
-                if (amounts.getOrDefault(targetId, 0) > 0) {
-                    damagedCreatureIds.add(targetId);
+    private Map<UUID, Permanent> snapshotCombatDamagedCreatures(GameData gameData, CombatDamageState state) {
+        Map<UUID, Permanent> damagedCreatures = new LinkedHashMap<>();
+        for (var entry : state.combatDamageAmountsToCreatures.entrySet()) {
+            for (var amountEntry : entry.getValue().entrySet()) {
+                if (amountEntry.getValue() <= 0) continue;
+                Permanent damaged = gameQueryService.findPermanentById(gameData, amountEntry.getKey());
+                if (damaged != null) {
+                    damagedCreatures.putIfAbsent(damaged.getId(), damaged);
                 }
             }
         }
-        for (UUID id : damagedCreatureIds) {
-            Permanent damaged = gameQueryService.findPermanentById(gameData, id);
+        return damagedCreatures;
+    }
+
+    /**
+     * Fires ON_ANY_CREATURE_DEALT_DAMAGE triggers for each creature that took combat damage this
+     * step, using the captured creature and controller when lethal damage removed it.
+     */
+    private void processAnyCreatureDealtDamageTriggers(GameData gameData, CombatDamageState state,
+                                                       Map<UUID, Permanent> damagedCreatureSnapshots) {
+        Map<UUID, Integer> damageByCreature = new LinkedHashMap<>();
+        for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
+            Map<UUID, Integer> amounts = state.combatDamageAmountsToCreatures.getOrDefault(entry.getKey(), Map.of());
+            for (UUID targetId : entry.getValue()) {
+                int damage = amounts.getOrDefault(targetId, 0);
+                if (damage > 0) {
+                    damageByCreature.merge(targetId, damage, Integer::sum);
+                }
+            }
+        }
+        for (var entry : damageByCreature.entrySet()) {
+            UUID damagedCreatureId = entry.getKey();
+            Permanent damaged = gameQueryService.findPermanentById(gameData, damagedCreatureId);
+            if (damaged == null) {
+                damaged = damagedCreatureSnapshots.get(damagedCreatureId);
+            }
             if (damaged == null) continue;
-            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, damaged);
+
+            UUID controllerId = state.combatDamageTargetControllers.get(damagedCreatureId);
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(
+                    gameData, damaged, controllerId, entry.getValue());
         }
     }
 

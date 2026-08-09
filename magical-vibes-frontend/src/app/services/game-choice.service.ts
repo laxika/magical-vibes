@@ -92,8 +92,10 @@ export class GameChoiceService {
     // X value choice
     this.awaitingXValueChoice = false;
     this.xValueChoicePrompt = '';
+    this.xValueChoiceMinValue = 0;
     this.xValueChoiceMaxValue = 0;
     this.xValueChoiceInput = 0;
+    this.xValueChoiceManaPayment = false;
     // Sub-services
     this.targeting.reset();
     this.library.reset();
@@ -182,8 +184,10 @@ export class GameChoiceService {
   // --- X value choice state ---
   awaitingXValueChoice = false;
   xValueChoicePrompt = '';
+  xValueChoiceMinValue = 0;
   xValueChoiceMaxValue = 0;
   xValueChoiceInput = 0;
+  xValueChoiceManaPayment = false;
 
   // ========== Message handlers ==========
 
@@ -255,8 +259,10 @@ export class GameChoiceService {
       case 'NUMBER_PICK':
         this.awaitingXValueChoice = true;
         this.xValueChoicePrompt = msg.prompt;
+        this.xValueChoiceMinValue = msg.minCount ?? 0;
         this.xValueChoiceMaxValue = msg.maxCount ?? 0;
-        this.xValueChoiceInput = msg.maxCount ?? 0;
+        this.xValueChoiceInput = this.xValueChoiceMinValue;
+        this.xValueChoiceManaPayment = msg.manaPayment ?? false;
         break;
       case 'SCRY_ORDER':
         this.library.handleScry(msg);
@@ -376,8 +382,10 @@ export class GameChoiceService {
     });
     this.awaitingXValueChoice = false;
     this.xValueChoicePrompt = '';
+    this.xValueChoiceMinValue = 0;
     this.xValueChoiceMaxValue = 0;
     this.xValueChoiceInput = 0;
+    this.xValueChoiceManaPayment = false;
   }
 
   cancelXValueChoice(): void {
@@ -389,8 +397,10 @@ export class GameChoiceService {
     });
     this.awaitingXValueChoice = false;
     this.xValueChoicePrompt = '';
+    this.xValueChoiceMinValue = 0;
     this.xValueChoiceMaxValue = 0;
     this.xValueChoiceInput = 0;
+    this.xValueChoiceManaPayment = false;
   }
 
   choosePermanent(permanentId: string): void {

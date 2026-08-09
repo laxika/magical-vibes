@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "302")
+@CardRegistration(set = "UDS", collectorNumber = "131")
 public class FodderCannon extends Card {
 
     public FodderCannon() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "310")
+@CardRegistration(set = "UDS", collectorNumber = "138")
 public class StorageMatrix extends Card {
 
     public StorageMatrix() {

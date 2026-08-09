@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffe
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
@@ -386,6 +387,51 @@ public class MayPenaltyChoiceHandlerService {
 
         if (effect.drawCardIfNotDiscarded()) {
             drawService.resolveDrawCard(gameData, controllerId);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExileUnlessDiscardChoice(GameData gameData, Player player, boolean accepted,
+            PendingMayAbility ability) {
+        ExileUnlessDiscardCardTypeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof ExileUnlessDiscardCardTypeEffect)
+                .map(e -> (ExileUnlessDiscardCardTypeEffect) e)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+
+        if (accepted) {
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
+                        validIndices.add(i);
+                    }
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                String typeName = effect.requiredType() == null
+                        ? "card"
+                        : effect.requiredType().name().toLowerCase() + " card";
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
+                        "Choose a " + typeName + " to discard.", 1);
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " chooses to discard a " + typeName + "."));
+                return;
+            }
+        }
+
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToExile(gameData, sourcePermanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to discard. ", sourceCard, " is exiled."));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "197")
+@CardRegistration(set = "UDS", collectorNumber = "88")
 public class Impatience extends Card {
 
     public Impatience() {

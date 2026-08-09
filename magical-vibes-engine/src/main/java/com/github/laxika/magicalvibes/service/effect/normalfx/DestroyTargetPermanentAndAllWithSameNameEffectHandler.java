@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetNonlandPermanentAndAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +16,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetNonlandPermanentAndAllWithSameNameEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetPermanentAndAllWithSameNameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;
     private final PermanentRemovalService permanentRemovalService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DestroyTargetNonlandPermanentAndAllWithSameNameEffect.class;
+        return DestroyTargetPermanentAndAllWithSameNameEffect.class;
     }
 
     @Override
@@ -32,14 +35,20 @@ public class DestroyTargetNonlandPermanentAndAllWithSameNameEffectHandler implem
             return;
         }
 
+        var sameNameEffect = (DestroyTargetPermanentAndAllWithSameNameEffect) effect;
         String targetName = target.getCard().getName();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-        // Collect the target and all other permanents with the same name across all battlefields.
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent perm : battlefield) {
-                if (perm.getCard().getName().equals(targetName)) {
-                    toDestroy.add(perm);
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getName().equals(targetName)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
+                    toDestroy.add(permanent);
                 }
             }
         });

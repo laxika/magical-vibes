@@ -513,7 +513,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableLibraryTopCards.set(state.playableLibraryTopCards ?? []);
     this.autoStopSteps.set(new Set(state.autoStopSteps));
 
-    if (this.choice.awaitingXValueChoice) {
+    if (this.choice.awaitingXValueChoice && this.choice.xValueChoiceManaPayment) {
       this.choice.xValueChoiceMaxValue = this.totalMana;
     }
     if (this.choice.awaitingMayAbility) {

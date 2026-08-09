@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
@@ -249,6 +250,7 @@ public class LayerSystemService {
                                     Map<UUID, List<CardSubtype>> landTypeOverrides,
                                     Set<UUID> marchAnimatedIds,
                                     Set<UUID> starfieldAnimatedIds,
+                                    Set<UUID> opalescenceAnimatedIds,
                                     Set<CardEffect> managedL4Effects,
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
                                     Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
@@ -734,6 +736,7 @@ public class LayerSystemService {
         Map<UUID, PermanentSlot> slotsById = new HashMap<>();
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
                 new HashSet<>(),
+                new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>());
@@ -1082,6 +1085,7 @@ public class LayerSystemService {
         LayeredBoardState trialBoard = new LayeredBoardState(trialStates,
                 new HashMap<>(board.landTypeOverrides()), new HashSet<>(board.marchAnimatedIds()),
                 new HashSet<>(board.starfieldAnimatedIds()),
+                new HashSet<>(board.opalescenceAnimatedIds()),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
@@ -1348,6 +1352,18 @@ public class LayerSystemService {
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                         board.starfieldAnimatedIds().add(permanent.getId());
+                    }
+                }
+            }
+            case AnimateNonAuraEnchantmentsEffect ignored -> {
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    Permanent permanent = target.permanent();
+                    CharacteristicState state = states.get(permanent.getId());
+                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)
+                            && !isOneShotAnimated(permanent)) {
+                        state.addCardType(CardType.CREATURE);
+                        board.opalescenceAnimatedIds().add(permanent.getId());
                     }
                 }
             }
@@ -2027,6 +2043,19 @@ public class LayerSystemService {
                         if (isSource(instance, target)) continue;
                         Permanent permanent = target.permanent();
                         if (board.starfieldAnimatedIds().contains(permanent.getId())
+                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
+                            int manaValue = permanent.getCard().getManaValue();
+                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
+                                    instance.timestamp(), instance.position(),
+                                    provenanceSourceName(instance)));
+                        }
+                    }
+                }
+                case AnimateNonAuraEnchantmentsEffect ignored -> {
+                    for (PermanentSlot target : slots) {
+                        if (isSource(instance, target)) continue;
+                        Permanent permanent = target.permanent();
+                        if (board.opalescenceAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
                             int manaValue = permanent.getCard().getManaValue();
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,

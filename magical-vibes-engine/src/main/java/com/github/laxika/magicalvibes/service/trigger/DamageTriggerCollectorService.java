@@ -288,6 +288,65 @@ public class DamageTriggerCollectorService {
     // ── ON_ENCHANTED_CREATURE_DEALT_DAMAGE ─────────────────────────────
 
     @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    private boolean handleAnyCreatureDealtDamageToController(TriggerMatchContext match,
+            EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                dc.damageDealt(),
+                dc.damagedCreatureControllerId(),
+                match.permanent().getId(),
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        );
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers for damage dealt to a creature", gameData.id,
+                match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    private boolean handleAnyCreatureDealtDamageDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTargetId(dc.damagedCreature().getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers for damage dealt to a creature", gameData.id,
+                match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
             slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageToController(TriggerMatchContext match,
             EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger, TriggerContext ctx) {

@@ -26,7 +26,8 @@ class XValueChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction
             return;
         }
 
-        int chosenValue = interaction.maxValue();
+        int chosenValue = interaction.maxValue() == Integer.MAX_VALUE
+                ? interaction.minValue() : interaction.maxValue();
         if (interaction.manaPayment()) {
             ManaPool pool = ctx.gameData().playerManaPools.get(interaction.playerId());
             int payable = pool == null ? 0

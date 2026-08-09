@@ -30,7 +30,9 @@ public record InteractionPromptMessage(
         String cardName,
         Boolean allGraveyards,
         Boolean searchable,
-        List<String> disabledOptions) {
+        List<String> disabledOptions,
+        Integer minCount,
+        Boolean manaPayment) {
 
     private static InteractionPromptMessage of(InteractionShape shape, String prompt,
                                                List<Integer> cardIndices, List<CardView> cards,
@@ -41,7 +43,21 @@ public record InteractionPromptMessage(
                                                Boolean allGraveyards, Boolean searchable) {
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, shape, prompt,
                 cardIndices, cards, cardIds, permanentIds, playerIds, options, maxCount,
-                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null);
+                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null, null, null);
+    }
+
+    private static InteractionPromptMessage of(InteractionShape shape, String prompt,
+                                               List<Integer> cardIndices, List<CardView> cards,
+                                               List<UUID> cardIds, List<UUID> permanentIds,
+                                               List<UUID> playerIds, List<String> options,
+                                               Integer maxCount, Boolean declinable, Boolean canPay,
+                                               String manaCost, String cardName,
+                                               Boolean allGraveyards, Boolean searchable,
+                                               Integer minCount, Boolean manaPayment) {
+        return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, shape, prompt,
+                cardIndices, cards, cardIds, permanentIds, playerIds, options, maxCount,
+                declinable, canPay, manaCost, cardName, allGraveyards, searchable, null,
+                minCount, manaPayment);
     }
 
     /** Pick one card from the player's own hand by index. */
@@ -102,7 +118,8 @@ public record InteractionPromptMessage(
                                                     boolean searchable, List<String> disabledOptions) {
         return new InteractionPromptMessage(MessageType.INTERACTION_PROMPT, InteractionShape.LIST_PICK,
                 prompt, null, null, null, null, null, options, null, null, null, null, null, null,
-                searchable, disabledOptions == null || disabledOptions.isEmpty() ? null : List.copyOf(disabledOptions));
+                searchable, disabledOptions == null || disabledOptions.isEmpty() ? null : List.copyOf(disabledOptions),
+                null, null);
     }
 
     public static InteractionPromptMessage acceptDecline(String prompt, boolean canPay,
@@ -112,8 +129,13 @@ public record InteractionPromptMessage(
     }
 
     public static InteractionPromptMessage numberPick(String prompt, int maxValue, String cardName) {
+        return numberPick(prompt, 0, maxValue, cardName, false);
+    }
+
+    public static InteractionPromptMessage numberPick(String prompt, int minValue, int maxValue,
+                                                      String cardName, boolean manaPayment) {
         return of(InteractionShape.NUMBER_PICK, prompt, null, null, null, null, null, null,
-                maxValue, null, null, null, cardName, null, null);
+                maxValue, null, null, null, cardName, null, null, minValue, manaPayment);
     }
 
     public static InteractionPromptMessage scryOrder(List<CardView> cards, String prompt) {

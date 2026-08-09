@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "101")
+@CardRegistration(set = "UDS", collectorNumber = "47")
 public class TelepathicSpies extends Card {
 
     public TelepathicSpies() {

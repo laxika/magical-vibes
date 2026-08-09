@@ -264,6 +264,11 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllPermanents(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        if (e.chosenCount() > 0) {
+            resolveChosenAllPermanents(gameData, entry, e);
+            return;
+        }
+
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId());
@@ -280,6 +285,30 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count[0] + " permanent(s)."));
         log.info("Game {} - {} untaps {} permanent(s)", gameData.id, entry.getCard().getName(), count[0]);
+    }
+
+    private void resolveChosenAllPermanents(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        List<UUID> validIds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.isTapped()) return;
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) return;
+            validIds.add(permanent.getId());
+        });
+
+        if (validIds.isEmpty()) {
+            return;
+        }
+
+        int maxCount = Math.min(e.chosenCount(), validIds.size());
+        playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, maxCount,
+                new MultiPermanentChoiceContext.UntapChosenPermanents(entry.getCard().getName()),
+                entry.getCard().getName() + " — Choose up to " + maxCount + " permanent"
+                        + (maxCount == 1 ? "" : "s") + " to untap.");
     }
 
     private void resolveAttackedCreatures(GameData gameData, StackEntry entry) {

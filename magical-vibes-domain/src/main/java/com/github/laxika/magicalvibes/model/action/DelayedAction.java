@@ -59,6 +59,7 @@ public sealed interface DelayedAction permits
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
         AddManaAtNextMainPhase,
+        EchoAtNextUpkeep,
         LoseLifeAtNextDrawStepUnlessPays,
         DamageAtNextUpkeepUnlessPays,
         PoisonAtNextUpkeepUnlessPays,

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPer
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -267,6 +268,33 @@ class CastingCostServiceTest {
             creature.setManaCost("{1}{G}");
 
             assertThat(svc.getCastCostModifier(gd, player1Id, creature)).isZero();
+        }
+
+        @Test
+        @DisplayName("Chosen subtype reduction applies only to own matching creature spells")
+        void chosenSubtypeReductionScopesToMatchingCreatureSpells() {
+            Card incubator = new Card();
+            incubator.setName("Urza's Incubator");
+            incubator.setType(CardType.ARTIFACT);
+            incubator.addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenSubtypeSpellsEffect(2));
+            Permanent incubatorPermanent = new Permanent(incubator);
+            incubatorPermanent.setChosenSubtype(CardSubtype.GIANT);
+            gd.playerBattlefields.get(player1Id).add(incubatorPermanent);
+
+            Card giant = new Card();
+            giant.setName("Hill Giant");
+            giant.setType(CardType.CREATURE);
+            giant.setSubtypes(List.of(CardSubtype.GIANT));
+            when(gameQueryService.cardHasSubtype(giant, CardSubtype.GIANT, gd, giant.getOwnerId())).thenReturn(true);
+
+            Card bear = new Card();
+            bear.setName("Grizzly Bears");
+            bear.setType(CardType.CREATURE);
+            bear.setSubtypes(List.of(CardSubtype.BEAR));
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, giant)).isEqualTo(-2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, bear)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player2Id, giant)).isZero();
         }
 
         @Test

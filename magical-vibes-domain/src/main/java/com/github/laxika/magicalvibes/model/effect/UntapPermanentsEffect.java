@@ -14,9 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code UntapEachOtherCreatureYouControlEffect}, {@code UntapAttackedCreaturesEffect},
  * {@code UntapEquippedCreatureEffect} and {@code UntapUpToControlledPermanentsEffect}.
  *
- * <p>With {@link TapUntapScope#CONTROLLED}, {@code chosenCount} of 0 untaps every matching tapped
- * permanent the controller controls; a positive {@code chosenCount} instead lets the controller pick
- * <em>up to</em> that many of them to untap (Rewind, Unwind), mirroring
+ * <p>With {@link TapUntapScope#CONTROLLED} or {@link TapUntapScope#ALL_PERMANENTS},
+ * {@code chosenCount} of 0 untaps every matching tapped permanent in scope; a positive
+ * {@code chosenCount} instead lets the controller pick <em>up to</em> that many of them to untap
+ * (Rewind, Unwind, Treachery), mirroring
  * {@link TapPermanentsEffect#chosenCount()}.
  *
  * @param scope       which permanent(s) to untap

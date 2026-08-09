@@ -92,6 +92,8 @@ import lombok.Builder;
  *                             next end step (Unearth, Postmortem Lunge, Shallow Grave). Unearth's extra
  *                             "exile it instead if it would leave the battlefield" clause is the separate
  *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
+ * @param sacrificeAtEndStep   {@code true} to schedule the permanent for sacrifice at the beginning of the
+ *                             next end step (Apprentice Necromancer)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
@@ -195,6 +197,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean attachToSource,
         boolean grantHaste,
         boolean exileAtEndStep,
+        boolean sacrificeAtEndStep,
         boolean requiresManaValueEqualsX,
         boolean requiresManaValueAtMostX,
         CardColor grantColor,

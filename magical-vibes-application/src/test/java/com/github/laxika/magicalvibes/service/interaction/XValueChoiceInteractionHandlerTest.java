@@ -121,6 +121,19 @@ class XValueChoiceInteractionHandlerTest {
         }
 
         @Test
+        @DisplayName("Rejects a value below the configured minimum")
+        void rejectsValueBelowMin() {
+            PendingInteraction.XValueChoice positiveChoice = new PendingInteraction.XValueChoice(
+                    PLAYER1_ID, 1, 10, "Choose a positive number", "Scrying Glass");
+            projectionSupport.begin(gd, positiveChoice);
+
+            assertThatThrownBy(() -> registry.dispatchAnswer(gd, new Player(PLAYER1_ID, "Player1"),
+                    new InteractionAnswer.NumberChosen(0)))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("between 1 and 10");
+        }
+
+        @Test
         @DisplayName("Rejects an answer from the wrong player")
         void rejectsWrongPlayer() {
             projectionSupport.begin(gd, choice(5));

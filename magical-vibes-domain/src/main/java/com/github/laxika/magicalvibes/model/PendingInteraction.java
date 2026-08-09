@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 import java.util.UUID;
 
@@ -34,6 +35,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.PutLandsFromHandChoice,
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
@@ -101,12 +103,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code manaPayment} marks prompts whose X is charged from the mana pool — those open
      * the CR 605.3a window so the player may tap mana sources while the prompt is up.
      */
-    record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName, boolean manaPayment)
+    record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName, boolean manaPayment)
             implements PendingInteraction {
 
         /** Non-mana number pick (discard counts, life payments, bids). */
         public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
-            this(playerId, maxValue, prompt, cardName, false);
+            this(playerId, 0, maxValue, prompt, cardName, false);
+        }
+
+        /** Non-mana number pick with an explicit lower bound. */
+        public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName) {
+            this(playerId, minValue, maxValue, prompt, cardName, false);
+        }
+
+        /** Backward-compatible mana-payment form with the usual zero lower bound. */
+        public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName,
+                            boolean manaPayment) {
+            this(playerId, 0, maxValue, prompt, cardName, manaPayment);
         }
 
         @Override
@@ -116,7 +129,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.NumberPick(0, maxValue);
+            return new InteractionOptions.NumberPick(minValue, maxValue);
         }
     }
 
@@ -452,6 +465,38 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public PutLandsFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+        }
+    }
+
+    /**
+     * The controller chooses any number of matching cards from their hand to reveal. The selected
+     * count is written to the resolving stack entry for the next effect to use.
+     */
+    record ManaAbilityRevealContext(UUID sourcePermanentId, ManaColor manaColor, DynamicAmount amount,
+                                    int xValue, int manaMultiplier, boolean creatureSource) {
+    }
+
+    record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                String cardName, ManaAbilityRevealContext manaAbilityContext)
+            implements PendingInteraction {
+
+        public RevealAnyNumberOfCardsFromHandChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName) {
+            this(playerId, validCardIds, cardName, null);
         }
 
         @Override

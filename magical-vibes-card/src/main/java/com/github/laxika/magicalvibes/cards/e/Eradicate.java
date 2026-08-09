@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BOK", collectorNumber = "65")
+@CardRegistration(set = "UDS", collectorNumber = "60")
 public class Eradicate extends Card {
 
     public Eradicate() {

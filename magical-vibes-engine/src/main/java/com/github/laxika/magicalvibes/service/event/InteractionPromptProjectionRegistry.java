@@ -71,6 +71,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
         register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
+        register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
+                this::projectRevealAnyNumberOfCardsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
@@ -151,13 +153,14 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectXValueChoice(
             GameData gameData, PendingInteraction.XValueChoice interaction) {
         return InteractionPromptMessage.numberPick(
-                interaction.prompt(), interaction.maxValue(), interaction.cardName());
+                interaction.prompt(), interaction.minValue(), interaction.maxValue(),
+                interaction.cardName(), interaction.manaPayment());
     }
 
     private InteractionPromptMessage projectAlternateCastXValueChoice(
             GameData gameData, PendingInteraction.AlternateCastXValueChoice interaction) {
         return InteractionPromptMessage.numberPick(
-                interaction.prompt(), interaction.maxValue(), interaction.cardName());
+                interaction.prompt(), 0, interaction.maxValue(), interaction.cardName(), true);
     }
 
     private InteractionPromptMessage projectScry(
@@ -318,6 +321,20 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
                 "You may put any number of land cards from your hand onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectRevealAnyNumberOfCardsFromHandChoice(
+            GameData gameData, PendingInteraction.RevealAnyNumberOfCardsFromHandChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews,
+                interaction.validCardIds().size(),
+                "Choose any number of cards to reveal from your hand for "
+                        + interaction.cardName() + ".");
     }
 
     private InteractionPromptMessage projectDoomsdayChoice(

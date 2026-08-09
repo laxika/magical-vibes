@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetNonlandPermanentAndAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "92")
 @CardRegistration(set = "INR", collectorNumber = "244")
@@ -17,6 +18,7 @@ public class MaelstromPulse extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetNonlandPermanentAndAllWithSameNameEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndAllWithSameNameEffect(
+                new PermanentNotPredicate(new PermanentIsLandPredicate()), new PermanentTruePredicate()));
     }
 }

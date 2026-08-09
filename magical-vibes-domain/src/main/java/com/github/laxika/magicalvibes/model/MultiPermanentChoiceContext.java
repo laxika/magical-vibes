@@ -116,7 +116,7 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * The controller untaps the chosen permanents they control (Rewind's "Untap up to four lands").
+     * The controller untaps the chosen permanents (Rewind's "Untap up to four lands").
      * {@code sourceName} names the source in the game log.
      */
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
@@ -265,6 +265,13 @@ public sealed interface MultiPermanentChoiceContext {
      * for each one actually sacrificed (Mana Seism).
      */
     record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Sacrifice the chosen permanents and record the number actually sacrificed on the resolving
+     * stack entry for a following {@code EventValue} effect.
+     */
+    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }
 
     /**

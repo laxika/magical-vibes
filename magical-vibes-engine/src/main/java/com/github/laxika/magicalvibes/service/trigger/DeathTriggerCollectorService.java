@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -39,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrif
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -62,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
@@ -81,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -598,6 +603,27 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureControllerMaySearch(TriggerMatchContext match,
+            EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        match.gameData().queueMayAbility(
+                match.permanent().getCard(),
+                epd.dyingPermanentControllerId(),
+                new MayEffect(
+                        new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
+                                LibrarySearchDestination.BATTLEFIELD),
+                        "Search your library for a creature card and put it onto the battlefield?"),
+                null,
+                match.permanent().getId());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (enchanted creature died)", match.gameData().id,
+                match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = ReturnEnchantedCreatureToBattlefieldOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreatureToBattlefield(TriggerMatchContext match,
             ReturnEnchantedCreatureToBattlefieldOnDeathEffect effect, TriggerContext ctx) {
@@ -709,7 +735,8 @@ public class DeathTriggerCollectorService {
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue));
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue,
+                    new Permanent(match.permanent())));
             return;
         }
 
@@ -720,6 +747,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
         );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         // Only effects that read the death event's numeric payload (e.g. the dying creature's
         // last-known power) bake one; the field is a primitive, so a null would unbox and throw.
         if (eventValue != null) {

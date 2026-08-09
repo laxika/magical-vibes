@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "M15", collectorNumber = "168")
 @CardRegistration(set = "9ED", collectorNumber = "230")
 @CardRegistration(set = "7ED", collectorNumber = "230")
+@CardRegistration(set = "UDS", collectorNumber = "101")
 public class AncientSilverback extends Card {
 
     public AncientSilverback() {

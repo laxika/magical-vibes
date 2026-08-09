@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "288")
+@CardRegistration(set = "UDS", collectorNumber = "129")
 public class Caltrops extends Card {
 
     public Caltrops() {

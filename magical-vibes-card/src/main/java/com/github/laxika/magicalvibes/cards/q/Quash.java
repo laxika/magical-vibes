@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "BOK", collectorNumber = "47")
+@CardRegistration(set = "UDS", collectorNumber = "42")
 public class Quash extends Card {
 
     public Quash() {

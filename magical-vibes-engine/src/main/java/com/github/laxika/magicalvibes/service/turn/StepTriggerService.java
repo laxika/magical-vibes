@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
@@ -352,6 +353,37 @@ public class StepTriggerService {
                         playerName + " draws " + pending.count() + " cards from ", pending.sourceCard(), "."));
                 log.info("Game {} - {} draws {} cards from delayed upkeep trigger ({})",
                         gameData.id, playerName, pending.count(), pending.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(EchoAtNextUpkeep.class)) {
+            List<EchoAtNextUpkeep> pendingEchoes = gameData.drainDelayedActions(EchoAtNextUpkeep.class);
+            for (EchoAtNextUpkeep action : pendingEchoes) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, action.permanentId());
+                if (controllerId == null) {
+                    continue;
+                }
+                if (!controllerId.equals(gameData.activePlayerId)) {
+                    gameData.queueDelayedAction(action);
+                    continue;
+                }
+
+                ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
+                        new PayManaCost(action.manaCost()),
+                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                        true);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        controllerId,
+                        action.sourceCard().getName() + "'s echo ability",
+                        new ArrayList<>(List.of(payEchoOrSacrifice)),
+                        (UUID) null,
+                        action.permanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s echo ability triggers."));
+                log.info("Game {} - {} echo trigger pushed onto stack", gameData.id, action.sourceCard().getName());
             }
         }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "63")
+@CardRegistration(set = "UDS", collectorNumber = "44")
 public class Rescue extends Card {
 
     public Rescue() {

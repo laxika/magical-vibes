@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -582,7 +583,8 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
-        for (CardEffect effect : effectsToResolve) {
+        for (int effectIndex = 0; effectIndex < effectsToResolve.size(); effectIndex++) {
+            CardEffect effect = effectsToResolve.get(effectIndex);
             if ((dampingReplacement || twistReplacement) && effect instanceof ManaProducingEffect) {
                 continue;
             }
@@ -601,6 +603,26 @@ public class ActivatedAbilityExecutionService {
                         
                         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
                     }
+                }
+            } else if (effect instanceof RevealAnyNumberOfCardsFromHandEffect reveal) {
+                List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+                List<UUID> validCardIds = hand.stream()
+                        .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                                card, reveal.filter(), permanent.getCard().getId(), gameData, playerId))
+                        .map(Card::getId)
+                        .toList();
+                if (!validCardIds.isEmpty()
+                        && effectIndex + 1 < effectsToResolve.size()
+                        && effectsToResolve.get(effectIndex + 1) instanceof AwardManaEffect award) {
+                    interactionHandlerRegistry.begin(gameData,
+                            new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
+                                    playerId, validCardIds, permanent.getCard().getName(),
+                                    new PendingInteraction.ManaAbilityRevealContext(
+                                            permanent.getId(), award.color(), award.amount(), xValue,
+                                            manaMultiplier, isCreatureSource)));
+                    log.info("Game {} - Awaiting {} to choose cards to reveal for {}",
+                            gameData.id, player.getUsername(), permanent.getCard().getName());
+                    break;
                 }
             } else if (effect instanceof RemoveCountersForManaEffect rc) {
                 // Storage land: "Remove any number of [type] counters: Add [color] for each removed."

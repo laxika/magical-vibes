@@ -42,7 +42,9 @@ public class ReturnPermanentControlledByPlayerToHandEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReturnPermanentControlledByPlayerToHandEffect e = (ReturnPermanentControlledByPlayerToHandEffect) effect;
         UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
-        if (playerId == null || !gameData.playerIds.contains(playerId)) {
+        UUID chooserId = e.controllerChooses() ? entry.getControllerId() : playerId;
+        if (playerId == null || chooserId == null || !gameData.playerIds.contains(playerId)
+                || !gameData.playerIds.contains(chooserId)) {
             return;
         }
 
@@ -67,8 +69,8 @@ public class ReturnPermanentControlledByPlayerToHandEffectHandler implements Nor
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(playerId));
-        playerInputService.beginPermanentChoice(gameData, playerId, choices,
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(chooserId));
+        playerInputService.beginPermanentChoice(gameData, chooserId, choices,
                 "Choose a " + e.noun() + " to return to its owner's hand.");
     }
 }

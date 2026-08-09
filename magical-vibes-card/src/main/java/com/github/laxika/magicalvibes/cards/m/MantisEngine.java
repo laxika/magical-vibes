@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "333")
+@CardRegistration(set = "UDS", collectorNumber = "133")
 public class MantisEngine extends Card {
 
     public MantisEngine() {

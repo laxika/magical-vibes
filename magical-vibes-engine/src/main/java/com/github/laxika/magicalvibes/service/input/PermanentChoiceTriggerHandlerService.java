@@ -161,6 +161,9 @@ public class PermanentChoiceTriggerHandlerService {
         if (dtt.eventValue() != null) {
             entry.setEventValue(dtt.eventValue());
         }
+        if (dtt.sourcePermanentSnapshot() != null) {
+            entry.setSourcePermanentSnapshot(dtt.sourcePermanentSnapshot());
+        }
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
