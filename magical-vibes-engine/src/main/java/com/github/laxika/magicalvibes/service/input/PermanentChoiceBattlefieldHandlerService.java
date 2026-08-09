@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSuppo
 import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -94,6 +95,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SoulbondSupport soulbondSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
+    private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
@@ -1091,6 +1093,18 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureThenMassDamageEqualToPower(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeCreatureThenMassDamageHandler.resolveAfterChoice(gameData, chosen, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

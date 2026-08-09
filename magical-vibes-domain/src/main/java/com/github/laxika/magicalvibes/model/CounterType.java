@@ -23,6 +23,7 @@ public enum CounterType {
     ECHO,
     ELIXIR,
     EYEBALL,
+    FADE,
     FEATHER,
     FILIBUSTER,
     FLOOD,

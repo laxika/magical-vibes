@@ -530,9 +530,21 @@ public class ActivatedAbilityExecutionService {
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
 
+        boolean chosenLandManaReplacement = permanent.getCard().hasType(CardType.LAND)
+                && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
+        if (chosenLandManaReplacement) {
+            ChoiceContext.ManaColorChoice choiceContext =
+                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier);
+            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    playerId, null, null, choiceContext, colors,
+                    "Choose a color of mana to add (Harvest Mage)."));
+        }
+
         // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
         boolean dampingReplacement = false;
-        if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActive(gameData)) {
+        if (!chosenLandManaReplacement && permanent.getCard().hasType(CardType.LAND)
+                && isDampingManaReplacementActive(gameData)) {
             int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue);
             if (totalMana >= 2) {
                 dampingReplacement = true;
@@ -545,7 +557,7 @@ public class ActivatedAbilityExecutionService {
         // Reality Twist / Infernal Darkness: lands produce remapped or fixed colors instead.
         boolean twistReplacement = false;
         ManaColor fixedLandColor = null;
-        if (!dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
+        if (!chosenLandManaReplacement && !dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
             fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
             if (fixedLandColor != null) {
                 int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
@@ -612,7 +624,8 @@ public class ActivatedAbilityExecutionService {
 
         for (int effectIndex = 0; effectIndex < effectsToResolve.size(); effectIndex++) {
             CardEffect effect = effectsToResolve.get(effectIndex);
-            if ((dampingReplacement || twistReplacement) && effect instanceof ManaProducingEffect) {
+            if ((chosenLandManaReplacement || dampingReplacement || twistReplacement)
+                    && effect instanceof ManaProducingEffect) {
                 continue;
             }
             if (effect instanceof AwardManaEffect award) {

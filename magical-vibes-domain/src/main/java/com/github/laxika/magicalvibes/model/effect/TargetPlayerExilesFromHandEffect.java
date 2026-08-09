@@ -9,14 +9,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * source gains permission to play each exiled card for as long as it remains exiled
  * (e.g. Fiend of the Shadows). The permission does not expire at end of turn.
  *
- * @param amount            number of cards to exile
- * @param controllerMayPlay whether the source's controller may play the exiled cards
+ * @param amount              number of cards to exile
+ * @param controllerMayPlay   whether the source's controller may play the exiled cards
+ * @param returnOnSourceLeave whether the exiled cards return to their owners' hands when the source leaves
  */
-public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay)
+public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay,
+                                               boolean returnOnSourceLeave)
         implements CombatDamageTriggerContextEffect {
 
     public TargetPlayerExilesFromHandEffect(int amount) {
-        this(amount, false);
+        this(amount, false, false);
+    }
+
+    public TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay) {
+        this(amount, controllerMayPlay, false);
     }
 
     @Override

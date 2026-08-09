@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "127")
+@CardRegistration(set = "NEM", collectorNumber = "51")
 public class AscendantEvincar extends Card {
 
     public AscendantEvincar() {

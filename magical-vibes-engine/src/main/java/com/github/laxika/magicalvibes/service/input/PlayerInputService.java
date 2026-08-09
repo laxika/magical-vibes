@@ -1037,28 +1037,35 @@ public class PlayerInputService {
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
-                remainingCount, List.of(), 0);
+                remainingCount, List.of(), 0, false);
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
-                remainingCount, remainingChoosers, cardsPerPlayer, false);
+                remainingCount, remainingChoosers, cardsPerPlayer, false, false);
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                          UUID playPermissionControllerId, int remainingCount,
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, false);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown, boolean returnOnSourceLeave) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
                 playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
-                "Choose a card to exile.",
-                remainingChoosers != null ? remainingChoosers : List.of(),
-                cardsPerPlayer, faceDown));
+                "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
+                cardsPerPlayer, faceDown, returnOnSourceLeave));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

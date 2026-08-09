@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -14,15 +16,23 @@ import java.util.UUID;
 public record PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
                                        UUID targetId, Zone targetZone,
                                        String discardCostLabel, int remainingDiscards,
-                                       String discardCostRequiredName) {
+                                       String discardCostRequiredName,
+                                       List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+
+    public PendingAbilityActivation {
+        targetIds = targetIds != null ? List.copyOf(targetIds) : List.of();
+        damageAssignments = damageAssignments != null ? Map.copyOf(damageAssignments) : Map.of();
+    }
 
     public PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
                                     UUID targetId, Zone targetZone, String discardCostLabel) {
-        this(sourcePermanentId, abilityIndex, xValue, targetId, targetZone, discardCostLabel, 1, null);
+        this(sourcePermanentId, abilityIndex, xValue, targetId, targetZone, discardCostLabel, 1, null,
+                List.of(), Map.of());
     }
 
     public PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
                                     UUID targetId, Zone targetZone, String discardCostLabel, int remainingDiscards) {
-        this(sourcePermanentId, abilityIndex, xValue, targetId, targetZone, discardCostLabel, remainingDiscards, null);
+        this(sourcePermanentId, abilityIndex, xValue, targetId, targetZone, discardCostLabel, remainingDiscards, null,
+                List.of(), Map.of());
     }
 }

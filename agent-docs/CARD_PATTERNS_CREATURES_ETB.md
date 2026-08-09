@@ -99,6 +99,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | Upkeep control-to-lowest-life | `l/LoxodonPeacekeeper.java` | UPKEEP_TRIGGERED PlayerWithLowestLifeGainsControlOfSourceCreatureEffect - the player with the lowest life gains control; the controller chooses among tied lowest-life players |
 | Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
+| Upkeep control-to-most-creatures | `w/WildMammoth.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer, PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect) — unique player with the most creatures gains control; no-op on a tie |
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (exile unless discard) | `b/BodySnatcher.java` | ExileUnlessDiscardCardTypeEffect |

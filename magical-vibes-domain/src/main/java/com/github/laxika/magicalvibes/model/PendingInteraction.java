@@ -49,7 +49,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
-        PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
+        PendingInteraction.HandCardChoice, PendingInteraction.StrongholdGambitCardChoice,
+        PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
         PendingInteraction.RevealedFreeCastGroup,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
@@ -1283,6 +1284,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Mandatory hidden hand-card selection used by Stronghold Gambit's each-player choice. */
+    record StrongholdGambitCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                      java.util.List<UUID> remainingPlayerIds,
+                                      java.util.Map<UUID, UUID> chosenCardIds, String sourceName)
+            implements PendingInteraction, HandChoice {
+
+        public StrongholdGambitCardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            chosenCardIds = java.util.Collections.unmodifiableMap(
+                    new java.util.LinkedHashMap<>(chosenCardIds));
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public String prompt() {
+            return "Choose a card in your hand.";
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
     /**
      * Master of Predicaments: the controller separates one card from their hand before the
      * damaged player guesses its mana-value range. The selected card stays in the hand until it
@@ -1556,14 +1586,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                UUID sourcePermanentId, UUID playPermissionControllerId,
                                int remainingCount, String prompt,
                                java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
-                               boolean faceDown)
+                               boolean faceDown, boolean returnOnSourceLeave)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                    UUID sourcePermanentId, UUID playPermissionControllerId,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, java.util.List.of(), 0, false);
+                    remainingCount, prompt, java.util.List.of(), 0, false, false);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -1571,7 +1601,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false);
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false);
         }
 
         @Override

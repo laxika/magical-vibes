@@ -77,13 +77,19 @@ public class PlayerInteractionSupport {
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, null);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
+                if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
+                        gameData, playerId)) {
                     continue;
                 }
                 // Mind into Matter: "mana value X or less".

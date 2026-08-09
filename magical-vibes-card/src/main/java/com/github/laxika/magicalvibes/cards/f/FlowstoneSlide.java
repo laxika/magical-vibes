@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "203")
 @CardRegistration(set = "9ED", collectorNumber = "186")
+@CardRegistration(set = "NEM", collectorNumber = "83")
 public class FlowstoneSlide extends Card {
 
     public FlowstoneSlide() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "181")
+@CardRegistration(set = "NEM", collectorNumber = "73")
 public class StrongholdDiscipline extends Card {
 
     public StrongholdDiscipline() {

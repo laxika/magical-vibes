@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourc
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
@@ -1752,6 +1753,26 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new SacrificeEnchantedCreatureOnLeaveEffect(enchantedId)))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = DestroyEnchantedCreatureOnLeaveEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleDestroyEnchantedCreatureOnLeave(TriggerMatchContext match,
+            DestroyEnchantedCreatureOnLeaveEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        UUID enchantedId = match.permanent().getAttachedTo();
+        if (enchantedId == null) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DestroyEnchantedCreatureOnLeaveEffect(
+                        enchantedId, effect.cannotBeRegenerated())))
         ));
         logSelfLeaves(match);
         return true;

@@ -53,6 +53,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMo
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
+import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -523,6 +525,10 @@ public class ConditionEvaluationService {
                     imprintedCardNameMatches(gameData, ctx);
             case OpponentControlsMoreCreatures c ->
                     anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx, c.minimumCreatureDifference());
+            case ControlsMoreCreaturesThanOpponent ignored ->
+                    controlsMoreCreaturesThanOpponent(gameData, ctx);
+            case APlayerControlsMoreCreaturesThanEachOtherPlayer ignored ->
+                    aPlayerControlsMoreCreaturesThanEachOtherPlayer(gameData);
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case OpponentControlsPermanentCount c ->
@@ -662,6 +668,29 @@ public class ConditionEvaluationService {
             }
         }
         return count;
+    }
+
+    private boolean controlsMoreCreaturesThanOpponent(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        return countCreaturesControlled(gameData, controllerId)
+                > countCreaturesControlled(gameData, opponentId);
+    }
+
+    private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData) {
+        int highestCreatureCount = -1;
+        int playersWithMostCreatures = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int creatureCount = countCreaturesControlled(gameData, playerId);
+            if (creatureCount > highestCreatureCount) {
+                highestCreatureCount = creatureCount;
+                playersWithMostCreatures = 1;
+            } else if (creatureCount == highestCreatureCount) {
+                playersWithMostCreatures++;
+            }
+        }
+        return playersWithMostCreatures == 1;
     }
 
     /**

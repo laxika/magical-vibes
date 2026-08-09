@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "145")
+@CardRegistration(set = "NEM", collectorNumber = "59")
 public class MindSlash extends Card {
 
     public MindSlash() {

@@ -250,7 +250,9 @@ public class TurnCleanupService {
         gameData.playersSilencedThisTurn.clear();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
         gameData.landSubtypeFixedManaColorThisTurn.clear();
+        gameData.nonbasicLandsFixedManaColorThisTurn = null;
         gameData.allLandsFixedManaColorThisTurn = null;
+        gameData.playersWithLandManaChoiceReplacementThisTurn.clear();
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastSpellTypesThisTurn.clear();
         gameData.playersCantCastNoncreatureSpellsThisTurn.clear();

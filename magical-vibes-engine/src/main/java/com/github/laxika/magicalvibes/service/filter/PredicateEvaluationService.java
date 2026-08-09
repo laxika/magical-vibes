@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
@@ -239,6 +241,18 @@ public class PredicateEvaluationService {
                     card.hasType(p.cardType());
             case CardSubtypePredicate p ->
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
+            case CardHasSourceChosenSubtypePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null || source.getChosenSubtype() == null || !card.hasType(CardType.CREATURE)) {
+                    yield false;
+                }
+                yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)
+                        || (gameQueryService.isCreatureSubtype(source.getChosenSubtype())
+                        && card.getKeywords().contains(Keyword.CHANGELING));
+            }
             case CardKeywordPredicate p ->
                     card.getKeywords().contains(p.keyword());
             case CardIsSelfPredicate ignored ->
@@ -1000,6 +1014,8 @@ public class PredicateEvaluationService {
                     true;
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestManaValueAmongAllCreatures(gameData, permanent);
+            case PermanentHasGreatestPowerAmongAllCreaturesPredicate ignored ->
+                    gameQueryService.hasGreatestPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasLeastPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {

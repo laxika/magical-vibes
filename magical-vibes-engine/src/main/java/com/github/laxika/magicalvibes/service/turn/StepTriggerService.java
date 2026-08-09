@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -672,6 +673,24 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof APlayerControlsMoreCreaturesThanEachOtherPlayer) {
+                    if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: unique player with most creatures)",
+                                gameData.id, perm.getCard().getName());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControllerLifeAtMost lifeCheck) {
                     // Intervening-if: only trigger if controller's life total <= threshold
                     int lifeTotal = gameData.playerLifeTotals.getOrDefault(activePlayerId, 20);
@@ -917,7 +936,7 @@ public class StepTriggerService {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             activePlayerId,
@@ -925,7 +944,9 @@ public class StepTriggerService {
                             new ArrayList<>(List.of(effect)),
                             (UUID) null,
                             perm.getId()
-                    ));
+                    );
+                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    gameData.stack.add(entry);
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                     log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -1010,7 +1031,7 @@ public class StepTriggerService {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             playerId,
@@ -1018,7 +1039,9 @@ public class StepTriggerService {
                             new ArrayList<>(List.of(effect)),
                             activePlayerId,
                             perm.getId()
-                    ));
+                    );
+                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    gameData.stack.add(entry);
                 }
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
@@ -1055,7 +1078,7 @@ public class StepTriggerService {
                         continue;
                     }
 
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             playerId,
@@ -1063,7 +1086,9 @@ public class StepTriggerService {
                             new ArrayList<>(List.of(effect)),
                             activePlayerId,
                             perm.getId()
-                    ));
+                    );
+                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    gameData.stack.add(entry);
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                     log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());

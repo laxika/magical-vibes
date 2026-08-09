@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "124")
+@CardRegistration(set = "NEM", collectorNumber = "56")
 public class DeathPitOffering extends Card {
 
     public DeathPitOffering() {

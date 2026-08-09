@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -114,6 +115,7 @@ public class BattlefieldEntryService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+    private com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler sacrificeAllPermanentsAsEntersEffectHandler;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -148,6 +150,12 @@ public class BattlefieldEntryService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
+    }
+
+    @Autowired
+    void setSacrificeAllPermanentsAsEntersEffectHandler(
+            @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler handler) {
+        this.sacrificeAllPermanentsAsEntersEffectHandler = handler;
     }
 
 
@@ -197,6 +205,9 @@ public class BattlefieldEntryService {
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         try {
+            if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
+                sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
+            }
             carrySpellTextReplacements(gameData, permanent);
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);

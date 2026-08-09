@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "171")
+@CardRegistration(set = "NEM", collectorNumber = "74")
 public class ViciousHunger extends Card {
 
     public ViciousHunger() {

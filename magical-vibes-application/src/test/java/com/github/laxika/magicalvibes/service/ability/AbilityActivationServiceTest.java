@@ -625,6 +625,45 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("ONLY_DURING_YOUR_TURN_BEFORE_END_STEP: succeeds before the end step")
+        void duringYourTurnBeforeEndStepSucceedsBeforeEndStep() {
+            Card card = createArtifactWithTimingRestriction(
+                    ActivationTimingRestriction.ONLY_DURING_YOUR_TURN_BEFORE_END_STEP);
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.POSTCOMBAT_MAIN;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+        }
+
+        @Test
+        @DisplayName("ONLY_DURING_YOUR_TURN_BEFORE_END_STEP: end step throws")
+        void duringYourTurnBeforeEndStepThrowsAtEndStep() {
+            Card card = createArtifactWithTimingRestriction(
+                    ActivationTimingRestriction.ONLY_DURING_YOUR_TURN_BEFORE_END_STEP);
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.END_STEP;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("before the end step");
+        }
+
+        @Test
         @DisplayName("COVEN: fewer than three different powers throws")
         void covenInsufficientDifferentPowersThrows() {
             Card card = createCreatureWithTimingRestriction(ActivationTimingRestriction.COVEN, 1, 1);

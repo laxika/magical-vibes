@@ -58,5 +58,6 @@ public enum ActivationTimingRestriction {
     ONLY_WHILE_CREATURE,
     POWER_4_OR_GREATER,
     RAID,
-    SORCERY_SPEED
+    SORCERY_SPEED,
+    ONLY_DURING_YOUR_TURN_BEFORE_END_STEP
 }

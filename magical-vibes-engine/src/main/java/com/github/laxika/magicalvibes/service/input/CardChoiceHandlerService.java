@@ -427,7 +427,8 @@ public class CardChoiceHandlerService {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
                     exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown());
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
+                    exileChoice.returnOnSourceLeave());
             return;
         }
 
@@ -451,6 +452,11 @@ public class CardChoiceHandlerService {
             gameData.exilePlayPermissions.put(card.getId(), exileChoice.playPermissionControllerId());
         }
 
+        if (exileChoice.returnOnSourceLeave() && sourcePermanentId != null) {
+            gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                    new PendingExileReturn(card, playerId, false, true));
+        }
+
         // A face-down exile must not name the card in the shared log (Gustha's Scepter).
         if (exileChoice.faceDown()) {
             gameLogService.append(gameData, GameLog.text(
@@ -467,7 +473,8 @@ public class CardChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown());
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
+                    exileChoice.returnOnSourceLeave());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -477,7 +484,7 @@ public class CardChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
-                    exileChoice.cardsPerPlayer(), exileChoice.faceDown());
+                    exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave());
         } else {
             gameData.interaction.clearAwaitingInput();
 

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  */
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
                                       boolean targetsPlayer)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
         this(counterType, 1, null, false);

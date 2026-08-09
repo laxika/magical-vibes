@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "101")
+@CardRegistration(set = "NEM", collectorNumber = "44")
 public class SneakyHomunculus extends Card {
 
     public SneakyHomunculus() {

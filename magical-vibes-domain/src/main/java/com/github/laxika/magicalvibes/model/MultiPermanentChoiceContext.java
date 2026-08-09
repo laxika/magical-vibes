@@ -115,6 +115,10 @@ public sealed interface MultiPermanentChoiceContext {
     record TapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap exactly the required number of matching permanents chosen by the affected player. */
+    record TapPermanentsForAmount(String sourceName, int requiredCount) implements MultiPermanentChoiceContext {
+    }
+
     /**
      * The controller untaps the chosen permanents (Rewind's "Untap up to four lands").
      * {@code sourceName} names the source in the game log.

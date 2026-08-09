@@ -227,13 +227,22 @@ public class AbilityActivationService {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
+        boolean chosenLandManaReplacement = permanent.getCard().hasType(CardType.LAND)
+                && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
         ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
                 ? gameQueryService.fixedLandManaColor(gameData, permanent)
                 : null;
         Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND) && fixedLandColor == null
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
                 : Set.of();
-        if (fixedLandColor != null) {
+        if (chosenLandManaReplacement) {
+            ChoiceContext.ManaColorChoice choiceContext =
+                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier);
+            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    playerId, null, null, choiceContext, colors,
+                    "Choose a color of mana to add (Harvest Mage)."));
+        } else if (fixedLandColor != null) {
             int totalMana = 0;
             if (!overriddenManaColors.isEmpty()) {
                 totalMana = manaMultiplier;
@@ -1599,7 +1608,9 @@ public class AbilityActivationService {
                     pending.targetZone(),
                     pending.discardCostLabel(),
                     remaining,
-                    requiredName
+                    requiredName,
+                    pending.targetIds(),
+                    pending.damageAssignments()
             );
             String labelText = pending.discardCostLabel() != null ? pending.discardCostLabel() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
@@ -1623,8 +1634,8 @@ public class AbilityActivationService {
                 pending.targetZone(),
                 -1,
                 null,
-                null,
-                null,
+                pending.targetIds(),
+                pending.damageAssignments(),
                 source,
                 null
         );
@@ -1755,8 +1766,8 @@ public class AbilityActivationService {
                 pending.targetZone(),
                 null,
                 cardIndex,
-                null,
-                null,
+                pending.targetIds(),
+                pending.damageAssignments(),
                 source,
                 null
         );
@@ -1948,7 +1959,7 @@ public class AbilityActivationService {
                     exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
             if (exileGraveyardCardIndex == null) {
                 beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        exileGraveyardCost, validExileIndices);
+                        targetIds, damageAssignments, exileGraveyardCost, validExileIndices);
                 return;
             }
             // Handle "exile and pay its mana cost" abilities (e.g. Back from the Brink)
@@ -1992,7 +2003,7 @@ public class AbilityActivationService {
                             + "card to activate ability");
                 }
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count(),
+                        targetIds, damageAssignments, discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count(),
                         discardCardTypeCost.payVerb());
                 return;
             }
@@ -3211,6 +3222,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during your turn");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN_BEFORE_END_STEP) {
+                if (!playerId.equals(gameData.activePlayerId)
+                        || !gameData.currentStep.isBeforeEndStep()) {
+                    throw new IllegalStateException("This ability can only be activated during your turn before the end step");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated during your upkeep");
@@ -3599,7 +3616,8 @@ public class AbilityActivationService {
     }
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                        UUID targetId, Zone targetZone, String costLabel, List<Integer> validDiscardIndices,
+                                        UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                        Map<UUID, Integer> damageAssignments, String costLabel, List<Integer> validDiscardIndices,
                                         int remainingDiscards, String payVerb) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
@@ -3608,7 +3626,10 @@ public class AbilityActivationService {
                 targetId,
                 targetZone,
                 costLabel,
-                remainingDiscards
+                remainingDiscards,
+                null,
+                targetIds,
+                damageAssignments
         );
         String labelText = costLabel != null ? costLabel + " " : "";
         String prompt = remainingDiscards > 1
@@ -3886,7 +3907,8 @@ public class AbilityActivationService {
     }
 
     private void beginGraveyardExileCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                               UUID targetId, Zone targetZone, ExileCardFromGraveyardCost cost,
+                                               UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                               Map<UUID, Integer> damageAssignments, ExileCardFromGraveyardCost cost,
                                                List<Integer> validExileIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
@@ -3894,7 +3916,11 @@ public class AbilityActivationService {
                 xValue,
                 targetId,
                 targetZone,
-                null
+                null,
+                1,
+                null,
+                targetIds,
+                damageAssignments
         );
         String typeName = graveyardExileFilterLabel(cost.requiredType(), cost.alternateType(), cost.requiredSubtype());
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardExileCostChoice(

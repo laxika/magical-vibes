@@ -54,6 +54,8 @@ public sealed interface Condition permits
         ControllerTurn,
         ControlsAnotherPermanent,
         ControlsDistinctPermanentNamesCount,
+        ControlsMoreCreaturesThanOpponent,
+        APlayerControlsMoreCreaturesThanEachOtherPlayer,
         ControlsOtherPermanentCount,
         ControlsPermanent,
         ControlsPermanentCount,

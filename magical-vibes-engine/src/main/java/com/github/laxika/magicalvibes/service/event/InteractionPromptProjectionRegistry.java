@@ -96,6 +96,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.StrongholdGambitCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.MasterOfPredicamentsCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.TargetedHandCardChoice.class,

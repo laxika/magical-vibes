@@ -10,6 +10,7 @@ public enum Keyword {
     DOUBLE_STRIKE,
     FIRST_STRIKE,
     FLASH,
+    FADING,
     VIGILANCE,
     SHROUD,
     CHANGELING,

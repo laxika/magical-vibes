@@ -144,6 +144,18 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent no longer exists");
             }
         }
+        if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount tapCtx) {
+            if (permanentIds.size() != tapCtx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + tapCtx.requiredCount()
+                        + " permanents");
+            }
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null || permanent.isTapped();
+            })) {
+                throw new IllegalStateException("A selected permanent is no longer untapped");
+            }
+        }
 
         gameData.interaction.clearAwaitingInput();
 
@@ -175,6 +187,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {
             handleTapChosenPermanents(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount ctx) {
+            handleTapPermanentsForAmount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
@@ -614,6 +628,22 @@ public class MultiPermanentChoiceHandlerService {
                     ctx.sourceName() + " taps " + tapped + " permanent(s)."));
             log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapPermanentsForAmount(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                              MultiPermanentChoiceContext.TapPermanentsForAmount ctx) {
+        int tapped = 0;
+        for (UUID permId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permId);
+            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
+                tapped++;
+            }
+        }
+        gameLogService.append(gameData, GameLog.text(
+                ctx.sourceName() + " taps " + tapped + " permanent(s)."));
+        log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

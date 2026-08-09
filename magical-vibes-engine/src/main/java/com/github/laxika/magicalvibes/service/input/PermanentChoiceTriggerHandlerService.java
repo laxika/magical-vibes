@@ -630,6 +630,10 @@ public class PermanentChoiceTriggerHandlerService {
                     att.sourcePermanentId()
             );
             entry.setTargetId(permanentId);
+            Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
             gameData.stack.add(entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersO
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
@@ -1260,6 +1261,23 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("DestroyEnchantedCreatureOnLeaveEffect captures the attached permanent ID")
+        void destroyEnchantedCreatureCapturesAttachedPermanent() {
+            Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
+            Permanent creature = new Permanent(createCreature("Enchanted Creature", 2, 2));
+            aura.setAttachedTo(creature.getId());
+            var effect = new DestroyEnchantedCreatureOnLeaveEffect();
+            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
+
+            svc.handleDestroyEnchantedCreatureOnLeave(match(aura, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            var captured = (DestroyEnchantedCreatureOnLeaveEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(captured.enchantedPermanentId()).isEqualTo(creature.getId());
+            assertThat(captured.cannotBeRegenerated()).isTrue();
         }
 
         @Test

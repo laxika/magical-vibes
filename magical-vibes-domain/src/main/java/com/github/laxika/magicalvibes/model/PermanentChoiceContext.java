@@ -411,6 +411,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeAnotherCreatureGainLifeAndDraw(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
+    record SacrificeCreatureThenMassDamageEqualToPower(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
+
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets) implements PermanentChoiceContext {
         // {@code copy=true} marks a Paradigm copy that must cease to exist rather than being placed in

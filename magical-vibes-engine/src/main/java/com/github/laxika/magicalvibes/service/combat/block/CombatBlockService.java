@@ -1145,6 +1145,19 @@ public class CombatBlockService {
         return false;
     }
 
+    /** Makes an attacking creature blocked without adding a creature that blocks it. */
+    public void makeAttackingCreatureBlockedWithoutBlockers(GameData gameData, Permanent attacker) {
+        if (attacker == null || !attacker.isAttacking() || attacker.isBlockedWithoutBlockers()
+                || gameQueryService.isBlockedByAnyCreature(gameData, attacker)) {
+            return;
+        }
+
+        attacker.setBlockedWithoutBlockers(true);
+        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " becomes blocked."));
+        log.info("Game {} - {} becomes blocked with no blockers", gameData.id, attacker.getCard().getName());
+        fireBecomesBlockedTriggersWithoutBlockers(gameData, attacker);
+    }
+
     /**
      * Fires the "becomes blocked" triggers for an attacker that an effect made blocked without any
      * creature blocking it (CR 509.1h, e.g. Dazzling Beauty). Only triggers that don't reference a
@@ -1413,12 +1426,30 @@ public class CombatBlockService {
                     if (effects.isEmpty()) {
                         continue;
                     }
+                    FilterContext watcherContext = FilterContext.of(gameData)
+                            .withSourceCardId(watcher.getCard().getId())
+                            .withSourceControllerId(battlefield.getKey());
+                    List<CardEffect> filteredEffects = new ArrayList<>();
+                    for (CardEffect effect : effects) {
+                        if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                            if (!predicateEvaluationService.matchesPermanentPredicate(
+                                    blocker, conditional.predicate(), watcherContext)) {
+                                continue;
+                            }
+                            filteredEffects.add(conditional.wrapped());
+                        } else {
+                            filteredEffects.add(effect);
+                        }
+                    }
+                    if (filteredEffects.isEmpty()) {
+                        continue;
+                    }
                     StackEntry trigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             watcher.getCard(),
                             battlefield.getKey(),
                             watcher.getCard().getName() + "'s block trigger",
-                            new ArrayList<>(effects),
+                            filteredEffects,
                             blocker.getId(),
                             watcher.getId()
                     );

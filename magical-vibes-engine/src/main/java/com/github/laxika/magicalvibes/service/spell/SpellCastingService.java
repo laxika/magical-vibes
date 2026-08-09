@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Retrace;
@@ -146,6 +148,7 @@ public class SpellCastingService {
     private final AdditionalSpellCostService additionalSpellCostService;
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
+    private final LifeSupport lifeSupport;
 
     // --- Helper records ---
 
@@ -902,6 +905,11 @@ public class SpellCastingService {
 
             turnProgressionService.resolveAutoPass(gameData);
             return;
+        }
+
+        Card handCardForTiming = gameData.playerHands.get(playerId).get(cardIndex);
+        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, handCardForTiming)) {
+            throw new IllegalStateException("Card is not playable");
         }
 
         if (!usingAlternateCost && castingPermissionService.flashTimingRequiresAlternateCast(
@@ -4728,6 +4736,15 @@ public class SpellCastingService {
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost.amount());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + lifeCost.amount() + " life for ", card, "."));
+        });
+
+        // Have each other player gain life for the alternate cost.
+        altCast.getCost(EachOpponentGainsLifeCastingCost.class).ifPresent(lifeCost -> {
+            for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+                if (!otherPlayerId.equals(playerId)) {
+                    lifeSupport.applyGainLife(gameData, otherPlayerId, lifeCost.amount(), card.getName());
+                }
+            }
         });
 
         // Tap untapped permanents

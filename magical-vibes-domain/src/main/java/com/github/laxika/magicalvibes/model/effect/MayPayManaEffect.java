@@ -21,7 +21,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link TargetPlayerMayPayManaOrLifeEffect}.
  */
 public record MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt,
-                               MayPayPayer payer, CardEffect elseEffect, int lifeCost) implements CardEffect {
+                               MayPayPayer payer, CardEffect elseEffect, int lifeCost)
+        implements CombatDamageTriggerContextEffect {
 
     /**
      * Delegates to the wrapped effect, like {@link MayEffect}: the target of "you may pay {X}. If
@@ -42,6 +43,13 @@ public record MayPayManaEffect(String manaCost, CardEffect wrapped, String promp
             return elseEffect.targetSpec();
         }
         return TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext()
+                : null;
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {

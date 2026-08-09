@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "304")
 @CardRegistration(set = "9ED", collectorNumber = "276")
+@CardRegistration(set = "NEM", collectorNumber = "123")
 public class TreetopBracers extends Card {
 
     public TreetopBracers() {

@@ -757,13 +757,20 @@ public class GameQueryService {
      * ({@link LandManaProducesFixedColorEffect}). Null when inactive. Global — not
      * controller-scoped. Amount is unchanged; only the type is replaced.
      *
-     * <p>A turn-scoped, land-subtype-scoped replacement recorded in
+     * <p>A turn-scoped, nonbasic-land replacement recorded in
+     * {@code GameData.nonbasicLandsFixedManaColorThisTurn} takes precedence over the
+     * subtype-scoped replacement. The subtype-scoped replacement recorded in
      * {@code GameData.landSubtypeFixedManaColorThisTurn} (Chaos Moon's even branch) takes
      * precedence, matched against the permanent's effective basic land types, followed by the
      * turn-scoped all-lands replacement in {@code GameData.allLandsFixedManaColorThisTurn} (Hall of
      * Gemstone).
      */
     public ManaColor fixedLandManaColor(GameData gameData, Permanent permanent) {
+        if (permanent != null
+                && gameData.nonbasicLandsFixedManaColorThisTurn != null
+                && !hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {
+            return gameData.nonbasicLandsFixedManaColorThisTurn;
+        }
         if (permanent != null && !gameData.landSubtypeFixedManaColorThisTurn.isEmpty()) {
             Set<CardSubtype> types = effectiveBasicLandTypes(gameData, permanent);
             for (var entry : gameData.landSubtypeFixedManaColorThisTurn.entrySet()) {
@@ -2647,6 +2654,28 @@ public class GameQueryService {
             }
         }
         return permanent.getCard().getManaValue() == greatest;
+    }
+
+    /**
+     * Returns {@code true} if the given permanent is a creature with the greatest effective power
+     * among all creatures on the battlefield (across every player's battlefield). Ties allowed.
+     * Used by Topple.
+     */
+    public boolean hasGreatestPowerAmongAllCreatures(GameData gameData, Permanent permanent) {
+        if (gameData == null || !isCreature(gameData, permanent)) {
+            return false;
+        }
+        int greatest = Integer.MIN_VALUE;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (isCreature(gameData, candidate)) {
+                    greatest = Math.max(greatest, getEffectivePower(gameData, candidate));
+                }
+            }
+        }
+        return getEffectivePower(gameData, permanent) == greatest;
     }
 
     /**

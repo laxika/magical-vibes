@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "121")
+@CardRegistration(set = "NEM", collectorNumber = "54")
 public class CarrionWall extends Card {
 
     public CarrionWall() {

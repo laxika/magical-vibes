@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "9ED", collectorNumber = "30")
 @CardRegistration(set = "8ED", collectorNumber = "32")
+@CardRegistration(set = "NEM", collectorNumber = "16")
 public class OraclesAttendants extends Card {
 
     public OraclesAttendants() {

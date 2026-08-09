@@ -31,6 +31,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasCountersPredicate,
         PermanentHasCumulativeUpkeepPredicate,
         PermanentHasGreatestManaValueAmongAllCreaturesPredicate,
+        PermanentHasGreatestPowerAmongAllCreaturesPredicate,
         PermanentHasGreatestPowerAmongControlledCreaturesPredicate,
         PermanentHasKeywordPredicate,
         PermanentHasProtectionFromColorPredicate,

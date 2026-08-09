@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "184")
+@CardRegistration(set = "NEM", collectorNumber = "81")
 public class FlowstoneCrusher extends Card {
 
     public FlowstoneCrusher() {

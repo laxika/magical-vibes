@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
@@ -309,6 +311,39 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Venser's Journal");
+        }
+
+        @Test
+        @DisplayName("Unique creature-count leader lets an intervening-if upkeep ability trigger")
+        void uniqueCreatureCountLeaderTriggers() {
+            Card card = createCardWithName("Wild Mammoth");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+                    new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
+                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 1")));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 2")));
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Tied creature counts suppress an intervening-if upkeep ability")
+        void tiedCreatureCountsDoNotTrigger() {
+            Card card = createCardWithName("Wild Mammoth");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+                    new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
+                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear")));
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

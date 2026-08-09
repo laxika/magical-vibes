@@ -25,6 +25,11 @@ public enum SpellCastTimingRestriction {
     COMBAT_BEFORE_BLOCKERS,
 
     /**
+     * "Cast this spell only during combat."
+     */
+    COMBAT,
+
+    /**
      * "Cast this spell only during combat on your turn before blockers are declared." Melee. As
      * {@code COMBAT_BEFORE_BLOCKERS}, but additionally requires the caster to be the active player.
      */

@@ -45,6 +45,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Double strike", Keyword.DOUBLE_STRIKE);
         KEYWORD_MAP.put("First strike", Keyword.FIRST_STRIKE);
         KEYWORD_MAP.put("Flash", Keyword.FLASH);
+        KEYWORD_MAP.put("Fading", Keyword.FADING);
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
         KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);

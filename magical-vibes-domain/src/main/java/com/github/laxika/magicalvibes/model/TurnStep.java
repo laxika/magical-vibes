@@ -63,4 +63,9 @@ public enum TurnStep {
     public boolean isBeforeEndOfCombat() {
         return ordinal() < END_OF_COMBAT.ordinal();
     }
+
+    /** True for steps before the ending phase begins. */
+    public boolean isBeforeEndStep() {
+        return ordinal() < END_STEP.ordinal();
+    }
 }

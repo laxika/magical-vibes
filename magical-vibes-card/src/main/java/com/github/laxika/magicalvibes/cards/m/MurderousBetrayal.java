@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "8ED", collectorNumber = "147")
+@CardRegistration(set = "NEM", collectorNumber = "61")
 public class MurderousBetrayal extends Card {
 
     public MurderousBetrayal() {

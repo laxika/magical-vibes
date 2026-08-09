@@ -694,10 +694,16 @@ public class GameData {
      *  type"). Amount is unchanged. Cleared at end of turn. */
     public final Map<CardSubtype, ManaColor> landSubtypeFixedManaColorThisTurn = new ConcurrentHashMap<>();
 
+    /** The mana color nonbasic lands produce instead of any other color this turn. */
+    public volatile ManaColor nonbasicLandsFixedManaColorThisTurn;
+
     /** The mana color every land produces instead of any other color this turn (Hall of Gemstone,
      *  chosen by the player whose upkeep it is). Amount is unchanged. Null when inactive; cleared at
      *  end of turn. */
     public volatile ManaColor allLandsFixedManaColorThisTurn;
+
+    /** Players whose land taps for mana produce one mana of a color chosen separately per tap. */
+    public final Set<UUID> playersWithLandManaChoiceReplacementThisTurn = ConcurrentHashMap.newKeySet();
 
     /**
      * Players who tapped a land for mana this turn (Desolation). Recorded whenever a land is tapped
@@ -2823,7 +2829,9 @@ public class GameData {
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
+        copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
+        copy.playersWithLandManaChoiceReplacementThisTurn.addAll(this.playersWithLandManaChoiceReplacementThisTurn);
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastSpellTypesThisTurn.putAll(this.playersCantCastSpellTypesThisTurn);

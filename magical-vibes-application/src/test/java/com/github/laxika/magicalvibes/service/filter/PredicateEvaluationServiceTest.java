@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -290,6 +291,23 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesCardPredicate(card, new CardSubtypePredicate(CardSubtype.ELF), null)).isTrue();
             assertThat(evaluator.matchesCardPredicate(card, new CardSubtypePredicate(CardSubtype.GOBLIN), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardHasSourceChosenSubtypePredicate uses the source permanent's choice")
+        void cardHasSourceChosenSubtypePredicateMatchesSourceChoice() {
+            Card sourceCard = createArtifact("Belbe's Portal");
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenSubtype(CardSubtype.BEAR);
+
+            Card bear = createCreatureWithSubtypes("Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
+            Card elf = createCreatureWithSubtypes("Elf", 1, 1, CardColor.GREEN, List.of(CardSubtype.ELF));
+            Card changeling = createChangelingCreature("Changeling");
+            CardHasSourceChosenSubtypePredicate predicate = new CardHasSourceChosenSubtypePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(bear, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(elf, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(changeling, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
         }
 
         @Test
