@@ -123,7 +123,7 @@ public record PreventDamageFromChosenSourceEffect(
     public static PreventDamageFromChosenSourceEffect nextDamageToTargetCreature() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET_CREATURE,
-                false, false, null, null, false, false, false);
+                false, false, null, null, false, false, false, false);
     }
 
     @Override
