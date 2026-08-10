@@ -184,6 +184,7 @@ export interface Card {
   kickerCost: string | null;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
+  buybackDiscardCount?: number;
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;

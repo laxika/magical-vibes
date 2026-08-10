@@ -650,7 +650,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.xValue = targetCount;
         gameData.graveyardTargetOperation.anyNumber = false;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, targetCount,
-                "Choose " + targetCount + " target " + CardPredicateUtils.describeFilter(filter)
+                targetCount, "Choose " + targetCount + " target " + CardPredicateUtils.describeFilter(filter)
                         + (targetCount != 1 ? "s" : "") + " from your graveyard " + destination + ".");
     }
 

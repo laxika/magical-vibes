@@ -2189,7 +2189,14 @@ public class TriggerCollectionService {
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
         effects.addAll(watcher.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
 
+        TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
+                damageSource, damagedCreatureId, damage, combatDamage);
+
         for (CardEffect effect : effects) {
+            TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, damageSourceControllerId, effect);
+            if (registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, context)) {
+                continue;
+            }
             if (effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect) {
                 if (reflect.combatOnly() && !combatDamage) continue;
                 if (reflect.sourceMustBeWatcher() && !watcher.getId().equals(damageSource.getId())) continue;

@@ -128,6 +128,24 @@ public class CastingCostService {
     }
 
     /**
+     * Net generic-mana adjustment to an optional buyback cost paid while casting {@code card}.
+     * Positive means more expensive, negative means cheaper.
+     */
+    public int getBuybackCostModifier(GameData gameData, UUID playerId, Card card) {
+        return getBuybackCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId));
+    }
+
+    public int getBuybackCostModifier(GameData gameData, UUID playerId, Card card,
+                                      CostModifierSnapshot snapshot) {
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card);
+        int delta = 0;
+        for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            delta += modifier.handler().modifyBuybackCost(context, modifier.effect(), modifier.source());
+        }
+        return delta;
+    }
+
+    /**
      * Computes the additional cost imposed by static effects that tax spells or abilities
      * targeting permanents with a specific subtype (e.g. Kopala, Warden of Waves).
      * The tax applies once per source permanent with the effect, regardless of how many

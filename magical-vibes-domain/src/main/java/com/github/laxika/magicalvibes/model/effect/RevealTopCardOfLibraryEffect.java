@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /**
  * Reveals the top card of the {@link LibraryOwner}'s library. The card stays on top — no draw, no
  * reorder. Pair with a {@code ConditionalEffect} reading the revealed card for an "if it's a land
- * card …" rider (the Deceivers).
+ * card …" rider (the Deceivers and Paroxysm).
  *
  * <p>{@code lifeGainIfLand} lets the controller gain that much life when the revealed card is a
  * land card (Prophecy); {@code 0} means no life gain (Aven Windreader, the Deceivers). The

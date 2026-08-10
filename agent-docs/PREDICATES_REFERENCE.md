@@ -46,6 +46,7 @@ filter directly rather than reusing a factory whose wording does not match.
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `PermanentBlockedBySourceThisTurnPredicate` | `()` | creatures that were blocked by the source permanent this turn (attacker direction only). Reads `GameData.creaturesBlockedThisTurn` and the source's recorded combat-opponent IDs, so it remains usable after combat state is cleared; requires a `FilterContext` source permanent ID or source snapshot. Wall of Nets |
 | `PermanentIsCreaturePredicate` | `()` | creatures |
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
@@ -270,6 +271,11 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerDamagedBySourceThisTurnPredicate` | `()` | players dealt damage **by the ability's own source permanent** this turn, combat or noncombat (evaluated against `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn`, both keyed by source permanent id). Source-relative: `TargetLegalityService.matchesPlayerPredicate` needs the source permanent id, which the activated-ability validation, valid-target enumeration and resolution-time recheck paths supply; any other path passes `null` and matches nobody. Used by Wicked Akuba's `{B}` ability |
+| `PlayerControlsMoreLandsThanControllerPredicate` | `()` | an opponent who controls strictly more lands than the controller; checked when the target is chosen and again when the ability resolves. Oath of Lieges |
+| `PlayerControlsMoreCreaturesThanControllerPredicate` | `()` | an opponent who controls strictly more creatures than the controller; checked when the target is chosen and again only for the opponent relationship at resolution. Keeper of the Beasts |
+| `PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate` | `(int minimumDifference[, boolean recheckAtResolution])` | an opponent whose graveyard has at least `minimumDifference` fewer creature cards than the controller's when targeted; the optional flag also requires the comparison to remain true at resolution. Keeper of the Dead uses the default, so only the opponent relationship is rechecked |
+| `PlayerHasMoreCardsInHandThanControllerPredicate` | `(int minimumDifference[, boolean recheckAtResolution])` | an opponent whose hand has at least `minimumDifference` more cards than the controller's hand when the target is selected; the optional flag also requires that comparison to remain true at resolution. Keeper of the Mind uses the default; Oath of Scholars uses `1, true` |
+| `PlayerHasMoreLifeThanControllerPredicate` | `()` | an opponent whose life total is greater than the controller's life total when the target is selected. The life comparison is activation-time only; resolution rechecks only that the target is still an opponent. Keeper of the Light |
 | `PlayerLostLifeThisTurnPredicate` | `()` | players that lost life this turn (evaluated against `GameData.lifeLostThisTurn`; damage counts). Used by Rix Maadi Guildmage's "target player who lost life this turn" |
 
 ## CardPredicate (spell/card filters)

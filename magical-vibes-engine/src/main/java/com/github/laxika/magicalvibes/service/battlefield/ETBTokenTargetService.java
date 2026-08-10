@@ -13,9 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -91,7 +89,7 @@ public class ETBTokenTargetService {
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, pending.targetFilter())) {
+                    if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, pending.targetFilter())) {
                         validPlayerTargets.add(pid);
                     }
                 }
@@ -178,7 +176,7 @@ public class ETBTokenTargetService {
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
                     if (pending.chosenTargetsSoFar().contains(pid)) continue;
-                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, group.getFilter())) {
+                    if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
                         validPlayerTargets.add(pid);
                     }
                 }
@@ -331,19 +329,13 @@ public class ETBTokenTargetService {
         return matched;
     }
 
-    private boolean matchesPlayerTargetFilter(UUID controllerId, UUID candidatePlayerId, TargetFilter targetFilter) {
+    private boolean matchesPlayerTargetFilter(GameData gameData, UUID controllerId, UUID candidatePlayerId,
+                                              TargetFilter targetFilter) {
         if (!(targetFilter instanceof PlayerPredicateTargetFilter playerFilter)) {
             return true;
         }
-        PlayerPredicate predicate = playerFilter.predicate();
-        if (predicate instanceof PlayerRelationPredicate relation) {
-            return switch (relation.relation()) {
-                case ANY -> true;
-                case SELF -> controllerId != null && controllerId.equals(candidatePlayerId);
-                case OPPONENT -> controllerId != null && !controllerId.equals(candidatePlayerId);
-            };
-        }
-        return true;
+        return targetLegalityService.matchesPlayerPredicate(
+                gameData, controllerId, candidatePlayerId, playerFilter.predicate());
     }
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,

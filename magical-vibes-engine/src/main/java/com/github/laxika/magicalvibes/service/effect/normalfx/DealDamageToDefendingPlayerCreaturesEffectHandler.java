@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -49,10 +52,15 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
         String cardName = entry.getCard().getName();
+        FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         List<Permanent> battlefield = gameData.playerBattlefields.get(defendingPlayerId);
         if (battlefield != null) {
             for (Permanent permanent : new ArrayList<>(battlefield)) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (e.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
                     continue;
                 }
                 if (gameQueryService.isDamagePreventable(gameData)

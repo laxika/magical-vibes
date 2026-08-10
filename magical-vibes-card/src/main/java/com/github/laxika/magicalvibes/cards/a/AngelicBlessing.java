@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "2")
 @CardRegistration(set = "POR", collectorNumber = "2")
 @CardRegistration(set = "P02", collectorNumber = "9")
+@CardRegistration(set = "EXO", collectorNumber = "2")
 public class AngelicBlessing extends Card {
 
     public AngelicBlessing() {

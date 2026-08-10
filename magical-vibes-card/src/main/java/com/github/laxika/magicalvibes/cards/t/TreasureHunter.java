@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "52")
+@CardRegistration(set = "EXO", collectorNumber = "23")
 public class TreasureHunter extends Card {
 
     public TreasureHunter() {

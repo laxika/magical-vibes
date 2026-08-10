@@ -45,6 +45,7 @@ public sealed interface Condition permits
         ControllerCastSpellThisTurn,
         ControllerDealtDamageThisTurn,
         ControllerHasMoreLifeThanAnOpponent,
+        ControllerControlsMoreLandsThanOpponent,
         ControllerHandEmpty,
         ControllerLifeAtLeast,
         ControllerLifeAtMost,

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "173")
+@CardRegistration(set = "EXO", collectorNumber = "79")
 public class Anarchist extends Card {
 
     public Anarchist() {

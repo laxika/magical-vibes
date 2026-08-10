@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "20")
+@CardRegistration(set = "EXO", collectorNumber = "7")
 public class HighGround extends Card {
 
     public HighGround() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,9 +48,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         // CR 603.5 — "you may" choice happens at resolution time.
         // Set flag so the resolution loop re-runs this effect after the player responds.
         gameData.resolvingMayEffectFromStack = true;
+        UUID choicePlayerId = e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
+                ? entry.getActivePlayerId() : entry.getControllerId();
+        if (choicePlayerId == null) return;
+
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
-                entry.getControllerId(),
+                choicePlayerId,
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 targetId,
@@ -58,7 +63,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 null,
                 0,
                 0,
-                entry.getAttackedTargetId()
+                entry.getAttackedTargetId(),
+                e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null
         ));
     
     }

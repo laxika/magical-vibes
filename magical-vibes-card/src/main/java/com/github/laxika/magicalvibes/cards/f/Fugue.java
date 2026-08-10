@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "137")
+@CardRegistration(set = "EXO", collectorNumber = "62")
 public class Fugue extends Card {
 
     public Fugue() {

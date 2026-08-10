@@ -646,6 +646,14 @@ public class ValidTargetService {
         return true;
     }
 
+    public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,
+                                                             ActivatedAbility ability, Permanent perm,
+                                                             UUID controllerId, int sourcePermanentIndex,
+                                                             TargetFilter positionFilter) {
+        return isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId,
+                false, sourcePermanentIndex, positionFilter);
+    }
+
     private boolean isValidAbilityPermanentTarget(GameData gameData, Card sourceCard, ActivatedAbility ability,
                                                    Permanent perm, UUID controllerId,
                                                    boolean targetsBlockingThis, int sourcePermanentIndex,

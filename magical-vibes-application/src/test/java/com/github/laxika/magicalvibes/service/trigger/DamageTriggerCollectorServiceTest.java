@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -94,6 +95,48 @@ class DamageTriggerCollectorServiceTest {
     }
 
     // ===== ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect =====
+
+    @Nested
+    @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — ExileDamagedCreatureEffect")
+    class ExileDamagedCreature {
+
+        @Test
+        @DisplayName("queues a non-targeting exile trigger for the damaged creature")
+        void queuesExileTrigger() {
+            Permanent source = createPermanent("Pit Spawn");
+            Permanent damaged = createPermanent("Force of Nature");
+            var effect = new ExileDamagedCreatureEffect();
+            var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
+
+            boolean result = registry.dispatch(
+                    match(source, player1Id, effect),
+                    EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(damaged.getId());
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                    .isInstanceOf(com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.class);
+        }
+
+        @Test
+        @DisplayName("does not fire for another creature's damage")
+        void doesNotFireForAnotherSource() {
+            Permanent watcher = createPermanent("Pit Spawn");
+            Permanent source = createPermanent("Grizzly Bears");
+            Permanent damaged = createPermanent("Force of Nature");
+            var effect = new ExileDamagedCreatureEffect();
+            var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect),
+                    EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
 
     @Nested
     @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect")

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -60,7 +61,9 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect) {
-        UUID controllerId = entry.getControllerId();
+        UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
+                ? entry.getActivePlayerId() : entry.getControllerId();
+        if (controllerId == null) return;
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -80,6 +81,7 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
     private Card auraForm(Card creatureForm, String endCost) {
         Card copy = creatureForm.createRuntimeCopy();
         copy.setType(CardType.ENCHANTMENT);
+        copy.setAdditionalTypes(Set.of());
         copy.setSubtypes(List.of(CardSubtype.AURA));
         copy.setPower(null);
         copy.setToughness(null);

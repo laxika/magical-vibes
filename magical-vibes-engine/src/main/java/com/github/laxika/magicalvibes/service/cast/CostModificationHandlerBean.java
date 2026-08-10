@@ -33,4 +33,13 @@ public interface CostModificationHandlerBean {
     }
 
     int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source);
+
+    /**
+     * Returns a signed generic-mana delta for an optional buyback cost. Ordinary cast-cost
+     * modifiers do not affect buyback costs unless they override this method.
+     */
+    default int modifyBuybackCost(CostModificationContext context, CardEffect effect,
+                                  CostModificationSource source) {
+        return 0;
+    }
 }

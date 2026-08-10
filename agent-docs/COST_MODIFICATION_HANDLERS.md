@@ -1,7 +1,8 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
 Cast-cost modifiers (cost reductions and increases — "this spell costs {2} less", "creatures
-you cast cost {1} more", metalcraft/graveyard/opponent-count reductions, etc.) are resolved by
+you cast cost {1} more", metalcraft/graveyard/opponent-count reductions, etc.) and optional
+buyback-cost modifiers are resolved by
 one self-contained handler class per effect type in
 `magical-vibes-engine/.../service/cast/costmod/` (tests live in
 `magical-vibes-application/src/test/.../service/cast/`).
@@ -25,6 +26,9 @@ Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` o
    - `int modifyCost(CostModificationContext, CardEffect, CostModificationSource)` — returns a
      **signed generic-mana delta**: positive means the spell costs more, negative means less,
      zero means this occurrence doesn't apply.
+   - `int modifyBuybackCost(CostModificationContext, CardEffect, CostModificationSource)` —
+     returns a signed generic-mana delta for an optional buyback cost. It defaults to zero so
+     ordinary spell-cost modifiers do not affect buyback.
    - Constructor-inject `CostModificationSupport`, `GameQueryService`, and/or
      `PredicateEvaluationService` as needed.
 4. **Scoping is the handler's responsibility.** Cast the `CardEffect` to its concrete type, then
@@ -76,6 +80,15 @@ which the generic cost-modifier path (and `ConditionContext.forCasting`) does no
 resolved inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
 not through the handler registry.
 
+## Buyback-cost reductions
+
+Effects that reduce the optional buyback cost, rather than the spell's own mana cost, use a
+dedicated battlefield handler and the `CastingCostService.getBuybackCostModifier` channel.
+`ReduceBuybackCostEffect(int)` reduces only the generic mana component of mana buyback costs and
+applies to buyback costs paid by every player while its source is on the battlefield. It does not
+change discard, life, or sacrifice buyback costs, and it does not reduce the spell's normal cast
+cost.
+
 ## Infrastructure
 
 - `cast/CostModificationHandlerBean.java` — interface.
@@ -92,6 +105,9 @@ not through the handler registry.
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
   permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less for each +1/+1 counter
   on this creature" — Herald of War).
+- `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
+  `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
+  isolated from ordinary spell-cost calculations.
 - `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
@@ -123,8 +139,8 @@ not through the handler registry.
   `battlefieldHasPermanentMatching`, `stackHasMatchingSpell`).
 - `cast/CastingCostService.java` — `@Component`, the query facade. Builds a
   `CostModifierSnapshot` (a single pass over battlefield permanents' cost modifiers) and computes
-  `getCastCostModifier`, targeting taxes/reductions, alternative-cost affordability, and attack
-  payment amounts.
+  `getCastCostModifier`, `getBuybackCostModifier`, targeting taxes/reductions, alternative-cost
+  affordability, and attack payment amounts.
 - `cast/CastingPermissionService.java` — `@Component`, sibling service for casting *permissions*
   (timing/flash, graveyard/library/exile cast permission, spell limits, restrictions, forbidden
   names). Not cost math, but the other half of what used to live in `GameActionAvailabilityService`.

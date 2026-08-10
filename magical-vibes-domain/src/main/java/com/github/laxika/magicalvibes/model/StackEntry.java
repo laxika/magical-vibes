@@ -21,6 +21,8 @@ public class StackEntry {
     private final StackEntryType entryType;
     private final Card card;
     private final UUID controllerId;
+    /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
+    @Setter private UUID activePlayerId;
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
@@ -388,6 +390,7 @@ public class StackEntry {
         this.entryType = source.entryType;
         this.card = source.card;
         this.controllerId = source.controllerId;
+        this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;

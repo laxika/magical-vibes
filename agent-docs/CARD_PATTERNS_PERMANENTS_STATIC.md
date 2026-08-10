@@ -8,6 +8,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Buyback cost reduction | `m/MemoryCrystal.java` | STATIC `ReduceBuybackCostEffect(2)` — the generic mana component of every player's mana buyback costs {2} less |
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) â€” +1/+1 and indestructible to other Knights you control |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
@@ -63,6 +64,7 @@ All paths relative to `cards/`.
 | Unblockable while attacking alone | `d/DreamProwler.java` | STATIC CantBeBlockedIfAttackingAloneEffect |
 | Own creatures matching a filter can't be blocked | `t/TetsukoUmezawaFugitive.java` | STATIC ControlledCreaturesMatchingCantBeBlockedEffect(PermanentAnyOfPredicate(PermanentPowerAtMostPredicate(1), PermanentToughnessAtMostPredicate(1))) — CR 613.11 rules-modifier applied after the layer system, so the set reads fully layered P/T. Do NOT use GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, filter) for a P/T filter: a layer-6 grant's scope filter is evaluated mid-pass, before layer 7 exists |
 | Attack restriction (defender controls) | `s/SeaMonster.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerControlsPermanent(predicate), desc) — can't attack unless defending player controls a matching permanent |
+| Attack/block restriction (controller has more lands) | `m/MonstrousHound.java` | STATIC CantAttackUnlessEffect + CantBlockUnlessEffect(new ControllerControlsMoreLandsThanOpponent(), desc) — both restrictions require the controller to control strictly more lands than the combat opponent |
 | Attack restriction (controller controls) | `d/DesperateCastaways.java` | STATIC CantAttackUnlessEffect(new ControlsPermanentCount(1, predicate), desc) — can't attack unless controller controls a matching permanent |
 | Attack/block restriction (more creatures than opponent) | `m/MoggToady.java` | STATIC CantAttackUnlessEffect + CantBlockUnlessEffect, both using ControlsMoreCreaturesThanOpponent — attacks compare you to defending player; blocks compare you to attacking player |
 | Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessEffect(new AnyPlayerControlsPermanentCount(5, predicate), desc) — can't attack unless N+ matching permanents across all battlefields |

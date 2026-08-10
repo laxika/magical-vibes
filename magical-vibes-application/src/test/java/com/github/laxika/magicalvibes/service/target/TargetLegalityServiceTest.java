@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -2325,5 +2326,16 @@ class TargetLegalityServiceTest {
 
             sut.validateGraveyardRetargetCandidate(gd, spellCard, candidateId, player1Id);
         }
+    }
+
+    @Test
+    @DisplayName("matches an opponent who controls more creatures than the controller")
+    void matchesOpponentWithMoreCreatures() {
+        when(gameQueryService.controlsMoreCreaturesThan(gd, player2Id, player1Id)).thenReturn(true);
+
+        assertThat(sut.matchesPlayerPredicate(gd, player1Id, player2Id,
+                new PlayerControlsMoreCreaturesThanControllerPredicate())).isTrue();
+        assertThat(sut.matchesPlayerPredicate(gd, player1Id, player1Id,
+                new PlayerControlsMoreCreaturesThanControllerPredicate())).isFalse();
     }
 }

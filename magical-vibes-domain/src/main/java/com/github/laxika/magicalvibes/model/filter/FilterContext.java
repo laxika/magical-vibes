@@ -18,29 +18,44 @@ public record FilterContext(
         UUID sourceCardId,
         UUID sourceControllerId,
         Integer xValue,
-        Permanent sourcePermanentSnapshot
+        Permanent sourcePermanentSnapshot,
+        UUID sourcePermanentId
 ) {
+    public FilterContext(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
+                         Integer xValue, Permanent sourcePermanentSnapshot) {
+        this(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot, null);
+    }
+
     public static FilterContext empty() {
-        return new FilterContext(null, null, null, null, null);
+        return new FilterContext(null, null, null, null, null, null);
     }
 
     public static FilterContext of(GameData gameData) {
-        return new FilterContext(gameData, null, null, null, null);
+        return new FilterContext(gameData, null, null, null, null, null);
     }
 
     public FilterContext withSourceCardId(UUID sourceCardId) {
-        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot);
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId);
     }
 
     public FilterContext withSourceControllerId(UUID sourceControllerId) {
-        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot);
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId);
     }
 
     public FilterContext withXValue(int xValue) {
-        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot);
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId);
     }
 
     public FilterContext withSourcePermanentSnapshot(Permanent sourcePermanentSnapshot) {
-        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot);
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId);
+    }
+
+    public FilterContext withSourcePermanentId(UUID sourcePermanentId) {
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId);
     }
 }

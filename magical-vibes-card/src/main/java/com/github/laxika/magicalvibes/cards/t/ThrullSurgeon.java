@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "183")
+@CardRegistration(set = "EXO", collectorNumber = "76")
 public class ThrullSurgeon extends Card {
 
     public ThrullSurgeon() {

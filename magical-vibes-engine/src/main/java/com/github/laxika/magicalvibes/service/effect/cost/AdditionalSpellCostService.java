@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -89,6 +90,7 @@ public class AdditionalSpellCostService {
             ExileXCardsFromGraveyardCost.class,
             ExileNCardsFromGraveyardCost.class,
             DiscardCardTypeCost.class,
+            DiscardRandomCardCost.class,
             DiscardCardOrPayManaCost.class,
             DiscardHandCost.class,
             DiscardXCardsCost.class,
@@ -123,6 +125,7 @@ public class AdditionalSpellCostService {
             ExileXCardsFromGraveyardCost exileXCardsCost,
             ExileNCardsFromGraveyardCost exileNCardsCost,
             DiscardCardTypeCost discardCost,
+            DiscardRandomCardCost discardRandomCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
             boolean discardHand,
             DiscardXCardsCost discardXCardsCost,
@@ -141,7 +144,8 @@ public class AdditionalSpellCostService {
                     || returnCreatureToHand || putCounterCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
-                    || discardCost != null || discardCardOrPayManaCost != null || discardHand || discardXCardsCost != null
+                    || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
+                    || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null;
         }
@@ -221,6 +225,7 @@ public class AdditionalSpellCostService {
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
+        DiscardRandomCardCost discardRandomCost = removeFirst(effects, DiscardRandomCardCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
         boolean discardHand = effects.removeIf(DiscardHandCost.class::isInstance);
         DiscardXCardsCost discardXCards = removeFirst(effects, DiscardXCardsCost.class);
@@ -230,7 +235,8 @@ public class AdditionalSpellCostService {
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
-                putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
+                putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
+                discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
     }
 
@@ -315,6 +321,10 @@ public class AdditionalSpellCostService {
                 }
                 case DiscardCardTypeCost cost -> {
                     if (discardCostIndices(gameData, playerId, card, cost).isEmpty()) return false;
+                }
+                case DiscardRandomCardCost ignored -> {
+                    List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+                    if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
                 }
                 // Paying X life is always payable — X may be announced as 0.
                 case PayXLifeCost ignored -> { }
@@ -471,6 +481,9 @@ public class AdditionalSpellCostService {
         if (costs.discardCost() != null) {
             validateDiscardCost(gameData, player, card, costs.discardCost(),
                     selection.discardHandCardIndex(), selection.spellCardIndex());
+        }
+        if (costs.discardRandomCost() != null) {
+            validateRandomDiscardCost(gameData, player, card);
         }
         if (costs.escalateDiscardCost() != null) {
             validateEscalateDiscardCost(gameData, player, card, selection.escalateModeCount(),
@@ -938,6 +951,14 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Discarded card must be " + label);
         }
         return effectiveIndex;
+    }
+
+    /** Validates a random-discard additional cast cost without mutating the hand. */
+    public void validateRandomDiscardCost(GameData gameData, Player player, Card card) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || hand.isEmpty()) {
+            throw new IllegalStateException("Must discard a card at random to cast " + card.getName());
+        }
     }
 
     /**

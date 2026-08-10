@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -1532,6 +1533,48 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
                     .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentBlockedBySourceThisTurnPredicate")
+    class BlockedBySourceThisTurn {
+
+        @Test
+        @DisplayName("Matches an attacker blocked by the source after combat state is cleared")
+        void matchesAttackerBlockedBySourceAfterCombat() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            Permanent blocker = addPermanent(player2Id, createCreature("Wall", 0, 7, CardColor.WHITE));
+
+            gd.creaturesBlockedThisTurn.add(attacker.getId());
+            gd.combatBlockOpponentIdsThisTurn
+                    .computeIfAbsent(attacker.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(blocker.getId());
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourcePermanentId(blocker.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    attacker, new PermanentBlockedBySourceThisTurnPredicate(), context)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Does not match a creature that only blocked the source")
+        void doesNotMatchCreatureBlockingSource() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            Permanent blocker = addPermanent(player2Id, createCreature("Wall", 0, 7, CardColor.WHITE));
+
+            gd.combatBlockOpponentIdsThisTurn
+                    .computeIfAbsent(blocker.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(attacker.getId());
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(blocker.getOriginalCard().getId())
+                    .withSourcePermanentId(blocker.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    attacker, new PermanentBlockedBySourceThisTurnPredicate(), context)).isFalse();
         }
     }
 

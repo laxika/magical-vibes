@@ -380,6 +380,13 @@ public class GameTestHarness {
                 false, null, null, null, null, List.of(), true);
     }
 
+    public void castInstantWithDiscardBuyback(Player player, int cardIndex, UUID targetId,
+                                              List<Integer> discardHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,
+                false, null, discardHandCardIndices, null, null, List.of(), true);
+    }
+
     /** Cast an instant paying both buyback and a sacrifice additional cost (Worthy Cause). */
     public void castInstantWithSacrificeAndBuyback(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
@@ -391,6 +398,12 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,
                 false, null, null, null, null, List.of(), true);
+    }
+
+    public void castSorceryWithSacrificeAndBuyback(Player player, int cardIndex, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                sacrificePermanentId, null, null, null, null, false, null, null, null, null, List.of(), true);
     }
 
     public void castCreatureWithGraveyardExile(Player player, int cardIndex, int exileGraveyardCardIndex) {

@@ -132,12 +132,16 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
     public TargetSpec targetSpec() {
         // Only the single-target scope targets a battlefield permanent (PERMANENT reproduces its
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
-        // validator imposed no guard there); the self / all-matching scopes target nothing.
+        // validator imposed no guard there). SELF acts on the source permanent without choosing a
+        // target, but marks it as self-targeting so trigger collectors retain the source id.
         if (scope == BounceScope.TARGET || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
             return TargetSpec.benign(TargetPredicates.permanent());
         }
         if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
             return TargetSpec.benign(TargetPredicates.player());
+        }
+        if (scope == BounceScope.SELF) {
+            return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;
     }

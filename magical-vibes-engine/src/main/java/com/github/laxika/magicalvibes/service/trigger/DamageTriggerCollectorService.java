@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentE
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamageSourcePermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -57,7 +59,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Trigger collectors for damage-related events (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_DEALT_DAMAGE).
+ * Trigger collectors for damage-related events (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+ * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_DEALT_DAMAGE).
  */
 @Slf4j
 @Service
@@ -72,6 +75,32 @@ public class DamageTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
 
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
+
+    @CollectsTrigger(value = ExileDamagedCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    private boolean handleExileDamagedCreature(TriggerMatchContext match,
+            ExileDamagedCreatureEffect exileEffect, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
+        if (match.permanent() == null || !match.permanent().getId().equals(dc.damageSource().getId())) return false;
+        if (dc.damagedCreatureId() == null) return false;
+
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                dc.damageSource().getCard(),
+                match.controllerId(),
+                dc.damageSource().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
+                dc.damagedCreatureId(),
+                dc.damageSource().getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers, exiling the creature it damaged",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
 
     @CollectsTrigger(value = ReturnDamageSourcePermanentToHandEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleBounceOnDamage(TriggerMatchContext match,

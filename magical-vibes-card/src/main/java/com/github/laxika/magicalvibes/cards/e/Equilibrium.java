@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "71")
+@CardRegistration(set = "EXO", collectorNumber = "32")
 public class Equilibrium extends Card {
 
     public Equilibrium() {

@@ -20,6 +20,8 @@ import java.util.UUID;
  * {@code eachPlayerAmounts} (when non-empty) overrides the shared {@code eachPlayerAmount} with a
  * per-chooser amount parallel to {@code remainingEachPlayerDiscards}, so different players can
  * discard different counts ("each player discards a third of their hand", Pox).
+ * {@code plusOnePlusOneCounterPermanentId}/{@code plusOnePlusOneCounterAmount} put counters on a
+ * source permanent after a filtered discard completes.
  * {@code thenEffect}/{@code thenEffectSourceCard} push {@code thenEffect} as a reflexive triggered
  * ability afterwards ("discard a [matching] card. If you do, [effect]", Pack Guardian).
  */
@@ -29,7 +31,8 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               int graveyardReturnCount, List<Integer> eachPlayerAmounts,
                               UUID boostPermanentId, int boostPower, int boostToughness,
                               Card thenEffectSourceCard, CardEffect thenEffect,
-                              Permanent enteringPermanent, UUID enteringControllerId) {
+                              Permanent enteringPermanent, UUID enteringControllerId,
+                              UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount) {
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
@@ -39,7 +42,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            Card thenEffectSourceCard, CardEffect thenEffect) {
         this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
                 eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
-                boostToughness, thenEffectSourceCard, thenEffect, null, null);
+                boostToughness, thenEffectSourceCard, thenEffect, null, null, null, 0);
     }
 
     public static final DiscardFollowUp NONE =
@@ -61,6 +64,12 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     /** Source gets +power/+toughness until end of turn once the discard completes. */
     public static DiscardFollowUp boost(UUID permanentId, int power, int toughness) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), permanentId, power, toughness, null, null);
+    }
+
+    /** Put a fixed number of +1/+1 counters on a permanent once the discard completes. */
+    public static DiscardFollowUp plusOnePlusOneCounters(UUID permanentId, int amount) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, permanentId, amount);
     }
 
     public static DiscardFollowUp eachPlayer(List<UUID> remainingChoosers, UUID controllerId, int amount) {
@@ -93,7 +102,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     /** Completes a permanent's entry after the controller discards the required card. */
     public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                null, null, permanent, controllerId);
+                null, null, permanent, controllerId, null, 0);
     }
 
     /**
@@ -104,6 +113,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remaining,
                 eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, remainingAmounts,
                 boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
-                enteringPermanent, enteringControllerId);
+                enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId,
+                plusOnePlusOneCounterAmount);
     }
 }

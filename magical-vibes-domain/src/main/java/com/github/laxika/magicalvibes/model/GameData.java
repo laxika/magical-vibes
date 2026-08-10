@@ -2339,6 +2339,28 @@ public class GameData {
         queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0);
     }
 
+    /** Queues a may ability while keeping its controller distinct from the choosing player. */
+    public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
+                                         UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
+                                         Permanent sourcePermanentSnapshot) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard,
+                controllerId,
+                new ArrayList<>(List.of(may.wrapped())),
+                sourceCard.getName() + " - " + may.prompt(),
+                targetCardId,
+                null,
+                sourcePermanentId,
+                null,
+                0,
+                0,
+                null,
+                null,
+                choicePlayerId,
+                sourcePermanentSnapshot
+        ));
+    }
+
     /**
      * Puts a resolution-time May ability on the stack while preserving the combat target that
      * defines a non-targeting defending-player effect.

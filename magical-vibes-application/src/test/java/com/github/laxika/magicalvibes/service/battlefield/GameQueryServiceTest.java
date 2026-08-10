@@ -693,6 +693,32 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("controlsMoreCreaturesThan")
+    class ControlsMoreCreaturesThan {
+
+        @Test
+        @DisplayName("returns true only for the player with more creatures")
+        void returnsTrueForPlayerWithMoreCreatures() {
+            addPermanent(player1Id, createCreature("Creature A", 2, 2, CardColor.GREEN));
+            addPermanent(player2Id, createCreature("Creature B", 2, 2, CardColor.GREEN));
+            addPermanent(player2Id, createCreature("Creature C", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.controlsMoreCreaturesThan(gd, player2Id, player1Id)).isTrue();
+            assertThat(gqs.controlsMoreCreaturesThan(gd, player1Id, player2Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("does not count noncreature permanents or ties")
+        void doesNotCountNoncreaturesOrTies() {
+            addPermanent(player1Id, createCreature("Creature A", 2, 2, CardColor.GREEN));
+            addPermanent(player2Id, createCreature("Creature B", 2, 2, CardColor.GREEN));
+            addPermanent(player2Id, createArtifact("Artifact"));
+
+            assertThat(gqs.controlsMoreCreaturesThan(gd, player2Id, player1Id)).isFalse();
+        }
+    }
+
     // ===== hasKeyword =====
 
     @Nested

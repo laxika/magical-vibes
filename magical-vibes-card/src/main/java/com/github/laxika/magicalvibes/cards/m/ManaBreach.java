@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "85")
+@CardRegistration(set = "EXO", collectorNumber = "38")
 public class ManaBreach extends Card {
 
     public ManaBreach() {

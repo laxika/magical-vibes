@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -159,6 +160,24 @@ class CastingCostServiceTest {
             assertThat(svc.getCastCostModifier(gd, player1Id, instant, snapshot)).isEqualTo(1);
             // Creature should not be taxed
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isZero();
+        }
+
+        @Test
+        @DisplayName("Buyback reduction does not reduce the spell's normal casting cost")
+        void buybackReductionUsesSeparateCostChannel() {
+            Card crystal = new Card();
+            crystal.setName("Memory Crystal");
+            crystal.setType(CardType.ARTIFACT);
+            crystal.addEffect(EffectSlot.STATIC, new ReduceBuybackCostEffect(2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(crystal));
+
+            Card spell = new Card();
+            spell.setName("Anoint");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{W}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isZero();
+            assertThat(svc.getBuybackCostModifier(gd, player1Id, spell)).isEqualTo(-2);
         }
 
         @Test

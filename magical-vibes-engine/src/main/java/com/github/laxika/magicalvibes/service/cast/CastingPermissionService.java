@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNames
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -208,11 +210,13 @@ public class CastingPermissionService {
 
     /**
      * Returns true if a static effect stops this player from playing lands: their own
-     * {@link ControllerCantPlayLandsEffect} permanent (Aggressive Mining), or an opponent's Ward of
-     * Bones (EVE) while this player controls more lands than that opponent.
+     * {@link ControllerCantPlayLandsEffect} permanent (Aggressive Mining), a global permanent-count
+     * restriction (Limited Resources), or an opponent's Ward of Bones (EVE) while this player
+     * controls more lands than that opponent.
      */
     public boolean isLandPlayRestricted(GameData gameData, UUID playerId) {
         if (controlsStatic(gameData, playerId, ControllerCantPlayLandsEffect.class)) return true;
+        if (hasActiveGlobalLandPlayRestriction(gameData)) return true;
         for (UUID controllerId : gameData.orderedPlayerIds) {
             if (controllerId.equals(playerId) || !controlsWardOfBones(gameData, controllerId)) continue;
             if (countControlledOfType(gameData, playerId, CardType.LAND)
@@ -221,6 +225,31 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    private boolean hasActiveGlobalLandPlayRestriction(GameData gameData) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GlobalLandPlayRestrictionEffect restriction
+                            && countMatchingPermanents(gameData, restriction.filter())
+                            >= restriction.minimumCount()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private long countMatchingPermanents(GameData gameData, PermanentPredicate filter) {
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, filter))
+                .count();
     }
 
     private boolean controlsWardOfBones(GameData gameData, UUID playerId) {

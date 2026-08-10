@@ -25,7 +25,10 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTargetPermanentEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID targetId = destroy.targetGroup() >= 0
+                ? entry.targetsForGroup(destroy.targetGroup()).stream().findFirst().orElse(null)
+                : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     return;
                 }

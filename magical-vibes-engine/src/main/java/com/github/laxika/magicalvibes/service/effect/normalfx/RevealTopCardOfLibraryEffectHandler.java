@@ -54,7 +54,10 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
 
     /** Falls back to the controller when a target-player form resolves without a target. */
     private static UUID resolveDeckOwner(StackEntry entry, LibraryOwner owner) {
-        if (owner != LibraryOwner.TARGET_PLAYER) return entry.getControllerId();
+        if (owner != LibraryOwner.TARGET_PLAYER
+                && owner != LibraryOwner.ENCHANTED_PERMANENT_CONTROLLER) {
+            return entry.getControllerId();
+        }
         return entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
     }
 }

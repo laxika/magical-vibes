@@ -96,11 +96,16 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackDiscardCount = 0;
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
     this.buybackSacrificeSelectedId.set(null);
     this.pendingBuybackSacrificePermanentId = null;
+    this.choosingBuybackDiscard = false;
+    this.buybackDiscardCardIndex = -1;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.pendingBuybackDiscardHandIndices = null;
     this.pendingBuyback = false;
     // Modal mode picker
     this.choosingMode = false;
@@ -260,11 +265,16 @@ export class TargetingChoiceService {
   buybackCardName = '';
   buybackCost = '';
   buybackRequiresSacrifice = false;
+  buybackDiscardCount = 0;
   choosingBuybackSacrifice = false;
   buybackSacrificeCardIndex = -1;
   buybackSacrificeDescription = '';
   buybackSacrificeSelectedId = signal<string | null>(null);
   private pendingBuybackSacrificePermanentId: string | null = null;
+  choosingBuybackDiscard = false;
+  buybackDiscardCardIndex = -1;
+  buybackDiscardSelectedIndices = signal<number[]>([]);
+  private pendingBuybackDiscardHandIndices: number[] | null = null;
   private pendingBuyback = false;
 
   // --- Flashback state ---
@@ -463,6 +473,7 @@ export class TargetingChoiceService {
         this.buybackCardName = card.name;
         this.buybackCost = card.buybackCost;
         this.buybackRequiresSacrifice = card.buybackRequiresSacrifice ?? false;
+        this.buybackDiscardCount = card.buybackDiscardCount ?? 0;
         return;
       }
 
@@ -588,6 +599,7 @@ export class TargetingChoiceService {
     this.pendingBuyback = true;
     const savedIndex = this.buybackCardIndex;
     const requiresSacrifice = this.buybackRequiresSacrifice;
+    const discardCount = this.buybackDiscardCount;
     const sacrificeDescription = this.buybackCost;
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
@@ -598,6 +610,12 @@ export class TargetingChoiceService {
       this.buybackSacrificeCardIndex = savedIndex;
       this.buybackSacrificeDescription = sacrificeDescription;
       this.buybackSacrificeSelectedId.set(null);
+      return;
+    }
+    if (discardCount > 0) {
+      this.choosingBuybackDiscard = true;
+      this.buybackDiscardCardIndex = savedIndex;
+      this.buybackDiscardSelectedIndices.set([]);
       return;
     }
     this.continuePlayCard(savedIndex);
@@ -611,6 +629,9 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackDiscardCount = 0;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.pendingBuybackDiscardHandIndices = null;
     this.continuePlayCard(savedIndex);
   }
 
@@ -620,6 +641,9 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackDiscardCount = 0;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.pendingBuybackDiscardHandIndices = null;
     this.pendingBuyback = false;
   }
 
@@ -642,6 +666,45 @@ export class TargetingChoiceService {
     this.continuePlayCard(savedIndex);
   }
 
+  toggleBuybackDiscard(handIndex: number): void {
+    if (!this.choosingBuybackDiscard || handIndex === this.buybackDiscardCardIndex) return;
+    const selected = this.buybackDiscardSelectedIndices();
+    if (selected.includes(handIndex)) {
+      this.buybackDiscardSelectedIndices.set(selected.filter(index => index !== handIndex));
+    } else if (selected.length < this.buybackDiscardCount) {
+      this.buybackDiscardSelectedIndices.set([...selected, handIndex]);
+    }
+  }
+
+  isBuybackDiscardSelected(handIndex: number): boolean {
+    return this.choosingBuybackDiscard && this.buybackDiscardSelectedIndices().includes(handIndex);
+  }
+
+  isBuybackDiscardSelectable(handIndex: number): boolean {
+    return this.choosingBuybackDiscard && handIndex !== this.buybackDiscardCardIndex;
+  }
+
+  confirmBuybackDiscard(): void {
+    const selected = this.buybackDiscardSelectedIndices();
+    if (!this.choosingBuybackDiscard || selected.length !== this.buybackDiscardCount) return;
+    const savedIndex = this.buybackDiscardCardIndex;
+    this.pendingBuybackDiscardHandIndices = [...selected];
+    this.choosingBuybackDiscard = false;
+    this.buybackDiscardCardIndex = -1;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.buybackDiscardCount = 0;
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelBuybackDiscard(): void {
+    this.choosingBuybackDiscard = false;
+    this.buybackDiscardCardIndex = -1;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.buybackDiscardCount = 0;
+    this.pendingBuybackDiscardHandIndices = null;
+    this.pendingBuyback = false;
+  }
+
   cancelBuybackSacrifice(): void {
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
@@ -649,6 +712,10 @@ export class TargetingChoiceService {
     this.buybackSacrificeSelectedId.set(null);
     this.pendingBuyback = false;
     this.pendingBuybackSacrificePermanentId = null;
+    this.choosingBuybackDiscard = false;
+    this.buybackDiscardCardIndex = -1;
+    this.buybackDiscardSelectedIndices.set([]);
+    this.pendingBuybackDiscardHandIndices = null;
   }
 
   // ========== Modal mode picker ==========
@@ -917,6 +984,10 @@ export class TargetingChoiceService {
       msg.buyback = true;
       this.pendingBuyback = false;
     }
+    if (this.pendingBuybackDiscardHandIndices != null) {
+      msg.discardHandCardIndices = this.pendingBuybackDiscardHandIndices;
+      this.pendingBuybackDiscardHandIndices = null;
+    }
     if (this.pendingBuybackSacrificePermanentId != null) {
       msg.sacrificePermanentId = this.pendingBuybackSacrificePermanentId;
       this.pendingBuybackSacrificePermanentId = null;
@@ -964,7 +1035,8 @@ export class TargetingChoiceService {
     if (msg.kicked && card.kickerCost) {
       clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.kickerCost;
     }
-    if (msg.buyback && card.buybackCost && !card.buybackRequiresSacrifice) {
+    if (msg.buyback && card.buybackCost && !card.buybackRequiresSacrifice
+        && !(card.buybackDiscardCount && card.buybackDiscardCount > 0)) {
       clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.buybackCost;
     }
 
@@ -1603,6 +1675,7 @@ export class TargetingChoiceService {
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
     this.addPendingBuybackToMsg(msg);
+    this.addPendingBuybackDiscardToMsg(msg);
     this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
@@ -1619,6 +1692,7 @@ export class TargetingChoiceService {
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
     this.addPendingBuybackToMsg(msg);
+    this.addPendingBuybackDiscardToMsg(msg);
     this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
@@ -1654,6 +1728,13 @@ export class TargetingChoiceService {
     if (this.pendingBuyback) {
       msg.buyback = true;
       this.pendingBuyback = false;
+    }
+  }
+
+  private addPendingBuybackDiscardToMsg(msg: any): void {
+    if (this.pendingBuybackDiscardHandIndices != null) {
+      msg.discardHandCardIndices = this.pendingBuybackDiscardHandIndices;
+      this.pendingBuybackDiscardHandIndices = null;
     }
   }
 

@@ -52,6 +52,12 @@ public class ActivatedAbility {
     private String requiredControlledPermanentDescription;
     /** Cross-target restriction on the whole chosen set for a multi-target ability (CR 601.2c), beyond the per-position filters (e.g. Gauntlets of Chaos). Null = no such restriction. Set via {@link #withMultiTargetConstraint}. */
     private MultiTargetConstraint multiTargetConstraint;
+    /** Position in the target list chosen by the opponent of the first target. */
+    private int opponentChosenTargetIndex = -1;
+    /** Filter used when presenting the opponent's target choice. */
+    private TargetFilter opponentChosenTargetFilter;
+    /** Whether the same permanent may be selected in more than one target group. */
+    private boolean allowSharedTargets;
     /** Counter type the source permanent must carry at least {@link #requiredSourceCounterCount} of to activate (e.g. Edifice of Authority's "three or more brick counters on this artifact"). Null = no such restriction. Set via {@link #withRequiredSourceCounters}. */
     private CounterType requiredSourceCounterType;
     /** Minimum number of {@link #requiredSourceCounterType} counters the source permanent must have to activate. */
@@ -225,6 +231,9 @@ public class ActivatedAbility {
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
         copy.multiTargetConstraint = this.multiTargetConstraint;
+        copy.opponentChosenTargetIndex = this.opponentChosenTargetIndex;
+        copy.opponentChosenTargetFilter = this.opponentChosenTargetFilter;
+        copy.allowSharedTargets = this.allowSharedTargets;
         copy.requiredSourceCounterType = this.requiredSourceCounterType;
         copy.requiredSourceCounterCount = this.requiredSourceCounterCount;
         copy.requiredGraveyardCardPredicate = this.requiredGraveyardCardPredicate;
@@ -300,6 +309,19 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMultiTargetConstraint(MultiTargetConstraint constraint) {
         this.multiTargetConstraint = constraint;
+        return this;
+    }
+
+    /** Marks one target position as chosen by the opponent who controls the first target. */
+    public ActivatedAbility withOpponentChosenTarget(int targetIndex, TargetFilter targetFilter) {
+        this.opponentChosenTargetIndex = targetIndex;
+        this.opponentChosenTargetFilter = targetFilter;
+        return this;
+    }
+
+    /** Allows one permanent to be selected in more than one target group. */
+    public ActivatedAbility withAllowSharedTargets() {
+        this.allowSharedTargets = true;
         return this;
     }
 

@@ -48,6 +48,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** An attack trigger asks the defending player to choose an untapped creature that must block. */
+    record DefendingPlayerChoosesCreatureToBlock(UUID choosingPlayerId, UUID sourcePermanentId,
+                                                 String sourceCardName) implements PermanentChoiceContext {}
+
     /**
      * Riches: {@code choosingPlayerId} picks one creature they control; remaining opponents choose
      * next, then {@code gainingControllerId} seizes all {@code accumulatedChosenIds} simultaneously.
@@ -152,6 +156,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** An activated ability whose second target is chosen by the opponent controlling the first target. */
+    record ActivatedAbilityOpponentTarget(UUID activatingPlayerId,
+                                          UUID choosingPlayerId,
+                                          UUID sourcePermanentId,
+                                          Integer abilityIndex,
+                                          Integer xValue,
+                                          UUID firstTargetId,
+                                          Zone targetZone) implements PermanentChoiceContext {}
+
     /**
      * Targeted death trigger awaiting its target choice (CR 603.3d).
      *
@@ -182,7 +195,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
-    record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+    record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
+        public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
+            this(sourceCard, controllerId, effects, null, null);
+        }
+    }
 
     /** "Prevent all damage [the chosen source] would deal this turn" — to the controller only
      *  (Auriok Replica) or to everything (Burrenton Forge-Tender). The legal source choices are
@@ -346,10 +364,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** {@code targetFilter} overrides the source card's own filter when the trigger's legal targets
      *  belong to one chosen mode rather than to the whole card (Demonic Pact's "target opponent"). */
     record UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                                     TargetFilter targetFilter) implements PermanentChoiceContext {
+                                     TargetFilter targetFilter, UUID choosingPlayerId) implements PermanentChoiceContext {
 
         public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, controllerId);
+        }
+
+        public UpkeepPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId, TargetFilter targetFilter) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, controllerId);
         }
     }
 

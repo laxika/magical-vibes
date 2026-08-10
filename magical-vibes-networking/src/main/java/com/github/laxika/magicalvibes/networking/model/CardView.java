@@ -69,6 +69,7 @@ public record CardView(
         String kickerCost,
         String buybackCost,
         boolean buybackRequiresSacrifice,
+        int buybackDiscardCount,
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,

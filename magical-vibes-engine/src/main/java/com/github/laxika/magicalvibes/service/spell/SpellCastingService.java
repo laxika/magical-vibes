@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
@@ -122,6 +123,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 @Slf4j
@@ -257,6 +259,25 @@ public class SpellCastingService {
                 .text(".")
                 .build());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
+    /** Pays a spell's random-discard additional cast cost (e.g. Sonic Burst). */
+    private void payRandomDiscardCost(GameData gameData, Player player, Card card, DiscardRandomCardCost cost) {
+        if (cost == null) return;
+        additionalSpellCostService.validateRandomDiscardCost(gameData, player, card);
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
+        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+        gameData.discardCausedByOpponent = false;
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(player.getUsername() + " discards ")
+                .card(discarded)
+                .text(" at random to cast ")
+                .card(card)
+                .text(".")
+                .build());
     }
 
     /**
@@ -1526,12 +1547,46 @@ public class SpellCastingService {
                         + effectiveXValue + ", have " + matchingCount + ")");
             }
         }
+        ReturnTargetCardsFromGraveyardToHandEffect exactToHandEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                        .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                        .filter(ReturnTargetCardsFromGraveyardToHandEffect::exactTargets)
+                        .findFirst().orElse(null);
+        if (exactToHandEffect != null) {
+            long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, exactToHandEffect.filter(), card.getId()))
+                    .count();
+            if (exactToHandEffect.maxTargets() > matchingCount) {
+                throw new IllegalStateException("Not enough matching cards in graveyard (need "
+                        + exactToHandEffect.maxTargets() + ", have " + matchingCount + ")");
+            }
+        }
 
         if (usingSharedColorDiscardAlternativeCost) {
             validateSharedColorDiscardDoesNotOverlapAdditionalCosts(
                     additionalCosts, costSelection, sharedColorDiscardHandCardIndex, card);
         }
+        BuybackEffect buybackEffect = findBuybackEffect(card);
+        if (buyback && buybackEffect != null && buybackEffect.hasLifeCost()) {
+            additionalSpellCostService.validatePayLifeCost(gameData, player, card, buybackEffect.lifeCost());
+        }
         hand.remove(cardIndex);
+        if (buyback && buybackEffect != null && buybackEffect.hasDiscardCost()) {
+            if (buybackEffect.hasRandomDiscardCost()) {
+                if (discardHandCardIndices != null && !discardHandCardIndices.isEmpty()) {
+                    throw new IllegalStateException("Random buyback discard does not accept a card choice");
+                }
+                if (hand.size() < buybackEffect.discardCount()) {
+                    throw new IllegalStateException("Must discard a card at random to pay buyback cost");
+                }
+            } else {
+                additionalSpellCostService.validateDiscardXCardsCost(
+                        gameData, player, card, new DiscardXCardsCost(), buybackEffect.discardCount(),
+                        discardHandCardIndices, cardIndex);
+            }
+        }
         AdditionalSpellCostService.CostSelection paymentCostSelection = usingSharedColorDiscardAlternativeCost
                 ? adjustCostSelectionAfterSharedColorDiscard(costSelection, sharedColorDiscardHandCardIndex)
                 : costSelection;
@@ -1570,7 +1625,6 @@ public class SpellCastingService {
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
             // later in the pay chain would keep the mana (and costs) already paid.
             KickerEffect kickerEffect = findKickerEffect(card);
-            BuybackEffect buybackEffect = findBuybackEffect(card);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection);
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
@@ -1619,7 +1673,8 @@ public class SpellCastingService {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
             }
             if (buyback && buybackEffect != null) {
-                payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId, preManaPaymentPool);
+                payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
+                        discardHandCardIndices, cardIndex, preManaPaymentPool);
             }
             payAdditionalCosts(gameData, player, card, additionalCosts, paymentCostSelection, 0, preManaPaymentPool);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
@@ -1725,7 +1780,6 @@ public class SpellCastingService {
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
             // later in the pay chain would keep the mana (and costs) already paid.
             KickerEffect kickerEffect = findKickerEffect(card);
-            BuybackEffect buybackEffect = findBuybackEffect(card);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection);
             validateSpliceCosts(gameData, player, card, pendingSpliceCosts, spliceCostPermanentIds);
             if (additionalCosts.payXLife()) {
@@ -1769,7 +1823,8 @@ public class SpellCastingService {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
             }
             if (buyback && buybackEffect != null) {
-                payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId, preManaPaymentPool);
+                payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
+                        discardHandCardIndices, cardIndex, preManaPaymentPool);
             }
             paySpliceCosts(gameData, player, card, pendingSpliceCosts, spliceCostPermanentIds, preManaPaymentPool);
             resolvedXValue = payAdditionalCosts(gameData, player, card, additionalCosts, paymentCostSelection,
@@ -1879,6 +1934,11 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, Map.of(), null, List.of(), List.of()
                 ));
+            } else if (graveyardToHandEffect != null && graveyardToHandEffect.exactTargets()) {
+                graveyardTargetingService.handleExactNGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, graveyardToHandEffect.maxTargets(),
+                        graveyardToHandEffect.filter(), "to your hand");
+                return; // finishSpellCast handled in graveyard targeting callback
             } else if (graveyardToHandEffect != null) {
                 // A modal "both" mode may pair the graveyard return with a spell-on-stack counter
                 // (Soul Manipulation): carry the counter's spell target through the interactive
@@ -2384,6 +2444,7 @@ public class SpellCastingService {
         payDiscardCardOrPayManaCost(gameData, player, card, costs.discardCardOrPayManaCost(),
                 selection.discardHandCardIndex(), selection.spellCardIndex(), preManaPaymentPool);
         payDiscardCost(gameData, player, card, costs.discardCost(), selection.discardHandCardIndex(), selection.spellCardIndex());
+        payRandomDiscardCost(gameData, player, card, costs.discardRandomCost());
         if (costs.discardHand()) {
             payDiscardHandCost(gameData, player, card);
         }
@@ -3097,6 +3158,7 @@ public class SpellCastingService {
                 || additionalCosts.sacrificePermanentCost() != null || additionalCosts.returnCreatureToHand()
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null
+                || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.discardXCardsCost() != null
                 || additionalCosts.escalateDiscardCost() != null
@@ -3117,7 +3179,7 @@ public class SpellCastingService {
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
                     false, false, true, null, null, null, null, null, null, null, false, null,
-                    false, null, null, null, null, null, null, false, null, null, null, null);
+                    false, null, null, null, null, null, null, null, false, null, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection);
@@ -4059,23 +4121,36 @@ public class SpellCastingService {
      * failed cast rewinds instead of eating the base mana (CR 601.2h).
      */
     private void payBuybackCost(GameData gameData, Player player, Card card, BuybackEffect buybackEffect,
-                                UUID sacrificePermanentId, ManaPool preManaPaymentPool) {
+                                UUID sacrificePermanentId, List<Integer> discardHandCardIndices,
+                                int spellCardIndex, ManaPool preManaPaymentPool) {
         try {
             int manaSpent = 0;
             if (buybackEffect.hasManaCost()) {
                 ManaCost buybackCost = new ManaCost(buybackEffect.cost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
-                if (!buybackCost.canPay(pool)) {
+                int costModifier = castingCostService.getBuybackCostModifier(gameData, player.getId(), card);
+                if (!buybackCost.canPay(pool, costModifier)) {
                     throw new IllegalStateException("Not enough mana to pay buyback cost");
                 }
                 int before = pool.getTotalAllMana();
-                buybackCost.pay(pool, 0);
+                buybackCost.pay(pool, costModifier);
                 manaSpent = before - pool.getTotalAllMana();
+            }
+            if (buybackEffect.hasLifeCost()) {
+                payBuybackLifeCost(gameData, player, card, buybackEffect.lifeCost());
             }
             if (buybackEffect.hasSacrificeCost()) {
                 paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                         buybackEffect.sacrificeDescription(),
                         p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, buybackEffect.sacrificePredicate()));
+            }
+            if (buybackEffect.hasDiscardCost()) {
+                if (buybackEffect.hasRandomDiscardCost()) {
+                    payRandomBuybackDiscardCost(gameData, player, card, buybackEffect.discardCount());
+                } else {
+                    payDiscardXCardsCost(gameData, player, card, new DiscardXCardsCost(),
+                            buybackEffect.discardCount(), discardHandCardIndices, spellCardIndex);
+                }
             }
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
         } catch (IllegalStateException e) {
@@ -4083,6 +4158,41 @@ public class SpellCastingService {
                 gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
             }
             throw e;
+        }
+    }
+
+    private void payBuybackLifeCost(GameData gameData, Player player, Card card, PayLifeCost cost) {
+        UUID playerId = player.getId();
+        int currentLife = gameData.getLife(playerId);
+        int amount = cost.effectiveAmount(currentLife);
+        if (currentLife < amount) {
+            throw new IllegalStateException("Not enough life to pay buyback cost");
+        }
+        if (amount > 0) {
+            gameData.playerLifeTotals.put(playerId, currentLife - amount);
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " pays " + amount + " life for buyback of " + card.getName() + "."));
+        }
+    }
+
+    private void payRandomBuybackDiscardCost(GameData gameData, Player player, Card card, int count) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.size() < count) {
+            throw new IllegalStateException("Must discard a card at random to pay buyback cost");
+        }
+        for (int i = 0; i < count; i++) {
+            Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            gameData.discardCausedByOpponent = false;
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " discards ")
+                    .card(discarded)
+                    .text(" at random as a buyback cost for ")
+                    .card(card)
+                    .text(".")
+                    .build());
         }
     }
 

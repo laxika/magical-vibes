@@ -1176,14 +1176,23 @@ public class GameQueryService {
      */
     public boolean anyOpponentControlsMoreLands(GameData gameData, UUID controllerId) {
         if (controllerId == null) return false;
-        int yourLands = countLandsControlled(gameData, controllerId);
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
-            if (countLandsControlled(gameData, candidateOpponentId) > yourLands) {
+            if (controlsMoreLandsThan(gameData, candidateOpponentId, controllerId)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** Returns whether {@code playerId} controls strictly more lands than {@code comparedPlayerId}. */
+    public boolean controlsMoreLandsThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
+        return countLandsControlled(gameData, playerId) > countLandsControlled(gameData, comparedPlayerId);
+    }
+
+    /** Returns whether {@code playerId} controls strictly more creatures than {@code comparedPlayerId}. */
+    public boolean controlsMoreCreaturesThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
+        return countCreaturesControlled(gameData, playerId) > countCreaturesControlled(gameData, comparedPlayerId);
     }
 
     /**
@@ -1211,6 +1220,18 @@ public class GameQueryService {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (permanent.getCard().hasType(CardType.LAND)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int countCreaturesControlled(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (isCreature(gameData, permanent)) {
                 count++;
             }
         }

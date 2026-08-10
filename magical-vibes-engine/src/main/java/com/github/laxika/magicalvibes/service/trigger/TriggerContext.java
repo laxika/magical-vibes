@@ -69,6 +69,10 @@ public sealed interface TriggerContext {
      */
     record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
 
+    /** Context for a creature dealing damage to another creature. */
+    record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
+                                          int damageDealt, boolean combatDamage) implements TriggerContext {}
+
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
                                   int damageDealt) implements TriggerContext {}

@@ -578,6 +578,16 @@ public class PermanentChoiceTriggerHandlerService {
                         permanentId,
                         Zone.STACK
                 );
+            } else if (mat.sourcePermanentId() != null) {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects()),
+                        permanentId,
+                        mat.sourcePermanentId());
+                entry.setSourcePermanentSnapshot(mat.sourcePermanentSnapshot());
             } else {
                 entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -764,6 +774,7 @@ public class PermanentChoiceTriggerHandlerService {
                 playerId,
                 upt.sourcePermanentId()
         );
+        entry.setActivePlayerId(upt.choosingPlayerId());
         gameData.stack.add(entry);
 
         String playerName = gameData.playerIdToName.get(playerId);

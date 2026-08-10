@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CON", collectorNumber = "68")
+@CardRegistration(set = "EXO", collectorNumber = "87")
 public class ManiacalRage extends Card {
 
     public ManiacalRage() {

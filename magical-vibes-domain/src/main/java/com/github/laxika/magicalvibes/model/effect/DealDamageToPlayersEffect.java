@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Deals damage to one or more players (never creatures). The {@link DamageRecipient} selects
  * which player(s) receive the damage; the {@link DynamicAmount} is evaluated at resolution
- * (fixed number, cards in a hand, +1/+1 counter count, …) — the same value is dealt to every
- * player in scope.
+ * (fixed number, cards in a hand, +1/+1 counter count, …). For {@code EACH_PLAYER}, the amount
+ * is evaluated once per player so player-relative scopes such as {@code CONTROLLER} refer to the
+ * player receiving the damage.
  *
  * <p>{@code attachedCountFilter} is non-null only for the {@code ENCHANTED_PLAYER} curse case
  * (Curse of Thirst): the amount dealt is the number of permanents attached to the enchanted

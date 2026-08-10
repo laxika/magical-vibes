@@ -74,6 +74,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler fadeAwayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EquipoiseSupport equipoiseSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler keepOneOfEachTypeHandler;
@@ -155,6 +157,11 @@ public class MultiPermanentChoiceHandlerService {
             })) {
                 throw new IllegalStateException("A selected permanent is no longer untapped");
             }
+        }
+        if (context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice fadeAway
+                && permanentIds.size() != fadeAway.requiredCount()) {
+            throw new IllegalStateException("Must select exactly " + fadeAway.requiredCount()
+                    + " permanents to sacrifice");
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -251,6 +258,10 @@ public class MultiPermanentChoiceHandlerService {
             handleExileTetraviteTokensPutCountersOnSource(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KillingWaveKeep ctx) {
             handleKillingWaveKeep(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.FadeAwayKeep ctx) {
+            handleFadeAwayKeep(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice ctx) {
+            handleFadeAwaySacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
             handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx) {
@@ -1558,6 +1569,30 @@ public class MultiPermanentChoiceHandlerService {
     private void handleKillingWaveKeep(GameData gameData, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.KillingWaveKeep context) {
         killingWaveEffectHandler.completeKeepChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleFadeAwayKeep(GameData gameData, List<UUID> permanentIds,
+                                    MultiPermanentChoiceContext.FadeAwayKeep context) {
+        fadeAwayEffectHandler.completeKeepChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleFadeAwaySacrifice(GameData gameData, List<UUID> permanentIds,
+                                         MultiPermanentChoiceContext.FadeAwaySacrifice context) {
+        fadeAwayEffectHandler.completeSacrificeChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

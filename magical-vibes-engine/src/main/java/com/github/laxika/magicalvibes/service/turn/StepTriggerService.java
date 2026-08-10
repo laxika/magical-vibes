@@ -1025,7 +1025,12 @@ public class StepTriggerService {
                     }
                 }
 
-                if (effect instanceof MayEffect may) {
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
+                            activePlayerId));
+                } else if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
@@ -1624,16 +1629,25 @@ public class StepTriggerService {
 
         PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
 
-        // Honour the trigger's target filter (e.g. "target opponent") so the controller is not
+        // Honour the trigger's target filter (e.g. "target opponent") so the choosing player is not
         // offered as a valid target. A null filter (e.g. "target player") leaves all players eligible.
         TargetFilter playerTargetFilter = trigger.targetFilter() != null
                 ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
                 gameData, playerTargetFilter,
-                new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId());
+                new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId());
+
+        if (validPlayerTargets.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no valid targets."));
+            log.info("Game {} - {} upkeep player-target trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
 
         gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+        playerInputService.beginAnyTargetChoice(gameData, trigger.choosingPlayerId(),
                 List.of(), validPlayerTargets,
                 trigger.sourceCard().getName() + "'s ability — Choose target player.");
 

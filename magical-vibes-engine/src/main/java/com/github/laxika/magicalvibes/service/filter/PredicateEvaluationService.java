@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnothe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -889,6 +890,27 @@ public class PredicateEvaluationService {
                 yield sourcePermanent != null
                         && sourcePermanent.isBlocking()
                         && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
+            }
+            case PermanentBlockedBySourceThisTurnPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID sourcePermanentId = filterContext != null ? filterContext.sourcePermanentId() : null;
+                if (sourcePermanentId == null && filterContext != null
+                        && filterContext.sourcePermanentSnapshot() != null) {
+                    sourcePermanentId = filterContext.sourcePermanentSnapshot().getId();
+                }
+                if (sourcePermanentId == null && sourceCardId != null) {
+                    Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                    if (sourcePermanent != null) {
+                        sourcePermanentId = sourcePermanent.getId();
+                    }
+                }
+                yield sourcePermanentId != null
+                        && gameData.creaturesBlockedThisTurn.contains(permanent.getId())
+                        && gameData.combatBlockOpponentIdsThisTurn
+                                .getOrDefault(permanent.getId(), java.util.Set.of())
+                                .contains(sourcePermanentId);
             }
             case PermanentBlockingSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

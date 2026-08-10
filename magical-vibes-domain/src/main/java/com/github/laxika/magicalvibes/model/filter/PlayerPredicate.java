@@ -7,6 +7,11 @@ package com.github.laxika.magicalvibes.model.filter;
 public sealed interface PlayerPredicate permits
         PlayerDamagedBySourceThisTurnPredicate,
         PlayerDealtDamageThisTurnPredicate,
+        PlayerControlsMoreCreaturesThanControllerPredicate,
+        PlayerControlsMoreLandsThanControllerPredicate,
+        PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate,
+        PlayerHasMoreCardsInHandThanControllerPredicate,
+        PlayerHasMoreLifeThanControllerPredicate,
         PlayerLostLifeThisTurnPredicate,
         PlayerRelationPredicate {
 }

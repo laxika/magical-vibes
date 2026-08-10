@@ -56,6 +56,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |
 | ETB may discard matching → token | `p/PackGuardian.java` | MayEffect(DiscardCardThenEffect(CardTypePredicate(LAND), CreateTokenEffect(Wolf 2/2), "a land card")) — may discard a land; if you do, create a 2/2 green Wolf (Flash from Scryfall) |
 | ETB draw + random discard + conditional counters | `r/RowdyCrew.java` | DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) — draw N, discard M at random, +1/+1 counters if discards share a card type |
+| ETB filtered discard for counters | `m/MindMaggots.java` | DiscardCardsAndPutCountersOnSourceEffect(CardTypePredicate(CREATURE), 2, "creature cards") — choose any number of matching creature cards, then put two +1/+1 counters on the source per card discarded |
 | ETB discard (targeted) | `r/RavenousRats.java` | DiscardEffect(1, TARGET_PLAYER) |
 | ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | ConditionalEffect(new Raid(), DiscardEffect(1, TARGET_PLAYER)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time. Target is chosen at trigger time, never at cast (see TRIGGER_SLOT_TARGETING.md) |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | DiscardEffect(1, EACH_OPPONENT) — no targeting, all opponents discard |

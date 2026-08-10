@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "11")
+@CardRegistration(set = "EXO", collectorNumber = "4")
 public class ChargingPaladin extends Card {
 
     public ChargingPaladin() {

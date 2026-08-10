@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeDrawXCardsEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "149")
+@CardRegistration(set = "EXO", collectorNumber = "68")
 public class Necrologia extends Card {
 
     public Necrologia() {

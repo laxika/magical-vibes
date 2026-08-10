@@ -385,16 +385,30 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * Tragic Arrogance: the spell's controller ({@code controllerId}) chose the permanent of
-     * {@code typePhase} that {@code subjectPlayerId} keeps. {@code remainingPlayerIds} starts with
-     * the subject player (their later type passes still have to run) and {@code keptIds} carries
-     * every pick so far. After the last pass, all nonland permanents outside {@code keptIds} are
-     * sacrificed simultaneously.
-     */
+    /** Fade Away: the player selected creatures whose controllers will pay instead of sacrificing. */
+    record FadeAwayKeep(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
+                        java.util.List<UUID> remainingPlayerIds,
+                        java.util.List<UUID> accumulatedKeepIds,
+                        java.util.List<UUID> accumulatedSacrificeIds,
+                        UUID sourceControllerId, String sourceName, String manaCost)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Fade Away: the player selected the permanents sacrificed for the creatures not paid for. */
+    record FadeAwaySacrifice(UUID choosingPlayerId, java.util.List<UUID> creatureIds,
+                             int requiredCount, java.util.List<UUID> remainingPlayerIds,
+                             java.util.List<UUID> accumulatedKeepIds,
+                             java.util.List<UUID> accumulatedSacrificeIds,
+                             UUID sourceControllerId, String sourceName, String manaCost)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Carries a keep-one-per-type choice until the next type pass or final sacrifice. */
     record KeepOneOfEachTypeChoice(UUID controllerId, UUID subjectPlayerId, CardType typePhase,
                                    java.util.List<UUID> remainingPlayerIds,
-                                   java.util.List<UUID> keptIds, String sourceName)
+                                   java.util.List<UUID> keptIds, String sourceName,
+                                   java.util.List<CardType> types, boolean sacrificeAllPermanents,
+                                   boolean eachPlayerChooses)
             implements MultiPermanentChoiceContext {
     }
 

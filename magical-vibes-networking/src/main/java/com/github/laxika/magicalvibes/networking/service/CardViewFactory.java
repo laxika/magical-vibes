@@ -118,6 +118,7 @@ public class CardViewFactory {
         String buybackCost = buybackEffect == null ? null
                 : buybackEffect.hasManaCost() ? buybackEffect.cost()
                 : buybackEffect.hasSacrificeCost() ? "Sacrifice " + buybackEffect.sacrificeDescription()
+                : buybackEffect.hasDiscardCost() ? "Discard " + buybackEffect.discardCount() + " cards"
                 : null;
 
         return new CardView(
@@ -170,6 +171,7 @@ public class CardViewFactory {
                         .findFirst().orElse(null),
                 buybackCost,
                 buybackEffect != null && buybackEffect.hasSacrificeCost(),
+                buybackEffect != null ? buybackEffect.discardCount() : 0,
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),

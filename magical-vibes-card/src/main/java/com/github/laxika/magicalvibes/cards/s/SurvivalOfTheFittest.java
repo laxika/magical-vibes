@@ -1,0 +1,27 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "EXO", collectorNumber = "129")
+public class SurvivalOfTheFittest extends Card {
+
+    public SurvivalOfTheFittest() {
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{G}",
+                List.of(
+                        new DiscardCardTypeCost(new CardTypePredicate(CardType.CREATURE), "creature"),
+                        new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE))
+                ),
+                "{G}, Discard a creature card: Search your library for a creature card, reveal it, put it into your hand, then shuffle."
+        ));
+    }
+}

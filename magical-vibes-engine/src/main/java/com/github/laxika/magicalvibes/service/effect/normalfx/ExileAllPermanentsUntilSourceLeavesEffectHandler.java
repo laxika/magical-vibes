@@ -52,7 +52,9 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<Permanent> toExile = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {

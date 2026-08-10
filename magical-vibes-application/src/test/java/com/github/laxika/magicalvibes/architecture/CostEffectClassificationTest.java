@@ -38,7 +38,6 @@ class CostEffectClassificationTest {
     private static final Set<String> ABILITY_ONLY_COST_TYPES = Set.of(
             "CrewCost",
             "DrawCardsCost",
-            "DiscardRandomCardCost",
             "ExileCardFromHandCost",
             "ExileInstantOrSorcerySpellCost",
             "ExileSelfCost",
@@ -89,6 +88,7 @@ class CostEffectClassificationTest {
             "ExileXCardsFromGraveyardCost",
             "ExileNCardsFromGraveyardCost",
             "DiscardCardTypeCost",
+            "DiscardRandomCardCost",
             "DiscardCardOrPayManaCost",
             "DiscardHandCost",
             "DiscardXCardsCost",

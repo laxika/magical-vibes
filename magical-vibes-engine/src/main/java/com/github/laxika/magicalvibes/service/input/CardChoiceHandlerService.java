@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -71,6 +72,7 @@ public class CardChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final EquipSupport equipSupport;
@@ -279,10 +281,16 @@ public class CardChoiceHandlerService {
                 && discardChoice.stopAfterDiscardingType() != null
                 && card.hasType(discardChoice.stopAfterDiscardingType());
 
-        if (remainingDiscards > 0 && !hand.isEmpty()) {
+        List<Integer> remainingValidIndices = validIndices.stream()
+                .filter(index -> index != cardIndex)
+                .map(index -> index > cardIndex ? index - 1 : index)
+                .toList();
+
+        if (remainingDiscards > 0 && !hand.isEmpty() && !remainingValidIndices.isEmpty()) {
             inputCompletionService.publishStateAfterInput(gameData);
-            playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards,
-                    discardChoice.followUp(), discardChoice.stopAfterDiscardingType(), mayDecline);
+            playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
+                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                    discardChoice.stopAfterDiscardingType(), mayDecline);
         } else {
             finishDiscardChoice(gameData, player, playerId, discardChoice.followUp());
         }
@@ -361,6 +369,15 @@ public class CardChoiceHandlerService {
                         break;
                     }
                 }
+            }
+        }
+
+        if (followUp.plusOnePlusOneCounterPermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData,
+                    followUp.plusOnePlusOneCounterPermanentId());
+            if (source != null) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source,
+                        followUp.plusOnePlusOneCounterAmount());
             }
         }
 

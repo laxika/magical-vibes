@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -77,15 +78,17 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** EACH_OPPONENT ({@code opponentsOnly}) / EACH_PLAYER: same value dealt to every player in scope. */
+    /** EACH_OPPONENT uses one shared amount; EACH_PLAYER evaluates player-relative amounts separately. */
     private void resolveEachPlayer(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e, boolean opponentsOnly) {
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int evaluated = evaluateAmount(gameData, entry, e, entry.getControllerId());
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
         UUID controllerId = entry.getControllerId();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (opponentsOnly && playerId.equals(controllerId)) continue;
+            int evaluated = opponentsOnly
+                    ? evaluateAmount(gameData, entry, e, controllerId)
+                    : evaluateAmount(gameData, entry, e, playerId);
+            int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
     }
@@ -143,6 +146,10 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        return amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, source));
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        if (e.recipient() == DamageRecipient.EACH_PLAYER) {
+            context = context.withControllerId(victimId);
+        }
+        return amountEvaluationService.evaluate(gameData, e.amount(), context);
     }
 }

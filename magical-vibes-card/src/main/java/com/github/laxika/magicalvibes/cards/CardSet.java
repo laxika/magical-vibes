@@ -67,6 +67,7 @@ public enum CardSet {
     SET_PTK("PTK"),
     SET_TMP("TMP"),
     SET_STH("STH"),
+    SET_EXO("EXO"),
     SET_DRB("DRB"),
     SET_UDS("UDS");
 

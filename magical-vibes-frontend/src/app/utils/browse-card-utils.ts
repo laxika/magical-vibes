@@ -44,6 +44,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     kickerCost: null,
     buybackCost: null,
     buybackRequiresSacrifice: false,
+    buybackDiscardCount: 0,
     modalChoicesRequired: 0,
     modalChoicesMax: 0,
     modalOptional: false,

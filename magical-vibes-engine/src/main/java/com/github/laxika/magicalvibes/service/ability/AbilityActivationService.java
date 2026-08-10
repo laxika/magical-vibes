@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
@@ -84,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
@@ -154,6 +156,7 @@ public class AbilityActivationService {
     private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
+    private final ValidTargetService validTargetService;
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
@@ -1548,6 +1551,23 @@ public class AbilityActivationService {
      * @throws IllegalStateException if there is no pending ability activation, the player is not the one
      *                               who should be choosing, or the card index is invalid
      */
+    public void handleOpponentChosenTarget(GameData gameData, Player player, UUID chosenTargetId,
+                                            PermanentChoiceContext.ActivatedAbilityOpponentTarget context) {
+        if (!player.getId().equals(context.choosingPlayerId())) {
+            throw new IllegalStateException("Not the player who chooses this target");
+        }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (sourcePermanent == null) {
+            throw new IllegalStateException("Source permanent no longer exists");
+        }
+        Player activatingPlayer = new Player(context.activatingPlayerId(),
+                gameData.playerIdToName.get(context.activatingPlayerId()));
+        List<UUID> targetIds = List.of(context.firstTargetId(), chosenTargetId);
+        activateAbilityInternal(gameData, activatingPlayer, -1, context.abilityIndex(), context.xValue(),
+                context.firstTargetId(), context.targetZone(), null, null, targetIds, null,
+                sourcePermanent, null, true);
+    }
+
     public void handleActivatedAbilityDiscardCostChosen(GameData gameData, Player player, int cardIndex) {
         com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice cardChoice =
                 gameData.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice.class);
@@ -1815,6 +1835,15 @@ public class AbilityActivationService {
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
                                          UUID exileInstantOrSorcerySpellCardId) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
+                discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
+                exileInstantOrSorcerySpellCardId, false);
+    }
+
+    private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
+                                         UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
+                                         UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen) {
         // Spell-only mana (e.g. tapped via Piracy) can't pay ability costs — hide it for the duration of
         // this activation (including the affordability check) so it is neither counted nor spent, then
         // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
@@ -1832,7 +1861,7 @@ public class AbilityActivationService {
         try {
             activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
                     discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
-                    exileInstantOrSorcerySpellCardId);
+                    exileInstantOrSorcerySpellCardId, opponentTargetAlreadyChosen);
         } finally {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
@@ -1846,7 +1875,7 @@ public class AbilityActivationService {
     private void activateAbilityInternalImpl(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
-                                         UUID exileInstantOrSorcerySpellCardId) {
+                                         UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -1882,6 +1911,46 @@ public class AbilityActivationService {
         validateActivationLegality(gameData, playerId, permanent, ability, effectiveIndex, effectiveXValue,
                 gameData.playerManaPools.get(playerId), additionalGenericCost,
                 discardCardIndex != null && discardCardIndex < 0);
+
+        if (ability.getOpponentChosenTargetIndex() >= 0 && !opponentTargetAlreadyChosen) {
+            if (targetIds != null && !targetIds.isEmpty()) {
+                throw new IllegalStateException("Choose the first target separately");
+            }
+            if (targetId == null || ability.getOpponentChosenTargetIndex() != 1
+                    || ability.getMultiTargetFilters().isEmpty()) {
+                throw new IllegalStateException("Invalid first target");
+            }
+
+            TargetFilter firstTargetFilter = ability.getMultiTargetFilters().getFirst();
+            Permanent firstTarget = gameQueryService.findPermanentById(gameData, targetId);
+            if (firstTarget == null || !validTargetService.isValidAbilityPermanentTargetForPosition(
+                    gameData, permanent.getCard(), ability, firstTarget, playerId, permanentIndex, firstTargetFilter)) {
+                throw new IllegalStateException("Invalid first target");
+            }
+
+            UUID choosingPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (choosingPlayerId == null || choosingPlayerId.equals(playerId)) {
+                throw new IllegalStateException("The first target must be controlled by an opponent");
+            }
+            TargetFilter opponentTargetFilter = ability.getOpponentChosenTargetFilter();
+            List<UUID> validOpponentTargetIds = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(candidate -> validTargetService.isValidAbilityPermanentTargetForPosition(
+                            gameData, permanent.getCard(), ability, candidate, playerId, permanentIndex,
+                            opponentTargetFilter))
+                    .map(Permanent::getId)
+                    .toList();
+            if (validOpponentTargetIds.isEmpty()) {
+                throw new IllegalStateException("No legal second target");
+            }
+
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityOpponentTarget(
+                    playerId, choosingPlayerId, permanent.getId(), effectiveIndex, effectiveXValue, targetId, targetZone));
+            playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validOpponentTargetIds,
+                    permanent.getCard().getName() + " — choose the second target.");
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return;
+        }
 
         // Validate spell target for abilities that counter spells
         if (ability.targetsSpellOnStack(targetZone)) {

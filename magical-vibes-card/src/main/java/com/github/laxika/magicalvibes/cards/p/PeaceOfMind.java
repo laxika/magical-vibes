@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "33")
+@CardRegistration(set = "EXO", collectorNumber = "13")
 public class PeaceOfMind extends Card {
 
     public PeaceOfMind() {

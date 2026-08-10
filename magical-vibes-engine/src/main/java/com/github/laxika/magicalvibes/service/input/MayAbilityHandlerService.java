@@ -253,6 +253,8 @@ public class MayAbilityHandlerService {
                 }
                 entry.setTargetId(ability.targetCardId());
                 entry.setAttackedTargetId(ability.attackedTargetId());
+                entry.setActivePlayerId(ability.activePlayerId());
+                entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
                 gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -313,6 +315,8 @@ public class MayAbilityHandlerService {
                         xValuePaid
                 );
             }
+            entry.setActivePlayerId(ability.activePlayerId());
+            entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
@@ -388,7 +392,8 @@ public class MayAbilityHandlerService {
         }
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())
+                ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
+                ability.sourcePermanentId(), ability.sourcePermanentSnapshot()
         ));
         String targetDescription;
         if (!canTargetPermanent && canTargetPlayer) {
@@ -400,7 +405,8 @@ public class MayAbilityHandlerService {
         } else {
             targetDescription = "creature";
         }
-        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
+        UUID choicePlayerId = ability.choicePlayerId() != null ? ability.choicePlayerId() : ability.controllerId();
+        playerInputService.beginPermanentChoice(gameData, choicePlayerId, validTargets,
                 ability.sourceCard().getName() + "'s ability — Choose target " + targetDescription + ".");
 
         gameLogService.append(gameData, GameLog.textCardText(

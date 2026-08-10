@@ -38,6 +38,11 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -288,6 +293,11 @@ public class TargetLegalityService {
                     throw new IllegalStateException("Cannot target more than "
                             + returnCardsEffect.maxTargets() + " cards");
                 }
+                if (returnCardsEffect.exactTargets()
+                        && targetCardIds.size() != returnCardsEffect.maxTargets()) {
+                    throw new IllegalStateException("Must target exactly "
+                            + returnCardsEffect.maxTargets() + " cards");
+                }
                 if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
                     throw new IllegalStateException("Cannot target the same card twice");
                 }
@@ -389,7 +399,8 @@ public class TargetLegalityService {
      * ability's {@code {X}} cost and bounds the target count for X-scaled abilities (Runed Arch).
      */
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard, int xValue) {
-        validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue));
+        validateMultiTargetCount(targetIds, ability.getEffectiveMinTargets(xValue), ability.getEffectiveMaxTargets(xValue),
+                null, ability.isAllowSharedTargets());
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
         // An unfiltered position is restricted by what the ability's own effects declare, exactly
@@ -1064,6 +1075,10 @@ public class TargetLegalityService {
                                     entry.getCard().getName())) {
                         targetFizzled = true;
                     }
+                    if (!targetFizzled) {
+                        targetFizzled = !isBattlefieldTargetLegalOnResolution(gameData, entry,
+                                entry.getTargetId(), primaryTargetFilter(entry));
+                    }
                     }
                 } else if (targetPerm != null) {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
@@ -1187,11 +1202,11 @@ public class TargetLegalityService {
                 return false;
             }
             if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
-                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, playerFilter.predicate(),
+                return matchesPlayerPredicateAtResolution(gameData, targetPredicateController(entry), targetId, playerFilter.predicate(),
                         entry.getSourcePermanentId());
             }
             if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
-                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, anyFilter.playerPredicate(),
+                return matchesPlayerPredicateAtResolution(gameData, targetPredicateController(entry), targetId, anyFilter.playerPredicate(),
                         entry.getSourcePermanentId());
             }
             return true;
@@ -1235,6 +1250,10 @@ public class TargetLegalityService {
                     && gameQueryService.hasProtectionFrom(gameData, target, sourceCard.getColor()))
                 || gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || gameQueryService.hasProtectionFromSourceSubtypes(target, sourceCard);
+    }
+
+    private UUID targetPredicateController(StackEntry entry) {
+        return entry.getActivePlayerId() != null ? entry.getActivePlayerId() : entry.getControllerId();
     }
 
     private TargetFilter primaryTargetFilter(StackEntry entry) {
@@ -1572,6 +1591,9 @@ public class TargetLegalityService {
                                           List<SpellTarget> spellTargets, boolean allowSharedTargets) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
             throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
+        }
+        if (allowSharedTargets && spellTargets == null) {
+            return;
         }
         if (allowSharedTargets && spellTargets != null && spellTargets.size() > 1) {
             // CR 114.6c: same permanent allowed across groups; enforce within-group uniqueness only
@@ -2000,7 +2022,69 @@ public class TargetLegalityService {
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
             case PlayerDamagedBySourceThisTurnPredicate ignored ->
                     wasDamagedBySourceThisTurn(gameData, sourcePermanentId, targetPlayerId);
+            case PlayerControlsMoreCreaturesThanControllerPredicate ignored ->
+                    controllerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && gameQueryService.controlsMoreCreaturesThan(gameData, targetPlayerId, controllerId);
+            case PlayerControlsMoreLandsThanControllerPredicate ignored ->
+                    controllerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && gameQueryService.controlsMoreLandsThan(gameData, targetPlayerId, controllerId);
+            case PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate graveyardPredicate ->
+                    controllerId != null
+                            && targetPlayerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && countCreatureCardsInGraveyard(gameData, controllerId)
+                            >= countCreatureCardsInGraveyard(gameData, targetPlayerId)
+                            + graveyardPredicate.minimumDifference();
+            case PlayerHasMoreLifeThanControllerPredicate ignored ->
+                    controllerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && gameData.getLife(targetPlayerId) > gameData.getLife(controllerId);
+            case PlayerHasMoreCardsInHandThanControllerPredicate handPredicate ->
+                    controllerId != null
+                            && targetPlayerId != null
+                            && !controllerId.equals(targetPlayerId)
+                            && gameData.playerHands.getOrDefault(targetPlayerId, List.of()).size()
+                            >= gameData.playerHands.getOrDefault(controllerId, List.of()).size()
+                            + handPredicate.minimumDifference();
         };
+    }
+
+    private boolean matchesPlayerPredicateAtResolution(GameData gameData, UUID controllerId,
+                                                        UUID targetPlayerId, PlayerPredicate predicate,
+                                                        UUID sourcePermanentId) {
+        if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate) {
+            return controllerId != null && !controllerId.equals(targetPlayerId);
+        }
+        if (predicate instanceof PlayerControlsMoreCreaturesThanControllerPredicate) {
+            return controllerId != null && !controllerId.equals(targetPlayerId);
+        }
+        if (predicate instanceof PlayerHasMoreCardsInHandThanControllerPredicate handPredicate) {
+            if (controllerId == null || controllerId.equals(targetPlayerId)) {
+                return false;
+            }
+            return !handPredicate.recheckAtResolution()
+                    || gameData.playerHands.getOrDefault(targetPlayerId, List.of()).size()
+                    >= gameData.playerHands.getOrDefault(controllerId, List.of()).size()
+                    + handPredicate.minimumDifference();
+        }
+        if (predicate instanceof PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate graveyardPredicate) {
+            if (controllerId == null || controllerId.equals(targetPlayerId)) {
+                return false;
+            }
+            return !graveyardPredicate.recheckAtResolution()
+                    || countCreatureCardsInGraveyard(gameData, controllerId)
+                    >= countCreatureCardsInGraveyard(gameData, targetPlayerId)
+                    + graveyardPredicate.minimumDifference();
+        }
+        return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, sourcePermanentId);
+    }
+
+    private int countCreatureCardsInGraveyard(GameData gameData, UUID playerId) {
+        return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE))
+                .count();
     }
 
     private boolean wasDamagedBySourceThisTurn(GameData gameData, UUID sourcePermanentId, UUID targetPlayerId) {

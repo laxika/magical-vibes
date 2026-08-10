@@ -34,9 +34,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler implements NormalEffectHandlerBean {
 
-    private static final List<CardType> TYPES = List.of(
-            CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.PLANESWALKER);
-
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -49,7 +46,10 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect keepEffect =
+                (ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect) effect;
         step(gameData, entry.getControllerId(), apnapPlayers(gameData), 0, List.of(),
+                keepEffect.types(), keepEffect.sacrificeAllPermanents(), keepEffect.eachPlayerChooses(),
                 entry.getCard().getName());
     }
 
@@ -70,7 +70,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
         }
 
         step(gameData, context.controllerId(), context.remainingPlayerIds(),
-                TYPES.indexOf(context.typePhase()) + 1, kept, context.sourceName());
+                context.types().indexOf(context.typePhase()) + 1, kept, context.types(),
+                context.sacrificeAllPermanents(), context.eachPlayerChooses(), context.sourceName());
     }
 
     /**
@@ -78,15 +79,16 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
      * at the first pass that needs a choice; when no pass is left, apply the sacrifices.
      */
     private void step(GameData gameData, UUID controllerId, List<UUID> playerIds, int phaseIndex,
-            List<UUID> keptIds, String sourceName) {
+            List<UUID> keptIds, List<CardType> types, boolean sacrificeAllPermanents,
+            boolean eachPlayerChooses, String sourceName) {
         List<UUID> remaining = new ArrayList<>(playerIds);
         List<UUID> kept = new ArrayList<>(keptIds);
         int index = phaseIndex;
 
         while (!remaining.isEmpty()) {
             UUID subjectPlayerId = remaining.getFirst();
-            while (index < TYPES.size()) {
-                CardType type = TYPES.get(index);
+            while (index < types.size()) {
+                CardType type = types.get(index);
                 List<UUID> candidates = candidates(gameData, subjectPlayerId, type);
                 index++;
 
@@ -101,9 +103,11 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
                     continue;
                 }
 
-                playerInputService.beginMultiPermanentChoice(gameData, controllerId, candidates, 1,
+                UUID chooserId = eachPlayerChooses ? subjectPlayerId : controllerId;
+                playerInputService.beginMultiPermanentChoice(gameData, chooserId, candidates, 1,
                         new MultiPermanentChoiceContext.KeepOneOfEachTypeChoice(controllerId,
-                                subjectPlayerId, type, List.copyOf(remaining), List.copyOf(kept), sourceName),
+                                subjectPlayerId, type, List.copyOf(remaining), List.copyOf(kept), sourceName,
+                                List.copyOf(types), sacrificeAllPermanents, eachPlayerChooses),
                         sourceName + " — choose the " + type.name().toLowerCase() + " "
                                 + gameData.playerIdToName.get(subjectPlayerId) + " keeps.");
                 return;
@@ -112,16 +116,18 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             index = 0;
         }
 
-        sacrificeRest(gameData, kept, sourceName);
+        sacrificeRest(gameData, kept, sacrificeAllPermanents, sourceName);
     }
 
-    /** Every nonland permanent that was not kept is sacrificed by its controller, all at once. */
-    private void sacrificeRest(GameData gameData, List<UUID> keptIds, String sourceName) {
+    /** Every permanent that was not kept, or every nonland permanent for Tragic Arrogance, is sacrificed together. */
+    private void sacrificeRest(GameData gameData, List<UUID> keptIds, boolean sacrificeAllPermanents,
+            String sourceName) {
         Set<UUID> keptSet = new HashSet<>(keptIds);
         List<UUID> toSacrifice = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (!gameQueryService.isLand(gameData, permanent) && !keptSet.contains(permanent.getId())) {
+                if ((sacrificeAllPermanents || !gameQueryService.isLand(gameData, permanent))
+                        && !keptSet.contains(permanent.getId())) {
                     toSacrifice.add(permanent.getId());
                 }
             }
@@ -132,7 +138,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             return;
         }
         destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
-        log.info("Game {} - {} sacrifices {} nonland permanents", gameData.id, sourceName, toSacrifice.size());
+        log.info("Game {} - {} sacrifices {} permanents", gameData.id, sourceName, toSacrifice.size());
     }
 
     private List<UUID> candidates(GameData gameData, UUID playerId, CardType type) {
@@ -145,7 +151,9 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             case ARTIFACT -> gameQueryService.isArtifact(gameData, permanent);
             case CREATURE -> gameQueryService.isCreature(gameData, permanent);
             case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, permanent);
-            default -> gameQueryService.isPlaneswalker(gameData, permanent);
+            case LAND -> gameQueryService.isLand(gameData, permanent);
+            case PLANESWALKER -> gameQueryService.isPlaneswalker(gameData, permanent);
+            default -> false;
         };
     }
 

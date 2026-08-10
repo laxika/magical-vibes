@@ -11,6 +11,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #TARGET_PLAYER} — "target player's library". Read from the stack entry's
  *       {@code targetId}, and the only value that declares a player {@code TargetSpec}. The chosen
  *       player may be the controller themselves ("target player" includes you).</li>
+ *   <li>{@link #ENCHANTED_PERMANENT_CONTROLLER} â€” the library of the player baked into the
+ *       stack entry by an enchanted-permanent-controller trigger. Read from {@code targetId}, but
+ *       does not declare an additional target because the trigger already identifies that player.</li>
  * </ul>
  *
  * <p>Who <em>decides</em> is not this axis: the effect's controller always makes the choice (looks
@@ -18,5 +21,6 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum LibraryOwner {
     CONTROLLER,
-    TARGET_PLAYER
+    TARGET_PLAYER,
+    ENCHANTED_PERMANENT_CONTROLLER
 }

@@ -156,8 +156,13 @@ public class PlayerInputService {
     }
 
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
+        beginMultiGraveyardChoice(gameData, playerId, cards, maxCount, 0, prompt);
+    }
+
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards,
+                                          int maxCount, int minCount, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                playerId, new ArrayList<>(cards), maxCount, prompt));
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
     }
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
@@ -1139,7 +1144,8 @@ public class PlayerInputService {
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MayAbilityChoice(
-                next.controllerId(), next.description(), next.manaCost()));
+                next.choicePlayerId() != null ? next.choicePlayerId() : next.controllerId(),
+                next.description(), next.manaCost()));
     }
 }
 

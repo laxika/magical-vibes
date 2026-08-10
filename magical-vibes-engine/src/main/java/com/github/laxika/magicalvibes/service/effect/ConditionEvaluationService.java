@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCom
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
@@ -149,6 +150,7 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
+import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -429,6 +431,10 @@ public class ConditionEvaluationService {
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), null, c.filter());
+            case ControllerControlsMoreLandsThanOpponent ignored ->
+                    ctx.controllerId() != null
+                            && gameQueryService.controlsMoreLandsThan(
+                                    gameData, ctx.controllerId(), gameQueryService.getOpponentId(gameData, ctx.controllerId()));
             case OpponentCastSpellThisTurn c ->
                     opponentCastMatchingSpellThisTurn(gameData, ctx, c.filter());
             case SpellManaSpentAtLeast c ->
@@ -526,7 +532,7 @@ public class ConditionEvaluationService {
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
             case TopCardOfLibraryType c ->
-                    isTopCardOfLibraryType(gameData, ctx.controllerId(), c);
+                    isTopCardOfLibraryType(gameData, resolveLibraryOwner(ctx, c.libraryOwner()), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
             case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);
@@ -1362,6 +1368,13 @@ public class ConditionEvaluationService {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) return false;
         return deck.getFirst().hasType(c.cardType());
+    }
+
+    private UUID resolveLibraryOwner(ConditionContext ctx, LibraryOwner owner) {
+        return switch (owner) {
+            case CONTROLLER -> ctx.controllerId();
+            case TARGET_PLAYER, ENCHANTED_PERMANENT_CONTROLLER -> ctx.targetId();
+        };
     }
 
     /**
