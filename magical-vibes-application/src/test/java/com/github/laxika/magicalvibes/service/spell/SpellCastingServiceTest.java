@@ -186,6 +186,12 @@ class SpellCastingServiceTest {
         lenient().when(castingCostService.getImposedSacrificeRequirementForSpell(
                         any(GameData.class), any(Card.class)))
                 .thenReturn(CastingCostService.ImposedSacrificeRequirement.none());
+        lenient().when(castingPermissionService.canCastWithSpellTimingRestriction(
+                any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(true);
+        lenient().when(castingPermissionService.flashTimingRequiresAlternateCast(
+                any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
+        lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(
+                any(GameData.class), any(UUID.class), any(Card.class), any())).thenReturn(false);
     }
 
     // =========================================================================

@@ -40,6 +40,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +58,9 @@ class UntapStepServiceTest {
     private PhasingService phasingService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
+    @Spy
+    private UntapPreventionSupport untapPreventionSupport =
+            new UntapPreventionSupport(org.mockito.Mockito.mock(ConditionEvaluationService.class));
 
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy

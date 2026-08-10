@@ -240,8 +240,12 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp,
-                stopAfterDiscardingType);
+        if (stopAfterDiscardingType == null) {
+            playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp);
+        } else {
+            playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp,
+                    stopAfterDiscardingType);
+        }
 
     }
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {

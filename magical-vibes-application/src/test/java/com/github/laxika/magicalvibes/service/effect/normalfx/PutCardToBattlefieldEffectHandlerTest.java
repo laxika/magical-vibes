@@ -26,12 +26,14 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         Card creatureCard = createCard("Grizzly Bears");
         gd.playerHands.get(player1Id).add(creatureCard);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any())).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
 
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
-                anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false));
+                anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
+                anySet());
     }
 
     @Test
@@ -45,12 +47,13 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         Card creatureCard = createCard("Air Elemental");
         gd.playerHands.get(player1Id).add(creatureCard);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any())).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
 
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true),
-                isNull(), eq(false), eq(false), isNull(), isNull(), eq(false));
+                isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet());
     }
 
     @Test
@@ -63,12 +66,13 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         Card landCard = createCard("Forest");
         gd.playerHands.get(player1Id).add(landCard);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(landCard), eq(predicate), any())).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(landCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
 
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
-                isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false));
+                isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet());
     }
 
     @Test
@@ -81,12 +85,13 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         Card landCard = createCard("Forest");
         gd.playerHands.get(player1Id).add(landCard);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(landCard), eq(predicate), any())).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(landCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
 
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
-                isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true));
+                isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet());
     }
 
     @Test
@@ -99,7 +104,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         Card nonMatchingCard = createCard("Mountain");
         gd.playerHands.get(player1Id).add(nonMatchingCard);
 
-        when(predicateEvaluationService.matchesCardPredicate(eq(nonMatchingCard), eq(predicate), any())).thenReturn(false);
+        when(predicateEvaluationService.matchesCardPredicate(eq(nonMatchingCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(false);
 
         resolveEffect(gd, entry, effect);
 
