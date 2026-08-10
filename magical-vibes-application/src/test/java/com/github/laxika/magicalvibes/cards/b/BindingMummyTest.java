@@ -28,6 +28,7 @@ class BindingMummyTest extends BaseCardTest {
         castScatheZombies(player1);
         harness.passBothPriorities(); // resolve the creature — Binding Mummy triggers and asks for a target
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -45,6 +46,7 @@ class BindingMummyTest extends BaseCardTest {
         castScatheZombies(player1);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -60,6 +62,7 @@ class BindingMummyTest extends BaseCardTest {
         castScatheZombies(player1);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -96,6 +99,7 @@ class BindingMummyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
     }
 
