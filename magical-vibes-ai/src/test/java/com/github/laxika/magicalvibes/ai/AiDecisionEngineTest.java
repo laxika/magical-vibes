@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianMarauder;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkaabRuinator;
@@ -47,6 +48,7 @@ import com.github.laxika.magicalvibes.cards.u.UnburialRites;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
@@ -2077,6 +2079,26 @@ class AiDecisionEngineTest {
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(result).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax pays a creature-specific attack tax")
+    void prepareAttackersForTaxPaysCreatureSpecificTax() {
+        giveAiPlains(1);
+        Permanent marauder = new Permanent(new PhyrexianMarauder());
+        marauder.setSummoningSick(false);
+        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(marauder);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
+
+        List<Integer> attackers = ai.prepareAttackersForTax(gd, List.of(1));
+        harness.getGameService().declareAttackers(gd, aiPlayer, attackers);
+
+        assertThat(marauder.isAttackedThisTurn()).isTrue();
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
     }
 
     @Test
