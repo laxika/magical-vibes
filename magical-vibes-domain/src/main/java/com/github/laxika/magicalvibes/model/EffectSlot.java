@@ -259,6 +259,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
      *  ({@code BoostSelfEffect(1, 1)}). */
     ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
+    /** Triggers whenever any permanent becomes untapped, regardless of its controller. The
+     *  untapped permanent is recorded on the triggered entry as the non-targeting event permanent. */
+    ON_ANY_PERMANENT_BECOMES_UNTAPPED,
     /** Triggers whenever this creature becomes renowned (CR 702.112b) — i.e. when a {@code RenownEffect}
      *  actually flips it from not-renowned to renowned. A creature that is already renowned never fires
      *  this again (CR 702.112c). Driven from {@code RenownEffectHandler} via
@@ -849,6 +852,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
     ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever an opponent of this permanent's controller is dealt damage. The damage
+     *  amount is snapshotted onto the triggered ability's event value. */
+    ON_OPPONENT_DEALT_DAMAGE,
     /** Triggers whenever a source this permanent's controller controls deals damage to a player
      *  other than them — "Whenever a source you control deals damage to another player, ...".
      *  The outbound mirror of {@link #ON_CONTROLLER_DEALT_DAMAGE}: it scans the <em>damaging</em>

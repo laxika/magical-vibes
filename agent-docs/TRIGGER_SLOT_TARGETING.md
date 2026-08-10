@@ -99,6 +99,8 @@ cast path type-checks the target automatically; an effect that targets a permane
 
 Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
 
+`ON_ANY_PERMANENT_ENTERS_BATTLEFIELD` effects with a permanent target use `EntersTriggerTarget` and choose the target as the trigger is put on the stack. The entering permanent is preserved as the first exchange participant and as `FilterContext.sourcePermanentSnapshot`; its controller is the player who chooses the target, even when that player differs from the source permanent's controller.
+
 ---
 
 ## Trigger slot → pipeline mapping
@@ -212,6 +214,10 @@ via the pending-may-ability flow, not a target-choice pipeline),
 the untapped permanent's controller's battlefield, including the source untapping itself; same
 `checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent),
+`ON_ANY_PERMANENT_BECOMES_UNTAPPED` (Mesmeric Orb; fires once for every permanent that transitions
+tapped→untapped on any battlefield. The untapped permanent and its controller are recorded on the
+non-targeting triggered entry so an effect can use that controller even if the permanent leaves before
+resolution),
 `ON_SELF_BECOMES_RENOWNED` / `ON_ALLY_CREATURE_BECOMES_RENOWNED` (Relic Seeker / Valeron Wardens; fired from
 `RenownEffectHandler` via `TriggerCollectionService.checkBecomesRenownedTriggers` on the flip to renowned
 only. The ally slot fires on every permanent with it on the renowned creature's controller's battlefield,
@@ -536,3 +542,7 @@ effect's own `damagedPermanentFilter` does the narrowing in `DamageTriggerCollec
 `targetGraveyard(true)` in the `ON_DEATH` slot. The death-trigger queue applies the effect's card
 predicate and `source()` scope while the trigger is put on the stack, then stores the selected card ID
 on the triggered entry for the normal return handler. An empty selection models an optional return.
+
+For `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY`, effects implementing `TriggeringSpellReferencingEffect`
+also carry the triggering spell or activated ability as an internal `STACK` reference. The source
+permanent id remains available so an Aura effect can re-derive its host at resolution.

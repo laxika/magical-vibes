@@ -65,7 +65,7 @@ class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         returnSelfToHandOnCoinFlipLossHandler = new ReturnSelfToHandOnCoinFlipLossEffectHandler(
-                gameLogService, bounceSupport);
+                gameLogService, bounceSupport, new CoinFlipService(gameQueryService));
 
     }
 

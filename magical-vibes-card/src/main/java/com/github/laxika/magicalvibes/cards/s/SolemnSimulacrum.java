@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "M12", collectorNumber = "217")
+@CardRegistration(set = "MRD", collectorNumber = "245")
 public class SolemnSimulacrum extends Card {
 
     public SolemnSimulacrum() {

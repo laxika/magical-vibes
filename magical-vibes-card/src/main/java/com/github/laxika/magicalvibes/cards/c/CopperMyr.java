@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "146")
+@CardRegistration(set = "MRD", collectorNumber = "158")
 public class CopperMyr extends Card {
 
     public CopperMyr() {

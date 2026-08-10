@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "176")
+@CardRegistration(set = "MRD", collectorNumber = "206")
 public class Mindslaver extends Card {
 
     public Mindslaver() {

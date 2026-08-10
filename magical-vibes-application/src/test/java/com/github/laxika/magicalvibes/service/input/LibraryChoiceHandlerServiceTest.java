@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -26,6 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,6 +66,8 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
 
     private LibraryChoiceHandlerService service;
 
@@ -79,7 +85,7 @@ class LibraryChoiceHandlerServiceTest {
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(gameQueryService,
-                mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                predicateEvaluationService,
                 graveyardService, battlefieldEntryService, legendRuleService,
                 stateBasedActionService, gameLogService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
@@ -90,7 +96,8 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
-                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class));
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
+                permanentControlSupport);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -127,6 +134,45 @@ class LibraryChoiceHandlerServiceTest {
         Card card = createCard(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    @DisplayName("Exile-and-create-tokens search keeps selecting after the source is gone")
+    void exileAndCreateTokensSearchResumesAfterSourceSacrifice() {
+        Card artifact1 = createCard("Artifact One", CardType.ARTIFACT);
+        Card artifact2 = createCard("Artifact Two", CardType.ARTIFACT);
+        gd.playerDecks.get(player1Id).addAll(List.of(artifact1, artifact2));
+        CreateTokenEffect token = new CreateTokenEffect(
+                1, "Myr", 1, 1, null, List.of(), Set.of(), Set.of(CardType.ARTIFACT));
+        when(predicateEvaluationService.matchesCardPredicate(any(Card.class),
+                any(com.github.laxika.magicalvibes.model.filter.CardPredicate.class), isNull(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(artifact1, artifact2))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.EXILE_AND_CREATE_TOKENS)
+                .filterPredicate(new CardTypePredicate(CardType.ARTIFACT))
+                .tokenTemplate(token)
+                .sourceSetCode("MRD")
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose cards", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(artifact2))
+                        .canFailToFind(true)
+                        .destination(LibrarySearchDestination.EXILE_AND_CREATE_TOKENS)
+                        .filterPredicate(new CardTypePredicate(CardType.ARTIFACT))
+                        .accumulatedCards(List.of(artifact1))
+                        .tokenTemplate(token)
+                        .sourceSetCode("MRD")
+                        .build(),
+                "Choose cards", true));
+        service.handleLibraryCardChosen(gd, player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(artifact2);
+        verify(permanentControlSupport).applyCreateToken(gd, player1Id, token, 1, "MRD");
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     private static Card createBasicLand(String name) {

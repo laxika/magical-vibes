@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -39,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendin
 import com.github.laxika.magicalvibes.model.effect.EquipmentTapsAndLocksDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -1114,6 +1114,26 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Handles effects that trigger whenever an opponent is dealt damage, regardless of the damage
+     * source's controller.
+     */
+    public void checkOpponentDealtDamageTriggers(GameData gameData, UUID damagedPlayerId, int amount) {
+        if (amount <= 0 || damagedPlayerId == null) return;
+
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+        gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
+            if (watcherPlayerId.equals(damagedPlayerId)) return;
+
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DEALT_DAMAGE)) {
+                    var match = new TriggerMatchContext(gameData, perm, watcherPlayerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
+                }
+            }
+        });
+    }
+
+    /**
      * Handles {@link EffectSlot#ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT} — "Whenever a
      * creature of the chosen color deals damage to you or a white creature you control, ...".
      * Scans the damaged player's battlefield for watchers; the per-watcher chosen-color and
@@ -1751,6 +1771,29 @@ public class TriggerCollectionService {
             return;
         }
 
+        if (effects.stream().anyMatch(TriggeringSpellReferencingEffect.class::isInstance)) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    controllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    0,
+                    triggeringEntry.getCard().getId(),
+                    source.getId(),
+                    null,
+                    Zone.STACK,
+                    null,
+                    null
+            );
+            gameData.stack.add(entry);
+
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued against the triggering object",
+                    gameData.id, source.getCard().getName());
+            return;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
@@ -2254,25 +2297,31 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} deals {} to {} and {} to its controller", gameData.id,
                         watcher.getCard().getName(), punisher.amountToDamagedCreatureController(),
                         gameData.playerIdToName.get(damagedCreatureControllerId), punisher.amountToSelf());
-            } else if (effect instanceof DestroyDamagedCreatureEffect) {
-                // "this creature" — fire only when the watcher itself dealt the damage.
-                if (!watcher.getId().equals(damageSource.getId())) continue;
+            } else if (effect instanceof DamagedCreatureTriggerEffect damagedCreatureTrigger) {
+                Permanent triggerSource = damageSource;
+                if (damagedCreatureTrigger.equipmentScoped()) {
+                    if (!isEquippedBy(gameData, watcher, damageSource)) continue;
+                    triggerSource = watcher;
+                } else if (!watcher.getId().equals(damageSource.getId())) {
+                    // "this creature" — fire only when the watcher itself dealt the damage.
+                    continue;
+                }
                 if (damagedCreatureId == null) continue;
 
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
-                        damageSource.getCard(),
+                        triggerSource.getCard(),
                         damageSourceControllerId,
-                        damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DestroyTargetPermanentEffect())),
+                        triggerSource.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(damagedCreatureTrigger.triggeredEffect())),
                         damagedCreatureId,
-                        damageSource.getId()
+                        triggerSource.getId()
                 );
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} will destroy the creature it damaged", gameData.id,
+                log.info("Game {} - {} will resolve its damaged-creature trigger", gameData.id,
                         watcher.getCard().getName());
             } else if (effect instanceof TapAndSkipUntapDamagedCreatureEffect) {
                 // "this creature" — fire only when the watcher itself dealt the damage.
@@ -2608,6 +2657,26 @@ public class TriggerCollectionService {
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally permanent untap ({})",
+                        gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
+            }
+        });
+
+        gameData.forEachPermanent((ownerId, perm) -> {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_BECOMES_UNTAPPED)) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                );
+                entry.setEventPlayerIds(List.of(untappedControllerId));
+                entry.setTriggeringPermanentId(untappedPermanent.getId());
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers on any permanent untap ({})",
                         gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
             }
         });
@@ -4431,6 +4500,16 @@ public class TriggerCollectionService {
             for (CardEffect effect : effects) {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, playerId);
                 if (resolved == null) continue;
+
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            perm.getCard(), enteringControllerId, new ArrayList<>(List.of(resolved)), perm.getId(),
+                            resolvedEnteringPermanentId, resolvedEnteringPermanentId));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} any-permanent-enters trigger awaiting target", gameData.id,
+                            perm.getCard().getName());
+                    continue;
+                }
 
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

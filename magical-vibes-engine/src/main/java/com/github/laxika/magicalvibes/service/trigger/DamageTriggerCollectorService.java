@@ -81,24 +81,32 @@ public class DamageTriggerCollectorService {
     private boolean handleExileDamagedCreature(TriggerMatchContext match,
             ExileDamagedCreatureEffect exileEffect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
-        if (match.permanent() == null || !match.permanent().getId().equals(dc.damageSource().getId())) return false;
+        Permanent watcher = match.permanent();
+        if (watcher == null) return false;
+        Permanent triggerSource = dc.damageSource();
+        if (exileEffect.equipmentScoped()) {
+            if (!watcher.isAttached() || !watcher.getAttachedTo().equals(dc.damageSource().getId())) return false;
+            triggerSource = watcher;
+        } else if (!watcher.getId().equals(dc.damageSource().getId())) {
+            return false;
+        }
         if (dc.damagedCreatureId() == null) return false;
 
         GameData gameData = match.gameData();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                dc.damageSource().getCard(),
+                triggerSource.getCard(),
                 match.controllerId(),
-                dc.damageSource().getCard().getName() + "'s ability",
+                triggerSource.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
                 dc.damagedCreatureId(),
-                dc.damageSource().getId());
+                triggerSource.getId());
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
 
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         log.info("Game {} - {} triggers, exiling the creature it damaged",
-                gameData.id, match.permanent().getCard().getName());
+                gameData.id, watcher.getCard().getName());
         return true;
     }
 
@@ -547,11 +555,9 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
-
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
-    private boolean handleControllerDealtDamageByOpponentMay(TriggerMatchContext match,
-            MayEffect may, TriggerContext ctx) {
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    private boolean handleOpponentDealtDamagePutCounters(TriggerMatchContext match,
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
@@ -561,11 +567,52 @@ public class DamageTriggerCollectorService {
                 perm.getCard(),
                 match.controllerId(),
                 perm.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(may)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 perm.getId());
-        // Snapshot the damage dealt so the wrapped effect's EventValue amount ("put that many
-        // +1/+1 counters") reads it back at resolution, after the "you may" is accepted.
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_OPPONENT_DEALT_DAMAGE trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
+    // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentConditional(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (conditional.interveningIf()
+                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
+                        match.permanent(), match.controllerId())) {
+            return false;
+        }
+        return queueControllerDealtDamageByOpponentTrigger(match, conditional, ctx);
+    }
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        return queueControllerDealtDamageByOpponentTrigger(match, may, ctx);
+    }
+
+    private boolean queueControllerDealtDamageByOpponentTrigger(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        // Preserve the damage amount for damage-trigger effects that read it at resolution.
         entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 

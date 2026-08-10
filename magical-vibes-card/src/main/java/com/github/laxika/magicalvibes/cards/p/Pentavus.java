@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "213")
+@CardRegistration(set = "MRD", collectorNumber = "226")
 public class Pentavus extends Card {
 
     public Pentavus() {

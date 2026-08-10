@@ -9,5 +9,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Expanded at trigger-collection time into a {@link DestroyTargetPermanentEffect} stack entry
  * whose target is the damaged creature, so it is never resolved directly.
  */
-public record DestroyDamagedCreatureEffect() implements CardEffect {
+public record DestroyDamagedCreatureEffect() implements DamagedCreatureTriggerEffect {
+
+    @Override
+    public CardEffect triggeredEffect() {
+        return new DestroyTargetPermanentEffect();
+    }
 }

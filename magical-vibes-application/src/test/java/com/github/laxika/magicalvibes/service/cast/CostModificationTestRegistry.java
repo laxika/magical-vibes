@@ -36,7 +36,7 @@ public final class CostModificationTestRegistry {
         CostModificationHandlerRegistry registry = new CostModificationHandlerRegistry();
         registry.register(new ReduceBuybackCostEffectHandler());
         registry.register(new IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler());
-        registry.register(new IncreaseSpellCostEffectHandler(predicateEvaluationService));
+        registry.register(new IncreaseSpellCostEffectHandler(predicateEvaluationService, amountEvaluationService));
         registry.register(new IncreaseSpellCostExceptOnControllersTurnEffectHandler());
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));

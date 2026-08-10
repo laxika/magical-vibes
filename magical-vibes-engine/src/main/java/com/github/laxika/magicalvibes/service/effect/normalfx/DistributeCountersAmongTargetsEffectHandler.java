@@ -42,10 +42,25 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongTargetsEffect) effect;
 
+        if (e.etbAssignments()) {
+            Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
+            gameData.pendingETBDamageAssignments = Map.of();
+            applyAssignments(gameData, entry, e, assignments);
+            return;
+        }
+
         Map<UUID, Integer> assignments = e.mode() == DivisionMode.CHOSEN
                 ? chosenAssignments(entry)
                 : evenAssignments(gameData, entry, e);
 
+        applyAssignments(gameData, entry, e, assignments);
+    }
+
+    private void applyAssignments(
+            GameData gameData,
+            StackEntry entry,
+            DistributeCountersAmongTargetsEffect e,
+            Map<UUID, Integer> assignments) {
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) {
@@ -53,6 +68,9 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             }
             // An announced target that is no longer a creature at resolution is illegal and isn't
             // affected (CR 608.2b) — never put the counters on an animated land that reverted.
+            if (assignment.getValue() == null || assignment.getValue() <= 0) {
+                continue;
+            }
             if (!gameQueryService.isCreature(gameData, target)) {
                 continue;
             }

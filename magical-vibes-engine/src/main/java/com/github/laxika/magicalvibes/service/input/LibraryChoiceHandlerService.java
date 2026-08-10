@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -94,6 +95,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -142,6 +144,8 @@ public class LibraryChoiceHandlerService {
         boolean grantHaste = librarySearch.grantHaste();
         boolean exileAtEndStep = librarySearch.exileAtEndStep();
         AnimatePermanentsEffect animateFound = librarySearch.animateFound();
+        CreateTokenEffect tokenTemplate = librarySearch.tokenTemplate();
+        String sourceSetCode = librarySearch.sourceSetCode();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -389,6 +393,11 @@ public class LibraryChoiceHandlerService {
                 finishSignalTheClansSearch(gameData, playerId, accumulatedCards);
                 return;
             }
+            if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
+                finishExileAndCreateTokensSearch(gameData, player, deckOwnerId, accumulatedCards,
+                        tokenTemplate, sourceSetCode, shuffleAfterSelection);
+                return;
+            }
             // A pile search stopped early still shuffles whatever was already exiled into it.
             if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
@@ -448,6 +457,36 @@ public class LibraryChoiceHandlerService {
 
         if (!removed) {
             throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            accumulatedCards.add(chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", chosenCard, "."));
+
+            List<Card> remainingMatches = deck.stream()
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                            card, filterPredicate, null, gameData, deckOwnerId))
+                    .toList();
+            if (!remainingMatches.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
+                                .remainingCount(remainingMatches.size())
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.EXILE_AND_CREATE_TOKENS)
+                                .filterPredicate(filterPredicate)
+                                .accumulatedCards(accumulatedCards)
+                                .tokenTemplate(tokenTemplate)
+                                .sourceSetCode(sourceSetCode)
+                                .build(),
+                        "Search your library for a card to exile (any number).", true));
+                return;
+            }
+
+            finishExileAndCreateTokensSearch(gameData, player, deckOwnerId, accumulatedCards,
+                    tokenTemplate, sourceSetCode, shuffleAfterSelection);
+            return;
         }
 
         if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL) {
@@ -998,6 +1037,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
+                case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
                 case EXILE_FACE_DOWN_PILE -> throw new IllegalStateException("EXILE_FACE_DOWN_PILE should be handled earlier");
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
@@ -1126,11 +1166,36 @@ public class LibraryChoiceHandlerService {
                         + controllerName + "'s graveyard. The rest go to their hand.", count));
     }
 
+    private void finishExileAndCreateTokensSearch(GameData gameData, Player player, UUID deckOwnerId,
+                                                   List<Card> exiledCards, CreateTokenEffect tokenTemplate,
+                                                   String sourceSetCode, boolean shuffleAfterSelection) {
+        if (!exiledCards.isEmpty()) {
+            permanentControlSupport.applyCreateToken(gameData, player.getId(), tokenTemplate,
+                    exiledCards.size(), sourceSetCode);
+        }
+        if (shuffleAfterSelection) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+        }
+        if (exiledCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " chooses not to exile any cards."));
+        }
+        if (shuffleAfterSelection) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + "'s library is shuffled."));
+        }
+        finishSearchAndResume(gameData);
+    }
+
     private void finishSearchAndResume(GameData gameData) {
         StackEntry pending = gameData.pendingEffectResolutionEntry;
         if (pending != null) {
             effectResolutionService.resolveEffectsFrom(gameData, pending, gameData.pendingEffectResolutionIndex);
-            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
                 return;
             }
         }

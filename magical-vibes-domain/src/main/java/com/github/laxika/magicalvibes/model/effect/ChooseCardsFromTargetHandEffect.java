@@ -18,7 +18,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               CardPredicate filter,
                                               int declineFallbackDiscardCount,
                                               boolean upTo,
-                                              boolean exileAllCopiesOfChosenNames)
+                                              boolean exileAllCopiesOfChosenNames,
+                                              boolean imprintOnSource)
         implements CombatDamageTriggerContextEffect {
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -27,7 +28,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, false, false);
+                0, false, false, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -36,7 +37,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter, int declineFallbackDiscardCount) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, false, false);
+                declineFallbackDiscardCount, false, false, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -46,12 +47,18 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter, boolean upTo,
                                            boolean exileAllCopiesOfChosenNames) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, upTo, exileAllCopiesOfChosenNames);
+                0, upTo, exileAllCopiesOfChosenNames, false);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
                                            HandChoiceDestination destination) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false, null);
+    }
+
+    public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
+                                           HandChoiceDestination destination, boolean imprintOnSource) {
+        this(new Fixed(count), excludedTypes, List.of(), destination, false, null,
+                0, false, false, imprintOnSource);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */

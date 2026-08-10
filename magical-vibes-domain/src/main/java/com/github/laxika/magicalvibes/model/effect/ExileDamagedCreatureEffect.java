@@ -1,12 +1,19 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker for "Whenever this creature deals damage to a creature, exile that creature".
- * Registered in {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE}
- * and self-scoped: it only fires when the permanent holding it is the damage source.
+ * Marker for a damage trigger that exiles the creature dealt damage.
  *
- * <p>Expanded at trigger-collection time into an {@link ExileTargetPermanentEffect} entry whose
- * non-targeting target is the damaged creature, so it is never resolved directly.
+ * <p>The default form is self-scoped: "Whenever this creature deals damage to a creature, exile
+ * that creature." The equipment-scoped form is used by Sword of Kaldra.
  */
-public record ExileDamagedCreatureEffect() implements CardEffect {
+public record ExileDamagedCreatureEffect(boolean equipmentScoped) implements DamagedCreatureTriggerEffect {
+
+    public ExileDamagedCreatureEffect() {
+        this(false);
+    }
+
+    @Override
+    public CardEffect triggeredEffect() {
+        return new ExileTargetPermanentEffect();
+    }
 }

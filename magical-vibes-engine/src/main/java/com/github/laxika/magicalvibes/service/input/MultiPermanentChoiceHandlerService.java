@@ -1342,6 +1342,7 @@ public class MultiPermanentChoiceHandlerService {
                                 .text(" deals " + damage + " damage to " + defenderName + ".").build());
                     }
                     gameData.recordDamageToPlayer(defendingPlayerId, damage);
+                    triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defendingPlayerId, damage);
                 }
             }
         }

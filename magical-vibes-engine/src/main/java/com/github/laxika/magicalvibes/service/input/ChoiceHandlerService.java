@@ -160,6 +160,10 @@ public class ChoiceHandlerService {
             handleRevealLibraryNumberGuessChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.LiarsPendulumChoice ctx) {
+            handleLiarsPendulumChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, colorName, ctx);
             return;
@@ -2265,7 +2269,13 @@ public class ChoiceHandlerService {
             }
         }
 
-        log.info("Game {} - {} Demonic Consultation dig: initialExile={}, revealed={}, found={}",
+        int exiledCount = initialExile.size() + revealed.size();
+        if (ctx.lifeLossPerExiled() > 0 && exiledCount > 0) {
+            lifeSupport.applyLifeLoss(gameData, controllerId,
+                    exiledCount * ctx.lifeLossPerExiled(), controllerName);
+        }
+
+        log.info("Game {} - {} name/reveal-until-named effect: initialExile={}, revealed={}, found={}",
                 gameData.id, controllerName, initialExile.size(), revealed.size(),
                 found != null ? found.getName() : "none");
 
@@ -2532,6 +2542,49 @@ public class ChoiceHandlerService {
                 gameData.id, controllerName, chosenNumber, ctx.chosenName(), targetName, matches);
 
         stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleLiarsPendulumChoice(GameData gameData, Player player, String choice,
+                                           ChoiceContext.LiarsPendulumChoice ctx) {
+        if (ctx.chosenName() != null && !"Yes".equals(choice) && !"No".equals(choice)) {
+            throw new IllegalArgumentException("Invalid Liar's Pendulum guess: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+
+        if (ctx.chosenName() == null) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " chooses the card name \"" + choice + "\" for Liar's Pendulum."));
+            playerInputService.beginLiarsPendulumGuessChoice(gameData,
+                    new ChoiceContext.LiarsPendulumChoice(
+                            ctx.controllerId(), ctx.targetPlayerId(), ctx.sourcePermanentId(), ctx.sourceCard(), choice));
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
+        boolean nameIsInHand = hand.stream().anyMatch(card -> ctx.chosenName().equals(card.getName()));
+        boolean guessedNameIsInHand = "Yes".equals(choice);
+        boolean guessedWrong = nameIsInHand != guessedNameIsInHand;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " guesses " + (guessedNameIsInHand ? "yes" : "no")
+                        + " for whether the controller has a card named \"" + ctx.chosenName() + "\"."));
+
+        if (guessedWrong) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    ctx.sourceCard(),
+                    ctx.controllerId(),
+                    List.of(new com.github.laxika.magicalvibes.model.effect.RevealTargetHandEffect(),
+                            new com.github.laxika.magicalvibes.model.effect.DrawCardEffect()),
+                    "Reveal your hand and draw a card?",
+                    ctx.controllerId(),
+                    null,
+                    ctx.sourcePermanentId()));
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

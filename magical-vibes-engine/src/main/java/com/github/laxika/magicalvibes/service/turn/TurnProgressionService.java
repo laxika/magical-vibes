@@ -416,6 +416,9 @@ public class TurnProgressionService {
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.lastRedSpellDamagerThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();
+        gameData.handSizeAtTurnStart.clear();
+        List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
+        gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();

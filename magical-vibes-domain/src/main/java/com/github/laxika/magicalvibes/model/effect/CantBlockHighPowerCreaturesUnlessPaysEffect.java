@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+
 /**
  * Static effect: this creature can't block creatures with power {@code minAttackerPower} or greater
  * unless its controller pays {@code amount} generic mana as an additional cost to declare the block
@@ -9,7 +11,7 @@ public record CantBlockHighPowerCreaturesUnlessPaysEffect(int minAttackerPower, 
         implements BlockCostEffect {
 
     @Override
-    public int blockCost(int attackerPower) {
+    public int blockCost(Permanent blocker, int attackerPower) {
         return attackerPower >= minAttackerPower ? amount : 0;
     }
 }

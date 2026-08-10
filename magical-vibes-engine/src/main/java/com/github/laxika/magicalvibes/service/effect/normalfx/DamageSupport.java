@@ -847,6 +847,7 @@ public class DamageSupport {
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
                 // Night Dealings: "whenever a source you control deals damage to another player".
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
                         entry.getSourcePermanentId() != null
@@ -944,6 +945,7 @@ public class DamageSupport {
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
                 gameData.recordDamageToPlayer(targetId, redirectEffective);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
             }
         }
     }
@@ -1003,6 +1005,7 @@ public class DamageSupport {
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
                     gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);

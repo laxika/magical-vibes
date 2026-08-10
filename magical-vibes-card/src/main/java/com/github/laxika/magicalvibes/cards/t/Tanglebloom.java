@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "311")
+@CardRegistration(set = "MRD", collectorNumber = "258")
 public class Tanglebloom extends Card {
 
     public Tanglebloom() {

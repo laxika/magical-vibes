@@ -255,6 +255,10 @@ public class MulliganService {
         gameData.turnsTakenByPlayer.clear();
         gameData.turnsTakenByPlayer.put(gameData.activePlayerId, 1);
         gameData.currentStep = TurnStep.first();
+        gameData.handSizeAtTurnStart.clear();
+        List<Card> handAtTurnStart = gameData.playerHands.get(gameData.activePlayerId);
+        gameData.handSizeAtTurnStart.put(gameData.activePlayerId,
+                handAtTurnStart == null ? 0 : handAtTurnStart.size());
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "302")
+@CardRegistration(set = "MRD", collectorNumber = "130")
 public class SylvanScrying extends Card {
 
     public SylvanScrying() {

@@ -1184,8 +1184,9 @@ public class CombatBlockService {
     /**
      * Pushes the non-PER_BLOCKER becomes-blocked effects of a blocked attacker.
      *
-     * <p>Permanent-targeting "you may" effects (Rust Scarab's "you may destroy target artifact or
-     * enchantment defending player controls") go through {@code queueMayAbility} with a {@code null}
+     * <p>Graveyard-targeting effects are queued for the shared graveyard target selector. Permanent-
+     * targeting "you may" effects (Rust Scarab's "you may destroy target artifact or enchantment
+     * defending player controls") go through {@code queueMayAbility} with a {@code null}
      * target so the target is chosen after the controller accepts, honouring the card's target
      * filter. Baking the attacker in as {@code targetId} — what the plain trigger entry does so
      * self-scoped effects see their own source — would otherwise look like an already-chosen target.
@@ -1195,6 +1196,17 @@ public class CombatBlockService {
     private void pushRegularBecomesBlockedTriggers(GameData gameData, Permanent attacker, UUID controllerId,
                                                    List<CardEffect> regularEffects) {
         if (regularEffects.isEmpty()) {
+            return;
+        }
+        boolean needsGraveyardTarget = regularEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsGraveyardTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    attacker.getCard(), controllerId, new ArrayList<>(regularEffects)));
+            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                    "'s becomes-blocked ability triggers."));
+            log.info("Game {} - {} becomes-blocked graveyard-target trigger queued",
+                    gameData.id, attacker.getCard().getName());
             return;
         }
         List<CardEffect> targetingMayEffects = regularEffects.stream()

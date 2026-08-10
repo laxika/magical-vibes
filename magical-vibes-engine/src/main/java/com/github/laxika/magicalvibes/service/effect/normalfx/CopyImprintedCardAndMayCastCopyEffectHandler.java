@@ -39,13 +39,17 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        CopyImprintedCardAndMayCastCopyEffect copyEffect =
+                (CopyImprintedCardAndMayCastCopyEffect) effect;
 
         // The source may have left the battlefield since activation; entry.getCard() keeps the
         // imprint pointer alive in that case (same fallback as the token-copy handler).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card imprintedCard = sourcePermanent != null
-                ? gameData.getImprintedCard(sourcePermanent.getCard())
-                : gameData.getImprintedCard(entry.getCard());
+        Card imprintedCard = copyEffect.copyOtherExiledCard()
+                ? findOtherExiledCard(gameData, entry, copyEffect)
+                : sourcePermanent != null
+                        ? gameData.getImprintedCard(sourcePermanent.getCard())
+                        : gameData.getImprintedCard(entry.getCard());
 
         if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to copy."));
@@ -58,9 +62,35 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 controllerId,
-                List.of(effect),
+                List.of(copyEffect),
                 "Cast the copy of " + copy.getName() + " without paying its mana cost?",
                 copy.getId()
         ));
+    }
+
+    private Card findOtherExiledCard(GameData gameData, StackEntry entry,
+                                     CopyImprintedCardAndMayCastCopyEffect effect) {
+        List<Card> exiledCards = gameData.getCardsExiledByPermanent(entry.getSourcePermanentId());
+        if (exiledCards.size() < 2) {
+            return null;
+        }
+
+        String triggeringName = null;
+        if (effect.triggeringCardId() != null) {
+            for (StackEntry stackEntry : gameData.stack) {
+                if (stackEntry.getCard().getId().equals(effect.triggeringCardId())) {
+                    triggeringName = stackEntry.getCard().getName();
+                    break;
+                }
+            }
+        }
+
+        Card first = exiledCards.getFirst();
+        Card second = exiledCards.get(1);
+        if (triggeringName != null && first.getName().equals(triggeringName)
+                && !second.getName().equals(triggeringName)) {
+            return second;
+        }
+        return first;
     }
 }

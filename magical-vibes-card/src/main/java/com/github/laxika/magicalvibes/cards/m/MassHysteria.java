@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "INR", collectorNumber = "164")
 @CardRegistration(set = "INR", collectorNumber = "400")
+@CardRegistration(set = "MRD", collectorNumber = "99")
 public class MassHysteria extends Card {
 
     public MassHysteria() {

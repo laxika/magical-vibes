@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
  * this spell is created in exile while Blazing Firesinger is prepared and may be cast from there.
  */
 @CardRegistration(set = "9ED", collectorNumber = "216")
+@CardRegistration(set = "MRD", collectorNumber = "104")
 public class SeethingSong extends Card {
 
     public SeethingSong() {

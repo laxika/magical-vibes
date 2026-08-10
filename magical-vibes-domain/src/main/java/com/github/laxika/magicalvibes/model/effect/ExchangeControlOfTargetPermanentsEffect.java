@@ -39,30 +39,46 @@ public record ExchangeControlOfTargetPermanentsEffect(
         boolean requireOpponentManaValueNotGreater,
         boolean requireFirstTargetControlledByController,
         boolean sourceIsFirstTarget,
-        boolean requireSharedArtifactOrCreatureType) implements CardEffect {
+        boolean requireSharedArtifactOrCreatureType,
+        boolean triggeringPermanentIsFirstTarget) implements CardEffect {
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
-        this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false);
+        this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, false, false);
+                requireFirstTargetControlledByController, false, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, sourceIsFirstTarget, false);
+                requireFirstTargetControlledByController, sourceIsFirstTarget, false, false);
+    }
+
+    public ExchangeControlOfTargetPermanentsEffect(
+            PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
+            boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget,
+            boolean requireSharedArtifactOrCreatureType) {
+        this(targetPredicate, requireOpponentManaValueNotGreater,
+                requireFirstTargetControlledByController, sourceIsFirstTarget,
+                requireSharedArtifactOrCreatureType, false);
+    }
+
+    public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanent(
+            PermanentPredicate targetPredicate) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                targetPredicate, false, false, false, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return sourceIsFirstTarget
+        return sourceIsFirstTarget || triggeringPermanentIsFirstTarget
                 ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate)
                 : TargetSpec.NONE;
     }

@@ -676,8 +676,12 @@ public class CardChoiceHandlerService {
             }
         } else if (exileMode) {
             // Exile chosen cards
+            UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
             for (Card exiled : chosenCards) {
                 exileService.exileCard(gameData, targetPlayerId, exiled);
+                if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
+                    exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                }
             }
 
             String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
@@ -687,8 +691,7 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
 
             // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
-            UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
-            if (sourcePermanentId != null) {
+            if (sourcePermanentId != null && !revealedHandChoice.imprintOnSource()) {
                 for (Card exiled : chosenCards) {
                     gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
                             new PendingExileReturn(exiled, targetPlayerId, false, true));

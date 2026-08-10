@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -470,6 +471,28 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Lowest mana value nonland predicate ignores lands and allows ties")
+        void lowestManaValueNonlandPredicateIgnoresLandsAndAllowsTies() {
+            Card lowCard = createArtifact("Low Artifact");
+            lowCard.setManaCost("{0}");
+            Permanent low = addPermanent(player1Id, lowCard);
+            Card tiedCard = createArtifact("Tied Artifact");
+            tiedCard.setManaCost("{0}");
+            Permanent tied = addPermanent(player2Id, tiedCard);
+            Card highCard = createArtifact("High Artifact");
+            highCard.setManaCost("{3}");
+            Permanent high = addPermanent(player2Id, highCard);
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+
+            PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate predicate =
+                    new PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, low, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, tied, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, high, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, land, predicate)).isFalse();
         }
 
         @Test

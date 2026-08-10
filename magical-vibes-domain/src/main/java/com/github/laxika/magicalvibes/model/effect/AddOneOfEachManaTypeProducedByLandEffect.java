@@ -11,6 +11,16 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Per MTG ruling: if the land produces multiple types, this adds one mana of only one
  * of those types (player's choice). Unlike {@link AddExtraManaOfChosenColorOnLandTapEffect},
  * this effect does not depend on a chosen color.</p>
+ *
+ * @param matchesImprintedCardName when {@code true}, only lands whose names match the card
+ *                                imprinted on the source trigger
  */
-public record AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly) implements CardEffect {
+public record AddOneOfEachManaTypeProducedByLandEffect(
+        boolean controllerOnly,
+        boolean matchesImprintedCardName
+) implements CardEffect {
+
+    public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly) {
+        this(controllerOnly, false);
+    }
 }

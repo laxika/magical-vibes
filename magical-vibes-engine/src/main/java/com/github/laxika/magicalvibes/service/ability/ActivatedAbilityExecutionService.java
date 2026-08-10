@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardUncounterableGrantingMan
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -350,12 +351,15 @@ public class ActivatedAbilityExecutionService {
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent, ability);
-        // CR 605.1a: A mana ability doesn't require a target, could add mana, and isn't a loyalty ability.
+        // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
+        // and its cost and effect don't move cards to or from a library.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
+                // A direct draw moves a card from the library, so the ability is not a mana ability.
+                && snapshotEffects.stream().noneMatch(e -> e instanceof DrawCardEffect)
                 && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {
@@ -712,7 +716,7 @@ public class ActivatedAbilityExecutionService {
                 int picks = amountEvaluationService.evaluate(gameData, anyColor.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
-                        playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype());
+                        playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard());
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
@@ -912,6 +916,7 @@ public class ActivatedAbilityExecutionService {
                     if (effectiveDamage > 0) {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                        triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                     }
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
@@ -1019,6 +1024,7 @@ public class ActivatedAbilityExecutionService {
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
             }
         }
     }

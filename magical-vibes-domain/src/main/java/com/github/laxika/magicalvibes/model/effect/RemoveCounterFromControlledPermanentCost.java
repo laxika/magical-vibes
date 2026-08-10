@@ -10,7 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * removed (same convention as
  * {@link MoveCounterFromTargetCreatureToTargetCreatureEffect}'s "a counter" mode).
  *
- * <p>Currently only used as the payable side of a {@link ForcedCostOrElseEffect}.
+ * <p>Used both as the payable side of a {@link ForcedCostOrElseEffect} and as an activated-ability
+ * cost. When used for an activated ability, the controller chooses one of their counter-bearing
+ * permanents through the standard permanent-choice cost flow.
  */
 public record RemoveCounterFromControlledPermanentCost() implements CostEffect {
 }

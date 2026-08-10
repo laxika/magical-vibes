@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +24,7 @@ public class GameOfChaosSupport {
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final CoinFlipService coinFlipService;
 
     /**
      * Performs one Game of Chaos coin flip from the spell controller's perspective at the given life
@@ -34,11 +34,13 @@ public class GameOfChaosSupport {
      *         a loss), or {@code null} if the game ended as a result of this flip.
      */
     public UUID flipRound(GameData gameData, String sourceName, UUID controllerId, UUID opponentId, int stake) {
-        boolean controllerWins = ThreadLocalRandom.current().nextBoolean();
+        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
+        boolean controllerWins = result.heads();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         gameLogService.append(gameData, GameLog.text(sourceName + ": " + controllerName
-                + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")."));
+                + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")"
+                + coinFlipService.replacementDetails(result) + "."));
 
         UUID decidingPlayer;
         if (controllerWins) {

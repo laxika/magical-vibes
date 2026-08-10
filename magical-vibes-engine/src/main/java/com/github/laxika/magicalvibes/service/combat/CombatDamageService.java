@@ -2141,8 +2141,9 @@ public class CombatDamageService {
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
-            gameData.recordDamageToPlayer(defenderId,
-                    state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer);
+            int damageDealt = state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer;
+            gameData.recordDamageToPlayer(defenderId, damageDealt);
+            triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
         }
     }
 
@@ -2205,6 +2206,7 @@ public class CombatDamageService {
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
                     gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
@@ -2251,6 +2253,7 @@ public class CombatDamageService {
                     gameData.playerLifeTotals.put(targetId, currentLife - effective);
                 }
                 gameData.recordDamageToPlayer(targetId, effective);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, effective);
             }
         }
     }

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Increases the casting cost of matching spells by the given amount of generic mana.
+ * Increases the casting cost of matching spells by the evaluated amount of generic mana.
  * Applied as a static effect from a permanent on the battlefield.
  *
  * <p>The {@code predicate} determines which spells are taxed; the {@code scope} determines whose
@@ -19,6 +21,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * </ul>
  */
 public record IncreaseSpellCostEffect(CardPredicate predicate,
-                                      int amount,
+                                      DynamicAmount amount,
                                       CostModificationScope scope) implements CardEffect {
+
+    /** Convenience for the common flat tax ("matching spells cost {N} more to cast"). */
+    public IncreaseSpellCostEffect(CardPredicate predicate, int amount, CostModificationScope scope) {
+        this(predicate, new Fixed(amount), scope);
+    }
 }

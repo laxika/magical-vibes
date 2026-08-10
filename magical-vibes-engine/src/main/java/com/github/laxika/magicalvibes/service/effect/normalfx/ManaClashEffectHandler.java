@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +26,7 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,12 +46,16 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
         String opponentName = gameData.playerIdToName.get(opponentId);
 
         while (true) {
-            boolean controllerHeads = ThreadLocalRandom.current().nextBoolean();
-            boolean opponentHeads = ThreadLocalRandom.current().nextBoolean();
+            CoinFlipService.CoinFlipResult controllerResult = coinFlipService.flip(gameData, controllerId);
+            CoinFlipService.CoinFlipResult opponentResult = coinFlipService.flip(gameData, opponentId);
+            boolean controllerHeads = controllerResult.heads();
+            boolean opponentHeads = opponentResult.heads();
 
             gameLogService.append(gameData, GameLog.text(sourceName + ": "
-                    + controllerName + " flips " + (controllerHeads ? "heads" : "tails") + ", "
-                    + opponentName + " flips " + (opponentHeads ? "heads" : "tails") + "."));
+                    + controllerName + " flips " + (controllerHeads ? "heads" : "tails")
+                    + coinFlipService.replacementDetails(controllerResult) + ", "
+                    + opponentName + " flips " + (opponentHeads ? "heads" : "tails")
+                    + coinFlipService.replacementDetails(opponentResult) + "."));
 
             if (!controllerHeads) {
                 dealOneDamage(gameData, entry, controllerId);

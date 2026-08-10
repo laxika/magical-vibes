@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -23,6 +25,10 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEff
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -192,6 +198,37 @@ class SpellCastingServiceTest {
                 any(GameData.class), any(UUID.class), any(Card.class))).thenReturn(false);
         lenient().when(castingPermissionService.isOpponentsManaValueSpellCastRestricted(
                 any(GameData.class), any(UUID.class), any(Card.class), any())).thenReturn(false);
+    }
+
+    @Test
+    @DisplayName("Tracks a sacrificed permanent's mana value in the spell stack entry")
+    void tracksSacrificedPermanentManaValue() {
+        Card spell = createInstant("Forge Armor", "{4}{R}");
+        spell.target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+                        new PermanentIsArtifactPredicate(), "an artifact", false, false, true, false))
+                .addEffect(EffectSlot.SPELL,
+                        new PutCounterOnTargetPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE,
+                                new XValue()));
+        Permanent artifact = new Permanent(createArtifact("Test Ingot", "{3}"));
+        Permanent target = new Permanent(createCreature("Target Creature", "{1}{G}"));
+        gd.playerBattlefields.get(player1Id).add(artifact);
+        gd.playerBattlefields.get(player2Id).add(target);
+        setHand(player1Id, List.of(spell));
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 4);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+        when(gameQueryService.findPermanentById(gd, artifact.getId())).thenReturn(artifact);
+        when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+                .thenReturn(true);
+        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+
+        svc.playCard(gd, player1, 0, null, target.getId(), null, null, null, false, artifact.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(3);
     }
 
     // =========================================================================

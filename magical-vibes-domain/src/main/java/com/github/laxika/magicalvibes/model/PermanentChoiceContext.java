@@ -292,10 +292,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
      *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                               UUID enteringPermanentId) implements PermanentChoiceContext {
+                               UUID enteringPermanentId, UUID targetSourcePermanentId) implements PermanentChoiceContext {
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, null);
+        }
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null);
         }
     }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "201")
+@CardRegistration(set = "MRD", collectorNumber = "91")
 public class FistsOfTheAnvil extends Card {
 
     public FistsOfTheAnvil() {

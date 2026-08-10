@@ -500,6 +500,19 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.resolvedMayTargetingEntry != null) {
+            StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
+            gameData.resolvedMayTargetingEntry = null;
+            gameData.interaction.clearAwaitingInput();
+            pendingEntry.setTargetCardIds(new ArrayList<>(cardIds));
+            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                    gameData.pendingEffectResolutionIndex);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         // Card pile separation (Boneyard Parley, Brilliant Ultimatum, Unesh): opponent assigns cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {

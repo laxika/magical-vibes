@@ -24,6 +24,7 @@ public enum CounterType {
     ELIXIR,
     EYEBALL,
     FADE,
+    FATE,
     FEATHER,
     FILIBUSTER,
     FLOOD,

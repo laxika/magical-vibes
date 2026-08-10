@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "161")
+@CardRegistration(set = "MRD", collectorNumber = "106")
 public class ShrapnelBlast extends Card {
 
     public ShrapnelBlast() {

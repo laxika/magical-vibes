@@ -2757,6 +2757,27 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given permanent is nonland and has the lowest mana value among
+     * all nonland permanents on the battlefield. Ties allowed.
+     */
+    public boolean hasLowestManaValueAmongAllNonlandPermanents(GameData gameData, Permanent permanent) {
+        if (gameData == null || isLand(gameData, permanent)) {
+            return false;
+        }
+        int lowest = Integer.MAX_VALUE;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (!isLand(gameData, candidate)) {
+                    lowest = Math.min(lowest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return permanent.getCard().getManaValue() == lowest;
+    }
+
+    /**
      * Returns {@code true} if the target permanent has protection from any of the source
      * permanent's card types. Accounts for artifact status (including granted) and creature
      * status (including animation).
@@ -2825,7 +2846,16 @@ public class GameQueryService {
         if (hasProtectionFromMulticolored(gameData, target, sourceCard)) {
             return true;
         }
-        return hasProtectionFromSourceCardTypes(target, sourceCard);
+        if (hasProtectionFromSourceCardTypes(target, sourceCard)) {
+            return true;
+        }
+        return computeStaticBonus(gameData, target).grantedEffects().stream()
+                .filter(ProtectionGrantingEffect.class::isInstance)
+                .map(ProtectionGrantingEffect.class::cast)
+                .anyMatch(protection -> protection.protectsFromEverything()
+                        || protection.protectionFromCardTypes().contains(sourceCard.getType())
+                        || sourceCard.getAdditionalTypes().stream()
+                                .anyMatch(protection.protectionFromCardTypes()::contains));
     }
 
     public boolean hasProtectionFromMulticolored(GameData gameData, Permanent target, Card sourceCard) {
@@ -3162,6 +3192,19 @@ public class GameQueryService {
         }
         return battlefield.stream().anyMatch(p ->
                 p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
+    }
+
+    /** Returns the number of STATIC-slot effects of the given type controlled by a player. */
+    public int countPlayerControlledStaticEffects(GameData gameData, UUID playerId,
+                                                   Class<? extends CardEffect> effectType) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        return (int) battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(effectType::isInstance)
+                .count();
     }
 
     /**
@@ -3894,7 +3937,7 @@ public class GameQueryService {
                 + getEnchantedCreatureBlockerTax(gameData, blocker);
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockCostEffect blockCost) {
-                tax += blockCost.blockCost(attackerPower);
+                tax += blockCost.blockCost(blocker, attackerPower);
             }
         }
         return tax;
@@ -4875,7 +4918,8 @@ public class GameQueryService {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
+                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
+                            && lock.blocksManaAbilities()) {
                         if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
                             return false;
                         }

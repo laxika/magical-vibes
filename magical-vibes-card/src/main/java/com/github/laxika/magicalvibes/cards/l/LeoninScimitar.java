@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "331")
+@CardRegistration(set = "MRD", collectorNumber = "193")
 public class LeoninScimitar extends Card {
 
     public LeoninScimitar() {

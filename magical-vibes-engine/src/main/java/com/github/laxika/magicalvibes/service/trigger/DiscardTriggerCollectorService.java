@@ -48,6 +48,7 @@ public class DiscardTriggerCollectorService {
     private final GameQueryService gameQueryService;
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
@@ -95,6 +96,7 @@ public class DiscardTriggerCollectorService {
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, discardingPlayerId, effectiveDamage);
             }
         }
 

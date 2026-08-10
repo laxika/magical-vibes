@@ -57,6 +57,7 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 exileService.exileCard(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
+                exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, targetCard);
             } else {
                 exileService.exileCard(gameData, graveyardOwnerId, targetCard);
             }

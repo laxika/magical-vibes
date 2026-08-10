@@ -135,6 +135,10 @@ public sealed interface ChoiceContext {
     record RevealLibraryNumberGuessChoice(UUID targetPlayerId, UUID controllerId, String chosenName,
                                           int damage, Card sourceCard) implements ChoiceContext {}
 
+    /** The controller names a card, then the targeted opponent guesses whether that name is in the controller's hand. */
+    record LiarsPendulumChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
+                               Card sourceCard, String chosenName) implements ChoiceContext {}
+
     /**
      * A single protection choice that applies to every permanent in {@code targetIds} — one pick
      * covering all of a spell's targets ("X target creatures gain protection from the chosen
@@ -332,11 +336,13 @@ public sealed interface ChoiceContext {
     record NameCardMillDrawChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
-     * Demonic Consultation: the controller names a card, then exiles the top {@code topExileCount}
-     * cards of their library and reveals until finding the named card (to hand; rest of the dig
-     * exiled). If the named card is never revealed, the entire remaining library is exiled.
+     * The controller names a card, then exiles the top {@code topExileCount} cards of their library
+     * and reveals until finding the named card (to hand; rest of the dig exiled). If the named card
+     * is never revealed, the entire remaining library is exiled. The controller loses
+     * {@code lifeLossPerExiled} life per card exiled by the effect.
      */
-    record ChooseNameExileTopRevealUntilNamedChoice(UUID controllerId, int topExileCount)
+    record ChooseNameExileTopRevealUntilNamedChoice(UUID controllerId, int topExileCount,
+                                                     int lifeLossPerExiled)
             implements ChoiceContext {}
 
     /**

@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "215")
 @CardRegistration(set = "M13", collectorNumber = "206")
+@CardRegistration(set = "MRD", collectorNumber = "175")
 public class GildedLotus extends Card {
 
     public GildedLotus() {

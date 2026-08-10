@@ -33,10 +33,15 @@ public record CreateTokenEffect(
         boolean legendary,
         int initialPlusOnePlusOneCounters,
         Set<Keyword> grantedKeywordsUntilEndOfTurn
-) implements TokenCreatingEffect {
+) implements TokenCreatingEffect, CombatDamageAmountAwareEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
+        return amount;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
         return amount;
     }
 

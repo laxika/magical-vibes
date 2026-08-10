@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,7 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,15 +32,21 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
         var e = (FlipCoinsPerHeadsEffect) effect;
 
         int heads = 0;
+        int physicalFlips = 0;
         for (int i = 0; i < e.coins(); i++) {
-            if (ThreadLocalRandom.current().nextBoolean()) {
+            CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
+            physicalFlips += result.physicalFlips();
+            if (result.heads()) {
                 heads++;
             }
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        String replacementDetails = physicalFlips == e.coins()
+                ? ""
+                : " (" + physicalFlips + " physical coin flips; one result kept per coin)";
         gameLogService.append(gameData, GameLog.text(playerName + " flips " + e.coins() + " coins for "
-                + entry.getCard().getName() + ": " + heads + " heads."));
+                + entry.getCard().getName() + ": " + heads + " heads" + replacementDetails + "."));
         log.info("Game {} - {} flips {} coins for {}: {} heads", gameData.id, playerName, e.coins(),
                 entry.getCard().getName(), heads);
 

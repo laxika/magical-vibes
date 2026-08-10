@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,7 +48,15 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
 
         PermanentPredicate sourceFilter = e.sourceFilter();
         String sourceLabel = e.sourceLabel();
-        if (e.sourceChosenColor()) {
+        if (e.sourceSharesColorWithImprintedCard()) {
+            Card imprintedCard = gameData.getImprintedCard(entry.getCard());
+            if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null
+                    || imprintedCard.getColors() == null || imprintedCard.getColors().isEmpty()) {
+                preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+                return;
+            }
+            sourceFilter = new PermanentColorInPredicate(Set.copyOf(imprintedCard.getColors()));
+        } else if (e.sourceChosenColor()) {
             Permanent source = entry.getSourcePermanentId() == null
                     ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -121,7 +130,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 context = new PermanentChoiceContext.PreventDamageSourceChoice(controllerId, e.controllerOnly());
                 prompt = e.controllerOnly()
                         ? "Choose a source. Prevent all damage it would deal to you this turn."
-                        : "Choose a " + label + "source. Prevent all damage it would deal this turn.";
+                        : e.sourceSharesColorWithImprintedCard()
+                                ? "Choose a source that shares a color with the exiled card. Prevent all damage it would deal this turn."
+                                : "Choose a " + label + "source. Prevent all damage it would deal this turn.";
             }
             default -> throw new IllegalStateException("Unknown chosen-source prevention scope: " + e.scope());
         }

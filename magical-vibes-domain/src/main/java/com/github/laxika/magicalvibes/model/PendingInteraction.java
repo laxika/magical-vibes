@@ -890,7 +890,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
                               String followUpPrompt, int declineFallbackDiscardCount,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                              boolean exileAllCopiesOfChosenNames)
+                              boolean exileAllCopiesOfChosenNames,
+                              boolean imprintOnSource)
             implements PendingInteraction {
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -900,7 +901,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   String prompt, boolean bottomThenDrawMode, boolean optional) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false,
-                    null, null, 0, null, false);
+                    null, null, 0, null, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -911,7 +912,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   boolean gainLifeToChooserEqualToChosenToughness) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, null, null, 0, null, false);
+                    gainLifeToChooserEqualToChosenToughness, null, null, 0, null, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -925,7 +926,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
                     gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    0, null, false);
+                    0, null, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -939,7 +940,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
                     gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, null, false);
+                    declineFallbackDiscardCount, null, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -955,7 +956,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
                     gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    0, choosableFilter, exileAllCopiesOfChosenNames);
+                    0, choosableFilter, exileAllCopiesOfChosenNames, false);
         }
 
         @Override

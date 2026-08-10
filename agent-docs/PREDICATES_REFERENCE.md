@@ -127,6 +127,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures with greatest power among source controller's creatures (ties allowed) | `gameData` + `sourceControllerId` |
 | `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentHasGreatestPowerAmongAllCreaturesPredicate` | `()` | creatures with the greatest effective power among all creatures on the battlefield across every player (ties allowed). Topple | `gameData` |
+| `PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate` | `()` | nonland permanents with the lowest mana value among all nonland permanents on the battlefield (ties allowed) | `gameData` |
 | `PermanentHasLeastPowerAmongAllCreaturesPredicate` | `()` | creatures with the least effective power among all creatures on the battlefield across every player (ties allowed). Wretched Banquet | `gameData` |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents dealt damage this turn (evaluated against `GameData.permanentsDealtDamageThisTurn`) | `gameData` |
 | `PermanentDealtDamageToAnythingThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat, to any player or creature — this turn ("target creature that dealt damage this turn", Avenging Arrow). Checks `GameData.combatDamageToPlayersThisTurn` + `noncombatDamageToPlayersThisTurn` + `creatureCardsDamagedThisTurnBySourcePermanent`, keyed by the candidate permanent. Note the opposite direction from `PermanentDealtDamageThisTurnPredicate` (which means *was* dealt damage) | `gameData` |
@@ -138,6 +139,8 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentNamedPredicate` | `(String cardName)` | permanents with the given name (exact `Card.getName()` equality); e.g. "a permanent named Guan Yu, Sainted Warrior" | none |
 | `PermanentSharesNameWithAnotherPermanentPredicate` | `()` | permanent shares its name with at least one other permanent on any battlefield (Eye of Singularity ETB wipe) | `gameData` |
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
+
+| `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share an artifact, creature, or enchantment card type with the source permanent snapshot; used for trigger-time comparisons with an entering permanent | `FilterContext.sourcePermanentSnapshot` |
 
 ### Source-relative predicates
 
@@ -167,6 +170,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
+| `StackEntrySharesColorOrManaValueWithImprintedCardPredicate` | `()` | source-aware spell-cast trigger predicate: matches when the cast spell shares a color or effective mana value with the card imprinted on the evaluating source permanent (Thought Prison); evaluated by `TargetLegalityService` with the source |
 | `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
 | `StackEntryCardTypeInPredicate` | `(Set<CardType>)` | stack entries whose card has any of the given card types. On an activated/triggered ability entry the card is the ability's **source**, so `Set.of(CardType.ARTIFACT)` + `StackEntryTypeInPredicate(ACTIVATED_ABILITY)` is "activated ability from an artifact source" (Brown Ouphe) |

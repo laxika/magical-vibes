@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,6 +33,7 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
 
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,11 +69,13 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
      * {@link GameOutcomeService#resolveLoss} so "can't lose" effects and loss replacers apply.
      */
     public void performFlip(GameData gameData, Card sourceCard, UUID controllerId, UUID opponentId) {
-        boolean wonFlip = ThreadLocalRandom.current().nextBoolean();
+        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
+        boolean wonFlip = result.heads();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         gameLogService.append(gameData, GameLog.textCardText(
-                controllerName + (wonFlip ? " wins" : " loses") + " the coin flip for ", sourceCard, "."));
+                controllerName + (wonFlip ? " wins" : " loses") + " the coin flip for ", sourceCard,
+                coinFlipService.replacementDetails(result) + "."));
 
         UUID losingPlayerId = wonFlip ? opponentId : controllerId;
         UUID winningPlayerId = wonFlip ? controllerId : opponentId;

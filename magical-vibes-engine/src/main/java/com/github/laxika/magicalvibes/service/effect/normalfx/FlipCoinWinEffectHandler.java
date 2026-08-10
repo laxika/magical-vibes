@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,6 +21,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,11 +34,14 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
 
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
-        boolean wonFlip = ThreadLocalRandom.current().nextBoolean();
+        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
+        boolean wonFlip = result.heads();
 
         String flipLog = wonFlip
-                ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName + "."
-                : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
+                ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName
+                        + coinFlipService.replacementDetails(result) + "."
+                : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
+                        + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();

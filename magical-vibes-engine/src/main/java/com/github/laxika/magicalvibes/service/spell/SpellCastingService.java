@@ -2293,6 +2293,14 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
                 ));
+            } else if (targetId != null && !targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
+                // Preserve a primary target alongside modal target groups (e.g. Grab the Reins
+                // entwined: the control mode's creature target plus the damage mode's any target).
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, targetId,
+                        null, Map.of(), null, List.of(), targetIds
+                ));
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 gameData.stack.add(new StackEntry(
@@ -2563,6 +2571,9 @@ public class SpellCastingService {
             SacrificedCreatureStats stats = paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                     sacPermCost.description(),
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacPermCost.filter()));
+            if (sacPermCost.trackSacrificedManaValue()) {
+                resolvedXValue = stats.manaValue();
+            }
             if (sacPermCost.trackSacrificedPower()) {
                 resolvedXValue = stats.power();
             }

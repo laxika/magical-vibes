@@ -29,7 +29,7 @@ public class ChooseNameExileTopRevealUntilNamedToHandEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ChooseNameExileTopRevealUntilNamedToHandEffect) effect;
         var choiceContext = new ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice(
-                entry.getControllerId(), e.topExileCount());
+                entry.getControllerId(), e.topExileCount(), e.lifeLossPerExiled());
 
         List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

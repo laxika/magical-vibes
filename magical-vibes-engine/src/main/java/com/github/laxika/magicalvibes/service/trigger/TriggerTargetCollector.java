@@ -116,6 +116,20 @@ public class TriggerTargetCollector {
                           UUID controllerId,
                           Card sourceCard,
                           Options options) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options, null);
+    }
+
+    /**
+     * Collects targets while optionally supplying a permanent that an enter-trigger effect uses
+     * as its comparison source. Ordinary trigger targeting leaves this snapshot null.
+     */
+    public Result collect(GameData gameData,
+                          List<CardEffect> effects,
+                          TargetFilter targetFilter,
+                          UUID controllerId,
+                          Card sourceCard,
+                          Options options,
+                          Permanent sourcePermanentSnapshot) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -150,7 +164,7 @@ public class TriggerTargetCollector {
 
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -163,7 +177,8 @@ public class TriggerTargetCollector {
                         .map(EffectResolution::targetPredicateOf)
                         .findFirst().orElse(null);
                 if (effectPredicate != null) {
-                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null, null);
+                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
+                            sourcePermanentSnapshot);
                 }
             }
 

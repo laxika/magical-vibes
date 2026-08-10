@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -21,6 +24,7 @@ public class ConditionalStaticSelfEffectHandler implements StaticEffectHandlerBe
 
     private final StaticEffectSupport support;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +43,14 @@ public class ConditionalStaticSelfEffectHandler implements StaticEffectHandlerBe
                 ConditionContext.forStaticEffect(context.source(), context.sourceControllerId()))) {
             return;
         }
-        support.applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);
+        if (conditional.wrapped() instanceof SetPowerToughnessToAmountEffect cda) {
+            AmountContext amountContext =
+                    AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+            accumulator.setBasePTOverride(
+                    amountEvaluationService.evaluate(context.gameData(), cda.power(), amountContext),
+                    amountEvaluationService.evaluate(context.gameData(), cda.toughness(), amountContext));
+        } else {
+            support.applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);
+        }
     }
 }

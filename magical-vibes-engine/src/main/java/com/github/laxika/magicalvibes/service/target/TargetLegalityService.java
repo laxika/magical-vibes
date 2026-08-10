@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -1797,6 +1798,19 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());
             return stackEntry.getCard().getManaValue() <= count;
+        }
+        if (predicate instanceof StackEntrySharesColorOrManaValueWithImprintedCardPredicate) {
+            if (source == null) {
+                return false;
+            }
+            Card imprintedCard = gameData.getImprintedCard(source.getCard());
+            if (imprintedCard == null) {
+                return false;
+            }
+            boolean sharesColor = imprintedCard.getColors().stream()
+                    .anyMatch(stackEntry.getCard().getColors()::contains);
+            int spellManaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return sharesColor || spellManaValue == imprintedCard.getManaValue();
         }
         if (predicate instanceof StackEntryControlledByPredicate) {
             return stackEntry.getControllerId().equals(controllerId);

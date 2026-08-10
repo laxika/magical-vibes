@@ -126,6 +126,7 @@ public class CombatTriggerService {
                                 perm.getId()
                         );
                         trigger.setNonTargeting(true);
+                        trigger.setTriggeringPermanentId(creature.getId());
                         // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                         // (e.g. equipment-granted Afflict) can resolve.
                         trigger.setAttackedTargetId(creature.getAttackTarget());
@@ -157,6 +158,7 @@ public class CombatTriggerService {
                             // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
+                            trigger.setTriggeringPermanentId(creature.getId());
                             gameData.stack.add(trigger);
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
@@ -229,6 +231,7 @@ public class CombatTriggerService {
                         if (autoTargetBlocker) {
                             trigger.setNonTargeting(true);
                         }
+                        trigger.setTriggeringPermanentId(attacker.getId());
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",

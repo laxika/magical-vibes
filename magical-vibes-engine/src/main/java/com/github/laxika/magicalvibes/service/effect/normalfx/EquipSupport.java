@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ public class EquipSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -40,6 +43,19 @@ public class EquipSupport {
             }
         }
         return null;
+    }
+
+    public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+        if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
+                || gameQueryService.isCreature(gameData, equipment)
+                || !gameQueryService.isCreature(gameData, host)
+                || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {
+            return false;
+        }
+
+        var attachRestriction = equipment.getCard().getAttachRestriction();
+        return attachRestriction == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, host, attachRestriction);
     }
 
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,

@@ -60,7 +60,10 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         log.info("Game {} - {} returns {} to battlefield via {}", gameData.id, playerName, dyingCard.getName(), entry.getCard().getName());
 
         // Attach the source equipment to the returned creature
-        Permanent equipment = e.attachSource() ? gameQueryService.findPermanentById(gameData, entry.getTargetId()) : null;
+        UUID equipmentId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        Permanent equipment = e.attachSource() && equipmentId != null
+                ? gameQueryService.findPermanentById(gameData, equipmentId)
+                : null;
         if (equipment != null) {
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());

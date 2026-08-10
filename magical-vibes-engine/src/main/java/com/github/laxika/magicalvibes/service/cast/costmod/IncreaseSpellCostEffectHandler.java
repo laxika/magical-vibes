@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +34,11 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         if (!applies) {
             return 0;
         }
-        return predicateEvaluationService.matchesCardPredicate(context.spell(), increase.predicate(), null)
-                ? increase.amount() : 0;
+        if (!predicateEvaluationService.matchesCardPredicate(context.spell(), increase.predicate(), null)) {
+            return 0;
+        }
+        var amountContext = AmountContext.forStaticEffect(source.sourcePermanent(),
+                context.castingPlayerId());
+        return amountEvaluationService.evaluate(context.gameData(), increase.amount(), amountContext);
     }
 }

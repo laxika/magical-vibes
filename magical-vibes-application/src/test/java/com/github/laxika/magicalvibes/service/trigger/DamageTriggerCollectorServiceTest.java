@@ -11,10 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -508,6 +512,51 @@ class DamageTriggerCollectorServiceTest {
             assertThat(stackEntry.getEventValue()).isEqualTo(3);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT conditional may")
+    class ControllerDealtDamageByOpponentConditionalMay {
+
+        @Test
+        @DisplayName("queues the conditional may trigger when its intervening-if is met")
+        void queuesWhenConditionIsMet() {
+            Permanent mask = createPermanent("Farsight Mask");
+            var condition = new SourceUntapped();
+            var effect = new ConditionalEffect(condition, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(mask), eq(player1Id)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(mask, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger when its intervening-if is not met")
+        void skipsWhenConditionIsNotMet() {
+            Permanent mask = createPermanent("Farsight Mask");
+            var condition = new SourceUntapped();
+            var effect = new ConditionalEffect(condition, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(mask), eq(player1Id)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(mask, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 

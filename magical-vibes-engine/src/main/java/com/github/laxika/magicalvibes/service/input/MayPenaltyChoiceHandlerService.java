@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPerma
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -93,6 +94,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapTargetCreatureUnlessControllerPaysLifeEffectHandler tapTargetCreatureUnlessControllerPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
@@ -936,6 +938,38 @@ public class MayPenaltyChoiceHandlerService {
                     gameData, ability.sourceCard(), targetPermanentId);
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReturnTargetCreatureUnlessControllerPaysChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability) {
+        ReturnTargetCreatureUnlessControllerPaysEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof ReturnTargetCreatureUnlessControllerPaysEffect)
+                .map(e -> (ReturnTargetCreatureUnlessControllerPaysEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID payingPlayerId = ability.controllerId();
+        UUID targetPermanentId = ability.targetCardId();
+        if (accepted) {
+            ManaCost cost = new ManaCost(effect.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} to keep their creature on the battlefield ({})",
+                        gameData.id, player.getUsername(), effect.manaCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+        }
+
+        UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        if (abilityControllerId == null) {
+            abilityControllerId = payingPlayerId;
+        }
+        returnTargetCreatureUnlessControllerPaysEffectHandler.returnTargetCreature(
+                gameData, ability.sourceCard(), abilityControllerId, targetPermanentId);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

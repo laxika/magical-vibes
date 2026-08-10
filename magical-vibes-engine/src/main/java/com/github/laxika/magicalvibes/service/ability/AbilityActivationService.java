@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandle
 import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
 import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromPermanentCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PutCounterOnCreatureCostHandler;
 
@@ -94,6 +95,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCoun
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
@@ -218,7 +220,7 @@ public class AbilityActivationService {
         if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
             throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
         }
-        validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByStaticAbilityLock(gameData, permanent, true);
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
@@ -701,7 +703,7 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
-        validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByStaticAbilityLock(gameData, permanent, false);
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
         // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
@@ -2415,6 +2417,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(c, gameLogService);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
@@ -2824,7 +2827,7 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
-        validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        validateNotBlockedByStaticAbilityLock(gameData, permanent, isManaAbility(ability));
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
@@ -4153,7 +4156,8 @@ public class AbilityActivationService {
                 + "or enchantments during your opponent's turn");
     }
 
-    private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent) {
+    private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent,
+                                                       boolean manaAbility) {
         // Detain / Edifice of Authority: a floating lock forbids activating this permanent's
         // activated abilities (mana abilities included; triggered abilities are unaffected).
         if (gameQueryService.isLockedFromActivatingAbilities(gameData, permanent.getId())) {
@@ -4163,7 +4167,8 @@ public class AbilityActivationService {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
+                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
+                            && (lock.blocksManaAbilities() || !manaAbility)) {
                         if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
                             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
                                     + " can't be activated (" + p.getCard().getName() + ")");

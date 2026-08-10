@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
@@ -140,10 +141,13 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
@@ -336,6 +340,9 @@ public class ConditionEvaluationService {
                                     .noneMatch(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()));
             case ControllerHandEmpty ignored ->
                     countCardsInHand(gameData, ctx.controllerId()) == 0;
+            case ControllerHadNoCardsInHandAtTurnStart ignored ->
+                    ctx.controllerId() != null
+                            && gameData.handSizeAtTurnStart.getOrDefault(ctx.controllerId(), -1) == 0;
             case TargetPlayerHandEmpty ignored ->
                     ctx.targetId() != null && countCardsInHand(gameData, ctx.targetId()) == 0;
             case CastFromZone c ->
@@ -455,6 +462,14 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
             }
+            case TargetPermanentManaValueEqualsControllerUnspentMana ignored -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+                var manaPool = ctx.controllerId() == null
+                        ? null
+                        : gameData.playerManaPools.get(ctx.controllerId());
+                yield target != null && manaPool != null
+                        && target.getCard().getManaValue() == manaPool.getTotalAllMana();
+            }
             case TargetSpellCanBeCountered ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
@@ -561,6 +576,15 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.lastClashWonByController.getOrDefault(ctx.controllerId(), false);
         };
+    }
+
+    /** Returns whether a trigger effect's intervening-if condition is met at trigger time. */
+    public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
+                                     UUID controllerId) {
+        if (!(effect instanceof ConditionalEffect conditional)) {
+            return true;
+        }
+        return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId));
     }
 
     /**
@@ -1422,7 +1446,9 @@ public class ConditionEvaluationService {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
         Card imprintedCard = gameData.getImprintedCard(source.getCard());
-        return imprintedCard != null && predicateEvaluationService.matchesCardPredicate(
+        return imprintedCard != null
+                && gameData.findExiledCard(imprintedCard.getId()) != null
+                && predicateEvaluationService.matchesCardPredicate(
                 imprintedCard, condition.filter(), source.getCard().getId(), gameData, ctx.controllerId());
     }
 

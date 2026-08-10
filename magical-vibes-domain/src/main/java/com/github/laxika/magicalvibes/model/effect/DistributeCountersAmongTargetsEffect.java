@@ -32,14 +32,21 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                              +1/+1 counter from that creature at the beginning of the next
  *                              cleanup step" — Bounty of the Hunt), making the boost effectively
  *                              last only for the turn.
+ * @param etbAssignments        when {@code true}, read the target-to-counter mapping from the ETB
+ *                              assignment buffer.
  */
 public record DistributeCountersAmongTargetsEffect(
-        CounterType counterType, DynamicAmount total, DivisionMode mode, boolean removeAtNextCleanup)
+        CounterType counterType,
+        DynamicAmount total,
+        DivisionMode mode,
+        boolean removeAtNextCleanup,
+        boolean etbAssignments)
         implements CardEffect {
 
     /** Fixed total split evenly across a {@code target(filter, 1, 2)} group (Splendid Agony). */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargets(CounterType counterType, int total) {
-        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.EVEN, false);
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false);
     }
 
     /**
@@ -48,7 +55,8 @@ public record DistributeCountersAmongTargetsEffect(
      * Hunt — "Distribute three +1/+1 counters among one, two, or three target creatures").
      */
     public static DistributeCountersAmongTargetsEffect chosenUntilNextCleanup(CounterType counterType, int total) {
-        return new DistributeCountersAmongTargetsEffect(counterType, new Fixed(total), DivisionMode.CHOSEN, true);
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false);
     }
 
     /**
@@ -58,11 +66,25 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total) {
-        return new DistributeCountersAmongTargetsEffect(counterType, total, DivisionMode.CHOSEN, false);
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, total, DivisionMode.CHOSEN, false, false);
+    }
+
+    /**
+     * Fixed total distributed as the controller chooses among target creatures for an ETB ability.
+     * The ETB target-and-assignment choice is supplied through the shared ETB assignment buffer.
+     */
+    public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreaturesEtb(
+            CounterType counterType, int total) {
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (etbAssignments) {
+            return TargetSpec.NONE;
+        }
         boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
                 || counterType == CounterType.MINUS_TWO_MINUS_ONE;
         // Both modes distribute among target *creatures*. CHOSEN-mode targets ride on

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -86,6 +88,9 @@ class SpellCastTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private TargetLegalityService targetLegalityService;
 
     @InjectMocks
     private SpellCastTriggerCollectorService sut;
@@ -291,6 +296,40 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(queued.controllerId()).isEqualTo(player1Id);
             assertThat(queued.effects()).singleElement()
                     .isEqualTo(new MayPayManaEffect("{3}", innerEffect, "Pay {3}?"));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CounterSpellIfManaValueEqualsSourceCountersEffect")
+    class AnyPlayerSourceCounterCounter {
+
+        @Test
+        @DisplayName("qualifies and targets the triggering spell using its cast-time mana value")
+        void qualifiesAndTargetsTriggeringSpell() {
+            Permanent perm = createPermanent("Chalice of the Void");
+            perm.setCounterCount(CounterType.CHARGE, 2);
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            spellCard.setManaCost("{1}{G}");
+            StackEntry spellEntry = new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 0);
+            gd.stack.add(spellEntry);
+            var effect = new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(targetLegalityService.matchesStackEntryPredicate(
+                    eq(gd), eq(spellEntry), any(), eq(player1Id), eq(perm))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            StackEntry triggerEntry = gd.stack.getLast();
+            assertThat(triggerEntry.getTargetId()).isEqualTo(spellCard.getId());
+            assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
+            assertThat(triggerEntry.getEffectsToResolve()).singleElement()
+                    .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 2));
         }
     }
 

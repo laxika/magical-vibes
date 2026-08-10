@@ -71,9 +71,11 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromImprintedCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -235,6 +237,7 @@ public final class LayerClassifier {
         map.put(TrackedLandsBecomeForestEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
+        map.put(SetCreatureTypesToImprintedCreatureEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
         // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
         // (losesAllAbilities) additionally strips the artifacts' abilities in layer 6.
@@ -299,6 +302,7 @@ public final class LayerClassifier {
         map.put(GrantTriggeredAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEquipByManaValueEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromColorsEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(ProtectionFromImprintedCardTypesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMulticoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromChosenColorEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenTypeToOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));

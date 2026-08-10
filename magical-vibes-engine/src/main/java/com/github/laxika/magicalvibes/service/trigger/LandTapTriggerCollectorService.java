@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -63,6 +64,7 @@ public class LandTapTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
@@ -109,6 +111,7 @@ public class LandTapTriggerCollectorService {
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, tappingPlayerId, effectiveDamage);
             }
         }
 
@@ -218,6 +221,14 @@ public class LandTapTriggerCollectorService {
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
+
+        if (trigger.matchesImprintedCardName()) {
+            Card imprintedCard = match.gameData().getImprintedCard(match.permanent().getCard());
+            if (imprintedCard == null
+                    || !imprintedCard.getName().equals(tappedLand.getCard().getName())) {
+                return false;
+            }
+        }
 
         ManaColor producedColor = null;
         for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {

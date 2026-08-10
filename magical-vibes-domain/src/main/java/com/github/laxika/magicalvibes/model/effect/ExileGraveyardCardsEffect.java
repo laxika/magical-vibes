@@ -28,18 +28,31 @@ import java.util.UUID;
  *                         (e.g. the enchanted player for Curse of Oblivion); null = the controller
  */
 public record ExileGraveyardCardsEffect(
-        int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId) implements CardEffect {
+        int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
+        boolean exactTargetCount, boolean trackWithSource) implements CardEffect {
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope) {
-        this(count, scope, null, null);
+        this(count, scope, null, null, false, false);
     }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter) {
-        this(count, scope, filter, null);
+        this(count, scope, filter, null, false, false);
+    }
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope,
+                                     CardPredicate filter, UUID affectedPlayerId) {
+        this(count, scope, filter, affectedPlayerId, false, false);
     }
 
     public ExileGraveyardCardsEffect(GraveyardExileScope scope) {
-        this(0, scope, null, null);
+        this(0, scope, null, null, false, false);
+    }
+
+    public static ExileGraveyardCardsEffect exactTargetedFromAnyGraveyard(int count,
+                                                                           CardPredicate filter,
+                                                                           boolean trackWithSource) {
+        return new ExileGraveyardCardsEffect(count, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                filter, null, true, trackWithSource);
     }
 
     @Override

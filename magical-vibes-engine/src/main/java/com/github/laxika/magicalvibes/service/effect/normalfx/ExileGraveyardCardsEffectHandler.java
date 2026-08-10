@@ -196,7 +196,11 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
             // Add to graveyard owner's exiled cards
             if (graveyardOwnerId != null) {
-                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+                if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                    exileService.exileCard(gameData, graveyardOwnerId, targetCard, entry.getSourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+                }
             }
             exiledCards.add(targetCard);
         }

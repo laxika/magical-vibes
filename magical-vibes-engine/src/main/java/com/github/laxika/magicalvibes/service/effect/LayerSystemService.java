@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -604,6 +605,13 @@ public class LayerSystemService {
                 h = mix(h, System.identityHashCode(entry.card()));
             }
         }
+        long imprintedSum = 0;
+        for (Map.Entry<UUID, Card> entry : gameData.imprintedCards.entrySet()) {
+            imprintedSum += mix64(entry.getKey().hashCode());
+            imprintedSum += mix64(System.identityHashCode(entry.getValue()));
+        }
+        h = mix(h, imprintedSum);
+        h = mix(h, gameData.imprintedCards.size());
         return h;
     }
 
@@ -1244,6 +1252,28 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(
                             grant.subtype(), grant.overriding(), false, null, null));
                 }
+            }
+            case SetCreatureTypesToImprintedCreatureEffect setTypes -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                Card imprinted = gameData.getImprintedCard(source.permanent().getCard());
+                if (imprinted == null
+                        || gameData.findExiledCard(imprinted.getId()) == null
+                        || !imprinted.hasType(CardType.CREATURE)) {
+                    return;
+                }
+                CharacteristicState state = states.get(source.permanent().getId());
+                if (state == null) return;
+                List<CardSubtype> subtypes = new ArrayList<>();
+                imprinted.getSubtypes().stream()
+                        .filter(StaticEffectSupport::isCreatureSubtype)
+                        .forEach(subtypes::add);
+                setTypes.retainedSubtypes().stream()
+                        .filter(StaticEffectSupport::isCreatureSubtype)
+                        .forEach(subtypes::add);
+                setCreatureTypes(state, subtypes);
+                record(board, instance, source, new L4Contribution(subtypes, true, false));
             }
             case GrantCardTypeEffect grant -> {
                 manage(board, instance);

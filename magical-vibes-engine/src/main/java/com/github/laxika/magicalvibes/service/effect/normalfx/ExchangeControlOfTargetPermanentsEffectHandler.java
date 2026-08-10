@@ -53,7 +53,12 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         UUID controllerId = entry.getControllerId();
         Permanent ownTarget;
         UUID opponentTargetId;
-        if (exchange.sourceIsFirstTarget()) {
+        if (exchange.triggeringPermanentIsFirstTarget()) {
+            opponentTargetId = entry.getTargetId();
+            ownTarget = entry.getTriggeringPermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        } else if (exchange.sourceIsFirstTarget()) {
             opponentTargetId = targetIds != null && !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
             if (opponentTargetId == null) {
                 return;
@@ -86,12 +91,19 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         // require that split; source-mode exchanges (Conjured Currency) skip the first-target
         // predicate because the source permanent stands in for that half.
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        if (exchange.triggeringPermanentIsFirstTarget()) {
+            filterContext = filterContext.withSourcePermanentSnapshot(ownTarget);
+        }
         boolean controllersDiffer = !ownController.equals(opponentController);
         boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
                 || (ownController.equals(controllerId) && !opponentController.equals(controllerId));
+        boolean triggeringPermanentTargetLegal = !exchange.triggeringPermanentIsFirstTarget()
+                || !opponentController.equals(controllerId);
         boolean stillLegal = controllersDiffer
                 && ownershipSplitOk
+                && triggeringPermanentTargetLegal
                 && (exchange.sourceIsFirstTarget()
+                        || exchange.triggeringPermanentIsFirstTarget()
                         || predicateEvaluationService.matchesPermanentPredicate(ownTarget, exchange.targetPredicate(), filterContext))
                 && predicateEvaluationService.matchesPermanentPredicate(opponentTarget, exchange.targetPredicate(), filterContext)
                 && (!exchange.requireOpponentManaValueNotGreater()

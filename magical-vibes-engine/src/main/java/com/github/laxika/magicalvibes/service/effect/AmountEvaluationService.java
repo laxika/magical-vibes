@@ -954,7 +954,11 @@ public class AmountEvaluationService {
     private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {
         if (ctx.sourcePermanent() == null) return 0;
         Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
-        if (imprinted == null || imprinted.getPower() == null || imprinted.getToughness() == null) {
+        if (imprinted == null
+                || gameData.findExiledCard(imprinted.getId()) == null
+                || !imprinted.hasType(CardType.CREATURE)
+                || imprinted.getPower() == null
+                || imprinted.getToughness() == null) {
             return 0;
         }
         return power ? imprinted.getPower() : imprinted.getToughness();

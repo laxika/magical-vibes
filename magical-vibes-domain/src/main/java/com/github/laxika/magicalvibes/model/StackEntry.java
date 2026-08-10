@@ -30,7 +30,7 @@ public class StackEntry {
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Zone targetZone;
-    private final List<UUID> targetCardIds;
+    @Setter private List<UUID> targetCardIds;
     @Setter private TargetFilter targetFilter;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;

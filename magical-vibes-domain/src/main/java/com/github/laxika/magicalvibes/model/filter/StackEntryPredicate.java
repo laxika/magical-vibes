@@ -23,6 +23,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueEqualsSourceCountersPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,
+        StackEntrySharesColorOrManaValueWithImprintedCardPredicate,
         StackEntryNotPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,
         StackEntryTargetsAnyPlayerPredicate,

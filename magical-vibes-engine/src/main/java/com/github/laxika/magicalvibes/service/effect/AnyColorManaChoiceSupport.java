@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -18,8 +22,6 @@ import java.util.UUID;
  * expressed once instead of once per call site.
  */
 public final class AnyColorManaChoiceSupport {
-
-    private static final List<String> COLORS = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
 
     private AnyColorManaChoiceSupport() {
     }
@@ -41,16 +43,40 @@ public final class AnyColorManaChoiceSupport {
                                            int amount,
                                            boolean fromCreature,
                                            CardSubtype chosenSubtype) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, null);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData,
+                                           UUID playerId,
+                                           AwardAnyColorManaEffect effect,
+                                           int amount,
+                                           boolean fromCreature,
+                                           CardSubtype chosenSubtype,
+                                           Card sourceCard) {
         if (amount <= 0) {
             return false;
         }
         ChoiceContext.ManaColorChoice choiceContext =
-                choiceContext(playerId, effect, amount, fromCreature, chosenSubtype);
+                choiceContext(gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard);
         if (choiceContext == null) {
             return false;
         }
+        List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
+                ? imprintedCardColors(gameData, sourceCard)
+                : ManaColor.COLORS;
+        if (allowedColors.size() == 1 && effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS) {
+            ManaPool manaPool = gameData.playerManaPools.get(playerId);
+            manaPool.add(allowedColors.get(0), amount);
+            if (fromCreature) {
+                manaPool.addCreatureMana(allowedColors.get(0), amount);
+            }
+            return false;
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, COLORS, prompt(effect.restriction())));
+                playerId, null, null, choiceContext,
+                allowedColors.stream().map(Enum::name).toList(), prompt(effect.restriction())));
         if (effect.restriction() == ManaSpendRestriction.INSTANT_SORCERY_COPY) {
             // Delayed trigger: copy the next instant/sorcery spell this mana is spent on.
             gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
@@ -58,14 +84,23 @@ public final class AnyColorManaChoiceSupport {
         return true;
     }
 
-    private static ChoiceContext.ManaColorChoice choiceContext(UUID playerId,
+    private static ChoiceContext.ManaColorChoice choiceContext(GameData gameData,
+                                                               UUID playerId,
                                                                AwardAnyColorManaEffect effect,
                                                                int amount,
                                                                boolean fromCreature,
-                                                               CardSubtype chosenSubtype) {
+                                                               CardSubtype chosenSubtype,
+                                                               Card sourceCard) {
         return switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
+            case IMPRINTED_CARD_COLORS -> {
+                List<ManaColor> colors = imprintedCardColors(gameData, sourceCard);
+                yield colors.isEmpty()
+                        ? null
+                        : ChoiceContext.ManaColorChoice.fixedColorCombination(
+                                playerId, fromCreature, amount, colors);
+            }
             case INSTANT_SORCERY_ONLY -> ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, amount);
             case FLASHBACK_ONLY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, null, true);
@@ -81,6 +116,21 @@ public final class AnyColorManaChoiceSupport {
             case SUBTYPE_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
         };
+    }
+
+    private static List<ManaColor> imprintedCardColors(GameData gameData, Card sourceCard) {
+        if (sourceCard == null) {
+            return List.of();
+        }
+        Card imprintedCard = gameData.getImprintedCard(sourceCard);
+        if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null
+                || imprintedCard.getColors() == null) {
+            return List.of();
+        }
+        return imprintedCard.getColors().stream()
+                .map(CardColor::name)
+                .map(ManaColor::valueOf)
+                .toList();
     }
 
     private static String prompt(ManaSpendRestriction restriction) {

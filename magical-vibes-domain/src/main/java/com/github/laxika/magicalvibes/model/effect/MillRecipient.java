@@ -19,5 +19,10 @@ public enum MillRecipient {
      * permanent). Used by "destroy target land, its controller reveals ..." effects such as Destroy
      * the Evidence. Not a chosen player target, so it never contributes a player target.
      */
-    TARGET_PERMANENT_CONTROLLER
+    TARGET_PERMANENT_CONTROLLER,
+    /**
+     * The controller of the permanent that caused the trigger, using the controller snapshot in
+     * {@code StackEntry.eventPlayerIds} when one is present.
+     */
+    UNTAPPED_PERMANENT_CONTROLLER
 }

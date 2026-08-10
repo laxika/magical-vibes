@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +41,18 @@ public final class LibraryShuffleHelper {
                             null,
                             perm.getId()
                     ));
+                } else {
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            shufflingPlayerId,
+                            perm.getId()
+                    );
+                    trigger.setNonTargeting(true);
+                    gameData.enqueueTrigger(trigger);
                 }
             }
         });

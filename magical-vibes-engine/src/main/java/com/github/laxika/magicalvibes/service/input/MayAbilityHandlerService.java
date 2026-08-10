@@ -33,9 +33,11 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEff
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -418,6 +420,19 @@ public class MayAbilityHandlerService {
         UUID controllerId = ability.controllerId();
 
         GraveyardTarget target = graveyardTargetOf(ability.effects());
+        ExileGraveyardCardsEffect exactExile = ability.effects().stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .filter(e -> e instanceof ExileGraveyardCardsEffect exile
+                        && exile.exactTargetCount()
+                        && exile.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
+                .map(e -> (ExileGraveyardCardsEffect) e)
+                .findFirst()
+                .orElse(null);
+
+        if (exactExile != null) {
+            handleExactMultiGraveyardMayAbility(gameData, player, ability, target, exactExile);
+            return;
+        }
 
         // Collect matching graveyard cards
         CardPredicate filter = target.filter();
@@ -487,6 +502,53 @@ public class MayAbilityHandlerService {
                 player.getUsername() + " accepts — choosing a graveyard target for ", ability.sourceCard(), "'s ability."));
         log.info("Game {} - {} accepts graveyard-targeted may ability from {}", gameData.id,
                 player.getUsername(), ability.sourceCard().getName());
+    }
+
+    private void handleExactMultiGraveyardMayAbility(GameData gameData, Player player,
+                                                      PendingMayAbility ability, GraveyardTarget target,
+                                                      ExileGraveyardCardsEffect effect) {
+        List<Card> matchingCards = new ArrayList<>();
+        boolean hasLegalGraveyard = false;
+        for (UUID playerId : target.scope().graveyardOwners(gameData.orderedPlayerIds, ability.controllerId())) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) {
+                continue;
+            }
+
+            List<Card> matchingInGraveyard = graveyard.stream()
+                    .filter(card -> target.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, target.filter(), ability.sourceCard().getId()))
+                    .toList();
+            matchingCards.addAll(matchingInGraveyard);
+            if (matchingInGraveyard.size() >= effect.count()) {
+                hasLegalGraveyard = true;
+            }
+        }
+
+        if (!hasLegalGraveyard) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(ability.sourceCard(), "'s ability has no valid two-card graveyard target."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.graveyardTargetOperation.card = ability.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = ability.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(ability.effects());
+        gameData.graveyardTargetOperation.sourcePermanentId = ability.sourcePermanentId();
+        gameData.graveyardTargetOperation.singleGraveyard = true;
+        playerInputService.beginMultiGraveyardChoice(
+                gameData,
+                ability.controllerId(),
+                matchingCards,
+                effect.count(),
+                effect.count(),
+                "Choose exactly " + effect.count() + " target cards from a single graveyard.");
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " accepts — choosing graveyard targets for ",
+                ability.sourceCard(), "'s ability."));
     }
 
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -699,13 +761,15 @@ public class MayAbilityHandlerService {
      */
     private GraveyardTarget graveyardTargetOf(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
-            GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
+            CardEffect targetEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
+            GraveyardSearchScope scope = targetEffect.targetSpec().graveyardScope().orElse(null);
             if (scope == null) {
                 continue;
             }
-            CardPredicate filter = switch (effect) {
+            CardPredicate filter = switch (targetEffect) {
                 case ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint -> imprint.filter();
                 case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
+                case ExileGraveyardCardsEffect exile -> exile.filter();
                 case ReturnCardFromGraveyardEffect ret -> ret.filter();
                 default -> null;
             };
@@ -722,6 +786,20 @@ public class MayAbilityHandlerService {
         UUID controllerId = ability.controllerId();
 
         GraveyardTarget target = graveyardTargetOf(ability.effects());
+        ExileGraveyardCardsEffect exactExile = ability.effects().stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .filter(e -> e instanceof ExileGraveyardCardsEffect exile
+                        && exile.exactTargetCount()
+                        && exile.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
+                .map(e -> (ExileGraveyardCardsEffect) e)
+                .findFirst()
+                .orElse(null);
+
+        if (exactExile != null) {
+            beginExactResolutionTimeGraveyardTargetSelection(
+                    gameData, player, ability, pendingEntry, target, exactExile);
+            return;
+        }
 
         CardPredicate filter = target.filter();
         List<UUID> searchPlayerIds = target.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
@@ -777,6 +855,58 @@ public class MayAbilityHandlerService {
                 .mayAbilityContext(ability.sourceCard(), controllerId,
                         new ArrayList<>(ability.effects()), ability.sourcePermanentId())
                 .build());
+    }
+
+    private void beginExactResolutionTimeGraveyardTargetSelection(
+            GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry,
+            GraveyardTarget target, ExileGraveyardCardsEffect effect) {
+        List<Card> matchingCards = new ArrayList<>();
+        boolean hasLegalGraveyard = false;
+        for (UUID playerId : target.scope().graveyardOwners(gameData.orderedPlayerIds, ability.controllerId())) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) {
+                continue;
+            }
+
+            List<Card> matchingInGraveyard = graveyard.stream()
+                    .filter(card -> target.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            card, target.filter(), ability.sourceCard().getId()))
+                    .toList();
+            matchingCards.addAll(matchingInGraveyard);
+            if (matchingInGraveyard.size() >= effect.count()) {
+                hasLegalGraveyard = true;
+            }
+        }
+
+        if (!hasLegalGraveyard) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(ability.sourceCard(), "'s ability has no valid two-card graveyard target."));
+            gameData.resolvedMayAccepted = false;
+            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
+        gameData.resolvedMayTargetingEntry = pendingEntry;
+        gameData.graveyardTargetOperation.card = ability.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = ability.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(ability.effects());
+        gameData.graveyardTargetOperation.sourcePermanentId = ability.sourcePermanentId();
+        gameData.graveyardTargetOperation.singleGraveyard = true;
+        playerInputService.beginMultiGraveyardChoice(
+                gameData,
+                ability.controllerId(),
+                matchingCards,
+                effect.count(),
+                effect.count(),
+                "Choose exactly " + effect.count() + " target cards from a single graveyard.");
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " accepts — choosing graveyard targets for ",
+                ability.sourceCard(), "'s ability."));
     }
 
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {

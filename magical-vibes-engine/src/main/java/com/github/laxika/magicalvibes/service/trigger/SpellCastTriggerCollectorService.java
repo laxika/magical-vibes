@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -66,12 +67,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -114,6 +118,40 @@ public class SpellCastTriggerCollectorService {
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
+    @CollectsTrigger(value = SpellweaverHelixTriggerEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleSpellweaverHelixTrigger(TriggerMatchContext match,
+                                                   SpellweaverHelixTriggerEffect trigger,
+                                                   TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry castEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (castEntry == null || castEntry.isCopy()) {
+            return false;
+        }
+
+        List<Card> exiledCards = match.gameData().getCardsExiledByPermanent(match.permanent().getId());
+        if (exiledCards.size() < 2
+                || exiledCards.stream().limit(2).noneMatch(card -> card.getName().equals(sc.spellCard().getName()))) {
+            return false;
+        }
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(
+                        CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(sc.spellCard().getId()),
+                        "You may copy the other exiled card and cast it without paying its mana cost?"
+                ))),
+                null,
+                match.permanent().getId()
+        );
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        return true;
+    }
+
     @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
@@ -121,6 +159,35 @@ public class SpellCastTriggerCollectorService {
         if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
         if (trigger.onlyOwnSpells()) return false;
         return addColorCounterTrigger(match, trigger);
+    }
+
+    @CollectsTrigger(value = CounterSpellIfManaValueEqualsSourceCountersEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterSpellIfManaValueEqualsSourceCounters(
+            TriggerMatchContext match,
+            CounterSpellIfManaValueEqualsSourceCountersEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
+                match.gameData(), spellEntry,
+                new StackEntryManaValueEqualsSourceCountersPredicate(trigger.counterType()),
+                match.controllerId(), match.permanent())) {
+            return false;
+        }
+
+        int manaValue = spellEntry.getCard().getManaValue() + spellEntry.getXValue();
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CounterSpellIfManaValueEqualsSourceCountersEffect(
+                        trigger.counterType(), manaValue))),
+                sc.spellCard().getId(),
+                Zone.STACK
+        ));
+        return true;
     }
 
     @CollectsTrigger(value = KnowledgePoolCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)

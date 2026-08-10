@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+
 /**
  * Capability interface for static effects that impose an additional mana cost to declare the
  * creature carrying them as a blocker of certain attackers (e.g. Hipparion — "can't block
@@ -16,6 +18,9 @@ public interface BlockCostEffect extends CardEffect {
     /**
      * Generic mana the controller must pay to block an attacker with the given effective power.
      * {@code 0} means the block is free.
+     *
+     * @param blocker the creature carrying this effect
+     * @param attackerPower the attacker's effective power
      */
-    int blockCost(int attackerPower);
+    int blockCost(Permanent blocker, int attackerPower);
 }

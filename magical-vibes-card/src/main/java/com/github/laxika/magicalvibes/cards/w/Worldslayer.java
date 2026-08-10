@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "222")
+@CardRegistration(set = "MRD", collectorNumber = "276")
 public class Worldslayer extends Card {
 
     public Worldslayer() {

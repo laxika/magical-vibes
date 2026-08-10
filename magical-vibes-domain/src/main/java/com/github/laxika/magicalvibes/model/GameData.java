@@ -1053,6 +1053,8 @@ public class GameData {
      *  turn (recorded as their upkeep begins, after the untap step). Locked so responses that tap lands
      *  don't change it. Read via {@code UntappedLandsAtTurnStart} for Power Surge. */
     public final Map<UUID, Integer> untappedLandsAtTurnStart = new ConcurrentHashMap<>();
+    /** Snapshot of each active player's hand size when their current turn began. */
+    public final Map<UUID, Integer> handSizeAtTurnStart = new ConcurrentHashMap<>();
 
     /** Tracks which permanents (by UUID) have been dealt damage this turn (from any source — combat, spells, abilities).
      *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
@@ -2656,6 +2658,7 @@ public class GameData {
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
+        copy.handSizeAtTurnStart.putAll(this.handSizeAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);

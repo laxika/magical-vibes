@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 
@@ -93,6 +94,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
     private final LibrarySearchSupport librarySearchSupport;
     private final SoulbondSupport soulbondSupport;
+    private final CoinFlipService coinFlipService;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
@@ -1006,12 +1008,15 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
-        boolean wonFlip = java.util.concurrent.ThreadLocalRandom.current().nextBoolean();
+        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
+        boolean wonFlip = result.heads();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         String sourceName = chosenPermanent.getCard().getName();
         gameLogService.append(gameData, GameLog.text(wonFlip
-                ? playerName + " wins the coin flip for Desperate Gambit."
-                : playerName + " loses the coin flip for Desperate Gambit."));
+                ? playerName + " wins the coin flip for Desperate Gambit"
+                        + coinFlipService.replacementDetails(result) + "."
+                : playerName + " loses the coin flip for Desperate Gambit"
+                        + coinFlipService.replacementDetails(result) + "."));
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
                 ? com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.doubling(permanentId)

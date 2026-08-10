@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -40,7 +41,9 @@ public record LibrarySearchParams(
         boolean grantHaste,
         boolean exileAtEndStep,
         AnimatePermanentsEffect animateFound,
-        boolean repeatUntilDecline
+        boolean repeatUntilDecline,
+        CreateTokenEffect tokenTemplate,
+        String sourceSetCode
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -65,7 +68,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                animateFound, repeatUntilDecline);
+                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode);
     }
 
     public static class Builder {
@@ -99,6 +102,8 @@ public record LibrarySearchParams(
         private boolean exileAtEndStep;
         private AnimatePermanentsEffect animateFound;
         private boolean repeatUntilDecline;
+        private CreateTokenEffect tokenTemplate;
+        private String sourceSetCode;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -241,6 +246,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder tokenTemplate(CreateTokenEffect tokenTemplate) {
+            this.tokenTemplate = tokenTemplate;
+            return this;
+        }
+
+        public Builder sourceSetCode(String sourceSetCode) {
+            this.sourceSetCode = sourceSetCode;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -248,7 +263,7 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    animateFound, repeatUntilDecline);
+                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode);
         }
     }
 }

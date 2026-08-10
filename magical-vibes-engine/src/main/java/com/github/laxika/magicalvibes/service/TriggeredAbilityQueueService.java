@@ -411,7 +411,10 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getTargetFilter(),
                     pending.controllerId(),
                     pending.sourceCard(),
-                    TriggerTargetCollector.Options.ATTACK);
+                    TriggerTargetCollector.Options.ATTACK,
+                    pending.targetSourcePermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.targetSourcePermanentId()));
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);

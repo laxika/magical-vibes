@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Adds mana of the given color to the active player's mana pool ("that player adds {G}{G}" on a
@@ -9,5 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * Not a {@link ManaProducingEffect}: a beginning-of-step trigger uses the stack (CR 605.1b) and
  * therefore is not a mana ability.
  */
-public record AwardManaToActivePlayerEffect(ManaColor color, int amount) implements CardEffect {
+public record AwardManaToActivePlayerEffect(ManaColor color, DynamicAmount amount) implements CardEffect {
+
+    public AwardManaToActivePlayerEffect(ManaColor color, int amount) {
+        this(color, new Fixed(amount));
+    }
 }

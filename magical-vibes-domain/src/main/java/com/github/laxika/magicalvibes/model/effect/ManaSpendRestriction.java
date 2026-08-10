@@ -16,6 +16,9 @@ public enum ManaSpendRestriction {
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
+    IMPRINTED_CARD_COLORS,
+
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
      * pays for (Primal Wellspring).

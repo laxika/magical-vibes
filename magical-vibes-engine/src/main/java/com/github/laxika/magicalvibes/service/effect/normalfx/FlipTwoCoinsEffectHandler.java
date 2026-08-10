@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,7 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,11 +35,13 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        boolean firstFlip = ThreadLocalRandom.current().nextBoolean();
-        boolean secondFlip = ThreadLocalRandom.current().nextBoolean();
+        CoinFlipService.CoinFlipResult firstResultValue = coinFlipService.flip(gameData, controllerId);
+        CoinFlipService.CoinFlipResult secondResultValue = coinFlipService.flip(gameData, controllerId);
+        boolean firstFlip = firstResultValue.heads();
+        boolean secondFlip = secondResultValue.heads();
 
-        String firstResult = firstFlip ? "heads" : "tails";
-        String secondResult = secondFlip ? "heads" : "tails";
+        String firstResult = (firstFlip ? "heads" : "tails") + coinFlipService.replacementDetails(firstResultValue);
+        String secondResult = (secondFlip ? "heads" : "tails") + coinFlipService.replacementDetails(secondResultValue);
         gameLogService.append(gameData, GameLog.text(playerName + " flips two coins for " + sourceName + ": " + firstResult + " and " + secondResult + "."));
 
         CardEffect chosen;

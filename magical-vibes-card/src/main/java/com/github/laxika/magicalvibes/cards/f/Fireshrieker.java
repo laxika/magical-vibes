@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M14", collectorNumber = "210")
+@CardRegistration(set = "MRD", collectorNumber = "171")
 public class Fireshrieker extends Card {
 
     public Fireshrieker() {

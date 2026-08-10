@@ -165,6 +165,12 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
     }
 
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards,
+                                          int maxCount, int minCount, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
+    }
+
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
         beginColorChoice(gameData, playerId, permanentId, etbTargetId,
                 List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
@@ -806,6 +812,21 @@ public class PlayerInputService {
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
         return true;
+    }
+
+    public void beginLiarsPendulumNameChoice(GameData gameData, UUID controllerId, UUID targetPlayerId,
+                                             UUID sourcePermanentId, Card sourceCard) {
+        ChoiceContext.LiarsPendulumChoice choiceContext =
+                new ChoiceContext.LiarsPendulumChoice(controllerId, targetPlayerId, sourcePermanentId, sourceCard, null);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, choiceContext, collectAllCardNamesInGame(gameData),
+                "Choose a card name for Liar's Pendulum."));
+    }
+
+    public void beginLiarsPendulumGuessChoice(GameData gameData, ChoiceContext.LiarsPendulumChoice ctx) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                ctx.targetPlayerId(), null, null, ctx, List.of("Yes", "No"),
+                "Is a card named \"" + ctx.chosenName() + "\" in the controller's hand?"));
     }
 
     /** Distinct names of the cards held by {@code playerId}'s opponents, minus {@code excludedTypes}. */
