@@ -26,13 +26,12 @@ class BindingMummyTest extends BaseCardTest {
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castScatheZombies(player1);
-        harness.passBothPriorities(); // resolve the creature — Binding Mummy triggers
-        harness.passBothPriorities(); // resolve the MayEffect → may prompt
+        harness.passBothPriorities(); // resolve the creature — Binding Mummy triggers and asks for a target
+        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.isTapped()).isTrue();
     }
@@ -45,10 +44,9 @@ class BindingMummyTest extends BaseCardTest {
 
         castScatheZombies(player1);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(artifact.isTapped()).isTrue();
     }
@@ -61,7 +59,7 @@ class BindingMummyTest extends BaseCardTest {
 
         castScatheZombies(player1);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, victim.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -88,17 +86,17 @@ class BindingMummyTest extends BaseCardTest {
     @DisplayName("The tap ability cannot target a land (artifact or creature only)")
     void cannotTargetLand() {
         harness.addToBattlefield(player1, new BindingMummy());
-        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         castScatheZombies(player1);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     private void castScatheZombies(Player player) {

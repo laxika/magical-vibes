@@ -22,7 +22,7 @@ public class BindingMummy extends Card {
     public BindingMummy() {
         // Whenever another Zombie you control enters, you may tap target artifact or creature.
         // The subtype gate is applied by TriggeringCardConditionalEffect on the entering creature;
-        // the "may" and the artifact-or-creature target are chosen at resolution via the MayEffect flow.
+        // the target is chosen as the trigger is put on the stack, and the may choice is made on resolution.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
