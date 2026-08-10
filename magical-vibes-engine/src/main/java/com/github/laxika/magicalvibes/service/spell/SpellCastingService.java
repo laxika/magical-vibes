@@ -994,6 +994,10 @@ public class SpellCastingService {
             } else if (hasSacrificeForCostReduction) {
                 // Allow — sacrifice cost reduction will be validated during casting
             } else {
+                if (targetId != null && cardCheck.getTargetFilter() != null) {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData, cardCheck, targetId, null, playerId, true);
+                }
                 // Diagnostic: log why this card was not in the playable list
                 ManaPool diagPool = gameData.playerManaPools.get(playerId);
                 log.warn("Game {} - Card '{}' at index {} not playable. Step={}, activePlayer={}, isActive={}, stackEmpty={}, pool={}, playableIndices={}, hand={}",

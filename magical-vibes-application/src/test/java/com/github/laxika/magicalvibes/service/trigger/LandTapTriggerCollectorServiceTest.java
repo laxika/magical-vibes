@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -72,6 +73,9 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private PermanentControlSupport permanentControlSupport;
+
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private TriggerCollectionService triggerCollectionService;

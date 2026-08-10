@@ -1051,6 +1051,15 @@ public class ConditionEvaluationService {
     }
 
     private boolean anyPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        Boolean layeredResult = gameQueryService.withQueryScope(gameData,
+                () -> anyPlayerControlsMatchingPermanentUnscoped(gameData, ctx, filter));
+        return layeredResult != null
+                ? layeredResult
+                : anyPlayerControlsMatchingPermanentUnscoped(gameData, ctx, filter);
+    }
+
+    private boolean anyPlayerControlsMatchingPermanentUnscoped(GameData gameData, ConditionContext ctx,
+                                                               PermanentPredicate filter) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -1062,6 +1071,15 @@ public class ConditionEvaluationService {
     }
 
     private long countMatchingPermanentsOnBattlefield(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        Long layeredResult = gameQueryService.withQueryScope(gameData,
+                () -> countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter));
+        return layeredResult != null
+                ? layeredResult
+                : countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter);
+    }
+
+    private long countMatchingPermanentsOnBattlefieldUnscoped(GameData gameData, ConditionContext ctx,
+                                                              PermanentPredicate filter) {
         long count = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1568,7 +1586,9 @@ public class ConditionEvaluationService {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
         Card imprintedCard = gameData.getImprintedCard(source.getCard());
+        boolean discardedCard = "discarded card".equals(condition.subject());
         return imprintedCard != null
+                && (discardedCard || gameData.findExiledCard(imprintedCard.getId()) != null)
                 && predicateEvaluationService.matchesCardPredicate(
                 imprintedCard, condition.filter(), source.getCard().getId(), gameData, ctx.controllerId());
     }
