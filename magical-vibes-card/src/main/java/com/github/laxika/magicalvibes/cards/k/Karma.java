@@ -21,6 +21,6 @@ public class Karma extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

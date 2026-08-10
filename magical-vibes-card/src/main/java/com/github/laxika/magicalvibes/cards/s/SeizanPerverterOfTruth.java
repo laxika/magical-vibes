@@ -17,7 +17,7 @@ public class SeizanPerverterOfTruth extends Card {
         // route to that player. One SequenceEffect keeps the ability a single atomic stack entry
         // with the life loss resolving before the draw.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                new LoseLifeEffect(2, LoseLifeRecipient.ACTIVE_PLAYER),
                 new DrawCardForTargetPlayerEffect(2)));
     }
 }

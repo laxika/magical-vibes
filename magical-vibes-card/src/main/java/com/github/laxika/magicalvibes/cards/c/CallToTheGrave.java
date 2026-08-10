@@ -25,7 +25,7 @@ public class CallToTheGrave extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)))),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.ACTIVE_PLAYER));
 
         // At the beginning of the end step, if no creatures are on the battlefield, sacrifice this enchantment.
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(

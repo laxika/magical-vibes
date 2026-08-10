@@ -56,7 +56,8 @@ class CardImmutabilityArchTest {
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
-            "MeldWithNamedCreatureEffectHandler"); // stamps the set code on the fresh meld-result card it just instantiated
+            "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
+            "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {
         String outermost = javaClass.getName().replaceAll("\\$.*", "");

@@ -15,7 +15,7 @@ public class ForsakenWastes extends Card {
         addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
 
         // EACH_UPKEEP_TRIGGERED sets the active player as the target, so "that player loses 1 life".
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER));
 
         // The trigger is queued against the spell that targeted this enchantment (STACK zone), so the
         // life loss hits that spell's controller.

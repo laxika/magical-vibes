@@ -206,7 +206,7 @@ public class ActivatedAbilityExecutionService {
         }
 
         UUID effectiveTargetId = targetId;
-        if (effectiveTargetId == null) {
+        if (effectiveTargetId == null && (targetIds == null || targetIds.isEmpty()) && targetZone == null) {
             boolean capturesAttachedPermanent = (permanent.getCard().isAura()
                     || permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                     && abilityEffects.stream()

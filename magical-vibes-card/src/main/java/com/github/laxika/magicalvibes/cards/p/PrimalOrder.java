@@ -30,6 +30,6 @@ public class PrimalOrder extends Card {
                                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                                 )),
                                 CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

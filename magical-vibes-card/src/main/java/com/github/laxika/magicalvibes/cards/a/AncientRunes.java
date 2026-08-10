@@ -18,6 +18,6 @@ public class AncientRunes extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(
                         new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

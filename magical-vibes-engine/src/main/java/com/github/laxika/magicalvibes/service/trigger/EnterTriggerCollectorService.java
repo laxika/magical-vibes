@@ -199,13 +199,17 @@ public class EnterTriggerCollectorService {
 
     @CollectsTriggers({
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, pe.mayPayTargetCardId());
+        UUID targetCardId = mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                ? pe.mayPayTargetCardId()
+                : null;
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId);
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may pay mana)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
