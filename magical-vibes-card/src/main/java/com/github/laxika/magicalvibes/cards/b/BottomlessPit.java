@@ -11,6 +11,6 @@ public class BottomlessPit extends Card {
 
     public BottomlessPit() {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true));
+                new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER, true));
     }
 }

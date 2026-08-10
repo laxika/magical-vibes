@@ -38,6 +38,7 @@ class DefenderEnVecTest extends BaseCardTest {
         defender.setCounterCount(CounterType.FADE, 2);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(defender.getCounterCount(CounterType.FADE)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Defender en-Vec");
@@ -49,6 +50,7 @@ class DefenderEnVecTest extends BaseCardTest {
         addCreatureReady(player1, new DefenderEnVec());
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Defender en-Vec");
     }
@@ -65,7 +67,7 @@ class DefenderEnVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(defender.getCounterCount(CounterType.FADE)).isZero();
-        assertThat(defender.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();

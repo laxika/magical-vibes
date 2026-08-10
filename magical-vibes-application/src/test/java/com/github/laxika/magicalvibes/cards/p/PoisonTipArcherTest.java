@@ -45,6 +45,7 @@ class PoisonTipArcherTest extends BaseCardTest {
         setupPlayer2Active();
         harness.setHand(player2, List.of(new LightningStrike()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         UUID archerId = harness.getPermanentId(player1, "Poison-Tip Archer");
         harness.castInstant(player2, 0, archerId);

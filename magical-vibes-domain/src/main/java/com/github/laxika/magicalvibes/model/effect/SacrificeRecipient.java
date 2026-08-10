@@ -23,6 +23,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum SacrificeRecipient {
     CONTROLLER,
     TARGET_PLAYER,
+    /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
+    ACTIVE_PLAYER,
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
     EACH_PLAYER,
     EACH_OPPONENT,

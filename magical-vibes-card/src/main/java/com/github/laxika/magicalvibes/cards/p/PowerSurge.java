@@ -16,6 +16,6 @@ public class PowerSurge extends Card {
         // sets the active player as target; UntappedLandsAtTurnStart reads the turn-start snapshot so
         // tapping lands in response can't reduce the damage (CR ruling).
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new DealDamageToPlayersEffect(new UntappedLandsAtTurnStart(), DamageRecipient.TARGET_PLAYER));
+                new DealDamageToPlayersEffect(new UntappedLandsAtTurnStart(), DamageRecipient.ACTIVE_PLAYER));
     }
 }

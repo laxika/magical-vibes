@@ -13,6 +13,6 @@ public class DreambornMuse extends Card {
 
     public DreambornMuse() {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new MillEffect(new CardsInHand(CountScope.TARGET_PLAYER), MillRecipient.TARGET_PLAYER));
+                new MillEffect(new CardsInHand(CountScope.TARGET_PLAYER), MillRecipient.ACTIVE_PLAYER));
     }
 }

@@ -51,6 +51,7 @@ public final class AiInteractionStrategies {
         register(new RevealCardsDiscardChoiceAiStrategy());
         register(new AlternatingHandExileChoiceAiStrategy());
         register(new MasterOfPredicamentsCardChoiceAiStrategy());
+        register(new StrongholdGambitCardChoiceAiStrategy());
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());

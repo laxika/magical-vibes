@@ -23,6 +23,6 @@ public class DefilerOfSouls extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsMonocoloredPredicate())),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.ACTIVE_PLAYER));
     }
 }

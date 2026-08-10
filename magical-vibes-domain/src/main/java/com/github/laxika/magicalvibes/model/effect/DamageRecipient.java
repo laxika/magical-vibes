@@ -8,6 +8,8 @@ public enum DamageRecipient {
     EACH_OPPONENT,
     /** Every player (including the controller). */
     EACH_PLAYER,
+    /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
+    ACTIVE_PLAYER,
     /** The effect's controller ("deals N damage to you"). */
     CONTROLLER,
     /** The enchanted player of a curse ({@code entry.getTargetId()} baked at trigger time; not chosen). */

@@ -395,13 +395,6 @@ public class GraveyardChoiceHandlerService {
             throw new IllegalStateException("Too many cards selected: " + cardIds.size() + " > " + maxCount);
         }
 
-        // A mandatory choice (Gifts Ungiven's "chooses two") must be answered in full; rejecting the
-        // answer before any state is touched leaves the prompt standing so it can be answered again.
-        if (cardIds.size() < multiGraveyardChoice.minCount()) {
-            throw new IllegalStateException("Must choose " + multiGraveyardChoice.minCount()
-                    + " cards, but chose " + cardIds.size());
-        }
-
         // Spell targeting (e.g. Midnight Ritual) requires exactly X targets — "X target" is not "up to X target"
         // Exception: "any number of target" spells (e.g. Frantic Salvage) allow 0 to max
         StackEntryType pendingEntryTypeCheck = gameData.graveyardTargetOperation.entryType;
@@ -409,6 +402,13 @@ public class GraveyardChoiceHandlerService {
         boolean isAnyNumber = gameData.graveyardTargetOperation.anyNumber;
         if (pendingEntryTypeCheck != null && !isAnyNumber && cardIds.size() != pendingXValueCheck) {
             throw new IllegalStateException("Must choose exactly " + pendingXValueCheck + " targets, but chose " + cardIds.size());
+        }
+
+        // A mandatory choice (Gifts Ungiven's "chooses two") must be answered in full; rejecting the
+        // answer before any state is touched leaves the prompt standing so it can be answered again.
+        if (cardIds.size() < multiGraveyardChoice.minCount()) {
+            throw new IllegalStateException("Must choose " + multiGraveyardChoice.minCount()
+                    + " cards, but chose " + cardIds.size());
         }
 
         Set<UUID> uniqueIds = new HashSet<>(cardIds);

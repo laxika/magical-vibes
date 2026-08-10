@@ -402,7 +402,14 @@ public class TargetPolarityClassifier {
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDividedDamageEffect", TargetPolarity.BENEFICIAL),
+            entry("PreventNextDamageByTargetCreatureEffect", TargetPolarity.BENEFICIAL),
+            entry("PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageToTargetAndAddToughnessCountersEffect", TargetPolarity.BENEFICIAL),
+            entry("RedirectAllDamageToTargetCreatureToControllerEffect", TargetPolarity.BENEFICIAL),
+            entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
+
+            // Pack Hunt searches for cards named after the opposing creature it targets.
+            entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),
 
             // Deliberately directionless: copies, color/type tweaks, symmetric moves — and
             // Polymorph/Shape Anew-style upgrades that are usually aimed at the AI's own

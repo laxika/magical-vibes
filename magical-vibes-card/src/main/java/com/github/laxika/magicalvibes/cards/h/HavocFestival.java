@@ -17,6 +17,6 @@ public class HavocFestival extends Card {
 
         // EACH_UPKEEP_TRIGGERED sets the active player as targetId — "that player loses half their life, rounded up".
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), LoseLifeRecipient.ACTIVE_PLAYER));
     }
 }

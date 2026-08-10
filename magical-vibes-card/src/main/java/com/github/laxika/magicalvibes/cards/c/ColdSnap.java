@@ -31,6 +31,6 @@ public class ColdSnap extends Card {
                                         new PermanentIsLandPredicate(),
                                         new PermanentHasSupertypePredicate(CardSupertype.SNOW))),
                                 CountScope.TARGET_PLAYER),
-                        DamageRecipient.TARGET_PLAYER));
+                        DamageRecipient.ACTIVE_PLAYER));
     }
 }

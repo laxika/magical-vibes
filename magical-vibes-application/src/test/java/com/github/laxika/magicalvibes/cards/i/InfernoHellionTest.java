@@ -68,7 +68,8 @@ class InfernoHellionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Inferno Hellion");
-        assertThat(gd.playerDecks.get(player2.getId()))
+        assertThat(gameLogContains("Inferno Hellion is shuffled into its owner's library.")).isTrue();
+        assertThat(gd.playerHands.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Inferno Hellion"));
     }
 }

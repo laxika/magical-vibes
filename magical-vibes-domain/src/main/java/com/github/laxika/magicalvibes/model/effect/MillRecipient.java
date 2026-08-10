@@ -4,6 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum MillRecipient {
     CONTROLLER,
     TARGET_PLAYER,
+    /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
+    ACTIVE_PLAYER,
     EACH_OPPONENT,
     /**
      * The controller of the spell targeted by this stack entry (i.e. {@code entry.getTargetId()}

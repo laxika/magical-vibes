@@ -2754,7 +2754,7 @@ public class AbilityActivationService {
             if (effect instanceof ReduceActivationCostPerCounterEffect reduce) {
                 int counterReduction = Math.min(
                         permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
-                        Math.max(0, totalManaCost + additionalGenericCost - 1));
+                        Math.max(0, genericCost));
                 additionalGenericCost -= counterReduction;
             }
             if (effect instanceof IncreaseActivationCostPerCounterEffect increase) {

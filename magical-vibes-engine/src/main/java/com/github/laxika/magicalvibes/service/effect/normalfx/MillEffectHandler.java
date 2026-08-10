@@ -45,7 +45,7 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
 
         switch (mill.recipient()) {
             case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
-            case TARGET_PLAYER -> {
+            case TARGET_PLAYER, ACTIVE_PLAYER -> {
                 List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
                 if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
                     targetPlayerIds = Collections.singletonList(entry.getTargetId());

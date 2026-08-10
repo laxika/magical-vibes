@@ -24,6 +24,6 @@ public class Dystopia extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
                 1,
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE)),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.ACTIVE_PLAYER));
     }
 }

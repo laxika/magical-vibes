@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -104,7 +105,7 @@ class ZoneToLibraryServiceTest {
 
         // The whole reason this move is shared: one of the two callers used to skip this, leaving
         // every "if one or more cards left your graveyard this turn" reader stale.
-        verify(graveyardService).notifyCardsLeftGraveyard(gd, player1Id, anyList());
+        verify(graveyardService).notifyCardsLeftGraveyard(eq(gd), eq(player1Id), anyList());
     }
 
     @Test

@@ -385,6 +385,7 @@ public class CombatBlockService {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             blocker.setBlocking(true);
+            blocker.setBlockedThisTurn(true);
             blocker.addBlockingTarget(assignment.attackerIndex());
             blocker.addBlockingTargetId(attacker.getId());
             recordCombatBlockOpponentSubtypes(gameData, blocker, attacker);

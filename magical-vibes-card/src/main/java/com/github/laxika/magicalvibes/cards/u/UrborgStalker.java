@@ -28,6 +28,6 @@ public class UrborgStalker extends Card {
                 new ActivePlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
                         new PermanentNotPredicate(new PermanentIsLandPredicate())))),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)));
+                new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER)));
     }
 }

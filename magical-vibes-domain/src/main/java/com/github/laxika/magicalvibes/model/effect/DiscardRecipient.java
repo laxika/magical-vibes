@@ -29,6 +29,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum DiscardRecipient {
     CONTROLLER,
     TARGET_PLAYER,
+    /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
+    ACTIVE_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
     TARGET_PLAYER_OR_PERMANENT_CONTROLLER,
     DEFENDING_PLAYER,

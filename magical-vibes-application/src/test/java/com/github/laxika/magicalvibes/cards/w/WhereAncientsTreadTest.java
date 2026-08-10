@@ -30,9 +30,10 @@ class WhereAncientsTreadTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
+        harness.passBothPriorities(); // choose the triggered ability's target
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve the MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
     }
@@ -49,9 +50,10 @@ class WhereAncientsTreadTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve Craw Wurm
 
+        harness.passBothPriorities(); // choose the triggered ability's target
+        harness.handlePermanentChosen(player1, angelId);
         harness.passBothPriorities(); // resolve the MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, angelId);
 
         // Serra Angel (4/4) dies to 5 damage
         harness.assertNotOnBattlefield(player2, "Serra Angel");
@@ -69,6 +71,8 @@ class WhereAncientsTreadTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
+        harness.passBothPriorities(); // choose the triggered ability's target
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve the MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 

@@ -64,7 +64,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
-            case TARGET_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
+            case TARGET_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);

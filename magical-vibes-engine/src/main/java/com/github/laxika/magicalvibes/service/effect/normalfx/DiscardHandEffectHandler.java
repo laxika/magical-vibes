@@ -46,6 +46,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> discardHand(gameData, controllerId, controllerId, cardName);
             case TARGET_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
+            case ACTIVE_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
             case EACH_PLAYER, EACH_OPPONENT -> {
                 boolean opponentsOnly = e.recipient() == DiscardRecipient.EACH_OPPONENT;
                 for (UUID playerId : apnapOrder(gameData)) {

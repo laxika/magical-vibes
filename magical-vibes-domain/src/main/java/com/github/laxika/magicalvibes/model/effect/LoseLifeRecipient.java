@@ -32,6 +32,8 @@ public enum LoseLifeRecipient {
     TARGET_PERMANENT_CONTROLLER,
     DYING_CREATURE_CONTROLLER,
     DEFENDING_PLAYER,
+    /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
+    ACTIVE_PLAYER,
     EACH_PLAYER,
     EACH_OPPONENT
 }
