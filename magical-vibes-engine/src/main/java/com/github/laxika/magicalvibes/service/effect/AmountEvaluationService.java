@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -111,12 +110,19 @@ import java.util.UUID;
  * controller, x value, …) come from at that site.</p>
  */
 @Service
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class AmountEvaluationService {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final ConditionEvaluationService conditionEvaluationService;
+
+    @Autowired
+    public AmountEvaluationService(PredicateEvaluationService predicateEvaluationService,
+            GameQueryService gameQueryService, ConditionEvaluationService conditionEvaluationService) {
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
+        this.conditionEvaluationService = conditionEvaluationService;
+    }
 
     /**
      * Hand-wires the condition evaluator from the same two collaborators, for the non-Spring call

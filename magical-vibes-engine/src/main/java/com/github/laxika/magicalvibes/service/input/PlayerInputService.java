@@ -165,12 +165,6 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
     }
 
-    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards,
-                                          int maxCount, int minCount, String prompt) {
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
-    }
-
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
         beginColorChoice(gameData, playerId, permanentId, etbTargetId,
                 List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
