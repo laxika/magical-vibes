@@ -96,6 +96,8 @@ public class ActivatedAbility {
      * Set via {@link #withXScaledTargets()}.
      */
     private boolean xScaledTargets;
+    /** Counter type that supplies the target limit instead of a paid X value. */
+    private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
     /**
@@ -245,6 +247,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.xScaledTargets = this.xScaledTargets;
+        copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         return copy;
@@ -450,6 +453,16 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks the target count as scaling with counters of the given type on the source permanent. */
+    public ActivatedAbility withSourceCounterScaledTargets(CounterType counterType) {
+        this.sourceCounterScaledTargetsType = counterType;
+        return this;
+    }
+
+    public boolean isXScaledTargets() {
+        return xScaledTargets || sourceCounterScaledTargetsType != null;
+    }
+
     /** Marks the ability as requiring a player-chosen xValue for a dynamic non-mana cost. */
     public ActivatedAbility withXValue() {
         this.requiresXValue = true;
@@ -469,12 +482,12 @@ public class ActivatedAbility {
      * when not enough legal targets exist.
      */
     public int getEffectiveMinTargets(int xValue) {
-        return xScaledTargets ? Math.min(xValue, minTargets) : minTargets;
+        return isXScaledTargets() ? Math.min(xValue, minTargets) : minTargets;
     }
 
     /** Maximum number of targets allowed for the given paid X ({@code min(X, maxTargets)} when X-scaled). */
     public int getEffectiveMaxTargets(int xValue) {
-        return xScaledTargets ? Math.min(xValue, maxTargets) : maxTargets;
+        return isXScaledTargets() ? Math.min(xValue, maxTargets) : maxTargets;
     }
 
     public boolean isNeedsSpellTarget() {

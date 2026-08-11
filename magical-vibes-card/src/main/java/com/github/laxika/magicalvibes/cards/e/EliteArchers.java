@@ -19,6 +19,7 @@ import java.util.List;
  */
 @CardRegistration(set = "8ED", collectorNumber = "18")
 @CardRegistration(set = "7ED", collectorNumber = "15")
+@CardRegistration(set = "USG", collectorNumber = "13")
 public class EliteArchers extends Card {
 
     public EliteArchers() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -47,6 +49,10 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         copy.setSubtypes(becomeCreature.subtypes());
         copy.setPower(becomeCreature.power());
         copy.setToughness(becomeCreature.toughness());
+        EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+        keywords.addAll(copy.getKeywords());
+        keywords.addAll(becomeCreature.keywords());
+        copy.setKeywords(keywords);
         copy.freeze();
         source.setCard(copy);
 

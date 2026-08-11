@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "40")
+@CardRegistration(set = "USG", collectorNumber = "43")
 public class SanctumGuardian extends Card {
 
     public SanctumGuardian() {

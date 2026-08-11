@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "37")
+@CardRegistration(set = "USG", collectorNumber = "33")
 public class Redeem extends Card {
 
     public Redeem() {

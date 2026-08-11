@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "32")
+@CardRegistration(set = "USG", collectorNumber = "45")
 public class SerraAvatar extends Card {
 
     public SerraAvatar() {

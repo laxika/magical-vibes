@@ -172,6 +172,7 @@ All paths relative to `cards/`.
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) â€” all your creatures assign combat damage equal to toughness |
 | Toughness as combat damage (global) | `d/DoranTheSiegeTower.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_CREATURES) â€” every creature assigns combat damage equal to toughness |
+| Defending player assigns combat damage | `d/DefensiveFormation.java` | STATIC DefensiveFormationEffect() â€” the controller assigns combat damage dealt by creatures attacking them |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |

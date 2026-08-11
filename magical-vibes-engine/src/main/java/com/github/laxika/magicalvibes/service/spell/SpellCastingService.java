@@ -2220,17 +2220,29 @@ public class SpellCastingService {
                     // "Prevent the next N damage ... to any number of targets, divided as you choose"
                     // (Remedy). Per-target shield amounts ride on damageAssignments; each target needs
                     // at least 1, so N is the effective cap on the number of targets.
+                    int expectedPrevention = amountEvaluationService.evaluate(gameData,
+                            preventDivided.amount(),
+                            com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
                     int totalPrevention = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                    if (totalPrevention != preventDivided.amount()) {
-                        throw new IllegalStateException("Prevention assignments must sum to " + preventDivided.amount());
+                    if (totalPrevention != expectedPrevention) {
+                        throw new IllegalStateException("Prevention assignments must sum to " + expectedPrevention);
                     }
-                    if (damageAssignments.size() > preventDivided.amount()) {
+                    if (damageAssignments.size() > expectedPrevention) {
                         throw new IllegalStateException("Too many targets");
                     }
+                    PermanentPredicate assignmentRestriction = preventDivided.targetSpec().targetPredicate()
+                            .permanentRestriction().orElseThrow();
+                    FilterContext assignmentContext = new FilterContext(gameData, card.getId(), playerId, null, null);
                     for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        if (!gameData.playerIds.contains(assignment.getKey())
-                                && gameQueryService.findPermanentById(gameData, assignment.getKey()) == null) {
-                            throw new IllegalStateException("Invalid target");
+                        if (!gameData.playerIds.contains(assignment.getKey())) {
+                            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                            if (target == null) {
+                                throw new IllegalStateException("Invalid target");
+                            }
+                            if (!predicateEvaluationService.matchesPermanentPredicate(
+                                    target, assignmentRestriction, assignmentContext)) {
+                                throw new IllegalStateException("Target must be a creature, planeswalker, battle, or player");
+                            }
                         }
                         if (assignment.getValue() <= 0) {
                             throw new IllegalStateException("Each prevention assignment must be positive");

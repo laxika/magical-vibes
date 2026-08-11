@@ -136,6 +136,7 @@ public sealed interface Condition permits
         SourceHasSubtype,
         SourceBlockedOrWasBlockedByColorThisTurn,
         SourceIsAttacking,
+        SourceIsEnchantment,
         SourceWasBlockedThisTurn,
         SourceIsPaired,
         SourceIsMonstrous,

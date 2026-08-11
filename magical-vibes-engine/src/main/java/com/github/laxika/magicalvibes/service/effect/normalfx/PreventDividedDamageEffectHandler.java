@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +39,16 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Map<UUID, Integer> assignments = entry.getDamageAssignments();
         if (assignments == null || assignments.isEmpty()) return;
+
+        PreventDividedDamageEffect prevention = (PreventDividedDamageEffect) effect;
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int expectedAmount = amountEvaluationService.evaluate(gameData, prevention.amount(),
+                AmountContext.forStackEntry(entry, source));
+        int assignedAmount = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (assignedAmount != expectedAmount) return;
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();

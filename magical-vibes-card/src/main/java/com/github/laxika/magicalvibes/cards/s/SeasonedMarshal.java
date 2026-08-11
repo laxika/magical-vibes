@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "8ED", collectorNumber = "44")
 @CardRegistration(set = "7ED", collectorNumber = "40")
 @CardRegistration(set = "POR", collectorNumber = "26")
+@CardRegistration(set = "USG", collectorNumber = "44")
 public class SeasonedMarshal extends Card {
 
     public SeasonedMarshal() {

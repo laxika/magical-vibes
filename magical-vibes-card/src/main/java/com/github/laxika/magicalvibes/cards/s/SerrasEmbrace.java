@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "40")
 @CardRegistration(set = "7ED", collectorNumber = "43")
+@CardRegistration(set = "USG", collectorNumber = "47")
 public class SerrasEmbrace extends Card {
 
     public SerrasEmbrace() {

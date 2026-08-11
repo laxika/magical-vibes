@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -1385,6 +1386,27 @@ class ValidTargetServiceTest {
                     gameData, sourceCard, ability, player1Id, 0, List.of());
 
             assertThat(response.maxTargets()).isZero();
+        }
+
+        @Test
+        @DisplayName("source-counter-scaled ability uses the source counter count as its target limit")
+        void sourceCounterScaledTargets_boundedBySourceCounters() {
+            Card sourceCard = createCreatureCard();
+            Permanent source = addPermanentToBattlefield(player1Id, sourceCard);
+            source.setCounterCount(CounterType.VERSE, 2);
+            when(gameQueryService.findPermanentById(gameData, source.getId())).thenReturn(source);
+
+            ActivatedAbility ability = new ActivatedAbility(true, "{W}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "Up to verse counters target creatures", null, null, null, null,
+                    List.of(), 0, 100)
+                    .withSourceCounterScaledTargets(CounterType.VERSE);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of());
+
+            assertThat(response.minTargets()).isZero();
+            assertThat(response.maxTargets()).isEqualTo(2);
         }
     }
 

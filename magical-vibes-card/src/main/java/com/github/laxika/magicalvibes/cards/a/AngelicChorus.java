@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "4")
+@CardRegistration(set = "USG", collectorNumber = "3")
 public class AngelicChorus extends Card {
 
     public AngelicChorus() {

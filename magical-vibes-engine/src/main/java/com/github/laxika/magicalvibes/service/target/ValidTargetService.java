@@ -310,6 +310,13 @@ public class ValidTargetService {
         // Source-relative player predicates ("dealt damage by this creature this turn") key their
         // per-turn records by permanent id, so resolve the ability's own permanent up front.
         UUID abilitySourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(gameData, sourceCard.getId());
+        int effectiveTargetScalingValue = xValue != null ? xValue : 0;
+        if (ability.getSourceCounterScaledTargetsType() != null && abilitySourcePermanentId != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, abilitySourcePermanentId);
+            if (sourcePermanent != null) {
+                effectiveTargetScalingValue = sourcePermanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
+            }
+        }
 
         // A filterless group ability ("each of up to six targets") declares no per-position filters
         // but still announces a group, so it takes the multi-target path too — mirroring the
@@ -417,7 +424,9 @@ public class ValidTargetService {
             }
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
-            return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);
+            return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+                    ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                    ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
         }
 
         boolean targetsPlayer = ability.getEffects().stream()
@@ -455,9 +464,8 @@ public class ValidTargetService {
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
 
         if (ability.isXScaledTargets()) {
-            int effectiveX = xValue != null ? xValue : 0;
-            minTargets = ability.getEffectiveMinTargets(effectiveX);
-            maxTargets = ability.getEffectiveMaxTargets(effectiveX);
+            minTargets = ability.getEffectiveMinTargets(effectiveTargetScalingValue);
+            maxTargets = ability.getEffectiveMaxTargets(effectiveTargetScalingValue);
             prompt = "Select targets for " + sourceCard.getName() + " ability";
         }
 

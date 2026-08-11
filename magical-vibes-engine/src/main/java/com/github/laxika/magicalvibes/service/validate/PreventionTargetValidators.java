@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -35,7 +33,6 @@ public class PreventionTargetValidators {
         if (ctx.gameData().playerIds.contains(ctx.targetId())) {
             return;
         }
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
+        tvs.requireBattlefieldTarget(ctx);
     }
 }

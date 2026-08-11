@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -2025,6 +2026,9 @@ public class AbilityActivationService {
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = ability.getManaCost();
+        if (ability.getSourceCounterScaledTargetsType() != null) {
+            effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
+        }
 
         int additionalGenericCost = getActivatedAbilityAdditionalGenericCost(
                 gameData, playerId, permanent, ability, targetId, targetIds, effectiveXValue);
@@ -2120,6 +2124,9 @@ public class AbilityActivationService {
                     permanent.getCard().getName()));
             return;
         }
+
+        validatePreventDividedDamageAssignments(gameData, playerId, permanent, ability, abilityEffects,
+                effectiveXValue, damageAssignments);
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
@@ -2546,6 +2553,38 @@ public class AbilityActivationService {
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
                 effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetIds, damageAssignments);
+    }
+
+    private void validatePreventDividedDamageAssignments(GameData gameData, UUID playerId,
+                                                         Permanent sourcePermanent, ActivatedAbility ability,
+                                                         List<CardEffect> abilityEffects, int xValue,
+                                                         Map<UUID, Integer> damageAssignments) {
+        PreventDividedDamageEffect prevention = abilityEffects.stream()
+                .filter(PreventDividedDamageEffect.class::isInstance)
+                .map(PreventDividedDamageEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (prevention == null) {
+            return;
+        }
+
+        Map<UUID, Integer> assignments = damageAssignments == null ? Map.of() : damageAssignments;
+        int expectedAmount = amountEvaluationService.evaluate(gameData, prevention.amount(),
+                new AmountContext(playerId, sourcePermanent, null, xValue, 0));
+        int assignedAmount = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (assignedAmount != expectedAmount) {
+            throw new IllegalStateException("Prevention assignments must sum to " + expectedAmount);
+        }
+        if (assignments.size() > expectedAmount) {
+            throw new IllegalStateException("Too many targets");
+        }
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            if (assignment.getValue() == null || assignment.getValue() <= 0) {
+                throw new IllegalStateException("Each prevention assignment must be positive");
+            }
+            targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects,
+                    assignment.getKey(), null, sourcePermanent.getCard(), xValue);
+        }
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(GameData gameData, CardEffect effect,

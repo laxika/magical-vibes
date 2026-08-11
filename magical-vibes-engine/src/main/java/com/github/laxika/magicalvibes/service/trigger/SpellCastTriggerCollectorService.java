@@ -1189,6 +1189,12 @@ public class SpellCastTriggerCollectorService {
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 
+        if (trigger.intervening() != null
+                && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
         // Repartee-style condition on the cast spell's chosen targets (e.g. "targets a creature"),
         // or source-relative mana-value gates (e.g. Imminent Doom — MV equals counters on source).
         if (trigger.castSpellTargetCondition() != null) {
@@ -1204,12 +1210,18 @@ public class SpellCastTriggerCollectorService {
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
+        if (trigger.intervening() != null) {
+            resolved = resolved.stream()
+                    .map(effect -> (CardEffect) new ConditionalEffect(trigger.intervening(), effect))
+                    .toList();
+        }
         boolean selfTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).selfTargeting());
         boolean attachedSelfTarget = resolved.stream().anyMatch(
                 e -> e instanceof AttachedPermanentSelfTargetingEffect && e.targetSpec().selfTargeting());
         boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PERMANENT));
         boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean needsSpellTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.SPELL));
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
@@ -1232,6 +1244,18 @@ public class SpellCastTriggerCollectorService {
             ));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, match.permanent().getCard().getName());
+        } else if (needsSpellTarget && !needsTargeting) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    resolved,
+                    spellCard.getId(),
+                    Zone.STACK
+            );
+            entry.setTriggeringCardId(spellCard.getId());
+            match.gameData().stack.add(entry);
         } else if (needsTargeting) {
             // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen
             // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution

@@ -857,6 +857,52 @@ public class GraveyardReturnSupport {
     }
 
     /**
+     * Puts all cards in {@code cardsByController} onto the battlefield as one simultaneous entry
+     * batch. The map key is the owner/controller of each graveyard card. Cards blocked from
+     * entering remain in their graveyards.
+     */
+    public void putCardsOntoBattlefieldSimultaneously(GameData gameData,
+                                                       Map<UUID, List<Card>> cardsByController,
+                                                       boolean enterTapped,
+                                                       CounterType enterWithCounter) {
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<ReturnedPermanent> enteredPermanents = new ArrayList<>();
+
+        for (Map.Entry<UUID, List<Card>> controllerEntry : cardsByController.entrySet()) {
+            UUID controllerId = controllerEntry.getKey();
+            for (Card card : controllerEntry.getValue()) {
+                if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(controllerId) + " can't put ", card,
+                            " onto the battlefield from a graveyard; it stays in the graveyard."));
+                    continue;
+                }
+
+                Permanent permanent = new Permanent(card);
+                if (enterWithCounter != null) {
+                    permanent.setCounterCount(enterWithCounter, 1);
+                }
+                if (enterTapped) {
+                    permanent.tap();
+                }
+                permanent.setEnteredFromGraveyardOwnerId(controllerId);
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                simultaneouslyEntered.add(permanent);
+                enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
+            }
+        }
+
+        for (ReturnedPermanent returned : enteredPermanents) {
+            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
+        }
+    }
+
+    private record ReturnedPermanent(UUID controllerId, Permanent permanent, Card card) {}
+
+    /**
      * Reanimates a targeted graveyard {@code card} under {@code controllerId}: removes it from
      * whichever graveyard it is in and puts it onto the battlefield. Returns the created permanent,
      * or {@code null} if it was blocked from entering (e.g. Grafdigger's Cage). Used by reanimation

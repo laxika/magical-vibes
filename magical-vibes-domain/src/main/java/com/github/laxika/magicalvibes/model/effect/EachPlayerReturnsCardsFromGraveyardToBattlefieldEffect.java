@@ -19,25 +19,27 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>Use the {@code fromBattlefieldThisTurn} overload for effects such as Second Sunrise that
  * return only cards put into the graveyard from the battlefield this turn.
+ * When {@code enterTapped} is true, cards returned this way enter tapped.
  */
 public record EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
         int maxCount,
         CardPredicate filter,
         CounterType enterWithCounter,
-        boolean fromBattlefieldThisTurn
+        boolean fromBattlefieldThisTurn,
+        boolean enterTapped
 ) implements CardEffect {
 
     public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter) {
-        this(maxCount, filter, null, false);
+        this(maxCount, filter, null, false, false);
     }
 
     public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
                                                                    CounterType enterWithCounter) {
-        this(maxCount, filter, enterWithCounter, false);
+        this(maxCount, filter, enterWithCounter, false, false);
     }
 
     public EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int maxCount, CardPredicate filter,
                                                                    boolean fromBattlefieldThisTurn) {
-        this(maxCount, filter, null, fromBattlefieldThisTurn);
+        this(maxCount, filter, null, fromBattlefieldThisTurn, false);
     }
 }

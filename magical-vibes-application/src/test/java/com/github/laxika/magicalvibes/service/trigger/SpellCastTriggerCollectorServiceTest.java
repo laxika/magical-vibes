@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -57,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -64,6 +66,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -99,6 +102,8 @@ class SpellCastTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @Mock
     private TargetLegalityService targetLegalityService;
@@ -199,6 +204,30 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("binds a spell target to the spell that caused the trigger")
+        void bindsSpellTargetToTriggeringSpell() {
+            Permanent perm = createPermanent("Presence of the Master");
+            var effect = new SpellCastTriggerEffect(null, List.of(new CounterSpellEffect()));
+            Card spellCard = createCard("Angelic Chorus");
+            StackEntry spellOnStack = new StackEntry(spellCard, player2Id);
+            gd.stack.add(spellOnStack);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            StackEntry triggerEntry = gd.stack.getLast();
+            assertThat(triggerEntry.getTargetId()).isEqualTo(spellCard.getId());
+            assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
         }
 
         @Test
@@ -600,6 +629,27 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("does not trigger when the source intervening condition is false")
+        void doesNotTriggerWhenInterveningConditionFails() {
+            Permanent perm = createPermanent("Opal Acrolith");
+            var effect = SpellCastTriggerEffect.withIntervening(null,
+                    List.of(new PutCountersOnSourceEffect(1, 1, 1)), new SourceIsEnchantment());
+            Card spellCard = createCard("Grizzly Bears");
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 

@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
@@ -411,6 +412,7 @@ public class CombatDamageService {
 
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = defenderId != null ? gameData.playerBattlefields.get(defenderId) : null;
+        Permanent atk = atkBf.get(attackerIndex);
 
         // CR 702.22j — a blocked attacker's combat damage is assigned by the defending player (not
         // the active player) when any of its living blockers has banding.
@@ -419,14 +421,13 @@ public class CombatDamageService {
         for (int i : authState.blockerMap.getOrDefault(attackerIndex, List.of())) {
             if (!authState.deadDefenderIndices.contains(i)) authLivingBlockers.add(i);
         }
-        UUID expectedAssigner = attackerDamageAssigner(gameData, authLivingBlockers, defBf, activeId, defenderId);
+        UUID expectedAssigner = attackerDamageAssigner(gameData, atk, authLivingBlockers, defBf, activeId, defenderId);
         if (!player.getId().equals(expectedAssigner)) {
             throw new IllegalStateException(expectedAssigner.equals(defenderId)
                     ? "Only the defending player can assign this attacker's combat damage"
                     : "Only the active player can assign combat damage");
         }
 
-        Permanent atk = atkBf.get(attackerIndex);
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
 
         // Validate total damage
@@ -2751,10 +2752,13 @@ public class CombatDamageService {
      * Normally the active player (CR 510.1c), but the defending player instead when any of the
      * attacker's living blockers has banding.
      */
-    private UUID attackerDamageAssigner(GameData gameData, List<Integer> livingBlockers,
+    private UUID attackerDamageAssigner(GameData gameData, Permanent attacker, List<Integer> livingBlockers,
                                         List<Permanent> defBf, UUID activeId, UUID defenderId) {
         if (defBf == null) {
             return activeId;
+        }
+        if (defendingPlayerAssignsCombatDamage(attacker, defBf, defenderId)) {
+            return defenderId;
         }
         for (int blkIdx : livingBlockers) {
             if (gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.BANDING)) {
@@ -2762,6 +2766,22 @@ public class CombatDamageService {
             }
         }
         return activeId;
+    }
+
+    private boolean defendingPlayerAssignsCombatDamage(Permanent attacker, List<Permanent> defBf,
+                                                        UUID defenderId) {
+        UUID attackTarget = attacker.getAttackTarget();
+        if (attackTarget != null && !attackTarget.equals(defenderId)) {
+            return false;
+        }
+        for (Permanent permanent : defBf) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DefendingPlayerAssignsCombatDamageEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -2926,7 +2946,7 @@ public class CombatDamageService {
                 blockerDescriptions);
 
         // CR 702.22j — route the prompt to the defending player when a banding blocker is present.
-        UUID assigningPlayer = attackerDamageAssigner(gameData, livingBlockers, defBf, activeId, defenderId);
+        UUID assigningPlayer = attackerDamageAssigner(gameData, atk, livingBlockers, defBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
                 assigningPlayer, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
                 domainTargets, isTrample, isDeathtouch, unblockedRedirect));
