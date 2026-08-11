@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
@@ -76,6 +77,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
@@ -113,6 +115,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSour
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -483,6 +486,13 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentAttachedToCreaturePredicate ignored -> {
+                if (gameData == null || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                yield host != null && gameQueryService.isCreature(gameData, host);
+            }
             case PermanentIsAuraAttachedToSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null
                         || !permanent.getCard().isAura() || !permanent.isAttached()) {
@@ -537,6 +547,7 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isEnchantment(gameData, permanent);
             }
+            case PermanentIsFaceDownPredicate ignored -> permanent.isFaceDown();
             case PermanentIsPlaneswalkerPredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.PLANESWALKER);
@@ -1116,6 +1127,23 @@ public class PredicateEvaluationService {
                     gameQueryService.hasGreatestPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate ignored ->
                     gameQueryService.hasLowestManaValueAmongAllNonlandPermanents(gameData, permanent);
+            case PermanentHasGreatestPowerAmongControllerCreaturesPredicate ignored -> {
+                if (gameData == null || !gameQueryService.isCreature(gameData, permanent)) {
+                    yield false;
+                }
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                List<Permanent> controllerBattlefield = controllerId == null
+                        ? null
+                        : gameData.playerBattlefields.get(controllerId);
+                if (controllerBattlefield == null) {
+                    yield false;
+                }
+                int maxPower = controllerBattlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
+                        .max().orElse(0);
+                yield gameQueryService.getEffectivePower(gameData, permanent) == maxPower;
+            }
             case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasLeastPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {
@@ -1244,6 +1272,7 @@ public class PredicateEvaluationService {
             case PermanentIsBlockingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHostOfSourceAuraPredicate ignored -> {

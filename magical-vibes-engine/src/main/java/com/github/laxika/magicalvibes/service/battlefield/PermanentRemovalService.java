@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -759,6 +760,32 @@ public class PermanentRemovalService {
     }
 
     /**
+     * True when a player other than {@code ownerId} controls a permanent with an opponent-owned
+     * creature-card graveyard replacement, and the dying card is not a token.
+     */
+    private boolean opponentExilesOwnedNontokenCreature(GameData gameData, UUID ownerId, Card card) {
+        if (card.isToken()) {
+            return false;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ownerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Frostwielder / Kumano's Blessing: true when a permanent that damaged {@code dying} this turn
      * has "if a creature dealt damage by this creature this turn would die, exile it instead" —
      * printed on the permanent itself, or on an Aura currently attached to it.
@@ -813,6 +840,7 @@ public class PermanentRemovalService {
         // card that leaves is still originalCard / meld components.
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
                 || (wasCreature && opponentExilesDyingCreatures(gameData, controllerId))
+                || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
                 || (wasCreature && damagerExilesDyingCreature(gameData, target));
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
@@ -854,7 +882,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedReturnOnDeath(gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
-                triggerCollectionService.triggerDelayedEffectOnDeath(gameData, target.getCard().getId());
+                triggerCollectionService.triggerDelayedEffectOnDeath(gameData, target.getCard().getId(), controllerId);
                 collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);
             }

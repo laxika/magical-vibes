@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 @CardRegistration(set = "M13", collectorNumber = "152")
 @CardRegistration(set = "UDS", collectorNumber = "98")
 @CardRegistration(set = "M19", collectorNumber = "165")
+@CardRegistration(set = "KTK", collectorNumber = "124")
 public class TrumpetBlast extends Card {
 
     public TrumpetBlast() {

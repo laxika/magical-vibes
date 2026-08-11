@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "RTR", collectorNumber = "134")
+@CardRegistration(set = "KTK", collectorNumber = "150")
 public class SeekTheHorizon extends Card {
 
     public SeekTheHorizon() {

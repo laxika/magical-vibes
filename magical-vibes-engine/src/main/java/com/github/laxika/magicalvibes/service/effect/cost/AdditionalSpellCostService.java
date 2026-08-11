@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
@@ -99,7 +100,8 @@ public class AdditionalSpellCostService {
             EscalateDiscardCost.class,
             EscalateManaCost.class,
             RepeatableAdditionalManaCost.class,
-            ChooseXValueCost.class);
+            ChooseXValueCost.class,
+            DelveCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -135,7 +137,8 @@ public class AdditionalSpellCostService {
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
             RepeatableAdditionalManaCost repeatableManaCost,
-            ChooseXValueCost chooseXValueCost
+            ChooseXValueCost chooseXValueCost,
+            DelveCost delveCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -151,7 +154,7 @@ public class AdditionalSpellCostService {
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
-                    || repeatableManaCost != null || chooseXValueCost != null;
+                    || repeatableManaCost != null || chooseXValueCost != null || delveCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -237,12 +240,14 @@ public class AdditionalSpellCostService {
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
         ChooseXValueCost chooseXValueCost = removeFirst(effects, ChooseXValueCost.class);
+        DelveCost delveCost = removeFirst(effects, DelveCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
                 discardCost, discardRandomCost, discardOrPay,
-                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost, chooseXValueCost);
+                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
+                chooseXValueCost, delveCost);
     }
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
@@ -493,6 +498,9 @@ public class AdditionalSpellCostService {
         if (costs.exileNCardsCost() != null) {
             validateExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(),
                     selection.exileGraveyardCardIndices(), -1);
+        }
+        if (costs.delveCost() != null) {
+            validateDelveCost(gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
         }
         if (costs.discardCost() != null) {
             validateDiscardCost(gameData, player, card, costs.discardCost(),
@@ -964,6 +972,39 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Must exile a " + typeName + " card from your graveyard");
             }
         }
+    }
+
+    /** Validates the selected cards for a delve cost; the spell's generic mana limit is supplied by the cast path. */
+    public void validateDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+                                  List<Integer> exileGraveyardCardIndices) {
+        List<Integer> indices = exileGraveyardCardIndices != null ? exileGraveyardCardIndices : List.of();
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(player.getId(), List.of());
+        if (indices.stream().distinct().count() != indices.size()) {
+            throw new IllegalStateException("Duplicate graveyard card indices for " + card.getName());
+        }
+        for (int idx : indices) {
+            if (idx < 0 || idx >= graveyard.size()) {
+                throw new IllegalStateException("Invalid graveyard card index: " + idx);
+            }
+        }
+    }
+
+    /** Validates delve after the cast path determines how much generic mana the spell needs. */
+    public void validateDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+                                  List<Integer> exileGraveyardCardIndices, int maximumReduction) {
+        validateDelveCost(gameData, player, card, cost, exileGraveyardCardIndices);
+        int selectedCount = exileGraveyardCardIndices == null ? 0 : exileGraveyardCardIndices.size();
+        if (selectedCount > maximumReduction) {
+            throw new IllegalStateException("Cannot exile more cards for delve than the spell's generic cost");
+        }
+    }
+
+    /** Returns the number of graveyard cards selected for delve. */
+    public int delveReduction(ExtractedCosts costs, List<Integer> exileGraveyardCardIndices) {
+        if (costs.delveCost() == null || exileGraveyardCardIndices == null) {
+            return 0;
+        }
+        return exileGraveyardCardIndices.size();
     }
 
     /**

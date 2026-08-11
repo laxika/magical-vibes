@@ -87,6 +87,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Meld", Keyword.MELD);
         KEYWORD_MAP.put("Training", Keyword.TRAINING);
         KEYWORD_MAP.put("Disturb", Keyword.DISTURB);
+        KEYWORD_MAP.put("Morph", Keyword.MORPH);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
@@ -102,6 +103,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Buyback", Keyword.BUYBACK);
         KEYWORD_MAP.put("Evolve", Keyword.EVOLVE);
         KEYWORD_MAP.put("Offering", Keyword.OFFERING);
+        KEYWORD_MAP.put("Delve", Keyword.DELVE);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

@@ -756,6 +756,22 @@
     </div>
   }
 
+  @if (choice.revealingPermanent) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>Face-down creature controlled by {{ choice.revealedPermanentPlayerName }}</h2>
+        @if (choice.revealedPermanentCard) {
+          <div class="reveal-hand-cards">
+            <app-card-display [card]="choice.revealedPermanentCard"
+              (mouseenter)="onCardHover(choice.revealedPermanentCard)"
+              (mouseleave)="onCardHoverEnd()" />
+          </div>
+        }
+        <button class="btn-keep" (click)="choice.closeRevealPermanent()">Close</button>
+      </div>
+    </div>
+  }
+
   @if (game()?.status === GameStatus.WAITING) {
     <div class="players-area">
       <div class="game-title">{{ game()?.gameName }}</div>

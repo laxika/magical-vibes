@@ -9,6 +9,7 @@ package com.github.laxika.magicalvibes.model.filter;
 public sealed interface PermanentPredicate permits
         PermanentAllOfPredicate,
         PermanentAnyOfPredicate,
+        PermanentAttachedToCreaturePredicate,
         PermanentAttachedToSourceControllerPredicate,
         PermanentAttackedOrBlockedThisTurnPredicate,
         PermanentAttackedDuringControllersLastTurnPredicate,
@@ -34,6 +35,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasNonManaActivatedAbilityPredicate,
         PermanentHasCountersPredicate,
         PermanentHasCumulativeUpkeepPredicate,
+        PermanentHasGreatestPowerAmongControllerCreaturesPredicate,
         PermanentHasGreatestManaValueAmongAllCreaturesPredicate,
         PermanentHasGreatestPowerAmongAllCreaturesPredicate,
         PermanentHasGreatestPowerAmongControlledCreaturesPredicate,
@@ -65,6 +67,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsCreaturePredicate,
         PermanentIsEnchantedPredicate,
         PermanentIsEnchantmentPredicate,
+        PermanentIsFaceDownPredicate,
         PermanentIsHistoricPredicate,
         PermanentIsHostOfSourceAuraPredicate,
         PermanentIsKindredPredicate,

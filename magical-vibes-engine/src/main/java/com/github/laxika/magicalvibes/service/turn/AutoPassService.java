@@ -105,6 +105,10 @@ public class AutoPassService {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
+            triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
+        }
+
         // Process any pending multi-target triggers (ETB copies / ON_SELF_CAST up-to-N, e.g. Elder Deep-Fiend)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);

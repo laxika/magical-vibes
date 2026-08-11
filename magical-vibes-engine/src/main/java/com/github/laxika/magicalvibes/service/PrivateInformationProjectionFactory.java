@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage;
+import com.github.laxika.magicalvibes.networking.message.RevealPermanentMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class PrivateInformationProjectionFactory {
         return switch (reveal.zone()) {
             case HAND -> new RevealHandMessage(cards, playerName);
             case LIBRARY -> new RevealLibraryTopMessage(cards, playerName);
+            case PERMANENT -> new RevealPermanentMessage(cards.getFirst(), playerName);
         };
     }
 

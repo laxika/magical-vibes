@@ -209,7 +209,7 @@ public class CounterSupport {
         return gained;
     }
 
-    public void counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
+    public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -217,7 +217,7 @@ public class CounterSupport {
         if (!target.isCopy()) {
             // Guile replaces the whole "counter" event: exile and offer a free play.
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
-                return;
+                return false;
             }
             exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
         }
@@ -226,6 +226,7 @@ public class CounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        return !target.isCopy();
     }
 
     /**

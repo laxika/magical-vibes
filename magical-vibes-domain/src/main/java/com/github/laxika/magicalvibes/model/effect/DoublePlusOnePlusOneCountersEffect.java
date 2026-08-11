@@ -11,5 +11,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * (so two copies multiply by four, three by eight, and so on). Counting the markers — rather than
  * granting a per-creature flag — lets multiple copies stack correctly without looping.
  */
-public record DoublePlusOnePlusOneCountersEffect() implements CardEffect {
+public record DoublePlusOnePlusOneCountersEffect() implements PlusOnePlusOneCountersReplacementEffect {
+
+    @Override
+    public int replace(int count) {
+        return count > 0 ? count * 2 : count;
+    }
 }

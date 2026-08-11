@@ -432,9 +432,12 @@ public class GameActionAvailabilityService {
         List<ManaCost> candidateCosts = castableCosts(card);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
                 + additionalGenericCost;
+        int delveReduction = castingCostService.maximumDelveReduction(
+                gameData, playerId, card, 0, additionalCost);
+        int effectiveAdditionalCost = additionalCost - delveReduction;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
-                && candidateCosts.stream().anyMatch(c -> c.canPayAsGeneric(pool, 0, additionalCost))) {
+                && candidateCosts.stream().anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost))) {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
@@ -459,12 +462,12 @@ public class GameActionAvailabilityService {
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
         for (ManaCost cost : candidateCosts) {
             boolean canAfford = hasRestricted
-                    ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
+                    ? cost.canPay(pool, effectiveAdditionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                     instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                     creatureSpellOnly, false, legendarySpellOnly)
-                    : cost.canPay(pool, additionalCost);
+                    : cost.canPay(pool, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
-                canAfford = cost.canPayCreatureOnly(pool, additionalCost);
+                canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }
             if (canAfford) {
                 return true;
@@ -485,7 +488,7 @@ public class GameActionAvailabilityService {
             }
             int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
             int totalAvailable = pool.getTotal() + convokeCreatures;
-            if (totalAvailable >= cost.getManaValue() + additionalCost) {
+            if (totalAvailable >= cost.getManaValue() + effectiveAdditionalCost) {
                 return true;
             }
         }

@@ -49,6 +49,7 @@ public enum MessageType {
     GRAVEYARD_UPDATED,
     REVEAL_HAND,
     REVEAL_LIBRARY_TOP,
+    REVEAL_PERMANENT,
     GAME_STATE,
     ERROR,
     CREATE_DRAFT,

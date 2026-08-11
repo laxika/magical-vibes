@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -189,6 +190,10 @@ public class Card {
     private String watermark;
     private Card backFaceCard;
     private List<CastingOption> castingOptions = new ArrayList<>();
+    /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
+    private String morphCost;
+    /** Optional card-reveal component of a morph face-up cost. */
+    private RevealCardsFromHandCastingCost morphRevealCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -307,6 +312,8 @@ public class Card {
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
         this.castingOptions = new ArrayList<>(source.castingOptions);
+        this.morphCost = source.morphCost;
+        this.morphRevealCost = source.morphRevealCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -714,6 +721,32 @@ public class Card {
     public void addCastingOption(CastingOption option) {
         assertMutable();
         castingOptions.add(option);
+    }
+
+    /** Adds morph and its standard face-down alternate casting cost. */
+    public void addMorph(String morphCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphRevealCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph with a card that must be revealed from hand as part of the face-down cost. */
+    public void addMorph(String morphCost, CardPredicate revealPredicate, String revealLabel) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphRevealCost = null;
+        addCastingOption(new AlternateHandCast(List.of(
+                new ManaCastingCost("{3}"),
+                new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
+    }
+
+    /** Adds morph whose face-up cost is revealing a matching card from hand. */
+    public void addMorphWithRevealCost(CardPredicate revealPredicate, String revealLabel) {
+        assertMutable();
+        this.morphCost = "{0}";
+        this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
     public <T extends CastingOption> Optional<T> getCastingOption(Class<T> type) {

@@ -74,6 +74,12 @@ final class RecordingCharacteristicState extends CharacteristicState {
     }
 
     @Override
+    public void overrideCardTypes(Collection<CardType> replacement) {
+        log("overrideCardTypes:" + sorted(replacement));
+        super.overrideCardTypes(replacement);
+    }
+
+    @Override
     public void addSupertype(CardSupertype supertype) {
         log("addSupertype:" + supertype);
         super.addSupertype(supertype);

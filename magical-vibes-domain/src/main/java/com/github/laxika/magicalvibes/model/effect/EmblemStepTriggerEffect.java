@@ -4,7 +4,8 @@ import java.util.List;
 
 /**
  * Marker payload for an emblem that reads "At the beginning of your {step}, …" (Chandra, Roaring
- * Flame's upkeep emblem, Ajani, Adversary of Tyrants' end-step emblem). It is never resolved
+ * Flame's upkeep emblem, Sarkhan, the Dragonspeaker's draw-step emblem, Ajani, Adversary of
+ * Tyrants' end-step emblem). It is never resolved
  * directly: it lives inside a {@link CreateEmblemEffect}'s static-effect list, and
  * {@code StepTriggerService} scans the emblems controlled by the active player at the beginning of
  * that step and puts {@link #effects} onto the stack as a triggered ability of the emblem.

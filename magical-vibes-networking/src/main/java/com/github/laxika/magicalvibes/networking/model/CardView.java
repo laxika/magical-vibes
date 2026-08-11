@@ -67,6 +67,7 @@ public record CardView(
         int alternateCostExileHandCount,
         String alternateCostExileHandLabel,
         boolean alternateCostDiscardsHandCard,
+        boolean alternateCostRevealsHandCard,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
         boolean transformable,

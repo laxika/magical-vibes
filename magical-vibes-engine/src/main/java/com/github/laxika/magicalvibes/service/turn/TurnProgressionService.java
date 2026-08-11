@@ -174,6 +174,10 @@ public class TurnProgressionService {
 
             stepTriggerService.processPendingExileReturns(gameData, next);
 
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+
             if (next == TurnStep.UPKEEP) {
                 stepTriggerService.handleUpkeepTriggers(gameData);
             } else if (next == TurnStep.PRECOMBAT_MAIN) {
@@ -627,6 +631,14 @@ public class TurnProgressionService {
             return;
         }
         autoPassService.resolveAutoPass(gameData, this::advanceStep);
+    }
+
+    public void completePendingExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
+                                                        PermanentChoiceContext.ExileReturnAttackTarget context) {
+        stepTriggerService.resolvePendingExileReturnAttackTarget(gameData, attackTargetId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            combatService.handleDeclareAttackersStep(gameData);
+        }
     }
 
     public void applyCleanupResets(GameData gameData) {

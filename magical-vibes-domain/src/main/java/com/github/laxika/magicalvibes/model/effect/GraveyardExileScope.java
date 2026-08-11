@@ -24,6 +24,9 @@ public enum GraveyardExileScope {
     /** Exiles the ENTIRE graveyard of a TARGET player. */
     TARGET_PLAYER_ENTIRE,
 
+    /** Exiles the entire graveyard of the creature's controller supplied by a delayed death trigger. */
+    DYING_CREATURE_CONTROLLER,
+
     /**
      * Exiles ALL cards matching the filter from a TARGET player's graveyard (Crypt Incursion).
      * A {@code null} filter exiles the whole graveyard. {@code count} is unused; the number of

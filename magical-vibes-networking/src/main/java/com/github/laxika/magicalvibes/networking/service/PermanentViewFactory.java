@@ -165,6 +165,7 @@ public class PermanentViewFactory {
                 .alternateCostManaCost(null)
                 .alternateCostExileHandCount(0)
                 .alternateCostExileHandLabel(null)
+                .alternateCostRevealsHandCard(false)
                 .graveyardActivatedAbilities(List.of())
                 .handActivatedAbilities(List.of())
                 .transformable(false)

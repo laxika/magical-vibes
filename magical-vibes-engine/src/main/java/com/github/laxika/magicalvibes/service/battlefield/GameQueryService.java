@@ -72,8 +72,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
@@ -1632,16 +1632,14 @@ public class GameQueryService {
     }
 
     /**
-     * Applies Corpsejack Menace-style replacement effects that double +1/+1 counters put on a
-     * creature its controller controls: "If one or more +1/+1 counters would be put on a creature
-     * you control, twice that many +1/+1 counters are put on it instead." For each permanent
-     * carrying {@link DoublePlusOnePlusOneCountersEffect} that {@code controllerId} controls, the
-     * count is multiplied by two (two copies → ×4, three → ×8, …). A {@code count} of zero or fewer
-     * is returned unchanged — no counters "would be put", so the replacement never applies. Callers
-     * that already know the recipient is a creature (e.g. as-enters) use this overload; the
-     * permanent overload also rejects non-creatures.
+     * Applies replacement effects that modify +1/+1 counters put on a creature its controller
+     * controls. Replacements are applied in battlefield order, so multiple copies of the same
+     * effect stack and mixed replacement effects have a deterministic order. A {@code count} of
+     * zero or fewer is returned unchanged — no counters "would be put", so no replacement applies.
+     * Callers that already know the recipient is a creature (e.g. as-enters) use the UUID overload;
+     * the permanent overload also rejects non-creatures.
      */
-    public int doublePlusOnePlusOneCounters(GameData gameData, UUID controllerId, int count) {
+    public int replacePlusOnePlusOneCounters(GameData gameData, UUID controllerId, int count) {
         if (count <= 0 || controllerId == null) {
             return count;
         }
@@ -1649,27 +1647,35 @@ public class GameQueryService {
         if (battlefield == null) {
             return count;
         }
-        long doublers = battlefield.stream()
-                .filter(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(DoublePlusOnePlusOneCountersEffect.class::isInstance))
-                .count();
+        List<PlusOnePlusOneCountersReplacementEffect> replacements = battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(PlusOnePlusOneCountersReplacementEffect.class::isInstance)
+                .map(PlusOnePlusOneCountersReplacementEffect.class::cast)
+                .toList();
         int result = count;
-        for (int i = 0; i < doublers; i++) {
-            result *= 2;
+        for (PlusOnePlusOneCountersReplacementEffect replacement : replacements) {
+            result = replacement.replace(result);
         }
         return result;
     }
 
     /**
-     * Convenience overload of {@link #doublePlusOnePlusOneCounters(GameData, UUID, int)} that
+     * Compatibility entry point used by existing +1/+1 counter placement paths.
+     */
+    public int doublePlusOnePlusOneCounters(GameData gameData, UUID controllerId, int count) {
+        return replacePlusOnePlusOneCounters(gameData, controllerId, count);
+    }
+
+    /**
+     * Convenience overload of {@link #replacePlusOnePlusOneCounters(GameData, UUID, int)} that
      * resolves the affected permanent's controller from the battlefield. Non-creatures are
-     * unchanged — Corpsejack only replaces counters put on creatures.
+     * unchanged because these replacement effects apply only to creatures.
      */
     public int doublePlusOnePlusOneCounters(GameData gameData, Permanent permanent, int count) {
         if (permanent == null || !isCreature(gameData, permanent)) {
             return count;
         }
-        return doublePlusOnePlusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
+        return replacePlusOnePlusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
     }
 
     /**
@@ -2508,6 +2514,10 @@ public class GameQueryService {
             Set<CardSupertype> layeredGrantedSupertypes = new HashSet<>(state.getSupertypes());
             layeredGrantedSupertypes.removeAll(target.getCard().getSupertypes());
             accumulator.getGrantedSupertypes().addAll(layeredGrantedSupertypes);
+            if (state.isCardTypesOverridden()) {
+                accumulator.getGrantedCardTypes().addAll(state.getCardTypes());
+                accumulator.setCardTypeOverriding(true);
+            }
         }
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {

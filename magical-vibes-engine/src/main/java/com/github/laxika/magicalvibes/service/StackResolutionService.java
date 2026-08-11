@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -249,6 +250,9 @@ public class StackResolutionService {
                                               boolean bestowAsAura) {
         Permanent perm = new Permanent(entry.getBestowOriginalCard() != null
                 ? entry.getBestowOriginalCard() : card);
+        if (entry.isCastFaceDown()) {
+            perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        }
         perm.setCastFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
@@ -323,14 +327,14 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+        if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
                 entry.getXValue())) {
             return;
         }
 
         // "As enters" card name choice (e.g. Meddling Mage) — name must be chosen BEFORE the
         // permanent enters the battlefield (MTG Rule 614.1c)
-        if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+        if (!entry.isCastFaceDown() && beginChooseCardNameOnEnter(gameData, controllerId, card)) {
             return;
         }
 
@@ -359,7 +363,9 @@ public class StackResolutionService {
         Card enteredCard = perm.getCard();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+        if (perm.isFaceDown()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " puts a card onto the battlefield face down."));
+        } else if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters", playerName));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
@@ -371,9 +377,12 @@ public class StackResolutionService {
 
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
-        handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
-
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        if (!perm.isFaceDown()) {
+            handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        } else {
+            battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
+        }
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 

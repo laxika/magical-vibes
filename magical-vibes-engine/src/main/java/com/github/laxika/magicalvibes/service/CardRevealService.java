@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -60,6 +61,17 @@ public class CardRevealService {
         }
         revealToAllPlayers(
                 gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, hand);
+    }
+
+    public void lookAtFaceDownPermanent(GameData gameData, UUID viewerId, Permanent permanent) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        String viewerName = gameData.playerIdToName.get(viewerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        gameLogService.append(gameData,
+                GameLog.text(viewerName + " looks at a face-down creature controlled by " + controllerName + "."));
+        revealToPlayer(gameData, controllerId, GameEventFact.RevealZone.PERMANENT,
+                List.of(permanent.getCard()), viewerId);
     }
 
     public void revealToPlayer(

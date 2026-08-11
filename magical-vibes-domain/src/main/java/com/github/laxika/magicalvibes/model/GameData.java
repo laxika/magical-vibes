@@ -631,6 +631,9 @@ public class GameData {
     /** Global triggered abilities registered by resolving spells until the current turn ends. */
     public final List<TemporaryGlobalTriggeredAbility> temporaryGlobalTriggeredAbilities =
             Collections.synchronizedList(new ArrayList<>());
+    /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
+    public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
+            Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -930,7 +933,8 @@ public class GameData {
     public final Set<UUID> exilePlayAnyManaTypeWhileExiled = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that may be played from exile without paying their mana cost (e.g. Oracle's Vault's
      *  second ability). Complements {@link #exilePlayPermissions} — the card must also hold a play
-     *  permission — and is cleared during the cleanup step. */
+     *  permission. Temporary entries are listed in {@link #exilePlayPermissionsExpireEndOfTurn};
+     *  entries without an expiry remain valid for as long as the card remains exiled. */
     public final Set<UUID> exilePlayWithoutPayingManaCost = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
      *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
@@ -2319,6 +2323,12 @@ public class GameData {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
+            exilePlayPermissions.remove(cardId);
+            exilePlayPermissionsExpireEndOfTurn.remove(cardId);
+            exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            exilePlayAnyManaType.remove(cardId);
+            exilePlayWithoutPayingManaCost.remove(cardId);
+            exileInsteadOfGraveyard.remove(cardId);
         }
         return removed;
     }
@@ -2678,6 +2688,7 @@ public class GameData {
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
+        copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);

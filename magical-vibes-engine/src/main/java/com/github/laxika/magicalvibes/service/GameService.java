@@ -8,15 +8,22 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -25,12 +32,17 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,7 +53,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class GameService {
 
     private final GameQueryService gameQueryService;
@@ -56,6 +67,56 @@ public class GameService {
     private final GameOutcomeService gameOutcomeService;
     private final GameMutationCoordinator mutationCoordinator;
     private final ManaChoiceNarrowingService manaChoiceNarrowingService;
+    private final CardRevealService cardRevealService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
+    private final PermanentCounterSupport permanentCounterSupport;
+    private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    public GameService(GameQueryService gameQueryService, GameLogService gameLogService,
+                       CombatService combatService, TurnProgressionService turnProgressionService,
+                       InteractionHandlerRegistry interactionHandlerRegistry,
+                       SpellCastingService spellCastingService, StackResolutionService stackResolutionService,
+                       AbilityActivationService abilityActivationService, MulliganService mulliganService,
+                       GameOutcomeService gameOutcomeService, GameMutationCoordinator mutationCoordinator,
+                       ManaChoiceNarrowingService manaChoiceNarrowingService,
+                       CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
+                       ConditionEvaluationService conditionEvaluationService,
+                       PermanentCounterSupport permanentCounterSupport,
+                       TriggerCollectionService triggerCollectionService) {
+        this.gameQueryService = gameQueryService;
+        this.gameLogService = gameLogService;
+        this.combatService = combatService;
+        this.turnProgressionService = turnProgressionService;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.spellCastingService = spellCastingService;
+        this.stackResolutionService = stackResolutionService;
+        this.abilityActivationService = abilityActivationService;
+        this.mulliganService = mulliganService;
+        this.gameOutcomeService = gameOutcomeService;
+        this.mutationCoordinator = mutationCoordinator;
+        this.manaChoiceNarrowingService = manaChoiceNarrowingService;
+        this.cardRevealService = cardRevealService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
+        this.permanentCounterSupport = permanentCounterSupport;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    /** Compatibility constructor for focused service tests that do not exercise morph reveals. */
+    public GameService(GameQueryService gameQueryService, GameLogService gameLogService,
+                       CombatService combatService, TurnProgressionService turnProgressionService,
+                       InteractionHandlerRegistry interactionHandlerRegistry,
+                       SpellCastingService spellCastingService, StackResolutionService stackResolutionService,
+                       AbilityActivationService abilityActivationService, MulliganService mulliganService,
+                       GameOutcomeService gameOutcomeService, GameMutationCoordinator mutationCoordinator,
+                       ManaChoiceNarrowingService manaChoiceNarrowingService) {
+        this(gameQueryService, gameLogService, combatService, turnProgressionService,
+                interactionHandlerRegistry, spellCastingService, stackResolutionService,
+                abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
+                manaChoiceNarrowingService, null, null, null, null, null);
+    }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
         if (mutationCoordinator.isInAction(gameData)) {
@@ -660,6 +721,145 @@ public class GameService {
             spellCastingService.playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId,
                     damageAssignments, targetIds != null ? targetIds : List.of());
         }
+    }
+
+    public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        playCardWithMorph(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, null);
+    }
+
+    public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                                  Integer revealedHandCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithMorph(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds, revealedHandCardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithMorph(gameData, player, cardIndex, xValue, targetId,
+                    damageAssignments, targetIds != null ? targetIds : List.of(), revealedHandCardIndex);
+        }
+    }
+
+    public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData, () -> turnFaceUp(gameData, actionPlayer, permanentIndex, null))) return;
+        turnFaceUp(gameData, player, permanentIndex, null);
+    }
+
+    public void turnFaceUp(GameData gameData, Player player, int permanentIndex, Integer revealedHandCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> turnFaceUp(gameData, actionPlayer, permanentIndex, revealedHandCardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            Permanent permanent = battlefield.get(permanentIndex);
+            if (!permanent.isFaceDown()) {
+                throw new IllegalStateException("Permanent is not face down");
+            }
+            String morphCost = permanent.getCard().getMorphCost();
+            if (morphCost == null || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+                throw new IllegalStateException("Permanent does not have morph");
+            }
+            RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
+            if (morphRevealCost != null) {
+                List<Card> hand = gameData.playerHands.get(player.getId());
+                if (revealedHandCardIndex == null || hand == null
+                        || revealedHandCardIndex < 0 || revealedHandCardIndex >= hand.size()) {
+                    throw new IllegalStateException("Must reveal " + morphRevealLabel(morphRevealCost)
+                            + " from your hand to turn the permanent face up");
+                }
+                Card toReveal = hand.get(revealedHandCardIndex);
+                if (morphRevealCost.predicate() != null
+                        && !predicateEvaluationService.matchesCardPredicate(toReveal,
+                        morphRevealCost.predicate(), toReveal.getId())) {
+                    throw new IllegalStateException("Revealed card must be " + morphRevealLabel(morphRevealCost));
+                }
+                cardRevealService.revealToAllPlayers(gameData, player.getId(),
+                        GameEventFact.RevealZone.HAND, List.of(toReveal));
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
+            } else {
+                ManaCost cost = new ManaCost(morphCost);
+                ManaPool pool = gameData.playerManaPools.get(player.getId());
+                if (pool == null || !cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                }
+                cost.pay(pool);
+            }
+            permanent.turnFaceUp();
+            List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
+                    .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                    .filter(TurnFaceUpReplacementEffect.class::isInstance)
+                    .map(TurnFaceUpReplacementEffect.class::cast)
+                    .toList();
+            for (TurnFaceUpReplacementEffect replacement : replacements) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(
+                        gameData, null, permanent, replacement.counterCount());
+            }
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is turned face up."));
+
+            if (triggerCollectionService != null) {
+                triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(
+                        gameData, player.getId(), permanent);
+            }
+
+            UUID controllerId = player.getId();
+            List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                    .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
+                    .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
+                    .toList();
+            if (!effects.isEmpty()) {
+                boolean targetsSpell = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+                boolean targetsPlayer = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                boolean targetsPermanent = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                if (targetsSpell) {
+                    StackEntryPredicate spellFilter = null;
+                    boolean includeAbilities = false;
+                    if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
+                        spellFilter = filter.predicate();
+                    }
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                            permanent.getCard(), player.getId(), effects, spellFilter, includeAbilities,
+                            permanent.getId()));
+                } else if (targetsPlayer || targetsPermanent) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            permanent.getCard(), player.getId(), effects,
+                            !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
+                } else {
+                    gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                            com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                            permanent.getCard(), player.getId(), permanent.getCard().getName() + "'s ability",
+                            effects, permanent.getId(), List.of()));
+                }
+            }
+            turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private boolean turnedFaceUpTriggerConditionIsMet(GameData gameData, Permanent source, UUID controllerId,
+                                                      CardEffect effect) {
+        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()
+                || conditionEvaluationService == null) {
+            return true;
+        }
+        return conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forPermanent(source, controllerId));
+    }
+
+    private String morphRevealLabel(RevealCardsFromHandCastingCost cost) {
+        return cost.label() != null ? cost.label() + " card" : "a card";
     }
 
     /** Casts a card for its overload cost (CR 702.96a). Overloaded spells never take targets (CR 702.96b). */

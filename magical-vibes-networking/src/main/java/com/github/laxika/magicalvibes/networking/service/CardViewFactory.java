@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -116,10 +117,13 @@ public class CardViewFactory {
         int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
         int alternateCostReturnCount = altCastOpt.flatMap(a -> a.getCost(ReturnPermanentsCost.class)).map(ReturnPermanentsCost::count).orElse(0);
         String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
-        int alternateCostExileHandCount = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
-                .map(ExileCardsFromHandCastingCost::count).orElse(0);
-        String alternateCostExileHandLabel = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class))
-                .map(ExileCardsFromHandCastingCost::label).orElse(null);
+        var exileHandCost = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class));
+        var revealHandCost = altCastOpt.flatMap(a -> a.getCost(RevealCardsFromHandCastingCost.class));
+        int alternateCostExileHandCount = exileHandCost.map(ExileCardsFromHandCastingCost::count)
+                .orElse(revealHandCost.isPresent() ? 1 : 0);
+        String alternateCostExileHandLabel = exileHandCost.map(ExileCardsFromHandCastingCost::label)
+                .orElseGet(() -> revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
+        boolean alternateCostRevealsHandCard = revealHandCost.isPresent();
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -182,6 +186,7 @@ public class CardViewFactory {
                 alternateCostExileHandCount,
                 alternateCostExileHandLabel,
                 false,
+                alternateCostRevealsHandCard,
                 graveyardAbilityViews,
                 handAbilityViews,
                 card.getBackFaceCard() != null,

@@ -91,8 +91,11 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         switch (e.scope()) {
             case NEXT_DAMAGE_TO_CONTROLLER -> {
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
-                        controllerId, e.gainLife(), e.exileFromLibrary());
-                String rider = e.gainLife()
+                        controllerId, e.gainLife(), e.exileFromLibrary(),
+                        e.damageSourceController() ? entry.getCard() : null);
+                String rider = e.damageSourceController()
+                        ? " If damage is prevented this way, this spell deals that much damage to that source's controller."
+                        : e.gainLife()
                         ? " and gain that much life."
                         : e.exileFromLibrary()
                                 ? " and exile that many cards from the top of your library."

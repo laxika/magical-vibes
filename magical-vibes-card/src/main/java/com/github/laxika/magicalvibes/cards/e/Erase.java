@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "M13", collectorNumber = "13")
+@CardRegistration(set = "KTK", collectorNumber = "9")
 public class Erase extends Card {
 
     public Erase() {

@@ -143,6 +143,32 @@ class ExileGraveyardCardsEffectHandlerTest {
     }
 
     @Nested
+    @DisplayName("DYING_CREATURE_CONTROLLER — delayed death trigger context")
+    class DyingCreatureController {
+
+        @Test
+        @DisplayName("Exiles the dying creature controller's entire graveyard")
+        void exilesDyingCreatureControllersGraveyard() {
+            gd.playerGraveyards.get(player2Id).addAll(List.of(
+                    createCard("Grizzly Bears"), createCard("Shock")));
+
+            ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(
+                    GraveyardExileScope.DYING_CREATURE_CONTROLLER);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Burn Away"),
+                    player1Id, "Burn Away triggers", List.of(effect), 0,
+                    player2Id, null);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
+            assertThat(gd.getPlayerExiledCards(player2Id))
+                    .extracting(Card::getName)
+                    .containsExactlyInAnyOrder("Grizzly Bears", "Shock");
+            verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
+        }
+    }
+
+    @Nested
     @DisplayName("EACH_OPPONENT_KEEP — each opponent keeps N cards, exiles the rest")
     class EachOpponentKeep {
 

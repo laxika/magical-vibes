@@ -142,6 +142,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostSelectedIds.set([]);
     // Graveyard targeting
@@ -307,6 +308,7 @@ export class TargetingChoiceService {
   alternateCostManaCost = '';
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
+  alternateCostRevealsHandCard = false;
   alternateCostDiscardsHandCard = false;
   alternateCostRequiresTarget = false;
   alternateCostSelectedIds = signal<string[]>([]);
@@ -454,6 +456,7 @@ export class TargetingChoiceService {
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
+        this.alternateCostRevealsHandCard = card.alternateCostRevealsHandCard ?? false;
         this.alternateCostDiscardsHandCard = card.alternateCostDiscardsHandCard ?? false;
         this.alternateCostRequiresTarget = card.alternateCostRequiresTarget ?? false;
         return;
@@ -1045,6 +1048,9 @@ export class TargetingChoiceService {
       } else {
         msg.discardHandCardIndex = this.pendingAlternateExileHandIndex;
       }
+      if (this.gameSignal()?.hand?.[cardIndex]?.keywords?.includes('MORPH')) {
+        msg.morph = true;
+      }
       this.pendingAlternateExileHandIndex = null;
     }
     if (this.pendingPhyrexianLifeCount != null) {
@@ -1095,6 +1101,7 @@ export class TargetingChoiceService {
     const isZonePlay = msg.flashback || msg.fromExileCardId != null || msg.fromLibraryTop
         || msg.discardHandCardIndex != null
         || msg.sharedColorDiscardHandCardIndex != null
+        || msg.morph === true
         || (msg.alternateCostSacrificePermanentIds?.length ?? 0) > 0;
     if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
       return;
@@ -1878,7 +1885,8 @@ export class TargetingChoiceService {
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
-      alternateCostSacrificePermanentIds: []
+      alternateCostSacrificePermanentIds: [],
+      morph: this.gameSignal()?.hand?.[this.alternateCostCardIndex]?.keywords?.includes('MORPH') ?? false
     });
     this.resetAlternateCostState();
   }
@@ -1902,6 +1910,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
@@ -1954,6 +1963,7 @@ export class TargetingChoiceService {
     this.alternateCostManaCost = '';
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
+    this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);

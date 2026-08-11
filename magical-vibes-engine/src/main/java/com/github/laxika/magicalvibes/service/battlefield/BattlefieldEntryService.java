@@ -1352,6 +1352,15 @@ public class BattlefieldEntryService {
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, List.of());
     }
 
+    public void processFaceDownCreatureETBTriggers(GameData gameData, UUID controllerId, Card card) {
+        if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
+            log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
+            return;
+        }
+
+        processCreatureEntersTriggers(gameData, controllerId, card, 0, true);
+    }
+
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked, List<UUID> targetIds) {
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
@@ -1437,21 +1446,28 @@ public class BattlefieldEntryService {
             }
         }
 
+        processCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers, false);
+    }
+
+    private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
+                                               int extraWizardTriggers, boolean faceDown) {
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAllyEnchantmentEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        if (!faceDown) {
+            triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkAllyEnchantmentEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
-        if (card.hasType(CardType.LAND)) {
+        if (!faceDown && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
         }

@@ -122,6 +122,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         card, e.choosePredicate(), sourceCardId, gameData, controllerId))
                 .toList();
 
+        boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
         boolean anyNumber = chooseCount > 1 || randomBottom;
@@ -131,6 +132,12 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 for (Card card : topCards) {
                     gameData.addToExile(controllerId, card);
                 }
+            } else if (restToGraveyard) {
+                for (Card card : topCards) {
+                    gameData.playerGraveyards.get(controllerId).add(card);
+                }
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts all revealed cards into their graveyard."));
             } else if (randomBottom) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
@@ -144,7 +151,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     LibrarySearchParams.builder(controllerId, matchingCards)
                             .canFailToFind(true)
                             .sourceCards(topCards)
-                            .reorderRemainingToBottom(!remainingToExile)
+                            .reorderRemainingToBottom(!restToGraveyard && !remainingToExile)
+                            .restToGraveyard(restToGraveyard)
                             .restToExile(remainingToExile)
                             .shuffleAfterSelection(false)
                             .prompt("You may put one of these cards onto the battlefield.")
@@ -158,13 +166,16 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         int maxCount = Math.min(chooseCount, matchingCards.size());
         String prompt = remainingToExile
                 ? "Choose any number of eligible cards to put onto the battlefield. Exile the rest."
+                : restToGraveyard
+                ? "Choose any number of eligible cards to put onto the battlefield. The rest go into your graveyard."
                 : randomBottom
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library.";
         List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, topCards, cardIds, false, false,
-                !randomBottom && !remainingToExile, randomBottom, remainingToExile, 0, null,
+                controllerId, topCards, cardIds, restToGraveyard, false,
+                !restToGraveyard && !randomBottom && !remainingToExile,
+                randomBottom, remainingToExile, 0, null,
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 

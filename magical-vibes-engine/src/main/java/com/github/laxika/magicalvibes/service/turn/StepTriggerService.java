@@ -169,6 +169,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -2019,6 +2020,7 @@ public class StepTriggerService {
 
     private void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
 
         // Nafs Asp: "that player loses N life at the beginning of their next draw step unless they
         // pay {M} before that draw step." Delayed trigger keyed to the damaged player's own draw
@@ -2459,8 +2461,9 @@ public class StepTriggerService {
 
     /**
      * Returns exiled cards scheduled for the given step from exile to the battlefield
-     * under their owner's control. A return flagged {@code onlyOnControllersTurn} waits for a step of
-     * this kind on its controller's own turn ("at the beginning of <em>your</em> next upkeep").
+     * under their scheduled controller's control. A return flagged {@code onlyOnControllersTurn}
+     * waits for a step of this kind on that controller's own turn ("at the beginning of
+     * <em>your</em> next upkeep").
      */
     public void processPendingExileReturns(GameData gameData, TurnStep step) {
         List<PendingExileReturn> matching = gameData.drainDelayedActions(PendingExileReturn.class,
@@ -2470,50 +2473,115 @@ public class StepTriggerService {
             return;
         }
 
-        for (PendingExileReturn pending : matching) {
-            UUID controllerId = pending.controllerId();
-            List<Card> cards = new ArrayList<>();
-            cards.add(pending.card());
-            cards.addAll(pending.additionalCards());
+        processPendingExileReturns(gameData, matching);
+    }
 
-            List<Card> returningCards = cards.stream()
-                    .filter(card -> gameData.removeFromExile(card.getId()))
-                    .toList();
-            if (returningCards.isEmpty()) {
-                log.info("Game {} - delayed return skipped because its cards are no longer in exile", gameData.id);
+    public void resolvePendingExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
+                                                       PermanentChoiceContext.ExileReturnAttackTarget context) {
+        Set<UUID> validTargets = validExileReturnAttackTargets(gameData, context.pending().controllerId());
+        UUID resolvedTarget = validTargets.contains(attackTargetId)
+                ? attackTargetId
+                : validTargets.stream().findFirst().orElse(null);
+        returnPendingExileCard(gameData, context.pending(), resolvedTarget);
+        processPendingExileReturns(gameData, context.remaining());
+    }
+
+    private void processPendingExileReturns(GameData gameData, List<PendingExileReturn> pendingReturns) {
+        for (int i = 0; i < pendingReturns.size(); i++) {
+            PendingExileReturn pending = pendingReturns.get(i);
+            if (pending.returnAttacking()) {
+                Set<UUID> validTargets = validExileReturnAttackTargets(gameData, pending.controllerId());
+                if (validTargets.size() > 1) {
+                    List<PendingExileReturn> remaining = pendingReturns.subList(i + 1, pendingReturns.size());
+                    gameData.interaction.setPermanentChoiceContext(
+                            new PermanentChoiceContext.ExileReturnAttackTarget(pending, remaining));
+                    playerInputService.beginAnyTargetChoice(
+                            gameData,
+                            pending.controllerId(),
+                            validTargets.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
+                            validTargets.stream().filter(gameData.playerIds::contains).toList(),
+                            "Choose an opponent or opposing planeswalker for " + pending.card().getName()
+                                    + " to attack.");
+                    return;
+                }
+                returnPendingExileCard(gameData, pending, validTargets.stream().findFirst().orElse(null));
+            } else {
+                returnPendingExileCard(gameData, pending, null);
+            }
+        }
+    }
+
+    private Set<UUID> validExileReturnAttackTargets(GameData gameData, UUID controllerId) {
+        Set<UUID> validTargets = new LinkedHashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId)) {
                 continue;
             }
+            validTargets.add(playerId);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().hasType(CardType.PLANESWALKER)) {
+                    validTargets.add(permanent.getId());
+                }
+            }
+        }
+        return validTargets;
+    }
 
-            Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-            List<Permanent> simultaneouslyEntered = new ArrayList<>();
-            for (Card card : returningCards) {
-                Permanent perm = new Permanent(card);
-                if (pending.returnTapped()) {
-                    perm.tap();
-                }
-                if (pending.plusOnePlusOneCounters() > 0
-                        && !gameQueryService.cantHaveCounters(gameData, perm)) {
-                    int counters = gameQueryService.doublePlusOnePlusOneCounters(
-                            gameData, controllerId, pending.plusOnePlusOneCounters());
-                    if (counters > 0) {
-                        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
-                    }
-                }
-                perm.setEnteredFromExile(true);
-                if (pending.grantHaste()) {
-                    perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
-                }
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
-                simultaneouslyEntered.add(perm);
-                String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, " returns to the battlefield under " + playerName + "'s control."));
-                log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
+    private void returnPendingExileCard(GameData gameData, PendingExileReturn pending, UUID attackTargetId) {
+        UUID controllerId = pending.controllerId();
+
+        List<Card> cards = new ArrayList<>();
+        cards.add(pending.card());
+        cards.addAll(pending.additionalCards());
+
+        List<Card> returningCards = cards.stream()
+                .filter(card -> gameData.removeFromExile(card.getId()))
+                .toList();
+        if (returningCards.isEmpty()) {
+            log.info("Game {} - delayed return skipped because its cards are no longer in exile", gameData.id);
+            return;
+        }
+
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        for (Card card : returningCards) {
+            Permanent perm = new Permanent(card);
+            if (pending.returnTapped()) {
+                perm.tap();
             }
-            for (Card card : returningCards) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            if (pending.returnAttacking() && attackTargetId != null) {
+                perm.setAttacking(true);
+                perm.setAttackTarget(attackTargetId);
             }
+            if (pending.plusOnePlusOneCounters() > 0
+                    && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                int counters = gameQueryService.doublePlusOnePlusOneCounters(
+                        gameData, controllerId, pending.plusOnePlusOneCounters());
+                if (counters > 0) {
+                    perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
+                }
+            }
+            perm.setEnteredFromExile(true);
+            if (pending.grantHaste()) {
+                perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            }
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, perm, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(perm);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String attackText = pending.returnAttacking() && attackTargetId != null
+                    ? " tapped and attacking" : "";
+            gameLogService.append(gameData,
+                    GameLog.cardThen(card, " returns to the battlefield" + attackText + " under "
+                            + playerName + "'s control."));
+            log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
+        }
+        for (Card card : returningCards) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
     }
 

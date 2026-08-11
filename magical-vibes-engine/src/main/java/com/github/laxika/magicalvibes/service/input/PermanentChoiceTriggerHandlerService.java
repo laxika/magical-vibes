@@ -670,6 +670,12 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
+                                               PermanentChoiceContext.ExileReturnAttackTarget context) {
+        turnProgressionService.completePendingExileReturnAttackTarget(gameData, attackTargetId, context);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleEntersTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EntersTriggerTarget ett) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);

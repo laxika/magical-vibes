@@ -58,6 +58,7 @@ public enum Keyword {
     MELD,
     TRAINING,
     DISTURB,
+    MORPH,
     SKULK,
     SOULBOND,
     MIRACLE,
@@ -71,7 +72,8 @@ public enum Keyword {
     BUYBACK,
     EVOLVE,
     FUSE,
-    OFFERING;
+    OFFERING,
+    DELVE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

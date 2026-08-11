@@ -26,7 +26,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -414,6 +416,30 @@ class AbilityActivationServiceTest {
     @Nested
     @DisplayName("activateAbility — tap and mana costs")
     class ActivateAbilityTapAndMana {
+
+        @Test
+        @DisplayName("Exile X graveyard cards: insufficient cards are rejected before mana payment")
+        void exileXGraveyardCostChecksAvailabilityBeforePayment() {
+            Card card = createCreatureCard("Test Fiend", 4, 5);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{X}",
+                    List.of(new ExileXCardsFromGraveyardCost(), new DrawCardEffect()),
+                    "{X}, Exile X cards from your graveyard: Draw a card."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, 2, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("graveyard");
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(2);
+        }
 
         @Test
         @DisplayName("Tap ability: already tapped permanent throws")

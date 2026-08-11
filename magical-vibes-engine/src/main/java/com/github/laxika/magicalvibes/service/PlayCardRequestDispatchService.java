@@ -46,6 +46,11 @@ public class PlayCardRequestDispatchService {
             gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             return;
         }
+        if (Boolean.TRUE.equals(request.morph())) {
+            gameService.playCardWithMorph(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
+            return;
+        }
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
         // former per-field branches keyed on, so an empty list still means "cost not used".
         if (request.sharedColorDiscardHandCardIndex() != null) {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -857,19 +858,20 @@ public class TriggeredAbilityQueueService {
             boolean lifeGainedCap = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             for (CardEffect effect : pending.effects()) {
-                if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                CardEffect targetEffect = unwrapConditionalEffect(effect);
+                if (targetEffect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
                     lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                     scope = returnEffect.source();
                     break;
                 }
-                if (effect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
+                if (targetEffect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
                     // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
                     filter = new CardTypePredicate(CardType.CREATURE);
                     scope = GraveyardSearchScope.ALL_GRAVEYARDS;
                     break;
                 }
-                if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
+                if (targetEffect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
                     // Ink-Eyes, Servant of Oni: creature card from an opponent's graveyard, narrowed
                     // to the damaged player by the pending trigger's graveyardOwnerId.
                     filter = steal.filter();
@@ -941,6 +943,13 @@ public class TriggeredAbilityQueueService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    private CardEffect unwrapConditionalEffect(CardEffect effect) {
+        while (effect instanceof ConditionalEffect conditional) {
+            effect = conditional.wrapped();
+        }
+        return effect;
     }
 
     public void processNextExploreTriggerTarget(GameData gameData) {

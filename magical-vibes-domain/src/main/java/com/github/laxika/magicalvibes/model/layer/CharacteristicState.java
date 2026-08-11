@@ -36,6 +36,7 @@ public class CharacteristicState {
 
     private String name;
     private final Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
+    private boolean cardTypesOverridden;
     private final Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
     /** Ordered, as printed subtypes are (CR 205.3). */
     private final List<CardSubtype> subtypes = new ArrayList<>();
@@ -146,6 +147,7 @@ public class CharacteristicState {
     public CharacteristicState(CharacteristicState source) {
         this.name = source.name;
         this.cardTypes.addAll(source.cardTypes);
+        this.cardTypesOverridden = source.cardTypesOverridden;
         this.supertypes.addAll(source.supertypes);
         this.subtypes.addAll(source.subtypes);
         this.colors.addAll(source.colors);
@@ -186,6 +188,7 @@ public class CharacteristicState {
     public void overrideCardTypes(Collection<CardType> replacement) {
         cardTypes.clear();
         cardTypes.addAll(replacement);
+        this.cardTypesOverridden = true;
     }
 
     public void addSupertype(CardSupertype supertype) {

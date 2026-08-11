@@ -716,6 +716,13 @@ public class Permanent {
         this.faceDownCardTypes.addAll(cardTypes);
     }
 
+    public void turnFaceUp() {
+        this.faceDown = false;
+        this.faceDownPower = 0;
+        this.faceDownToughness = 0;
+        this.faceDownCardTypes.clear();
+    }
+
     public void setCard(Card card) {
         this.card = card;
     }

@@ -138,6 +138,9 @@ public sealed interface TriggerContext {
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
                            int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
 
+    /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
+    record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
+
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
     /**

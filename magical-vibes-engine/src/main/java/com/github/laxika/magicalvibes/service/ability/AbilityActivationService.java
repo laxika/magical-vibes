@@ -981,6 +981,18 @@ public class AbilityActivationService {
                     + exileNGraveyardCost.count() + ")");
         }
 
+        ExileXCardsFromGraveyardCost exileXGraveyardCost = ability.getEffects().stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .map(ExileXCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileXGraveyardCost != null
+                && matchingGraveyardExileCandidates(graveyard, exileXGraveyardCost.requiredType(), card).size() < xValue) {
+            String typeName = graveyardExileFilterLabel(exileXGraveyardCost.requiredType(), null);
+            throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
+                    + xValue + ")");
+        }
+
         // Mill-controller activation cost (Rot Farm Skeleton: "Mill four cards"). CR 701.17b — a
         // player can't pay a cost that mills more cards than their library holds.
         MillControllerCost graveyardMillCost = ability.getEffects().stream()
@@ -1031,6 +1043,10 @@ public class AbilityActivationService {
         // Pay the exile-N-cards-from-graveyard cost
         if (exileNGraveyardCost != null) {
             payGraveyardExileNCost(gameData, player, exileNGraveyardCost, card);
+        }
+
+        if (exileXGraveyardCost != null) {
+            payGraveyardExileXCost(gameData, player, exileXGraveyardCost, xValue, card);
         }
 
         // Pay the exile-this-card cost (Embalm / Eternalize). Exiling the source now — before the
@@ -2367,6 +2383,15 @@ public class AbilityActivationService {
             payGraveyardExileNCost(gameData, player, exileNGraveyardCostToPay, null);
         }
 
+        ExileXCardsFromGraveyardCost exileXGraveyardCostToPay = abilityEffects.stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .map(ExileXCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileXGraveyardCostToPay != null) {
+            payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null);
+        }
+
         abilityEffects.stream()
                 .filter(ExileTopCardOfGraveyardCost.class::isInstance)
                 .map(ExileTopCardOfGraveyardCost.class::cast)
@@ -3247,6 +3272,20 @@ public class AbilityActivationService {
                 String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
                 throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                         + exileNGraveyardCost.count() + ")");
+            }
+        }
+
+        ExileXCardsFromGraveyardCost exileXGraveyardCost = abilityEffects.stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .map(ExileXCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileXGraveyardCost != null) {
+            List<Card> gy = gameData.playerGraveyards.get(playerId);
+            if (matchingGraveyardExileCandidates(gy, exileXGraveyardCost.requiredType(), null).size() < xValue) {
+                String typeName = graveyardExileFilterLabel(exileXGraveyardCost.requiredType(), null);
+                throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
+                        + xValue + ")");
             }
         }
 
@@ -4192,6 +4231,35 @@ public class AbilityActivationService {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
+        for (Card exiled : toExile) {
+            exileService.exileCard(gameData, playerId, exiled);
+        }
+        String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
+        String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName
+                + "card" + (toExile.size() != 1 ? "s" : "") + " from graveyard as an activation cost.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
+                gameData.id, player.getUsername(), toExile.size(), typeName);
+    }
+
+    private void payGraveyardExileXCost(GameData gameData, Player player, ExileXCardsFromGraveyardCost cost,
+                                        int count, Card sourceCard) {
+        if (count < 0) {
+            throw new IllegalStateException("X value cannot be negative");
+        }
+        if (count == 0) {
+            return;
+        }
+
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost.requiredType(), sourceCard);
+        if (candidates.size() < count) {
+            throw new IllegalStateException("Not enough cards in graveyard to exile");
+        }
+        List<Card> toExile = new ArrayList<>(candidates.subList(0, count));
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {

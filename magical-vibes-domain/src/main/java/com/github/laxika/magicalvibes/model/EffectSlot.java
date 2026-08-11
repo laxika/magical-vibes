@@ -688,6 +688,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched back to the original front face. */
     ON_TRANSFORM_TO_FRONT_FACE,
+    /** Holds abilities and replacement effects that apply when a face-down permanent is turned face up. */
+    ON_TURNED_FACE_UP,
+    /** Fires when this creature or another creature its controller controls is turned face up. */
+    ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
     /** Triggers once per attacking creature whenever a creature attacks the controller of this
      *  permanent or a planeswalker they control. Fires on the defending player's permanents.
      *  The attacking creature's permanent ID is set as the (non-targeting) targetId on the stack

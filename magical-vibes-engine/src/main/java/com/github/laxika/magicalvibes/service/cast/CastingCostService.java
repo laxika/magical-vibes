@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
@@ -694,6 +695,18 @@ public class CastingCostService {
             if (matchingCount < exileHandCost.get().count()) return false;
         }
 
+        var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
+        if (revealHandCost.isPresent()) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null) return false;
+            boolean hasMatchingCard = hand.stream()
+                    .filter(c -> c != card)
+                    .anyMatch(c -> revealHandCost.get().predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                                    c, revealHandCost.get().predicate(), c.getId()));
+            if (!hasMatchingCard) return false;
+        }
+
         var exileGraveyardCost = altCast.getCost(ExileTopCardsFromGraveyardCastingCost.class);
         if (exileGraveyardCost.isPresent()) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -890,6 +903,23 @@ public class CastingCostService {
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         return additionalSpellCostService.satisfiable(gameData, playerId, card)
                 && canPayImposedSacrificeTax(gameData, playerId, card);
+    }
+
+    /** Returns the maximum generic mana reduction currently available from delve, if present. */
+    public int maximumDelveReduction(GameData gameData, UUID playerId, Card card,
+                                     int effectiveXValue, int additionalGenericCost) {
+        if (additionalSpellCostService.peek(card).delveCost() == null) {
+            return 0;
+        }
+        ManaCost manaCost = card.getParsedManaCost();
+        if (manaCost == null) {
+            return 0;
+        }
+        int genericDemand = manaCost.getGenericCost()
+                + (manaCost.hasX() ? effectiveXValue * manaCost.getXSymbolCount() : 0)
+                + additionalGenericCost;
+        int graveyardSize = gameData.playerGraveyards.getOrDefault(playerId, List.of()).size();
+        return Math.min(graveyardSize, Math.max(0, genericDemand));
     }
 
     /** @see AdditionalSpellCostService#validDiscardCostIndices */

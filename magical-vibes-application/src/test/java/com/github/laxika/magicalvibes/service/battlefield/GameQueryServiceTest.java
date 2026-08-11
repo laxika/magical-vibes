@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -1018,6 +1019,17 @@ class GameQueryServiceTest {
 
             assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
             assertThat(gqs.doublePlusOnePlusOneCounters(gd, player1Id, 3)).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("adds one per Hardened Scales marker")
+        void addsOnePerMarker() {
+            Card scales = createCreature("Hardened Scales", 0, 0, CardColor.GREEN);
+            scales.addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+            addPermanent(player1Id, scales);
+
+            assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
+            assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 3)).isEqualTo(4);
         }
 
         @Test

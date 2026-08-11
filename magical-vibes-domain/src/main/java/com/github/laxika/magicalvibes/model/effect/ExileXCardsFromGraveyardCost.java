@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 /**
  * Cost effect that requires exiling X cards from the controller's graveyard.
- * The number of exiled cards becomes the X value for the spell or activated ability.
- * The player chooses which cards to exile and how many (0 or more).
+ * For spells, the number of exiled cards becomes the spell's X value (e.g. Harvest Pyre),
+ * and the player chooses which cards to exile and how many. For activated abilities, the
+ * announced mana X determines how many cards are exiled.
  *
  * @param requiredType the card type every exiled card must have (null = any, e.g. Haunting Misery's creature cards)
  */

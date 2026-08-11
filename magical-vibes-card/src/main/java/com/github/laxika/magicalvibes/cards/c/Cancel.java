@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "RTR", collectorNumber = "31")
 @CardRegistration(set = "M19", collectorNumber = "48")
 @CardRegistration(set = "ZEN", collectorNumber = "44")
+@CardRegistration(set = "KTK", collectorNumber = "33")
 public class Cancel extends Card {
 
     public Cancel() {

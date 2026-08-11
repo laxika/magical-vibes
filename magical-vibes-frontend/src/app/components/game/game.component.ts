@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, StackEntry, RevealHandNotification, InteractionPromptNotification, RevealLibraryTopNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, GameLogEntry } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, StackEntry, RevealHandNotification, InteractionPromptNotification, RevealLibraryTopNotification, RevealPermanentNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, GameLogEntry } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
@@ -242,6 +242,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
     if (message.type === MessageType.REVEAL_LIBRARY_TOP) {
       this.choice.handleRevealLibraryTop(message as RevealLibraryTopNotification);
+    }
+
+    if (message.type === MessageType.REVEAL_PERMANENT) {
+      this.choice.handleRevealPermanent(message as RevealPermanentNotification);
     }
 
     if (message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {

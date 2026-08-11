@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "188")
+@CardRegistration(set = "KTK", collectorNumber = "135")
 public class HighlandGame extends Card {
 
     public HighlandGame() {

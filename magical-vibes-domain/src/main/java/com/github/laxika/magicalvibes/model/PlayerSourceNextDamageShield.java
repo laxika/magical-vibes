@@ -21,15 +21,26 @@ import java.util.UUID;
  *                 (Shadowbane: "If damage from a black source is prevented this way …")
  * @param exileFromLibrary exile that many cards from the top of the protected player's library
  *                 once the shield prevents damage (Bone Mask)
+ * @param damageSourceControllerCard card that deals prevented damage to the chosen source's controller
+ *                 (Deflecting Palm)
  */
 public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                            boolean coversControlledCreatures,
                                            boolean gainLifeOnlyFromBlackSource,
-                                           boolean exileFromLibrary) {
+                                           boolean exileFromLibrary,
+                                           Card damageSourceControllerCard) {
+
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                        boolean coversControlledCreatures,
+                                        boolean gainLifeOnlyFromBlackSource,
+                                        boolean exileFromLibrary) {
+        this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
+                exileFromLibrary, null);
+    }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false);
+        this(playerId, sourceId, gainLife, false, false, false, null);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */

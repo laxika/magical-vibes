@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedA
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -465,6 +467,32 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentAttachedToCreaturePredicate matches an attached permanent")
+        void attachedToCreaturePredicateMatchesAttachedPermanent() {
+            Permanent creature = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent attachment = addPermanent(player1Id, createArtifact("Dagger of the Worthy"));
+            attachment.setAttachedTo(creature.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, attachment,
+                    new PermanentAttachedToCreaturePredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentAttachedToCreaturePredicate rejects unattached permanents and non-creature hosts")
+        void attachedToCreaturePredicateRejectsInvalidAttachments() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+            Permanent unattached = addPermanent(player1Id, createArtifact("Dagger of the Worthy"));
+            Permanent attachedToLand = addPermanent(player1Id, createArtifact("Mox Emerald"));
+            attachedToLand.setAttachedTo(land.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, unattached,
+                    new PermanentAttachedToCreaturePredicate())).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, attachedToLand,
+                    new PermanentAttachedToCreaturePredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsLandPredicate matches land")
         void landPredicateMatches() {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
@@ -797,6 +825,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("greatest power among controller's creatures is evaluated per permanent controller")
+        void greatestPowerAmongControllerCreatures() {
+            Permanent p1Small = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent p1Big = addPermanent(player1Id,
+                    createCreature("Hill Giant", 3, 3, CardColor.RED));
+            Permanent p2Creature = addPermanent(player2Id,
+                    createCreature("Craw Wurm", 4, 4, CardColor.GREEN));
+            PermanentHasGreatestPowerAmongControllerCreaturesPredicate predicate =
+                    new PermanentHasGreatestPowerAmongControllerCreaturesPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, p1Small, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, p1Big, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, p2Creature, predicate)).isTrue();
         }
 
         @Test

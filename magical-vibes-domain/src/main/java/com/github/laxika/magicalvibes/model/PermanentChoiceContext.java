@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -249,7 +250,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  When {@code exileFromLibrary} is true the controller instead exiles that many cards from the
      *  top of their library (Bone Mask). */
     record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
-                                             boolean exileFromLibrary) implements PermanentChoiceContext {}
+                                             boolean exileFromLibrary,
+                                             Card damageSourceControllerCard) implements PermanentChoiceContext {
+        public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
+                                                 boolean exileFromLibrary) {
+            this(controllerId, gainLife, exileFromLibrary, null);
+        }
+    }
 
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. When
@@ -295,6 +302,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
+    record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
+            implements PermanentChoiceContext {
+
+        public ExileReturnAttackTarget {
+            remaining = List.copyOf(remaining);
+        }
+    }
 
     /** Decimator Beetle attack trigger, stage 1: choose the creature you control to remove a counter
      *  from. Only this stage is parked on the pending-interaction queue; stage 2 is begun directly by

@@ -55,6 +55,8 @@ public class StackEntry {
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
      */
     @Setter private boolean castTransformed;
+    /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
+    @Setter private boolean castFaceDown;
     @Setter private Zone sourceZone;
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
@@ -416,6 +418,7 @@ public class StackEntry {
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castTransformed = source.castTransformed;
+        this.castFaceDown = source.castFaceDown;
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;

@@ -52,7 +52,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
             case TARGET_CARDS_ANY_GRAVEYARD -> resolveTargetAnyGraveyardCards(gameData, entry, e);
             case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
-            case TARGET_PLAYER_ENTIRE -> resolveTargetPlayerEntire(gameData, entry);
+            case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry);
             case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry);
             case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry);

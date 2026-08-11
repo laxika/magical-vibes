@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -31,6 +32,8 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -228,6 +231,21 @@ class StepTriggerServiceTest {
 
             verify(drawService, never()).resolveDrawCard(gd, player1Id);
             verify(gameLogService).append(gd, GameLog.text("Player1 skips the draw (first turn)."));
+        }
+
+        @Test
+        @DisplayName("Draw-step emblem triggers after the turn-based draw")
+        void drawStepEmblemTriggersAfterTurnBasedDraw() {
+            gd.turnNumber = 2;
+            Card source = createCardWithName("Sarkhan, the Dragonspeaker");
+            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
+                    EmblemTriggerStep.DRAW_STEP, List.of(new GainLifeEffect(1)), "Draw-step effect")), source));
+
+            sut.handleDrawStep(gd);
+
+            verify(drawService).resolveDrawCard(gd, player1Id);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Sarkhan, the Dragonspeaker");
         }
 
         @Test
@@ -1669,6 +1687,22 @@ class StepTriggerServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(player1Id), argThat(Permanent::isTapped), any(), any());
+        }
+
+        @Test
+        @DisplayName("Pending exile returns can put a permanent onto the battlefield attacking")
+        void pendingExileReturnsAttacking() {
+            Card card = createCardWithName("Exiled Card");
+            gd.addToExile(player1Id, card);
+            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, true, false,
+                    TurnStep.DECLARE_ATTACKERS, 0, List.of(), true, false, true));
+
+            sut.processPendingExileReturns(gd, TurnStep.DECLARE_ATTACKERS);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), argThat(permanent -> permanent.isTapped()
+                            && permanent.isAttacking()
+                            && player2Id.equals(permanent.getAttackTarget())), any(), any());
         }
 
         @Test

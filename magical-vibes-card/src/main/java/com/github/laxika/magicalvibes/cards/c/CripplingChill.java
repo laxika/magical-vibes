@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "46")
+@CardRegistration(set = "KTK", collectorNumber = "35")
 public class CripplingChill extends Card {
 
     public CripplingChill() {

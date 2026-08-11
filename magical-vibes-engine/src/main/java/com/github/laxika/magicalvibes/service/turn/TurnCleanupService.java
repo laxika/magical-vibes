@@ -244,6 +244,7 @@ public class TurnCleanupService {
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.temporaryGlobalTriggeredAbilities.clear();
+        gameData.creatureDeathTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
@@ -299,18 +300,19 @@ public class TurnCleanupService {
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayWithoutPayingManaCost.remove(cardId);
         }
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
 
         // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
         gameData.exilePlayAnyManaType.clear();
-        gameData.exilePlayWithoutPayingManaCost.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {
                 gameData.exilePlayPermissions.remove(entry.getKey());
+                gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
                 return true;
             }
             return false;

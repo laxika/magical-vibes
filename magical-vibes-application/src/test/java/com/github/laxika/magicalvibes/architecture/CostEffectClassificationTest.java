@@ -97,7 +97,8 @@ class CostEffectClassificationTest {
             "DiscardXCardsCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
-            "RepeatableAdditionalManaCost");
+            "RepeatableAdditionalManaCost",
+            "DelveCost");
 
     private static final String EFFECT_PKG_PATH =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";

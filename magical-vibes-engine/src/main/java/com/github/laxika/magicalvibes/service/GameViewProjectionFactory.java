@@ -478,6 +478,13 @@ public class GameViewProjectionFactory {
                 }
             }
         }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (!alreadyIncluded.contains(entry.card().getId())
+                    && playerId.equals(gameData.exilePlayPermissions.get(entry.card().getId()))) {
+                exiledCards.add(entry.card());
+                alreadyIncluded.add(entry.card().getId());
+            }
+        }
         if (exiledCards.isEmpty()) {
             return playable;
         }
@@ -513,6 +520,7 @@ public class GameViewProjectionFactory {
                 if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                     playable.add(cardViewFactory.create(card));
                 } else {
+                    boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
                     ManaCost cost = card.getParsedManaCost();
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
@@ -531,7 +539,7 @@ public class GameViewProjectionFactory {
                             canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
                         }
                     }
-                    if (canAfford) {
+                    if (playWithoutPaying || canAfford) {
                         playable.add(cardViewFactory.create(card));
                     }
                 }

@@ -632,6 +632,13 @@ public class DamagePreventionService {
     private void applyNextSourceShieldRiders(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
         gainLifeForNextSourceShield(gameData, shield, damage);
         exileFromLibraryForNextSourceShield(gameData, shield, damage);
+        if (shield.damageSourceControllerCard() != null) {
+            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, shield.sourceId());
+            if (sourceControllerId != null) {
+                gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
+                        sourceControllerId, damage, shield.damageSourceControllerCard(), shield.playerId()));
+            }
+        }
     }
 
     /**

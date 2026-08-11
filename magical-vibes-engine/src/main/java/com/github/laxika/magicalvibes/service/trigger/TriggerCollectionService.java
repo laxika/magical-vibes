@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTar
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -427,26 +428,22 @@ public class TriggerCollectionService {
                 }
             }
             if (spellEntry != null) {
-                StackEntry snapshot = new StackEntry(spellEntry);
-                CopyControllerCastSpellEffect copyEffect =
-                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        "Copy " + spellCard.getName() + " (Primal Wellspring)",
-                        new ArrayList<>(List.of(copyEffect))
-                ));
-                // Decrement — one-shot trigger
-                int remaining = pendingCopies - 1;
-                if (remaining <= 0) {
-                    gameData.pendingNextInstantSorceryCopyCount.remove(castingPlayerId);
-                } else {
-                    gameData.pendingNextInstantSorceryCopyCount.put(castingPlayerId, remaining);
+                for (int copyNumber = 0; copyNumber < pendingCopies; copyNumber++) {
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    CopyControllerCastSpellEffect copyEffect =
+                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName() + " (Primal Wellspring)",
+                            new ArrayList<>(List.of(copyEffect))
+                    ));
                 }
+                gameData.pendingNextInstantSorceryCopyCount.remove(castingPlayerId);
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (Primal Wellspring)."));
-                log.info("Game {} - {} spell-copy trigger queued for {} (Primal Wellspring)",
-                        gameData.id, spellCard.getName(), castingPlayerId);
+                log.info("Game {} - {} spell-copy trigger(s) queued for {} (Primal Wellspring)",
+                        gameData.id, pendingCopies, spellCard.getName());
             }
         }
 
@@ -463,25 +460,22 @@ public class TriggerCollectionService {
                 }
             }
             if (spellEntry != null) {
-                StackEntry snapshot = new StackEntry(spellEntry);
-                CopyControllerCastSpellEffect copyEffect =
-                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        "Copy " + spellCard.getName(),
-                        new ArrayList<>(List.of(copyEffect))
-                ));
-                int remaining = pendingRedCopies - 1;
-                if (remaining <= 0) {
-                    gameData.pendingNextRedInstantSorceryCopyCount.remove(castingPlayerId);
-                } else {
-                    gameData.pendingNextRedInstantSorceryCopyCount.put(castingPlayerId, remaining);
+                for (int copyNumber = 0; copyNumber < pendingRedCopies; copyNumber++) {
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    CopyControllerCastSpellEffect copyEffect =
+                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName(),
+                            new ArrayList<>(List.of(copyEffect))
+                    ));
                 }
+                gameData.pendingNextRedInstantSorceryCopyCount.remove(castingPlayerId);
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                log.info("Game {} - {} red spell-copy trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
+                log.info("Game {} - {} red spell-copy trigger(s) queued for {}",
+                        gameData.id, pendingRedCopies, spellCard.getName());
             }
         }
 
@@ -499,25 +493,22 @@ public class TriggerCollectionService {
                 }
             }
             if (spellEntry != null) {
-                StackEntry snapshot = new StackEntry(spellEntry);
-                CopyControllerCastSpellEffect copyEffect =
-                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        "Copy " + spellCard.getName(),
-                        new ArrayList<>(List.of(copyEffect))
-                ));
-                int remaining = pendingTurnCopies - 1;
-                if (remaining <= 0) {
-                    gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
-                } else {
-                    gameData.pendingNextInstantSorceryCopyThisTurnCount.put(castingPlayerId, remaining);
+                for (int copyNumber = 0; copyNumber < pendingTurnCopies; copyNumber++) {
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    CopyControllerCastSpellEffect copyEffect =
+                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName(),
+                            new ArrayList<>(List.of(copyEffect))
+                    ));
                 }
+                gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                log.info("Game {} - {} delayed spell-copy trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
+                log.info("Game {} - {} delayed spell-copy trigger(s) queued for {}",
+                        gameData.id, pendingTurnCopies, spellCard.getName());
             }
         }
 
@@ -3362,6 +3353,10 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
     }
 
+    public void processNextETBSpellTargetTrigger(GameData gameData) {
+        etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
+    }
+
     public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
     }
@@ -3603,7 +3598,8 @@ public class TriggerCollectionService {
     }
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {
-        List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
+        List<CardEffect> deathEffects = dyingPermanent != null && dyingPermanent.isFaceDown()
+                ? List.of() : dyingCard.getEffects(EffectSlot.ON_DEATH);
 
         // Include temporarily granted ON_DEATH effects (e.g. from Verdant Rebirth)
         List<CardEffect> temporaryDeathEffects = dyingPermanent != null
@@ -4101,6 +4097,24 @@ public class TriggerCollectionService {
                 dyingCreatureControllerId, Math.max(0, ctx.dyingCreatureToughness()));
 
         collectEmblemCreatureDeathTriggers(gameData, dyingCard);
+        collectCreatureDeathTriggerWatchers(gameData);
+    }
+
+    private void collectCreatureDeathTriggerWatchers(GameData gameData) {
+        for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect())),
+                    (UUID) null,
+                    (UUID) null);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} triggers because a creature died",
+                    gameData.id, watcher.sourceCard().getName());
+        }
     }
 
     /**
@@ -4527,7 +4541,7 @@ public class TriggerCollectionService {
      * recorded effect under the recorded controller's control, carrying the registering permanent so
      * self-referential effects still find it. Fires at most once per registration.
      */
-    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingCreatureCardId) {
+    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingCreatureCardId, UUID dyingCreatureControllerId) {
         List<DelayedEffectOnDeath> registrations = gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingCreatureCardId);
         if (registrations == null) {
             return;
@@ -4540,7 +4554,7 @@ public class TriggerCollectionService {
                     registration.controllerId(),
                     registration.sourceCard().getName() + " triggers (a creature dealt damage this way died)",
                     new ArrayList<>(List.of(registration.effect())),
-                    null,
+                    dyingCreatureControllerId,
                     registration.sourcePermanentId()
             ));
 
@@ -4556,6 +4570,28 @@ public class TriggerCollectionService {
      * Naban doubling snapshots every stack entry produced during the scan and re-adds it
      * {@code extraWizardTriggers} times, so the duplication spans all triggering permanents.
      */
+    /** Fires "whenever this creature or another creature you control is turned face up" triggers. */
+    public void checkSelfOrAllyCreatureTurnsFaceUpTriggers(GameData gameData, UUID controllerId,
+                                                            Permanent turnedPermanent) {
+        if (!gameQueryService.isCreature(gameData, turnedPermanent)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        TriggerContext.PermanentTurnsFaceUp ctx = new TriggerContext.PermanentTurnsFaceUp(turnedPermanent, controllerId);
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            if (perm.isFaceDown() || perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                registry.dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect),
+                        EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP, effect, ctx);
+            }
+        }
+    }
+
     public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (enteringCreature.getToughness() == null) return;
 
@@ -4649,9 +4685,13 @@ public class TriggerCollectionService {
      * default fallback skips targeting effects.
      */
     public void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
-        if (enteringCreature.getToughness() == null) return;
+        checkAnyCreatureEntersTriggers(gameData, enteringCreatureControllerId, enteringCreature,
+                gameQueryService.countETBExtraTriggers(gameData, enteringCreatureControllerId, enteringCreature));
+    }
 
-        int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, enteringCreatureControllerId, enteringCreature);
+    public void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId,
+                                               Card enteringCreature, int extraWizardTriggers) {
+        if (enteringCreature.getToughness() == null) return;
 
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD);

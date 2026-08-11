@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import {
   WebsocketService, Game, MessageType, Card, Permanent,
-  InteractionPromptNotification, RevealHandNotification, RevealLibraryTopNotification,
+  InteractionPromptNotification, RevealHandNotification, RevealLibraryTopNotification, RevealPermanentNotification,
   CombatDamageAssignmentNotification, ValidTargetsResponse
 } from './websocket.service';
 import { TargetingChoiceService } from './targeting-choice.service';
@@ -79,6 +79,9 @@ export class GameChoiceService {
     this.revealingLibraryTop = false;
     this.revealedLibraryTopCards = [];
     this.revealedLibraryTopPlayerName = '';
+    this.revealingPermanent = false;
+    this.revealedPermanentCard = null;
+    this.revealedPermanentPlayerName = '';
     // Choose from revealed hand
     this.choosingFromRevealedHand = false;
     this.revealedHandChoosableIndices = new Set();
@@ -168,6 +171,10 @@ export class GameChoiceService {
   revealingLibraryTop = false;
   revealedLibraryTopCards: Card[] = [];
   revealedLibraryTopPlayerName = '';
+
+  revealingPermanent = false;
+  revealedPermanentCard: Card | null = null;
+  revealedPermanentPlayerName = '';
 
   // --- Choose from revealed hand state ---
   choosingFromRevealedHand = false;
@@ -289,6 +296,12 @@ export class GameChoiceService {
     this.revealingLibraryTop = true;
     this.revealedLibraryTopCards = msg.cards;
     this.revealedLibraryTopPlayerName = msg.playerName;
+  }
+
+  handleRevealPermanent(msg: RevealPermanentNotification): void {
+    this.revealingPermanent = true;
+    this.revealedPermanentCard = msg.card;
+    this.revealedPermanentPlayerName = msg.playerName;
   }
 
   handleCombatDamageAssignment(msg: CombatDamageAssignmentNotification): void {
@@ -511,6 +524,12 @@ export class GameChoiceService {
     this.revealingLibraryTop = false;
     this.revealedLibraryTopCards = [];
     this.revealedLibraryTopPlayerName = '';
+  }
+
+  closeRevealPermanent(): void {
+    this.revealingPermanent = false;
+    this.revealedPermanentCard = null;
+    this.revealedPermanentPlayerName = '';
   }
 
   chooseFromRevealedHand(index: number): void {

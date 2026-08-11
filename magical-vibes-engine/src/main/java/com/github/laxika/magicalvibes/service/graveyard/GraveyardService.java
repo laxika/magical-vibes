@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGr
 import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
+import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -312,6 +313,15 @@ public class GraveyardService {
 
         // Leyline of the Void — if an opponent controls a permanent with
         // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
+        if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)) {
+            exileService.exileCard(gameData, ownerId, card);
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is exiled instead of being put into a graveyard."));
+            log.info("Game {} - {} replacement effect: opponent creature card exiled instead of graveyard",
+                    gameData.id, card.getName());
+            return false;
+        }
+
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
             exileService.exileCard(gameData, ownerId, card);
             
@@ -755,6 +765,29 @@ public class GraveyardService {
             for (Permanent p : bf) {
                 if (p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(ExileOpponentCardsInsteadOfGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean opponentHasCreatureCardExileReplacement(GameData gameData, UUID ownerId,
+                                                            Card card, Zone sourceZone) {
+        if (sourceZone == Zone.BATTLEFIELD || card.isToken() || !card.hasType(CardType.CREATURE)) {
+            return false;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ownerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
                     return true;
                 }
             }

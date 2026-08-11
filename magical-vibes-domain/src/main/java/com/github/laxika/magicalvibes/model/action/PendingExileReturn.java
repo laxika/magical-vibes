@@ -23,7 +23,8 @@ public record PendingExileReturn(
         int plusOnePlusOneCounters,
         List<Card> additionalCards,
         boolean onlyOnControllersTurn,
-        boolean grantHaste) implements DelayedAction {
+        boolean grantHaste,
+        boolean returnAttacking) implements DelayedAction {
 
     public PendingExileReturn {
         additionalCards = additionalCards == null ? List.of() : List.copyOf(additionalCards);
@@ -32,7 +33,7 @@ public record PendingExileReturn(
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, false, false);
+                additionalCards, false, false, false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId) {
@@ -55,5 +56,12 @@ public record PendingExileReturn(
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters, List.of());
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, false);
     }
 }

@@ -902,7 +902,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         UUID controllerId = ctx.controllerId();
         boolean gainLife = ctx.gainLife();
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
-                controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary()));
+                controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
+                ctx.damageSourceControllerCard()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenPermanent.getCard().getName();
@@ -910,6 +911,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ? " and " + playerName + " gains that much life."
                 : ctx.exileFromLibrary()
                         ? " and " + playerName + " exiles that many cards from the top of their library."
+                        : ctx.damageSourceControllerCard() != null
+                                ? " and " + ctx.damageSourceControllerCard().getName()
+                                        + " deals that much damage to the source's controller."
                         : ".";
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, it is prevented" + rider;

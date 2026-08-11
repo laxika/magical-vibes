@@ -476,6 +476,26 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    public void castCreatureWithMorph(Player player, int cardIndex) {
+        ensurePriority(player);
+        gameService.playCardWithMorph(gameData, player, cardIndex, 0, null, null, List.of());
+    }
+
+    public void castCreatureWithMorph(Player player, int cardIndex, int revealedHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCardWithMorph(gameData, player, cardIndex, 0, null, null, List.of(), revealedHandCardIndex);
+    }
+
+    public void turnFaceUp(Player player, int permanentIndex) {
+        ensurePriority(player);
+        gameService.turnFaceUp(gameData, player, permanentIndex);
+    }
+
+    public void turnFaceUp(Player player, int permanentIndex, int revealedHandCardIndex) {
+        ensurePriority(player);
+        gameService.turnFaceUp(gameData, player, permanentIndex, revealedHandCardIndex);
+    }
+
     /** Cast any spell (creature, artifact, etc.) using its alternate hand cost, paying the given permanent IDs. */
     public void castWithAlternateCost(Player player, int cardIndex, List<UUID> alternateCostPermanentIds) {
         ensurePriority(player);

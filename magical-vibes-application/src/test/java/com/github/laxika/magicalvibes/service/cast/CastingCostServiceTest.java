@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -1070,6 +1071,19 @@ class CastingCostServiceTest {
 
             gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DelveCost is payable with zero cards and capped by generic mana")
+        void delveCost() {
+            Card spell = spellWith(new DelveCost());
+            spell.setManaCost("{6}{U}{U}");
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            for (int i = 0; i < 8; i++) {
+                gd.playerGraveyards.get(player1Id).add(graveyardCard("Card " + i, CardType.INSTANT));
+            }
+            assertThat(svc.maximumDelveReduction(gd, player1Id, spell, 0, 0)).isEqualTo(6);
         }
 
         @Test

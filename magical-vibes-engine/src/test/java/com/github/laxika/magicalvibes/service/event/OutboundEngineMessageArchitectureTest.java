@@ -191,6 +191,8 @@ class OutboundEngineMessageArchitectureTest {
         projectors.put("RevealHandMessage", Set.of("PrivateInformationProjectionFactory.java"));
         projectors.put("RevealLibraryTopMessage",
                 Set.of("PrivateInformationProjectionFactory.java"));
+        projectors.put("RevealPermanentMessage",
+                Set.of("PrivateInformationProjectionFactory.java"));
         projectors.put("GameOverMessage",
                 Set.of("event/GameEventProjectionSubscriber.java"));
         // Read-only request/response query projection; never used for mutation notifications.
