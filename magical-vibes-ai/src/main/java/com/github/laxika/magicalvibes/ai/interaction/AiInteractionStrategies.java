@@ -54,6 +54,7 @@ public final class AiInteractionStrategies {
         register(new StrongholdGambitCardChoiceAiStrategy());
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
+        register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new PermanentChoiceAiStrategy());

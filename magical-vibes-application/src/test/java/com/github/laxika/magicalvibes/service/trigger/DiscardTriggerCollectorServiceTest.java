@@ -65,6 +65,9 @@ class DiscardTriggerCollectorServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+
     @InjectMocks
     private DiscardTriggerCollectorService sut;
 

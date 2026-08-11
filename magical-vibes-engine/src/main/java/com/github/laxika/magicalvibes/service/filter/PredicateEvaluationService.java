@@ -218,6 +218,10 @@ public class PredicateEvaluationService {
     private static final PermanentHasKeywordPredicate CHANGELING_PREDICATE =
             new PermanentHasKeywordPredicate(Keyword.CHANGELING);
 
+    private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
+            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+            CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+
     // --- Card predicate matching ---
 
     /**
@@ -381,6 +385,10 @@ public class PredicateEvaluationService {
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
                 if (layered != null) {
                     yield matchesPermanentPredicate(layered, permanent, hasSubtypePredicate, filterContext);
+                }
+                if (gameData != null && BASIC_LAND_SUBTYPES.contains(hasSubtypePredicate.subtype())) {
+                    yield gameQueryService.effectiveBasicLandTypes(gameData, permanent)
+                            .contains(hasSubtypePredicate.subtype());
                 }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
                 // "Loses all creature types" strips every creature subtype (base/transient/granted) and,

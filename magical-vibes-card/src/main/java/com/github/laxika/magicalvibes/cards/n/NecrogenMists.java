@@ -11,6 +11,6 @@ public class NecrogenMists extends Card {
 
     public NecrogenMists() {
         // At the beginning of each player's upkeep, that player discards a card.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER));
     }
 }

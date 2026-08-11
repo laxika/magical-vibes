@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -41,7 +42,8 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
             return;
         }
 
-        destructionSupport.tryDestroyAndLog(gameData, referenced, entry.getCard().getName(), e.cannotBeRegenerated());
+        destructionSupport.destroyBatch(
+                gameData, List.of(referenced), entry.getCard().getName(), e.cannotBeRegenerated());
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

@@ -168,8 +168,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
                 verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
                 verify(gameLogService).append(gd, GameLog.isDestroyed(angel.getCard()));
             }
@@ -192,8 +192,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, spellbook);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
+                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, spellbook);
             }
 
             @Test
@@ -214,8 +214,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, golem);
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, golem);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
             }
 
             @Test
@@ -255,7 +255,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
                 verify(graveyardService).tryRegenerate(gd, elves);
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, elves);
+                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, elves);
             }
 
             @Test
@@ -274,7 +274,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
                 verify(graveyardService, never()).tryRegenerate(any(), any());
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
             }
 
             @Test
@@ -297,9 +297,9 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, myBears);
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
+                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, myBears);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, elves);
             }
 
             @Test
@@ -340,8 +340,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, myBears);
+                verify(permanentRemovalService).destroyPermanentToGraveyard(gd, angel);
+                verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, myBears);
             }
 
             @Test

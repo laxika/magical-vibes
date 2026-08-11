@@ -21,6 +21,7 @@ class NecrogenMistsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -28,6 +29,7 @@ class NecrogenMistsTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Angel of Mercy");

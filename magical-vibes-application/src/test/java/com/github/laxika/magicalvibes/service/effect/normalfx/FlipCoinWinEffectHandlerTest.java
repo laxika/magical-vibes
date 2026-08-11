@@ -16,6 +16,13 @@ import static org.mockito.Mockito.*;
 
 class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
+    @Override
+    protected void setUpHandler() {
+        when(coinFlipService.flip(gd, player1Id))
+                .thenReturn(new CoinFlipService.CoinFlipResult(true, 1));
+        when(coinFlipService.replacementDetails(any())).thenReturn("");
+    }
+
     @Test
             @DisplayName("Always broadcasts flip result")
             void broadcastsFlipResult() {

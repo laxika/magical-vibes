@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -134,6 +136,13 @@ public class TargetPolarityClassifier {
                     ? null
                     : classify(gameData, flip.lost(), aiPlayerId);
             return higherPriority(won, lost);
+        }
+        if (effect instanceof FlipUntilLoseOrStopEffect flip) {
+            TargetPolarity best = null;
+            for (CardEffect reward : flip.rewards()) {
+                best = higherPriority(best, classify(gameData, reward, aiPlayerId));
+            }
+            return best;
         }
         if (effect instanceof SequenceEffect sequence) {
             TargetPolarity best = null;
@@ -270,6 +279,9 @@ public class TargetPolarityClassifier {
         }
 
         if (effect instanceof RegenerationEffect) {
+            return TargetPolarity.BENEFICIAL;
+        }
+        if (effect instanceof RegisterDelayedWatchedCreatureDealsDamageEffect) {
             return TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof KeywordGrantingEffect grant) {

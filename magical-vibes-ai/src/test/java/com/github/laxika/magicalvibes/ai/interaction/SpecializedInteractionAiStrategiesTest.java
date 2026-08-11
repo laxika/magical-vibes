@@ -106,13 +106,29 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void activatedAbilityGraveyardExileCostChoosesMaximumX() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+
+        new ActivatedAbilityGraveyardExileCostChoiceAiStrategy().answer(
+                new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
+                        aiPlayerId, UUID.randomUUID(), 0, UUID.randomUUID(), null,
+                        List.of(first, second), "Choose cards to exile."),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId(), second.getId())));
+    }
+
+    @Test
     void allNewSpecializedTypesAreRegistered() {
         assertThat(AiInteractionStrategies.registeredTypes()).contains(
                 PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 PendingInteraction.BrilliantUltimatumPileChoice.class,
                 PendingInteraction.KeepCardsInHandChoice.class,
                 PendingInteraction.SylvanLibraryChoice.class,
-                PendingInteraction.AdNauseamRepeatChoice.class);
+                PendingInteraction.AdNauseamRepeatChoice.class,
+                PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class);
     }
 
     private InteractionAnswer capturedAnswer() throws Exception {

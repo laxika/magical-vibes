@@ -73,6 +73,9 @@ class LandTapTriggerCollectorServiceTest {
     @Mock
     private PermanentControlSupport permanentControlSupport;
 
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+
     @InjectMocks
     private LandTapTriggerCollectorService sut;
 

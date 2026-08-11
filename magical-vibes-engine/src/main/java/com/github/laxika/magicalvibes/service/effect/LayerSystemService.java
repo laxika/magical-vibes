@@ -1250,8 +1250,11 @@ public class LayerSystemService {
                     } else {
                         setCreatureType(state, grant.subtype());
                     }
+                    boolean landSubtypeOverride = grant.overriding()
+                            && BASIC_LAND_SUBTYPES.contains(grant.subtype());
                     record(board, instance, target, new L4Contribution(
-                            grant.subtype(), grant.overriding(), false, null, null));
+                            grant.subtype(), grant.overriding() && !landSubtypeOverride,
+                            landSubtypeOverride, null, null));
                 }
             }
             case SetCreatureTypesToImprintedCreatureEffect setTypes -> {

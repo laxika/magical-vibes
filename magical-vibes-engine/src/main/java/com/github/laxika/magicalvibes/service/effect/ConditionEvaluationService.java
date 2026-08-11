@@ -1459,7 +1459,6 @@ public class ConditionEvaluationService {
         if (source == null) return false;
         Card imprintedCard = gameData.getImprintedCard(source.getCard());
         return imprintedCard != null
-                && gameData.findExiledCard(imprintedCard.getId()) != null
                 && predicateEvaluationService.matchesCardPredicate(
                 imprintedCard, condition.filter(), source.getCard().getId(), gameData, ctx.controllerId());
     }

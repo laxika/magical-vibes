@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +59,7 @@ class LookAtTopCardsEffectHandlerTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private GraveyardService graveyardService;
 
     private LibraryRevealSupport libraryRevealSupport;
     private LookAtTopCardsEffectHandler handler;
@@ -89,6 +93,13 @@ class LookAtTopCardsEffectHandlerTest {
             DynamicAmount a = inv.getArgument(1);
             return a instanceof Fixed f ? f.value() : 0;
         });
+        lenient().doAnswer(inv -> {
+            UUID playerId = inv.getArgument(1);
+            Card card = inv.getArgument(2);
+            gd.playerGraveyards.get(playerId).add(card);
+            return null;
+        }).when(graveyardService).addCardToGraveyard(
+                eq(gd), any(UUID.class), any(Card.class), any(Zone.class));
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
@@ -96,6 +107,7 @@ class LookAtTopCardsEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService);
         handler = new LookAtTopCardsEffectHandler(gameLogService, libraryRevealSupport, gameQueryService,
                 predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry);
+        ReflectionTestUtils.setField(handler, "graveyardService", graveyardService);
     }
 
     private static Card createCard(String name) {
