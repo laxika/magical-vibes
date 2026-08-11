@@ -100,6 +100,11 @@ public class AutoPassService {
             gameData.priorityPassedBy.clear();
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        }
+
         // Process any pending spell-target triggers (e.g. Livewire Lash)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);

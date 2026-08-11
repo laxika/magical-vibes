@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "42")
+@CardRegistration(set = "M20", collectorNumber = "66")
 public class MetropolisSprite extends Card {
 
     public MetropolisSprite() {

@@ -26,6 +26,7 @@ public sealed interface StackEntryPredicate permits
         StackEntrySharesColorOrManaValueWithImprintedCardPredicate,
         StackEntryNotPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,
+        StackEntrySupertypeInPredicate,
         StackEntryTargetsAnyPlayerPredicate,
         StackEntryTargetsPermanentPredicate,
         StackEntryTargetsSourcePredicate,

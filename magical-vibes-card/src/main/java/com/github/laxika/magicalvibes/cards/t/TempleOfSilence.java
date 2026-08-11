@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "227")
+@CardRegistration(set = "M20", collectorNumber = "256")
 public class TempleOfSilence extends Card {
 
     public TempleOfSilence() {

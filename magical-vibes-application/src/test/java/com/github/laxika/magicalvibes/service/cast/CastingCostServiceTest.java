@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -62,6 +63,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -831,7 +833,8 @@ class CastingCostServiceTest {
 
             when(gameQueryService.findPermanentById(gd, merfolkPermanent.getId())).thenReturn(merfolkPermanent);
             when(gameQueryService.findPermanentController(gd, merfolkPermanent.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, merfolkPermanent, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(merfolkPermanent), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, merfolkPermanent.getId(), null)).isEqualTo(2);
         }
@@ -856,7 +859,8 @@ class CastingCostServiceTest {
 
             when(gameQueryService.findPermanentById(gd, bearPermanent.getId())).thenReturn(bearPermanent);
             when(gameQueryService.findPermanentController(gd, bearPermanent.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, bearPermanent, predicate)).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(bearPermanent), eq(predicate), any(FilterContext.class))).thenReturn(false);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, bearPermanent.getId(), null)).isZero();
         }
@@ -880,6 +884,35 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player1Id).add(merfolkPermanent);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player1Id, merfolkPermanent.getId(), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("Source-relative predicate matches only the taxing permanent and only taxes spells when configured")
+        void sourceRelativePredicateAndSpellOnlyScope() {
+            var predicate = new PermanentIsSourcePermanentPredicate();
+            Card boreal = new Card();
+            boreal.addEffect(EffectSlot.STATIC,
+                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2, false));
+            Permanent source = new Permanent(boreal);
+            Permanent other = new Permanent(new Card());
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(other);
+
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.findPermanentById(gd, other.getId())).thenReturn(other);
+            when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, other.getId())).thenReturn(player1Id);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), eq(predicate), any(FilterContext.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent candidate = invocation.getArgument(0);
+                        FilterContext context = invocation.getArgument(2);
+                        return context.sourcePermanentSnapshot().getId().equals(candidate.getId());
+                    });
+
+            assertThat(svc.getTargetingSubtypeTax(gd, player2Id, source.getId(), null, false)).isEqualTo(2);
+            assertThat(svc.getTargetingSubtypeTax(gd, player2Id, other.getId(), null, false)).isZero();
+            assertThat(svc.getTargetingSubtypeTax(gd, player2Id, source.getId(), null, true)).isZero();
         }
     }
 

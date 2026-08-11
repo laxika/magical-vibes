@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ISD", collectorNumber = "24")
+@CardRegistration(set = "M20", collectorNumber = "30")
 public class MomentOfHeroism extends Card {
 
     public MomentOfHeroism() {

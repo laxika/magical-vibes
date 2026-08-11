@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
@@ -344,6 +345,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
+
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
      *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
      *  flying until end of turn." The controller chooses the target when the discard trigger is
@@ -387,6 +391,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Put a creature you control on top of its owner's library." The controller chooses one of their
      *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
     record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** Pattern Matcher: choose another controlled creature whose name bounds the library search. */
+    record PatternMatcherCreatureChoice(UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
     record Populate(UUID controllerId) implements PermanentChoiceContext {}
@@ -499,10 +506,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
-                                    StackEntryType spellType, boolean exileInsteadOfGraveyard) implements PermanentChoiceContext {
+                                    StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                    boolean withoutPayingManaCost) implements PermanentChoiceContext {
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, true);
+        }
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard, true);
         }
     }
 

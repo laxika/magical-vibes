@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "263")
+@CardRegistration(set = "M20", collectorNumber = "238")
 public class Scuttlemutt extends Card {
 
     public Scuttlemutt() {

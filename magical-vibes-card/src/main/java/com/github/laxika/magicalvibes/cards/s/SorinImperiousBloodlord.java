@@ -30,6 +30,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "133")
 @CardRegistration(set = "INR", collectorNumber = "322")
 @CardRegistration(set = "INR", collectorNumber = "476")
+@CardRegistration(set = "M20", collectorNumber = "115")
 public class SorinImperiousBloodlord extends Card {
 
     public SorinImperiousBloodlord() {

@@ -566,12 +566,6 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        // Collect castable types from all AllowCastFromTopOfLibraryEffect on the player's battlefield
-        Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
-        if (castableTypes.isEmpty()) {
-            return playable;
-        }
-
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
             return playable;
@@ -579,10 +573,8 @@ public class GameViewProjectionFactory {
 
         Card topCard = deck.getFirst();
 
-        // Check if the top card matches any castable type
-        boolean matchesType = castableTypes.contains(topCard.getType())
-                || topCard.getAdditionalTypes().stream().anyMatch(castableTypes::contains);
-        if (!matchesType || topCard.getManaCost() == null) {
+        if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
+                || topCard.getManaCost() == null) {
             return playable;
         }
 

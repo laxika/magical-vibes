@@ -46,6 +46,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
             for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
+                markForExileInsteadOfDying(gameData, target, e);
                 if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
                     damageSupport.dealCreatureDamage(gameData, entry, target, damage);
                 }
@@ -53,6 +54,17 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
             return;
         }
 
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target != null) {
+            markForExileInsteadOfDying(gameData, target, e);
+        }
         damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
+    }
+
+    private void markForExileInsteadOfDying(GameData gameData, Permanent target,
+                                            DealDamageToTargetCreatureOrPlaneswalkerEffect effect) {
+        if (effect.exileInsteadOfDie() && gameQueryService.isCreature(gameData, target)) {
+            target.setExileInsteadOfDieThisTurn(true);
+        }
     }
 }

@@ -6,5 +6,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * matching the Rhox Faithmender / Alhammarret's Archive ruling — the effective life gained is
  * {@code amount * 2^(number of controlled doublers)}. Applied in {@code LifeSupport.applyGainLife}.
  */
-public record DoubleLifeGainEffect() implements CardEffect {
+public record DoubleLifeGainEffect() implements LifeGainReplacementEffect {
+
+    @Override
+    public int lifeGainMultiplier() {
+        return 2;
+    }
 }

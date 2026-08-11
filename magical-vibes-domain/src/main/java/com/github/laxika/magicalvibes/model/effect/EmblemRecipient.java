@@ -12,6 +12,9 @@ public enum EmblemRecipient {
      */
     TARGET_PLAYER,
 
+    /** "Each opponent gets an emblem with …" — one emblem under every opponent's control. */
+    EACH_OPPONENT,
+
     /**
      * "Each player dealt damage this way gets an emblem with …" — one emblem per player this same
      * stack entry actually dealt damage to (Chandra, Roaring Flame −7). A player whose damage was

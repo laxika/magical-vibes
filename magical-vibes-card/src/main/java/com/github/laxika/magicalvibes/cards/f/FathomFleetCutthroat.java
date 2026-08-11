@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "107")
+@CardRegistration(set = "M20", collectorNumber = "100")
 public class FathomFleetCutthroat extends Card {
 
     public FathomFleetCutthroat() {

@@ -49,12 +49,16 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             return;
         }
 
+        Set<UUID> trackedIds = e.fromBattlefieldThisTurn()
+                ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of())
+                : null;
         List<Card> cardsToReturn = new ArrayList<>();
         for (UUID targetCardId : entry.getTargetCardIds()) {
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
                     .findFirst().orElse(null);
             if (card != null
+                    && (trackedIds == null || trackedIds.contains(card.getId()))
                     && predicateEvaluationService.matchesCardPredicate(card, e.filter(), entry.getCard().getId())) {
                 cardsToReturn.add(card);
             }
@@ -76,6 +80,9 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
+                if (e.enterTapped()) {
+                    permanent.tap();
+                }
                 permanent.setEnteredFromGraveyardOwnerId(controllerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
@@ -90,7 +97,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         if (!returnedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " returns " + returnedCards.size()
-                            + " creature card(s) from the graveyard to the battlefield."));
+                            + " card(s) from the graveyard to the battlefield."));
         }
     }
 }

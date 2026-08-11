@@ -134,6 +134,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with {@code spellSubtype} or planeswalker spells of {@code planeswalkerSubtype}. */
+    record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
+        }
+    }
+
     /**
      * Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). Applies to any
      * spell or ability whose mana cost includes an {X} symbol; the mana can pay any generic portion

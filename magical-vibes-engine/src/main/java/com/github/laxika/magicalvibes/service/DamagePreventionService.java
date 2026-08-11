@@ -263,7 +263,7 @@ public class DamagePreventionService {
             if (damage <= 0) return 0;
             if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
-                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
                     int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, damage);
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
@@ -275,7 +275,7 @@ public class DamagePreventionService {
             // Put a +1/+1 counter on that creature for each 1 damage prevented this way." The effect
             // lives on a different permanent (Vigor) controlled by this creature's controller.
             if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent)) {
-                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
                     int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);

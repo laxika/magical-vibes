@@ -166,6 +166,9 @@ public class LibraryChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
+        List<Card> sourceZone = librarySearch.sourceSideboard()
+                ? gameData.playerSideboards.getOrDefault(deckOwnerId, List.of())
+                : deck;
 
         if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile) {
             if (sourceCards == null) {
@@ -312,6 +315,16 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (followUp.secondBoundedPick() != null
+                    && followUp.secondBoundedPick().randomRest()) {
+                Collections.shuffle(sourceCards);
+                deck.addAll(sourceCards);
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " puts the unchosen cards on the bottom of their library in a random order."));
+                finishSearchAndResume(gameData);
+                return;
+            }
+
             if (restToExile) {
                 if (!sourceCards.isEmpty()) {
                     GameLog.Builder exileLog = GameLog.builder().text(player.getUsername() + " exiles ");
@@ -429,6 +442,7 @@ public class LibraryChoiceHandlerService {
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+            if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
@@ -444,9 +458,9 @@ public class LibraryChoiceHandlerService {
         Card chosenCard = searchCards.get(cardIndex);
 
         boolean removed = false;
-        for (int i = 0; i < deck.size(); i++) {
-            if (deck.get(i).getId().equals(chosenCard.getId())) {
-                deck.remove(i);
+        for (int i = 0; i < sourceZone.size(); i++) {
+            if (sourceZone.get(i).getId().equals(chosenCard.getId())) {
+                sourceZone.remove(i);
                 removed = true;
                 break;
             }
@@ -888,6 +902,7 @@ public class LibraryChoiceHandlerService {
                     " and puts it on top of their library. Library is shuffled."));
             log.info("Game {} - {} searches library and puts {} on top",
                     gameData.id, player.getUsername(), chosenCard.getName());
+            if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
         } else if (toGraveyard) {
@@ -1081,6 +1096,7 @@ public class LibraryChoiceHandlerService {
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
@@ -1345,19 +1361,40 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * If any card of the second pick's type remains among the two-bounded-pick looked-at cards
-     * (Gift of the Gargantuan land pick, Benefaction of Rhonas enchantment pick), begins the second
-     * pick (may reveal such a card to hand, then dispose the rest per the pick's rest destination)
-     * and returns true. Otherwise returns false so the caller disposes the remaining cards immediately.
+     * If any card of the next bounded-pick category remains among the looked-at cards, begins that
+     * pick and returns true. Missing subtype categories are skipped. Otherwise returns false so the
+     * caller disposes the remaining cards immediately.
      */
     private boolean startSecondBoundedPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
             LibrarySearchFollowUp.SecondBoundedPick spec) {
-        List<Card> eligible = lookedAtCards.stream().filter(card -> card.hasType(spec.type())).toList();
-        if (eligible.isEmpty()) {
+        if (spec.type() == null && spec.subtype() == null) {
             return false;
         }
-        String prompt = "You may reveal a " + spec.type().getDisplayName().toLowerCase()
+
+        List<Card> eligible = lookedAtCards.stream()
+                .filter(card -> spec.subtype() != null
+                        ? card.getSubtypes().contains(spec.subtype())
+                        : card.hasType(spec.type()))
+                .toList();
+        if (eligible.isEmpty()) {
+            if (spec.remainingSubtypes().isEmpty()) {
+                return false;
+            }
+            return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
+                    LibrarySearchFollowUp.SecondBoundedPick.subtype(
+                            spec.remainingSubtypes().getFirst(),
+                            spec.remainingSubtypes().subList(1, spec.remainingSubtypes().size()),
+                            spec.randomRest()));
+        }
+
+        String category = spec.subtype() != null
+                ? spec.subtype().getDisplayName().toLowerCase()
+                : spec.type().getDisplayName().toLowerCase();
+        String prompt = "You may reveal a " + category
                 + " card from among them and put it into your hand.";
+        LibrarySearchFollowUp nextFollowUp = spec.subtype() == null
+                ? LibrarySearchFollowUp.NONE
+                : LibrarySearchFollowUp.forSubtypeBoundedPick(spec.remainingSubtypes(), spec.randomRest());
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)
@@ -1366,6 +1403,7 @@ public class LibraryChoiceHandlerService {
                 .reorderRemainingToBottom(!spec.restToGraveyard())
                 .restToGraveyard(spec.restToGraveyard())
                 .shuffleAfterSelection(false)
+                .followUp(nextFollowUp)
                 .build();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;

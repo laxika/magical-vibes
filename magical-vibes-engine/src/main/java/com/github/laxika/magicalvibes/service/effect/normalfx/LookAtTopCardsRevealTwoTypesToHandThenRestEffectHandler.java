@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,13 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
                     + LibraryRevealSupport.pluralCards(topCards.size()) + " of their library."));
         }
 
+        if (!e.subtypePicks().isEmpty()) {
+            if (!beginSubtypePick(gameData, controllerId, topCards, e.subtypePicks())) {
+                disposeRest(gameData, controllerId, playerName, topCards, false, true);
+            }
+            return;
+        }
+
         List<Card> firstEligible = topCards.stream().filter(c -> c.hasType(e.firstType())).toList();
         List<Card> secondEligible = topCards.stream().filter(c -> c.hasType(e.secondType())).toList();
 
@@ -107,10 +116,40 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
     }
 
+    private boolean beginSubtypePick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
+            List<CardSubtype> subtypes) {
+        for (int i = 0; i < subtypes.size(); i++) {
+            CardSubtype subtype = subtypes.get(i);
+            List<Card> eligible = lookedAtCards.stream()
+                    .filter(card -> card.getSubtypes().contains(subtype))
+                    .toList();
+            if (!eligible.isEmpty()) {
+                beginPick(gameData, controllerId, eligible, lookedAtCards,
+                        promptFor(subtype),
+                        LibrarySearchFollowUp.forSubtypeBoundedPick(subtypes.subList(i + 1, subtypes.size()), true),
+                        false);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void disposeRest(GameData gameData, UUID controllerId, String playerName,
             List<Card> cards, boolean toGraveyard) {
+        disposeRest(gameData, controllerId, playerName, cards, toGraveyard, false);
+    }
+
+    private void disposeRest(GameData gameData, UUID controllerId, String playerName,
+            List<Card> cards, boolean toGraveyard, boolean randomBottom) {
         if (!toGraveyard) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, cards);
+            if (randomBottom) {
+                Collections.shuffle(cards);
+                gameData.playerDecks.get(controllerId).addAll(cards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the unchosen cards on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, cards);
+            }
             return;
         }
         for (Card card : cards) {
@@ -124,6 +163,11 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
 
     private static String promptFor(CardType type) {
         return "You may reveal a " + type.getDisplayName().toLowerCase() + " card from among them and put it into your hand.";
+    }
+
+    private static String promptFor(CardSubtype subtype) {
+        return "You may reveal a " + subtype.getDisplayName().toLowerCase()
+                + " card from among them and put it into your hand.";
     }
 
     /** Appends {@code cards} to {@code builder} as comma-separated card segments. */

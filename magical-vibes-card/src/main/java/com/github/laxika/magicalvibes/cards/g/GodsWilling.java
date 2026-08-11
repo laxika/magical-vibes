@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "16")
+@CardRegistration(set = "M20", collectorNumber = "19")
 public class GodsWilling extends Card {
 
     public GodsWilling() {

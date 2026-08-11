@@ -21,6 +21,7 @@ public sealed interface Condition permits
         AnOpponentLifeAtMost,
         AnyGraveyardAtLeast,
         AnyLibraryAtMost,
+        AnyPlayerLostLifeThisTurn,
         AnyPlayerControlsPermanent,
         AnyPlayerControlsPermanentCount,
         AnyPlayerControlsPermanentCountAtMost,

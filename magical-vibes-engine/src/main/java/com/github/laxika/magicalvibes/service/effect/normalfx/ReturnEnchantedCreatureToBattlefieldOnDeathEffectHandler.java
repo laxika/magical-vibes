@@ -63,12 +63,13 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCreatureCardId);
 
         if (controllerId == null || controllerId.equals(ownerId)) {
-            graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, creatureCard);
+            graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, creatureCard,
+                    null, null, false, false, e.enterWithCounter());
             return;
         }
 
         Permanent permanent = graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, creatureCard,
-                null, null, false, false, null);
+                null, null, false, false, e.enterWithCounter());
         if (permanent == null) {
             return;
         }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "188")
+@CardRegistration(set = "M20", collectorNumber = "182")
 public class MightOfTheMasses extends Card {
 
     public MightOfTheMasses() {

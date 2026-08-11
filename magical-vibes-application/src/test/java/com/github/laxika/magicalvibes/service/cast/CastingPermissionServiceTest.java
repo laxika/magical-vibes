@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
@@ -79,6 +80,47 @@ class CastingPermissionServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
+
+    @Nested
+    @DisplayName("canCastFromTopOfLibrary")
+    class CastFromTopOfLibrary {
+
+        @Test
+        @DisplayName("allows matching artifact and colorless spells")
+        void allowsMatchingArtifactAndColorlessSpells() {
+            Card forge = new Card();
+            forge.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(forge));
+
+            Card coloredArtifact = new Card();
+            coloredArtifact.setType(CardType.ARTIFACT);
+            coloredArtifact.setColors(List.of(CardColor.RED));
+            Card colorlessInstant = new Card();
+            colorlessInstant.setType(CardType.INSTANT);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, coloredArtifact)).isTrue();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, colorlessInstant)).isTrue();
+        }
+
+        @Test
+        @DisplayName("does not treat colored or land cards as colorless spells")
+        void rejectsColoredAndLandCardsAsColorlessSpells() {
+            Card forge = new Card();
+            forge.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(forge));
+
+            Card coloredInstant = new Card();
+            coloredInstant.setType(CardType.INSTANT);
+            coloredInstant.setColors(List.of(CardColor.BLUE));
+            Card colorlessLand = new Card();
+            colorlessLand.setType(CardType.LAND);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, coloredInstant)).isFalse();
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, colorlessLand)).isFalse();
+        }
     }
 
     @Nested

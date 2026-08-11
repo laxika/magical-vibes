@@ -43,7 +43,8 @@ public record LibrarySearchParams(
         AnimatePermanentsEffect animateFound,
         boolean repeatUntilDecline,
         CreateTokenEffect tokenTemplate,
-        String sourceSetCode
+        String sourceSetCode,
+        boolean sourceSideboard
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -68,7 +69,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode);
+                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard);
     }
 
     public static class Builder {
@@ -104,6 +105,7 @@ public record LibrarySearchParams(
         private boolean repeatUntilDecline;
         private CreateTokenEffect tokenTemplate;
         private String sourceSetCode;
+        private boolean sourceSideboard;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -256,6 +258,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder sourceSideboard(boolean sourceSideboard) {
+            this.sourceSideboard = sourceSideboard;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -263,7 +270,7 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode);
+                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard);
         }
     }
 }

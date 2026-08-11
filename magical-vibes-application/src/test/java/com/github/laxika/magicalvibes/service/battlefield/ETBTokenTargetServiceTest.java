@@ -40,6 +40,7 @@ class ETBTokenTargetServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
+    @Mock private GraveyardTargetingService graveyardTargetingService;
 
     private ETBTokenTargetService service;
     private GameData gd;
@@ -48,7 +49,7 @@ class ETBTokenTargetServiceTest {
     @BeforeEach
     void setUp() {
         service = new ETBTokenTargetService(gameQueryService, new PredicateEvaluationService(gameQueryService),
-                gameLogService, playerInputService, targetLegalityService);
+                gameLogService, playerInputService, targetLegalityService, graveyardTargetingService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -469,6 +470,39 @@ class ManaCostTest {
             cost.pay(pool, 0, false, false, false, false, false);
 
             assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Subtype-or-planeswalker restricted mana pays only matching spell costs")
+        void subtypeOrPlaneswalkerRestrictedManaPaysMatchingSpell() {
+            ManaRestriction.SubtypeOrPlaneswalkerSpells restriction =
+                    new ManaRestriction.SubtypeOrPlaneswalkerSpells(CardSubtype.ELEMENTAL, CardSubtype.CHANDRA);
+            ManaPool pool = new ManaPool();
+            pool.addSubtypeOrPlaneswalkerSpellMana(restriction, ManaColor.RED, 1);
+            ManaCost cost = new ManaCost("{R}");
+
+            assertThat(cost.canPay(pool, 0, false, false, false, false, false,
+                    null, null, false, false, false, java.util.Set.of(restriction))).isTrue();
+            cost.pay(pool, 0, false, false, false, false, false,
+                    null, null, false, false, false, java.util.Set.of(restriction));
+            assertThat(pool.getTotalAllMana()).isZero();
+            assertThat(cost.canPay(pool, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Subtype-or-planeswalker restricted mana pays hybrid spell costs")
+        void subtypeOrPlaneswalkerRestrictedManaPaysHybridSpell() {
+            ManaRestriction.SubtypeOrPlaneswalkerSpells restriction =
+                    new ManaRestriction.SubtypeOrPlaneswalkerSpells(CardSubtype.ELEMENTAL, CardSubtype.CHANDRA);
+            ManaPool pool = new ManaPool();
+            pool.addSubtypeOrPlaneswalkerSpellMana(restriction, ManaColor.RED, 1);
+            ManaCost cost = new ManaCost("{R/G}");
+
+            assertThat(cost.canPay(pool, 0, false, false, false, false, false,
+                    null, null, false, false, false, java.util.Set.of(restriction))).isTrue();
+            cost.pay(pool, 0, false, false, false, false, false,
+                    null, null, false, false, false, java.util.Set.of(restriction));
+            assertThat(pool.getTotalAllMana()).isZero();
         }
 
         @Test

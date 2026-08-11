@@ -1324,6 +1324,10 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
+        if (etbTokenTargetService.handleETBTokenTargetChosen(gameData, targetId, etbTtt)) {
+            return;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 etbTtt.sourceCard(),

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "185")
+@CardRegistration(set = "M20", collectorNumber = "183")
 public class NaturalEnd extends Card {
 
     public NaturalEnd() {

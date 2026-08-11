@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature. No card-specific engine logic.
  */
 @CardRegistration(set = "AVR", collectorNumber = "201")
+@CardRegistration(set = "M20", collectorNumber = "201")
 public class Vorstclaw extends Card {
 
     public Vorstclaw() {

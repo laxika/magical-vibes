@@ -38,7 +38,7 @@ public class UnleashHandler implements MayEffectHandlerBean {
         if (accepted) {
             Permanent source = ability.sourcePermanentId() != null
                     ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-            if (source != null) {
+            if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
                 int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,

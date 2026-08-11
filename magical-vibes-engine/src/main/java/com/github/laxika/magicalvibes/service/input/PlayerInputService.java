@@ -474,6 +474,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
     }
 
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
+        ChoiceContext.TriggeredModalChoice ctx =
+                new ChoiceContext.TriggeredModalChoice(sourceCard, controllerId, effect, sourcePermanentId);
+        List<String> optionLabels = effect.options().stream()
+                .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " - Choose one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a triggered mode for {}", gameData.id, playerName,
+                sourceCard.getName());
+    }
+
     /**
      * Hullbreaker Horror "choose up to one" — offers bounce-spell / bounce-permanent / do-nothing,
      * omitting a bounce mode when it currently has no legal target.

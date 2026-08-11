@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "241")
+@CardRegistration(set = "M20", collectorNumber = "232")
 public class MeteorGolem extends Card {
 
     public MeteorGolem() {

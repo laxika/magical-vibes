@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "149")
+@CardRegistration(set = "M20", collectorNumber = "227")
 public class GrafdiggersCage extends Card {
 
     public GrafdiggersCage() {

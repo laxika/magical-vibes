@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -661,7 +662,9 @@ public class MayAbilityHandlerService {
             boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
             boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
             boolean targetAlreadySet = pendingEntry != null
-                    && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
+                    && (pendingEntry.getTargetId() != null
+                    || !pendingEntry.getTargetIds().isEmpty()
+                    || !pendingEntry.getTargetCardIds().isEmpty());
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
                 gameData.resolvedMayAccepted = true;
                 handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
@@ -801,6 +804,7 @@ public class MayAbilityHandlerService {
                 case ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint -> imprint.filter();
                 case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
                 case ExileGraveyardCardsEffect exile -> exile.filter();
+                case ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature -> exileCreature.filter();
                 case ReturnCardFromGraveyardEffect ret -> ret.filter();
                 default -> null;
             };

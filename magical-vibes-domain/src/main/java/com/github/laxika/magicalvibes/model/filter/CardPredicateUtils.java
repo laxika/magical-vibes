@@ -76,6 +76,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardPowerAtMostPredicate p) {
             return "card with power " + p.maxPower() + " or less";
         }
+        if (predicate instanceof CardToughnessLessThanSourceToughnessPredicate) {
+            return "card with toughness less than this creature's toughness";
+        }
         if (predicate instanceof CardNamedPredicate p) {
             return "card named " + p.cardName();
         }

@@ -1301,7 +1301,9 @@ public abstract class AiDecisionEngine {
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
             Card c = graveyard.get(i);
-            if (cost.requiredType() == null || c.hasType(cost.requiredType())) {
+            if ((cost.requiredType() == null || c.hasType(cost.requiredType()))
+                    && (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null))) {
                 matchingIndices.add(i);
             }
         }

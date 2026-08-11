@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "61")
+@CardRegistration(set = "M20", collectorNumber = "64")
 public class LeylineOfAnticipation extends Card {
 
     public LeylineOfAnticipation() {

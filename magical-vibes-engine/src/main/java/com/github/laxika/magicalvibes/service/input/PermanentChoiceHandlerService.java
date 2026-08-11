@@ -119,6 +119,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePopulate(gameData, permanentId, populate);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
+        } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {
+            battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {

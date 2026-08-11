@@ -34,7 +34,7 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateEmblemEffect emblemEffect = (CreateEmblemEffect) effect;
 
-        for (UUID recipientId : recipients(entry, emblemEffect)) {
+        for (UUID recipientId : recipients(gameData, entry, emblemEffect)) {
             if (!gameData.playerIds.contains(recipientId)) {
                 continue;
             }
@@ -48,10 +48,14 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private static List<UUID> recipients(StackEntry entry, CreateEmblemEffect emblemEffect) {
+    private static List<UUID> recipients(GameData gameData, StackEntry entry,
+                                         CreateEmblemEffect emblemEffect) {
         return switch (emblemEffect.recipient()) {
             case TARGET_PLAYER -> List.of(entry.getTargetId());
             case CONTROLLER -> List.of(entry.getControllerId());
+            case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                    .toList();
             // "Each player dealt damage this way": the damage effect earlier in this same entry logged
             // exactly who took damage, so fully-prevented players are skipped.
             case EACH_PLAYER_DEALT_DAMAGE_THIS_WAY -> List.copyOf(entry.getPlayersDealtDamageThisResolution());

@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ShuffleTargetCardsFromGraveyardIntoLibraryEffect(
         CardPredicate filter,
         int maxTargets
-) implements CardEffect {
+) implements GraveyardCardChoosingEffect {
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.player()); }
+
+    @Override public int graveyardChoiceMaxTargets() { return maxTargets; }
+
+    @Override public CardPredicate graveyardChoiceFilter() { return filter; }
 }

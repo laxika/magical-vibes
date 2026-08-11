@@ -272,7 +272,9 @@ public class GameActionAvailabilityService {
         if (exileCost != null) {
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
             long matchingCount = graveyard.stream()
-                    .filter(c -> exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
+                    .filter(c -> (exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
+                            && (exileCost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(c, exileCost.predicate(), null)))
                     .count();
             if (matchingCount < exileCost.count()) {
                 return false;
@@ -454,17 +456,25 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
+                subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                        || (card.hasType(CardType.PLANESWALKER)
+                        && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))
+                        ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                        CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
+                        : Set.of();
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
-                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
+                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
+                || !subtypeOrPlaneswalkerSpellContext.isEmpty();
         for (ManaCost cost : candidateCosts) {
             boolean canAfford = hasRestricted
                     ? cost.canPay(pool, effectiveAdditionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                     instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
-                    creatureSpellOnly, false, legendarySpellOnly)
+                    creatureSpellOnly, false, legendarySpellOnly, subtypeOrPlaneswalkerSpellContext)
                     : cost.canPay(pool, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
@@ -786,7 +796,9 @@ public class GameActionAvailabilityService {
                 if (exileNCost != null) {
                     long availableCards = graveyard.stream()
                             .filter(c -> c != card)
-                            .filter(c -> exileNCost.requiredType() == null || c.hasType(exileNCost.requiredType()))
+                            .filter(c -> (exileNCost.requiredType() == null || c.hasType(exileNCost.requiredType()))
+                                    && (exileNCost.predicate() == null
+                                    || predicateEvaluationService.matchesCardPredicate(c, exileNCost.predicate(), null)))
                             .count();
                     if (availableCards < exileNCost.count()) {
                         continue;

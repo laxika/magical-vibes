@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "46")
+@CardRegistration(set = "M20", collectorNumber = "73")
 public class SagesRowDenizen extends Card {
 
     public SagesRowDenizen() {

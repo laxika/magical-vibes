@@ -9,6 +9,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Buyback cost reduction | `m/MemoryCrystal.java` | STATIC `ReduceBuybackCostEffect(2)` — the generic mana component of every player's mana buyback costs {2} less |
+| Opponents' creatures can't get +1/+1 counters | `b/Blightbeetle.java` | STATIC GrantEffectEffect(CantHavePlusOnePlusOneCountersEffect, OPPONENT_CREATURES) — the narrow counter lock leaves other counter types unaffected |
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) â€” +1/+1 and indestructible to other Knights you control |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
@@ -176,6 +177,7 @@ All paths relative to `cards/`.
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) â€” all your creatures assign combat damage equal to toughness |
 | Toughness as combat damage (global) | `d/DoranTheSiegeTower.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_CREATURES) â€” every creature assigns combat damage equal to toughness |
 | Defending player assigns combat damage | `d/DefensiveFormation.java` | STATIC DefensiveFormationEffect() â€” the controller assigns combat damage dealt by creatures attacking them |
+| Toughness as combat damage (Aura, always) | `g/GauntletsOfLight.java` | STATIC AssignCombatDamageWithToughnessEffect(ENCHANTED_CREATURE, true) â€” enchanted creature assigns combat damage equal to toughness even when its power is greater |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |
@@ -190,6 +192,7 @@ All paths relative to `cards/`.
 | Twist basic-land mana colors | `n/NakedSingularity.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{3}") + STATIC NakedSingularityManaEffect — Plains→{R}, Island→{G}, Swamp→{W}, Mountain→{U}, Forest→{B}; same plumbing as Reality Twist |
 | Lands produce fixed color | `i/InfernalDarkness.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{B}", 1) + STATIC ReplaceLandManaWithColorEffect(BLACK) — amount unchanged; global via GameQueryService.fixedLandManaColor |
 | Symmetric land-tap mana doubling | `m/ManaFlare.java` | ON_ANY_PLAYER_TAPS_LAND `AddOneOfEachManaTypeProducedByLandEffect(false)` — every player's land tap adds one extra mana of a type it produced (controller-scoped variant `true` = Vorinclex) |
+| Controller's creature-tap mana boost | `l/LeylineOfAbundance.java` | ON_CONTROLLER_TAPS_CREATURE_FOR_MANA `AddManaWhenCreatureTappedForManaEffect(ManaColor.GREEN)` — the controller's creatures add one additional green when tapped for mana |
 | Deferred opponent land-tap color lock | `m/ManaWeb.java` | ON_ANY_PLAYER_TAPS_LAND `TapLandsThatCouldProduceSameManaAsTappedLandEffect()` — queues a trigger, then at resolution taps that player's lands that could produce any type the triggering land could produce |
 | Parity-branching upkeep with turn-scoped mana riders | `c/ChaosMoon.java` | Two complementary EACH_UPKEEP_TRIGGERED `ConditionalEffect`s (`NotCondition(TotalPermanentCountEven())` / `TotalPermanentCountEven()`), each wrapping a `SequenceEffect` of `BoostAllCreaturesEffect(±1, ±1, PermanentColorInPredicate(RED))` + a turn-scoped mana rider (`LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect` / `LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect`). Parity is counted on resolution, not as an intervening-if |
 | Island-tap CU-restricted mana + snow bonus | `s/Snowfall.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{U}") + ON_ANY_PLAYER_TAPS_LAND `AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect(ISLAND, BLUE, 1, 2, CumulativeUpkeepCosts())` — Island → +{U} CU-only; snow Island → +{U}{U} instead; "may" auto-accepted |

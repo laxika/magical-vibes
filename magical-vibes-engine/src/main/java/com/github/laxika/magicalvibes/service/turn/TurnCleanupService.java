@@ -252,7 +252,10 @@ public class TurnCleanupService {
         gameData.drawStepFirstDrawTaken.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
+        gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
+        gameData.playerHexproofFromColorsThisTurn.clear();
+        gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -286,6 +289,7 @@ public class TurnCleanupService {
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.conspiredSpellIds.clear();

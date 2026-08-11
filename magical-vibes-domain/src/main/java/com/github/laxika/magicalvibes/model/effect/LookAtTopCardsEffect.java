@@ -192,6 +192,13 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.BATTLEFIELD, true);
     }
 
+    /** Put one matching card onto the battlefield and the rest into the graveyard. */
+    public static LookAtTopCardsEffect putOneMatchingOntoBattlefieldRestToGraveyard(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.BATTLEFIELD, false);
+    }
+
     /** You may put one matching card onto the battlefield; the rest go to the bottom randomly. */
     public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
             int lookCount, CardPredicate choosePredicate) {

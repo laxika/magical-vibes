@@ -80,7 +80,10 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                graveyardCard, effect.filter(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
@@ -89,20 +92,18 @@ public class GraveyardTargetValidators {
         // so findSourcePermanentController returns null and this check is safely skipped.
         if (effect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
             UUID controllerId = tvs.findSourcePermanentController(ctx);
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
             if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
                 throw new IllegalStateException("Target must be in your graveyard");
             }
         }
         if (effect.targetPutIntoGraveyardFromBattlefieldThisTurn()) {
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
             boolean tracked = graveyardOwnerId != null
-                    && ctx.gameData().creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
-                    .getOrDefault(graveyardOwnerId, Set.of())
-                    .contains(ctx.targetId());
+                    && ctx.gameData().cardsPutIntoGraveyardFromBattlefieldThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
             if (!tracked) {
                 throw new IllegalStateException(
-                        "Target must be a creature card put into a graveyard from the battlefield this turn");
+                        "Target must be a card put into a graveyard from the battlefield this turn");
             }
         }
         if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {

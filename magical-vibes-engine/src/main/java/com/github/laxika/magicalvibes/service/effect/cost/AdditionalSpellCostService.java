@@ -316,7 +316,9 @@ public class AdditionalSpellCostService {
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
                     long matchingCount = graveyard.stream()
-                            .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
+                            .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                                    && (cost.predicate() == null
+                                    || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
                             .count();
                     if (matchingCount < cost.count()) return false;
                 }
@@ -967,8 +969,13 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Invalid graveyard card index: " + idx);
             }
             int actualIdx = excludedGraveyardIndex >= 0 && idx >= excludedGraveyardIndex ? idx + 1 : idx;
-            if (cost.requiredType() != null && !graveyard.get(actualIdx).hasType(cost.requiredType())) {
-                String typeName = cost.requiredType().name().toLowerCase();
+            Card selected = graveyard.get(actualIdx);
+            if ((cost.requiredType() != null && !selected.hasType(cost.requiredType()))
+                    || (cost.predicate() != null
+                    && !predicateEvaluationService.matchesCardPredicate(selected, cost.predicate(), null))) {
+                String typeName = cost.requiredType() != null
+                        ? cost.requiredType().name().toLowerCase()
+                        : "matching";
                 throw new IllegalStateException("Must exile a " + typeName + " card from your graveyard");
             }
         }

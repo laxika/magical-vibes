@@ -375,6 +375,9 @@ public class AbilityActivationService {
         if (permanent.getCard().hasType(CardType.LAND)) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
+        if (isCreatureSource) {
+            triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
+        }
         triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
         List<StackEntry> deferred = List.of();
@@ -974,7 +977,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileNGraveyardCost != null
-                && matchingGraveyardExileCandidates(graveyard, exileNGraveyardCost.requiredType(), card).size()
+                && matchingGraveyardExileCandidates(graveyard, exileNGraveyardCost, card).size()
                         < exileNGraveyardCost.count()) {
             String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
             throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
@@ -987,7 +990,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileXGraveyardCost != null
-                && matchingGraveyardExileCandidates(graveyard, exileXGraveyardCost.requiredType(), card).size() < xValue) {
+                && matchingGraveyardExileCandidates(graveyard, exileXGraveyardCost, card).size() < xValue) {
             String typeName = graveyardExileFilterLabel(exileXGraveyardCost.requiredType(), null);
             throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                     + xValue + ")");
@@ -1261,6 +1264,7 @@ public class AbilityActivationService {
                 );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
+        flushActivatedAbilityCostTriggers(gameData);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
         log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
@@ -1580,7 +1584,7 @@ public class AbilityActivationService {
             gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
         }
         gameData.discardCausedByOpponent = false;
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
 
         // Push the ability onto the stack with its graveyard targets (cost effects are not resolved)
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -1603,6 +1607,7 @@ public class AbilityActivationService {
                 graveyardCardIds,
                 List.of()
         ));
+        flushActivatedAbilityCostTriggers(gameData);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability targeting graveyards", gameData.id, player.getUsername(), card.getName());
@@ -2237,11 +2242,6 @@ public class AbilityActivationService {
             payLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         }
 
-        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
-                .filter(PayLifeCost.class::isInstance)
-                .map(PayLifeCost.class::cast)
-                .findFirst();
-
         ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
                 .filter(ExileCardFromGraveyardCost.class::isInstance)
                 .map(ExileCardFromGraveyardCost.class::cast)
@@ -2345,14 +2345,6 @@ public class AbilityActivationService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaCost taxCost = new ManaCost("{" + additionalGenericCost + "}");
             taxCost.pay(pool);
-        }
-
-        // Pay life cost
-        if (payLifeCost.isPresent()) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int amount = payLifeCost.get().effectiveAmount(currentLife, sourceCounterCount(permanent, payLifeCost.get()));
-            gameData.playerLifeTotals.put(playerId, currentLife - amount);
-            gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
         }
 
         // discardCardIndex < 0 means the interactive path already paid all required discards.
@@ -3004,7 +2996,7 @@ public class AbilityActivationService {
             GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability,
             UUID targetId, List<UUID> targetIds, int effectiveXValue) {
         int additionalGenericCost =
-                castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds)
+                castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, true)
                         + castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
         String abilityCost = ability.getManaCost();
         if (abilityCost == null) {
@@ -3267,7 +3259,7 @@ public class AbilityActivationService {
                 .orElse(null);
         if (exileNGraveyardCost != null) {
             List<Card> gy = gameData.playerGraveyards.get(playerId);
-            if (matchingGraveyardExileCandidates(gy, exileNGraveyardCost.requiredType(), null).size()
+            if (matchingGraveyardExileCandidates(gy, exileNGraveyardCost, null).size()
                     < exileNGraveyardCost.count()) {
                 String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
                 throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
@@ -3282,7 +3274,7 @@ public class AbilityActivationService {
                 .orElse(null);
         if (exileXGraveyardCost != null) {
             List<Card> gy = gameData.playerGraveyards.get(playerId);
-            if (matchingGraveyardExileCandidates(gy, exileXGraveyardCost.requiredType(), null).size() < xValue) {
+            if (matchingGraveyardExileCandidates(gy, exileXGraveyardCost, null).size() < xValue) {
                 String typeName = graveyardExileFilterLabel(exileXGraveyardCost.requiredType(), null);
                 throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                         + xValue + ")");
@@ -4081,7 +4073,7 @@ public class AbilityActivationService {
 
         graveyardService.addCardToGraveyard(gameData, player.getId(), paid);
         gameData.discardCausedByOpponent = false;
-        triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), paid);
+        collectDiscardTriggersAsAbilityCost(gameData, player.getId(), paid);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , paid, " as an activation cost."));
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), paid.getName());
@@ -4089,6 +4081,23 @@ public class AbilityActivationService {
     }
 
     private record PaidHandCard(String name, int manaValue) {
+    }
+
+    private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard) {
+        int stackBefore = gameData.stack.size();
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
+        if (gameData.stack.size() > stackBefore) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(
+                    new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size())));
+            gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
+        }
+    }
+
+    private void flushActivatedAbilityCostTriggers(GameData gameData) {
+        if (!gameData.pendingActivatedAbilityCostTriggers.isEmpty()) {
+            gameData.stack.addAll(gameData.pendingActivatedAbilityCostTriggers);
+            gameData.pendingActivatedAbilityCostTriggers.clear();
+        }
     }
 
     private void payExileTopOfLibraryCost(GameData gameData, UUID playerId, Permanent permanent,
@@ -4126,7 +4135,7 @@ public class AbilityActivationService {
         gameData.discardCausedByOpponent = false;
         for (Card card : discarded) {
             graveyardService.addCardToGraveyard(gameData, playerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
         }
 
         String logEntry = player.getUsername() + " discards their hand (" + discarded.size()
@@ -4146,7 +4155,7 @@ public class AbilityActivationService {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             graveyardService.addCardToGraveyard(gameData, playerId, discarded);
             gameData.discardCausedByOpponent = false;
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            collectDiscardTriggersAsAbilityCost(gameData, playerId, discarded);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " at random as an activation cost."));
             log.info("Game {} - {} discards {} at random as activation cost", gameData.id, player.getUsername(), discarded.getName());
@@ -4207,7 +4216,9 @@ public class AbilityActivationService {
      * artifact creature counts as an artifact card. The source is excluded so a graveyard-activated
      * ability that returns itself (Salvage Titan) never exiles the very card it means to bring back.
      */
-    private List<Card> matchingGraveyardExileCandidates(List<Card> graveyard, CardType requiredType, Card sourceCard) {
+    private List<Card> matchingGraveyardExileCandidates(List<Card> graveyard,
+                                                        ExileNCardsFromGraveyardCost cost,
+                                                        Card sourceCard) {
         List<Card> candidates = new ArrayList<>();
         if (graveyard == null) {
             return candidates;
@@ -4216,7 +4227,24 @@ public class AbilityActivationService {
             if (card == sourceCard) {
                 continue;
             }
-            if (requiredType == null || card.hasType(requiredType)) {
+            if ((cost.requiredType() == null || card.hasType(cost.requiredType()))
+                    && (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null))) {
+                candidates.add(card);
+            }
+        }
+        return candidates;
+    }
+
+    private List<Card> matchingGraveyardExileCandidates(List<Card> graveyard,
+                                                        ExileXCardsFromGraveyardCost cost,
+                                                        Card sourceCard) {
+        List<Card> candidates = new ArrayList<>();
+        if (graveyard == null) {
+            return candidates;
+        }
+        for (Card card : graveyard) {
+            if (card != sourceCard && (cost.requiredType() == null || card.hasType(cost.requiredType()))) {
                 candidates.add(card);
             }
         }
@@ -4226,7 +4254,7 @@ public class AbilityActivationService {
     private void payGraveyardExileNCost(GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost.requiredType(), sourceCard);
+        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost, sourceCard);
         if (candidates.size() < cost.count()) {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
@@ -4255,7 +4283,7 @@ public class AbilityActivationService {
 
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost.requiredType(), sourceCard);
+        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost, sourceCard);
         if (candidates.size() < count) {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }

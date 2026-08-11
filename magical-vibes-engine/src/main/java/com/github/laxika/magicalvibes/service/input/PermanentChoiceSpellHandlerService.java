@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSuppo
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class PermanentChoiceSpellHandlerService {
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
     private final PsychicBattleSupport psychicBattleSupport;
+    private final SpellCastingService spellCastingService;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -55,7 +57,8 @@ public class PermanentChoiceSpellHandlerService {
                                               @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
                                               @Lazy InputCompletionService inputCompletionService,
-                                              PsychicBattleSupport psychicBattleSupport) {
+                                              PsychicBattleSupport psychicBattleSupport,
+                                              @Lazy SpellCastingService spellCastingService) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -65,6 +68,7 @@ public class PermanentChoiceSpellHandlerService {
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
         this.psychicBattleSupport = psychicBattleSupport;
+        this.spellCastingService = spellCastingService;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -301,6 +305,16 @@ public class PermanentChoiceSpellHandlerService {
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
 
         if (target != null || isPlayerTarget) {
+            if (!gct.withoutPayingManaCost()) {
+                try {
+                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), gct.cardToCast(), 0);
+                } catch (IllegalStateException ex) {
+                    graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
+                    gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), " can't be cast because its mana cost can't be paid."));
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+            }
             StackEntry entry = new StackEntry(
                     gct.spellType(),
                     gct.cardToCast(),

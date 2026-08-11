@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "129")
+@CardRegistration(set = "M20", collectorNumber = "132")
 public class ChandrasSpitfire extends Card {
 
     public ChandrasSpitfire() {

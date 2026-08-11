@@ -54,6 +54,8 @@ public class GameData {
     public final Map<UUID, String> playerIdToName = new ConcurrentHashMap<>();
     public final Map<UUID, String> playerDeckChoices = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerDecks = new ConcurrentHashMap<>();
+    /** Cards owned by each player that began outside the game, such as a sideboard. */
+    public final Map<UUID, List<Card>> playerSideboards = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerHands = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();
     public final Set<UUID> playerKeptHand = ConcurrentHashMap.newKeySet();
@@ -188,6 +190,8 @@ public class GameData {
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
     public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
+    /** Triggered abilities collected while an activated ability's discard cost is being paid. */
+    public final List<StackEntry> pendingActivatedAbilityCostTriggers = Collections.synchronizedList(new ArrayList<>());
     /** Mana-ability activations that can still be undone by the MTGO-style "cancel casting" UI
      *  (untap the source, drain the produced mana). Cleared whenever a non-mana action happens
      *  (casting, non-mana ability activation, passing priority, step change); each entry is also
@@ -679,8 +683,17 @@ public class GameData {
     /** Per-player: spells controlled by this player can't be countered by spells of these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerSpellsCantBeCounteredByColorsThisTurn = new ConcurrentHashMap<>();
 
+    /** Players whose spells can't be countered this turn. Cleared at end of turn. */
+    public final Set<UUID> playersSpellsCantBeCounteredThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
+
+    /** Per-player: this player has hexproof from these colors this turn. Cleared at end of turn. */
+    public final Map<UUID, Set<CardColor>> playerHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
+
+    /** Per-permanent: this permanent has hexproof from these colors this turn. Cleared at end of turn. */
+    public final Map<UUID, Set<CardColor>> permanentHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
 
     /** Card IDs of individual spells on the stack that have been made uncounterable (e.g. Vexing Shusher's
      *  "Target spell can't be countered"). Only relevant while the spell is on the stack. */
@@ -855,6 +868,9 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** Pending one-shot loyalty-ability copy triggers for the current turn. */
+    public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
 
     /** "Whenever you cast a creature spell this turn, draw a card" delayed triggers (Glimpse of
      *  Nature). The value is how many cards that player draws per creature spell cast; cleared at
@@ -2796,6 +2812,7 @@ public class GameData {
 
         // --- Map<UUID, List<Card>> (shared Card refs) ---
         this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, new ArrayList<>(v)));
+        this.playerSideboards.forEach((k, v) -> copy.playerSideboards.put(k, new ArrayList<>(v)));
         this.playerHands.forEach((k, v) -> copy.playerHands.put(k, new ArrayList<>(v)));
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
@@ -2820,6 +2837,7 @@ public class GameData {
         // --- List<StackEntry> (deep copy each StackEntry) ---
         this.stack.forEach(se -> copy.stack.add(new StackEntry(se)));
         this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
+        this.pendingActivatedAbilityCostTriggers.forEach(se -> copy.pendingActivatedAbilityCostTriggers.add(new StackEntry(se)));
 
         // --- InteractionState ---
         InteractionState copiedInteraction = this.interaction.deepCopy();
@@ -2887,7 +2905,9 @@ public class GameData {
         copy.graveyardTargetOperation.effects = this.graveyardTargetOperation.effects;
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
+        copy.graveyardTargetOperation.anyNumber = this.graveyardTargetOperation.anyNumber;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
+        copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
         copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
@@ -2958,8 +2978,13 @@ public class GameData {
         // --- Per-player spell/creature color protection (Autumn's Veil style) ---
         this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) ->
                 copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, new HashSet<>(v)));
+        copy.playersSpellsCantBeCounteredThisTurn.addAll(this.playersSpellsCantBeCounteredThisTurn);
         this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
+        this.playerHexproofFromColorsThisTurn.forEach((k, v) ->
+                copy.playerHexproofFromColorsThisTurn.put(k, new HashSet<>(v)));
+        this.permanentHexproofFromColorsThisTurn.forEach((k, v) ->
+                copy.permanentHexproofFromColorsThisTurn.put(k, new HashSet<>(v)));
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
         this.spellColorOverrides.forEach((k, v) -> copy.spellColorOverrides.put(k, new HashSet<>(v)));
@@ -2994,6 +3019,7 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));

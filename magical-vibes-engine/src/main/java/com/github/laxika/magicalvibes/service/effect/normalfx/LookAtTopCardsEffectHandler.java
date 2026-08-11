@@ -110,11 +110,18 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     private void resolveMayPutOntoBattlefield(GameData gameData, StackEntry entry,
             LookAtTopCardsEffect e, int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
-                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, !e.reveal());
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
+
+        if (e.reveal()) {
+            GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
+            appendCardList(revealBuilder, topCards);
+            revealBuilder.text(" from the top of their library with ").card(entry.getCard()).text(".");
+            gameLogService.append(gameData, revealBuilder.build());
+        }
 
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Card> matchingCards = topCards.stream()
@@ -122,9 +129,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         card, e.choosePredicate(), sourceCardId, gameData, controllerId))
                 .toList();
 
-        boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
+        boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD && !e.optional();
         boolean anyNumber = chooseCount > 1 || randomBottom;
 
         if (matchingCards.isEmpty()) {
@@ -136,8 +143,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 for (Card card : topCards) {
                     gameData.playerGraveyards.get(controllerId).add(card);
                 }
-                gameLogService.append(gameData, GameLog.text(playerName
-                        + " puts all revealed cards into their graveyard."));
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " puts the revealed cards into their graveyard."));
             } else if (randomBottom) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
@@ -147,6 +154,22 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (!anyNumber) {
+            if (restToGraveyard) {
+                String prompt = "Choose a card to put onto the battlefield. The rest go into your graveyard.";
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(controllerId, matchingCards)
+                                .reveals(true)
+                                .canFailToFind(false)
+                                .sourceCards(new ArrayList<>(topCards))
+                                .restToGraveyard(true)
+                                .shuffleAfterSelection(false)
+                                .prompt(prompt)
+                                .destination(e.chosenDestination())
+                                .build(),
+                        prompt,
+                        false));
+                return;
+            }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                     LibrarySearchParams.builder(controllerId, matchingCards)
                             .canFailToFind(true)
@@ -276,7 +299,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     + LibraryRevealSupport.pluralCards(topCards.size()) + " of their library."));
         }
 
-        List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(), gameData, controllerId);
+        List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(),
+                entry.getCard().getId(), gameData, controllerId);
         if (matchingCards.isEmpty()) {
             if (toGraveyard) {
                 for (Card card : topCards) {
@@ -391,7 +415,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (e.choosePredicate() != null) {
-            resolveRestToBottomFiltered(gameData, controllerId, topCards, playerName, e,
+            resolveRestToBottomFiltered(gameData, entry, controllerId, topCards, playerName, e,
                     chooseCount, randomRemaining);
             return;
         }
@@ -428,9 +452,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
      * number of eligible cards this is choice-free — every matching card auto-moves to hand
      * (Lair Delve).
      */
-    private void resolveRestToBottomFiltered(GameData gameData, UUID controllerId, List<Card> topCards,
-            String playerName, LookAtTopCardsEffect e, int chooseCount, boolean randomRemaining) {
-        List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(), gameData, controllerId);
+    private void resolveRestToBottomFiltered(GameData gameData, StackEntry entry, UUID controllerId,
+            List<Card> topCards, String playerName, LookAtTopCardsEffect e, int chooseCount,
+            boolean randomRemaining) {
+        List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(),
+                entry.getCard().getId(), gameData, controllerId);
 
         if (eligibleCards.size() > chooseCount) {
             List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
@@ -490,7 +516,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        List<Card> eligibleCards = filterEligibleCards(topCards, handChoicePredicate, gameData, controllerId);
+        List<Card> eligibleCards = filterEligibleCards(topCards, handChoicePredicate,
+                entry.getCard().getId(), gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
             for (Card card : topCards) {
@@ -590,10 +617,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,
-            GameData gameData, UUID controllerId) {
+            UUID sourceCardId, GameData gameData, UUID controllerId) {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : topCards) {
-            if (predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, controllerId)) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    card, predicate, sourceCardId, gameData, controllerId)) {
                 eligibleCards.add(card);
             }
         }

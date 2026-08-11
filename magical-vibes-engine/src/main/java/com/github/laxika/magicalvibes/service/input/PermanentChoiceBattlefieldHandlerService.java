@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,6 +99,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
+    private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
@@ -732,6 +734,25 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePatternMatcherCreatureChoice(GameData gameData, UUID chosenPermanentId,
+                                                   PermanentChoiceContext.PatternMatcherCreatureChoice context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null
+                || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, chosenPermanentId))
+                || !gameQueryService.isCreature(gameData, chosen)
+                || chosenPermanentId.equals(context.sourcePermanentId())) {
+            throw new IllegalStateException("Chosen permanent is not another creature you control");
+        }
+
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            throw new IllegalStateException("Pattern Matcher resolution is no longer pending");
+        }
+
+        patternMatcherHandler.search(gameData, pendingEntry, chosen.getCard().getName());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "12")
 @CardRegistration(set = "M12", collectorNumber = "21")
 @CardRegistration(set = "M14", collectorNumber = "20")
+@CardRegistration(set = "M20", collectorNumber = "21")
 public class GriffinSentinel extends Card {
 }

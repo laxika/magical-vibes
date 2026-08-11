@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -39,6 +40,7 @@ public class ETBTokenTargetService {
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GraveyardTargetingService graveyardTargetingService;
 
     @Autowired
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -46,13 +48,15 @@ public class ETBTokenTargetService {
                                  GameLogService gameLogService,
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService,
-                                 AmountEvaluationService amountEvaluationService) {
+                                 AmountEvaluationService amountEvaluationService,
+                                 GraveyardTargetingService graveyardTargetingService) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.targetLegalityService = targetLegalityService;
         this.amountEvaluationService = amountEvaluationService;
+        this.graveyardTargetingService = graveyardTargetingService;
     }
 
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -61,7 +65,18 @@ public class ETBTokenTargetService {
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService) {
         this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
-                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService));
+                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService), null);
+    }
+
+    public ETBTokenTargetService(GameQueryService gameQueryService,
+                                 PredicateEvaluationService predicateEvaluationService,
+                                 GameLogService gameLogService,
+                                 PlayerInputService playerInputService,
+                                 TargetLegalityService targetLegalityService,
+                                 GraveyardTargetingService graveyardTargetingService) {
+        this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
+                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService),
+                graveyardTargetingService);
     }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {
@@ -153,6 +168,30 @@ public class ETBTokenTargetService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * Continues an ETB target choice whose effect also needs a multi-card graveyard selection.
+     * Returns {@code true} when the ordinary stack-entry path must be skipped.
+     */
+    public boolean handleETBTokenTargetChosen(GameData gameData, UUID targetId,
+            PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        GraveyardCardChoosingEffect choosingEffect = pending.effects().stream()
+                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                        && e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                .map(GraveyardCardChoosingEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (choosingEffect == null) {
+            return false;
+        }
+
+        graveyardTargetingService.handleTargetPlayerGraveyardChoiceETBTargeting(
+                gameData, pending.controllerId(), pending.sourceCard(), pending.effects(), targetId, choosingEffect);
+        if (!gameData.interaction.isAwaitingInput()) {
+            processNextETBTokenTargetTrigger(gameData);
+        }
+        return true;
     }
 
     public void processNextETBTokenMultiTargetTrigger(GameData gameData) {

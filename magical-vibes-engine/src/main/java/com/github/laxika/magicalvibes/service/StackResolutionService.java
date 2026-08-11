@@ -379,7 +379,9 @@ public class StackResolutionService {
         // happens as part of the entering process before state-based actions are checked.
         if (!perm.isFaceDown()) {
             handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+            int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard,
+                    entry.getTargetId(), true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
         } else {
             battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
         }
@@ -749,7 +751,9 @@ public class StackResolutionService {
 
         // Process ETB effects for all artifacts (creature and non-creature)
         if (!gameData.interaction.isAwaitingInput()) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+            int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard,
+                    entry.getTargetId(), true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
         }
 
         checkLegendRuleIfIdle(gameData, controllerId);

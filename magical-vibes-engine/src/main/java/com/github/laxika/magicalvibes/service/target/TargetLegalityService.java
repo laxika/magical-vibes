@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
@@ -437,7 +438,7 @@ public class TargetLegalityService {
                 if (peaceTalks != null) {
                     throw new IllegalStateException(peaceTalks);
                 }
-                validatePlayerTargetable(gameData, targetId, playerId);
+                validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
                 continue;
             }
 
@@ -450,7 +451,7 @@ public class TargetLegalityService {
                 if (peaceTalks != null) {
                     throw new IllegalStateException(peaceTalks);
                 }
-                validatePlayerTargetable(gameData, targetId, playerId);
+                validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
                 validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
                 continue;
             }
@@ -459,7 +460,7 @@ public class TargetLegalityService {
             // checked against the filter's player predicate, the permanent side falls through below.
             if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter
                     && gameData.playerIds.contains(targetId)) {
-                validatePlayerTargetable(gameData, targetId, playerId);
+                validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
                 validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
                 continue;
             }
@@ -661,7 +662,7 @@ public class TargetLegalityService {
         if (target == null && needsTarget && gameData.playerIds.contains(targetId)) {
             String peaceTalks = peaceTalksUntargetableReason(gameData);
             if (peaceTalks != null) return Optional.of(peaceTalks);
-            String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId);
+            String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId, card);
             if (playerReason != null) return Optional.of(playerReason);
             if (card != null && card.getColor() != null
                     && gameQueryService.playerHasProtectionFromColor(gameData, targetId, card.getColor())) {
@@ -776,19 +777,19 @@ public class TargetLegalityService {
                 }
                 TargetFilter playerSlotFilter = getPositionFilter(perPositionFilters, i);
                 if (playerSlotFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
-                    validatePlayerTargetable(gameData, targetId, controllerId);
+                    validatePlayerTargetable(gameData, targetId, controllerId, card);
                     validatePlayerPredicate(gameData, controllerId, targetId, anyFilter.playerPredicate(),
                             anyFilter.errorMessage());
                     continue;
                 }
                 if (playerSlotFilter instanceof PlayerPredicateTargetFilter playerFilter) {
-                    validatePlayerTargetable(gameData, targetId, controllerId);
+                    validatePlayerTargetable(gameData, targetId, controllerId, card);
                     validatePlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate(),
                             playerFilter.errorMessage());
                     continue;
                 }
                 if (EffectResolution.needsTarget(card)) {
-                    validatePlayerTargetable(gameData, targetId, controllerId);
+                    validatePlayerTargetable(gameData, targetId, controllerId, card);
                 }
                 continue;
             }
@@ -1097,7 +1098,8 @@ public class TargetLegalityService {
                     if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
                         targetFizzled = true;
                     } else {
-                    String playerReason = checkPlayerUntargetableReason(gameData, entry.getTargetId(), entry.getControllerId());
+                    String playerReason = checkPlayerUntargetableReason(
+                            gameData, entry.getTargetId(), entry.getControllerId(), entry.getCard());
                     if (playerReason != null) {
                         targetFizzled = true;
                     } else if (entry.getCard() != null && entry.getCard().getColor() != null
@@ -1225,7 +1227,7 @@ public class TargetLegalityService {
             if (isBlockedByPeaceTalksForEntry(gameData, entry)) {
                 return false;
             }
-            if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId()) != null) {
+            if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId(), entry.getCard()) != null) {
                 return false;
             }
             Card sourceCard = entry.getCard();
@@ -1498,6 +1500,11 @@ public class TargetLegalityService {
     }
 
     private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
+        return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, null);
+    }
+
+    private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId,
+                                                 Card sourceCard) {
         if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted";
         }
@@ -1506,11 +1513,25 @@ public class TargetLegalityService {
                 && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, sourcePlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
         }
+        if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
+                && sourceCard != null && sourceCard.getColor() != null
+                && gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, sourceCard.getColor())) {
+            return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
+                    + sourceCard.getColor().name().toLowerCase();
+        }
         return null;
     }
 
     private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
         String reason = checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId);
+        if (reason != null) {
+            throw new IllegalStateException(reason);
+        }
+    }
+
+    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId,
+                                          Card sourceCard) {
+        String reason = checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, sourceCard);
         if (reason != null) {
             throw new IllegalStateException(reason);
         }
@@ -1803,6 +1824,10 @@ public class TargetLegalityService {
             return stackEntry.getCard().getSubtypes().stream()
                     .anyMatch(subtypeInPredicate.subtypes()::contains);
         }
+        if (predicate instanceof StackEntrySupertypeInPredicate supertypeInPredicate) {
+            return stackEntry.getCard().getSupertypes().stream()
+                    .anyMatch(supertypeInPredicate.supertypes()::contains);
+        }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return stackEntry.isSingleTarget();
         }
@@ -2040,11 +2065,16 @@ public class TargetLegalityService {
      */
     public void validateSpellPlayerTarget(GameData gameData, UUID targetPlayerId, UUID controllerId,
                                           PlayerPredicateTargetFilter filter) {
+        validateSpellPlayerTarget(gameData, targetPlayerId, controllerId, null, filter);
+    }
+
+    public void validateSpellPlayerTarget(GameData gameData, UUID targetPlayerId, UUID controllerId,
+                                          Card sourceCard, PlayerPredicateTargetFilter filter) {
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)
                 || !matchesPlayerPredicate(gameData, controllerId, targetPlayerId, filter.predicate())) {
             throw new IllegalStateException(filter.errorMessage());
         }
-        validatePlayerTargetable(gameData, targetPlayerId, controllerId);
+        validatePlayerTargetable(gameData, targetPlayerId, controllerId, sourceCard);
     }
 
     /**

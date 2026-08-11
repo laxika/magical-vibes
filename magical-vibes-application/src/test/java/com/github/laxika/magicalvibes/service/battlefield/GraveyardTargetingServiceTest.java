@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +54,7 @@ class GraveyardTargetingServiceTest {
     @BeforeEach
     void setUp() {
         service = new GraveyardTargetingService(predicateEvaluationService, gameLogService, playerInputService,
-                gameQueryService);
+                gameQueryService, new GraveyardTargetingSupport());
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
 
         player1Id = UUID.randomUUID();

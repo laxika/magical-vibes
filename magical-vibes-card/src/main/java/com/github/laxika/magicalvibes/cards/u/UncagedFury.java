@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "INR", collectorNumber = "177")
+@CardRegistration(set = "M20", collectorNumber = "163")
 public class UncagedFury extends Card {
 
     public UncagedFury() {

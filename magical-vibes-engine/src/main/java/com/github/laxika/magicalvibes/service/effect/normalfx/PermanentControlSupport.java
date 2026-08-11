@@ -88,10 +88,11 @@ public class PermanentControlSupport {
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (token.initialPlusOnePlusOneCounters() > 0
-                    && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
+                    && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, tokenPermanent, controllerId)) {
                 int initial = token.initialPlusOnePlusOneCounters();
                 if (isCreature) {
-                    initial = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, initial);
+                    initial = gameQueryService.doublePlusOnePlusOneCounters(
+                            gameData, tokenPermanent, controllerId, initial);
                 }
                 if (initial > 0) {
                     tokenPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, initial);
@@ -153,6 +154,8 @@ public class PermanentControlSupport {
                 }
             }
         }
+
+        battlefieldEntryService.checkAllyTokenEntersTriggers(gameData, controllerId, createdIds.size());
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
         return createdIds;

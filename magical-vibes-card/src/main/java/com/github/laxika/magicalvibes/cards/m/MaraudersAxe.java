@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "240")
+@CardRegistration(set = "M20", collectorNumber = "231")
 public class MaraudersAxe extends Card {
 
     public MaraudersAxe() {

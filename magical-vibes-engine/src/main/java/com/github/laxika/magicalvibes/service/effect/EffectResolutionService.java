@@ -258,6 +258,7 @@ public class EffectResolutionService {
                 entry.setTargetId(savedTargetId);
             }
 
+            effects = entry.getEffectsToResolve();
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.

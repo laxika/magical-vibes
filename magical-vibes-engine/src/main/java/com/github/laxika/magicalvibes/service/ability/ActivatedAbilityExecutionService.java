@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
@@ -286,6 +287,24 @@ public class ActivatedAbilityExecutionService {
         // the activated ability — matching the same pattern used for tap triggers above.
         int stackBeforeCosts = gameData.stack.size();
 
+        // Pay life here, after the activation has established its cost-trigger boundary. The life
+        // loss trigger must be deferred until the activated ability is on the stack, so it resolves
+        // above the ability rather than below it.
+        abilityEffects.stream()
+                .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
+                .findFirst()
+                .ifPresent(cost -> {
+                    int currentLife = gameData.getLife(playerId);
+                    int sourceCounterCount = cost.perSourceCounter() == null
+                            ? 0
+                            : permanent.getCounterCount(cost.perSourceCounter());
+                    int amount = cost.effectiveAmount(currentLife, sourceCounterCount);
+                    if (amount > 0) {
+                        lifeSupport.applyLifeLoss(gameData, playerId, amount, permanent.getCard().getName());
+                    }
+                });
+
         boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
         if (shouldExileSelf) {
             permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -339,9 +358,13 @@ public class ActivatedAbilityExecutionService {
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
         }
 
-        List<StackEntry> deferredCostTriggers = List.of();
+        List<StackEntry> deferredCostTriggers = new ArrayList<>();
+        if (!gameData.pendingActivatedAbilityCostTriggers.isEmpty()) {
+            deferredCostTriggers.addAll(gameData.pendingActivatedAbilityCostTriggers);
+            gameData.pendingActivatedAbilityCostTriggers.clear();
+        }
         if (gameData.stack.size() > stackBeforeCosts) {
-            deferredCostTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
+            deferredCostTriggers.addAll(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
             gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
         }
 
@@ -392,6 +415,9 @@ public class ActivatedAbilityExecutionService {
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue);
+            if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
+                triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
+            }
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.

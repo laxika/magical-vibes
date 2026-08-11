@@ -35,24 +35,34 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     private final int drawCount;
     private final UUID enchantedPermanentId;
     private final DynamicAmount castTimeXValue;
+    private final CardEffect thenEffect;
+    private final int minimumControlledNontokenCount;
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
-        this(scope, filter, lifeLoss, drawCount, null);
+        this(scope, filter, lifeLoss, drawCount, null, null, null, 0);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null);
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId, DynamicAmount castTimeXValue) {
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0);
+    }
+
+    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
+                               UUID enchantedPermanentId, DynamicAmount castTimeXValue,
+                               CardEffect thenEffect, int minimumControlledNontokenCount) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
         this.enchantedPermanentId = enchantedPermanentId;
         this.castTimeXValue = castTimeXValue;
+        this.thenEffect = thenEffect;
+        this.minimumControlledNontokenCount = minimumControlledNontokenCount;
     }
 
     public static ReturnToHandEffect target() {
@@ -85,6 +95,17 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     public static ReturnToHandEffect allPermanentsMatching(PermanentPredicate filter) {
         return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0);
+    }
+
+    /**
+     * Returns all matching permanents, then resolves {@code thenEffect} when at least the given
+     * number of nontoken permanents controlled by the resolving player were returned.
+     */
+    public static ReturnToHandEffect allPermanentsMatchingThen(PermanentPredicate filter,
+                                                                int minimumControlledNontokenCount,
+                                                                CardEffect thenEffect) {
+        return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0, null, null, thenEffect,
+                minimumControlledNontokenCount);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerControls(PermanentPredicate filter) {
@@ -138,6 +159,14 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     public int drawCount() {
         return drawCount;
+    }
+
+    public CardEffect thenEffect() {
+        return thenEffect;
+    }
+
+    public int minimumControlledNontokenCount() {
+        return minimumControlledNontokenCount;
     }
 
     @Override

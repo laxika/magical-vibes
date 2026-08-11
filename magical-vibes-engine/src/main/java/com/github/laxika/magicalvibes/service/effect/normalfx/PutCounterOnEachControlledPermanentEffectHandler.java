@@ -67,6 +67,8 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
                     && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
+            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, p)) continue;
 
             int placed = amount;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {

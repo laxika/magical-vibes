@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -150,6 +151,8 @@ public class GrantedAbilityViewFactory {
             case CantBeEnchantedByOtherAurasEffect ignored -> "Can't be enchanted by other Auras";
             case CantHaveMinusOneMinusOneCountersEffect ignored ->
                     "Can't have \u22121/\u22121 counters put on it";
+            case CantHavePlusOnePlusOneCountersEffect ignored ->
+                    "Can't have +1/+1 counters put on it";
             default -> null;
         };
     }

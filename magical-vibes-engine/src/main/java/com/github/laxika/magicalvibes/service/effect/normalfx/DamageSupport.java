@@ -79,12 +79,10 @@ public class DamageSupport {
     /**
      * Applies damage to a creature, handling prevention shield, recording, logging,
      * and checking for lethal damage (indestructible/regenerate).
-     * Returns true if the creature took lethal damage and should be destroyed.
-     * Caller is responsible for removal (use {@link #destroyPermanent} for single-target,
-     * or batch-collect for multi-target effects).
+     * Returns the amount of damage actually dealt to the target.
      */
-    public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
-        dealCreatureDamage(gameData, entry, target, rawDamage, null);
+    public int dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+        return dealCreatureDamage(gameData, entry, target, rawDamage, null);
     }
 
     /**
@@ -92,14 +90,14 @@ public class DamageSupport {
      * When {@code damageSource} is non-null, its ID is used for recording, its name for logging,
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
-    public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+    public int dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         Permanent source = damageSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
         if (gameQueryService.isDamageByCreaturePrevented(gameData, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage dealt by ", source.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         // Malignus: "Damage that would be dealt by this creature can't be prevented." Suppress every
         // prevention path (all gated on isDamagePreventable) for this one event, then restore — the
@@ -108,16 +106,15 @@ public class DamageSupport {
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
             try {
-                dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
+                return dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
             } finally {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
-            return;
         }
-        dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
+        return dealCreatureDamageFromSource(gameData, entry, target, rawDamage, damageSource);
     }
 
-    private void dealCreatureDamageFromSource(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+    private int dealCreatureDamageFromSource(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
@@ -131,14 +128,14 @@ public class DamageSupport {
                 && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
-            return;
+            return 0;
         }
         if (damageSource == null
                 && gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
             gainLifeForTargetSpellDamage(gameData, entry, rawDamage);
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
-            return;
+            return 0;
         }
         // Benevolent Unicorn: a spell dealing damage as itself deals that much damage minus N.
         if (damageSource == null) {
@@ -159,12 +156,12 @@ public class DamageSupport {
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, sourcePermId, rawDamage);
             processEyeForAnEyeReflections(gameData);
-            if (rawDamage <= 0) return;
+            if (rawDamage <= 0) return 0;
             // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
             rawDamage = damagePreventionService.applySourceNextDamageRedirectToPermanent(
                     gameData, sourcePermId, target.getId(), rawDamage);
             processSourceRedirectDamage(gameData);
-            if (rawDamage <= 0) return;
+            if (rawDamage <= 0) return 0;
         }
         // Saving Grace: redirect all damage this turn to a permanent you control onto the enchanted creature.
         if (targetControllerId != null) {
@@ -197,7 +194,7 @@ public class DamageSupport {
                 : entry.getControllerId();
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, rawDamage, swansSourceControllerId)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         // Prismatic Ward: prevent all damage to the enchanted creature from sources of the chosen colour.
         Set<CardColor> sourceColors = damageSource != null
@@ -205,11 +202,11 @@ public class DamageSupport {
                 : sourceCardColors(entry.getEffectiveDamageSourceCard());
         if (damagePreventionService.isColorDamagePreventedForTarget(gameData, target.getId(), sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         Permanent sharedColorSource = damageSource;
         if (sharedColorSource == null && entry != null && entry.getSourcePermanentId() != null) {
@@ -217,20 +214,20 @@ public class DamageSupport {
         }
         if (gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, sharedColorSource)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         // Gideon's Intervention: prevent all damage to permanents you control from sources with the chosen name.
         String preventionSourceName = (damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard()).getName();
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, preventionSourceName)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Noncombat
         // path — combat damage is prevented in DamagePreventionService.applyCreaturePreventionShield.
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
-            return;
+            return 0;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
@@ -314,7 +311,7 @@ public class DamageSupport {
                     checkSpellLifelink(gameData, entry, damage);
                 }
                 processPendingRedirectDamage(gameData);
-                return;
+                return damage;
             }
         }
 
@@ -335,7 +332,7 @@ public class DamageSupport {
                     checkSpellLifelink(gameData, entry, damage);
                 }
                 processPendingRedirectDamage(gameData);
-                return;
+                return damage;
             }
         }
 
@@ -378,7 +375,7 @@ public class DamageSupport {
             }
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
             processPendingRedirectDamage(gameData);
-            return;
+            return damage;
         }
 
         // Record only — the state-based action check (CR 704.5g/704.5h) is the single place
@@ -397,6 +394,7 @@ public class DamageSupport {
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
         }
         processPendingRedirectDamage(gameData);
+        return damage;
     }
 
     /**

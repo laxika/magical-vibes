@@ -392,6 +392,7 @@ public class AnimationSupport {
         }
 
         target.getGrantedKeywords().addAll(effect.grantedKeywords());
+        target.getPersistentGrantedKeywords().addAll(effect.grantedKeywords());
 
         // The animation has no duration, so the granted card types must survive turn cleanup too
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").

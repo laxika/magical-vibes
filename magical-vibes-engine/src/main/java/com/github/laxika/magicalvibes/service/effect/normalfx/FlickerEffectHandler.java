@@ -231,9 +231,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         Permanent returned = new Permanent(card);
         boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
                 && (e.bonusSubtype() == null || hadBonusSubtype);
-        if (applyReturnCounters && !gameQueryService.cantHaveCounters(gameData, returned)) {
+        if (applyReturnCounters
+                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, returned, returnControllerId)) {
             int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
-                    gameData, returnControllerId, e.plusOnePlusOneCountersOnReturn());
+                    gameData, returned, returnControllerId, e.plusOnePlusOneCountersOnReturn());
             if (returnCounters > 0) {
                 returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, returnCounters);
             }

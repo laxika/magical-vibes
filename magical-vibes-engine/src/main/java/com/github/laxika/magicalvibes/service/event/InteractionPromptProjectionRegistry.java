@@ -863,7 +863,8 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
-                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice;
+                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
+                || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice;
     }
 
     private <T extends PendingInteraction> void register(

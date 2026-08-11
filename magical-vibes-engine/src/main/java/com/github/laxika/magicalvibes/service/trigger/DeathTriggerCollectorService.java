@@ -665,7 +665,7 @@ public class DeathTriggerCollectorService {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
         CardEffect effectForStack = epd.dyingCreatureCardId() != null
                 ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingCreatureCardId(),
-                        effect.underAuraControllersControl())
+                        effect.underAuraControllersControl(), effect.enterWithCounter())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
         return true;
@@ -1008,6 +1008,22 @@ public class DeathTriggerCollectorService {
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleEnchantmentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        logEnchantmentGraveyard(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyEnchantmentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

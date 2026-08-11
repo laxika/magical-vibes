@@ -1211,7 +1211,8 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                        if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+                        if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
+                                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm)) {
                             int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, perm, 1);
                             if (placed > 0) {
                                 perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
@@ -1467,7 +1468,7 @@ public class MultiPermanentChoiceHandlerService {
         if (entering != null && devoured > 0) {
             if (!gameQueryService.cantHaveCounters(gameData, entering)) {
                 int added = context.multiplier() * devoured;
-                added = gameQueryService.doublePlusOnePlusOneCounters(gameData, playerId, added);
+                added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
                 gameLogService.append(gameData, GameLog.cardThen(context.card(),
@@ -1540,9 +1541,10 @@ public class MultiPermanentChoiceHandlerService {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (entering != null && sacrificed > 0 && !gameQueryService.cantHaveCounters(gameData, entering)) {
+        if (entering != null && sacrificed > 0
+                && !gameQueryService.cantHaveCounters(gameData, entering)) {
             int added = context.countersPerPermanent() * sacrificed;
-            added = gameQueryService.doublePlusOnePlusOneCounters(gameData, playerId, added);
+            added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
             entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                     entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
             gameLogService.append(gameData, GameLog.cardThen(context.card(),

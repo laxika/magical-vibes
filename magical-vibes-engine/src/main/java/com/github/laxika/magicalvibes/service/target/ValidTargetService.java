@@ -201,7 +201,8 @@ public class ValidTargetService {
             if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(), playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(),
+                            playerId, controllerId, null, card)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -336,7 +337,8 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
+                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId,
+                            abilitySourcePermanentId, sourceCard)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -348,7 +350,8 @@ public class ValidTargetService {
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId, abilitySourcePermanentId)) {
+                    if (isValidPlayerTarget(gameData, anyFilter, playerId, controllerId,
+                            abilitySourcePermanentId, sourceCard)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -374,7 +377,8 @@ public class ValidTargetService {
                         && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
-                        if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
+                        if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId,
+                                abilitySourcePermanentId, sourceCard)) {
                             validPlayerIds.add(playerId);
                         }
                     }
@@ -450,7 +454,8 @@ public class ValidTargetService {
 
         if (targetsPlayer && !gameQueryService.isPeaceTalksActive(gameData)) {
             for (UUID playerId : gameData.playerIds) {
-                if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId, abilitySourcePermanentId)) {
+                if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId,
+                        abilitySourcePermanentId, sourceCard)) {
                     validPlayerIds.add(playerId);
                 }
             }
@@ -668,6 +673,11 @@ public class ValidTargetService {
      */
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
                                         UUID sourcePermanentId) {
+        return isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, sourcePermanentId, null);
+    }
+
+    private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
+                                        UUID sourcePermanentId, Card sourceCard) {
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;
@@ -677,6 +687,11 @@ public class ValidTargetService {
         if (!controllerId.equals(playerId)
                 && gameQueryService.playerHasHexproof(gameData, playerId)
                 && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, controllerId)) {
+            return false;
+        }
+
+        if (!controllerId.equals(playerId) && sourceCard != null && sourceCard.getColor() != null
+                && gameQueryService.playerHasHexproofFromColor(gameData, playerId, sourceCard.getColor())) {
             return false;
         }
 
@@ -825,7 +840,7 @@ public class ValidTargetService {
 
             if (anyPositionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
-                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId, null, card)) {
                         return true;
                     }
                 }
@@ -954,8 +969,8 @@ public class ValidTargetService {
                             continue;
                         }
                         if (rge.targetPutIntoGraveyardFromBattlefieldThisTurn()
-                                && !gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
-                                .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                                && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
                         validIds.add(c.getId());

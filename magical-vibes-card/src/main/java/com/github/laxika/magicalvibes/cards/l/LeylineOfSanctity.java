@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "21")
+@CardRegistration(set = "M20", collectorNumber = "26")
 public class LeylineOfSanctity extends Card {
 
     public LeylineOfSanctity() {

@@ -544,6 +544,45 @@ public class MayMiscHandlerService {
     }
 
     /**
+     * Risen Reef: accept -> the matching top land enters the battlefield tapped; decline -> the
+     * top card goes into hand.
+     */
+    public void handleLookAtTopCardMayPutMatchingElseToHandChoice(
+            GameData gameData, Player player, boolean accepted, boolean tapped) {
+        UUID controllerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (deck.isEmpty()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        if (accepted) {
+            Permanent perm = new Permanent(topCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            if (tapped) {
+                perm.tap();
+            }
+            if (topCard.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", topCard, " onto the battlefield."));
+            log.info("Game {} - {} puts {} onto the battlefield from library top",
+                    gameData.id, player.getUsername(), topCard.getName());
+        } else {
+            gameData.playerHands.get(controllerId).add(topCard);
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts the top card into their hand."));
+            log.info("Game {} - {} puts {} into hand from library top",
+                    gameData.id, player.getUsername(), topCard.getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Unexpected Results, land branch: "you may put it onto the battlefield and return Unexpected
      * Results to its owner's hand". Both halves are one choice, so a decline leaves the land on top
      * of the library and lets the sorcery go to the graveyard as normal. Putting the land onto the

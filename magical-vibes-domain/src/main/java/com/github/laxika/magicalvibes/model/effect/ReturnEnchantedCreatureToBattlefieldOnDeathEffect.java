@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import java.util.UUID;
 
 /**
@@ -21,10 +22,12 @@ import java.util.UUID;
  *                                     the Aura controller's control, {@code false} for its owner's.
  *                                     When the two differ the returned permanent is tracked as a
  *                                     stolen creature so the control change persists.
+ * @param enterWithCounter             optional counter put on the returned permanent as it enters
  */
 public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
         UUID dyingCreatureCardId,
-        boolean underAuraControllersControl
+        boolean underAuraControllersControl,
+        CounterType enterWithCounter
 ) implements CardEffect {
 
     /**
@@ -32,7 +35,7 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      * card ID is not yet known.
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect() {
-        this(null, false);
+        this(null, false, null);
     }
 
     /**
@@ -41,6 +44,28 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      * @param underAuraControllersControl see the record component
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl) {
-        this(null, underAuraControllersControl);
+        this(null, underAuraControllersControl, null);
+    }
+
+    /**
+     * Trigger-time constructor retaining the counterless form.
+     *
+     * @param dyingCreatureCardId          see the record component
+     * @param underAuraControllersControl  see the record component
+     */
+    public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(UUID dyingCreatureCardId,
+                                                              boolean underAuraControllersControl) {
+        this(dyingCreatureCardId, underAuraControllersControl, null);
+    }
+
+    /**
+     * Card-definition constructor with an optional enter-with counter.
+     *
+     * @param underAuraControllersControl see the record component
+     * @param enterWithCounter             see the record component
+     */
+    public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl,
+                                                              CounterType enterWithCounter) {
+        this(null, underAuraControllersControl, enterWithCounter);
     }
 }

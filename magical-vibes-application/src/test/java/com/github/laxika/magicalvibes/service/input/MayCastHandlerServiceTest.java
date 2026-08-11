@@ -53,6 +53,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 
 @ExtendWith(MockitoExtension.class)
 class MayCastHandlerServiceTest {
@@ -69,6 +70,7 @@ class MayCastHandlerServiceTest {
     @Mock private ExileService exileService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
+    @Mock private SpellCastingService spellCastingService;
 
     @InjectMocks
     private MayCastHandlerService svc;

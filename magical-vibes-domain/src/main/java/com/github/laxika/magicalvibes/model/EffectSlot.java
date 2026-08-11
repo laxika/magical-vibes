@@ -28,6 +28,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+    /** "Whenever one or more tokens you control enter the battlefield." */
+    ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
     /** Aura slot for player-enchanting Curses: "Whenever a creature enchanted player controls enters, …".
@@ -125,6 +127,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_DISCARDED,
     ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
+    /** "Whenever you tap a creature for mana"; checked on the tapping player's battlefield. */
+    ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
@@ -161,6 +165,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}.
      *  Used by Femeref Enchantress (pair with {@code DrawCardEffect}). */
     ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever an enchantment controlled by this permanent's controller is put into a
+     *  graveyard from the battlefield. Checked in {@code PermanentRemovalService} via
+     *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}. */
+    ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type) an opponent of the controller controls is put into
      *  a graveyard from the battlefield. Fires on permanents controlled by an opponent of the dying
@@ -672,6 +680,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
      *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Willbreaker. */
     ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
+    /** Triggers whenever a creature controlled by the same player becomes the target of a spell.
+     *  Fires on all permanents with this slot on the creature's controller's battlefield. The
+     *  spell path only checks this slot; activated abilities do not trigger it. */
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL,
     /** Triggers whenever a creature controlled by the same player becomes the target of an instant
      *  or sorcery spell — regardless of who controls that spell. Fires on ALL permanents with this
      *  slot on the creature's controller's battlefield (not just the targeted creature). The

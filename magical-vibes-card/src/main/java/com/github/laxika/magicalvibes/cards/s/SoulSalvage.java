@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "104")
+@CardRegistration(set = "M20", collectorNumber = "116")
 public class SoulSalvage extends Card {
 
     public SoulSalvage() {

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -102,13 +103,36 @@ public class EnterTriggerCollectorService {
             Card sourceCard = match.permanent().getCard();
             // The entering permanent rides along for effects phrased around "that creature"
             // (Gruul Ragebeast's fight); target-only effects such as Reaper King's ignore it.
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
-                    findEnteringPermanentId(match, pe.enteringCard())));
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                        findEnteringPermanentId(match, pe.enteringCard())));
+            }
             logTriggered(match);
             return true;
         }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(tokensEnter.count());
+        entry.setNonTargeting(true);
+        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            match.gameData().enqueueTrigger(new StackEntry(entry));
+        }
         logTriggered(match);
         return true;
     }
@@ -123,9 +147,11 @@ public class EnterTriggerCollectorService {
         boolean needsTargetChoice = isTargeting(effect);
         if (needsTargetChoice) {
             Card sourceCard = match.permanent().getCard();
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
-                    findEnteringPermanentId(match, pe.enteringCard())));
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                        findEnteringPermanentId(match, pe.enteringCard())));
+            }
             logTriggered(match);
             return true;
         }
@@ -155,14 +181,18 @@ public class EnterTriggerCollectorService {
         // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
         // player unset (null), which is harmless for player-directed wrapped effects.
         if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), match.permanent().getId(),
-                    findEnteringPermanentId(match, pe.enteringCard())));
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), match.permanent().getId(),
+                        findEnteringPermanentId(match, pe.enteringCard())));
+            }
             logTriggered(match);
             return true;
         }
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                pe.defaultTargetPlayerId(), match.permanent().getId());
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    pe.defaultTargetPlayerId(), match.permanent().getId());
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
@@ -228,7 +258,9 @@ public class EnterTriggerCollectorService {
         UUID targetCardId = mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 ? pe.mayPayTargetCardId()
                 : null;
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId);
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId);
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may pay mana)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
@@ -343,6 +375,38 @@ public class EnterTriggerCollectorService {
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (deal damage to entering creature)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * Queues Marauding Raptor-style damage to the creature that caused the ally-creature trigger.
+     * The entering creature is fixed by the event, so no target choice is presented.
+     */
+    @CollectsTrigger(value = DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureDealDamageThenBoost(TriggerMatchContext match,
+            DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (deal damage and boost source)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
@@ -479,7 +543,9 @@ public class EnterTriggerCollectorService {
         var counters = new PutCountersOnSourceEffect(effect.powerModifier(), effect.toughnessModifier(), power);
         if (effect.optional()) {
             var may = new MayEffect(counters, "Put " + power + " counter(s) on " + sourceCard.getName() + "?");
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+            }
         } else {
             enqueue(match, counters, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         }
@@ -508,17 +574,21 @@ public class EnterTriggerCollectorService {
         var transform = new TransformTargetPermanentEffect();
         if (effect.optional()) {
             var may = new MayEffect(transform, "Transform " + pe.enteringCard().getName() + "?");
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    enteringPermanentId, match.permanent().getId());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                        enteringPermanentId, match.permanent().getId());
+            }
         } else {
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(transform)),
-                    enteringPermanentId,
-                    match.permanent().getId()));
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        match.controllerId(),
+                        sourceCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(transform)),
+                        enteringPermanentId,
+                        match.permanent().getId()));
+            }
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering ({} transform it)",
@@ -549,17 +619,21 @@ public class EnterTriggerCollectorService {
         if (effect.optional()) {
             var may = new MayEffect(counters,
                     "Put " + effect.count() + " +1/+1 counter(s) on " + pe.enteringCard().getName() + "?");
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    enteringPermanentId, match.permanent().getId());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                        enteringPermanentId, match.permanent().getId());
+            }
         } else {
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(counters)),
-                    enteringPermanentId,
-                    match.permanent().getId()));
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        match.controllerId(),
+                        sourceCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(counters)),
+                        enteringPermanentId,
+                        match.permanent().getId()));
+            }
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering ({} put {} +1/+1 counter(s) on it)",
@@ -589,14 +663,16 @@ public class EnterTriggerCollectorService {
         if (!effect.keywords().isEmpty()) {
             effects.add(new GrantKeywordEffect(effect.keywords(), GrantScope.TARGET));
         }
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                effects,
-                enteringPermanentId,
-                match.permanent().getId()));
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    effects,
+                    enteringPermanentId,
+                    match.permanent().getId()));
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (+{}/+{}, gains {})",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
@@ -632,8 +708,10 @@ public class EnterTriggerCollectorService {
             return true;
         }
         var may = new MayEffect(effect, "Pair " + sourceCard.getName() + " with " + pe.enteringCard().getName() + "?");
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                enteringPermanentId, match.permanent().getId());
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        }
         logTriggered(match);
         log.info("Game {} - {} soulbond may-pair with entering {}",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
@@ -654,7 +732,9 @@ public class EnterTriggerCollectorService {
         }
         var look = LookAtTopCardsEffect.putOneOnTopRestOnBottom(power);
         var may = new MayEffect(look, "Look at the top " + power + " card(s) of your library?");
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (look at top {})",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
@@ -684,19 +764,23 @@ public class EnterTriggerCollectorService {
         if (effect.optional()) {
             var may = new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
                     "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    enteringPermanentId, match.permanent().getId());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                        enteringPermanentId, match.permanent().getId());
+            }
         } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(new AttachSourceEquipmentToTargetCreatureEffect())),
-                    enteringPermanentId,
-                    match.permanent().getId());
-            entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        match.controllerId(),
+                        sourceCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new AttachSourceEquipmentToTargetCreatureEffect())),
+                        enteringPermanentId,
+                        match.permanent().getId());
+                entry.setNonTargeting(true);
+                match.gameData().stack.add(entry);
+            }
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering ({} attach equipment)",
@@ -724,8 +808,10 @@ public class EnterTriggerCollectorService {
         }
         var may = new MayEffect(new AttachSourceAuraToTargetCreatureEffect(),
                 "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                enteringPermanentId, match.permanent().getId());
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may attach aura)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());

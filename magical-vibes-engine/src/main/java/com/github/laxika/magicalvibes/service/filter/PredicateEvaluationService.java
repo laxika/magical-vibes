@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentP
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -164,6 +165,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -327,6 +329,16 @@ public class PredicateEvaluationService {
                 Card imprintedCard = gameData.imprintedCards.get(sourceCardId);
                 yield imprintedCard != null && java.util.Arrays.stream(CardType.values())
                         .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
+            }
+            case CardToughnessLessThanSourceToughnessPredicate ignored -> {
+                if (gameData == null || sourceCardId == null || card.getToughness() == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null) {
+                    yield false;
+                }
+                yield card.getToughness() < gameQueryService.getEffectiveToughness(gameData, source);
             }
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
@@ -1785,6 +1797,8 @@ public class PredicateEvaluationService {
                     cardTypeIn.cardTypes().stream().anyMatch(entry.getCard()::hasType);
             case StackEntrySubtypeInPredicate subtypeIn ->
                     entry.getCard().getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
+            case StackEntrySupertypeInPredicate supertypeIn ->
+                    entry.getCard().getSupertypes().stream().anyMatch(supertypeIn.supertypes()::contains);
             case StackEntryAllOfPredicate allOf -> {
                 for (StackEntryPredicate nested : allOf.predicates()) {
                     if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) yield false;

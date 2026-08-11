@@ -76,7 +76,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-                if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
+                if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
                     int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.counterAmount());
                     if (placed > 0) {
                         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);

@@ -47,7 +47,7 @@ public class RenownEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!gameQueryService.cantHaveCounters(gameData, source)) {
+        if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
             int amount = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.amount());
             if (amount > 0) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,

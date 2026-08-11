@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "26")
 @CardRegistration(set = "MRD", collectorNumber = "16")
+@CardRegistration(set = "M20", collectorNumber = "34")
 public class RaiseTheAlarm extends Card {
 
     public RaiseTheAlarm() {

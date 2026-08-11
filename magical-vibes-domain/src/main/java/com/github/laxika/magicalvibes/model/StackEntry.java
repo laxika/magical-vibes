@@ -26,6 +26,8 @@ public class StackEntry {
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
+    /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
+    @Setter private Integer etbMode;
     @Setter private UUID targetId;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
@@ -403,6 +405,7 @@ public class StackEntry {
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;
+        this.etbMode = source.etbMode;
         this.targetId = source.targetId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);

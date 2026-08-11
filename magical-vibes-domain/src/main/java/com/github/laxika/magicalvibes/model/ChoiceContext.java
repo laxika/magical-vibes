@@ -401,6 +401,12 @@ public sealed interface ChoiceContext {
                                                int damageOnMiss) implements ChoiceContext {}
 
     /**
+     * Diviner's Lockbox: the controller names a card, then reveals the top card of their library.
+     * A matching card inserts the source sacrifice and three-card draw into the paused ability.
+     */
+    record ChooseCardNameRevealTopCardChoice(UUID controllerId) implements ChoiceContext {}
+
+    /**
      * Cursed Scroll: the controller names a card, then reveals a card at random from their own hand.
      * If the revealed card has that name, {@code sourceCard} deals {@code damage} damage to
      * {@code targetId} (the any-target chosen when the ability was activated).
@@ -593,6 +599,9 @@ public sealed interface ChoiceContext {
             this(sourceCard, controllerId, effect, false, null);
         }
     }
+
+    record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                UUID sourcePermanentId) implements ChoiceContext {}
 
     record RedistributePlayerLifeTotalsChoice(Map<String, Map<UUID, Integer>> choices) implements ChoiceContext {
 

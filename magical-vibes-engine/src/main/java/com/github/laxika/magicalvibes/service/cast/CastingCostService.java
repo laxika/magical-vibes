@@ -163,6 +163,11 @@ public class CastingCostService {
      * matching permanents are targeted.
      */
     public int getTargetingSubtypeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds) {
+        return getTargetingSubtypeTax(gameData, casterId, targetId, targetIds, true);
+    }
+
+    public int getTargetingSubtypeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds,
+                                      boolean activatedAbility) {
         Set<UUID> allTargetIds = new HashSet<>();
         if (targetId != null) allTargetIds.add(targetId);
         if (targetIds != null) allTargetIds.addAll(targetIds);
@@ -176,13 +181,15 @@ public class CastingCostService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
+                        if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
                         for (UUID tid : allTargetIds) {
                             Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
                             if (targetPerm != null) {
                                 UUID targetController = gameQueryService.findPermanentController(gameData, tid);
                                 if (controllerId.equals(targetController)
                                         && predicateEvaluationService.matchesPermanentPredicate(
-                                                gameData, targetPerm, taxEffect.predicate())) {
+                                                targetPerm, taxEffect.predicate(),
+                                                FilterContext.of(gameData).withSourcePermanentSnapshot(perm))) {
                                     tax += taxEffect.amount();
                                     break;
                                 }

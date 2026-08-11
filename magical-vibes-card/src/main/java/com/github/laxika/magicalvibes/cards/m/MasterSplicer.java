@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "16")
+@CardRegistration(set = "M20", collectorNumber = "29")
 public class MasterSplicer extends Card {
 
     public MasterSplicer() {

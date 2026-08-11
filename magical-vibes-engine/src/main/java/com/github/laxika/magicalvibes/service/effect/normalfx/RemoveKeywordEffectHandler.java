@@ -69,6 +69,17 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (remove.scope() == GrantScope.TARGET && !targetIds.isEmpty()) {
+            for (UUID multiTargetId : targetIds) {
+                Permanent multiTarget = gameQueryService.findPermanentById(gameData, multiTargetId);
+                if (multiTarget != null) {
+                    removeFrom(gameData, entry, remove, multiTarget);
+                }
+            }
+            return;
+        }
+
         UUID targetId = switch (remove.scope()) {
             case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             case TARGET -> entry.getTargetId();

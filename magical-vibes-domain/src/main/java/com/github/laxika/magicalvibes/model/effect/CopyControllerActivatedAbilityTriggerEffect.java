@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * artifacts trigger it) and Illusionist's Bracers ({@code manaCost == null} plus
  * {@code equippedCreatureOnly} — the equipped creature's abilities are copied for free).
  *
+ * Chandra's Regulator uses {@code loyaltyAbilityOnly} to limit the trigger to loyalty abilities.
+ *
  * @param manaCost             the cost the controller may pay to create the copy (e.g. {@code "{2}"});
  *                             {@code null} makes the copy free and mandatory
  * @param sourceFilter         optional restriction on the activated ability's stack entry (its card is
@@ -24,18 +26,25 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * @param equippedCreatureOnly when {@code true} the trigger fires only for abilities of the creature
  *                             this permanent is attached to (whoever activated them) instead of for
  *                             abilities activated by this permanent's controller
+ * @param loyaltyAbilityOnly  when {@code true} the trigger fires only for loyalty abilities
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
         StackEntryPredicate sourceFilter,
-        boolean equippedCreatureOnly
+        boolean equippedCreatureOnly,
+        boolean loyaltyAbilityOnly
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
-        this(manaCost, null, false);
+        this(manaCost, null, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter) {
-        this(manaCost, sourceFilter, false);
+        this(manaCost, sourceFilter, false, false);
+    }
+
+    public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
+                                                       boolean equippedCreatureOnly) {
+        this(manaCost, sourceFilter, equippedCreatureOnly, false);
     }
 }

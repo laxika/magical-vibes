@@ -93,7 +93,7 @@ public class PermanentCounterSupport {
     }
 
     public void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
-        if (counters <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+        if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
         counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, counters);
@@ -188,7 +188,7 @@ public class PermanentCounterSupport {
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
             case LUCK -> { target.setCounterCount(CounterType.LUCK, target.getCounterCount(CounterType.LUCK) + count); yield "luck"; }
             case PLUS_ONE_PLUS_ONE -> {
-                if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+                if (count <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
                     yield null;
                 }
                 count = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, count);

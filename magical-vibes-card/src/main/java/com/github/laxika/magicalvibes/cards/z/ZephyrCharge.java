@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "82")
+@CardRegistration(set = "M20", collectorNumber = "82")
 public class ZephyrCharge extends Card {
 
     public ZephyrCharge() {

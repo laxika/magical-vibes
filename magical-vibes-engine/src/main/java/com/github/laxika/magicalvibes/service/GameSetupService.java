@@ -154,6 +154,7 @@ public class GameSetupService {
         for (UUID playerId : gameData.playerIds) {
             String deckId = gameData.playerDeckChoices.get(playerId);
             List<Card> deck = resolveDeck(deckId, gameData.randomSetCode);
+            List<Card> sideboard = resolveSideboard(deckId);
 
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".
@@ -163,9 +164,14 @@ public class GameSetupService {
                 card.setOwnerId(playerId);
                 card.freeze();
             }
+            for (Card card : sideboard) {
+                card.setOwnerId(playerId);
+                card.freeze();
+            }
 
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
+            gameData.playerSideboards.put(playerId, sideboard);
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
@@ -241,5 +247,16 @@ public class GameSetupService {
             return source.buildCustomDeck(deckId);
         }
         return PrebuiltDeck.findById(deckId).buildDeck(cardCatalog);
+    }
+
+    private List<Card> resolveSideboard(String deckId) {
+        if (RandomDeckGenerator.RANDOM_DECK_ID.equals(deckId)) {
+            return new ArrayList<>();
+        }
+        CustomDeckSource source = customDeckSourceProvider.getIfAvailable();
+        if (source != null && source.isCustomDeck(deckId)) {
+            return new ArrayList<>(source.buildCustomSideboard(deckId));
+        }
+        return PrebuiltDeck.findById(deckId).buildSideboard(cardCatalog);
     }
 }

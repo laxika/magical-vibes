@@ -38,8 +38,11 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
         // resolveMillPlayer returns only the cards that actually reached the graveyard, which is
         // exactly what "milled this way" means — a card diverted by a replacement does not count.
         List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, Math.max(0, e.count()));
-        boolean matched = milled.stream()
-                .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, e.filter(), null));
+        int matchCount = (int) milled.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
+                .count();
+        entry.setEventValue(matchCount);
+        boolean matched = matchCount > 0;
 
         log.info("Game {} - {} milled {} card(s), condition {}",
                 gameData.id, entry.getCard().getName(), milled.size(), matched ? "met" : "not met");

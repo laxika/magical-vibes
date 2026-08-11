@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "135")
+@CardRegistration(set = "M20", collectorNumber = "146")
 public class KeldonRaider extends Card {
 
     public KeldonRaider() {

@@ -166,7 +166,13 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                                 || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), context))
                         .toList()));
 
-        bounceAll(gameData, entry, toReturn);
+        int returnedControlledNontokens = bounceAll(gameData, entry, toReturn);
+        if (e.thenEffect() != null && returnedControlledNontokens >= e.minimumControlledNontokenCount()) {
+            int effectIndex = entry.getEffectsToResolve().indexOf(e);
+            if (effectIndex >= 0) {
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(e.thenEffect()));
+            }
+        }
     }
 
     private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
@@ -223,9 +229,16 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         bounceAll(gameData, entry, toReturn);
     }
 
-    private void bounceAll(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
+    private int bounceAll(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
+        int returnedControlledNontokens = 0;
         for (Permanent permanent : toReturn) {
-            permanentRemovalService.removePermanentToHand(gameData, permanent);
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            boolean controlledNontoken = entry.getControllerId().equals(controllerId)
+                    && !permanent.getCard().isToken();
+            boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+            if (returned && controlledNontoken) {
+                returnedControlledNontokens++;
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
@@ -234,5 +247,6 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (!toReturn.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
+        return returnedControlledNontokens;
     }
 }

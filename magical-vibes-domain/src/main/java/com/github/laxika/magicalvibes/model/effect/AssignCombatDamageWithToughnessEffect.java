@@ -18,17 +18,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       controller; always uses toughness regardless of power (e.g. Doran, the Siege Tower).</li>
  * </ul>
  */
-public record AssignCombatDamageWithToughnessEffect(GrantScope scope, PermanentPredicate affectedPredicate)
+public record AssignCombatDamageWithToughnessEffect(
+        GrantScope scope,
+        PermanentPredicate affectedPredicate,
+        boolean alwaysUseToughness
+)
         implements CardEffect {
 
     public AssignCombatDamageWithToughnessEffect(GrantScope scope) {
-        this(scope, null);
+        this(scope, null, false);
+    }
+
+    public AssignCombatDamageWithToughnessEffect(GrantScope scope, boolean alwaysUseToughness) {
+        this(scope, null, alwaysUseToughness);
+    }
+
+    public AssignCombatDamageWithToughnessEffect(GrantScope scope, PermanentPredicate affectedPredicate) {
+        this(scope, affectedPredicate, false);
     }
 
     /**
      * Backwards-compatible no-arg constructor defaulting to {@link GrantScope#EQUIPPED_CREATURE}.
      */
     public AssignCombatDamageWithToughnessEffect() {
-        this(GrantScope.EQUIPPED_CREATURE, null);
+        this(GrantScope.EQUIPPED_CREATURE, null, false);
     }
 }

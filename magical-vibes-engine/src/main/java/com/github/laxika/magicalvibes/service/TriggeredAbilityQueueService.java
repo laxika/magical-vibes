@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -410,7 +411,7 @@ public class TriggeredAbilityQueueService {
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    pending.sourceCard().getTargetFilter(),
+                    targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.ATTACK,
@@ -441,6 +442,41 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} enter trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    public void processNextTriggeredModalTrigger(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            PermanentChoiceContext.TriggeredModalTrigger pending =
+                    gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+            playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
+                    pending.effect(), pending.sourcePermanentId());
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
+            log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
+                    pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, ChooseOneEffect.ChooseOneOption chosen) {
+        List<CardEffect> effects = new ArrayList<>(chosen.effects());
+        boolean needsTarget = effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (needsTarget) {
+            gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, controllerId, effects, sourcePermanentId));
+            return;
+        }
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                effects,
+                null,
+                sourcePermanentId));
     }
 
     public void processNextDiscardControllerTriggerTarget(GameData gameData) {

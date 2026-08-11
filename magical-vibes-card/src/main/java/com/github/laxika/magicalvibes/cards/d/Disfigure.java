@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "87")
+@CardRegistration(set = "M20", collectorNumber = "95")
 public class Disfigure extends Card {
 
     public Disfigure() {

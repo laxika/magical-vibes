@@ -33,10 +33,12 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -352,6 +354,10 @@ public class ChoiceHandlerService {
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice ctx) {
+            handleChooseCardNameRevealTopCardChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RelicBindModeChoice ctx) {
             handleRelicBindModeChoice(gameData, player, colorName, ctx);
             return;
@@ -366,6 +372,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
             handleDismantleCounterTypeChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice ctx) {
+            handleTriggeredModalChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
@@ -718,6 +728,27 @@ public class ChoiceHandlerService {
         legendRuleService.checkLegendRule(gameData, controllerId);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleTriggeredModalChoice(GameData gameData, Player player, String chosenLabel,
+            ChoiceContext.TriggeredModalChoice ctx) {
+        ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
+                .filter(o -> o.label().equals(chosenLabel))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+
+        gameData.interaction.clearAwaitingInput();
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
+        triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
+                ctx.sourcePermanentId(), chosen);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     /**
@@ -2593,6 +2624,33 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their graveyard."));
             dealRevealMissDamage(gameData, ctx, targetPlayerId);
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseCardNameRevealTopCardChoice(GameData gameData, Player player, String cardName,
+                                                         ChoiceContext.ChooseCardNameRevealTopCardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        List<Card> deck = gameData.playerDecks.get(ctx.controllerId());
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", topCard, "."));
+        if (topCard.getName().equals(cardName) && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(new SacrificeSelfEffect(), new DrawCardEffect(3)));
+            log.info("Game {} - {} named the top card correctly; Lockbox sacrifices and draws three",
+                    gameData.id, playerName);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

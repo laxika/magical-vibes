@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final PermanentControlSupport permanentControlSupport;
@@ -35,10 +38,17 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ExileGraveyardCardCreateTokenIfCreatureEffect) effect;
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+            return;
+        }
+
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                    + " fizzles (target is no longer a valid " + CardPredicateUtils.describeFilter(e.filter()) + ")."));
             return;
         }
 

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -407,6 +409,25 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("tracks the discarded card with the source when requested")
+        void tracksExiledCardWithSource() {
+            Permanent bag = createPermanent("Bag of Holding");
+            var effect = new ExileDiscardedCardFromGraveyardEffect(true);
+            Card discarded = createCard("Grizzly Bears");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).add(discarded);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(bag, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(bag.getId());
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(discarded.getId());
+        }
+
+        @Test
         @DisplayName("no-op when the discarded card is not in the graveyard")
         void noOpWhenNotInGraveyard() {
             Permanent necro = createPermanent("Necropotence");
@@ -474,6 +495,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(hekma.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(BoostSelfEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — DealDamageToPlayersEffect")
+    class ControllerDiscardDamageToEachOpponent {
+
+        @Test
+        @DisplayName("queues damage to each opponent with the source permanent and returns true")
+        void queuesDamageTrigger() {
+            Permanent buccaneer = createPermanent("Glint-Horn Buccaneer");
+            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(buccaneer, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(buccaneer.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }
 

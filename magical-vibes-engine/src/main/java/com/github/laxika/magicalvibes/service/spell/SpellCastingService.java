@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -160,11 +161,12 @@ public class SpellCastingService {
 
     // --- Helper records ---
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly, boolean legendarySpellOnly) {
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly, boolean legendarySpellOnly, Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext) {
         boolean hasRestricted() {
             return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
                     || (subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty())
-                    || (subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty());
+                    || (subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty())
+                    || (subtypeOrPlaneswalkerSpellContext != null && !subtypeOrPlaneswalkerSpellContext.isEmpty());
         }
     }
 
@@ -559,7 +561,14 @@ public class SpellCastingService {
                 nullToEmpty(gameQueryService.getCardSubtypes(card, gameData, playerId));
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
-        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, legendarySpellOnly);
+        Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
+                subtypeSpellOrAbilityContext.contains(CardSubtype.ELEMENTAL)
+                        || (card.hasType(CardType.PLANESWALKER)
+                        && subtypeSpellOrAbilityContext.contains(CardSubtype.CHANDRA))
+                        ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
+                        CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
+                        : Set.of();
+        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, legendarySpellOnly, subtypeOrPlaneswalkerSpellContext);
     }
 
     private static Set<CardSubtype> nullToEmpty(Set<CardSubtype> subtypes) {
@@ -1041,6 +1050,8 @@ public class SpellCastingService {
                 ? bestowRuntimeCopyForHandCast(hand, cardIndex)
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
@@ -1092,7 +1103,7 @@ public class SpellCastingService {
         // The mode selection is carried by xValue (consumed above). For a modal spell that also has an
         // {X} cost (e.g. Alabaster Potion), the real X paid is threaded separately via modalXValue so it
         // drives mana payment / XValue resolution — while non-{X} modal spells keep X = 0 as before.
-        if (wasModal && modalXValue != null) {
+        if ((wasModal || hasModalEtb) && modalXValue != null) {
             effectiveXValue = modalXValue;
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
@@ -1289,7 +1300,7 @@ public class SpellCastingService {
         }
 
         // Compute targeting tax from effects like Kopala, Warden of Waves and Kaervek's Torch
-        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds)
+        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         int selectedDelveReduction = additionalSpellCostService.delveReduction(
                 additionalCosts, costSelection.exileGraveyardCardIndices());
@@ -1349,10 +1360,12 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (flags.hasRestricted()) {
-                            if (!cost.canPayWithAdditionalGenericCost(pool, effectiveXValue,
-                                    totalAdditionalCost - selectedDelveReduction,
+                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost - selectedDelveReduction,
                                     flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
-                                    flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless())) {
+                                    flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                                    flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                                    flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                                    flags.subtypeOrPlaneswalkerSpellContext())) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (!cost.canPayWithAdditionalGenericCost(
@@ -1623,8 +1636,12 @@ public class SpellCastingService {
                 throw new IllegalStateException("Not enough creature cards in graveyard (need " + effectiveXValue + ", have " + creatureCount + ")");
             }
         }
-        if (returnToBattlefieldEffect != null && effectiveXValue > 0) {
+        if (returnToBattlefieldEffect != null && returnToBattlefieldEffect.xScaled() && effectiveXValue > 0) {
+            Set<UUID> trackedIds = returnToBattlefieldEffect.fromBattlefieldThisTurn()
+                    ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
+                    : null;
             long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> trackedIds == null || trackedIds.contains(c.getId()))
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
                             c, returnToBattlefieldEffect.filter(), card.getId()))
                     .count();
@@ -1866,6 +1883,9 @@ public class SpellCastingService {
             }
             if (additionalCostPayment.sacrificedCardId() != null) {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
+            }
+            if (hasModalEtb) {
+                entry.setEtbMode(xValue != null ? xValue : 0);
             }
             entry.setSourceZone(Zone.HAND);
             // Mirage flash clause: the permanent this becomes is sacrificed at the next cleanup step
@@ -2212,6 +2232,27 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, null, null, List.of(), List.of()
                 ));
+            } else if (returnToBattlefieldEffect != null && !returnToBattlefieldEffect.xScaled()) {
+                Set<UUID> trackedIds = returnToBattlefieldEffect.fromBattlefieldThisTurn()
+                        ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
+                        : null;
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> trackedIds == null || trackedIds.contains(c.getId()))
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                                c, returnToBattlefieldEffect.filter(), card.getId()))
+                        .count();
+                if (matchingCount > 0) {
+                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
+                            gameData, playerId, card, entryType, returnToBattlefieldEffect.filter(),
+                            returnToBattlefieldEffect.maxTargets(), filteredSpellEffects,
+                            returnToBattlefieldEffect.fromBattlefieldThisTurn());
+                    return;
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, null, null, List.of(), List.of()
+                ));
             } else if (returnToBattlefieldEffect != null && resolvedXValue > 0) {
                 graveyardTargetingService.handleExactNGraveyardSpellTargeting(
                         gameData, playerId, card, entryType, resolvedXValue,
@@ -2432,7 +2473,7 @@ public class SpellCastingService {
                 // validated against the card's player filter here, and is carried on the stack
                 // entry alongside the damage assignments.
                 if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
-                    targetLegalityService.validateSpellPlayerTarget(gameData, targetId, playerId, playerFilter);
+                    targetLegalityService.validateSpellPlayerTarget(gameData, targetId, playerId, card, playerFilter);
                 }
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
@@ -3470,7 +3511,7 @@ public class SpellCastingService {
         // Validate and pay flashback / disturb / graveyard cast cost
         boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, paysFlashbackCost);
-        additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds)
+        additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedGraveyardCardCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
@@ -4030,11 +4071,6 @@ public class SpellCastingService {
         UUID playerId = player.getId();
 
         // Verify the player can cast from top of library
-        Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
-        if (castableTypes.isEmpty()) {
-            throw new IllegalStateException("No effect allowing cast from library top");
-        }
-
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
             throw new IllegalStateException("Library is empty");
@@ -4048,10 +4084,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
 
-        // Validate card type matches
-        boolean matchesType = castableTypes.contains(card.getType())
-                || card.getAdditionalTypes().stream().anyMatch(castableTypes::contains);
-        if (!matchesType) {
+        if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, card)) {
             throw new IllegalStateException("Top card type is not castable from library");
         }
 
@@ -4358,15 +4391,18 @@ public class SpellCastingService {
             gameData.setSpellCastManaSpentOnX(card.getId(), spentOnX);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                cost.pay(pool, effectiveXValue + additionalCost,
                         flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
-                        flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless());
+                        flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                        flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                        flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                        flags.subtypeOrPlaneswalkerSpellContext());
             } else {
                 cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly(), false, flags.legendarySpellOnly());
+                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly(), false, flags.legendarySpellOnly(), flags.subtypeOrPlaneswalkerSpellContext());
             } else {
                 cost.pay(pool, additionalCost);
             }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "57")
+@CardRegistration(set = "M20", collectorNumber = "58")
 public class FaerieMiscreant extends Card {
 
     public FaerieMiscreant() {

@@ -1001,6 +1001,36 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_LOSES_LIFE (exile for each life lost) ──────────
 
+    /**
+     * Handles a draw amount that is snapshotted from the life-loss event, such as Vilis, Broker of
+     * Blood's "whenever you lose life, draw that many cards" ability.
+     */
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleLifeLossDrawCards(TriggerMatchContext match,
+            DrawCardEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        UUID controllerId = match.controllerId();
+        int amount = ll.lifeLostAmount();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                controllerId,
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(amount);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life loss ({} life), drawing that many cards",
+                gameData.id, cardName, amount);
+        return true;
+    }
+
     @CollectsTrigger(value = ExileForEachLifeLostEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleExileForEachLifeLost(TriggerMatchContext match,
             ExileForEachLifeLostEffect effect, TriggerContext ctx) {
@@ -1017,6 +1047,27 @@ public class MiscTriggerCollectorService {
                 gameData.id, cardName, amount);
 
         performLichExile(gameData, controllerId, amount, match.permanent());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleLifeLossPutCounters(TriggerMatchContext match,
+            PutCountersOnSourceEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life loss", gameData.id, cardName);
         return true;
     }
 

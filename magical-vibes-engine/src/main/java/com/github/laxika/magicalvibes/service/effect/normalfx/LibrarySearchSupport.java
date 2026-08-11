@@ -175,6 +175,32 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Starts the next targeted player's mandatory unrestricted search for a card to put on top of
+     * their library. Players whose searches cannot start are skipped, while the remaining players
+     * continue through the shared library-search interaction flow.
+     */
+    public boolean startNextTargetPlayerTopSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        List<UUID> remaining = new ArrayList<>(followUp.remainingTargetPlayerTopSearches());
+        while (!remaining.isEmpty()) {
+            UUID playerId = remaining.remove(0);
+            boolean started = performLibrarySearch(
+                    gameData,
+                    playerId,
+                    card -> true,
+                    "cards",
+                    "Search your library for a card, then shuffle and put that card on top.",
+                    false,
+                    false,
+                    LibrarySearchDestination.TOP_OF_LIBRARY,
+                    followUp.withRemainingTargetPlayerTopSearches(remaining));
+            if (started) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Starts the next pending "search for a card with the same name and put it onto the battlefield"
      * pick from the follow-up's same-name queue (Clarion Ultimatum, Doubling Chant). Each queue entry
      * is one permanent's name; the queue's own destination and creature-only restriction apply to

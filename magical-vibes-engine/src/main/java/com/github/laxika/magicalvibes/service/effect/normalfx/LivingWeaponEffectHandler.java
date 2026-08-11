@@ -1,9 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,14 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,8 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final LegendRuleService legendRuleService;
+    private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
@@ -40,63 +30,26 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                UUID controllerId = entry.getControllerId();
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
-                Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-                enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        var e = (LivingWeaponEffect) effect;
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                gameData, entry.getControllerId(), e.token(), entry.getCard().getSetCode());
+        entry.getCreatedPermanentIds().addAll(createdIds);
+        if (createdIds.isEmpty()) {
+            return;
+        }
 
-                Permanent lastTokenPermanent = null;
-                for (int copy = 0; copy < tokenMultiplier; copy++) {
-                    // Create a 0/0 black Phyrexian Germ creature token
-                    Card tokenCard = new Card();
-                    tokenCard.setName("Phyrexian Germ");
-                    tokenCard.setType(CardType.CREATURE);
-                    tokenCard.setManaCost("");
-                    tokenCard.setToken(true);
-                    tokenCard.setColor(CardColor.BLACK);
-                    tokenCard.setPower(0);
-                    tokenCard.setToughness(0);
-                    tokenCard.setSubtypes(List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM));
+        Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (token == null || equipment == null) {
+            return;
+        }
 
-                    // Look up token image from Scryfall token set
-                    // Scryfall names this token "Germ" (subtypes are Phyrexian Germ)
-                    CardPrintingRegistry.TokenImageData germImageData = CardPrintingRegistry.getTokenImage(
-                            entry.getCard().getSetCode(), "Germ", 0, 0, CardColor.BLACK
-                    );
-                    if (germImageData != null) {
-                        tokenCard.setSetCode(germImageData.setCode());
-                        tokenCard.setCollectorNumber(germImageData.collectorNumber());
-                    }
-
-                    Permanent tokenPermanent = new Permanent(tokenCard);
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
-
-                    String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
-                    gameLogService.append(gameData, GameLog.text(logEntry));
-
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-                    if (!gameData.interaction.isAwaitingInput()) {
-                        legendRuleService.checkLegendRule(gameData, controllerId);
-                    }
-
-                    lastTokenPermanent = tokenPermanent;
-                }
-
-                // Attach the equipment to the last token created (per CR 614.6b)
-                if (lastTokenPermanent != null) {
-                    Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                    if (equipment != null) {
-                        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-                        equipment.setAttachedTo(lastTokenPermanent.getId());
-                        // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
-                        equipment.setTimestamp(gameData.nextTimestamp());
-                        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to Phyrexian Germ."));
-                        log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
-                    }
-                }
-
-                log.info("Game {} - Living weapon: {} Phyrexian Germ token(s) created for player {}", gameData.id, tokenMultiplier, controllerId);
-    
+        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipment.setAttachedTo(token.getId());
+        equipment.setTimestamp(gameData.nextTimestamp());
+        gameLogService.append(gameData,
+                GameLog.cardThen(entry.getCard(), " is now attached to " + token.getCard().getName() + "."));
+        log.info("Game {} - {} attached to {} token via living weapon", gameData.id,
+                entry.getCard().getName(), token.getCard().getName());
     }
 }

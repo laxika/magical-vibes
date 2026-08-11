@@ -575,6 +575,32 @@ class LookAtTopCardsEffectHandlerTest {
             assertThat(choice.reorderRemainingToBottom()).isFalse();
             assertThat(choice.randomRemainingToBottom()).isFalse();
         }
+
+        @Test
+        @DisplayName("Mandatory battlefield pick sends the other revealed cards to the graveyard")
+        void mandatoryBattlefieldPickRestToGraveyard() {
+            stubCardViewFactory();
+            Card land = createCard("Forest");
+            Card spell = createCard("Lightning Bolt");
+            gd.playerDecks.get(player1Id).add(land);
+            gd.playerDecks.get(player1Id).add(spell);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == land);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.putOneMatchingOntoBattlefieldRestToGraveyard(
+                    2, new CardTypePredicate(CardType.LAND));
+            handler.resolve(gd, entryFor("Cavalier of Thorns", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            assertThat(search.params().cards()).containsExactly(land);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
+            assertThat(search.params().canFailToFind()).isFalse();
+            assertThat(search.params().restToGraveyard()).isTrue();
+            assertThat(search.params().reorderRemainingToBottom()).isFalse();
+            assertThat(search.params().sourceCards()).containsExactly(land, spell);
+        }
     }
 
     // =========================================================================

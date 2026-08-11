@@ -12,18 +12,35 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Chandra's Defeat); {@code null} means any creature or planeswalker is legal.
  */
 public record DealDamageToTargetCreatureOrPlaneswalkerEffect(
-        DynamicAmount damage, PermanentPredicate targetRestriction) implements DamageDealingEffect {
+        DynamicAmount damage, PermanentPredicate targetRestriction,
+        boolean exileInsteadOfDie) implements DamageDealingEffect {
+
+    public DealDamageToTargetCreatureOrPlaneswalkerEffect(DynamicAmount damage,
+                                                           PermanentPredicate targetRestriction) {
+        this(damage, targetRestriction, false);
+    }
 
     public DealDamageToTargetCreatureOrPlaneswalkerEffect(int damage) {
-        this(new Fixed(damage), null);
+        this(new Fixed(damage), null, false);
     }
 
     public DealDamageToTargetCreatureOrPlaneswalkerEffect(int damage, PermanentPredicate targetRestriction) {
-        this(new Fixed(damage), targetRestriction);
+        this(new Fixed(damage), targetRestriction, false);
+    }
+
+    public DealDamageToTargetCreatureOrPlaneswalkerEffect(int damage,
+                                                           PermanentPredicate targetRestriction,
+                                                           boolean exileInsteadOfDie) {
+        this(new Fixed(damage), targetRestriction, exileInsteadOfDie);
     }
 
     public DealDamageToTargetCreatureOrPlaneswalkerEffect(DynamicAmount damage) {
-        this(damage, null);
+        this(damage, null, false);
+    }
+
+    public DealDamageToTargetCreatureOrPlaneswalkerEffect(DynamicAmount damage,
+                                                           boolean exileInsteadOfDie) {
+        this(damage, null, exileInsteadOfDie);
     }
 
     @Override

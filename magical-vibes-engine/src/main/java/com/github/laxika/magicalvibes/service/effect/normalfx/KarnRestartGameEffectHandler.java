@@ -167,6 +167,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.TriggeredModalTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
@@ -191,7 +192,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
+        gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
+        gameData.playerHexproofFromColorsThisTurn.clear();
+        gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();

@@ -55,6 +55,12 @@ public sealed interface TriggerContext {
     record LandTap(UUID tappingPlayerId, UUID tappedLandId) implements TriggerContext {}
 
     /**
+     * Context for controller-scoped creature-mana triggers
+     * (ON_CONTROLLER_TAPS_CREATURE_FOR_MANA).
+     */
+    record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
+
+    /**
      * Context for damage-dealt-to-controller triggers (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).
      */
     record DamageToController(UUID damagedPlayerId, UUID sourcePermanentId, boolean isCombatDamage) implements TriggerContext {}
@@ -147,6 +153,13 @@ public sealed interface TriggerContext {
      * Context for a card's own death triggers (ON_DEATH).
      * The dying permanent may be null when the 4-arg overload is used.
      */
+    /** Context for one token-creation event, preserving the number of tokens that entered together. */
+    record TokensEnter(int count, int perEffectTriggerCount) implements TriggerContext {
+        public TokensEnter(int count) {
+            this(count, 1);
+        }
+    }
+
     record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
                      Permanent dyingPermanent) implements TriggerContext {}
 

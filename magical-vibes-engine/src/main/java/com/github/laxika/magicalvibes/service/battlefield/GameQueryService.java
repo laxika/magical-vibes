@@ -72,6 +72,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -102,7 +104,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
@@ -709,21 +711,39 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the multiplier applied to life the given player gains, per any
-     * {@link DoubleLifeGainEffect} static effects they control (e.g. Boon Reflection). Each such
-     * effect doubles the life gained, and multiple stack multiplicatively (2^count), matching the
-     * Rhox Faithmender / Alhammarret's Archive ruling. Returns 1 when the player controls none.
+     * Returns the multiplier applied to life the given player gains, per any static life-gain
+     * replacement effects they control. Multiple replacements stack multiplicatively.
      */
     public int lifeGainMultiplier(GameData gameData, UUID playerId) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return 1;
-        int doublers = 0;
+        int multiplier = 1;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleLifeGainEffect) doublers++;
+                if (effect instanceof LifeGainReplacementEffect replacement) {
+                    multiplier *= replacement.lifeGainMultiplier();
+                }
             }
         }
-        return 1 << doublers;
+        return multiplier;
+    }
+
+    /**
+     * Returns the additional life applied to each positive life-gain event by static replacement
+     * effects controlled by the player.
+     */
+    public int additionalLifeGain(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return 0;
+        int additional = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof LifeGainReplacementEffect replacement) {
+                    additional += replacement.additionalLifeGain();
+                }
+            }
+        }
+        return additional;
     }
 
     /**
@@ -1600,6 +1620,37 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the permanent cannot have +1/+1 counters placed on it, including
+     * blanket counter locks and effects granted by other permanents.
+     */
+    public boolean cantHavePlusOnePlusOneCounters(GameData gameData, Permanent permanent) {
+        return cantHavePlusOnePlusOneCountersForController(gameData, permanent, null);
+    }
+
+    /**
+     * Controller-aware form used while a permanent is entering the battlefield, before its
+     * battlefield controller can be resolved from the game state.
+     */
+    public boolean cantHavePlusOnePlusOneCounters(
+            GameData gameData, Permanent permanent, UUID controllerId) {
+        return cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId);
+    }
+
+    private boolean cantHavePlusOnePlusOneCountersForController(
+            GameData gameData, Permanent permanent, UUID controllerId) {
+        if (cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return true;
+        }
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantHavePlusOnePlusOneCountersEffect.class::isInstance)) {
+            return true;
+        }
+        StaticBonus bonus = computeStaticBonusForController(gameData, permanent, controllerId);
+        return bonus.grantedEffects().stream()
+                .anyMatch(CantHavePlusOnePlusOneCountersEffect.class::isInstance);
+    }
+
+    /**
      * Applies Vizier of Remedies-style replacement effects (CR 616) that reduce the number of -1/-1
      * counters put on a creature its controller controls: "If one or more -1/-1 counters would be put
      * on a creature you control, that many -1/-1 counters minus one are put on it instead." For each
@@ -1675,7 +1726,25 @@ public class GameQueryService {
         if (permanent == null || !isCreature(gameData, permanent)) {
             return count;
         }
-        return replacePlusOnePlusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId)) {
+            return 0;
+        }
+        return doublePlusOnePlusOneCounters(gameData, controllerId, count);
+    }
+
+    /**
+     * Controller-aware permanent overload for +1/+1 counter placement during battlefield entry.
+     */
+    public int doublePlusOnePlusOneCounters(
+            GameData gameData, Permanent permanent, UUID controllerId, int count) {
+        if (permanent == null || !isCreature(gameData, permanent)) {
+            return count;
+        }
+        if (cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId)) {
+            return 0;
+        }
+        return doublePlusOnePlusOneCounters(gameData, controllerId, count);
     }
 
     /**
@@ -1955,7 +2024,8 @@ public class GameQueryService {
      * Normally equal to effective power, but some effects cause a creature to assign
      * damage equal to its toughness instead:
      * <ul>
-     *   <li>Equipment/aura-scoped (e.g. Bark of Doran): only when toughness &gt; power.</li>
+     *   <li>Equipment/aura-scoped (e.g. Bark of Doran): only when toughness &gt; power, unless
+     *       the effect explicitly requires toughness every time (e.g. Gauntlets of Light).</li>
      *   <li>Controller-scoped (e.g. Belligerent Brontodon): always uses toughness.</li>
      * </ul>
      */
@@ -1975,7 +2045,15 @@ public class GameQueryService {
                 return Math.max(0, toughness);
             }
 
-            // Equipment/aura-scoped: use toughness only when toughness > power
+            // Some Aura wordings require toughness regardless of the creature's power.
+            if (hasAuraWithEffect(gameData, creature,
+                    effect -> effect instanceof AssignCombatDamageWithToughnessEffect acdt
+                            && acdt.alwaysUseToughness())) {
+                return Math.max(0, toughness);
+            }
+
+            // Equipment/aura-scoped effects such as Bark of Doran use toughness only when it is
+            // greater than power.
             if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
                 return Math.max(0, toughness);
             }
@@ -3435,6 +3513,10 @@ public class GameQueryService {
         if (sourceColor == null) {
             return false;
         }
+        Set<CardColor> turnColors = gameData.permanentHexproofFromColorsThisTurn.get(target.getId());
+        if (turnColors != null && turnColors.contains(sourceColor)) {
+            return true;
+        }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (isHexproofFromColorRestriction(effect, sourceColor)) {
                 return true;
@@ -3588,6 +3670,18 @@ public class GameQueryService {
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
         return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
+    }
+
+    /**
+     * Returns whether the player has hexproof from the given color until end of turn. This is
+     * targeting-only and does not provide protection from damage.
+     */
+    public boolean playerHasHexproofFromColor(GameData gameData, UUID playerId, CardColor color) {
+        if (color == null) {
+            return false;
+        }
+        Set<CardColor> colors = gameData.playerHexproofFromColorsThisTurn.get(playerId);
+        return colors != null && colors.contains(color);
     }
 
     /**
@@ -3771,6 +3865,15 @@ public class GameQueryService {
         if (gameData.spellsMadeUncounterable.contains(card.getId())) {
             return true;
         }
+        StackEntry stackEntry = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(card.getId())
+                        && isSpellStackEntry(entry.getEntryType()))
+                .findFirst()
+                .orElse(null);
+        if (stackEntry != null
+                && gameData.playersSpellsCantBeCounteredThisTurn.contains(stackEntry.getControllerId())) {
+            return true;
+        }
         if (!hasCardType(card, CardType.CREATURE)) {
             return false;
         }
@@ -3778,6 +3881,16 @@ public class GameQueryService {
             return true;
         }
         return controllerProtectsHighPowerCreatureSpell(gameData, card);
+    }
+
+    private boolean isSpellStackEntry(StackEntryType entryType) {
+        return entryType == StackEntryType.CREATURE_SPELL
+                || entryType == StackEntryType.ENCHANTMENT_SPELL
+                || entryType == StackEntryType.SORCERY_SPELL
+                || entryType == StackEntryType.INSTANT_SPELL
+                || entryType == StackEntryType.ARTIFACT_SPELL
+                || entryType == StackEntryType.PLANESWALKER_SPELL
+                || entryType == StackEntryType.BATTLE_SPELL;
     }
 
     /**
@@ -3834,19 +3947,38 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the number of extra times a triggered ability should fire when a creature
-     * controlled by {@code controllerId} enters the battlefield — one per
-     * {@link ETBDoubleTriggerEffect} whose predicate matches the entering creature
-     * (e.g. Naban, Dean of Iteration with {@code CardSubtypePredicate(WIZARD)}).
+     * Returns the number of extra times a triggered ability of a permanent controlled by
+     * {@code sourceControllerId} should fire when {@code enteringPermanent} enters.
      */
-    public int countETBExtraTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
-        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+    public int countETBExtraTriggers(GameData gameData, UUID sourceControllerId,
+                                     UUID enteringControllerId, Card enteringPermanent) {
+        List<Permanent> bf = gameData.playerBattlefields.get(sourceControllerId);
         if (bf == null) return 0;
         int count = 0;
         for (Permanent perm : bf) {
             for (CardEffect e : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (e instanceof ETBDoubleTriggerEffect etb
-                        && predicateEvaluationService.matchesCardPredicate(enteringCreature, etb.predicate(), null)) {
+                        && (!etb.requiresEnteringControllerMatch() || sourceControllerId.equals(enteringControllerId))
+                        && predicateEvaluationService.matchesCardPredicate(enteringPermanent, etb.predicate(), null)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    public int countETBExtraTriggers(GameData gameData, UUID controllerId, Card enteringPermanent) {
+        return countETBExtraTriggers(gameData, controllerId, controllerId, enteringPermanent);
+    }
+
+    public int countETBExtraTriggersForAnyPermanent(GameData gameData, UUID sourceControllerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(sourceControllerId);
+        if (bf == null) return 0;
+        int count = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ETBDoubleTriggerEffect etb
+                        && !etb.requiresEnteringControllerMatch()) {
                     count++;
                 }
             }

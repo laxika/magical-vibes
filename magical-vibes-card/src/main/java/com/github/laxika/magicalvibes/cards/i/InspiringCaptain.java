@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "28")
+@CardRegistration(set = "M20", collectorNumber = "25")
 public class InspiringCaptain extends Card {
 
     public InspiringCaptain() {

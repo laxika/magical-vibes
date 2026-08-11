@@ -3,11 +3,17 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -62,6 +68,7 @@ class MayAbilityHandlerServiceTest {
     private PlayerInputService playerInputService;
     private ValidTargetService validTargetService;
     private MayEffectHandlerRegistry mayEffectHandlerRegistry;
+    private EffectResolutionService effectResolutionService;
     private MayAbilityHandlerService svc;
 
     private GameData gd;
@@ -73,6 +80,7 @@ class MayAbilityHandlerServiceTest {
         playerInputService = mock(PlayerInputService.class);
         validTargetService = mock(ValidTargetService.class);
         mayEffectHandlerRegistry = mock(MayEffectHandlerRegistry.class);
+        effectResolutionService = mock(EffectResolutionService.class);
 
         PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         TargetPredicateEvaluationService targetPredicateEvaluationService =
@@ -88,7 +96,7 @@ class MayAbilityHandlerServiceTest {
                 mock(GameLogService.class),
                 playerInputService,
                 mock(TurnProgressionService.class),
-                mock(EffectResolutionService.class),
+                effectResolutionService,
                 mock(DestructionSupport.class),
                 mock(BendOrBreakEffectHandler.class),
                 mock(FightOrFlightSupport.class),
@@ -153,6 +161,38 @@ class MayAbilityHandlerServiceTest {
 
         verify(playerInputService, org.mockito.Mockito.never())
                 .beginPermanentChoice(any(), any(), anyList(), anyString());
+    }
+
+    @Test
+    @DisplayName("A preselected graveyard target is not selected again after accepting a sequence may")
+    void preselectedGraveyardTargetIsRetainedAfterMayAcceptance() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        Card targetCard = new Card();
+        targetCard.setName("Target Card");
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(targetCard)));
+
+        CardEffect sequence = SequenceEffect.of(
+                new ExileSourceCardFromGraveyardEffect(),
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
+                        .targetGraveyard(true)
+                        .build());
+        StackEntry pendingEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(sequence, "Exile it?")),
+                List.of(targetCard.getId()));
+        gd.pendingEffectResolutionEntry = pendingEntry;
+        gd.pendingEffectResolutionIndex = 0;
+        gd.resolvingMayEffectFromStack = true;
+        gd.pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard, PLAYER1_ID, List.of(sequence), "Exile it?"));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "Exile it?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
+        verify(mayEffectHandlerRegistry, org.mockito.Mockito.never()).getHandler(any());
     }
 
     private void acceptMayAbility(CardEffect effect) {

@@ -166,12 +166,10 @@ public class GraveyardReturnSupport {
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+        UUID targetOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
 
-        UUID graveyardOwnerId = targetCard == null
-                ? null
-                : gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, graveyardOwnerId))) {
+                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
@@ -233,8 +231,8 @@ public class GraveyardReturnSupport {
         if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.HAND) {
-            if (graveyardOwnerId != null) {
-                destinationPlayerId = graveyardOwnerId;
+            if (targetOwnerId != null) {
+                destinationPlayerId = targetOwnerId;
             }
         }
 
@@ -245,10 +243,10 @@ public class GraveyardReturnSupport {
             if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
                 returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
                         effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                        effect.exileIfLeavesBattlefield());
+                        effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, controllerId, targetCard,
-                        effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), false, null);
+                        effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(), null);
             }
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
@@ -257,7 +255,7 @@ public class GraveyardReturnSupport {
 
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect);
-            trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, graveyardOwnerId);
+            trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, targetOwnerId);
         }
 
         if (effect.returnToHandAtEndStep() && returnedPermanent != null) {
@@ -476,7 +474,7 @@ public class GraveyardReturnSupport {
                     } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                                effect.exileIfLeavesBattlefield());
+                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
@@ -971,6 +969,15 @@ public class GraveyardReturnSupport {
                                                               boolean grantHaste, boolean exileAtEndStep,
                                                               boolean sacrificeAtEndStep,
                                                               boolean exileIfLeavesBattlefield) {
+        return putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, card, grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, exileIfLeavesBattlefield, false, false);
+    }
+
+    public Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                              boolean grantHaste, boolean exileAtEndStep,
+                                                              boolean sacrificeAtEndStep,
+                                                              boolean exileIfLeavesBattlefield,
+                                                              boolean enterTapped, boolean enterAttacking) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -987,8 +994,17 @@ public class GraveyardReturnSupport {
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
+        if (enterTapped) {
+            permanent.tap();
+        }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        if (enterTapped) {
+            permanent.tap();
+        }
+        if (enterAttacking) {
+            permanent.setAttacking(true);
+        }
         if (exileIfLeavesBattlefield) {
             // Unearth's second clause (CR 702.100): if it would leave the battlefield for any other
             // reason, exile it instead. Shallow Grave has only the delayed exile, not this.

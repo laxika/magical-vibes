@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "124")
+@CardRegistration(set = "M20", collectorNumber = "118")
 public class UndeadServant extends Card {
 
     public UndeadServant() {

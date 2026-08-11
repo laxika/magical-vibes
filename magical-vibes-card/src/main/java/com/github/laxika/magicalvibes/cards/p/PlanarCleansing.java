@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "24")
 @CardRegistration(set = "M13", collectorNumber = "26")
 @CardRegistration(set = "M14", collectorNumber = "29")
+@CardRegistration(set = "M20", collectorNumber = "33")
 public class PlanarCleansing extends Card {
 
     public PlanarCleansing() {

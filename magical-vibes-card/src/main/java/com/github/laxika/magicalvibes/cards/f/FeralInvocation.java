@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "158")
+@CardRegistration(set = "M20", collectorNumber = "170")
 public class FeralInvocation extends Card {
 
     public FeralInvocation() {

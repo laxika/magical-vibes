@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "56")
+@CardRegistration(set = "M20", collectorNumber = "61")
 public class FrilledSeaSerpent extends Card {
 
     public FrilledSeaSerpent() {

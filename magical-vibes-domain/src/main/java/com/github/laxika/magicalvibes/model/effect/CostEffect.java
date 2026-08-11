@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -85,6 +86,14 @@ public interface CostEffect extends CardEffect {
      * type (only meaningful when {@link #consumedGraveyardCardCount()} is positive).
      */
     default CardType consumedGraveyardCardType() {
+        return null;
+    }
+
+    /**
+     * An additional predicate the graveyard cards consumed by this cost must match, or
+     * {@code null} when the type facet is sufficient.
+     */
+    default CardPredicate consumedGraveyardCardPredicate() {
         return null;
     }
 }

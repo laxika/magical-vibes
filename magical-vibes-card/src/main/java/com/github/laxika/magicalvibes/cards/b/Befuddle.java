@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "45")
+@CardRegistration(set = "M20", collectorNumber = "47")
 public class Befuddle extends Card {
 
     public Befuddle() {

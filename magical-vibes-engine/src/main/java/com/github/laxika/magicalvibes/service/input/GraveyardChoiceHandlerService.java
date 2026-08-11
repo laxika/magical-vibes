@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -58,6 +59,7 @@ public class GraveyardChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -655,6 +657,9 @@ public class GraveyardChoiceHandlerService {
                         new ArrayList<>(cardIds)
                 );
             }
+            if (pendingTargetPlayerId != null) {
+                triggeredEntry.setTargetId(pendingTargetPlayerId);
+            }
             gameData.stack.add(triggeredEntry);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
 
@@ -678,6 +683,14 @@ public class GraveyardChoiceHandlerService {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);

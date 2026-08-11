@@ -16,6 +16,7 @@ public sealed interface DynamicAmount permits
         AttachedPermanentColorCount,
         BasicLandTypesAmongControlledLands,
         CardTypesAmongCardsInGraveyard,
+        DistinctManaCostsAmongCardsInGraveyard,
         CardsDiscardedByTargetPlayerThisTurn,
         CardsDiscardedOrCycledThisTurn,
         CardsInExile,
@@ -91,6 +92,7 @@ public sealed interface DynamicAmount permits
         TargetPower,
         TotalPowerOfCardsExiledWithSource,
         TotalToughnessOfCardsExiledWithSource,
+        TotalToughnessOfControlledCreatures,
         UntappedLandsAtTurnStart,
         XValue {
 }

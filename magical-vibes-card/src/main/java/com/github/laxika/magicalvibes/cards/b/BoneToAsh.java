@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "DKA", collectorNumber = "29")
 @CardRegistration(set = "ORI", collectorNumber = "47")
 @CardRegistration(set = "M19", collectorNumber = "47")
+@CardRegistration(set = "M20", collectorNumber = "48")
 public class BoneToAsh extends Card {
 
     public BoneToAsh() {

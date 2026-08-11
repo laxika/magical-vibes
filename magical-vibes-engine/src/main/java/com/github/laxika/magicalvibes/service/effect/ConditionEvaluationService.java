@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
@@ -458,6 +459,8 @@ public class ConditionEvaluationService {
                             && gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.contains(ctx.sourcePermanentId());
             case OpponentLostLifeThisTurn c ->
                     didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case AnyPlayerLostLifeThisTurn c ->
+                    didAnyPlayerLoseLifeThisTurn(gameData, c.minimumAmount());
             case OpponentLostLifeLastTurn ignored ->
                     didAnyOpponentLoseLifeLastTurn(gameData, ctx.controllerId());
             case ControllerDidntLoseLifeThisTurn ignored ->
@@ -1448,6 +1451,12 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean didAnyPlayerLoseLifeThisTurn(GameData gameData, int minimumAmount) {
+        int threshold = Math.max(1, minimumAmount);
+        return gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> gameData.lifeLostThisTurn.getOrDefault(playerId, 0) >= threshold);
     }
 
     private int activationCountThisTurn(GameData gameData, ConditionContext ctx, int abilityIndex) {

@@ -65,7 +65,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             Permanent source = entry.getSourcePermanentId() != null
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
-            if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
+            if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
                 int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);

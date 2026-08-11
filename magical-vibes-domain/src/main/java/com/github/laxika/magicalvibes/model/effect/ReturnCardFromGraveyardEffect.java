@@ -68,9 +68,9 @@ import lombok.Builder;
  *                             {@code cardsDiscardedOrCycledThisTurn} tracking in GameData; only meaningful
  *                             when {@link #returnAll} is {@code true}
  * @param targetPutIntoGraveyardFromBattlefieldThisTurn {@code true} to restrict the <b>targeted</b>
- *                             graveyard card to a creature card that was put into that graveyard from the
- *                             battlefield this turn (e.g. Grim Return); reads the
- *                             {@code creatureCardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
+ *                             graveyard card to one that was put into that graveyard from the battlefield
+ *                             this turn (e.g. Grim Return, Salvager of Ruin); reads the
+ *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a

@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
@@ -561,6 +562,18 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (!trigger.matchesColor(sc.spellCard().getColor())) return false;
         return addColorCounterTrigger(match, trigger);
+    }
+
+    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleControllerChosenColorCounter(TriggerMatchContext match,
+            PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (match.permanent().getChosenColor() == null
+                || !sc.spellCard().getColors().contains(match.permanent().getChosenColor())) {
+            return false;
+        }
+        return addColorCounterTrigger(match, trigger.amount());
     }
 
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
@@ -1401,7 +1414,11 @@ public class SpellCastTriggerCollectorService {
 
     private boolean addColorCounterTrigger(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger) {
-        List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, trigger.amount()));
+        return addColorCounterTrigger(match, trigger.amount());
+    }
+
+    private boolean addColorCounterTrigger(TriggerMatchContext match, int amount) {
+        List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, amount));
 
         if (match.rawEffect() instanceof MayEffect may) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(

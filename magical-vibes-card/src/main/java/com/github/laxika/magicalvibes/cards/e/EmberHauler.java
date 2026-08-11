@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "135")
+@CardRegistration(set = "M20", collectorNumber = "137")
 public class EmberHauler extends Card {
 
     public EmberHauler() {

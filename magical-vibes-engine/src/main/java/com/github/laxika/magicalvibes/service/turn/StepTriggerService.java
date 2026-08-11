@@ -2558,9 +2558,9 @@ public class StepTriggerService {
                 perm.setAttackTarget(attackTargetId);
             }
             if (pending.plusOnePlusOneCounters() > 0
-                    && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                    && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm, controllerId)) {
                 int counters = gameQueryService.doublePlusOnePlusOneCounters(
-                        gameData, controllerId, pending.plusOnePlusOneCounters());
+                        gameData, perm, controllerId, pending.plusOnePlusOneCounters());
                 if (counters > 0) {
                     perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
                 }

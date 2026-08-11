@@ -884,6 +884,20 @@ public class CastingPermissionService {
         return castableTypes;
     }
 
+    /** Returns whether a specific card may be cast from the top of the player's library. */
+    public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AllowCastFromTopOfLibraryEffect allow && allow.matches(card)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Vizier of the Menagerie etc.: returns true if the player controls a permanent that lets them
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).

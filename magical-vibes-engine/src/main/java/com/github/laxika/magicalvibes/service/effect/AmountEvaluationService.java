@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThis
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
+import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
@@ -187,6 +189,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case DistinctManaCostsAmongCardsInGraveyard c ->
+                    countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
             case CardsInGraveyard c ->
@@ -293,6 +297,8 @@ public class AmountEvaluationService {
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalToughnessOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
+            case TotalToughnessOfControlledCreatures ignored ->
+                    totalToughnessOfControlledCreatures(gameData, ctx);
             case LastDiscardedCardManaValue ignored ->
                     gameData.lastDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
@@ -578,6 +584,21 @@ public class AmountEvaluationService {
         return found.size();
     }
 
+    private int countDistinctManaCostsAmongCardsInGraveyard(
+            GameData gameData, DistinctManaCostsAmongCardsInGraveyard amount, AmountContext ctx) {
+        java.util.Set<String> found = new java.util.HashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken() || card.hasType(CardType.LAND) || card.getManaCost() == null) continue;
+                found.add(card.getManaCost());
+            }
+        }
+        return found.size();
+    }
+
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -763,6 +784,7 @@ public class AmountEvaluationService {
     }
 
     private int totalToughnessOfControlledCreatures(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         int total = 0;

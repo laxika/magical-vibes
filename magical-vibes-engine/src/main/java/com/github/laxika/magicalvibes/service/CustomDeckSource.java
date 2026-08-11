@@ -16,4 +16,9 @@ public interface CustomDeckSource {
     boolean isCustomDeck(String deckId);
 
     List<Card> buildCustomDeck(String deckId);
+
+    /** Builds cards the player owns outside the game, such as a sideboard. */
+    default List<Card> buildCustomSideboard(String deckId) {
+        return List.of();
+    }
 }

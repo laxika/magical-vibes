@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "HOU", collectorNumber = "125")
+@CardRegistration(set = "M20", collectorNumber = "186")
 public class Overcome extends Card {
 
     public Overcome() {

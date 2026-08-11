@@ -193,7 +193,7 @@ public class CloneService {
         int count = amountEvaluationService.evaluate(gameData, amount,
                 new AmountContext(controllerId, perm, null, xValue, 0));
         if (count > 0) {
-            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, controllerId, count);
+            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, perm, controllerId, count);
             if (count > 0) {
                 perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);

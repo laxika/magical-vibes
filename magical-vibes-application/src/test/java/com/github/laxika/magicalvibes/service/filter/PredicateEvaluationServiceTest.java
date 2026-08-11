@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColo
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -1357,6 +1358,30 @@ class PredicateEvaluationServiceTest {
     @Nested
     @DisplayName("matchesStackEntryPredicate — enchanted-player filter")
     class MatchesStackEntryPredicateEnchantedPlayer {
+
+        @Test
+        @DisplayName("matches a stack entry with the requested supertype")
+        void matchesSupertype() {
+            Card legendaryInstant = new Card();
+            legendaryInstant.setName("Legendary Instant");
+            legendaryInstant.setType(CardType.INSTANT);
+            legendaryInstant.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+            StackEntry legendaryEntry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, legendaryInstant, player1Id,
+                    "Legendary Instant", new ArrayList<>());
+
+            Card ordinaryInstant = new Card();
+            ordinaryInstant.setName("Ordinary Instant");
+            ordinaryInstant.setType(CardType.INSTANT);
+            StackEntry ordinaryEntry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, ordinaryInstant, player1Id,
+                    "Ordinary Instant", new ArrayList<>());
+
+            StackEntrySupertypeInPredicate predicate = new StackEntrySupertypeInPredicate(
+                    Set.of(CardSupertype.LEGENDARY));
+            assertThat(evaluator.matchesStackEntryPredicate(legendaryEntry, predicate, null)).isTrue();
+            assertThat(evaluator.matchesStackEntryPredicate(ordinaryEntry, predicate, null)).isFalse();
+        }
 
         private StackEntry instantControlledBy(UUID controllerId) {
             Card bolt = new Card();
