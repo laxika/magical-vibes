@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -584,6 +585,67 @@ class HardAiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         assertThat(berserkers.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI removes a creature that can only attack alone from a larger group")
+    void removesCanOnlyAttackAloneCreature() {
+        Permanent restricted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        restricted.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        aura.setAttachedTo(restricted.getId());
+        Permanent unrestricted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        unrestricted.setSummoningSick(false);
+
+        List<Integer> result = createHardAi(player1).prepareAttackersForTax(gd, List.of(0, 2));
+
+        assertThat(result).containsExactly(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI keeps one creature when every selected creature can only attack alone")
+    void keepsOneWhenAllCanOnlyAttackAlone() {
+        Permanent firstRestricted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        firstRestricted.setSummoningSick(false);
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        firstAura.setAttachedTo(firstRestricted.getId());
+        Permanent secondRestricted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        secondRestricted.setSummoningSick(false);
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        secondAura.setAttachedTo(secondRestricted.getId());
+
+        List<Integer> result = createHardAi(player1).prepareAttackersForTax(gd, List.of(0, 2));
+
+        assertThat(result).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Hard AI ignores a stale attacker-declaration event")
+    void ignoresStaleAttackerDeclarationEvent() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+        TurnStep stepAfterDeclaration = gd.currentStep;
+        int lifeAfterDeclaration = gd.getLife(player2.getId());
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+        assertThat(lifeAfterDeclaration).isEqualTo(18);
+        assertThat(gd.currentStep).isEqualTo(stepAfterDeclaration);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeAfterDeclaration);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test

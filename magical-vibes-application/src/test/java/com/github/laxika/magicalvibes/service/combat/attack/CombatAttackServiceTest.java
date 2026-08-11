@@ -122,6 +122,19 @@ class CombatAttackServiceTest extends BaseCardTest {
 
             assertThat(service().getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
         }
+
+        @Test
+        @DisplayName("Identifies creatures that can only attack alone through an attached Aura")
+        void identifiesCanOnlyAttackAloneRestrictionFromAura() {
+            Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+            Permanent unrestricted = addCreatureReady(player1, new GrizzlyBears());
+            Permanent aura = new Permanent(new Errantry());
+            aura.setAttachedTo(enchanted.getId());
+            gd.playerBattlefields.get(player1.getId()).add(aura);
+
+            assertThat(service().canOnlyAttackAlone(gd, enchanted)).isTrue();
+            assertThat(service().canOnlyAttackAlone(gd, unrestricted)).isFalse();
+        }
     }
 
     @Nested

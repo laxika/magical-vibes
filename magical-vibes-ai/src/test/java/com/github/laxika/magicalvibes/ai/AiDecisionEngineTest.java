@@ -1936,6 +1936,10 @@ class AiDecisionEngineTest {
     @Test
     @DisplayName("prepareAttackersForTax passes through when no tax")
     void prepareAttackersForTaxNoOp() {
+        for (int i = 0; i < 3; i++) {
+            Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+        }
         List<Integer> original = List.of(0, 1, 2);
         List<Integer> result = ai.prepareAttackersForTax(gd, original);
 

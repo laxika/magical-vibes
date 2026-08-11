@@ -140,6 +140,17 @@ public class CombatAttackService {
     }
 
     /**
+     * Whether this creature may be declared only as the sole attacker, either from its own
+     * static ability or from an attached Aura.
+     */
+    public boolean canOnlyAttackAlone(GameData gameData, Permanent creature) {
+        boolean selfRestricted = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
+        return selfRestricted || gameQueryService.hasAuraWithEffect(gameData, creature,
+                EnchantedCreatureCanOnlyAttackAloneEffect.class);
+    }
+
+    /**
      * Returns the subset of attackable indices whose creatures have at least one
      * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
      */
@@ -1375,10 +1386,7 @@ public class CombatAttackService {
         }
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            boolean selfRestricted = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
-            if (selfRestricted || gameQueryService.hasAuraWithEffect(gameData, attacker,
-                    EnchantedCreatureCanOnlyAttackAloneEffect.class)) {
+            if (canOnlyAttackAlone(gameData, attacker)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can only attack alone");
             }
         }

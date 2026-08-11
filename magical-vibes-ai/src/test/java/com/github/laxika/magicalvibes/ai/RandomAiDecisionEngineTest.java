@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
+import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -37,6 +38,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void excludesCanOnlyAttackAloneCreatureAndIgnoresStaleRetry() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        harness.setLife(opponent, 20);
+
+        Permanent restricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        restricted.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(aiPlayer, new Errantry());
+        aura.setAttachedTo(restricted.getId());
+        Permanent unrestricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        unrestricted.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            TurnStep stepAfterDeclaration = gameData.currentStep;
+
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.currentStep).isEqualTo(stepAfterDeclaration);
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(restricted.isAttacking()).isFalse();
+        assertThat(gameData.getLife(opponent.getId())).isEqualTo(18);
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
 
     @Test
     void doesNotDeclareOkkWithoutGreaterPowerBlocker() {

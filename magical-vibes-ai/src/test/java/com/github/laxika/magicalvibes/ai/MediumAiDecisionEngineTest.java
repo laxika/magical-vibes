@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
@@ -208,6 +209,66 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI removes a creature that can only attack alone from a larger group")
+    void removesCanOnlyAttackAloneCreature() {
+        Permanent restricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        restricted.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(aiPlayer, new Errantry());
+        aura.setAttachedTo(restricted.getId());
+        Permanent unrestricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        unrestricted.setSummoningSick(false);
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 2));
+
+        assertThat(result).containsExactly(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI keeps one creature when every selected creature can only attack alone")
+    void keepsOneWhenAllCanOnlyAttackAlone() {
+        Permanent firstRestricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        firstRestricted.setSummoningSick(false);
+        Permanent firstAura = harness.addToBattlefieldAndReturn(aiPlayer, new Errantry());
+        firstAura.setAttachedTo(firstRestricted.getId());
+        Permanent secondRestricted = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        secondRestricted.setSummoningSick(false);
+        Permanent secondAura = harness.addToBattlefieldAndReturn(aiPlayer, new Errantry());
+        secondAura.setAttachedTo(secondRestricted.getId());
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 2));
+
+        assertThat(result).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Medium AI ignores a stale attacker-declaration event")
+    void ignoresStaleAttackerDeclarationEvent() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+        TurnStep stepAfterDeclaration = gd.currentStep;
+        int lifeAfterDeclaration = gd.getLife(human.getId());
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+        assertThat(lifeAfterDeclaration).isEqualTo(18);
+        assertThat(gd.currentStep).isEqualTo(stepAfterDeclaration);
+        assertThat(gd.getLife(human.getId())).isEqualTo(lifeAfterDeclaration);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test

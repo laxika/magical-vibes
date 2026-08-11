@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -935,6 +936,95 @@ class EasyAiDecisionEngineTest {
         PlayCardRequest request = captor.getValue();
         // maxX should be 2, smartX clamps to target toughness but no target A?†’ full maxX
         assertThat(request.xValue()).isEqualTo(2);
+    }
+
+    @Nested
+    @DisplayName("Attacker declaration regressions")
+    class AttackerDeclarationRegressionTests {
+
+        private GameTestHarness combatHarness;
+        private Player opponent;
+        private Player combatAiPlayer;
+        private GameData combatGd;
+        private EasyAiDecisionEngine combatAi;
+
+        @BeforeEach
+        void setUpCombatHarness() {
+            combatHarness = new GameTestHarness();
+            opponent = combatHarness.getPlayer1();
+            combatAiPlayer = combatHarness.getPlayer2();
+            combatGd = combatHarness.getGameData();
+            combatHarness.skipMulligan();
+            combatHarness.clearMessages();
+            FakeConnection aiConn = new FakeConnection("ai-easy-attacker-regression-test");
+            combatHarness.getSessionManager().registerPlayer(aiConn, combatAiPlayer.getId(), "Bob");
+            combatAi = new EasyAiDecisionEngine(combatGd.id, combatAiPlayer, combatHarness.getGameRegistry(),
+                    combatHarness.getGameService(), combatHarness.getGameQueryService(),
+                    combatHarness.getBlockLegalityService(), combatHarness.getCombatAttackService(),
+                    combatHarness.getGameActionAvailabilityService(), combatHarness.getCastingCostService(),
+                    combatHarness.getCastingPermissionService(), combatHarness.getTargetValidationService(),
+                    combatHarness.getTargetLegalityService());
+        }
+
+        @Test
+        @DisplayName("Easy AI removes a creature that can only attack alone from a larger group")
+        void removesCanOnlyAttackAloneCreature() {
+            Permanent restricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            restricted.setSummoningSick(false);
+            Permanent aura = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Errantry());
+            aura.setAttachedTo(restricted.getId());
+            Permanent unrestricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            unrestricted.setSummoningSick(false);
+
+            List<Integer> result = combatAi.prepareAttackersForTax(combatGd, List.of(0, 2));
+
+            assertThat(result).containsExactly(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI keeps one creature when every selected creature can only attack alone")
+        void keepsOneWhenAllCanOnlyAttackAlone() {
+            Permanent firstRestricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstRestricted.setSummoningSick(false);
+            Permanent firstAura = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Errantry());
+            firstAura.setAttachedTo(firstRestricted.getId());
+            Permanent secondRestricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            secondRestricted.setSummoningSick(false);
+            Permanent secondAura = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Errantry());
+            secondAura.setAttachedTo(secondRestricted.getId());
+
+            List<Integer> result = combatAi.prepareAttackersForTax(combatGd, List.of(0, 2));
+
+            assertThat(result).containsExactly(0);
+        }
+
+        @Test
+        @DisplayName("Easy AI ignores a stale attacker-declaration event")
+        void ignoresStaleAttackerDeclarationEvent() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            TurnStep stepAfterDeclaration = combatGd.currentStep;
+            int lifeAfterDeclaration = combatGd.getLife(opponent.getId());
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+            assertThat(lifeAfterDeclaration).isEqualTo(18);
+            assertThat(combatGd.currentStep).isEqualTo(stepAfterDeclaration);
+            assertThat(combatGd.getLife(opponent.getId())).isEqualTo(lifeAfterDeclaration);
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        }
     }
 
     // ===== Attack tax handling =====

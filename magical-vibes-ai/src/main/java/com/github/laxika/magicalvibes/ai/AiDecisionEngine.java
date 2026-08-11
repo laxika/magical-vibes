@@ -159,7 +159,11 @@ public abstract class AiDecisionEngine {
             case GAME_STATE -> handleGameState(gameData);
             case MULLIGAN -> handleInitialMulligan();
             case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
-            case ATTACKER_DECLARATION -> handleAttackers(gameData);
+            case ATTACKER_DECLARATION -> {
+                if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) != null) {
+                    handleAttackers(gameData);
+                }
+            }
             case BLOCKER_DECLARATION -> handleBlockers(gameData);
             case INTERACTION -> handleInteractionPrompt(gameData);
             case COMBAT_DAMAGE_ASSIGNMENT -> choiceHandler.handleCombatDamageAssignment(gameData);
@@ -572,6 +576,7 @@ public abstract class AiDecisionEngine {
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        attackerIndices = enforceCanOnlyAttackAlone(gameData, actingPlayerId, attackerIndices);
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
                 gameData, actingPlayerId);
@@ -637,6 +642,26 @@ public abstract class AiDecisionEngine {
                 .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
                 .toList();
         return dropLoneCantAttackAlone(gameData, capped);
+    }
+
+    /**
+     * Removes creatures that can only attack alone when the AI selected a larger attacking group.
+     * If every selected creature has that restriction, keeps one legal singleton declaration.
+     */
+    private List<Integer> enforceCanOnlyAttackAlone(GameData gameData, UUID actingPlayerId,
+                                                    List<Integer> attackerIndices) {
+        if (attackerIndices.size() <= 1) {
+            return attackerIndices;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
+        if (battlefield == null) {
+            return attackerIndices;
+        }
+        List<Integer> unrestricted = attackerIndices.stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .filter(index -> !combatAttackService.canOnlyAttackAlone(gameData, battlefield.get(index)))
+                .toList();
+        return unrestricted.isEmpty() ? List.of(attackerIndices.getFirst()) : unrestricted;
     }
 
     private boolean isPhyrexianLifePaymentWorthwhile(GameData gameData, List<Integer> attackerIndices,
