@@ -28,6 +28,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast instant and sorcery spells (Resonating Lute). */
     INSTANT_SORCERY_ONLY,
 
+    /** Spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
+    ARTIFACT_SPELLS_OR_ABILITIES,
+
     /** Spendable only to cast spells with flashback from a graveyard (Altar of the Lost). */
     FLASHBACK_ONLY,
 

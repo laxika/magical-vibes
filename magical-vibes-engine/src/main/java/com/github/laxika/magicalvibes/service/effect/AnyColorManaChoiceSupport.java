@@ -102,6 +102,8 @@ public final class AnyColorManaChoiceSupport {
                                 playerId, fromCreature, amount, colors);
             }
             case INSTANT_SORCERY_ONLY -> ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, amount);
+            case ARTIFACT_SPELLS_OR_ABILITIES ->
+                    ChoiceContext.ManaColorChoice.artifactSpellOrAbilityOnly(playerId, amount);
             case FLASHBACK_ONLY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, null, true);
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, amount);
@@ -136,6 +138,7 @@ public final class AnyColorManaChoiceSupport {
     private static String prompt(ManaSpendRestriction restriction) {
         return switch (restriction) {
             case INSTANT_SORCERY_ONLY -> "Choose a color of mana to add (instant and sorcery spells only).";
+            case ARTIFACT_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (artifact spells or artifact abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             default -> "Choose a color of mana to add.";
         };

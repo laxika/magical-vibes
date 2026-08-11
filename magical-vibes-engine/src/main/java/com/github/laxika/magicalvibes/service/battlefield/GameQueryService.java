@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityTimingEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
@@ -892,6 +894,25 @@ public class GameQueryService {
     }
 
     /**
+     * Returns true if a static effect controlled by the player makes the given ability available
+     * at instant speed.
+     */
+    public boolean canActivateAbilityAtInstantSpeed(GameData gameData, UUID playerId,
+                                                    ActivatedAbility ability) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ActivatedAbilityTimingEffect timing
+                        && timing.allowsInstantSpeedActivation(ability)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the given player may spend white mana as though it were red mana (i.e.
      * they control a permanent with {@link SpendWhiteManaAsRedEffect}, e.g. Sunglasses of Urza). Set
      * onto the player's {@code ManaPool} at the payment/affordability sites so {@code ManaCost} honors it.
@@ -1082,6 +1103,21 @@ public class GameQueryService {
                 || permanent.getGrantedCardTypes().contains(type)
                 || permanent.getPersistentGrantedCardTypes().contains(type)
                 || bonus.grantedCardTypes().contains(type);
+    }
+
+    private Set<CardType> baseCardTypes(Permanent permanent) {
+        Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
+        if (permanent.isFaceDown()) {
+            cardTypes.addAll(permanent.getFaceDownCardTypes());
+        } else {
+            if (permanent.getCard().getType() != null) {
+                cardTypes.add(permanent.getCard().getType());
+            }
+            cardTypes.addAll(permanent.getCard().getAdditionalTypes());
+        }
+        cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
+        cardTypes.addAll(permanent.getGrantedCardTypes());
+        return cardTypes;
     }
 
     /**
@@ -2520,6 +2556,12 @@ public class GameQueryService {
             accumulator.setLandSubtypeOverriding(true);
         }
 
+        if (state != null && !state.getCardTypes().equals(baseCardTypes(target))) {
+            accumulator.getGrantedCardTypes().clear();
+            accumulator.getGrantedCardTypes().addAll(state.getCardTypes());
+            accumulator.setCardTypeOverriding(true);
+        }
+
         // Sublayer 7d: the parity of the active floating switch effects, resolved by the
         // layered pass; the effective-P/T queries swap the finished 7a-7c values when set.
         boolean ptSwitched = board.switchedPt7d().contains(target.getId());
@@ -3569,15 +3611,33 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
     }
 
-    /** Returns whether a targeted instant or sorcery spell has its damage prevented this turn. */
-    public boolean isDamageFromTargetSpellPrevented(GameData gameData, StackEntry entry) {
+    /** Returns the first turn-scoped damage-prevention shield matching the targeted spell. */
+    public TargetSpellDamagePreventionShield getTargetSpellDamagePreventionShield(
+            GameData gameData, StackEntry entry) {
         if (!isDamagePreventable(gameData) || entry == null) {
-            return false;
+            return null;
         }
         StackEntryType type = entry.getEntryType();
-        return (type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL)
-                && entry.getCard() != null
-                && gameData.spellsPreventedFromDealingDamage.contains(entry.getCard().getId());
+        boolean isSpell = switch (type) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
+                    ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+        };
+        if (!isSpell || entry.getCard() == null) {
+            return null;
+        }
+        UUID spellCardId = entry.getCard().getId();
+        synchronized (gameData.targetSpellDamagePreventionShields) {
+            return gameData.targetSpellDamagePreventionShields.stream()
+                    .filter(shield -> spellCardId.equals(shield.spellCardId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+
+    /** Returns whether a targeted instant or sorcery spell has its damage prevented this turn. */
+    public boolean isDamageFromTargetSpellPrevented(GameData gameData, StackEntry entry) {
+        return getTargetSpellDamagePreventionShield(gameData, entry) != null;
     }
 
     /**

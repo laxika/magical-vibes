@@ -2377,8 +2377,28 @@ public class CombatDamageService {
             // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
             damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), null, damage);
             processSourceRedirectDamage(gameData);
+            UUID combatRedirectTargetId = damagePreventionService.findCombatDamageRedirectTarget(gameData, defenderId);
+            Permanent combatRedirectTarget = combatRedirectTargetId == null
+                    ? null : gameQueryService.findPermanentById(gameData, combatRedirectTargetId);
+            List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+            int combatRedirectTargetIdx = attackingBattlefield == null || combatRedirectTarget == null
+                    ? -1 : attackingBattlefield.indexOf(combatRedirectTarget);
+            if (damage > 0 && combatRedirectTargetIdx >= 0) {
+                if (gameQueryService.isDamagePreventable(gameData)
+                        && gameQueryService.hasProtectionFromDamageSource(gameData, combatRedirectTarget, atk)) {
+                    return;
+                }
+                applyCombatCreatureDamage(gameData, atk, atkStats, combatRedirectTarget,
+                        combatRedirectTargetIdx, damage, state.atkDamageTaken,
+                        state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices,
+                        state.atkDamageTakenBySource);
+                state.combatDamageDealt.merge(atk, damage, Integer::sum);
+                recordCombatDamageToCreature(gameData, state, atk, gameData.activePlayerId,
+                        combatRedirectTarget, damage);
+                return;
+            }
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
-            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
+            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage, true);
             processSourceRedirectDamage(gameData);
             // Martyrdom: redirect the next N combat damage to the defending player onto the creature
             // carrying the ability.
@@ -2518,7 +2538,7 @@ public class CombatDamageService {
             damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Saving Grace: redirect all combat damage this turn to a permanent you control onto the enchanted creature.
-            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage);
+            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage, true);
             processSourceRedirectDamage(gameData);
             // Palisade Giant: combat damage to other permanents its controller controls is dealt to it instead.
             damage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), damage);

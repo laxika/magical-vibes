@@ -334,6 +334,10 @@ public class ChoiceHandlerService {
             handleAdjustCounterKindChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
+            handleDismantleCounterTypeChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
             handleChooseModeChoice(gameData, player, colorName, ctx);
             return;
@@ -519,6 +523,13 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} creature-spell-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
+        } else if (ctx.artifactSpellOrAbilityOnly()) {
+            manaPool.addArtifactOnlyMana(manaColor, amount);
+
+            String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
+                    + " " + colorName.toLowerCase() + " mana (artifact spells or abilities only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds {} {} artifact-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else {
             manaPool.add(manaColor, amount);
             if (ctx.fromCreature()) {
@@ -531,7 +542,8 @@ public class ChoiceHandlerService {
             }
         }
 
-        if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null && !ctx.creatureSpellOnly()) {
+        if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
+                && !ctx.creatureSpellOnly() && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -922,6 +934,31 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Completes Dismantle's counter-type choice and then chooses a controlled artifact if needed. */
+    private void handleDismantleCounterTypeChoice(GameData gameData, String choice,
+            ChoiceContext.DismantleCounterTypeChoice ctx) {
+        if (!ChoiceContext.DismantleCounterTypeChoice.OPTIONS.contains(choice)) {
+            throw new IllegalArgumentException("Invalid Dismantle counter type: " + choice);
+        }
+        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+        if (sourceEntry == null) {
+            throw new IllegalStateException("Dismantle choice has no parked resolution");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        CounterType counterType = ChoiceContext.DismantleCounterTypeChoice.PLUS_ONE_PLUS_ONE.equals(choice)
+                ? CounterType.PLUS_ONE_PLUS_ONE
+                : CounterType.CHARGE;
+        permanentCounterSupport.resolveCounterOnOwnPermanent(gameData, sourceEntry, counterType,
+                ctx.counterCount(), new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate());
+
+        if (gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.publishStateAfterInput(gameData);
+        } else {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     /**

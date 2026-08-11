@@ -17,13 +17,14 @@ public sealed interface ChoiceContext {
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                            List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
+                           boolean artifactSpellOrAbilityOnly,
                            boolean grantsUncounterable) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                                List<ManaColor> fixedColorOptions, boolean creatureSpellOnly) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly, false);
+                    spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -83,13 +84,18 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, false, amount, null, false, false, false, null, true);
         }
 
+        /** "Add N mana of any one color, spendable only to cast artifact spells or activate abilities of artifacts". */
+        public static ManaColorChoice artifactSpellOrAbilityOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(playerId, false, amount, null, false, false, false, null, false, true, false);
+        }
+
         /**
          * "Add one mana of any color, spendable only to cast a creature spell of the chosen type, and
          * that spell can't be countered" (Cavern of Souls). The mana routes to the pool's
          * subtype-creature bucket and is additionally marked as uncounterable-granting.
          */
         public static ManaColorChoice chosenSubtypeCreatureUncounterable(UUID playerId, int amount, CardSubtype subtype) {
-            return new ManaColorChoice(playerId, false, amount, subtype, false, false, false, null, false, true);
+            return new ManaColorChoice(playerId, false, amount, subtype, false, false, false, null, false, false, true);
         }
     }
 
@@ -514,6 +520,14 @@ public sealed interface ChoiceContext {
         public static final String ADD = "ADD";
         public static final String REMOVE = "REMOVE";
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
+    }
+
+    /** Dismantle's choice of counter type for the destroyed artifact's counters. */
+    record DismantleCounterTypeChoice(int counterCount, String sourceCardName) implements ChoiceContext {
+
+        public static final String PLUS_ONE_PLUS_ONE = "+1/+1 counters";
+        public static final String CHARGE = "charge counters";
+        public static final List<String> OPTIONS = List.of(PLUS_ONE_PLUS_ONE, CHARGE);
     }
 
     /**

@@ -115,6 +115,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeScroungeResume) {
+            gameData.graveyardTargetOperation.resolutionTimeScroungeResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.scroungeChosenCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
         CardColor grantColor = graveyardChoice.grantColor();

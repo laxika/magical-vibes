@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "26")
+@CardRegistration(set = "DST", collectorNumber = "7")
 public class LoxodonMystic extends Card {
 
     public LoxodonMystic() {

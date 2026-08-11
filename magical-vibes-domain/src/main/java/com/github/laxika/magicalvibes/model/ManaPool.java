@@ -39,6 +39,8 @@ public class ManaPool {
      */
     private final EnumMap<ManaColor, Integer> uncounterableGrantingMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
+    /** Per-color mana spendable only to cast artifact spells or activate abilities of artifacts (Vedalken Engineer). */
+    private final EnumMap<ManaColor, Integer> artifactOnlyMana = new EnumMap<>(ManaColor.class);
     /** Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). */
     private int artifactAbilityOnlyColorless;
     private int myrOnlyColorless;
@@ -119,6 +121,7 @@ public class ManaPool {
             instantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
+            artifactOnlyMana.put(color, 0);
         }
     }
 
@@ -134,6 +137,7 @@ public class ManaPool {
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
+        artifactOnlyMana.putAll(source.artifactOnlyMana);
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
@@ -209,6 +213,9 @@ public class ManaPool {
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
+        for (ManaColor color : ManaColor.values()) {
+            artifactOnlyMana.put(color, 0);
+        }
         artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
         legendarySpellOnlyColorless = 0;
@@ -268,6 +275,7 @@ public class ManaPool {
         // separate buckets, so they are already counted by getTotal() and must not be added again.
         int total = getTotal();
         total += artifactOnlyColorless;
+        total += getArtifactOnlyManaTotal();
         total += artifactAbilityOnlyColorless;
         total += myrOnlyColorless;
         total += legendarySpellOnlyColorless;
@@ -519,6 +527,27 @@ public class ManaPool {
 
     public void removeArtifactOnlyColorless(int amount) {
         artifactOnlyColorless = Math.max(0, artifactOnlyColorless - amount);
+    }
+
+    public int getArtifactOnlyMana(ManaColor color) {
+        return artifactOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getArtifactOnlyManaTotal() {
+        int total = 0;
+        for (int value : artifactOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void addArtifactOnlyMana(ManaColor color, int amount) {
+        artifactOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public void removeArtifactOnlyMana(ManaColor color, int amount) {
+        int current = artifactOnlyMana.getOrDefault(color, 0);
+        artifactOnlyMana.put(color, Math.max(0, current - amount));
     }
 
     public int getArtifactAbilityOnlyColorless() {
@@ -891,6 +920,9 @@ public class ManaPool {
                     Math.min(uncounterableGrantingMana.getOrDefault(color, 0), total));
         }
         artifactOnlyColorless = 0;
+        for (ManaColor color : ManaColor.values()) {
+            artifactOnlyMana.put(color, 0);
+        }
         artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
         legendarySpellOnlyColorless = 0;
@@ -935,6 +967,7 @@ public class ManaPool {
                         + legendarySpellOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless
                         + cumulativeUpkeepOnlyColorless;
             }
+            amount += artifactOnlyMana.getOrDefault(color, 0);
             if (color == ManaColor.RED) {
                 amount += restrictedRed;
             }
@@ -976,6 +1009,7 @@ public class ManaPool {
             if (color == ManaColor.GREEN) {
                 amount += kickedOnlyGreen;
             }
+            amount += artifactOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }

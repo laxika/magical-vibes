@@ -396,7 +396,8 @@ public class AutoPassService {
         for (Permanent perm : battlefield) {
             for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
                 // Skip sorcery-speed and upkeep-only abilities
-                if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                if ((ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                        && !gameQueryService.canActivateAbilityAtInstantSpeed(gameData, playerId, ability))
                         || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
                         || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP
                         || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_OPPONENTS_UPKEEP) {

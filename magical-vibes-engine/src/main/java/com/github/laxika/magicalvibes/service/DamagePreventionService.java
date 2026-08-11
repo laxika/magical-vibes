@@ -1008,11 +1008,18 @@ public class DamagePreventionService {
      */
     public int applyTurnDamageRedirectToCreature(GameData gameData, UUID protectedPlayerId,
                                                  UUID damagedPermanentId, int damage) {
+        return applyTurnDamageRedirectToCreature(gameData, protectedPlayerId, damagedPermanentId, damage, false);
+    }
+
+    public int applyTurnDamageRedirectToCreature(GameData gameData, UUID protectedPlayerId,
+                                                 UUID damagedPermanentId, int damage, boolean combatDamage) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
         if (damage <= 0 || protectedPlayerId == null || gameData.turnDamageRedirectToCreatureShields.isEmpty()) return damage;
 
         for (TurnDamageRedirectToCreatureShield shield : gameData.turnDamageRedirectToCreatureShields) {
             if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
+            if (shield.combatOnly() && !combatDamage) continue;
+            if (!shield.includeControlledPermanents() && damagedPermanentId != null) continue;
             UUID targetId = shield.redirectTargetCreatureId();
             // Redirecting damage to the destination creature itself is a no-op; deal it normally.
             if (targetId.equals(damagedPermanentId)) continue;
@@ -1023,6 +1030,23 @@ public class DamagePreventionService {
             return 0;
         }
         return damage;
+    }
+
+    /** Returns the active target for a player-only combat-damage redirect, if its creature remains. */
+    public UUID findCombatDamageRedirectTarget(GameData gameData, UUID protectedPlayerId) {
+        if (protectedPlayerId == null || gameData.turnDamageRedirectToCreatureShields.isEmpty()) return null;
+
+        for (TurnDamageRedirectToCreatureShield shield : gameData.turnDamageRedirectToCreatureShields) {
+            if (!shield.combatOnly() || !shield.protectedPlayerId().equals(protectedPlayerId)
+                    || shield.includeControlledPermanents()) {
+                continue;
+            }
+            Permanent target = gameQueryService.findPermanentById(gameData, shield.redirectTargetCreatureId());
+            if (target != null && gameQueryService.isCreature(gameData, target)) {
+                return target.getId();
+            }
+        }
+        return null;
     }
 
     /**

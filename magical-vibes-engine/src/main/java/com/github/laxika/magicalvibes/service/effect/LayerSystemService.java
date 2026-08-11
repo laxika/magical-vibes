@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTy
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
@@ -1554,6 +1555,11 @@ public class LayerSystemService {
                 for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId())
                             .removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                }
+            }
+            case RemoveCardTypeFromTargetPermanentEffect remove -> {
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).removeCardType(remove.cardType());
                 }
             }
             case GrantKeywordEffect grant -> {

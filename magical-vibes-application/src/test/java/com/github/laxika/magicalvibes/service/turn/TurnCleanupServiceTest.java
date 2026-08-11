@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import org.junit.jupiter.api.BeforeEach;
@@ -415,6 +417,18 @@ class TurnCleanupServiceTest {
             assertThat(gd.globalDamagePreventionShield).isZero();
             assertThat(gd.preventAllCombatDamage).isFalse();
             assertThat(gd.allPermanentsEnterTappedThisTurn).isFalse();
+        }
+
+        @Test
+        @DisplayName("Clears temporary global triggered abilities")
+        void clearsTemporaryGlobalTriggeredAbilities() {
+            gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
+                    player1Id, createCardWithName("Shriveling Rot"), EffectSlot.ON_ANY_CREATURE_DIES,
+                    new LoseLifeEffect(1)));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
         }
 
         @Test

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 
 /**
  * A player gains {@code amount} life. By default the spell/ability's controller gains it; a
@@ -19,7 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
                              boolean targetsPlayer,
-                             boolean onlyIfSacrificed) implements LifeGainEffect {
+                             boolean onlyIfSacrificed) implements LifeGainEffect, CombatDamageTriggerContextEffect {
 
     public GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient) {
         this(amount, recipient, false, false);
@@ -58,5 +60,11 @@ public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
     @Override
     public boolean onlyTriggersOnSacrifice() {
         return onlyIfSacrificed;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

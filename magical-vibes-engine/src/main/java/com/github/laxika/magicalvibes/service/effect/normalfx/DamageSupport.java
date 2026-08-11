@@ -122,8 +122,14 @@ public class DamageSupport {
         // Energy Storm and Hidden Retreat: prevent damage dealt by instant/sorcery spells themselves
         // (not fight/bite damage from permanents that a spell merely caused to deal damage).
         if (damageSource == null
-                && (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
-                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry))) {
+                && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
+                    "'s damage is prevented."));
+            return;
+        }
+        if (damageSource == null
+                && gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
+            gainLifeForTargetSpellDamage(gameData, entry, rawDamage);
             gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
                     "'s damage is prevented."));
             return;
@@ -452,12 +458,24 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
-        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
-                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+            return true;
+        }
+        if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)
+                && gameQueryService.getTargetSpellDamagePreventionShield(gameData, entry).lifeGainPlayerId() == null) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
         return false;
+    }
+
+    private void gainLifeForTargetSpellDamage(GameData gameData, StackEntry entry, int damage) {
+        if (damage <= 0) return;
+        var shield = gameQueryService.getTargetSpellDamagePreventionShield(gameData, entry);
+        if (shield != null && shield.lifeGainPlayerId() != null) {
+            lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), damage, "prevented spell damage");
+        }
     }
 
     public void resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
@@ -551,6 +569,11 @@ public class DamageSupport {
                 return;
             }
             if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
+                    gainLifeForTargetSpellDamage(gameData, entry, rawDamage);
+                    gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+                    return;
+                }
                 // "Prevent all damage that would be dealt to ~" (e.g. Gideon of the Trials 0) also stops
                 // loyalty loss. The creature-damage path applies this set in DamagePreventionService, but
                 // the loyalty branch below bypasses it, so guard it here.
@@ -666,8 +689,13 @@ public class DamageSupport {
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId);
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
-        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)
-                || gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
+            gainLifeForTargetSpellDamage(gameData, entry, rawDamage);
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;

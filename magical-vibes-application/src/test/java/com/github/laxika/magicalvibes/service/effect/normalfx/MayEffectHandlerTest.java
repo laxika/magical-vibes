@@ -10,8 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -66,5 +64,25 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(accepted);
+            }
+
+            @Test
+            @DisplayName("Chooses the controller of the targeted spell")
+            void choosesTargetSpellController() {
+                Card source = createCard("Vex");
+                Card targetSpell = createCard("Grizzly Bears");
+                StackEntry targetEntry = createEntry(targetSpell, player2Id, List.of());
+                gd.stack.add(targetEntry);
+
+                MayEffect mayEffect = new MayEffect(
+                        new DrawCardEffect(1),
+                        "Draw a card?",
+                        null,
+                        MayChoicePlayer.TARGET_SPELL_CONTROLLER);
+                StackEntry entry = createEntryWithTarget(source, player1Id, List.of(mayEffect), targetSpell.getId());
+
+                resolveEffect(gd, entry, mayEffect);
+
+                assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
             }
 }

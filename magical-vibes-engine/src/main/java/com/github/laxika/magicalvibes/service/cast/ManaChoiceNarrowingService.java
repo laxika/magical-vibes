@@ -162,6 +162,7 @@ public class ManaChoiceNarrowingService {
                 && !manaChoice.instantSorceryOnly()
                 && !manaChoice.spellOrAbilitySubtype()
                 && !manaChoice.creatureSpellOnly()
+                && !manaChoice.artifactSpellOrAbilityOnly()
                 && manaChoice.fixedColorOptions() == null;
     }
 

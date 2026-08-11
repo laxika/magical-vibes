@@ -525,8 +525,9 @@ public class GameData {
      *  once per source (CR ruling). Combat damage batches separately via {@code combatDamageDealt}. */
     public final Map<UUID, PendingSourceDamage> pendingSourceDamageForReflection = new LinkedHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
-    /** Instant and sorcery spell card IDs whose damage is prevented for the rest of this turn. */
-    public final Set<UUID> spellsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
+    /** Instant and sorcery spells whose damage is prevented for the rest of this turn. */
+    public final List<TargetSpellDamagePreventionShield> targetSpellDamagePreventionShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Permanents prevented from dealing damage until a player's next turn (Gideon of the Trials +1),
      *  keyed by prevented permanent id → the player whose next turn ends the prevention. Unlike
      *  {@link #permanentsPreventedFromDealingDamage} these entries survive the cleanup step and are
@@ -616,6 +617,9 @@ public class GameData {
      * cleanup.
      */
     public final List<LifeGainOpponentLifeLossWatcher> lifeGainOpponentLifeLossWatchers =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Global triggered abilities registered by resolving spells until the current turn ends. */
+    public final List<TemporaryGlobalTriggeredAbility> temporaryGlobalTriggeredAbilities =
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
@@ -2645,6 +2649,7 @@ public class GameData {
         copy.permanentDamageDoublingsThisTurn.putAll(this.permanentDamageDoublingsThisTurn);
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
+        copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
@@ -3053,7 +3058,7 @@ public class GameData {
 
         // --- Damage prevention / redirection still pending ---
         copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);
-        copy.spellsPreventedFromDealingDamage.addAll(this.spellsPreventedFromDealingDamage);
+        copy.targetSpellDamagePreventionShields.addAll(this.targetSpellDamagePreventionShields);
         copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
         copy.permanentsToTapWhenControlLost.addAll(this.permanentsToTapWhenControlLost);

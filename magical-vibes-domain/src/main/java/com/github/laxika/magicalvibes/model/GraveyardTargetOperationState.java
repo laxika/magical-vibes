@@ -65,6 +65,10 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimePhyrexianGrimoireResume;
     /** Card the opponent just picked for the above, consumed on the next re-entry. */
     public UUID phyrexianGrimoireChosenCardId;
+    /** Card chosen by the target opponent for a resolution-time opponent graveyard choice. */
+    public UUID scroungeChosenCardId;
+    /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
+    public boolean resolutionTimeScroungeResume;
     /**
      * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
      * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the

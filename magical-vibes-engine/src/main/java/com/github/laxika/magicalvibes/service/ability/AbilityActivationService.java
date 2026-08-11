@@ -400,6 +400,7 @@ public class AbilityActivationService {
                 && !manaChoice.instantSorceryOnly()
                 && !manaChoice.spellOrAbilitySubtype()
                 && !manaChoice.creatureSpellOnly()
+                && !manaChoice.artifactSpellOrAbilityOnly()
                 && manaChoice.fixedColorOptions() == null;
     }
 
@@ -3530,7 +3531,8 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Raid — activate only if you attacked this turn");
                 }
             }
-            if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                    && !gameQueryService.canActivateAbilityAtInstantSpeed(gameData, playerId, ability)) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated at sorcery speed");
                 }

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDa
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -2534,6 +2535,30 @@ public class TriggerCollectionService {
                 registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
             }
         });
+
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE,
+                damagedCreature.getId(), damageDealt);
+    }
+
+    private void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
+                                                int eventValue) {
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != slot) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.sourceCard(),
+                    watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect())));
+            entry.setTargetId(targetId);
+            entry.setEventValue(eventValue);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            log.info("Game {} - {} temporary global {} trigger fires",
+                    gameData.id, watcher.sourceCard().getName(), slot.name());
+        }
     }
 
     // ── Enchanted-permanent-tap triggers ───────────────────────────────
@@ -3983,6 +4008,9 @@ public class TriggerCollectionService {
             dispatchAnyCreatureDeathTriggersForWatcher(
                     gameData, controllerId, watcher, dyingPermanent, dyingCreatureControllerId, ctx);
         }
+
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_DIES,
+                dyingCreatureControllerId, Math.max(0, ctx.dyingCreatureToughness()));
 
         collectEmblemCreatureDeathTriggers(gameData, dyingCard);
     }

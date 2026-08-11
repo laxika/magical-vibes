@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
@@ -310,6 +312,8 @@ public class ConditionEvaluationService {
                     attachedPermanentControllerControlsNoOther(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
                     controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
+            case AnOpponentHasMoreCardsInHandThanController ignored ->
+                    anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
                     anOpponentHasMoreLifeThanController(gameData, ctx.controllerId());
             case ControllerLifeAtLeast c ->
@@ -361,6 +365,11 @@ public class ConditionEvaluationService {
                             && gameData.handSizeAtTurnStart.getOrDefault(ctx.controllerId(), -1) == 0;
             case TargetPlayerHandEmpty ignored ->
                     ctx.targetId() != null && countCardsInHand(gameData, ctx.targetId()) == 0;
+            case TargetPlayerHasMoreCardsInHandThanController ignored ->
+                    ctx.targetId() != null
+                            && ctx.controllerId() != null
+                            && countCardsInHand(gameData, ctx.targetId())
+                            > countCardsInHand(gameData, ctx.controllerId());
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
@@ -674,6 +683,18 @@ public class ConditionEvaluationService {
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
             if (gameData.getLife(candidateOpponentId) > yourLife) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int yourHandSize = countCardsInHand(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countCardsInHand(gameData, candidateOpponentId) > yourHandSize) {
                 return true;
             }
         }
