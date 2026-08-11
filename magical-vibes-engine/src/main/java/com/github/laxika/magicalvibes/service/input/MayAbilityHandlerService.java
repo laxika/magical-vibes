@@ -175,16 +175,6 @@ public class MayAbilityHandlerService {
 
         // CR 603.5: resolution-time "you may" choice for triggered abilities on the stack.
         if (gameData.resolvingMayEffectFromStack) {
-            for (CardEffect effect : ability.effects()) {
-                var mayHandler = mayEffectHandlerRegistry.getHandler(effect);
-                if (mayHandler != null) {
-                    gameData.resolvingMayEffectFromStack = false;
-                    gameData.pendingEffectResolutionEntry = null;
-                    gameData.pendingEffectResolutionIndex = 0;
-                    mayHandler.handle(gameData, player, accepted, ability);
-                    return;
-                }
-            }
             handleResolutionTimeMayChoice(gameData, player, accepted, ability);
             return;
         }

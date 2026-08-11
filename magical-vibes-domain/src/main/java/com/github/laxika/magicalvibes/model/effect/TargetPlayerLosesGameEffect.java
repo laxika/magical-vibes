@@ -13,6 +13,8 @@ public record TargetPlayerLosesGameEffect(UUID playerId) implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.player());
+        return playerId == null
+                ? TargetSpec.harmful(TargetPredicates.player())
+                : TargetSpec.NONE;
     }
 }

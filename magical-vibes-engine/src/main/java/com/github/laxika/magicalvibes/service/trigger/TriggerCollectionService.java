@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.ClashOutcomeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
@@ -5370,13 +5371,21 @@ public class TriggerCollectionService {
             boolean needsPermanentTarget = resolvedEffects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
             if (needsPlayerTarget || needsPermanentTarget) {
+                int targetGroupIndex = resolvedEffects.stream()
+                        .mapToInt(perm.getCard()::getEffectTargetIndex)
+                        .filter(index -> index >= 0 && index < perm.getCard().getSpellTargets().size())
+                        .findFirst()
+                        .orElse(-1);
+                TargetFilter targetFilter = targetGroupIndex >= 0
+                        ? perm.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
+                        : perm.getCard().getTargetFilter();
                 for (int i = 0; i < triggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(),
                             landControllerId,
                             resolvedEffects,
                             needsPlayerTarget && !needsPermanentTarget,
-                            perm.getCard().getTargetFilter(),
+                            targetFilter,
                             0,
                             perm.getId()
                     ));

@@ -2081,22 +2081,6 @@ public class LayerSystemService {
 
     private void applyL6Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
                                  Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
-        // An unattached scope-less protection static is the object's OWN printed protection
-        // ability — already seeded into its state (and removable by a lose-all there); the
-        // attachment handler would no-op anyway.
-        if (instance.effect() instanceof ProtectionFromColorsEffect protection
-                && protection.scope() == null && instance.source() != null
-                && !instance.source().permanent().isAttached()) {
-            return;
-        }
-        // CR 613.8a(1): the ability no longer exists — its source lost all abilities (an
-        // earlier-applied layer-6 removal; dependency ordering guarantees the removal applies
-        // first regardless of timestamps) or had its printed abilities removed by a layer-4
-        // land-type setter (CR 305.7). A lose-all'd lord grants nothing.
-        if (staticSourceAbilitiesGone(instance, board, true)) {
-            board.managedL56Effects().add(instance.original());
-            return;
-        }
         Map<UUID, CharacteristicState> states = board.states();
         if (instance.floating() != null) {
             for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
@@ -2129,6 +2113,23 @@ public class LayerSystemService {
                 }
                 board.l56Touched().add(target.permanent().getId());
             }
+            return;
+        }
+
+        // An unattached scope-less protection static is the object's OWN printed protection
+        // ability — already seeded into its state (and removable by a lose-all there); the
+        // attachment handler would no-op anyway.
+        if (instance.effect() instanceof ProtectionFromColorsEffect protection
+                && protection.scope() == null && instance.source() != null
+                && !instance.source().permanent().isAttached()) {
+            return;
+        }
+        // CR 613.8a(1): the ability no longer exists — its source lost all abilities (an
+        // earlier-applied layer-6 removal; dependency ordering guarantees the removal applies
+        // first regardless of timestamps) or had its printed abilities removed by a layer-4
+        // land-type setter (CR 305.7). A lose-all'd lord grants nothing.
+        if (staticSourceAbilitiesGone(instance, board, true)) {
+            board.managedL56Effects().add(instance.original());
             return;
         }
         applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {

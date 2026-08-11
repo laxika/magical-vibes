@@ -41,7 +41,7 @@ class PlagueSporesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId(), land.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("nonblack creature");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test

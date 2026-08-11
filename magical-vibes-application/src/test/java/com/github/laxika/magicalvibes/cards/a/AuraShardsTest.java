@@ -26,8 +26,9 @@ class AuraShardsTest extends BaseCardTest {
         castGrizzlyBears();
         resolveCreatureAndTrigger();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
@@ -41,8 +42,9 @@ class AuraShardsTest extends BaseCardTest {
         castGrizzlyBears();
         resolveCreatureAndTrigger();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player2, "Glorious Anthem");
     }
@@ -51,11 +53,13 @@ class AuraShardsTest extends BaseCardTest {
     @DisplayName("Declining the trigger does not destroy the target")
     void declineDoesNotDestroyTarget() {
         harness.addToBattlefield(player1, new AuraShards());
-        harness.addToBattlefield(player2, new LeoninScimitar());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
 
         castGrizzlyBears();
         resolveCreatureAndTrigger();
 
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Leonin Scimitar");
@@ -80,8 +84,6 @@ class AuraShardsTest extends BaseCardTest {
         castGrizzlyBears();
         resolveCreatureAndTrigger();
 
-        harness.handleMayAbilityChosen(player1, true);
-
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -93,7 +95,6 @@ class AuraShardsTest extends BaseCardTest {
     }
 
     private void resolveCreatureAndTrigger() {
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

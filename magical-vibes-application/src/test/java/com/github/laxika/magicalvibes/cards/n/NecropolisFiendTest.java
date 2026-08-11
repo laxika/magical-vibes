@@ -43,11 +43,14 @@ class NecropolisFiendTest extends BaseCardTest {
     void activatedAbilityScalesWithExiledCards() {
         Permanent fiend = addCreatureReady(player1, new NecropolisFiend());
         Permanent target = addCreatureReady(player2, new HillGiant());
-        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Shock()));
+        Shock first = new Shock();
+        Shock second = new Shock();
+        harness.setGraveyard(player1, List.of(first, second, new Shock()));
         forceMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
@@ -93,11 +96,13 @@ class NecropolisFiendTest extends BaseCardTest {
     void debuffWearsOffAtCleanup() {
         addCreatureReady(player1, new NecropolisFiend());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new Shock()));
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
         forceMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 

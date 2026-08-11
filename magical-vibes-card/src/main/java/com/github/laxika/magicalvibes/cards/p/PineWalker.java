@@ -12,6 +12,6 @@ public class PineWalker extends Card {
     public PineWalker() {
         addMorph("{4}{G}");
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
-                new UntapPermanentsEffect(TapUntapScope.SELF));
+                new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

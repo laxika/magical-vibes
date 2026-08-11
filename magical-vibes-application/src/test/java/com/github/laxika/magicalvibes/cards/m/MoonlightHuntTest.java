@@ -80,6 +80,6 @@ class MoonlightHuntTest extends BaseCardTest {
         UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, ownId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Target must be a creature you don't control");
     }
 }

@@ -107,6 +107,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Set;
 
@@ -1278,8 +1279,13 @@ public class SpellCastTriggerCollectorService {
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
                     resolved,
+                    0,
                     spellCard.getId(),
-                    Zone.STACK
+                    match.permanent().getId(),
+                    Map.of(),
+                    Zone.STACK,
+                    List.of(),
+                    List.of()
             );
             entry.setTriggeringCardId(spellCard.getId());
             match.gameData().stack.add(entry);

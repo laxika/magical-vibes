@@ -88,7 +88,7 @@ Implementation note: `ExileTargetPermanentUntilSourceLeavesEffect` accepts an op
 
 `BecomeEnchantmentEffect()` is a non-targeting source effect that restores the source permanent's original card form, including its enchantment type and abilities. Use it to reverse a permanent self-change created by `BecomeCreatureEffect`.
 
-`GrantProtectionFromTriggeringSpellColorsEffect()` is a non-targeting source effect for spell-cast triggers. It reads the triggering spell still on the stack at resolution and adds a permanent `ProtectionFromColorsEffect` to the source's runtime card.
+`GrantProtectionFromTriggeringSpellColorsEffect()` is a non-targeting source effect for spell-cast triggers. It reads the triggering spell still on the stack at resolution and adds a permanent floating `ProtectionFromColorsEffect` to the source.
 
 ## Marker interfaces
 

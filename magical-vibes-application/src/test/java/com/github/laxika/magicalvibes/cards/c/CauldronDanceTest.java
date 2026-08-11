@@ -42,7 +42,7 @@ class CauldronDanceTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(returned.getId())
                         && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -76,7 +76,7 @@ class CauldronDanceTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(handPermanent.getId())
                         && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

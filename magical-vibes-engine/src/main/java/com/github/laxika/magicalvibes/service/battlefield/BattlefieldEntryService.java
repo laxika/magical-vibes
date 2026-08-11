@@ -1659,14 +1659,6 @@ public class BattlefieldEntryService {
             // planeswalker") — must still choose targets for its mandatory ETB as the ability is
             // put on the stack (CR 603.3b). Cast spells with "up to" targets that chose 0 targets
             // are excluded; they passed through cast-time target selection.
-            List<Permanent> enteredBf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEnteredPermanent = enteredBf != null && !enteredBf.isEmpty()
-                    ? enteredBf.getLast() : null;
-            boolean enteredFromGraveyard = justEnteredPermanent != null
-                    && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
-            boolean enteredFromExile = justEnteredPermanent != null && justEnteredPermanent.isEnteredFromExile();
-            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard || enteredFromExile
-                    || card.hasType(CardType.LAND);
             boolean hasDynamicTargetCount = card.hasDynamicTargetCount();
             boolean etbNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -1699,7 +1691,7 @@ public class BattlefieldEntryService {
             if ((hasDynamicTargetCount && !hasTarget)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
-                    || (etbNeedsTarget && !hasTarget && choosesTargetAtTriggerTime)) {
+                    || (etbNeedsTarget && !hasTarget)) {
                 // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
                 // an intervening-if, or the permanent wasn't cast (token copy, or returned from
                 // a graveyard via undying / reanimation). The controller must choose a target

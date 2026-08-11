@@ -1930,25 +1930,6 @@ public class AbilityActivationService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        graveyardService.beginGraveyardLeaveBatch(gameData);
-        try {
-            for (Card selectedCard : selectedCards) {
-                graveyard.remove(selectedCard);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
-            }
-        } finally {
-            graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card selectedCard : selectedCards) {
-            exileService.exileCard(gameData, playerId, selectedCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(selectedCard)
-                    .text(" from graveyard for ")
-                    .card(source.getCard())
-                    .text(".")
-                    .build());
-        }
 
         activateAbilityInternal(
                 gameData,
@@ -2382,7 +2363,12 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileXGraveyardCostToPay != null) {
-            payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null);
+            if (exileXGraveyardCardIndices != null) {
+                payChosenGraveyardExileXCost(
+                        gameData, player, exileXGraveyardCostToPay, exileXGraveyardCardIndices);
+            } else {
+                payGraveyardExileXCost(gameData, player, exileXGraveyardCostToPay, effectiveXValue, null);
+            }
         }
 
         abilityEffects.stream()
@@ -3640,7 +3626,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated at sorcery speed");
                 }
                 if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
-                    throw new IllegalStateException("This ability can only be activated during a main phase");
+                    throw new IllegalStateException("This ability can only be activated at sorcery speed during your main phase");
                 }
                 if (!gameData.stack.isEmpty()) {
                     throw new IllegalStateException("This ability can only be activated when the stack is empty");
@@ -3735,7 +3721,7 @@ public class AbilityActivationService {
                 throw new IllegalStateException("This ability can only be activated at sorcery speed");
             }
             if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
-                throw new IllegalStateException("This ability can only be activated during a main phase");
+                throw new IllegalStateException("This ability can only be activated at sorcery speed during your main phase");
             }
             if (!gameData.stack.isEmpty()) {
                 throw new IllegalStateException("This ability can only be activated when the stack is empty");
@@ -4299,6 +4285,43 @@ public class AbilityActivationService {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, count));
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
+        for (Card exiled : toExile) {
+            exileService.exileCard(gameData, playerId, exiled);
+        }
+        String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
+        String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName
+                + "card" + (toExile.size() != 1 ? "s" : "") + " from graveyard as an activation cost.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
+                gameData.id, player.getUsername(), toExile.size(), typeName);
+    }
+
+    private void payChosenGraveyardExileXCost(GameData gameData, Player player,
+                                               ExileXCardsFromGraveyardCost cost,
+                                               List<Integer> selectedIndices) {
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            throw new IllegalStateException("Selected graveyard cards are no longer available");
+        }
+
+        List<Card> toExile = new ArrayList<>();
+        for (int index : selectedIndices) {
+            if (index < 0 || index >= graveyard.size()) {
+                throw new IllegalStateException("Selected graveyard cards are no longer available");
+            }
+            Card selected = graveyard.get(index);
+            if (cost.requiredType() != null && !selected.hasType(cost.requiredType())) {
+                throw new IllegalStateException("Selected card is no longer a valid graveyard exile cost");
+            }
+            toExile.add(selected);
+        }
+        if (new HashSet<>(toExile).size() != toExile.size()) {
+            throw new IllegalStateException("Duplicate graveyard card selection");
+        }
+
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
