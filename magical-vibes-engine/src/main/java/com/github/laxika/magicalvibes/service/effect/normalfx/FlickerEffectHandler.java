@@ -76,16 +76,42 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveTargetAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty()) {
             return;
         }
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        exileSupport.exileAndScheduleReturn(gameData, entry, target, ownerId, e.returnTapped(), e.returnStep(),
-                e.plusOnePlusOneCountersOnReturn());
+            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+            List<Card> cards = target.cardsLeavingBattlefield();
+            permanentRemovalService.removePermanentToExile(gameData, target);
+            cardsByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>()).addAll(cards);
+
+            gameLogService.append(gameData, GameLog.cardThen(cards.getFirst(),
+                    " is exiled. It will return at the beginning of the next "
+                            + e.returnStep().getDisplayName().toLowerCase() + "."));
+            log.info("Game {} - {} exiles {}; will return at next {}",
+                    gameData.id, entry.getCard().getName(), cards.getFirst().getName(), e.returnStep());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        for (Map.Entry<UUID, List<Card>> group : cardsByOwner.entrySet()) {
+            List<Card> cards = group.getValue();
+            gameData.queueDelayedAction(new PendingExileReturn(
+                    cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
+                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size())));
+        }
     }
 
     private void resolveSelfAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {

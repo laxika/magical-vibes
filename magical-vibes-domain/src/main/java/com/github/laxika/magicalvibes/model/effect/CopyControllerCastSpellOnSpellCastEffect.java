@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+
+import java.util.Set;
 
 /**
  * Trigger descriptor for {@code ON_CONTROLLER_CASTS_SPELL}: whenever the controller casts a spell
@@ -22,26 +26,39 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,
         String manaCost,
-        Zone requiredCastZone
+        Zone requiredCastZone,
+        StackEntryPredicate castSpellTargetCondition,
+        Set<Keyword> grantedKeywords
 ) implements CardEffect {
+
+    public CopyControllerCastSpellOnSpellCastEffect {
+        grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
+    }
 
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, TapMultiplePermanentsCost tapCost,
             String manaCost) {
-        this(spellFilter, tapCost, manaCost, null);
+        this(spellFilter, tapCost, manaCost, null, null, Set.of());
     }
 
     /** "you may tap N creatures. If you do, copy that spell" (Aziza, Mage Tower Captain). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, TapMultiplePermanentsCost tapCost) {
-        this(spellFilter, tapCost, null, null);
+        this(spellFilter, tapCost, null, null, null, Set.of());
     }
 
     /** "you may pay {cost}. If you do, copy that spell" (Cloven Casting). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, String manaCost) {
-        this(spellFilter, null, manaCost, null);
+        this(spellFilter, null, manaCost, null, null, Set.of());
     }
 
     /** "whenever you cast a [filter] spell from your library, copy it" (Melek, Izzet Paragon). */
     public CopyControllerCastSpellOnSpellCastEffect(CardPredicate spellFilter, Zone requiredCastZone) {
-        this(spellFilter, null, null, requiredCastZone);
+        this(spellFilter, null, null, requiredCastZone, null, Set.of());
+    }
+
+    public static CopyControllerCastSpellOnSpellCastEffect withCastTargetCondition(
+            CardPredicate spellFilter, StackEntryPredicate castSpellTargetCondition,
+            Set<Keyword> grantedKeywords) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                spellFilter, null, null, null, castSpellTargetCondition, grantedKeywords);
     }
 }

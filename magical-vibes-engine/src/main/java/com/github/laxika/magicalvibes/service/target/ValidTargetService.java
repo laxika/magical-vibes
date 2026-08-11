@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -230,7 +231,9 @@ public class ValidTargetService {
         }
 
         int responseMinTargets = card.getMinTargets();
-        int responseMaxTargets = card.getMaxTargets();
+        int effectiveX = xValue != null ? xValue : 0;
+        int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
+                gameData, card, controllerId, effectiveX);
         if (card.hasXScaledTargets()) {
             responseMinTargets = card.getEffectiveMinTargets(effectiveXValue);
             responseMaxTargets = card.getEffectiveMaxTargets(effectiveXValue);
@@ -463,7 +466,8 @@ public class ValidTargetService {
 
         List<UUID> validGraveyardCardIds = new ArrayList<>();
         if (targetsGraveyard) {
-            validGraveyardCardIds.addAll(computeValidGraveyardTargetsForAbility(gameData, ability, controllerId, excludeIds));
+            validGraveyardCardIds.addAll(computeValidGraveyardTargetsForAbility(
+                    gameData, ability, controllerId, excludeIds, sourceCard.getId()));
         }
 
         int minTargets = 1;
@@ -768,6 +772,9 @@ public class ValidTargetService {
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
                 e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
+            if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
+                return false;
+            }
             if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
             }
@@ -959,7 +966,7 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (rge.filter() != null && !predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId())) {
+                        if (!matchesReturnCardFilter(gameData, rge, c, card.getId())) {
                             continue;
                         }
                         if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
@@ -982,7 +989,7 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (!matchesGraveyardEffectTypeFilter(effect, c, card.getId())) continue;
+                        if (!matchesGraveyardEffectTypeFilter(gameData, effect, c, card.getId())) continue;
                         validIds.add(c.getId());
                     }
                 }
@@ -995,7 +1002,8 @@ public class ValidTargetService {
     }
 
     private List<UUID> computeValidGraveyardTargetsForAbility(GameData gameData, ActivatedAbility ability,
-                                                                UUID controllerId, Set<UUID> excludeIds) {
+                                                                UUID controllerId, Set<UUID> excludeIds,
+                                                                UUID sourceCardId) {
         if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             return List.of();
         }
@@ -1020,7 +1028,8 @@ public class ValidTargetService {
                 List<UUID> searchPlayerIds = scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (!excludeIds.contains(c.getId()) && matchesGraveyardEffectTypeFilter(effect, c, null)) {
+                        if (!excludeIds.contains(c.getId())
+                                && matchesGraveyardEffectTypeFilter(gameData, effect, c, sourceCardId)) {
                             validIds.add(c.getId());
                         }
                     }
@@ -1035,7 +1044,7 @@ public class ValidTargetService {
      * Checks whether a graveyard card matches the type restriction imposed by the given effect.
      * Mirrors the validation in {@link com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators}.
      */
-    private boolean matchesGraveyardEffectTypeFilter(CardEffect effect, Card c, UUID sourceCardId) {
+    private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c, UUID sourceCardId) {
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
@@ -1057,12 +1066,42 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
-        } else if (effect instanceof ReturnCardFromGraveyardEffect e && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+        } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
+            return matchesReturnCardFilter(gameData, e, c, sourceCardId);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
         return true;
+    }
+
+    private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,
+                                             Card card, UUID sourceCardId) {
+        if (effect.sourceChosenSubtype()) {
+            CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, sourceCardId);
+            UUID cardOwnerId = card.getOwnerId() != null
+                    ? card.getOwnerId()
+                    : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+            return chosenSubtype != null
+                    && (card.getKeywords().contains(Keyword.CHANGELING)
+                    || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));
+        }
+        return effect.filter() == null
+                || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId);
+    }
+
+    private CardSubtype findSourceChosenSubtype(GameData gameData, UUID sourceCardId) {
+        if (sourceCardId == null) {
+            return null;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(sourceCardId)
+                        || permanent.getOriginalCard().getId().equals(sourceCardId)) {
+                    return permanent.getChosenSubtype();
+                }
+            }
+        }
+        return null;
     }
 
     /**

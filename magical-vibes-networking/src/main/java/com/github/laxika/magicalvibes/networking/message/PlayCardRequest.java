@@ -16,6 +16,12 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               List<String> repeatedAdditionalCosts,
                               Boolean buyback,
                               Integer sharedColorDiscardHandCardIndex,
+                              UUID beholdPermanentId,
+                              Integer beholdHandCardIndex,
+                              List<UUID> beholdPermanentIds,
+                              List<Integer> beholdHandCardIndices,
+                              List<UUID> exileCounterCostPermanentIds,
+                              String beholdCreatureType,
                               Boolean morph) {
 
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
@@ -34,7 +40,7 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                 flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop,
                 chosenGraveyardType, discardHandCardIndex, discardHandCardIndices,
                 imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                repeatedAdditionalCosts, buyback, null, null);
+                repeatedAdditionalCosts, buyback, null, null, null, null, null, null, null, null);
     }
 
     /** Convenience for the overwhelming majority of casts, which pay no repeatable additional cost. */
@@ -51,6 +57,7 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                 sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds,
                 flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop,
                 chosenGraveyardType, discardHandCardIndex, discardHandCardIndices,
-                imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, List.of(), null, null, null);
+                imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, List.of(), null, null,
+                null, null, null, null, null, null, null);
     }
 }

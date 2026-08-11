@@ -40,6 +40,8 @@ import lombok.Builder;
  * @param filter               predicate restricting which graveyard cards qualify (e.g.
  *                             {@code CardTypePredicate(CREATURE)}, {@code CardSubtypePredicate(EQUIPMENT)});
  *                             {@code null} means any card
+ * @param sourceChosenSubtype  {@code true} to restrict matching cards to the creature type chosen
+ *                             by the source permanent as it entered the battlefield
  * @param source               which graveyards to search — {@code CONTROLLERS_GRAVEYARD} (default),
  *                             {@code ALL_GRAVEYARDS}, or {@code OPPONENT_GRAVEYARD}
  * @param targetGraveyard      {@code true} if the card in the graveyard is targeted at cast/activation
@@ -187,6 +189,7 @@ import lombok.Builder;
 public record ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
+        boolean sourceChosenSubtype,
         GraveyardSearchScope source,
         boolean targetGraveyard,
         boolean upTo,

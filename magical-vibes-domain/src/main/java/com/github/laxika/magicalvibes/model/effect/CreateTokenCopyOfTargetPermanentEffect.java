@@ -25,16 +25,17 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         Map<CounterType, Integer> initialCounters,
         boolean grantHaste,
         boolean exileAtEndStep,
-        boolean sacrificeAtEndStep
+        boolean sacrificeAtEndStep,
+        boolean tappedAndAttacking
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect() {
-        this(List.of(), Set.of(), null, null, Map.of(), false, false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false);
     }
 
     /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false);
     }
 
     /**
@@ -43,7 +44,14 @@ public record CreateTokenCopyOfTargetPermanentEffect(
      * dies-triggers and other players' "whenever a creature dies" abilities fire.
      */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep, false);
+    }
+
+    /** "Create a tapped and attacking token that's a copy of the target permanent." */
+    public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
+                                                  boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, tappedAndAttacking);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -52,7 +60,8 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Integer powerOverride,
             Integer toughnessOverride,
             Map<CounterType, Integer> initialCounters) {
-        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, false, false, false);
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                false, false, false, false);
     }
 
     @Override

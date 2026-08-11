@@ -369,12 +369,14 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if the card has any spell effect gated on which mana color was spent to cast
-     * it ({@link com.github.laxika.magicalvibes.model.condition.ColorSpentToCast}). Signals that
-     * spell payment must snapshot the colors of mana spent (e.g. Repel Intruders).
+     * Returns true if a spell or its battlefield-entry effect is gated on which mana color was
+     * spent to cast it ({@link com.github.laxika.magicalvibes.model.condition.ColorSpentToCast}).
+     * Signals that spell payment must snapshot the colors and amounts of mana spent (e.g. Repel
+     * Intruders and Catharsis).
      */
     public static boolean hasColorSpentCondition(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+                .flatMap(slot -> card.getEffects(slot).stream())
                 .anyMatch(e -> e instanceof ConditionalEffect c
                         && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.ColorSpentToCast);
     }

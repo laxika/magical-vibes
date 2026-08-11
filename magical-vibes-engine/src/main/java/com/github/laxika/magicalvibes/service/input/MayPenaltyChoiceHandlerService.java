@@ -153,7 +153,9 @@ public class MayPenaltyChoiceHandlerService {
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
         UUID targetCardId = ability.targetCardId();
-        String costText = "{" + amount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
+        String costText = amount == 0 && lifeCost > 0
+                ? lifeCost + " life"
+                : "{" + amount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
@@ -216,7 +218,9 @@ public class MayPenaltyChoiceHandlerService {
         stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
 
         // Copies cease to exist per rule 707.10a
-        if (!targetEntry.isCopy()) {
+        boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+        if (!targetEntry.isCopy() && !isAbility) {
             if (exileIfCountered) {
                 exileService.exileCard(gameData, counteredControllerId, targetEntry.getCard());
             } else {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.UUID;
 
@@ -21,7 +22,15 @@ import java.util.UUID;
  * @param kicked          whether the spell was kicked (gates kicked-conditional effects)
  * @param evoked          whether the spell was cast for its evoke cost (gates the evoke sacrifice)
  * @param prowl           whether the spell was cast for its prowl cost (gates prowl-conditional effects)
+ * @param sourcePermanent the permanent that just entered, when available
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                                boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
-                               boolean prowl) {}
+                               boolean prowl, Permanent sourcePermanent) {
+
+    public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
+                            boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
+                            boolean prowl) {
+        this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl, null);
+    }
+}

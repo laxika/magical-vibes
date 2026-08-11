@@ -47,7 +47,7 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
         if (battlefield != null) {
             for (Permanent permanent : new ArrayList<>(battlefield)) {
                 if (!inScope(gameData, permanent, e.scope())) continue;
-                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard())) {
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard(), entry.getControllerId())) {
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
                     continue;
                 }

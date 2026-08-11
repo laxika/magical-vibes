@@ -59,7 +59,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
             affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
             if (affectedPlayerId == null) return;
 
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPw.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage);
@@ -73,7 +73,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
                 // Skip the planeswalker target (already dealt damage above)
                 if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
-                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }

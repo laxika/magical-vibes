@@ -29,6 +29,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
+        PendingInteraction.ExiledCardMayPlayChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
         PendingInteraction.BrilliantUltimatumPileChoice,
@@ -58,11 +59,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealedFreeCastGroup,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
+        PendingInteraction.TargetLibraryDestinationChoice,
         PendingInteraction.CounteredSpellLibraryDestinationChoice,
         PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
+        PendingInteraction.VividCardChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
@@ -295,6 +298,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public ExiledSpellCopyChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** End-Blaze Epiphany: choose one card among the cards exiled by its delayed trigger. */
+    record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public ExiledCardMayPlayChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
 
@@ -1043,15 +1065,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * set. Answers are {@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic
      * {@code CardIndexChosen} picks, dispatched by the deciding player. {@code destination} is
      * {@code DISCARD} for the discard cards, or {@code EXILE} when the controller's pick is exiled
-     * from the target's hand instead (Vizkopa Confessor).
+     * from the target's hand instead (Vizkopa Confessor). {@code sourcePermanentId} tracks an exile
+     * with the permanent that caused the interaction when the effect needs source-linked behavior.
      */
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
                                     int discardCount,
-                                    com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination)
+                                    com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination,
+                                    UUID sourcePermanentId)
             implements PendingInteraction {
         // The decidingPlayerId component accessor doubles as the interface override.
+
+        public RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
+                                        boolean revealStage, java.util.List<Integer> validIndices,
+                                        int remainingCount, java.util.List<UUID> revealedCardIds,
+                                        int discardCount,
+                                        com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination) {
+            this(decidingPlayerId, targetPlayerId, controllerId, revealStage, validIndices,
+                    remainingCount, revealedCardIds, discardCount, destination, null);
+        }
 
         public RevealCardsDiscardChoice {
             validIndices = java.util.List.copyOf(validIndices);
@@ -1617,6 +1650,36 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * Choose whether a targeted spell or creature stays on top of its owner's library or moves to
+     * the bottom. The deciding player is the target card's owner.
+     */
+    record TargetLibraryDestinationChoice(UUID playerId, UUID cardId, String cardName,
+                                          String firstOption)
+            implements PendingInteraction {
+
+        /** The exact option strings the handler's prompt offers and its answer parser matches. */
+        public static final java.util.List<String> OPTIONS = java.util.List.of("Top", "Bottom");
+
+        public TargetLibraryDestinationChoice(UUID playerId, UUID cardId, String cardName) {
+            this(playerId, cardId, cardName, OPTIONS.getFirst());
+        }
+
+        public java.util.List<String> options() {
+            return java.util.List.of(firstOption, OPTIONS.getLast());
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(options());
+        }
+    }
+
+    /**
      * Sylvan Library's "choose two cards drawn this turn; for each pay 4 life or put it on top of
      * your library" decision, collapsed into a single multi-select. {@code drawnThisTurnCardIds}
      * are the cards still in the player's hand that were drawn this turn (card views re-derived
@@ -1819,6 +1882,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, minCount, maxCount);
+        }
+    }
+
+    /** Selects at most one revealed card for one color during Sanar's Vivid ability. */
+    record VividCardChoice(UUID playerId, java.util.List<Card> revealedCards,
+                           java.util.List<UUID> validCardIds, java.util.List<CardColor> colors,
+                           int nextColorIndex, java.util.List<UUID> selectedCardIds,
+                           String prompt) implements PendingInteraction {
+
+        public VividCardChoice {
+            revealedCards = java.util.List.copyOf(revealedCards);
+            validCardIds = java.util.List.copyOf(validCardIds);
+            colors = java.util.List.copyOf(colors);
+            selectedCardIds = java.util.List.copyOf(selectedCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 

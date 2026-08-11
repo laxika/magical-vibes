@@ -117,6 +117,8 @@ public final class AnyColorManaChoiceSupport {
                     : ChoiceContext.ManaColorChoice.chosenSubtypeCreatureUncounterable(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
+            case MANA_VALUE_AT_LEAST_FOUR ->
+                    ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
         };
     }
 
@@ -140,6 +142,7 @@ public final class AnyColorManaChoiceSupport {
             case INSTANT_SORCERY_ONLY -> "Choose a color of mana to add (instant and sorcery spells only).";
             case ARTIFACT_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (artifact spells or artifact abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
+            case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             default -> "Choose a color of mana to add.";
         };
     }

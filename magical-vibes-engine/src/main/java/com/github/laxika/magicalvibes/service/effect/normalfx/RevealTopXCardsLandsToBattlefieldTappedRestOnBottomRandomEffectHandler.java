@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -73,7 +75,7 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
             Permanent permanent = new Permanent(card);
             permanent.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
-            if (untap) {
+            if (untap && !gameQueryService.cantBecomeUntapped(gameData, permanent)) {
                 permanent.untap();
             }
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));

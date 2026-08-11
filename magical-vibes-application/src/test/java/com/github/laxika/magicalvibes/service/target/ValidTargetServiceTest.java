@@ -80,6 +80,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ValidTargetServiceTest {
@@ -87,6 +88,7 @@ class ValidTargetServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetValidationService targetValidationService;
+    @Mock private AmountEvaluationService amountEvaluationService;
 
     private ValidTargetService validTargetService;
 
@@ -112,7 +114,8 @@ class ValidTargetServiceTest {
         // this test already stubs. The per-effect @ValidatesTarget validators are mocked to a no-op so the
         // structural + "any target" enumeration behaviour under test is isolated from validator coverage.
         TargetLegalityService targetLegalityService = new TargetLegalityService(
-                gameQueryService, predicateEvaluationService, targetValidationService);
+                gameQueryService, predicateEvaluationService, targetValidationService,
+                amountEvaluationService);
         // The "any target" narrowing evaluates TargetPredicates.anyTarget() for real, so it gets a
         // real PredicateEvaluationService over the same mocked GameQueryService the rest of the
         // structural core uses — the mocked one would reject every candidate.

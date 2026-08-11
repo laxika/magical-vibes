@@ -269,6 +269,9 @@ class GameDataDeepCopyTest {
         gd.spellCastManaSpent.put(cardId, 5);
         gd.spellCastConvergeValue.put(cardId, 3);
         gd.spellCastColorsSpent.put(cardId, EnumSet.of(ManaColor.RED, ManaColor.BLUE));
+        EnumMap<ManaColor, Integer> spentByColor = new EnumMap<>(ManaColor.class);
+        spentByColor.put(ManaColor.RED, 2);
+        gd.spellCastManaSpentByColor.put(cardId, spentByColor);
         EnumMap<ManaColor, Integer> spentOnX = new EnumMap<>(ManaColor.class);
         spentOnX.put(ManaColor.GREEN, 2);
         gd.spellCastManaSpentOnX.put(cardId, spentOnX);
@@ -278,12 +281,15 @@ class GameDataDeepCopyTest {
         assertThat(copy.spellCastManaSpent).containsEntry(cardId, 5);
         assertThat(copy.spellCastConvergeValue).containsEntry(cardId, 3);
         assertThat(copy.spellCastColorsSpent.get(cardId)).containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+        assertThat(copy.spellCastManaSpentByColor.get(cardId)).containsEntry(ManaColor.RED, 2);
         assertThat(copy.spellCastManaSpentOnX.get(cardId)).containsEntry(ManaColor.GREEN, 2);
 
         // Independent — the nested EnumSet/EnumMap are copied, not aliased.
         copy.spellCastColorsSpent.get(cardId).add(ManaColor.WHITE);
+        copy.spellCastManaSpentByColor.get(cardId).put(ManaColor.RED, 7);
         copy.spellCastManaSpentOnX.get(cardId).put(ManaColor.GREEN, 7);
         assertThat(gd.spellCastColorsSpent.get(cardId)).containsExactlyInAnyOrder(ManaColor.RED, ManaColor.BLUE);
+        assertThat(gd.spellCastManaSpentByColor.get(cardId)).containsEntry(ManaColor.RED, 2);
         assertThat(gd.spellCastManaSpentOnX.get(cardId)).containsEntry(ManaColor.GREEN, 2);
     }
 

@@ -184,6 +184,10 @@ export interface Card {
   alternateCostExileHandLabel: string | null;
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
+  additionalBeholdSubtype: string | null;
+  additionalBeholdCount: number;
+  additionalBeholdFlashbackOnly: boolean;
+  additionalBeholdChosenCreatureType: boolean;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
@@ -196,6 +200,8 @@ export interface Card {
   modalChoicesMax: number;
   modalOptional: boolean;
   modalOptions: ModalOptionView[] | null;
+  /** Additional counters to remove when casting this card from exile. */
+  exileCastCounterCost: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;

@@ -65,6 +65,13 @@ public record SpellCastTriggerEffect(
         this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false, null);
     }
 
+    public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+                                  TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+                                  boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, null);
+    }
+
     /** Trigger gated on the cast spell's targets (e.g. Repartee — "spell that targets a creature"). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate castSpellTargetCondition) {

@@ -54,6 +54,10 @@ public class PermanentChoiceTriggerHandlerService {
     private final CreatureControlService creatureControlService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
+        boolean declined = stt.optionalTarget()
+                && stt.targetFilter() != null
+                && permanentId.equals(stt.controllerId())
+                && gameData.playerIdToName.containsKey(permanentId);
         StackEntry entry;
         if (stt.sourcePermanentId() != null) {
             entry = stt.spellManaSpentX() > 0
@@ -71,9 +75,9 @@ public class PermanentChoiceTriggerHandlerService {
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
                             new ArrayList<>(stt.effects()),
-                            permanentId,
+                            declined ? (UUID) null : permanentId,
                             stt.sourcePermanentId());
-            if (stt.spellManaSpentX() > 0) {
+            if (stt.spellManaSpentX() > 0 && !declined) {
                 entry.setTargetId(permanentId);
             }
         } else {
@@ -91,14 +95,20 @@ public class PermanentChoiceTriggerHandlerService {
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
                             new ArrayList<>(stt.effects()));
-            entry.setTargetId(permanentId);
+            if (!declined) {
+                entry.setTargetId(permanentId);
+            }
         }
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, permanentId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(stt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
-        log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(stt.sourceCard()).text("'s triggered ability targets nothing.").build());
+            log.info("Game {} - {} spell-target trigger targets nothing", gameData.id, stt.sourceCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameLogService.append(gameData, GameLog.builder().card(stt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
+            log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
@@ -153,6 +163,9 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleDeathTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DeathTriggerTarget dtt) {
+        boolean declined = hasOptionalSingleTarget(dtt.dyingCard(), dtt.effects())
+                && gameData.playerIdToName.containsKey(permanentId)
+                && permanentId.equals(dtt.controllerId());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 dtt.dyingCard(),
@@ -160,7 +173,9 @@ public class PermanentChoiceTriggerHandlerService {
                 dtt.dyingCard().getName() + "'s ability",
                 new ArrayList<>(dtt.effects())
         );
-        entry.setTargetId(permanentId);
+        if (!declined) {
+            entry.setTargetId(permanentId);
+        }
         // Carry the death event's numeric payload (e.g. the dying creature's last-known power) so an
         // EventValue-based amount can be evaluated at resolution.
         if (dtt.eventValue() != null) {
@@ -171,10 +186,16 @@ public class PermanentChoiceTriggerHandlerService {
         }
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, permanentId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(dtt.dyingCard()).text("'s death trigger targets " + targetName + ".").build());
-        log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(dtt.dyingCard())
+                    .text("'s death trigger targets nothing.").build());
+            log.info("Game {} - {} death trigger declined targeting", gameData.id, dtt.dyingCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameLogService.append(gameData, GameLog.builder().card(dtt.dyingCard())
+                    .text("'s death trigger targets " + targetName + ".").build());
+            log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
@@ -187,6 +208,16 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean hasOptionalSingleTarget(Card card, List<CardEffect> effects) {
+        if (card.getSpellTargets().size() != 1) {
+            return false;
+        }
+        var target = card.getSpellTargets().getFirst();
+        return target.getMinTargets() == 0
+                && target.getMaxTargets() == 1
+                && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) == target.getIndex());
     }
 
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
@@ -374,6 +405,27 @@ public class PermanentChoiceTriggerHandlerService {
                     tct.effects(), tct.sourcePermanentId(), tct.opponentId(), updatedCreatureIds);
             continueAfterTransformTarget(gameData);
         }
+    }
+
+    public void handleTransformTriggerTarget(GameData gameData, UUID chosenId,
+                                              PermanentChoiceContext.TransformTriggerTarget ttt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ttt.sourceCard(),
+                ttt.controllerId(),
+                ttt.sourceCard().getName() + "'s transform ability",
+                new ArrayList<>(ttt.effects()),
+                chosenId,
+                ttt.sourcePermanentId());
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.builder().card(ttt.sourceCard())
+                .text("'s transform ability targets " + getTargetDisplayName(gameData, chosenId) + ".")
+                .build());
+        log.info("Game {} - {} transform trigger targets {}", gameData.id,
+                ttt.sourceCard().getName(), getTargetDisplayName(gameData, chosenId));
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void pushTransformOpponentCreatureTrigger(GameData gameData, Card sourceCard, UUID controllerId,

@@ -43,6 +43,16 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             return;
         }
 
+        if (!e.grantedKeywords().isEmpty()) {
+            spellSnapshot.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
+            for (StackEntry stackEntry : gameData.stack) {
+                if (spellCard.getId().equals(stackEntry.getCard().getId())) {
+                    stackEntry.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
+                    break;
+                }
+            }
+        }
+
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 

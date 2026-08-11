@@ -96,6 +96,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Madness", Keyword.MADNESS);
         KEYWORD_MAP.put("Escalate", Keyword.ESCALATE);
         KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
+        KEYWORD_MAP.put("Blight", Keyword.BLIGHT);
         KEYWORD_MAP.put("Splice", Keyword.SPLICE);
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
         KEYWORD_MAP.put("Prepared", Keyword.PREPARED);

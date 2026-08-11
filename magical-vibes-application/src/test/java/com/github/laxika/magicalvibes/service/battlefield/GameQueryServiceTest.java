@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
@@ -1558,6 +1559,34 @@ class GameQueryServiceTest {
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true for any spell controlled by a player with controller-wide protection")
+        void returnsTrueForControllerSpellProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Hexing Squelcher", 2, 2, CardColor.RED, new ControllerSpellsCantBeCounteredEffect()));
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant, player1Id,
+                    "Shock", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, instant)).isTrue();
+        }
+
+        @Test
+        @DisplayName("controller-wide protection does not protect an opponent's spell")
+        void controllerSpellProtectionDoesNotAffectOpponent() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Hexing Squelcher", 2, 2, CardColor.RED, new ControllerSpellsCantBeCounteredEffect()));
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant, player2Id,
+                    "Shock", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
         }
 
         @Test

@@ -882,7 +882,8 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedReturnOnDeath(gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
-                triggerCollectionService.triggerDelayedEffectOnDeath(gameData, target.getCard().getId(), controllerId);
+                triggerCollectionService.triggerDelayedEffectOnDeath(
+                        gameData, target.getCard().getId(), controllerId, target.getEffectivePower());
                 collectUndyingTrigger(gameData, target, ownerId, hadUndying);
                 collectPersistTrigger(gameData, target, ownerId, hadPersist);
             }

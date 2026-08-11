@@ -75,7 +75,7 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
             if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
             if (!gameQueryService.isCreature(gameData, creature)) continue;
             if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                    && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                 continue;
             }

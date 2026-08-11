@@ -26,6 +26,7 @@ import java.util.UUID;
  * @param targetId         current target id, when resolving a targeted effect
  * @param triggeringCard   the entering/triggering card for enter-trigger conditions
  * @param staticEvaluation whether this evaluation is for a static continuous effect
+ * @param putCounterCostPaid whether the spell's put-counter additional cost was paid
  */
 public record ConditionContext(
         UUID controllerId,
@@ -40,14 +41,25 @@ public record ConditionContext(
         int xValue,
         UUID targetId,
         Card triggeringCard,
-        boolean staticEvaluation
+        boolean staticEvaluation,
+        boolean putCounterCostPaid
 ) {
+
+    /** Compatibility constructor for evaluation sites with no cast-cost payment state. */
+    public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
+                            Card sourceCard, boolean kicked, boolean buyback, boolean prowl,
+                            boolean overloaded, Zone sourceZone, int xValue, UUID targetId,
+                            Card triggeringCard, boolean staticEvaluation) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
+                overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, false);
+    }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static ConditionContext forStackEntry(StackEntry entry) {
         return new ConditionContext(entry.getControllerId(), entry.getSourcePermanentId(), null,
                 entry.getCard(), entry.isKicked(), entry.isBuyback(), entry.isProwl(), entry.isOverloaded(),
-                entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false);
+                entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
+                entry.isPutCounterCostPaid());
     }
 
     /** Context for trigger-time (intervening-if) checks against a battlefield permanent. */
@@ -91,19 +103,20 @@ public record ConditionContext(
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
                 kicked, buyback, prowl, overloaded, sourceZone, newXValue, targetId, triggeringCard,
-                staticEvaluation);
+                staticEvaluation, putCounterCostPaid);
     }
 
     /** Returns a copy with the given target id (e.g. a multi-target group's chosen target). */
     public ConditionContext withTargetId(UUID newTargetId) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
                 kicked, buyback, prowl, overloaded, sourceZone, xValue, newTargetId, triggeringCard,
-                staticEvaluation);
+                staticEvaluation, putCounterCostPaid);
     }
 
     /** Returns a copy with the given triggering (entering) card. */
     public ConditionContext withTriggeringCard(Card card) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
-                kicked, buyback, prowl, overloaded, sourceZone, xValue, targetId, card, staticEvaluation);
+                kicked, buyback, prowl, overloaded, sourceZone, xValue, targetId, card, staticEvaluation,
+                putCounterCostPaid);
     }
 }

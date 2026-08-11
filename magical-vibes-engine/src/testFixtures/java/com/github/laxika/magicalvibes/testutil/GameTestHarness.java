@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.testutil;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -466,6 +467,11 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, null);
     }
 
+    public void castFromExile(Player player, UUID exileCardId, List<UUID> counterCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, null, counterCostPermanentIds);
+    }
+
     public void castFromExile(Player player, UUID exileCardId, UUID targetId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
@@ -500,6 +506,20 @@ public class GameTestHarness {
     public void castWithAlternateCost(Player player, int cardIndex, List<UUID> alternateCostPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, alternateCostPermanentIds);
+    }
+
+    public void castCreatureWithBeholdPermanent(Player player, int cardIndex, UUID permanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                permanentId, null);
+    }
+
+    public void castCreatureWithBeholdHandCard(Player player, int cardIndex, int beholdHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, beholdHandCardIndex);
     }
 
     /** Cast a targeted instant using its alternate hand cost (e.g. Fireblast sacrificing two Mountains). */
@@ -588,6 +608,14 @@ public class GameTestHarness {
     public void castSorcery(Player player, int cardIndex, int xValue) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
+    }
+
+    public void castSorceryWithBehold(Player player, int cardIndex, int xValue, CardSubtype chosenType,
+                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, beholdPermanentIds, beholdHandCardIndices, chosenType);
     }
 
     public void castSorcery(Player player, int cardIndex, UUID targetPlayerId) {
@@ -1060,6 +1088,13 @@ public class GameTestHarness {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
                 null, null, List.of(), null, sacrificePermanentId);
+    }
+
+    public void castFlashbackWithBehold(Player player, int graveyardCardIndex, UUID targetId,
+                                        List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(),
+                null, null, List.of(), null, null, beholdPermanentIds, beholdHandCardIndices);
     }
 
     public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetId) {

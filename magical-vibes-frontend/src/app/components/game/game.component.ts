@@ -592,6 +592,10 @@ export class GameComponent implements OnInit, OnDestroy {
       this.choice.targeting.selectAlternateCostHandCard(index);
       return;
     }
+    if (this.choice.targeting.selectingBeholdHandCard) {
+      this.choice.targeting.selectBeholdHandCard(index);
+      return;
+    }
     this.choice.targeting.playCard(index, (i) => this.isCardPlayable(i));
   }
 
@@ -630,7 +634,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playFlashback(index: number): void {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
-      if (card?.needsTarget) {
+      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -1312,6 +1316,13 @@ export class GameComponent implements OnInit, OnDestroy {
   onMyBattlefieldCardClick(index: number, event?: MouseEvent): void {
     const perm = this.myBattlefield[index];
     if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
+    if (this.choice.targeting.selectingBeholdPermanent) {
+      if (perm && (perm.card.type === 'CREATURE' || (perm.card.additionalTypes ?? []).includes('CREATURE'))
+          && perm.card.subtypes.includes(this.choice.targeting.beholdSubtype)) {
+        this.choice.targeting.selectBeholdPermanent(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.convoking) {
       if (perm && isPermanentCreature(perm) && !perm.tapped) {
         this.choice.targeting.toggleConvokeCreature(perm.id);
@@ -1338,6 +1349,12 @@ export class GameComponent implements OnInit, OnDestroy {
         if (canSelectCreature || canSelectArtifact || canSelectLand) {
           this.choice.targeting.toggleAlternateCostCreature(perm.id);
         }
+      }
+      return;
+    }
+    if (this.choice.targeting.selectingExileCounterCost) {
+      if (perm && isPermanentCreature(perm)) {
+        this.choice.targeting.toggleExileCounterCostPermanent(perm.id);
       }
       return;
     }
@@ -1609,7 +1626,9 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingKicker) { t.cancelKicker(); return true; }
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
+    if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
     if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
+    if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
     if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
@@ -1633,7 +1652,8 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
-      || t.selectingAlternateCostHandCard
+      || t.selectingAlternateCostHandCard || t.selectingExileCounterCost
+      || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard;
   }
 

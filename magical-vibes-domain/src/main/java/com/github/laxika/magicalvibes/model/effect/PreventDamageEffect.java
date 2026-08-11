@@ -226,6 +226,12 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER, null, false, null, null, null);
     }
 
+    /** "Until your next turn, prevent all damage that would be dealt to you" (Morningtide's Light). */
+    public static PreventDamageEffect allToControllerUntilNextTurn() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_UNTIL_NEXT_TURN, null, false, null, null, null);
+    }
+
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     public static PreventDamageEffect allToControllerFromAttackers() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null, null);

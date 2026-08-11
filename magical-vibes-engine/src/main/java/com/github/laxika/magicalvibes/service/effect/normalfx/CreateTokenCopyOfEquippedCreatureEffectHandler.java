@@ -38,8 +38,11 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenCopyOfEquippedCreatureEffect) effect;
-        
-                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+
+                UUID equipmentPermanentId = e.equipmentPermanentId() != null
+                        ? e.equipmentPermanentId()
+                        : entry.getSourcePermanentId();
+                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, equipmentPermanentId);
                 if (sourcePermanent == null) {
                     log.info("Game {} - Source equipment no longer on battlefield", gameData.id);
                     return;
@@ -60,7 +63,8 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                 Card sourceCard = equippedCreature.getCard();
 
                 int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
-                for (int copy = 0; copy < tokenMultiplier; copy++) {
+                int totalCopies = e.amount() * tokenMultiplier;
+                for (int copy = 0; copy < totalCopies; copy++) {
                     // Create a token that's a copy of the equipped creature (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
                     tokenCard.setName(sourceCard.getName());
@@ -109,9 +113,18 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
 
                     Permanent tokenPermanent = new Permanent(tokenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+                    entry.getCreatedPermanentIds().add(tokenPermanent.getId());
 
-                    gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created (non-legendary, with haste)."));
-                    log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
+                    StringBuilder logSuffix = new StringBuilder(" is created");
+                    if (e.removeLegendary()) {
+                        logSuffix.append(" (non-legendary)");
+                    }
+                    if (e.grantHaste()) {
+                        logSuffix.append(" (with haste)");
+                    }
+                    logSuffix.append('.');
+                    gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, logSuffix.toString()));
+                    log.info("Game {} - Token copy of {} created", gameData.id, sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
                     // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.

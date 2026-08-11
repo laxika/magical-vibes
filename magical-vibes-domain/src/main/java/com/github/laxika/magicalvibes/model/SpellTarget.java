@@ -34,7 +34,6 @@ public class SpellTarget {
      * {@code maxTargets} acts only as a sanity cap.
      */
     private final boolean xScaled;
-
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
         this(card, filter, minTargets, maxTargets, index, false, null);
     }

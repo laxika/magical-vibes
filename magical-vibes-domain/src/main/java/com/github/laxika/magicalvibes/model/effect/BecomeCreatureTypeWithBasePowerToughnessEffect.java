@@ -19,13 +19,32 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param addedSubtype    the subtype to add to the source (additive, survives turn resets)
  * @param requiredSubtype if non-null, the effect only applies when the source already has this
  *                        subtype; {@code null} for an unconditional change
+ * @param replacesGrantedSubtypes whether to replace the persistent subtypes granted by earlier
+ *                                instances of this effect before adding {@code addedSubtype}
+ * @param grantsProtectionFromOpponents whether to also grant protection from the ability
+ *                                      controller's opponents
  */
 public record BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness,
                                                              CardSubtype addedSubtype,
-                                                             CardSubtype requiredSubtype) implements CardEffect {
+                                                             CardSubtype requiredSubtype,
+                                                             boolean replacesGrantedSubtypes,
+                                                             boolean grantsProtectionFromOpponents) implements CardEffect {
 
     public BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness, CardSubtype addedSubtype) {
-        this(power, toughness, addedSubtype, null);
+        this(power, toughness, addedSubtype, null, false, false);
+    }
+
+    public BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness,
+                                                          CardSubtype addedSubtype,
+                                                          CardSubtype requiredSubtype) {
+        this(power, toughness, addedSubtype, requiredSubtype, false, false);
+    }
+
+    public BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness,
+                                                          CardSubtype addedSubtype,
+                                                          CardSubtype requiredSubtype,
+                                                          boolean replacesGrantedSubtypes) {
+        this(power, toughness, addedSubtype, requiredSubtype, replacesGrantedSubtypes, false);
     }
 
     @Override

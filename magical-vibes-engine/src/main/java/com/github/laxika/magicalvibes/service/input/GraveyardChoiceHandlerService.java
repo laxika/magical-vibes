@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -436,6 +437,26 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        ReturnTargetCardsFromGraveyardToHandEffect sharedCreatureTypeEffect = pendingEffects == null
+                ? null
+                : pendingEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect::requireSharedCreatureType)
+                .findFirst()
+                .orElse(null);
+        if (sharedCreatureTypeEffect != null && cardIds.size() == sharedCreatureTypeEffect.minTargets()) {
+            List<Card> selectedCards = cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (selectedCards.size() == 2
+                    && !gameQueryService.shareCreatureType(selectedCards.get(0), selectedCards.get(1))) {
+                throw new IllegalStateException("The selected creature cards must share a creature type");
+            }
+        }
+
         // "... from a single graveyard" (Scarab Feast): all chosen targets must share one graveyard.
         if (gameData.graveyardTargetOperation.singleGraveyard && cardIds.size() > 1) {
             UUID firstOwner = gameQueryService.findGraveyardOwnerById(gameData, cardIds.get(0));
@@ -467,6 +488,18 @@ public class GraveyardChoiceHandlerService {
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
+            return;
+        }
+
+        // Resolution-time optional filtered exile with a life-loss rider: record the answer and
+        // let the effect handler perform the zone change and rider on resumption.
+        if (gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId =
+                    cardIds.isEmpty() ? null : cardIds.getFirst();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -555,7 +588,6 @@ public class GraveyardChoiceHandlerService {
         // Retrieve the pending info
         Card pendingCard = gameData.graveyardTargetOperation.card;
         UUID controllerId = gameData.graveyardTargetOperation.controllerId;
-        List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
         StackEntryType pendingEntryType = gameData.graveyardTargetOperation.entryType;
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
@@ -563,6 +595,7 @@ public class GraveyardChoiceHandlerService {
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
+        List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -578,6 +611,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.sourcePermanentId = null;
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
+        gameData.graveyardTargetOperation.permanentTargetIds = null;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -601,7 +635,8 @@ public class GraveyardChoiceHandlerService {
             StackEntry spellEntry = new StackEntry(
                     pendingEntryType, pendingCard, controllerId, pendingCard.getName(),
                     new ArrayList<>(pendingEffects), pendingXValue, spellEntryTargetId,
-                    null, Map.of(), spellEntryTargetZone, new ArrayList<>(cardIds), List.of()
+                    null, Map.of(), spellEntryTargetZone, new ArrayList<>(cardIds),
+                    pendingPermanentTargetIds == null ? List.of() : new ArrayList<>(pendingPermanentTargetIds)
             );
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);

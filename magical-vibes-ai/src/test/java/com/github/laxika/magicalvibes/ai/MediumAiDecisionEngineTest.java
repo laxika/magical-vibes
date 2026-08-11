@@ -532,7 +532,8 @@ class MediumAiDecisionEngineTest {
                     mockTargetValidationService,
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
                             new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(mockGameQueryService),
-                            mockTargetValidationService));
+                            mockTargetValidationService,
+                            org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
             return engine;
         }
 

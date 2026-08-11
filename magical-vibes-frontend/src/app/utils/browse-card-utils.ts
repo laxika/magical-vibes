@@ -39,6 +39,10 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     alternateCostManaCost: null,
     alternateCostExileHandCount: 0,
     alternateCostExileHandLabel: null,
+    additionalBeholdSubtype: null,
+    additionalBeholdCount: 0,
+    additionalBeholdFlashbackOnly: false,
+    additionalBeholdChosenCreatureType: false,
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
@@ -50,6 +54,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null,
+    exileCastCounterCost: 0,
     prepareSpell: info.prepareSpell ? browseInfoToCard(info.prepareSpell) : null
   };
 }

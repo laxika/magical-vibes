@@ -53,6 +53,7 @@ class CombatDamageState {
     // Combat damage records (for triggers: lifelink, combat damage to player, etc.)
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
+    final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();

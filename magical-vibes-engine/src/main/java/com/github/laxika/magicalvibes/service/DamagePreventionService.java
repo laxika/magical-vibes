@@ -459,6 +459,8 @@ public class DamagePreventionService {
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
         if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) return 0;
+        // Morningtide's Light: prevent all damage that would be dealt to the caster until their next turn.
+        if (gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.contains(playerId)) return 0;
         // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
         damage = applyHalfDamagePrevention(gameData, playerId, damage);
         if (damage <= 0) return 0;

@@ -400,6 +400,8 @@ public class CombatService {
             }
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
                     perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+            permanentCounterSupport.recordCounterPlacedOnCreature(gameData, perm,
+                    gameQueryService.findPermanentController(gameData, perm.getId()));
             gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                     " gets " + counters + " -1/-1 counter(s)."));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",

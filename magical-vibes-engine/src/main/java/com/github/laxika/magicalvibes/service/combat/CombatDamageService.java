@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
@@ -349,6 +350,9 @@ public class CombatDamageService {
 
         // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
         processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
+
+        // Process delayed combat damage draw triggers (e.g. Flitterwing Nuisance's ability)
+        processDelayedCombatDamageDrawTriggers(gameData, state);
 
         // Process combat damage reflection triggers (e.g. Harsh Justice)
         processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
@@ -1593,6 +1597,41 @@ public class CombatDamageService {
         }
     }
 
+    private void processDelayedCombatDamageDrawTriggers(GameData gameData, CombatDamageState state) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageDraw.class)) return;
+
+        Map<UUID, Permanent> damageSources = new LinkedHashMap<>();
+        for (Permanent creature : state.combatDamageDealtToPlayer.keySet()) {
+            damageSources.put(creature.getId(), creature);
+        }
+        for (Permanent creature : state.combatDamageDealtToPlaneswalker.keySet()) {
+            damageSources.put(creature.getId(), creature);
+        }
+
+        for (DelayedCombatDamageDraw delayed : gameData.getDelayedActions(DelayedCombatDamageDraw.class)) {
+            for (Permanent creature : damageSources.values()) {
+                int playerDamage = state.combatDamageDealtToPlayer.getOrDefault(creature, 0);
+                int planeswalkerDamage = state.combatDamageDealtToPlaneswalker.getOrDefault(creature, 0);
+                if (playerDamage <= 0 && planeswalkerDamage <= 0) continue;
+
+                UUID controllerId = state.combatDamageDealerControllers.get(creature);
+                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
+                if (!delayed.controllerId().equals(controllerId)) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new DrawCardEffect(1)));
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
+                        "'s delayed trigger fires — draw a card."));
+            }
+        }
+    }
+
     /**
      * Processes combat damage reflection triggers registered this turn (e.g. Harsh Justice).
      * For each attacking creature that dealt combat damage to a protected player this step, the
@@ -2310,6 +2349,11 @@ public class CombatDamageService {
     private void accumulatePlayerDamageInternal(GameData gameData, Permanent atk, CombatantStats atkStats,
                                                 int damage, UUID defenderId, Permanent redirectTarget,
                                                 CombatDamageState state) {
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
+        if (sourceControllerId != null) {
+            state.combatDamageDealerControllers.putIfAbsent(atk, sourceControllerId);
+        }
+
         // Check if the attacker is attacking a planeswalker instead of a player
         UUID attackTarget = atk.getAttackTarget();
         if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) {
@@ -2343,6 +2387,7 @@ public class CombatDamageService {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
+            state.combatDamageDealtToPlaneswalker.merge(atk, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
             return;
         }

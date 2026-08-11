@@ -255,6 +255,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
         } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {
             triggerHandler.handleTransformCreatureTarget(gameData, permanentId, tct);
+        } else if (context instanceof PermanentChoiceContext.TransformTriggerTarget ttt) {
+            triggerHandler.handleTransformTriggerTarget(gameData, permanentId, ttt);
         } else if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget acmf) {
             triggerHandler.handleAttackCounterMoveFirstTarget(gameData, permanentId, acmf);
         } else if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget acms) {

@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,5 +75,12 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
         log.info("Game {} - {} returns to the battlefield from the graveyard", gameData.id, card.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
+
+        if (e.losesAllAbilities()) {
+            permanent.setLosesAllAbilitiesPermanently(true);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
+                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
+                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
     }
 }

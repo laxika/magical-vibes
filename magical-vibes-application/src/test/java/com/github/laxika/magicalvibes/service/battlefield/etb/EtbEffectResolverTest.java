@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -172,6 +173,22 @@ class EtbEffectResolverTest {
 
         assertThat(resolver.resolve(ctx(true, 0, false), fromHand)).isSameAs(wrapped);
         assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isNull();
+    }
+
+    @Test
+    @DisplayName("WasCastConditional: unwraps for a cast permanent but drops for a battlefield entry")
+    void wasCastConditional() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        ConditionalEffect wasCast = new ConditionalEffect(new WasCast(), wrapped);
+        Permanent source = new Permanent(card);
+
+        source.setCast(true);
+        assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source), wasCast)).isSameAs(wrapped);
+
+        source.setCast(false);
+        assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
+                false, 0, false, false, false, source), wasCast)).isNull();
     }
 
     @Test

@@ -18,27 +18,38 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       ManaSpendRestriction restriction,
-                                      CardSubtype subtype) implements ManaProducingEffect {
+                                      CardSubtype subtype,
+                                      boolean sourceBecomesProducedColorUntilEndOfTurn) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect() {
         this(1);
     }
 
     public AwardAnyColorManaEffect(int amount) {
-        this(new Fixed(amount), ManaSpendRestriction.NONE, null);
+        this(new Fixed(amount), ManaSpendRestriction.NONE, null, false);
+    }
+
+    /** "Add one mana of any color. This creature becomes that color until end of turn." */
+    public AwardAnyColorManaEffect(boolean sourceBecomesProducedColorUntilEndOfTurn) {
+        this(new Fixed(1), ManaSpendRestriction.NONE, null, sourceBecomesProducedColorUntilEndOfTurn);
     }
 
     /** "Add X mana of any one color", X coming from the ability's xValue (Springjack Pasture). */
     public AwardAnyColorManaEffect(DynamicAmount amount) {
-        this(amount, ManaSpendRestriction.NONE, null);
+        this(amount, ManaSpendRestriction.NONE, null, false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction) {
-        this(new Fixed(amount), restriction, null);
+        this(new Fixed(amount), restriction, null, false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype) {
-        this(new Fixed(amount), restriction, subtype);
+        this(new Fixed(amount), restriction, subtype, false);
+    }
+
+    public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn) {
+        this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn);
     }
 
     /**
@@ -58,7 +69,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case IMPRINTED_CARD_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
                  ARTIFACT_SPELLS_OR_ABILITIES, FLASHBACK_ONLY,
-                 SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY -> 0;
+                 SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY, MANA_VALUE_AT_LEAST_FOUR -> 0;
         };
     }
 }

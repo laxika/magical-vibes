@@ -40,6 +40,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -322,6 +324,12 @@ public class PredicateEvaluationService {
                     card.getPower() != null && card.getPower() >= p.minPower();
             case CardPowerAtMostPredicate p ->
                     card.getPower() != null && card.getPower() <= p.maxPower();
+            case CardPowerToughnessTotalAtMostPredicate p ->
+                    card.getPower() != null && card.getToughness() != null
+                            && card.getPower() + card.getToughness() <= p.maxTotal();
+            case CardToughnessGreaterThanPowerPredicate ignored ->
+                    card.getPower() != null && card.getToughness() != null
+                            && card.getToughness() > card.getPower();
             case CardSharesCardTypeWithImprintedCardPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield true;

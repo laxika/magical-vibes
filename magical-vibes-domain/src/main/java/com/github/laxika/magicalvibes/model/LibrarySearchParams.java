@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -44,7 +45,8 @@ public record LibrarySearchParams(
         boolean repeatUntilDecline,
         CreateTokenEffect tokenTemplate,
         String sourceSetCode,
-        boolean sourceSideboard
+        boolean sourceSideboard,
+        CardSubtype battlefieldIfChosenBeholdType
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -69,7 +71,8 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard);
+                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                battlefieldIfChosenBeholdType);
     }
 
     public static class Builder {
@@ -106,6 +109,7 @@ public record LibrarySearchParams(
         private CreateTokenEffect tokenTemplate;
         private String sourceSetCode;
         private boolean sourceSideboard;
+        private CardSubtype battlefieldIfChosenBeholdType;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -263,6 +267,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder battlefieldIfChosenBeholdType(CardSubtype battlefieldIfChosenBeholdType) {
+            this.battlefieldIfChosenBeholdType = battlefieldIfChosenBeholdType;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -270,7 +279,8 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard);
+                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                    battlefieldIfChosenBeholdType);
         }
     }
 }

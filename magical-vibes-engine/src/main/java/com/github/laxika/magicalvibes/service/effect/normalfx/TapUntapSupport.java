@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,12 +16,29 @@ import org.springframework.stereotype.Component;
  * behavior (trigger order) is identical.
  */
 @Component
-@RequiredArgsConstructor
 public class TapUntapSupport {
 
     private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
+    private final GameQueryService gameQueryService;
+
+    @Autowired
+    public TapUntapSupport(TriggerCollectionService triggerCollectionService,
+                           CreatureControlService creatureControlService,
+                           UntapLockReleaseService untapLockReleaseService,
+                           GameQueryService gameQueryService) {
+        this.triggerCollectionService = triggerCollectionService;
+        this.creatureControlService = creatureControlService;
+        this.untapLockReleaseService = untapLockReleaseService;
+        this.gameQueryService = gameQueryService;
+    }
+
+    public TapUntapSupport(TriggerCollectionService triggerCollectionService,
+                           CreatureControlService creatureControlService,
+                           UntapLockReleaseService untapLockReleaseService) {
+        this(triggerCollectionService, creatureControlService, untapLockReleaseService, null);
+    }
 
     /**
      * Taps the permanent and fires enchanted-permanent tap triggers if it was not already tapped.
@@ -43,6 +61,9 @@ public class TapUntapSupport {
      * @return true if the permanent was newly untapped (was tapped before)
      */
     public boolean untapPermanent(GameData gameData, Permanent permanent) {
+        if (gameQueryService != null && gameQueryService.cantBecomeUntapped(gameData, permanent)) {
+            return false;
+        }
         boolean wasTapped = permanent.isTapped();
         permanent.untap();
         if (wasTapped) {

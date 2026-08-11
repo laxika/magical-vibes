@@ -285,6 +285,14 @@ public sealed interface TriggerContext {
     record CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId) implements TriggerContext {}
 
     /**
+     * Context for ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers.
+     *
+     * @param permanentCard     the permanent card that was put into the graveyard from anywhere
+     * @param graveyardOwnerId  the owner of the graveyard the card was put into
+     */
+    record PermanentCardPutIntoGraveyard(Card permanentCard, UUID graveyardOwnerId) implements TriggerContext {}
+
+    /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
     record SelfLeaves(UUID controllerId) implements TriggerContext {}

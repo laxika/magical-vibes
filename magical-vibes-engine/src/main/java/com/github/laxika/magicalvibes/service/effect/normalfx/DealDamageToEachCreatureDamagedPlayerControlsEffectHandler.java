@@ -47,7 +47,7 @@ public class DealDamageToEachCreatureDamagedPlayerControlsEffectHandler implemen
         if (battlefield != null) {
             for (Permanent creature : new ArrayList<>(battlefield)) {
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
-                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }

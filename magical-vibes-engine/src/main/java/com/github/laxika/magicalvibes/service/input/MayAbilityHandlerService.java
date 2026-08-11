@@ -606,10 +606,9 @@ public class MayAbilityHandlerService {
         }
         if (accepted) {
             if (ability.tapPermanentsCost() != null) {
-                // beginTapCostPayment either awaits player input or (on auto-pay / failure
-                // to pay) already resumes stack resolution itself — nothing left to do here.
+                // beginTapCostPayment either awaits input or continues the parked resolution.
                 mayAbilityTapCostService.beginTapCostPayment(
-                        gameData, player, ability.tapPermanentsCost(), ability.sourcePermanentId());
+                        gameData, player, ability.tapPermanentsCost(), ability.sourcePermanentId(), ability);
                 return;
             } else if (ability.manaCost() != null) {
                 ManaCost cost = new ManaCost(ability.manaCost());
@@ -684,6 +683,44 @@ public class MayAbilityHandlerService {
         }
         if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
         if (gameData.interaction.isAwaitingInput()) { return; }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Continues a may ability after a tap cost has been paid. */
+    public void continueAfterTapCost(GameData gameData, Player player, PendingMayAbility ability) {
+        gameData.resolvingMayEffectFromStack = false;
+        continueAcceptedMayAbility(gameData, player, ability);
+    }
+
+    private void continueAcceptedMayAbility(GameData gameData, Player player, PendingMayAbility ability) {
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
+        CardEffect innerEffect = extractInnerEffect(ability);
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+        boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+        boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+        boolean targetAlreadySet = pendingEntry != null
+                && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
+        if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
+            gameData.resolvedMayAccepted = true;
+            handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
+            return;
+        }
+        if (isTargetedGraveyard && pendingEntry != null && !targetAlreadySet) {
+            gameData.resolvedMayAccepted = true;
+            handleResolutionTimeGraveyardTargetSelection(gameData, player, ability, pendingEntry);
+            return;
+        }
+        if (pendingEntry != null) { setUpSelfTargetIfNeeded(gameData, ability, pendingEntry, innerEffect); }
+        gameData.resolvedMayAccepted = true;
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
@@ -42,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -147,6 +149,7 @@ public class LibraryChoiceHandlerService {
         AnimatePermanentsEffect animateFound = librarySearch.animateFound();
         CreateTokenEffect tokenTemplate = librarySearch.tokenTemplate();
         String sourceSetCode = librarySearch.sourceSetCode();
+        CardSubtype battlefieldIfChosenBeholdType = librarySearch.battlefieldIfChosenBeholdType();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -456,6 +459,17 @@ public class LibraryChoiceHandlerService {
         }
 
         Card chosenCard = searchCards.get(cardIndex);
+
+        boolean putChosenCardOnBattlefield = destination == LibrarySearchDestination.HAND
+                && battlefieldIfChosenBeholdType != null
+                && chosenCard.hasType(CardType.CREATURE)
+                && predicateEvaluationService.matchesCardPredicate(chosenCard,
+                        new CardSubtypePredicate(battlefieldIfChosenBeholdType), chosenCard.getId(),
+                        gameData, playerId);
+        if (putChosenCardOnBattlefield) {
+            toBattlefield = true;
+            toBattlefieldTapped = false;
+        }
 
         boolean removed = false;
         for (int i = 0; i < sourceZone.size(); i++) {
@@ -911,7 +925,12 @@ public class LibraryChoiceHandlerService {
             deck.add(chosenCard);
             graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
         } else if (destination == LibrarySearchDestination.HAND) {
-            gameData.playerHands.get(handOwnerId).add(chosenCard);
+            if (putChosenCardOnBattlefield) {
+                placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
+                        false, false, false, null);
+            } else {
+                gameData.playerHands.get(handOwnerId).add(chosenCard);
+            }
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
             exileService.exileCard(gameData, playerId, chosenCard);
             UUID sourcePermanentId = followUp.imprintSourcePermanentId();
@@ -1025,6 +1044,7 @@ public class LibraryChoiceHandlerService {
                     .grantHaste(grantHaste)
                     .exileAtEndStep(exileAtEndStep)
                     .animateFound(animateFound)
+                    .battlefieldIfChosenBeholdType(battlefieldIfChosenBeholdType)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -1043,7 +1063,8 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(shuffleLog));
             }
         } else {
-            String destinationText = switch (destination) {
+            String destinationText = switch (putChosenCardOnBattlefield
+                    ? LibrarySearchDestination.BATTLEFIELD : destination) {
                 case BATTLEFIELD -> "onto the battlefield";
                 case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
                 case BATTLEFIELD_ATTACHED_TO_PLAYER -> "onto the battlefield";

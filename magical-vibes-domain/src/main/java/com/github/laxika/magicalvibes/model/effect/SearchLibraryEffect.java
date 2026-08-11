@@ -47,8 +47,35 @@ public record SearchLibraryEffect(
         boolean exileAtEndStep,
         AnimatePermanentsEffect animateFound,
         LibrarySearchPlayer searchPlayer,
-        boolean onlyIfSacrificed
+        boolean onlyIfSacrificed,
+        boolean battlefieldIfChosenBeholdType
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               AnimatePermanentsEffect animateFound) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, animateFound, LibrarySearchPlayer.CONTROLLER, false, false);
+    }
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               AnimatePermanentsEffect animateFound, LibrarySearchPlayer searchPlayer,
+                               boolean onlyIfSacrificed) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, animateFound, searchPlayer, onlyIfSacrificed, false);
+    }
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               AnimatePermanentsEffect animateFound, boolean battlefieldIfChosenBeholdType) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, animateFound, LibrarySearchPlayer.CONTROLLER, false,
+                battlefieldIfChosenBeholdType);
+    }
 
     /** Unrestricted single-card tutor to hand (e.g. Diabolic Tutor). */
     public SearchLibraryEffect() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
@@ -214,6 +215,20 @@ public class LandTapTriggerCollectorService {
             return true;
         }
 
+        if (mana instanceof AwardChosenColorManaEffect) {
+            CardColor chosenColor = match.permanent().getChosenColor();
+            if (chosenColor == null) {
+                return false;
+            }
+
+            ManaColor chosenManaColor = ManaColor.valueOf(chosenColor.name());
+            gameData.playerManaPools.get(tappingPlayerId).add(chosenManaColor);
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                    " triggers - " + playerName + " adds 1 additional "
+                            + chosenColor.name().toLowerCase() + " mana."));
+            return true;
+        }
+
         log.warn("Unsupported mana effect in AddManaOnEnchantedLandTapEffect: {}", mana.getClass().getSimpleName());
         return false;
     }
@@ -254,6 +269,9 @@ public class LandTapTriggerCollectorService {
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
+        if (trigger.landFilter() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                        match.gameData(), tappedLand, trigger.landFilter())) return false;
 
         if (trigger.matchesImprintedCardName()) {
             Card imprintedCard = match.gameData().getImprintedCard(match.permanent().getCard());

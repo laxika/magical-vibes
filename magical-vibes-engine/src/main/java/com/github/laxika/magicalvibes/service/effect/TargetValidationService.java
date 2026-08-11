@@ -253,6 +253,9 @@ public class TargetValidationService {
     }
 
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
+        if (hasProtectionFromSourceController(ctx, target)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
+        }
         if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, ctx.sourceCard().getColor())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getColor().name().toLowerCase());
         }
@@ -262,6 +265,11 @@ public class TargetValidationService {
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
         }
+    }
+
+    private boolean hasProtectionFromSourceController(TargetValidationContext ctx, Permanent target) {
+        UUID sourceControllerId = findSourcePermanentController(ctx);
+        return gameQueryService.hasProtectionFromOpponents(ctx.gameData(), target, sourceControllerId);
     }
 
     public void requireTargetPlayer(TargetValidationContext ctx) {

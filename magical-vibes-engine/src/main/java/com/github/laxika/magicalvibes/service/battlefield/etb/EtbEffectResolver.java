@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.springframework.stereotype.Component;
@@ -79,8 +80,13 @@ public class EtbEffectResolver {
         // re-evaluation at stack resolution, and every other condition passes through unchanged.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
-            ConditionContext conditionContext = new ConditionContext(ctx.controllerId(), null, null,
-                    ctx.card(), ctx.kicked(), false, ctx.prowl(), false, ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null, false);
+            Zone sourceZone = ctx.sourcePermanent() == null
+                    ? (ctx.wasCastFromHand() ? Zone.HAND : null)
+                    : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
+            ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
+                    ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
+                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false,
+                    sourceZone, 0, null, null, false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -92,6 +98,12 @@ public class EtbEffectResolver {
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
                                 ? conditional.wrapped() : null;
+                // "if you cast it" is true for a spell cast from any zone, but not for a copy or
+                // a permanent put onto the battlefield by an effect.
+                case WasCast ignored ->
+                        ctx.sourcePermanent() != null
+                                ? (ctx.sourcePermanent().isCast() ? conditional.wrapped() : null)
+                                : (ctx.wasCastFromHand() ? conditional.wrapped() : null);
                 // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
                 // the conditional effect when met (re-checked at stack resolution), drop it when not.
                 case Condition gate when gate.isEtbTriggerGate() ->

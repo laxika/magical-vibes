@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -254,6 +255,10 @@ public sealed interface MultiPermanentChoiceContext {
     record TapCreaturesGainLife(int lifePerCreature) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses exactly two creatures; their power difference determines the effect. */
+    record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tap each chosen untapped creature the controller controls, then the controller creates one
      * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's
@@ -425,6 +430,21 @@ public sealed interface MultiPermanentChoiceContext {
                                    java.util.List<CardType> types, boolean sacrificeAllPermanents,
                                    boolean eachPlayerChooses)
             implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Winnowing: the spell's controller chose a creature for the player at {@code playerIndex}.
+     * The choices are retained by player so every player's other non-sharing creatures can be
+     * sacrificed together after all choices are complete.
+     */
+    record WinnowingChoice(UUID controllerId, List<UUID> playerIds, int playerIndex,
+                           Map<UUID, UUID> chosenByPlayer, String sourceName)
+            implements MultiPermanentChoiceContext {
+
+        public WinnowingChoice {
+            playerIds = List.copyOf(playerIds);
+            chosenByPlayer = Map.copyOf(chosenByPlayer);
+        }
     }
 
     /**

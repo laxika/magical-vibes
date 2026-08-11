@@ -47,8 +47,10 @@ on what the mana may pay for.
 
 ## Spells
 
+| Any number of target creatures exile and tapped-return plus next-turn player prevention | `m/MorningtidesLight.java` | `target(PermanentIsCreaturePredicate, 0, 99)` + `FlickerEffect.exileTargetReturnAtEndStep(true)` + `PreventDamageEffect.allToControllerUntilNextTurn()` + `ExileSpellEffect` |
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Counter opponent spells and abilities + tokens per counter | `g/GlenElendrasAnswer.java` | STATIC CantBeCounteredEffect + SPELL CounterOpponentsSpellsAndAbilitiesEffect(CreateTokenEffect) — snapshots opponent-controlled spells and activated/triggered abilities already on the stack, counts only successful counters, then creates one token per counter |
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | Random-discard burn | `s/SonicBurst.java` | SPELL `DiscardRandomCardCost` + `DealDamageToAnyTargetEffect(4)`; the random discard is paid automatically before the spell is put on the stack |
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER) |
@@ -207,6 +209,7 @@ on what the mana may pay for.
 | Pump spell + graveyard subtype-enters pay-to-return | `u/UnconventionalTactics.java` | SPELL: BoostTargetCreatureEffect(3,3) + GrantKeywordEffect(FLYING, TARGET). GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD: TriggeringCardConditionalEffect(CardSubtypePredicate(ZOMBIE), MayPayManaEffect("{W}", ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).returnAll(true).build())) — "whenever a Zombie you control enters, you may pay {W}: return this from your graveyard to hand" |
 | Graveyard return (exactly X to hand, lose X life) | `s/ShatteredCrypt.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 0, true) + LoseLifeEffect(new XValue(), CONTROLLER) — exact-X graveyard targeting at cast time |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |
+| Graveyard return (two creatures sharing a type) | `u/Unbury.java` | `ReturnTargetCardsFromGraveyardToHandEffect.exactlyTwoSharingCreatureType(CardTypePredicate(CREATURE))` — exactly two cast-time graveyard targets, filtered to a Changeling-aware shared-type pair |
 | Graveyard return (count scaled off target opponent) | `r/Reap.java` | `target(PlayerPredicateTargetFilter(OPPONENT))` + ReturnTargetCardsFromGraveyardToHandEffect(null, PermanentCount(PermanentColorInPredicate(BLACK), TARGET_PLAYER)) — "up to X target cards from your graveyard, where X is the number of black permanents target opponent controls as you cast this spell"; the dynamic cap is evaluated at cast time, so 0 black permanents means no graveyard prompt at all |
 | Graveyard return (multi-target, cards with cycling) | `s/SacredExcavation.java` | ReturnTargetCardsFromGraveyardToHandEffect(new CardHasCyclingPredicate(), 2) — up to two target cards with cycling to hand |
 | Graveyard return (one per subtype to hand) | `g/GrimCaptainsCall.java` | ReturnOneOfEachSubtypeFromGraveyardToHandEffect(List.of(PIRATE, VAMPIRE, DINOSAUR, MERFOLK)) — one of each subtype, chosen at resolution |

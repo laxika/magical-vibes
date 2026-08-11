@@ -205,7 +205,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                             gameData.playerIdToName.get(targetId) + " can't cast noncreature spells this turn."));
                 }
             } else if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
+                    && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);

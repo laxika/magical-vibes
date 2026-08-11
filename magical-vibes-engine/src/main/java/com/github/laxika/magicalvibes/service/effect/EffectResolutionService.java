@@ -279,6 +279,7 @@ public class EffectResolutionService {
         if (entry.getCard() != null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
+            gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this

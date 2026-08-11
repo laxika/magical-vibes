@@ -13,8 +13,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param counterType type of counter to place
  * @param count number of counters to place
+ * @param optional whether the caster may decline this cost
  */
-public record PutCounterOnControlledCreatureCost(CounterType counterType, int count) implements CostEffect {
+public record PutCounterOnControlledCreatureCost(CounterType counterType, int count, boolean optional)
+        implements CostEffect {
+
+    public PutCounterOnControlledCreatureCost(CounterType counterType, int count) {
+        this(counterType, count, false);
+    }
 
     private static final PermanentPredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
 

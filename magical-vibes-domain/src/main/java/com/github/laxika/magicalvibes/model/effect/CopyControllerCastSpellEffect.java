@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -19,6 +21,15 @@ import java.util.UUID;
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
-        UUID castingPlayerId
+        UUID castingPlayerId,
+        Set<Keyword> grantedKeywords
 ) implements CardEffect {
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
+        this(spellSnapshot, castingPlayerId, Set.of());
+    }
+
+    public CopyControllerCastSpellEffect {
+        grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
+    }
 }

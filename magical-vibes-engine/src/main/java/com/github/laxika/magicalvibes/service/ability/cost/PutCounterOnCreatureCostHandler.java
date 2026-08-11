@@ -69,6 +69,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
             return;
         }
         chosen.setCounterCount(type, chosen.getCounterCount(type) + count);
+        gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
 
         String counterWord = count == 1
                 ? "a " + counterLabel() + " counter"

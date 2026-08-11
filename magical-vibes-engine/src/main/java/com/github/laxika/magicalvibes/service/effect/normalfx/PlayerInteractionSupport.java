@@ -660,6 +660,15 @@ public class PlayerInteractionSupport {
      */
     public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount,
                                               HandChoiceDestination destination) {
+        beginRevealCardsChooseDiscard(gameData, entry, revealCount, discardCount, destination, null);
+    }
+
+    /**
+     * Begins the reveal-and-choose flow while preserving a source permanent for a source-linked
+     * exile destination.
+     */
+    public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount,
+                                              HandChoiceDestination destination, UUID sourcePermanentId) {
 
         UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
@@ -681,7 +690,7 @@ public class PlayerInteractionSupport {
             // Whole hand is revealed — no choice for the target player.
             List<UUID> revealedCardIds = hand.stream().map(Card::getId).toList();
             beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount,
-                    destination);
+                    destination, sourcePermanentId);
             return;
         }
 
@@ -694,7 +703,7 @@ public class PlayerInteractionSupport {
         // sibling — carried forward once the reveal picks complete (see the discard-stage begin).
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 targetPlayerId, targetPlayerId, controllerId, true, validIndices, revealCount,
-                new ArrayList<>(), discardCount, destination));
+                new ArrayList<>(), discardCount, destination, sourcePermanentId));
 
         log.info("Game {} - {} choosing {} cards to reveal for reveal-and-discard",
                 gameData.id, targetName, revealCount);
@@ -708,6 +717,14 @@ public class PlayerInteractionSupport {
     public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
                                              UUID controllerId, List<UUID> revealedCardIds, int discardCount,
                                              HandChoiceDestination destination) {
+        beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount,
+                destination, null);
+    }
+
+    /** Begins the controller's pick while preserving a source permanent for source-linked exile. */
+    public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
+                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount,
+                                             HandChoiceDestination destination, UUID sourcePermanentId) {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -729,7 +746,7 @@ public class PlayerInteractionSupport {
         int toDiscard = Math.min(discardCount, revealedCardIds.size());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, toDiscard,
-                new ArrayList<>(revealedCardIds), toDiscard, destination));
+                new ArrayList<>(revealedCardIds), toDiscard, destination, sourcePermanentId));
     }
 
     /**
@@ -741,6 +758,16 @@ public class PlayerInteractionSupport {
                                                          UUID controllerId, List<UUID> revealedCardIds,
                                                          int remainingDiscards, int discardCount,
                                                          HandChoiceDestination destination) {
+        beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId, controllerId, revealedCardIds,
+                remainingDiscards, discardCount, destination, null);
+    }
+
+    /** Continues a multi-pick controller choice while preserving source-linked exile metadata. */
+    public void beginRevealCardsDiscardStageContinuation(GameData gameData, UUID targetPlayerId,
+                                                         UUID controllerId, List<UUID> revealedCardIds,
+                                                         int remainingDiscards, int discardCount,
+                                                         HandChoiceDestination destination,
+                                                         UUID sourcePermanentId) {
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
@@ -748,7 +775,7 @@ public class PlayerInteractionSupport {
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, remainingDiscards,
-                new ArrayList<>(revealedCardIds), discardCount, destination));
+                new ArrayList<>(revealedCardIds), discardCount, destination, sourcePermanentId));
     }
 
     public boolean sharesCardType(List<Card> cards) {

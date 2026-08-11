@@ -64,7 +64,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
         for (Permanent hunter : tappedHunters) {
             int hunterPower = gameQueryService.getPowerBasedDamage(gameData, hunter);
             if (!(gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, target, hunter.getCard()))) {
+                    && gameQueryService.hasProtectionFromSource(gameData, target, hunter))) {
                 int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
                 damageSupport.dealCreatureDamage(gameData, entry, target, damage, hunter);
             } else {
@@ -84,7 +84,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                 int damage = baseDamage + (i < remainder ? 1 : 0);
                 if (damage > 0) {
                     if (!(gameQueryService.isDamagePreventable(gameData)
-                            && gameQueryService.hasProtectionFromSource(gameData, hunter, target.getCard()))) {
+                            && gameQueryService.hasProtectionFromSource(gameData, hunter, target))) {
                         int actualDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
                         damageSupport.dealCreatureDamage(gameData, entry, hunter, actualDamage, target);
                     } else {

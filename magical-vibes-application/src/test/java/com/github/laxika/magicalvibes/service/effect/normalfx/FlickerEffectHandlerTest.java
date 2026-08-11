@@ -134,6 +134,37 @@ class FlickerEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Exiles all targets and batches same-owner returns")
+        void exilesAllTargetsAndBatchesSameOwnerReturns() {
+            Permanent first = new Permanent(createCreatureCard("Grizzly Bears"));
+            Permanent second = new Permanent(createCreatureCard("Llanowar Elves"));
+            Card sourceCard = createCreatureCard("Morningtide's Light");
+            FlickerEffect effect = FlickerEffect.exileTargetReturnAtEndStep(true);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, List.of(first.getId(), second.getId()));
+
+            when(gameQueryService.findPermanentById(gd, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gd, second.getId())).thenReturn(second);
+            when(gameQueryService.findPermanentController(gd, first.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, second.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, first);
+            verify(permanentRemovalService).removePermanentToExile(gd, second);
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+                    .singleElement()
+                    .satisfies(pending -> {
+                        assertThat(pending.card().getName()).isEqualTo("Grizzly Bears");
+                        assertThat(pending.additionalCards())
+                                .extracting(Card::getName)
+                                .containsExactly("Llanowar Elves");
+                        assertThat(pending.returnTapped()).isTrue();
+                    });
+        }
+
+        @Test
         @DisplayName("Does nothing when target is removed before resolution")
         void fizzlesWhenTargetRemoved() {
             UUID targetId = UUID.randomUUID();

@@ -248,6 +248,29 @@ class MiscTriggerCollectorServiceTest {
     // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
 
     @Nested
+    @DisplayName("ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE")
+    class PermanentCardPutIntoGraveyard {
+
+        @Test
+        @DisplayName("puts the triggered ability on the stack with the source permanent")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Moonshadow");
+            var effect = new BoostSelfEffect(1, 1);
+            var ctx = new TriggerContext.PermanentCardPutIntoGraveyard(
+                    createCard("Spellbook"), player1Id);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
     @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER)")
     class EnchantedPermanentTapPoison {
 

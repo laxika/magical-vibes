@@ -154,6 +154,8 @@ public class StateBasedActionService {
 
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardDreamCounters.remove(cardId);
+            gameData.spellsWithDreamCounterOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);

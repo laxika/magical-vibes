@@ -35,6 +35,10 @@ function makeCard(overrides: Partial<Card>): Card {
     alternateCostManaCost: null,
     alternateCostExileHandCount: 0,
     alternateCostExileHandLabel: null,
+    additionalBeholdSubtype: null,
+    additionalBeholdCount: 0,
+    additionalBeholdFlashbackOnly: false,
+    additionalBeholdChosenCreatureType: false,
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
@@ -46,6 +50,7 @@ function makeCard(overrides: Partial<Card>): Card {
     modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null,
+    exileCastCounterCost: 0,
     prepareSpell: null,
     ...overrides
   };

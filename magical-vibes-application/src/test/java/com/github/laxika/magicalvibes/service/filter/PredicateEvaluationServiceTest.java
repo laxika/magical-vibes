@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -293,6 +295,20 @@ class PredicateEvaluationServiceTest {
             Card card = createArtifactCreature("Myr Sire", 1, 1, List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR));
 
             assertThat(evaluator.matchesCardPredicate(card, new CardTypePredicate(CardType.ARTIFACT), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardPowerToughnessTotalAtMostPredicate matches cards at or below the total")
+        void cardPowerToughnessTotalAtMostPredicateMatches() {
+            Card eligible = createCreature("Grizzly Bears", 2, 3, CardColor.GREEN);
+            Card tooLarge = createCreature("Air Elemental", 4, 4, CardColor.BLUE);
+            Card withoutPowerToughness = createLand("Forest");
+
+            CardPowerToughnessTotalAtMostPredicate predicate = new CardPowerToughnessTotalAtMostPredicate(5);
+
+            assertThat(evaluator.matchesCardPredicate(eligible, predicate, null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(tooLarge, predicate, null)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(withoutPowerToughness, predicate, null)).isFalse();
         }
 
         @Test

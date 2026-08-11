@@ -39,6 +39,12 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             return;
         }
 
+        if (e.replacesGrantedSubtypes()) {
+            source.getGrantedSubtypes().clear();
+            source.setProtectionFromOpponentsPermanently(false);
+            source.getProtectionFromPlayerIdsPermanently().clear();
+        }
+
         // Set base P/T as a layer-7b setting effect (CR 613.4b); the timestamp orders it against
         // other 7b setters. A later level-up simply gets a newer timestamp and wins.
         source.setBasePowerOverriddenPermanently(true);
@@ -50,6 +56,16 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
 
         if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
             source.getGrantedSubtypes().add(e.addedSubtype());
+        }
+
+        if (e.grantsProtectionFromOpponents()) {
+            source.setProtectionFromOpponentsPermanently(true);
+            source.getProtectionFromPlayerIdsPermanently().clear();
+            for (var playerId : gameData.playerIds) {
+                if (!playerId.equals(entry.getControllerId())) {
+                    source.getProtectionFromPlayerIdsPermanently().add(playerId);
+                }
+            }
         }
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" becomes a " + e.addedSubtype().getDisplayName() + " with base power and toughness " + e.power() + "/" + e.toughness() + ".").build());

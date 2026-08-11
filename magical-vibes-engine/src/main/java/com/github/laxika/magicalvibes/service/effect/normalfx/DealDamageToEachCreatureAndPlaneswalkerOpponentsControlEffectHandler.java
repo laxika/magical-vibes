@@ -51,7 +51,7 @@ public class DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffectHandle
                 boolean isCreature = gameQueryService.isCreature(gameData, permanent);
                 boolean isPlaneswalker = permanent.getCard().hasType(CardType.PLANESWALKER);
                 if (!isCreature && !isPlaneswalker) continue;
-                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard())) {
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard(), entry.getControllerId())) {
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
                     continue;
                 }

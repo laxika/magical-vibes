@@ -2202,7 +2202,8 @@ public class AbilityActivationService {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
                     targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
-            targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, targetIds);
+            targetLegalityService.validateMultiTargetGraveyardAbility(
+                    gameData, playerId, abilityEffects, targetIds, permanent.getCard().getId());
         } else {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
@@ -2500,6 +2501,9 @@ public class AbilityActivationService {
                 }
             }
             if (placed) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
+                }
                 String counterLabel = c.powerModifier() == 0 && c.toughnessModifier() < 0
                         ? "-0/" + c.toughnessModifier()
                         : String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
@@ -2516,6 +2520,9 @@ public class AbilityActivationService {
         if (typedCounterCost.isPresent() && !gameQueryService.cantHaveCounters(gameData, permanent)) {
             PutTypedCounterOnSourceCost c = typedCounterCost.get();
             permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + c.count());
+            if (gameQueryService.isCreature(gameData, permanent) && c.count() > 0) {
+                gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
+            }
             String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');
             String counterWord = c.count() == 1 ? "a " + counterLabel + " counter" : c.count() + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
@@ -2675,7 +2682,8 @@ public class AbilityActivationService {
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameLogService, sourcePermanentId);
+        if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
+                c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -3127,6 +3135,9 @@ public class AbilityActivationService {
         if (ability.isRequiresUntap()) {
             if (!permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is not tapped");
+            }
+            if (gameQueryService.cantBecomeUntapped(gameData, permanent)) {
+                throw new IllegalStateException("Permanent can't become untapped");
             }
             if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");

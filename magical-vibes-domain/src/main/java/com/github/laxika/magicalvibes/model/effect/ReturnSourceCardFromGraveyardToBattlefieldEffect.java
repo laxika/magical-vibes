@@ -13,7 +13,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * the battlefield tapped under its owner's control.'"). Fizzles if the card is no longer in a
  * graveyard.
  *
- * @param tapped {@code true} to have it enter the battlefield tapped
+ * @param tapped             {@code true} to have it enter the battlefield tapped
+ * @param losesAllAbilities  {@code true} to make the returned permanent lose all abilities indefinitely
  */
-public record ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped) implements CardEffect {
+public record ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities)
+        implements CardEffect {
+
+    public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped) {
+        this(tapped, false);
+    }
 }

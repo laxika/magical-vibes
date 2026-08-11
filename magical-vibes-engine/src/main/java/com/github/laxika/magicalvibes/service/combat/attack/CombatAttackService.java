@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -84,6 +85,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles declare-attackers step: computing legal attackers, enforcing attack requirements
@@ -367,6 +369,22 @@ public class CombatAttackService {
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
         gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
+        Map<CardSubtype, Integer> subtypeCounts = gameData.creaturesAttackedCountBySubtypeThisTurn
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            Set<CardSubtype> subtypes = new HashSet<>(gameQueryService.effectiveCreatureSubtypes(gameData, attacker));
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.CHANGELING)) {
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (gameQueryService.isCreatureSubtype(subtype)) {
+                        subtypes.add(subtype);
+                    }
+                }
+            }
+            for (CardSubtype subtype : subtypes) {
+                subtypeCounts.merge(subtype, 1, Integer::sum);
+            }
+        }
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {
@@ -718,24 +736,36 @@ public class CombatAttackService {
             }
             if (filteredEffects.isEmpty()) continue;
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    playerId,
-                    perm.getCard().getName() + "'s attack trigger",
-                    filteredEffects,
-                    attackerIndices.size(),
-                    null,
-                    perm.getId(),
-                    null,
-                    null,
-                    null,
-                    null
-            ));
-            gameLogService.append(gameData,
-                    GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-            log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                    gameData.id, perm.getCard().getName(), attackerIndices.size());
+            boolean needsTarget = filteredEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        perm.getCard(), playerId, filteredEffects, perm.getId()));
+                gameLogService.append(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
+                        gameData.id, perm.getCard().getName());
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s attack trigger",
+                        filteredEffects,
+                        attackerIndices.size(),
+                        null,
+                        perm.getId(),
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+                gameLogService.append(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
+                log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                        gameData.id, perm.getCard().getName(), attackerIndices.size());
+            }
         }
 
         // Check for "whenever a creature you control attacks" triggers (ON_ALLY_CREATURE_ATTACKS)

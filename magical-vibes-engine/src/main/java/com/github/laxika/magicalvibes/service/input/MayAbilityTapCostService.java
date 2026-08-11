@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,7 @@ public class MayAbilityTapCostService {
     private final InputCompletionService inputCompletionService;
     private final EffectResolutionService effectResolutionService;
     private final TapCostSupport tapCostSupport;
+    private final ObjectProvider<MayAbilityHandlerService> mayAbilityHandlerService;
 
     /**
      * Begins interactive tap-cost payment after the player accepted a may ability with a tap cost.
@@ -43,7 +46,7 @@ public class MayAbilityTapCostService {
      * @return {@code true} if awaiting player input; {@code false} if the cost was auto-paid
      */
     public boolean beginTapCostPayment(GameData gameData, Player player, TapMultiplePermanentsCost tapCost,
-                                       UUID sourcePermanentId) {
+                                       UUID sourcePermanentId, PendingMayAbility ability) {
         PermanentChoiceCostHandler handler = new MultiplePermanentTapCostHandler(
                 tapCost, tapCostSupport.requiredCount(gameData, tapCost, sourcePermanentId, 0),
                 predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -68,13 +71,13 @@ public class MayAbilityTapCostService {
                 }
             }
             gameData.resolvedMayAccepted = true;
-            resumeEffectResolution(gameData);
+            mayAbilityHandlerService.getObject().continueAfterTapCost(gameData, player, ability);
             return false;
         }
 
         List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTapCostChoice(
-                playerId, sourcePermanentId, tapCost, required));
+                playerId, sourcePermanentId, tapCost, required, ability));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
         inputCompletionService.publishStateAfterInput(gameData);
@@ -118,7 +121,7 @@ public class MayAbilityTapCostService {
             } else {
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTapCostChoice(
-                        playerId, context.sourcePermanentId(), context.costEffect(), remaining));
+                        playerId, context.sourcePermanentId(), context.costEffect(), remaining, context.mayAbility()));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -127,7 +130,7 @@ public class MayAbilityTapCostService {
         }
 
         gameData.resolvedMayAccepted = true;
-        resumeEffectResolution(gameData);
+        mayAbilityHandlerService.getObject().continueAfterTapCost(gameData, player, context.mayAbility());
     }
 
     private void resumeEffectResolution(GameData gameData) {

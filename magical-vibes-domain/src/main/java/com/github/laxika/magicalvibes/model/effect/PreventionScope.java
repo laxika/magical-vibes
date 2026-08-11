@@ -55,6 +55,8 @@ public enum PreventionScope {
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control). Unlike
      *  {@link #ALL_TO_CONTROLLER_AND_CREATURES} the controller's creatures are not shielded. */
     ALL_TO_CONTROLLER,
+    /** "Until your next turn, prevent all damage that would be dealt to you" (Morningtide's Light). */
+    ALL_TO_CONTROLLER_UNTIL_NEXT_TURN,
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */

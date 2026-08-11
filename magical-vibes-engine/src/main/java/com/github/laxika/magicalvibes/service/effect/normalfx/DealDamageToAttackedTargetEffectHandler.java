@@ -51,7 +51,7 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         Card source = entry.getEffectiveDamageSourceCard();
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
                 || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
+                || gameQueryService.hasProtectionFromSource(gameData, target, source, entry.getControllerId())) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return;
         }

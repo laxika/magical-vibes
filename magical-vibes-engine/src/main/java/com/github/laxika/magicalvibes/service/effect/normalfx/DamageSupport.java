@@ -95,6 +95,11 @@ public class DamageSupport {
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
+        if (damageSource != null && (entry == null || entry.getSourcePermanentId() == null
+                || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
+            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+            rawDamage *= gameQueryService.getSourceDamageMultiplier(gameData, sourceControllerId, damageSource);
+        }
         if (gameQueryService.isDamageByCreaturePrevented(gameData, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage dealt by ", source.getCard(), " is prevented."));
             return 0;
@@ -535,7 +540,8 @@ public class DamageSupport {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())
-                    || gameQueryService.hasProtectionFromDamageSource(gameData, target, source))) {
+                    || gameQueryService.hasProtectionFromDamageSource(gameData, target, source,
+                        entry.getControllerId()))) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
@@ -593,7 +599,8 @@ public class DamageSupport {
             if (isDamageSourcePreventedWithLog(gameData, entry)) return;
             if (gameQueryService.isDamagePreventable(gameData)
                     && (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                        || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source))) {
+                        || gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, source,
+                            entry.getControllerId()))) {
                 gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
                 return;
             }
@@ -694,7 +701,7 @@ public class DamageSupport {
                                         boolean exileInsteadOfDie) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard())) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
             // Mark before the damage lands so lethal damage is replaced by exile straight away.
             if (exileInsteadOfDie) {
                 p.setExileInsteadOfDieThisTurn(true);
@@ -1244,7 +1251,7 @@ public class DamageSupport {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, sourceCard))) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, targetPermanent, sourceCard, tempEntry.getControllerId()))) {
                     dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage);
                 } else {
                     gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,

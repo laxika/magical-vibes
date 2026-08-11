@@ -61,5 +61,8 @@ public enum ManaSpendRestriction {
      * Spendable only to cast spells of the effect's own {@code subtype} or to activate abilities of
      * permanents of that subtype (Smokebraider, Primal Beyond).
      */
-    SUBTYPE_SPELL_OR_ABILITY
+    SUBTYPE_SPELL_OR_ABILITY,
+
+    /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
+    MANA_VALUE_AT_LEAST_FOUR
 }

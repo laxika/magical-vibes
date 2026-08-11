@@ -553,10 +553,21 @@ public class PlayerInputService {
     }
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        beginSubtypeChoice(gameData, playerId, permanentId, List.of());
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   List<CardSubtype> allowedSubtypes) {
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId);
 
-        List<String> creatureTypes = Arrays.stream(CardSubtype.values())
+        List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
+                ? Arrays.stream(CardSubtype.values())
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .toList()
+                : allowedSubtypes.stream()
+                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .toList();
+        List<String> creatureTypes = choices.stream()
                 .map(CardSubtype::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

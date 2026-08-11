@@ -272,6 +272,43 @@ public class GraveyardReturnSupport {
         }
     }
 
+    private boolean matchesReturnCardFilter(GameData gameData, StackEntry entry,
+                                             ReturnCardFromGraveyardEffect effect, Card card,
+                                             UUID sourceCardId) {
+        if (card == null) {
+            return false;
+        }
+        if (effect.sourceChosenSubtype()) {
+            CardSubtype chosenSubtype = findSourceChosenSubtype(gameData, entry, sourceCardId);
+            UUID cardOwnerId = card.getOwnerId() != null
+                    ? card.getOwnerId()
+                    : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+            return chosenSubtype != null
+                    && (card.getKeywords().contains(Keyword.CHANGELING)
+                    || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));
+        }
+        return effect.filter() == null
+                || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId);
+    }
+
+    private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {
+        if (entry.getSourcePermanentSnapshot() != null) {
+            return entry.getSourcePermanentSnapshot().getChosenSubtype();
+        }
+        if (sourceCardId == null) {
+            return null;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(sourceCardId)
+                        || permanent.getOriginalCard().getId().equals(sourceCardId)) {
+                    return permanent.getChosenSubtype();
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Post-processes a pre-targeted graveyard-to-battlefield return. A card reanimated out of another
      * player's graveyard entered under a non-owner's control, so its original owner is recorded (it must

@@ -92,7 +92,7 @@ public class CounterSupport {
         return targetEntry;
     }
 
-    public void counterSpell(GameData gameData, StackEntry source, StackEntry target) {
+    public boolean counterSpell(GameData gameData, StackEntry source, StackEntry target) {
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -104,7 +104,7 @@ public class CounterSupport {
             // Guile (CR 614): "If a spell or ability you control would counter a spell, instead exile
             // that spell and you may play that card without paying its mana cost."
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
-                return;
+                return false;
             }
             if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
@@ -123,6 +123,7 @@ public class CounterSupport {
                     GameLog.cardThen(target.getCard(), " is countered."));
         }
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        return true;
     }
 
     public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -92,10 +93,12 @@ public class ExileFreeCastSupport {
         }
 
         gameData.removeFromExile(exileCardId);
-        gameData.stack.add(new StackEntry(
+        StackEntry stackEntry = new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null
-        ));
+        );
+        stackEntry.setSourceZone(Zone.EXILE);
+        gameData.stack.add(stackEntry);
 
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
@@ -104,7 +107,7 @@ public class ExileFreeCastSupport {
                 GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.EXILE);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

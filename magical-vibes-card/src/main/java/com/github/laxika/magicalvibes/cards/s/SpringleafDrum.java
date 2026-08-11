@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "261")
+@CardRegistration(set = "ECL", collectorNumber = "260")
 public class SpringleafDrum extends Card {
 
     public SpringleafDrum() {

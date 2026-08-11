@@ -60,6 +60,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
+        register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
@@ -120,10 +121,13 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPutCardsFromHandOnLibraryCardChoice);
         register(PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.class,
                 this::projectPutCardsFromHandOnLibraryDestinationChoice);
+        register(PendingInteraction.TargetLibraryDestinationChoice.class,
+                this::projectTargetLibraryDestinationChoice);
         register(PendingInteraction.CounteredSpellLibraryDestinationChoice.class,
                 this::projectCounteredSpellLibraryDestinationChoice);
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
+        register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
@@ -259,6 +263,15 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an instant or sorcery card exiled this way to copy "
                         + interaction.copies() + " times.");
+    }
+
+    private InteractionPromptMessage projectExiledCardMayPlayChoice(
+            GameData gameData, PendingInteraction.ExiledCardMayPlayChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a card exiled this way to play until the end of your next turn.");
     }
 
     private InteractionPromptMessage projectExileInstantOrSorcerySpellCostChoice(
@@ -638,6 +651,19 @@ public class InteractionPromptProjectionRegistry {
                 false);
     }
 
+    private InteractionPromptMessage projectTargetLibraryDestinationChoice(
+            GameData gameData,
+            PendingInteraction.TargetLibraryDestinationChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                interaction.options(),
+                "Put " + interaction.cardName() + " on the " +
+                        (interaction.firstOption().equalsIgnoreCase("Top")
+                                ? "top"
+                                : interaction.firstOption().toLowerCase()) +
+                        " or bottom of its owner's library?",
+                false);
+    }
+
     private InteractionPromptMessage projectSylvanLibraryChoice(
             GameData gameData, PendingInteraction.SylvanLibraryChoice interaction) {
         List<Card> hand = gameData.playerHands.getOrDefault(interaction.playerId(), List.of());
@@ -675,6 +701,18 @@ public class InteractionPromptProjectionRegistry {
                 cardViews,
                 interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectVividCardChoice(
+            GameData gameData, PendingInteraction.VividCardChoice interaction) {
+        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
     private InteractionPromptMessage projectLibrarySearch(

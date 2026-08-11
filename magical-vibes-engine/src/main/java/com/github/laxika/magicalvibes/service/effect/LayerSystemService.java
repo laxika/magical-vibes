@@ -34,7 +34,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwn
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
@@ -587,6 +589,13 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
+            List<Card> enteredThisTurn = gameData.permanentsEnteredBattlefieldThisTurn.get(playerId);
+            h = mix(h, enteredThisTurn == null ? -1 : enteredThisTurn.size());
+            if (enteredThisTurn != null) {
+                for (Card card : enteredThisTurn) {
+                    h = mix(h, System.identityHashCode(card));
+                }
+            }
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null) {
                 h = mix(h, battlefield.size());
@@ -672,6 +681,10 @@ public class LayerSystemService {
         for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
             h = mix(h, counter.getKey().ordinal());
             h = mix(h, counter.getValue());
+        }
+        for (Map.Entry<CounterType, Long> timestamp : p.getCounterTimestamps().entrySet()) {
+            h = mix(h, timestamp.getKey().ordinal());
+            h = mix(h, timestamp.getValue());
         }
         h = mix(h, p.getPowerModifier());
         h = mix(h, p.getToughnessModifier());
@@ -992,6 +1005,25 @@ public class LayerSystemService {
                 instances.add(new EffectInstance(source, floating.effect(), floating.effect(), floating,
                         classification.characteristicDefining(),
                         floating.timestamp(), Integer.MAX_VALUE));
+            }
+        }
+        if (layer == Layer.L6_ABILITIES) {
+            for (PermanentSlot slot : slots) {
+                Permanent permanent = slot.permanent();
+                for (CounterType counterType : CounterType.values()) {
+                    Keyword keyword = counterType.grantedKeyword();
+                    if (keyword == null || permanent.getCounterCount(counterType) <= 0) {
+                        continue;
+                    }
+                    GrantKeywordEffect grant = new GrantKeywordEffect(
+                            keyword, GrantScope.TARGET, GrantDuration.INDEFINITE);
+                    FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
+                            UUID.randomUUID(), keyword.name().toLowerCase() + " counter", null,
+                            slot.controllerId(), grant, permanent.getId(), null, null,
+                            EffectDuration.PERMANENT, permanent.getCounterTimestamp(counterType));
+                    instances.add(new EffectInstance(null, grant, grant, counterEffect, false,
+                            counterEffect.timestamp(), slot.position()));
+                }
             }
         }
         instances.sort(Comparator.comparing((EffectInstance i) -> !i.characteristicDefining())
@@ -2085,6 +2117,11 @@ public class LayerSystemService {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), grant.keywords(), Set.of(), false));
+                    }
+                    case ProtectionFromColorsEffect protection -> {
+                        state.addProtectionColors(protection.colors());
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), protection);
                     }
                     default -> {
                         continue;

@@ -60,7 +60,7 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
         String cardName = entry.getCard().getName();
 
         for (Permanent creature : creatures) {
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                 continue;
             }

@@ -505,7 +505,7 @@ public class GameViewProjectionFactory {
                         && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                         && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
-                    playable.add(cardViewFactory.create(card));
+                    playable.add(exileCardView(gameData, playerId, card));
                 }
                 continue;
             }
@@ -517,8 +517,9 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
-                if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
-                    playable.add(cardViewFactory.create(card));
+                if (castingPermissionService.hasFreeCastFromExiledWithSource(gameData, playerId, card.getId())
+                        || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
+                    playable.add(exileCardView(gameData, playerId, card));
                 } else {
                     boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
                     ManaCost cost = card.getParsedManaCost();
@@ -547,6 +548,13 @@ public class GameViewProjectionFactory {
         }
 
         return playable;
+    }
+
+    private CardView exileCardView(GameData gameData, UUID playerId, Card card) {
+        CardView view = cardViewFactory.create(card);
+        int counterCost = castingPermissionService.findAdditionalCounterCostFromSource(
+                gameData, playerId, card.getId()).orElse(0);
+        return counterCost == 0 ? view : view.toBuilder().exileCastCounterCost(counterCost).build();
     }
 
     /**

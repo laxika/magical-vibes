@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCrea
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -26,10 +28,13 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,6 +56,8 @@ public class AnimationSupport {
     private final CreatureControlService creatureControlService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TriggerTargetCollector triggerTargetCollector;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -613,6 +620,44 @@ public class AnimationSupport {
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                         "'s transform ability triggers - choose target opponent."));
                 log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
+                return;
+            } else if (e instanceof ReturnCardFromGraveyardEffect returnEffect
+                    && returnEffect.targetGraveyard()) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        triggerCard, controllerId, new ArrayList<>(effects)));
+                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
+                        "'s transform ability triggers - choose a graveyard target."));
+                if (!gameData.interaction.isAwaitingInput()) {
+                    triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+                }
+                return;
+            } else if (e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                        gameData, effects, triggerCard.getTargetFilter(), controllerId, triggerCard,
+                        TriggerTargetCollector.Options.ATTACK);
+                if (result.validTargets().isEmpty()) {
+                    gameLogService.append(gameData, GameLog.cardThen(triggerCard,
+                            "'s transform ability has no valid target."));
+                    log.info("Game {} - {} transform trigger skipped (no valid targets)",
+                            gameData.id, triggerCard.getName());
+                    return;
+                }
+                PermanentChoiceContext.TransformTriggerTarget context =
+                        new PermanentChoiceContext.TransformTriggerTarget(
+                                triggerCard, controllerId, new ArrayList<>(effects), self.getId());
+                gameData.interaction.setPermanentChoiceContext(context);
+                playerInputService.beginAnyTargetChoice(gameData, controllerId,
+                        result.validTargets().stream()
+                                .filter(id -> !gameData.playerIdToName.containsKey(id))
+                                .toList(),
+                        result.validTargets().stream()
+                                .filter(gameData.playerIdToName::containsKey)
+                                .toList(),
+                        triggerCard.getName() + "'s ability - Choose target.");
+                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
+                        "'s transform ability triggers - choose a target."));
+                log.info("Game {} - {} transform trigger awaiting target", gameData.id, triggerCard.getName());
                 return;
             } else {
                 gameData.stack.add(new StackEntry(

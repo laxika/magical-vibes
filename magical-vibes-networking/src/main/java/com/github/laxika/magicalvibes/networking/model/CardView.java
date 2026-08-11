@@ -80,6 +80,7 @@ public record CardView(
         int modalChoicesMax,
         boolean modalOptional,
         List<ModalOptionView> modalOptions,
+        int exileCastCounterCost,
         CardView prepareSpell
 ) {
 }

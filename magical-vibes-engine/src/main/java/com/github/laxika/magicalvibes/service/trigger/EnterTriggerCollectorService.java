@@ -43,10 +43,14 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -69,16 +73,90 @@ public class EnterTriggerCollectorService {
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public EnterTriggerCollectorService(GameLogService gameLogService,
                                         AmountEvaluationService amountEvaluationService,
-                                        GameQueryService gameQueryService) {
+                                        GameQueryService gameQueryService,
+                                        PredicateEvaluationService predicateEvaluationService) {
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleAnyPermanentEnterDefault(TriggerMatchContext match, CardEffect effect,
+                                                    TriggerContext ctx) {
+        return enqueueAnyPermanentEnter(match, effect, (TriggerContext.PermanentEnters) ctx);
+    }
+
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleAnyPermanentEnterCardConditional(TriggerMatchContext match,
+                                                             TriggeringCardConditionalEffect conditional,
+                                                             TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(pe.enteringCard(), conditional.predicate(), null,
+                match.gameData(), match.controllerId())) {
+            return false;
+        }
+        return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
+    }
+
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleAnyPermanentEnterPermanentConditional(TriggerMatchContext match,
+                                                                  TriggeringPermanentConditionalEffect conditional,
+                                                                  TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (!match.controllerId().equals(pe.enteringControllerId())) return false;
+        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+        if (enteringPermanent == null) return false;
+
+        FilterContext filterContext = FilterContext.of(match.gameData())
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentSnapshot(match.permanent());
+        if (!predicateEvaluationService.matchesPermanentPredicate(enteringPermanent, conditional.predicate(),
+                filterContext)) {
+            return false;
+        }
+        return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
+    }
+
+    private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
+                                             TriggerContext.PermanentEnters pe) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                pe.enteringControllerId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
+        entry.setTriggeringCardId(pe.enteringCard().getId());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
+                match.permanent().getCard().getName());
+        return true;
+    }
+
+    private Permanent findEnteringPermanent(com.github.laxika.magicalvibes.model.GameData gameData,
+                                            TriggerContext.PermanentEnters pe) {
+        if (pe.mayPayTargetCardId() == null) return null;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(pe.enteringControllerId());
+        if (battlefield == null) return null;
+        return battlefield.stream()
+                .filter(permanent -> pe.mayPayTargetCardId().equals(permanent.getId()))
+                .findFirst()
+                .orElse(null);
+    }
 
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
@@ -440,14 +518,57 @@ public class EnterTriggerCollectorService {
     }
 
     /**
+     * "Whenever a creature you control enters, it deals damage equal to its power to each opponent."
+     * The entering permanent is the damage source, while the permanent carrying the trigger remains
+     * the source of the triggered ability itself.
+     */
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureDealsPowerDamageToEachOpponent(TriggerMatchContext match,
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
+        if (effect.recipient() != DamageRecipient.EACH_OPPONENT) {
+            return false;
+        }
+
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+        if (enteringPermanent == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    enteringPermanent.getId());
+            entry.setSourcePermanentSnapshot(enteringPermanent);
+            entry.setDamageSourceCard(enteringPermanent.getCard());
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (entering creature deals power damage to each opponent)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
      * "Whenever a nontoken [creature] you control enters, create a token that's a copy of that
      * creature" (Necroduality). The entering creature is fixed at trigger time — bake its id as
      * {@code targetId} rather than routing through the EntersTriggerTarget choice pipeline that
      * the permanent-targeting default would use. Subtype gating (e.g. Zombie) is applied upstream
      * by {@code TriggeringCardConditionalEffect}; tokens are already excluded by the slot.
      */
-    @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    })
     private boolean handleAllyNontokenCreatureCreateTokenCopy(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;

@@ -30,17 +30,20 @@ public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileEnchantedCreatureEffect exileEffect = (ExileEnchantedCreatureEffect) effect;
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (auraPerm == null) {
-            log.info("Game {} - Aura {} no longer on battlefield, skipping exile trigger",
-                    gameData.id, entry.getCard().getName());
-            return;
+        UUID enchantedId = exileEffect.enchantedPermanentId();
+        if (enchantedId == null && auraPerm != null) {
+            enchantedId = auraPerm.getAttachedTo();
         }
-
-        UUID enchantedId = auraPerm.getAttachedTo();
         if (enchantedId == null) {
-            log.info("Game {} - {} is not attached to anything, skipping exile",
-                    gameData.id, entry.getCard().getName());
+            if (auraPerm == null) {
+                log.info("Game {} - Aura {} no longer on battlefield, skipping exile trigger",
+                        gameData.id, entry.getCard().getName());
+            } else {
+                log.info("Game {} - {} is not attached to anything, skipping exile",
+                        gameData.id, entry.getCard().getName());
+            }
             return;
         }
 
@@ -50,7 +53,6 @@ public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerB
             return;
         }
 
-        
         gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is exiled (", entry.getCard(), ")."));
         log.info("Game {} - {} exiled by {}", gameData.id,
                 enchantedCreature.getCard().getName(), entry.getCard().getName());

@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
@@ -110,12 +111,15 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
@@ -1452,6 +1456,22 @@ public class GameQueryService {
         return colors;
     }
 
+    /**
+     * Returns colors without re-entering static-bonus assembly when called from a static effect's
+     * amount evaluation. The layered pass already has the layer-5 result available for every
+     * permanent; outside that pass, the permanent's intrinsic colors are the safe fallback.
+     */
+    public Set<CardColor> colorsForStaticEvaluation(Permanent permanent) {
+        CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+        if (state != null) {
+            return Set.copyOf(state.getColors());
+        }
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        colors.addAll(permanent.getEffectiveColors());
+        colors.addAll(permanent.getGrantedColors());
+        return colors;
+    }
+
     /** Returns {@code true} if the permanent currently has the given color (layer-5 aware). */
     public boolean hasColor(GameData gameData, Permanent permanent, CardColor color) {
         return color != null && getEffectiveColors(gameData, permanent).contains(color);
@@ -1486,6 +1506,19 @@ public class GameQueryService {
      */
     public boolean cantHaveCounters(GameData gameData, Permanent permanent) {
         return cantHaveCountersForController(gameData, permanent, null);
+    }
+
+    /**
+     * Returns {@code true} if the permanent cannot become untapped, either from its own static
+     * effects or from effects granted by other permanents.
+     */
+    public boolean cantBecomeUntapped(GameData gameData, Permanent permanent) {
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBecomeUntappedEffect.class::isInstance)) {
+            return true;
+        }
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(CantBecomeUntappedEffect.class::isInstance);
     }
 
     boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
@@ -2529,7 +2562,7 @@ public class GameQueryService {
                         // control get +1/+0" (Sorin, Lord of Innistrad) would recurse forever. Read the
                         // layer-4 board state already computed for this pass instead.
                         && isCreatureInStaticPass(board, target)
-                        && (boost.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, target, boost.filter()))) {
+                        && (boost.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, boost.filter()))) {
                     accumulator.addPower(boost.powerBoost());
                     accumulator.addToughness(boost.toughnessBoost());
                     accumulator.addKeywords(boost.grantedKeywords());
@@ -2779,6 +2812,20 @@ public class GameQueryService {
     }
 
     // --- Protection & evasion ---
+
+    /** Returns {@code true} if the target permanent has protection from the source's controller. */
+    public boolean hasProtectionFromOpponents(GameData gameData, Permanent target, UUID sourceControllerId) {
+        if (target == null || sourceControllerId == null
+                || !target.isProtectionFromOpponentsPermanently()
+                || target.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus.losesAllAbilities()) {
+            return false;
+        }
+        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId);
+    }
 
     /**
      * Returns {@code true} if the target permanent has protection from the given color.
@@ -3216,6 +3263,10 @@ public class GameQueryService {
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source,
                                            Set<CardColor> sourceColors) {
+        if (hasProtectionFromOpponents(gameData, target,
+                findPermanentController(gameData, source.getId()))) {
+            return true;
+        }
         // Layer-5 aware: protection applies if the source has ANY protected color.
         for (CardColor sourceColor : sourceColors) {
             if (hasProtectionFrom(gameData, target, sourceColor)) {
@@ -3245,7 +3296,16 @@ public class GameQueryService {
 
     /** Damage-path variant of {@link #hasProtectionFromSource(GameData, Permanent, Card)}. */
     public boolean hasProtectionFromDamageSource(GameData gameData, Permanent target, Card sourceCard) {
-        return hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
+        return hasProtectionFromDamageSource(gameData, target, sourceCard, null);
+    }
+
+    public boolean hasProtectionFromDamageSource(GameData gameData, Permanent target, Card sourceCard,
+                                                 UUID sourceControllerId) {
+        UUID protectionSourcePlayerId = sourceControllerId != null
+                ? sourceControllerId
+                : sourceCard.getOwnerId();
+        return hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
+                || hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
@@ -3253,7 +3313,16 @@ public class GameQueryService {
     }
 
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
-        return hasProtectionFrom(gameData, target, sourceCard.getColor())
+        return hasProtectionFromSource(gameData, target, sourceCard, null);
+    }
+
+    public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard,
+                                           UUID sourceControllerId) {
+        UUID protectionSourcePlayerId = sourceControllerId != null
+                ? sourceControllerId
+                : sourceCard.getOwnerId();
+        return hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
+                || hasProtectionFrom(gameData, target, sourceCard.getColor())
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
@@ -3325,7 +3394,8 @@ public class GameQueryService {
         // spell like Puncture Blast). Its printed keywords (wither, etc.) apply. CR 702.80.
         return entry.getSourcePermanentId() == null
                 && entry.getCard() != null
-                && entry.getCard().getKeywords().contains(keyword);
+                && (entry.getCard().getKeywords().contains(keyword)
+                || entry.getGrantedKeywordsOnEntry().contains(keyword));
     }
 
     /**
@@ -3854,7 +3924,8 @@ public class GameQueryService {
      * Returns {@code true} if the given card cannot be countered, either because it has
      * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
      * individually made uncounterable while on the stack (e.g. Vexing Shusher), or because
-     * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells.
+     * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells, or
+     * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
@@ -3979,6 +4050,36 @@ public class GameQueryService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ETBDoubleTriggerEffect etb
                         && !etb.requiresEnteringControllerMatch()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Returns the number of additional copies for a triggered ability sourced by a permanent.
+     * Each matching static effect contributes one copy, and a static effect never applies to the
+     * permanent carrying that effect.
+     */
+    public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
+                                                        Permanent triggeringPermanent) {
+        if (controllerId == null || triggeringPermanent == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+
+        int count = 0;
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId);
+        for (Permanent staticSource : battlefield) {
+            if (staticSource.getId().equals(triggeringPermanent.getId())
+                    || staticSource.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalTriggeredAbilityEffect additional
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                triggeringPermanent, additional.sourcePredicate(), filterContext)) {
                     count++;
                 }
             }
@@ -4369,6 +4470,24 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if two cards in non-battlefield zones share at least one creature type.
+     * Only printed subtypes and keywords are relevant for cards in a graveyard.
+     */
+    public boolean shareCreatureType(Card a, Card b) {
+        Set<CardSubtype> aTypes = Set.copyOf(a.getSubtypes());
+        Set<CardSubtype> bTypes = Set.copyOf(b.getSubtypes());
+        boolean aChangeling = a.getKeywords().contains(Keyword.CHANGELING);
+        boolean bChangeling = b.getKeywords().contains(Keyword.CHANGELING);
+        if (aChangeling) {
+            return bChangeling || !bTypes.isEmpty();
+        }
+        if (bChangeling) {
+            return !aTypes.isEmpty();
+        }
+        return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /**
      * Returns {@code true} if the two permanents share at least one of the card types artifact,
      * creature, or land (Gauntlets of Chaos' "shares one of those types with it"). Uses each
      * permanent's card types.
@@ -4717,6 +4836,9 @@ public class GameQueryService {
                     + getControllerDamageBonus(gameData, entry);
         }
         UUID controllerId = entry != null ? entry.getControllerId() : null;
+        Permanent source = entry != null && entry.getSourcePermanentId() != null
+                ? findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
         return (damage + bonus) * getDamageMultiplier(gameData)
                 * getControllerDamageMultiplier(gameData, controllerId, entry, false)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
@@ -4766,6 +4888,11 @@ public class GameQueryService {
      * @param isCombat whether this is combat damage
      */
     int getControllerDamageMultiplier(GameData gameData, UUID controllerId, StackEntry entry, boolean isCombat) {
+        return getControllerDamageMultiplier(gameData, controllerId, entry, isCombat, null);
+    }
+
+    private int getControllerDamageMultiplier(GameData gameData, UUID controllerId, StackEntry entry,
+                                              boolean isCombat, Permanent damageSource) {
         if (controllerId == null) return 1;
 
         int[] multiplier = {1};
@@ -4782,14 +4909,45 @@ public class GameQueryService {
                             multiplier[0] *= 2;
                         }
                     }
+                } else if (!isCombat && entry != null && damageSource == null
+                        && effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
+                        && multiplyingEffect.matchesStackEntrySource(entry, p)) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplier();
                 }
             }
         });
+        if (damageSource != null && controllerId.equals(findPermanentController(gameData, damageSource.getId()))) {
+            multiplier[0] *= getSourceDamageMultiplier(gameData, controllerId, damageSource);
+        }
         // Insult: "if a source you control would deal damage this turn, it deals double instead"
         int turnDoublings = gameData.controllerDamageDoublingsThisTurn.getOrDefault(controllerId, 0);
         for (int i = 0; i < turnDoublings; i++) {
             multiplier[0] *= 2;
         }
+        return multiplier[0];
+    }
+
+    public int getSourceDamageMultiplier(GameData gameData, UUID controllerId, Permanent damageSource) {
+        if (controllerId == null || damageSource == null
+                || !controllerId.equals(findPermanentController(gameData, damageSource.getId()))) {
+            return 1;
+        }
+
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, effectSource) -> {
+            if (!playerId.equals(controllerId)) return;
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(effectSource.getCard().getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentSnapshot(effectSource);
+            for (CardEffect effect : effectSource.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                        damageSource, multiplyingEffect.sourceFilter(), context)) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplier();
+                }
+            }
+        });
         return multiplier[0];
     }
 

@@ -226,6 +226,7 @@ public class GraveyardService {
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+        gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
 
         // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
@@ -347,6 +348,9 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD) {
             collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card);
         }
+        if (!card.isToken() && isPermanentCard(card)) {
+            triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
             if (sourceZone == Zone.LIBRARY) {
@@ -364,6 +368,15 @@ public class GraveyardService {
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
+    }
+
+    private boolean isPermanentCard(Card card) {
+        return card.hasType(CardType.LAND)
+                || card.hasType(CardType.CREATURE)
+                || card.hasType(CardType.ENCHANTMENT)
+                || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.PLANESWALKER)
+                || card.hasType(CardType.BATTLE);
     }
 
     /**

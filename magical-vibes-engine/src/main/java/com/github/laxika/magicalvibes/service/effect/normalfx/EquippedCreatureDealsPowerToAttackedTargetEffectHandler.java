@@ -79,7 +79,8 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
         Card source = damageEntry.getEffectiveDamageSourceCard();
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)
                 || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, damageEntry)
-                || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
+                || gameQueryService.hasProtectionFromSource(gameData, target, source,
+                    damageEntry.getControllerId())) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return;
         }

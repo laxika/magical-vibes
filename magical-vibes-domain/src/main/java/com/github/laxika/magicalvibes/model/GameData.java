@@ -117,6 +117,8 @@ public class GameData {
      * Populated during spell payment and consumed when the spell resolves (e.g. Repel Intruders).
      */
     public final Map<UUID, java.util.EnumSet<ManaColor>> spellCastColorsSpent = new ConcurrentHashMap<>();
+    /** Per-color amounts of mana spent to cast a spell, keyed by spell card instance id. */
+    public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentByColor = new ConcurrentHashMap<>();
     /**
      * Names of the cards spliced onto a spell (CR 702.47), keyed by host spell card instance id.
      * Populated as splice costs are paid and read while the spell is on the stack (Minamo's Meddling).
@@ -135,8 +137,12 @@ public class GameData {
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who put at least one counter on a creature this turn. */
+    public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
+    /** Cumulative count of attacking creatures by subtype each player declared this turn. */
+    public final Map<UUID, Map<CardSubtype, Integer>> creaturesAttackedCountBySubtypeThisTurn = new ConcurrentHashMap<>();
     /**
      * Result of each player's most recent clash, keyed by the clashing player's id. Written by the
      * clash-source effect ({@code ClashEffect}) and read within the same spell/ability resolution by
@@ -186,7 +192,7 @@ public class GameData {
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final InteractionState interaction = new InteractionState();
-    public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
+    public final List<StackEntry> stack = Collections.synchronizedList(new TriggerAwareStackList(this));
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
     public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -212,6 +218,7 @@ public class GameData {
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
+    private int activeTriggeredAbilityCopies = 1;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     /** Cards in each player's command zone (CR 903.6). Used by Eminence and similar command-zone abilities. */
     public final Map<UUID, List<Card>> playerCommandZones = new ConcurrentHashMap<>();
@@ -273,6 +280,10 @@ public class GameData {
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
+    /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
+    public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
+    /** Spells whose successful resolution is replaced by exile with a dream counter. */
+    public final Set<UUID> spellsWithDreamCounterOnResolution = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
@@ -551,6 +562,8 @@ public class GameData {
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
     public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose own damage is fully prevented until the beginning of their next turn (Morningtide's Light). */
+    public final Set<UUID> playersWithAllPlayerDamagePreventedUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
@@ -1146,6 +1159,11 @@ public class GameData {
      *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Crown permanent IDs that have replaced a token creation event this turn. */
+    public final Set<UUID> tokenCreationReplacementUsedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Token creation event paused for a Mirrormind Crown replacement choice. */
+    public PendingTokenCreationReplacement pendingTokenCreationReplacement;
+
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect} in the
      *  {@code ON_ATTACK} slot this turn — "attacks for the first time each turn" (Aurelia, the
      *  Warleader). Kept separate from {@link #oncePerTurnTriggersFiredThisTurn} so a permanent with
@@ -1718,8 +1736,49 @@ public class GameData {
     public void enqueueTrigger(StackEntry entry) {
         if (manaAbilityResolutionDepth > 0) {
             pendingManaAbilityTriggers.add(entry);
+            for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
+                pendingManaAbilityTriggers.add(new StackEntry(entry));
+            }
         } else {
             stack.add(entry);
+        }
+    }
+
+    /**
+     * Begins a trigger-collection scope in which newly queued triggered abilities are multiplied.
+     * Returns the previous scope value for restoration by the caller.
+     */
+    public int beginTriggeredAbilityCopies(int copies) {
+        int previous = activeTriggeredAbilityCopies;
+        activeTriggeredAbilityCopies = Math.max(1, copies);
+        return previous;
+    }
+
+    public void restoreTriggeredAbilityCopies(int previous) {
+        activeTriggeredAbilityCopies = previous;
+    }
+
+    private int activeTriggeredAbilityCopies() {
+        return activeTriggeredAbilityCopies;
+    }
+
+    private static final class TriggerAwareStackList extends ArrayList<StackEntry> {
+
+        private final GameData gameData;
+
+        private TriggerAwareStackList(GameData gameData) {
+            this.gameData = gameData;
+        }
+
+        @Override
+        public boolean add(StackEntry entry) {
+            boolean added = super.add(entry);
+            if (added && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                for (int i = 1; i < gameData.activeTriggeredAbilityCopies(); i++) {
+                    super.add(new StackEntry(entry));
+                }
+            }
+            return added;
         }
     }
 
@@ -1728,6 +1787,9 @@ public class GameData {
      */
     public void queueInteraction(PendingInteraction interaction) {
         pendingInteractions.addLast(interaction);
+        for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
+            pendingInteractions.addLast(interaction);
+        }
     }
 
     /**
@@ -1737,6 +1799,9 @@ public class GameData {
      */
     public void queueInteractionFirst(PendingInteraction interaction) {
         pendingInteractions.addFirst(interaction);
+        for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
+            pendingInteractions.addFirst(interaction);
+        }
     }
 
     /**
@@ -2074,6 +2139,20 @@ public class GameData {
         spellCastColorsSpent.remove(spellCardId);
     }
 
+    public void setSpellCastManaSpentByColor(UUID spellCardId,
+                                             java.util.EnumMap<ManaColor, Integer> manaSpentByColor) {
+        spellCastManaSpentByColor.put(spellCardId, new java.util.EnumMap<>(manaSpentByColor));
+    }
+
+    public int getSpellCastManaSpentByColor(UUID spellCardId, ManaColor color) {
+        java.util.EnumMap<ManaColor, Integer> spent = spellCastManaSpentByColor.get(spellCardId);
+        return spent == null ? 0 : spent.getOrDefault(color, 0);
+    }
+
+    public void clearSpellCastManaSpentByColor(UUID spellCardId) {
+        spellCastManaSpentByColor.remove(spellCardId);
+    }
+
     public void setSpellCastManaSpentOnX(UUID spellCardId, java.util.EnumMap<ManaColor, Integer> spentOnX) {
         spellCastManaSpentOnX.put(spellCardId, spentOnX);
     }
@@ -2284,17 +2363,20 @@ public class GameData {
 
     /** Adds a card to exile without source tracking. */
     public void addToExile(UUID ownerId, Card card) {
-        exiledCards.add(new ExiledCardEntry(card, ownerId, null));
+        spellsWithDreamCounterOnResolution.remove(card.getId());
+        exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
     }
 
     /** Adds a card to exile with source permanent tracking. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId) {
-        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId));
+        spellsWithDreamCounterOnResolution.remove(card.getId());
+        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, false, turnNumber));
     }
 
     /** Adds a card to exile with source permanent tracking and an explicit face-down status. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown) {
-        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown));
+        spellsWithDreamCounterOnResolution.remove(card.getId());
+        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, turnNumber));
     }
 
     /** Adds a card to exile with source tracking, face-down status, and its exiling player. */
@@ -2409,7 +2491,15 @@ public class GameData {
 
     /** Removes all exile entries tracked with the given source permanent. */
     public void clearExiledByPermanent(UUID sourcePermanentId) {
-        exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
+        List<UUID> removedIds;
+        synchronized (exiledCards) {
+            removedIds = exiledCards.stream()
+                    .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                    .map(e -> e.card().getId())
+                    .toList();
+            exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
+        }
+        removedIds.forEach(exiledCardDreamCounters::remove);
     }
 
     /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
@@ -2665,6 +2755,8 @@ public class GameData {
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
+        copy.playersWithAllPlayerDamagePreventedUntilNextTurn
+                .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -2751,7 +2843,10 @@ public class GameData {
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
+        this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
+                copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
@@ -2788,6 +2883,8 @@ public class GameData {
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
+        copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
+        copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
@@ -2818,6 +2915,8 @@ public class GameData {
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
+        copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
+        copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
 
@@ -2909,7 +3008,15 @@ public class GameData {
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
+        copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
+                ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume =
+                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade =
+                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
+        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId =
+                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeForgottenLoreResume =
                 this.graveyardTargetOperation.resolutionTimeForgottenLoreResume;
         copy.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume =
@@ -3104,6 +3211,8 @@ public class GameData {
         copy.spellCastConvergeValue.putAll(this.spellCastConvergeValue);
         this.spellCastColorsSpent.forEach((k, v) ->
                 copy.spellCastColorsSpent.put(k, java.util.EnumSet.copyOf(v)));
+        this.spellCastManaSpentByColor.forEach((k, v) ->
+                copy.spellCastManaSpentByColor.put(k, new java.util.EnumMap<>(v)));
         this.spellCastManaSpentOnX.forEach((k, v) ->
                 copy.spellCastManaSpentOnX.put(k, new java.util.EnumMap<>(v)));
         copy.spellCastSplicedNames.putAll(this.spellCastSplicedNames);

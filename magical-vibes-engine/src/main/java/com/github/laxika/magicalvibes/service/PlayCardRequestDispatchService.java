@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -36,6 +37,15 @@ public class PlayCardRequestDispatchService {
         if (Boolean.TRUE.equals(request.flashback())) {
             CardType chosenGraveyardType = request.chosenGraveyardType() != null
                     ? CardType.valueOf(request.chosenGraveyardType()) : null;
+            if (!listOrEmpty(request.beholdPermanentIds()).isEmpty()
+                    || !listOrEmpty(request.beholdHandCardIndices()).isEmpty()) {
+                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
+                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
+                        request.sacrificePermanentId(), listOrEmpty(request.beholdPermanentIds()),
+                        listOrEmpty(request.beholdHandCardIndices()));
+                return;
+            }
             gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                     listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
                     listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
@@ -43,7 +53,8 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (request.fromExileCardId() != null) {
-            gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
+            gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {
@@ -51,6 +62,8 @@ public class PlayCardRequestDispatchService {
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
             return;
         }
+        CardSubtype chosenBeholdType = request.beholdCreatureType() != null
+                ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
         // former per-field branches keyed on, so an empty list still means "cost not used".
         if (request.sharedColorDiscardHandCardIndex() != null) {
@@ -79,10 +92,13 @@ public class PlayCardRequestDispatchService {
                 nullIfEmpty(request.imposedSacrificePermanentIds()),
                 nullIfEmpty(request.additionalCostSacrificePermanentIds()),
                 request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
-                Boolean.TRUE.equals(request.buyback()));
+                Boolean.TRUE.equals(request.buyback()),
+                request.beholdPermanentId(), request.beholdHandCardIndex(),
+                listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
+                chosenBeholdType);
     }
 
-    private static List<UUID> listOrEmpty(List<UUID> list) {
+    private static <T> List<T> listOrEmpty(List<T> list) {
         return list != null ? list : List.of();
     }
 

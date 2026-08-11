@@ -912,6 +912,12 @@ public class CastingCostService {
                 && canPayImposedSacrificeTax(gameData, playerId, card);
     }
 
+    /** Checks additional costs for a spell being cast from a graveyard zone. */
+    public boolean canPayAdditionalSpellCostsFromGraveyard(GameData gameData, UUID playerId, Card card) {
+        return additionalSpellCostService.satisfiableForGraveyardCast(gameData, playerId, card)
+                && canPayImposedSacrificeTax(gameData, playerId, card);
+    }
+
     /** Returns the maximum generic mana reduction currently available from delve, if present. */
     public int maximumDelveReduction(GameData gameData, UUID playerId, Card card,
                                      int effectiveXValue, int additionalGenericCost) {

@@ -575,6 +575,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |
+| `ConditionalEffect(new ControllerMainPhase(), wrapped)` | - | yes | - | source/controller is the active player during precombat or postcombat main |
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |

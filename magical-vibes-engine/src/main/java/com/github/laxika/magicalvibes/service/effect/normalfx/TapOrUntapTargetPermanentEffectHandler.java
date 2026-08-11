@@ -55,6 +55,9 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
     private void tapOrUntap(GameData gameData, StackEntry entry, Permanent target) {
         if (target.isTapped()) {
+            if (gameQueryService.cantBecomeUntapped(gameData, target)) {
+                return;
+            }
             target.untap();
             triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
             

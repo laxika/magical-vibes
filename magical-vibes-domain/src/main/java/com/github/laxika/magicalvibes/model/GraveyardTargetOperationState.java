@@ -32,6 +32,8 @@ public class GraveyardTargetOperationState {
      * the graveyard-choice flow so the counter survives onto the resulting stack entry's targetId.
      */
     public UUID spellCounterTargetId;
+    /** Battlefield/player targets selected for a modal spell paired with this graveyard choice. */
+    public List<UUID> permanentTargetIds;
     /**
      * Resolution-time "exile up to one target card from a graveyard" (Grixis Sojourners' death and
      * cycling triggers). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}
@@ -48,6 +50,12 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
+    /** Resolution-time optional filtered exile whose successful choice has a life-loss rider. */
+    public boolean resolutionTimeExileThenEachOpponentLosesLifeResume;
+    /** Whether the optional filtered exile choice has been answered. */
+    public boolean resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
+    /** The card chosen by the optional filtered exile choice, or {@code null} for decline. */
+    public UUID resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
      * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} only records the chosen card on

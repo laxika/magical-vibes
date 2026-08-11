@@ -126,6 +126,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
                         .animateFound(effect.animateFound())
+                        .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
+                                ? entry.getBeholdChosenSubtype() : null)
                         .build(),
                 prompt, restricted);
 

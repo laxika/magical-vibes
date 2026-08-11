@@ -195,6 +195,7 @@ public class UntapStepService {
                 boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
                 // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
                 boolean hasCounterLock = counterLockPreventsUntap(p);
+                boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
@@ -211,6 +212,8 @@ public class UntapStepService {
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
                 } else if (blockedByStorageMatrix || blockedByStaticOrb) {
                     // Storage Matrix / untap cap: not selected to untap — stays tapped this step
+                } else if (cannotBecomeUntapped) {
+                    // A hard prevention effect such as Blossombind also suppresses optional untap choices.
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
@@ -400,8 +403,10 @@ public class UntapStepService {
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
             boolean hasCounterLock = counterLockPreventsUntap(p);
+            boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
-                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
+                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock
+                    && !hasCounterLock && !cannotBecomeUntapped) {
                 candidates.add(p.getId());
             }
         }

@@ -346,13 +346,14 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
+        boolean manaValueAtLeastFour = card.getManaValue() >= 4;
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
-                || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
+                || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
         return hasRestricted
                 ? totalCost.canPay(pool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
-                creatureSpellOnly, false, legendarySpellOnly)
+                creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour)
                 : totalCost.canPay(pool, kickerXValue);
     }
 
@@ -467,14 +468,16 @@ public class GameActionAvailabilityService {
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
-        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
+        boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty();
         for (ManaCost cost : candidateCosts) {
             boolean canAfford = hasRestricted
                     ? cost.canPay(pool, effectiveAdditionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                     instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
-                    creatureSpellOnly, false, legendarySpellOnly, subtypeOrPlaneswalkerSpellContext)
+                    creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
+                    subtypeOrPlaneswalkerSpellContext)
                     : cost.canPay(pool, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
@@ -808,7 +811,7 @@ public class GameActionAvailabilityService {
 
             // Aftermath / flashback halves may carry additional cast costs (e.g. Finish's
             // sacrifice a creature) on the cast half, not the parent split card.
-            if (!castingCostService.canPayAdditionalSpellCosts(gameData, playerId, castHalf)) {
+            if (!castingCostService.canPayAdditionalSpellCostsFromGraveyard(gameData, playerId, castHalf)) {
                 continue;
             }
 

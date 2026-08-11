@@ -230,6 +230,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
      *  Used by Soulcipher Board. */
     ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a nontoken permanent card the controller owns is put into their graveyard
+     *  from anywhere (battlefield, hand, library, stack, exile). Fires on permanents the graveyard
+     *  owner controls. Checked in {@code GraveyardService.addCardToGraveyard} via
+     *  {@code TriggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers}. */
+    ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card is put into an opponent's graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents controlled by an opponent of
      *  the graveyard owner. Uses the card's printed types, so tokens never trigger. Checked in

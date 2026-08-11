@@ -35,6 +35,8 @@ class CreateTokenEffectHandlerTest {
     private GameQueryService gameQueryService;
     @Mock
     private AmountEvaluationService amountEvaluationService;
+    @Mock
+    private CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
 
     private CreateTokenEffectHandler handler;
     private GameData gd;
@@ -47,7 +49,8 @@ class CreateTokenEffectHandlerTest {
         gd.orderedPlayerIds.add(playerId);
         gd.playerIds.add(playerId);
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
-        handler = new CreateTokenEffectHandler(permanentControlSupport, gameQueryService, amountEvaluationService);
+        handler = new CreateTokenEffectHandler(
+                permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler);
     }
 
     @Test

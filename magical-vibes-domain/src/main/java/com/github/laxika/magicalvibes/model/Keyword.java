@@ -65,6 +65,7 @@ public enum Keyword {
     MADNESS,
     ESCALATE,
     DECAYED,
+    BLIGHT,
     SPLICE,
     DELIRIUM,
     PREPARED,

@@ -31,26 +31,37 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         int maxTargets,
         DynamicAmount dynamicMaxTargets,
         boolean xScaled,
-        boolean exactTargets
+        boolean exactTargets,
+        int minTargets,
+        boolean requireSharedCreatureType
 ) implements CardEffect {
 
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets) {
-        this(filter, maxTargets, null, false, false);
+        this(filter, maxTargets, null, false, false, 0, false);
     }
 
     /** The dynamic-cap form: the cap is counted off the targeted player as the spell is cast. */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, DynamicAmount dynamicMaxTargets) {
-        this(filter, 0, dynamicMaxTargets, false, false);
+        this(filter, 0, dynamicMaxTargets, false, false, 0, false);
     }
 
     /** Exact-X form: choose exactly the spell's paid X matching cards (Shattered Crypt). */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets, boolean xScaled) {
-        this(filter, maxTargets, null, xScaled, false);
+        this(filter, maxTargets, null, xScaled, false, 0, false);
     }
 
     /** Fixed-exact form: choose exactly {@code targetCount} matching cards (Death's Duet). */
     public static ReturnTargetCardsFromGraveyardToHandEffect exactly(CardPredicate filter, int targetCount) {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, targetCount, null, false, true);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, targetCount, null, false, true, targetCount, false);
+    }
+
+    public static ReturnTargetCardsFromGraveyardToHandEffect exactlyOne(CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, false, 1, false);
+    }
+
+    public static ReturnTargetCardsFromGraveyardToHandEffect exactlyTwoSharingCreatureType(CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 2, null, false, false, 2, true);
     }
 
     @Override

@@ -85,7 +85,7 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard(), entry.getControllerId()))) {
                     damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 } else {
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));

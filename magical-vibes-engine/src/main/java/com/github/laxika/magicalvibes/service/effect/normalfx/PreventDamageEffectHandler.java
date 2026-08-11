@@ -86,6 +86,12 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to "
                         + gameData.playerIdToName.get(controllerId) + " this turn is prevented."));
             }
+            case ALL_TO_CONTROLLER_UNTIL_NEXT_TURN -> {
+                UUID controllerId = entry.getControllerId();
+                gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.add(controllerId);
+                gameLogService.append(gameData, GameLog.text("All damage that would be dealt to "
+                        + gameData.playerIdToName.get(controllerId) + " until their next turn is prevented."));
+            }
             case ALL_TO_CONTROLLER_FROM_ATTACKERS -> {
                 UUID controllerId = entry.getControllerId();
                 gameData.playersWithDamageFromAttackersPrevented.add(controllerId);

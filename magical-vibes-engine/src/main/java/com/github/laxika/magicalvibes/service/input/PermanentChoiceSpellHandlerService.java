@@ -207,6 +207,7 @@ public class PermanentChoiceSpellHandlerService {
                             null
             );
             entry.setCopy(ect.copy());
+            entry.setSourceZone(Zone.EXILE);
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -216,7 +217,7 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(ect.cardToCast()).text(" targets " + targetName + " (Knowledge Pool).").build());
             log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), false);
+            triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
@@ -275,6 +276,7 @@ public class PermanentChoiceSpellHandlerService {
                 chosen
         );
         entry.setCopy(ect.copy());
+        entry.setSourceZone(Zone.EXILE);
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(ect.controllerId(), card);
@@ -285,7 +287,7 @@ public class PermanentChoiceSpellHandlerService {
         gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + String.join(", ", targetNames) + ".").build());
         log.info("Game {} - {} multi-target cast-from-exile targets {}", gameData.id, card.getName(), targetNames);
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), Zone.EXILE);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
 
         resumeAfterExileCast(gameData, ect.controllerId());

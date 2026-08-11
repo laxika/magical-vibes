@@ -63,6 +63,10 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
 
         if (boost.scope() == EachPermanentScope.TARGET_PLAYER) {
             UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null) {
+                List<UUID> targets = entry.targetsForEffect(boost);
+                targetPlayerId = targets.isEmpty() ? null : targets.getFirst();
+            }
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                 return;
             }

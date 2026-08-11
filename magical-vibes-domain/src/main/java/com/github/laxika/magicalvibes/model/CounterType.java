@@ -93,5 +93,17 @@ public enum CounterType {
     VERSE,
     VITALITY,
     VORTEX,
-    WAGE
+    WAGE,
+    FLYING,
+    FIRST_STRIKE,
+    LIFELINK;
+
+    public Keyword grantedKeyword() {
+        return switch (this) {
+            case FLYING -> Keyword.FLYING;
+            case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
+            case LIFELINK -> Keyword.LIFELINK;
+            default -> null;
+        };
+    }
 }

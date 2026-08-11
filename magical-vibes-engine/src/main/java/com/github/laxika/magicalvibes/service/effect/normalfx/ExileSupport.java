@@ -130,6 +130,21 @@ public class ExileSupport {
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 
+    /**
+     * Grants permission until the next end step belonging to {@code ownerId}. If that player's
+     * current end step has already begun, the permission lasts through their following turn.
+     */
+    public void grantPlayUntilOwnersNextEndStep(GameData gameData, UUID cardId, UUID ownerId) {
+        boolean ownerIsActive = ownerId.equals(gameData.activePlayerId);
+        boolean currentEndStepHasBegun = gameData.currentStep != null
+                && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
+        int expireTurn = gameData.turnNumber + (ownerIsActive
+                ? currentEndStepHasBegun ? 2 : 0
+                : 1);
+        gameData.exilePlayPermissions.put(cardId, ownerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;

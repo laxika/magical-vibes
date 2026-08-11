@@ -46,7 +46,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
         if (rawDamage > 0) {
             if (!(gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
+                    && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {
                 damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage);
                 gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + rawDamage + " damage to ", target.getCard(), "."));
             } else {

@@ -649,9 +649,15 @@ public class SpellCastTriggerCollectorService {
         }
         if (spellEntry == null) return false;
 
+        if (trigger.castSpellTargetCondition() != null
+                && !targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
+                trigger.castSpellTargetCondition(), match.controllerId(), match.permanent())) {
+            return false;
+        }
+
         StackEntry snapshot = new StackEntry(spellEntry);
         CopyControllerCastSpellEffect copyEffect =
-                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId());
+                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords());
 
         // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
         // prompt; accepting puts the copy-creating ability on the stack.
@@ -1351,6 +1357,16 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean hasOptionalSingleTarget(Card card, CardEffect effect) {
+        if (card.getSpellTargets().size() != 1) {
+            return false;
+        }
+        var target = card.getSpellTargets().getFirst();
+        return target.getMinTargets() == 0
+                && target.getMaxTargets() == 1
+                && card.getEffectTargetIndex(effect) == target.getIndex();
     }
 
     /**

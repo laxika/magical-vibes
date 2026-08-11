@@ -34,7 +34,10 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (!applies) {
             return 0;
         }
-        if (!predicateEvaluationService.matchesCardPredicate(context.spell(), reduce.predicate(), null)) {
+        if (!predicateEvaluationService.matchesCardPredicate(
+                context.spell(), reduce.predicate(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
+                context.gameData(), context.castingPlayerId())) {
             return 0;
         }
         // Evaluated against the source permanent so source-relative amounts (counters on this

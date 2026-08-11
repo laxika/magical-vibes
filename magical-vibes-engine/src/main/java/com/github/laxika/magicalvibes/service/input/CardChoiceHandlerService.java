@@ -932,11 +932,13 @@ public class CardChoiceHandlerService {
                 newValid.remove(Integer.valueOf(cardIndex));
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                         choice.decidingPlayerId(), targetPlayerId, choice.controllerId(), true,
-                        newValid, remaining, revealed, choice.discardCount(), choice.destination()));
+                        newValid, remaining, revealed, choice.discardCount(), choice.destination(),
+                        choice.sourcePermanentId()));
             } else {
                 gameData.interaction.clearAwaitingInput();
                 playerInteractionSupport.beginRevealCardsDiscardStage(gameData, targetPlayerId,
-                        choice.controllerId(), revealed, choice.discardCount(), choice.destination());
+                        choice.controllerId(), revealed, choice.discardCount(), choice.destination(),
+                        choice.sourcePermanentId());
             }
             return;
         }
@@ -956,7 +958,11 @@ public class CardChoiceHandlerService {
             String controllerName = player.getUsername();
 
             if (choice.destination() == HandChoiceDestination.EXILE) {
-                exileService.exileCard(gameData, targetPlayerId, card);
+                if (choice.sourcePermanentId() != null) {
+                    exileService.exileCard(gameData, targetPlayerId, card, choice.sourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, targetPlayerId, card);
+                }
                 gameLogService.append(gameData, GameLog.textCardText(
                         controllerName + " chooses ", card, " and exiles it from " + targetName + "'s hand."));
                 log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, controllerName, card.getName(), targetName);
@@ -988,7 +994,7 @@ public class CardChoiceHandlerService {
         if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
             playerInteractionSupport.beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId,
                     choice.controllerId(), remainingRevealed, remainingDiscards, choice.discardCount(),
-                    choice.destination());
+                    choice.destination(), choice.sourcePermanentId());
             return;
         }
 
@@ -1300,9 +1306,11 @@ public class CardChoiceHandlerService {
                 return;
             }
             // Untap
-            source.untap();
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-            log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
+            if (!gameQueryService.cantBecomeUntapped(gameData, source)) {
+                source.untap();
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+                log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
+            }
 
             // Transform
             Card originalCard = source.getOriginalCard();

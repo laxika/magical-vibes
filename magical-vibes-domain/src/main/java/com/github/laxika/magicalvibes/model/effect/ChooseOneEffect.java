@@ -15,7 +15,8 @@ import java.util.List;
  * {@code choicesMax} is the maximum (inclusive). Classic "choose one" is {@code (1, 1)};
  * "choose two" is {@code (2, 2)}; "choose one or more" is {@code (1, options.size())}.
  */
-public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax)
+public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                              boolean allModesWhenOptionalCostPaid)
         implements CardEffect {
 
     public ChooseOneEffect {
@@ -28,20 +29,24 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options) {
-        this(options, false, 1, 1);
+        this(options, false, 1, 1, false);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional) {
-        this(options, optional, 1, 1);
+        this(options, optional, 1, 1, false);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, int choicesRequired) {
-        this(options, false, choicesRequired, choicesRequired);
+        this(options, false, choicesRequired, choicesRequired, false);
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax) {
+        this(options, optional, choicesRequired, choicesMax, false);
     }
 
     /** "Choose one or more —" modal: at least one mode, up to every mode. */
     public static ChooseOneEffect oneOrMore(List<ChooseOneOption> options) {
-        return new ChooseOneEffect(options, false, 1, options.size());
+        return new ChooseOneEffect(options, false, 1, options.size(), false);
     }
 
     /**

@@ -109,6 +109,11 @@ public class GrantedAbilityViewFactory {
             result.add(new GrantedAbilityView(
                     "Protection from non-" + formatSubtype(subtype) + " creatures", null));
         }
+        if (permanent.isProtectionFromOpponentsPermanently()
+                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !bonus.losesAllAbilities()) {
+            result.add(new GrantedAbilityView("Protection from each opponent", null));
+        }
 
         // Multiple sources may grant the same final ability. Keep their separate source rows,
         // but collapse exact duplicates caused by repeated query paths.

@@ -282,6 +282,58 @@
       </div>
     }
 
+    @if (choice.targeting.selectingExileCounterCost) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Remove {{ choice.targeting.exileCounterCostRequired }} counters from creatures to cast {{ choice.targeting.exileCounterCostCardName }} ({{ choice.targeting.exileCounterCostSelectedIds().length }}/{{ choice.targeting.exileCounterCostRequired }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmExileCounterCost()" [disabled]="choice.targeting.exileCounterCostSelectedIds().length !== choice.targeting.exileCounterCostRequired">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelExileCounterCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingBehold) {
+      <div class="side-prompt prompt-targeting">
+        @if (choice.targeting.beholdChosenCreatureType) {
+          <span class="side-prompt-text">Cast {{ choice.targeting.beholdCardName }} &mdash; choose a creature type to behold:</span>
+          <select class="form-select" [value]="choice.targeting.beholdChosenType" (change)="choice.targeting.chooseBeholdType($any($event.target).value)">
+            <option value="" disabled>Choose a creature type</option>
+            @for (type of choice.targeting.beholdCreatureTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+          <button class="btn-side-prompt" (click)="choice.targeting.declineBehold()">Cast without beholding</button>
+        } @else {
+          <span class="side-prompt-text">Cast {{ choice.targeting.beholdCardName }} &mdash; behold {{ choice.targeting.beholdRequiredCount }} {{ choice.targeting.beholdSubtype.toLowerCase() }}:</span>
+        }
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          @if (!choice.targeting.beholdChosenCreatureType && choice.targeting.beholdRequiredCount === 1) {
+            <button class="btn-side-prompt" (click)="choice.targeting.chooseBeholdPermanent()">Exile a {{ choice.targeting.beholdSubtype.toLowerCase() }} permanent</button>
+            <button class="btn-side-prompt" (click)="choice.targeting.chooseBeholdHandCard()">Exile a {{ choice.targeting.beholdSubtype.toLowerCase() }} card from hand</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelBehold()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingBeholdPermanent) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Select a {{ choice.targeting.beholdSubtype.toLowerCase() }} permanent to behold for {{ choice.targeting.beholdCardName }} ({{ choice.targeting.beholdSelectedCount }}/{{ choice.targeting.beholdRequiredCount }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelBehold()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingBeholdHandCard) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Select a {{ choice.targeting.beholdSubtype.toLowerCase() }} card in your hand to behold for {{ choice.targeting.beholdCardName }} ({{ choice.targeting.beholdSelectedCount }}/{{ choice.targeting.beholdRequiredCount }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelBehold()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.selectingAlternateCostHandCard) {
       <div class="side-prompt prompt-targeting">
         @if (choice.targeting.alternateCostRevealsHandCard) {

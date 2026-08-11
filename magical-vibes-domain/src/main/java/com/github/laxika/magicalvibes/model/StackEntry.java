@@ -76,6 +76,8 @@ public class StackEntry {
      * only ever rides a spell entry.
      */
     @Setter private boolean buyback;
+    /** Whether this spell's put-counter additional cost was paid. */
+    @Setter private boolean putCounterCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -100,6 +102,10 @@ public class StackEntry {
     /** Whether this spell was cast for its overload cost (CR 702.96a): every "target" in its text
      *  reads "each", and per CR 702.96b the spell has no targets at all. */
     @Setter private boolean overloaded;
+    /** Card exiled as an additional behold cost, pending the permanent spell entering. */
+    @Setter private Card beheldCard;
+    @Setter private UUID beheldCardOwnerId;
+    @Setter private CardSubtype beholdChosenSubtype;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -426,6 +432,7 @@ public class StackEntry {
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
         this.buyback = source.buyback;
+        this.putCounterCostPaid = source.putCounterCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -433,6 +440,9 @@ public class StackEntry {
         this.bestowOriginalCard = source.bestowOriginalCard;
         this.prowl = source.prowl;
         this.overloaded = source.overloaded;
+        this.beheldCard = source.beheldCard;
+        this.beheldCardOwnerId = source.beheldCardOwnerId;
+        this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;

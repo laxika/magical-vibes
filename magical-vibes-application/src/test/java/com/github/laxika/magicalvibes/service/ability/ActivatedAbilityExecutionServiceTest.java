@@ -441,6 +441,26 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        @DisplayName("Source-color any-color mana carries the source into the color choice")
+        void sourceColorAnyColorManaCarriesSourceIntoChoice() {
+            Card card = createCreature("Test Source-Color Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect(true));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Add one mana and become that color.");
+
+            stubIsCreature(perm, true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(interactionHandlerRegistry).begin(eq(gameData), argThat(interaction ->
+                    interaction instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice colorChoice
+                            && colorChoice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.ManaColorChoice choice
+                            && perm.getId().equals(choice.sourcePermanentId())));
+        }
+
+        @Test
         @DisplayName("SkipNextUntapEffect(SELF) rider on a mana ability increments skipUntapCount inline")
         void skipNextUntapSelfRiderOnManaAbility() {
             Card card = createCreature("Oasis Ritualist");

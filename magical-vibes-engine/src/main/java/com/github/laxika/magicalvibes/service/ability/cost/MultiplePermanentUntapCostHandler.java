@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
@@ -24,13 +25,16 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
     private final UntapMultiplePermanentsCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final UUID sourcePermanentId;
 
     public MultiplePermanentUntapCostHandler(UntapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
-                                             GameLogService gameLogService, UUID sourcePermanentId) {
+                                             GameLogService gameLogService, GameQueryService gameQueryService,
+                                             UUID sourcePermanentId) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
+        this.gameQueryService = gameQueryService;
         this.sourcePermanentId = sourcePermanentId;
     }
 
@@ -49,6 +53,7 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
     public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
         return candidateBattlefields(gameData, playerId).stream()
                 .filter(Permanent::isTapped)
+                .filter(p -> !gameQueryService.cantBecomeUntapped(gameData, p))
                 .filter(p -> !cost.excludeSource() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                 .map(Permanent::getId)
@@ -82,6 +87,9 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
         }
         if (!chosen.isTapped()) {
             throw new IllegalStateException("Permanent is not tapped");
+        }
+        if (gameQueryService.cantBecomeUntapped(gameData, chosen)) {
+            throw new IllegalStateException("Permanent can't become untapped");
         }
         if (cost.excludeSource() && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("Cannot untap the source permanent for this cost");

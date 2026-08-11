@@ -129,6 +129,11 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
+    this.pendingExileCounterCostPermanentIds = [];
+    this.selectingExileCounterCost = false;
+    this.exileCounterCostCardName = '';
+    this.exileCounterCostRequired = 0;
+    this.exileCounterCostSelectedIds.set([]);
     // Alternate casting cost
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
@@ -145,6 +150,25 @@ export class TargetingChoiceService {
     this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostSelectedIds.set([]);
+    this.choosingBehold = false;
+    this.selectingBeholdPermanent = false;
+    this.selectingBeholdHandCard = false;
+    this.beholdCardIndex = -1;
+    this.beholdCardName = '';
+    this.beholdSubtype = '';
+    this.beholdRequiredCount = 1;
+    this.beholdSelectedCount = 0;
+    this.beholdCardIsInGraveyard = false;
+    this.pendingBeholdPermanentId = null;
+    this.pendingBeholdHandCardIndex = null;
+    this.pendingBeholdPermanentIds = [];
+    this.pendingBeholdHandCardIndices = [];
+    this.pendingBeholdChosenType = null;
+    this.skipBeholdForCardIndex = null;
+    this.beholdChosenCreatureType = false;
+    this.beholdChosenType = '';
+    this.pendingBeholdCard = null;
+    this.pendingBeholdIsFlashback = false;
     // Graveyard targeting
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
@@ -295,6 +319,11 @@ export class TargetingChoiceService {
   private pendingFromExileCardId: string | null = null;
   private pendingFromLibraryTop = false;
   private pendingZoneCard: Card | null = null;
+  selectingExileCounterCost = false;
+  exileCounterCostCardName = '';
+  exileCounterCostRequired = 0;
+  exileCounterCostSelectedIds = signal<string[]>([]);
+  private pendingExileCounterCostPermanentIds: string[] = [];
 
   // --- Alternate casting cost state ---
   choosingAlternateCost = false;
@@ -315,6 +344,26 @@ export class TargetingChoiceService {
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
   private pendingAlternateExileHandIndex: number | null = null;
+
+  choosingBehold = false;
+  selectingBeholdPermanent = false;
+  selectingBeholdHandCard = false;
+  beholdCardIndex = -1;
+  beholdCardName = '';
+  beholdSubtype = '';
+  beholdChosenCreatureType = false;
+  beholdChosenType = '';
+  beholdRequiredCount = 1;
+  beholdSelectedCount = 0;
+  beholdCardIsInGraveyard = false;
+  private pendingBeholdPermanentId: string | null = null;
+  private pendingBeholdHandCardIndex: number | null = null;
+  private pendingBeholdPermanentIds: string[] = [];
+  private pendingBeholdHandCardIndices: number[] = [];
+  private pendingBeholdChosenType: string | null = null;
+  private skipBeholdForCardIndex: number | null = null;
+  private pendingBeholdCard: Card | null = null;
+  private pendingBeholdIsFlashback = false;
 
   // --- Graveyard targeting state ---
   targetingGraveyard = false;
@@ -501,6 +550,15 @@ export class TargetingChoiceService {
     if (!g) return;
     const card = g.hand[index];
     if (!card) return;
+
+    if ((card.additionalBeholdSubtype || card.additionalBeholdChosenCreatureType) && !card.additionalBeholdFlashbackOnly
+        && this.skipBeholdForCardIndex !== index
+        && this.pendingBeholdPermanentId == null && this.pendingBeholdHandCardIndex == null
+        && this.pendingBeholdPermanentIds.length === 0 && this.pendingBeholdHandCardIndices.length === 0) {
+      this.beginBeholdSelection(card, index, false);
+      return;
+    }
+    if (this.skipBeholdForCardIndex === index) this.skipBeholdForCardIndex = null;
 
     // Modal ("choose one/two") spell or ETB — pick mode(s) before anything else
     if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
@@ -881,6 +939,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
+    this.pendingExileCounterCostPermanentIds = [];
   }
 
   private resetModeState(): void {
@@ -896,18 +955,22 @@ export class TargetingChoiceService {
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
     this.pendingFlashback = true;
+    this.continueFlashbackPlay(graveyardIndex, card);
+  }
+
+  private continueFlashbackPlay(graveyardIndex: number, card: Card): void {
+    if (card.additionalBeholdSubtype && card.additionalBeholdFlashbackOnly
+        && this.pendingBeholdPermanentId == null && this.pendingBeholdHandCardIndex == null
+        && this.pendingBeholdPermanentIds.length === 0 && this.pendingBeholdHandCardIndices.length === 0) {
+      this.beginBeholdSelection(card, graveyardIndex, true);
+      return;
+    }
     this.targetingCardIndex = graveyardIndex;
     this.targetingCardName = card.name;
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
-    this.sendValidTargetsRequest(null, null, null);
-    // Use the card's targeting info — request valid targets from graveyard card
-    // The backend ValidTargets handler uses cardIndex from hand. For flashback,
-    // we manually set valid targets based on battlefield artifacts.
-    // Actually, we can piggyback on the existing targeting: the user clicks a permanent.
-    // For simplicity, enter selectingTarget mode and let the backend validate on cast.
     this.selectingTarget = true;
     this.pendingTargetRequest = false;
     // Accept all permanents as potential targets — backend validates on cast
@@ -941,6 +1004,16 @@ export class TargetingChoiceService {
   }
 
   private continueZonePlay(card: Card): void {
+    if ((card.exileCastCounterCost ?? 0) > 0
+        && !this.selectingExileCounterCost
+        && this.pendingExileCounterCostPermanentIds.length === 0) {
+      this.pendingZoneCard = card;
+      this.selectingExileCounterCost = true;
+      this.exileCounterCostCardName = card.name;
+      this.exileCounterCostRequired = card.exileCastCounterCost;
+      this.exileCounterCostSelectedIds.set([]);
+      return;
+    }
     // Modal ("choose one/two") spell — pick mode(s) before anything else
     if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
       this.pendingZoneCard = card;
@@ -1053,6 +1126,26 @@ export class TargetingChoiceService {
       }
       this.pendingAlternateExileHandIndex = null;
     }
+    if (this.pendingBeholdPermanentId != null) {
+      msg.beholdPermanentId = this.pendingBeholdPermanentId;
+      this.pendingBeholdPermanentId = null;
+    }
+    if (this.pendingBeholdHandCardIndex != null) {
+      msg.beholdHandCardIndex = this.pendingBeholdHandCardIndex;
+      this.pendingBeholdHandCardIndex = null;
+    }
+    if (this.pendingBeholdPermanentIds.length > 0) {
+      msg.beholdPermanentIds = this.pendingBeholdPermanentIds;
+      this.pendingBeholdPermanentIds = [];
+    }
+    if (this.pendingBeholdHandCardIndices.length > 0) {
+      msg.beholdHandCardIndices = this.pendingBeholdHandCardIndices;
+      this.pendingBeholdHandCardIndices = [];
+    }
+    if (this.pendingBeholdChosenType != null) {
+      msg.beholdCreatureType = this.pendingBeholdChosenType;
+      this.pendingBeholdChosenType = null;
+    }
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
     }
@@ -1067,6 +1160,10 @@ export class TargetingChoiceService {
     if (this.pendingFromLibraryTop) {
       msg.fromLibraryTop = true;
       this.pendingFromLibraryTop = false;
+    }
+    if (this.pendingExileCounterCostPermanentIds.length > 0) {
+      msg.exileCounterCostPermanentIds = this.pendingExileCounterCostPermanentIds;
+      this.pendingExileCounterCostPermanentIds = [];
     }
     this.pendingZoneCard = null;
     if (this.pendingKicked) {
@@ -1432,6 +1529,11 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
+    this.pendingExileCounterCostPermanentIds = [];
+    this.pendingBeholdPermanentId = null;
+    this.pendingBeholdHandCardIndex = null;
+    this.pendingBeholdPermanentIds = [];
+    this.pendingBeholdHandCardIndices = [];
   }
 
   selectTarget(permanentId: string): void {
@@ -1544,6 +1646,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
+    this.pendingExileCounterCostPermanentIds = [];
     // Note: don't reset pendingPhyrexianLifeCount here — it carries through to the final send
   }
 
@@ -1853,6 +1956,163 @@ export class TargetingChoiceService {
 
   // ========== Alternate casting cost selection ==========
 
+  private beginBeholdSelection(card: Card, cardIndex: number, fromGraveyard: boolean): void {
+    this.beholdChosenCreatureType = card.additionalBeholdChosenCreatureType;
+    this.choosingBehold = this.beholdChosenCreatureType || card.additionalBeholdCount <= 1;
+    this.selectingBeholdPermanent = !this.beholdChosenCreatureType && card.additionalBeholdCount > 1;
+    this.selectingBeholdHandCard = !this.beholdChosenCreatureType && card.additionalBeholdCount > 1;
+    this.beholdCardIndex = cardIndex;
+    this.beholdCardName = card.name;
+    this.beholdSubtype = card.additionalBeholdSubtype ?? '';
+    this.beholdRequiredCount = Math.max(1, card.additionalBeholdCount);
+    this.beholdSelectedCount = 0;
+    this.beholdCardIsInGraveyard = fromGraveyard;
+    this.pendingBeholdCard = card;
+    this.pendingBeholdIsFlashback = fromGraveyard;
+    this.pendingBeholdPermanentIds = [];
+    this.pendingBeholdHandCardIndices = [];
+    this.pendingBeholdChosenType = null;
+  }
+
+  chooseBeholdType(chosenType: string): void {
+    if (!this.choosingBehold || !this.beholdChosenCreatureType || !chosenType) return;
+    this.beholdChosenType = chosenType;
+    this.beholdSubtype = chosenType;
+    this.pendingBeholdChosenType = chosenType;
+    this.choosingBehold = false;
+    this.selectingBeholdPermanent = true;
+    this.selectingBeholdHandCard = true;
+  }
+
+  get beholdCreatureTypes(): string[] {
+    const counts = new Map<string, number>();
+    const addCard = (card: Card): void => {
+      if (card.type !== 'CREATURE' && !(card.additionalTypes ?? []).includes('CREATURE')) return;
+      for (const subtype of card.subtypes ?? []) {
+        counts.set(subtype, (counts.get(subtype) ?? 0) + 1);
+      }
+    };
+    for (const permanent of this.myBattlefieldFn()) addCard(permanent.card);
+    const game = this.gameSignal();
+    if (game) {
+      game.hand.forEach((card, index) => {
+        if (index !== this.beholdCardIndex) addCard(card);
+      });
+    }
+    return [...counts.entries()]
+      .filter(([, count]) => count >= this.beholdRequiredCount)
+      .map(([subtype]) => subtype)
+      .sort();
+  }
+
+  chooseBeholdPermanent(): void {
+    if (!this.choosingBehold) return;
+    this.choosingBehold = false;
+    this.selectingBeholdPermanent = true;
+  }
+
+  chooseBeholdHandCard(): void {
+    if (!this.choosingBehold) return;
+    this.choosingBehold = false;
+    this.selectingBeholdHandCard = true;
+  }
+
+  selectBeholdPermanent(permanentId: string): void {
+    if (!this.selectingBeholdPermanent) return;
+    if (this.pendingBeholdPermanentIds.includes(permanentId)) return;
+    this.pendingBeholdPermanentIds.push(permanentId);
+    this.beholdSelectedCount = this.pendingBeholdPermanentIds.length + this.pendingBeholdHandCardIndices.length;
+    if (this.beholdRequiredCount > 1) {
+      if (this.beholdSelectedCount < this.beholdRequiredCount) return;
+      this.selectingBeholdPermanent = false;
+      this.selectingBeholdHandCard = false;
+      this.finishBeholdSelection();
+      return;
+    }
+    const spellIndex = this.beholdCardIndex;
+    this.pendingBeholdPermanentId = permanentId;
+    this.finishBeholdSelection(spellIndex);
+  }
+
+  selectBeholdHandCard(handIndex: number): void {
+    if (!this.selectingBeholdHandCard
+        || (!this.beholdCardIsInGraveyard && handIndex === this.beholdCardIndex)
+        || this.pendingBeholdHandCardIndices.includes(handIndex)) return;
+    this.pendingBeholdHandCardIndices.push(handIndex);
+    this.beholdSelectedCount = this.pendingBeholdPermanentIds.length + this.pendingBeholdHandCardIndices.length;
+    if (this.beholdRequiredCount > 1) {
+      if (this.beholdSelectedCount < this.beholdRequiredCount) return;
+      this.selectingBeholdPermanent = false;
+      this.selectingBeholdHandCard = false;
+      this.finishBeholdSelection();
+      return;
+    }
+    const spellIndex = this.beholdCardIndex;
+    this.pendingBeholdHandCardIndex = handIndex;
+    this.finishBeholdSelection(spellIndex);
+  }
+
+  private finishBeholdSelection(singleSpellIndex?: number): void {
+    const card = this.pendingBeholdCard;
+    const spellIndex = singleSpellIndex ?? this.beholdCardIndex;
+    const fromGraveyard = this.pendingBeholdIsFlashback;
+    this.choosingBehold = false;
+    this.selectingBeholdPermanent = false;
+    this.selectingBeholdHandCard = false;
+    this.beholdCardIndex = -1;
+    this.beholdCardName = '';
+    this.beholdSubtype = '';
+    this.beholdChosenCreatureType = false;
+    this.beholdChosenType = '';
+    this.beholdRequiredCount = 1;
+    this.beholdSelectedCount = 0;
+    this.beholdCardIsInGraveyard = false;
+    this.pendingBeholdCard = null;
+    this.pendingBeholdIsFlashback = false;
+    if (fromGraveyard && card) {
+      this.continueFlashbackPlay(spellIndex, card);
+    } else {
+      this.continuePlayCard(spellIndex);
+    }
+  }
+
+  cancelBehold(): void {
+    this.choosingBehold = false;
+    this.selectingBeholdPermanent = false;
+    this.selectingBeholdHandCard = false;
+    this.beholdCardIndex = -1;
+    this.beholdCardName = '';
+    this.beholdSubtype = '';
+    this.beholdChosenCreatureType = false;
+    this.beholdChosenType = '';
+    this.beholdRequiredCount = 1;
+    this.beholdSelectedCount = 0;
+    this.beholdCardIsInGraveyard = false;
+    this.pendingBeholdPermanentId = null;
+    this.pendingBeholdHandCardIndex = null;
+    this.pendingBeholdPermanentIds = [];
+    this.pendingBeholdHandCardIndices = [];
+    this.pendingBeholdChosenType = null;
+    this.pendingBeholdCard = null;
+    this.pendingBeholdIsFlashback = false;
+  }
+
+  declineBehold(): void {
+    if (!this.choosingBehold || !this.beholdChosenCreatureType) return;
+    const cardIndex = this.beholdCardIndex;
+    const fromGraveyard = this.pendingBeholdIsFlashback;
+    this.skipBeholdForCardIndex = cardIndex;
+    this.cancelBehold();
+    if (fromGraveyard) {
+      const game = this.gameSignal();
+      const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+      const card = playerIndex >= 0 ? game?.graveyards[playerIndex]?.[cardIndex] : undefined;
+      if (card) this.continueFlashbackPlay(cardIndex, card);
+    } else {
+      this.continuePlayCard(cardIndex);
+    }
+  }
+
   choosePayMana(): void {
     const savedIndex = this.alternateCostCardIndex;
     this.resetAlternateCostState();
@@ -1968,6 +2228,55 @@ export class TargetingChoiceService {
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
     this.pendingAlternateExileHandIndex = null;
+  }
+
+  toggleExileCounterCostPermanent(permanentId: string): void {
+    if (!this.selectingExileCounterCost) return;
+    const current = this.exileCounterCostSelectedIds();
+    const permanent = this.myBattlefieldFn().find(p => p.id === permanentId);
+    const available = permanent ? Object.values(permanent.counters ?? {}).reduce((sum, n) => sum + n, 0) : 0;
+    const selectedForPermanent = current.filter(id => id === permanentId).length;
+    if (current.length < this.exileCounterCostRequired && selectedForPermanent < available) {
+      this.exileCounterCostSelectedIds.set([...current, permanentId]);
+      return;
+    }
+    const existingIndex = current.indexOf(permanentId);
+    if (existingIndex >= 0) {
+      this.exileCounterCostSelectedIds.set([
+        ...current.slice(0, existingIndex), ...current.slice(existingIndex + 1)
+      ]);
+    }
+  }
+
+  isExileCounterCostSelected(permanentId: string): boolean {
+    return this.exileCounterCostSelectedIds().includes(permanentId);
+  }
+
+  selectedExileCounterCostCount(permanentId: string): number {
+    return this.exileCounterCostSelectedIds().filter(id => id === permanentId).length;
+  }
+
+  confirmExileCounterCost(): void {
+    if (!this.selectingExileCounterCost) return;
+    const selected = this.exileCounterCostSelectedIds();
+    if (selected.length !== this.exileCounterCostRequired || !this.pendingZoneCard) return;
+    const card = this.pendingZoneCard;
+    this.pendingExileCounterCostPermanentIds = [...selected];
+    this.selectingExileCounterCost = false;
+    this.exileCounterCostCardName = '';
+    this.exileCounterCostRequired = 0;
+    this.exileCounterCostSelectedIds.set([]);
+    this.continueZonePlay(card);
+  }
+
+  cancelExileCounterCost(): void {
+    this.selectingExileCounterCost = false;
+    this.exileCounterCostCardName = '';
+    this.exileCounterCostRequired = 0;
+    this.exileCounterCostSelectedIds.set([]);
+    this.pendingExileCounterCostPermanentIds = [];
+    this.pendingZoneCard = null;
+    this.pendingFromExileCardId = null;
   }
 
   // ========== Tap / ability activation ==========

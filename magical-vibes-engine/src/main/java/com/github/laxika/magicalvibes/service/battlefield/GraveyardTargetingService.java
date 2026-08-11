@@ -753,12 +753,30 @@ public class GraveyardTargetingService {
                                                     StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
                                                     List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
-                spellEffects, false);
+                spellEffects, 0, false, false);
+    }
+
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType,
+                                                    ReturnTargetCardsFromGraveyardToHandEffect returnEffect,
+                                                    int maxTargetsCap, List<CardEffect> spellEffects) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, returnEffect.filter(),
+                maxTargetsCap, spellEffects, returnEffect.minTargets(),
+                returnEffect.requireSharedCreatureType(), false);
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                     StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
                                                     List<CardEffect> spellEffects, boolean fromBattlefieldThisTurn) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
+                spellEffects, 0, false, fromBattlefieldThisTurn);
+    }
+
+    private void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, CardPredicate filter,
+                                                     int maxTargetsCap, List<CardEffect> spellEffects,
+                                                     int minTargets, boolean requireSharedCreatureType,
+                                                     boolean fromBattlefieldThisTurn) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId);
         var trackedIds = fromBattlefieldThisTurn
@@ -773,6 +791,12 @@ public class GraveyardTargetingService {
             }
         }
 
+        if (requireSharedCreatureType) {
+            matchingCards.removeIf(candidate -> matchingCards.stream()
+                    .noneMatch(other -> !other.getId().equals(candidate.getId())
+                            && gameQueryService.shareCreatureType(candidate, other)));
+        }
+
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
@@ -781,8 +805,11 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
         String filterLabel = CardPredicateUtils.describeFilter(filter);
+        String prompt = minTargets > 0
+                ? "Choose " + minTargets + " target " + filterLabel + "s that share a creature type from your graveyard."
+                : "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.";
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
+                minTargets, prompt);
     }
 
     /**

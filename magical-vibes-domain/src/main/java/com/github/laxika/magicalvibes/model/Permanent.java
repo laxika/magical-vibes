@@ -256,6 +256,9 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
+     *  in layer ordering; removing counters does not remove their timestamp. */
+    private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
     /** Counters this permanent must shed at the beginning of the next cleanup step, keyed by type.
      *  Populated by the "for each counter you put on a creature this way, remove a counter from that
      *  creature at the beginning of the next cleanup step" rider (Bounty of the Hunt) and swept by
@@ -333,6 +336,10 @@ public class Permanent {
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
+    /** Whether this permanent has durable protection from each opponent of its controller. */
+    @Setter private boolean protectionFromOpponentsPermanently;
+    /** Players from whom this permanent has durable protection, captured when the effect resolved. */
+    private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
     /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
@@ -421,6 +428,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
+    @Setter private boolean losesAllAbilitiesPermanently;
     /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
      *  All creature subtypes (base, transient, granted) are treated as absent, and the Changeling keyword
      *  no longer grants any creature types. Cleared by {@link #resetModifiers()}. */
@@ -629,6 +638,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.extraLoyaltyActivationsThisTurn = source.extraLoyaltyActivationsThisTurn;
@@ -650,6 +660,8 @@ public class Permanent {
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
+        this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
+        this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
@@ -674,6 +686,7 @@ public class Permanent {
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
@@ -931,6 +944,22 @@ public class Permanent {
         }
     }
 
+    public long getCounterTimestamp(CounterType counterType) {
+        if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+            throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not a concrete permanent counter");
+        }
+        return counterTimestamps.getOrDefault(counterType, 0L);
+    }
+
+    public void setCounterTimestamp(CounterType counterType, long timestamp) {
+        if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+            throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not a concrete permanent counter");
+        }
+        counterTimestamps.put(counterType, timestamp);
+    }
+
     /**
      * Returns only the modifier portion of power (counters + temporary modifiers),
      * without the base power. Used by static base P/T override effects (e.g. Deep Freeze)
@@ -1089,13 +1118,20 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        if (losesAllAbilitiesUntilEndOfTurn) return false;
+        if (losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently) return false;
         // Changeling grants all creature types; losing all creature types nullifies that grant.
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
+        CounterType keywordCounter = switch (keyword) {
+            case FLYING -> CounterType.FLYING;
+            case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
+            case LIFELINK -> CounterType.LIFELINK;
+            default -> null;
+        };
         return (!faceDown && card.getKeywords().contains(keyword)) || grantedKeywords.contains(keyword)
                 || persistentGrantedKeywords.contains(keyword)
-                || untilNextTurnKeywords.contains(keyword);
+                || untilNextTurnKeywords.contains(keyword)
+                || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
     }
 
     public void addTemporaryTriggeredEffect(EffectSlot slot, CardEffect effect) {
@@ -1132,6 +1168,10 @@ public class Permanent {
             }
         }
         return false;
+    }
+
+    public boolean isLosesAllAbilitiesUntilEndOfTurn() {
+        return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently;
     }
 
     public void resetModifiers() {

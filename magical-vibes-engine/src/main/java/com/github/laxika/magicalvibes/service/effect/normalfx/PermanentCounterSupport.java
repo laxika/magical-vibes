@@ -101,6 +101,7 @@ public class PermanentCounterSupport {
             return;
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+        recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
@@ -117,8 +118,13 @@ public class PermanentCounterSupport {
                 switch (counterType) {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + 1);
+                    case FLYING, FIRST_STRIKE, LIFELINK -> {
+                        perm.setCounterCount(counterType, perm.getCounterCount(counterType) + 1);
+                        perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                    }
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
                 }
+                recordCounterPlacedOnCreature(gameData, perm, placingPlayerId(gameData, entry, perm));
                 affectedCards.add(perm.getCard());
             }
         }
@@ -315,9 +321,18 @@ public class PermanentCounterSupport {
             case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
+            case FLYING, FIRST_STRIKE, LIFELINK -> {
+                target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
+                if (count > 0) {
+                    target.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                }
+                yield counterType.name().toLowerCase();
+            }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
-        if (counterName == null) return;
+        if (counterName == null || count <= 0) return;
+
+        recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
 
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
@@ -490,6 +505,7 @@ public class PermanentCounterSupport {
         if (count <= 0 || creature == null || !gameQueryService.isCreature(gameData, creature)) {
             return;
         }
+        recordCounterPlacedOnCreature(gameData, creature, placingPlayerId);
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             boolean placedByThisController = controllerId.equals(placingPlayerId);
             for (Permanent source : new ArrayList<>(battlefield)) {
@@ -634,5 +650,21 @@ public class PermanentCounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
+    }
+
+    public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {
+        if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
+            gameData.playersWhoPutCountersOnCreaturesThisTurn.add(placingPlayerId);
+        }
+    }
+
+    private UUID placingPlayerId(GameData gameData, StackEntry entry, Permanent target) {
+        if (entry != null && entry.getControllerId() != null) {
+            return entry.getControllerId();
+        }
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        return gameQueryService.findPermanentController(gameData, target.getId());
     }
 }

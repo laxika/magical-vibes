@@ -218,6 +218,10 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
         UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null) {
+            List<UUID> targets = entry.targetsForEffect(e);
+            targetPlayerId = targets.isEmpty() ? null : targets.getFirst();
+        }
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -255,8 +259,9 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
             if (!p.isTapped()) return;
 
-            p.untap();
-            count[0]++;
+            if (tapUntapSupport.untapPermanent(gameData, p)) {
+                count[0]++;
+            }
         });
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count[0] + " creature(s)."));

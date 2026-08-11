@@ -52,12 +52,23 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         }
 
         Card sourceCard = targetPermanent.getCard();
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = buildTokenCopyCard(sourceCard, e);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            if (e.tappedAndAttacking()) {
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+                if (sourcePermanent != null) {
+                    tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
+                }
+            }
 
             if (e.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));

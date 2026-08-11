@@ -32,6 +32,7 @@ public class CopySupport {
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
+        copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
         return copy;
     }
 

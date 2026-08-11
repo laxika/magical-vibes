@@ -131,7 +131,7 @@ public class MayMiscHandlerService {
             }
         }
 
-        if (accepted && sourcePermanent != null) {
+        if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
             sourcePermanent.untap();
             // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
             creatureControlService.onSourceUntapped(gameData, sourcePermanent);

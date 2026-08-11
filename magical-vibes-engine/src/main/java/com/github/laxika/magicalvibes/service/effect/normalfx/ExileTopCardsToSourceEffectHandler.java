@@ -82,7 +82,9 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             case TARGET_OPPONENT -> {
                 // A combat-damage trigger binds the damaged player as the target; otherwise
                 // (Grimoire Thief) the single opponent is the only legal target in a two-player game.
-                UUID opponentId = entry.getTargetId() != null && !entry.getTargetId().equals(controllerId)
+                UUID opponentId = entry.getTargetId() != null
+                        && gameData.orderedPlayerIds.contains(entry.getTargetId())
+                        && !entry.getTargetId().equals(controllerId)
                         ? entry.getTargetId()
                         : gameData.orderedPlayerIds.stream()
                                 .filter(id -> !id.equals(controllerId))
