@@ -2078,7 +2078,8 @@ public class CombatDamageService {
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
-        state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        state.poisonDamageToDefendingPlayer = damagePreventionService.applyCombatPlayerPreventionShield(
+                gameData, defenderId, state.poisonDamageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
         boolean lichReplaced = damageSupport.applyNefariousLichReplacement(gameData, defenderId,
                 state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0;
@@ -2130,7 +2131,6 @@ public class CombatDamageService {
             }
         }
 
-        state.poisonDamageToDefendingPlayer = damagePreventionService.applyCombatPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         // Glacial Chasm also prevents infect combat damage (still damage, so no poison counters).
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBl
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -60,6 +61,9 @@ class TargetPolarityGuardTest {
                 new PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED))), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(
+                gd, new TapCombatOpponentsOfTargetAtEndOfCombatEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 
     @Test

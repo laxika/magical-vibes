@@ -25,6 +25,7 @@ class HythoniaTheCruelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(hythonia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(hythonia.isMonstrous()).isTrue();

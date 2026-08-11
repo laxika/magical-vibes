@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,6 +96,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock private ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
     @Mock private LifeSupport lifeSupport;
     @Mock private GameMutationCoordinator mutationCoordinator;
 

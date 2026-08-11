@@ -121,6 +121,23 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void exileFromOpponentHandOrGraveyardChoosesHighestManaValue() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        Card handCard = card("Hand card", "{2}");
+        Card graveyardCard = card("Graveyard card", "{5}");
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(handCard)));
+        gameData.playerGraveyards.put(opponentId, new ArrayList<>(List.of(graveyardCard)));
+
+        new ExileNonlandCardFromTargetHandOrGraveyardChoiceAiStrategy().answer(
+                new PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice(
+                        aiPlayerId, opponentId, List.of(handCard.getId(), graveyardCard.getId())),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(graveyardCard.getId())));
+    }
+
+    @Test
     void allNewSpecializedTypesAreRegistered() {
         assertThat(AiInteractionStrategies.registeredTypes()).contains(
                 PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
@@ -128,7 +145,8 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.KeepCardsInHandChoice.class,
                 PendingInteraction.SylvanLibraryChoice.class,
                 PendingInteraction.AdNauseamRepeatChoice.class,
-                PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class);
+                PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
+                PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class);
     }
 
     private InteractionAnswer capturedAnswer() throws Exception {

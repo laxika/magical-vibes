@@ -494,7 +494,8 @@ public class StackResolutionService {
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
             } else {
-                Permanent perm = createEnteringPermanent(entry, card, characteristics, true);
+                Permanent perm = createEnteringPermanent(
+                        entry, card, characteristics, entry.getBestowOriginalCard() != null);
                 perm.setAttachedTo(entry.getTargetId());
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                         entry.getXValue(), entry.isKicked());

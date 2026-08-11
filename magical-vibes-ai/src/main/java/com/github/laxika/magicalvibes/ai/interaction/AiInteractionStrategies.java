@@ -41,6 +41,7 @@ public final class AiInteractionStrategies {
         register(new IntuitionSearchChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
+        register(new ExileNonlandCardFromTargetHandOrGraveyardChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
         register(new AttachAurasChoiceAiStrategy());
