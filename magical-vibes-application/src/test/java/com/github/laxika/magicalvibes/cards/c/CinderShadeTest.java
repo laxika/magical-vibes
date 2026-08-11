@@ -41,7 +41,7 @@ class CinderShadeTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Cinder Shade");
         harness.assertInGraveyard(player1, "Cinder Shade");
@@ -61,7 +61,7 @@ class CinderShadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -76,7 +76,7 @@ class CinderShadeTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Forest");
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }

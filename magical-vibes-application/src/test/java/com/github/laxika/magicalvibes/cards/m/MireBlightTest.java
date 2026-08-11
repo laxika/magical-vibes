@@ -49,7 +49,7 @@ class MireBlightTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test

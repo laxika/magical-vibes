@@ -67,6 +67,7 @@ class CollectiveRestraintTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(5));
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }

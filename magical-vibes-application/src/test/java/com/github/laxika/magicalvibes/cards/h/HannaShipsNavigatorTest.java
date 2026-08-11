@@ -21,7 +21,7 @@ class HannaShipsNavigatorTest extends BaseCardTest {
     @DisplayName("Returns target artifact card from your graveyard to your hand")
     void returnsArtifactFromGraveyardToHand() {
         Card artifact = new Ornithopter();
-        harness.addToBattlefield(player1, new HannaShipsNavigator());
+        addCreatureReady(player1, new HannaShipsNavigator());
         harness.setGraveyard(player1, List.of(artifact));
         addActivationMana();
 
@@ -36,7 +36,7 @@ class HannaShipsNavigatorTest extends BaseCardTest {
     @DisplayName("Returns target enchantment card from your graveyard to your hand")
     void returnsEnchantmentFromGraveyardToHand() {
         Card enchantment = new AuraOfSilence();
-        harness.addToBattlefield(player1, new HannaShipsNavigator());
+        addCreatureReady(player1, new HannaShipsNavigator());
         harness.setGraveyard(player1, List.of(enchantment));
         addActivationMana();
 
@@ -51,7 +51,7 @@ class HannaShipsNavigatorTest extends BaseCardTest {
     @DisplayName("Cannot target a creature card")
     void cannotTargetCreatureCard() {
         Card creature = new GrizzlyBears();
-        harness.addToBattlefield(player1, new HannaShipsNavigator());
+        addCreatureReady(player1, new HannaShipsNavigator());
         harness.setGraveyard(player1, List.of(creature));
         addActivationMana();
 

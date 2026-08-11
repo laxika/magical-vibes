@@ -28,13 +28,11 @@ class KeldonNecropolisTest extends BaseCardTest {
     void sacrificesCreatureToDamagePlayer() {
         harness.addToBattlefield(player1, new KeldonNecropolis());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID fodderId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
-        harness.handlePermanentChosen(player1, fodderId);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -47,14 +45,12 @@ class KeldonNecropolisTest extends BaseCardTest {
     void sacrificesCreatureToDamageCreature() {
         harness.addToBattlefield(player1, new KeldonNecropolis());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID fodderId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addToBattlefield(player2, new FugitiveWizard());
         UUID targetId = harness.getPermanentId(player2, "Fugitive Wizard");
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, targetId);
-        harness.handlePermanentChosen(player1, fodderId);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

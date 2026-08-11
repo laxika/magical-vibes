@@ -169,7 +169,6 @@ public class PermanentChoiceTriggerHandlerService {
         if (dtt.sourcePermanentSnapshot() != null) {
             entry.setSourcePermanentSnapshot(dtt.sourcePermanentSnapshot());
         }
-        gameData.stack.add(entry);
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
@@ -650,7 +649,6 @@ public class PermanentChoiceTriggerHandlerService {
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
             }
-            gameData.stack.add(entry);
             pushTriggeredEntry(gameData, entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);
@@ -788,7 +786,6 @@ public class PermanentChoiceTriggerHandlerService {
                 upt.sourcePermanentId()
         );
         entry.setActivePlayerId(upt.choosingPlayerId());
-        gameData.stack.add(entry);
         pushTriggeredEntry(gameData, entry);
 
         String playerName = gameData.playerIdToName.get(playerId);

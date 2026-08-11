@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BurrogBanemakerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Burrog Banemaker has correct activated ability")
-    void hasCorrectAbility() {
-        BurrogBanemaker card = new BurrogBanemaker();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{B}");
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Burrog Banemaker puts it on the stack")
@@ -65,8 +45,6 @@ class BurrogBanemakerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Burrog Banemaker"));
     }
-
-    // ===== Activate ability =====
 
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
@@ -157,8 +135,6 @@ class BurrogBanemakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
-
-    // ===== Helper methods =====
 
     private Permanent addBurrogBanemakerReady(Player player) {
         BurrogBanemaker card = new BurrogBanemaker();

@@ -22,8 +22,7 @@ class AssaultBatteryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castModalSorcery(player1, 0, 0,
-                List.of(harness.getPermanentId(player2, "Air Elemental")));
+        castAssault(harness.getPermanentId(player2, "Air Elemental"));
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
@@ -56,8 +55,12 @@ class AssaultBatteryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AssaultBattery()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0,
-                List.of(harness.getPermanentId(player2, "Forest"))))
+        assertThatThrownBy(() -> castAssault(harness.getPermanentId(player2, "Forest")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castAssault(java.util.UUID targetId) {
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 0, targetId, null);
     }
 }

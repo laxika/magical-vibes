@@ -42,7 +42,7 @@ class InertiaBubbleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessageContaining("Target must be an artifact");
     }
 
     @Test

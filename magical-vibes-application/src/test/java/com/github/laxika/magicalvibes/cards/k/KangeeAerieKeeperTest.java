@@ -65,6 +65,6 @@ class KangeeAerieKeeperTest extends BaseCardTest {
     private void addKangeeMana(int kickerX) {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2 + kickerX);
+        harness.addMana(player1, ManaColor.COLORLESS, 4 + kickerX);
     }
 }

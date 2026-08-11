@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ArmadilloCloakTest extends BaseCardTest {
@@ -30,6 +32,7 @@ class ArmadilloCloakTest extends BaseCardTest {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(1);
         Permanent creature = addCreatureReady(player1, card);
+        creature.setAttacking(true);
         attachCloak(player1, creature);
 
         GrizzlyBears blockerCard = new GrizzlyBears();
@@ -41,6 +44,7 @@ class ArmadilloCloakTest extends BaseCardTest {
         harness.setLife(player1, 10);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 3));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
