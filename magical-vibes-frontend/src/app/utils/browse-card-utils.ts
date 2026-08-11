@@ -42,6 +42,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
+    kickerRequiresTap: false,
     buybackCost: null,
     buybackRequiresSacrifice: false,
     buybackDiscardCount: 0,

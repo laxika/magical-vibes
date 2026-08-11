@@ -343,8 +343,14 @@ public class GraveyardService {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
             }
         }
+        if (!card.isToken()) {
+            triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
             triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
+        if (!card.isToken()) {
+            triggerCollectionService.checkCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;

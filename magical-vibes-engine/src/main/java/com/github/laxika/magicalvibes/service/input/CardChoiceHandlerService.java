@@ -32,6 +32,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
@@ -45,6 +48,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -80,6 +84,7 @@ public class CardChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -218,7 +223,7 @@ public class CardChoiceHandlerService {
                         gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), false);
                 resumeRemainingEffectsAfterDiscard(gameData);
             } else {
-                finishDiscardChoice(gameData, player, player.getId(), followUp);
+                finishDiscardChoice(gameData, player, player.getId(), followUp, null);
             }
             return;
         }
@@ -295,12 +300,12 @@ public class CardChoiceHandlerService {
                     discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
                     discardChoice.stopAfterDiscardingType(), mayDecline);
         } else {
-            finishDiscardChoice(gameData, player, playerId, discardChoice.followUp());
+            finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
         }
     }
 
     private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
-                                    DiscardFollowUp followUp) {
+                                    DiscardFollowUp followUp, Card discardedCard) {
         gameData.interaction.clearAwaitingInput();
         finalizePendingReturnToHandOnDiscard(gameData);
 
@@ -401,16 +406,64 @@ public class CardChoiceHandlerService {
         }
 
         // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
-        if (followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
+        boolean thenEffectConditionMet = followUp.thenEffectCondition() == null
+                || discardedCard != null && predicateEvaluationService.matchesCardPredicate(
+                        discardedCard, followUp.thenEffectCondition(), followUp.thenEffectSourceCard().getId());
+        if (thenEffectConditionMet && followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = followUp.thenEffect();
             Card sourceCard = followUp.thenEffectSourceCard();
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    playerId,
-                    sourceCard.getName() + "'s effect",
-                    List.of(thenEffect)
-            ));
+            TargetSpec targetSpec = thenEffect.targetSpec();
+            boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                    || targetSpec.admits(TargetPredicate.Kind.PLAYER);
+            if (needsTarget) {
+                List<UUID> validPermanentTargets = new ArrayList<>();
+                if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(sourceCard.getId())
+                            .withSourceControllerId(playerId);
+                    TargetPredicate targetPredicate = targetSpec.targetPredicate();
+                    for (UUID targetPlayerId : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+                        if (battlefield == null) {
+                            continue;
+                        }
+                        for (Permanent permanent : battlefield) {
+                            if (targetPredicateEvaluationService.matchesPermanent(
+                                    targetPredicate, permanent, filterContext)) {
+                                validPermanentTargets.add(permanent.getId());
+                            }
+                        }
+                    }
+                }
+                List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
+                        ? gameData.orderedPlayerIds.stream()
+                                .filter(targetId -> targetPredicateEvaluationService.matchesPlayer(
+                                        targetSpec.targetPredicate(), targetId, playerId, gameData))
+                                .toList()
+                        : List.of();
+                if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                    gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                            "'s ability has no valid targets."));
+                } else {
+                    gameData.interaction.setPermanentChoiceContext(
+                            new PermanentChoiceContext.MayAbilityTriggerTarget(
+                                    sourceCard, playerId, List.of(thenEffect)));
+                    playerInputService.beginAnyTargetChoice(gameData, playerId,
+                            validPermanentTargets, validPlayerTargets,
+                            sourceCard.getName() + " — Choose a target for the reflexive trigger.");
+                    log.info("Game {} - {} discard-then rider awaiting target for {}",
+                            gameData.id, player.getUsername(), sourceCard.getName());
+                    return;
+                }
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        playerId,
+                        sourceCard.getName() + "'s effect",
+                        List.of(thenEffect)
+                ));
+            }
             log.info("Game {} - {} discard-then rider pushed for {}",
                     gameData.id, player.getUsername(), sourceCard.getName());
         }

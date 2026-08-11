@@ -1051,6 +1051,7 @@ public class CombatDamageService {
             gameData.combatDamageToPlayersThisTurn
                     .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                     .add(defenderId);
+            gameData.recordCreatureDamageSourceToPlayer(creature.getId(), defenderId);
 
             // Record creature subtypes at combat damage time for subtype-conditional triggers
             // (e.g. Admiral Beckett Brass checks if 3+ Pirates dealt damage to a player)
@@ -1342,13 +1343,22 @@ public class CombatDamageService {
                 }
 
                 if (!effects.isEmpty()) {
+                    UUID triggerTargetId = defenderId;
+                    boolean targetsEnchantedCreatureController = effects.stream()
+                            .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
+                                    && contextEffect.combatDamageTriggerContext()
+                                    == CombatDamageTriggerContextEffect.TriggerContext.ENCHANTED_CREATURE_CONTROLLER);
+                    if (targetsEnchantedCreatureController) {
+                        triggerTargetId = gameData.findControllerOf(creature);
+                    }
+
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             attackerId,
                             perm.getCard().getName() + "'s triggered ability",
                             new ArrayList<>(effects),
-                            defenderId,
+                            triggerTargetId,
                             perm.getId()
                     );
                     for (CardEffect effect : effects) {
@@ -2308,6 +2318,7 @@ public class CombatDamageService {
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk))) {
                 damage = 0;
             }
+            damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, damage);

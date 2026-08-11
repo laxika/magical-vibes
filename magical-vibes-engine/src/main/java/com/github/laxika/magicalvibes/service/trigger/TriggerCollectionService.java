@@ -727,6 +727,17 @@ public class TriggerCollectionService {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    /** Fires effects that care when the given player controls an effect that counters a spell. */
+    public void checkControllerCountersSpellTriggers(GameData gameData, UUID counteringPlayerId) {
+        if (counteringPlayerId == null) return;
+
+        var ctx = new TriggerContext.SpellCountered(counteringPlayerId);
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(counteringPlayerId)) return;
+            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, ctx);
+        });
+    }
+
     // ── Discard triggers ───────────────────────────────────────────────
 
     public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
@@ -3817,6 +3828,22 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Fires controller-graveyard triggers whenever a non-token card enters the controller's
+     * graveyard from any zone.
+     */
+    public void checkCardPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                               Card card) {
+        var ctx = new TriggerContext.CardPutIntoGraveyard(card, graveyardOwnerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, graveyardOwnerId,
+                    EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
+        }
+    }
+
+    /**
      * Fires ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Soulcipher Board) whenever
      * a creature card is put into its owner's graveyard from any zone. Uses printed card types (not
      * battlefield creature-ness); callers must already exclude tokens. Fires on every permanent the
@@ -3839,6 +3866,20 @@ public class TriggerCollectionService {
             if (playerId.equals(graveyardOwnerId)) return;
             dispatchSlot(gameData, perm, playerId,
                     EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
+        });
+    }
+
+    /**
+     * Fires opponent-graveyard triggers whenever a non-token card enters an opponent's graveyard
+     * from any zone. The graveyard owner is preserved as the trigger's target context.
+     */
+    public void checkCardPutIntoOpponentGraveyardFromAnywhereTriggers(GameData gameData,
+            UUID graveyardOwnerId, Card card) {
+        var ctx = new TriggerContext.CardPutIntoGraveyard(card, graveyardOwnerId);
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (playerId.equals(graveyardOwnerId)) return;
+            dispatchSlot(gameData, perm, playerId,
+                    EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
         });
     }
 
@@ -4946,17 +4987,37 @@ public class TriggerCollectionService {
             }
             if (resolvedEffects.isEmpty()) continue;
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    landControllerId,
-                    perm.getCard().getName() + "'s ability",
-                    resolvedEffects,
-                    null,
-                    perm.getId()
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
+            boolean needsPlayerTarget = resolvedEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean needsPermanentTarget = resolvedEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            if (needsPlayerTarget || needsPermanentTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        perm.getCard(),
+                        landControllerId,
+                        resolvedEffects,
+                        needsPlayerTarget && !needsPermanentTarget,
+                        perm.getCard().getTargetFilter(),
+                        0,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                        "'s landfall ability triggers — choose a target."));
+                log.info("Game {} - {} landfall trigger queued for target selection",
+                        gameData.id, perm.getCard().getName());
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        landControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        resolvedEffects,
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
+            }
         }
 
         // Graveyard-resident landfall triggers (GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Reach of Branches).

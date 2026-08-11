@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
@@ -239,6 +241,66 @@ class CastingPermissionServiceTest {
             creature.setManaCost("{1}{G}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Rejects an opponent's spell of a permanent's chosen color")
+        void rejectsOpponentSpellOfChosenColor() {
+            Card iona = new Card();
+            iona.setName("Iona, Shield of Emeria");
+            iona.setType(CardType.CREATURE);
+            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            Permanent ionaPerm = new Permanent(iona);
+            ionaPerm.setChosenColor(CardColor.RED);
+            gd.playerBattlefields.get(player1Id).add(ionaPerm);
+
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            bolt.setColors(List.of(CardColor.RED));
+            bolt.setManaCost("{R}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player2Id, bolt)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Allows an opponent's spell of another color")
+        void allowsOpponentSpellOfAnotherColor() {
+            Card iona = new Card();
+            iona.setName("Iona, Shield of Emeria");
+            iona.setType(CardType.CREATURE);
+            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            Permanent ionaPerm = new Permanent(iona);
+            ionaPerm.setChosenColor(CardColor.RED);
+            gd.playerBattlefields.get(player1Id).add(ionaPerm);
+
+            Card snag = new Card();
+            snag.setName("Vapor Snag");
+            snag.setType(CardType.INSTANT);
+            snag.setColors(List.of(CardColor.BLUE));
+            snag.setManaCost("{U}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player2Id, snag)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Does not restrict the source controller")
+        void doesNotRestrictSourceController() {
+            Card iona = new Card();
+            iona.setName("Iona, Shield of Emeria");
+            iona.setType(CardType.CREATURE);
+            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            Permanent ionaPerm = new Permanent(iona);
+            ionaPerm.setChosenColor(CardColor.RED);
+            gd.playerBattlefields.get(player1Id).add(ionaPerm);
+
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            bolt.setColors(List.of(CardColor.RED));
+            bolt.setManaCost("{R}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isTrue();
         }
 
         @Test

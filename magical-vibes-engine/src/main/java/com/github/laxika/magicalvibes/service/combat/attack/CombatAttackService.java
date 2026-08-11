@@ -350,6 +350,7 @@ public class CombatAttackService {
             if (lifeCost > 0) {
                 int currentLife = gameData.playerLifeTotals.get(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
+                gameData.lifeLostThisTurn.merge(playerId, lifeCost, Integer::sum);
             }
         }
 

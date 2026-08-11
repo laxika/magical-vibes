@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "46")
+@CardRegistration(set = "ZEN", collectorNumber = "58")
 public class ParalyzingGrasp extends Card {
 
     public ParalyzingGrasp() {

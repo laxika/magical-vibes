@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
@@ -529,6 +530,12 @@ public class PredicateEvaluationService {
                     yield permanent.getCard().hasType(CardType.BATTLE);
                 }
                 yield gameQueryService.isBattle(gameData, permanent);
+            }
+            case PermanentIsKindredPredicate ignored -> {
+                if (gameData == null) {
+                    yield permanent.getCard().hasType(CardType.KINDRED);
+                }
+                yield gameQueryService.isKindred(gameData, permanent);
             }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
@@ -1205,6 +1212,7 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 // Recursion-safe: attachment state is stored on the source snapshot, not derived
                 // through computeStaticBonus. Used by Vampirism-style "other than enchanted creature".
@@ -1499,6 +1507,8 @@ public class PredicateEvaluationService {
                     state.hasCardType(CardType.PLANESWALKER);
             case PermanentIsBattlePredicate ignored ->
                     state.hasCardType(CardType.BATTLE);
+            case PermanentIsKindredPredicate ignored ->
+                    state.hasCardType(CardType.KINDRED);
             case PermanentHasKeywordPredicate p ->
                     state.hasKeyword(p.keyword());
             case PermanentHasProtectionFromColorPredicate p ->

@@ -34,7 +34,13 @@ public interface CombatDamageTriggerContextEffect extends CardEffect {
          * Stack entry binds the damaged player as its {@code targetId} and the damage-dealing
          * creature as its source permanent (e.g. "that player discards a card").
          */
-        DAMAGED_PLAYER
+        DAMAGED_PLAYER,
+
+        /**
+         * Stack entry carries the enchanted creature's controller as its non-targeting
+         * {@code targetId}; used by Aura combat-damage triggers that affect that controller.
+         */
+        ENCHANTED_CREATURE_CONTROLLER
     }
 
     /**

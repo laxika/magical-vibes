@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,19 +31,19 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               UUID eachPlayerControllerId, int eachPlayerAmount,
                               int graveyardReturnCount, List<Integer> eachPlayerAmounts,
                               UUID boostPermanentId, int boostPower, int boostToughness,
-                              Card thenEffectSourceCard, CardEffect thenEffect,
+                              Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
                               Permanent enteringPermanent, UUID enteringControllerId,
                               UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount) {
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
                            UUID eachPlayerControllerId, int eachPlayerAmount,
-                           int graveyardReturnCount, List<Integer> eachPlayerAmounts,
-                           UUID boostPermanentId, int boostPower, int boostToughness,
-                           Card thenEffectSourceCard, CardEffect thenEffect) {
+                              int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                              UUID boostPermanentId, int boostPower, int boostToughness,
+                              Card thenEffectSourceCard, CardEffect thenEffect) {
         this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
                 eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
-                boostToughness, thenEffectSourceCard, thenEffect, null, null, null, 0);
+                boostToughness, thenEffectSourceCard, thenEffect, null, null, null, null, 0);
     }
 
     public static final DiscardFollowUp NONE =
@@ -69,7 +70,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     /** Put a fixed number of +1/+1 counters on a permanent once the discard completes. */
     public static DiscardFollowUp plusOnePlusOneCounters(UUID permanentId, int amount) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                null, null, null, null, permanentId, amount);
+                null, null, null, null, null, permanentId, amount);
     }
 
     public static DiscardFollowUp eachPlayer(List<UUID> remainingChoosers, UUID controllerId, int amount) {
@@ -96,13 +97,22 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
      * completes ("discard a [matching] card. If you do, [effect]").
      */
     public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect) {
-        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, sourceCard, thenEffect);
+        return thenEffect(sourceCard, thenEffect, null);
+    }
+
+    /**
+     * Push {@code thenEffect} only when the card actually discarded also matches {@code condition}.
+     */
+    public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect,
+                                              CardPredicate condition) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                sourceCard, thenEffect, condition, null, null, null, 0);
     }
 
     /** Completes a permanent's entry after the controller discards the required card. */
     public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                null, null, permanent, controllerId, null, 0);
+                null, null, null, permanent, controllerId, null, 0);
     }
 
     /**
@@ -113,6 +123,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remaining,
                 eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, remainingAmounts,
                 boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition,
                 enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId,
                 plusOnePlusOneCounterAmount);
     }

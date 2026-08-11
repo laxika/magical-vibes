@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -25,29 +26,36 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param recipient               who loses life
  * @param controllerGainsLifeLost when {@code true} the controller gains the total life lost
  * @param exemptIfControls        when non-null, players controlling a matching permanent are skipped
+ * @param controllerGainsLifeLostCondition optional condition gating the controller's life gain
  */
 public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
                              boolean controllerGainsLifeLost,
-                             PermanentPredicate exemptIfControls) implements CombatDamageTriggerContextEffect {
+                             PermanentPredicate exemptIfControls,
+                             Condition controllerGainsLifeLostCondition) implements CombatDamageTriggerContextEffect {
+
+    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
+            boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls) {
+        this(amount, recipient, controllerGainsLifeLost, exemptIfControls, null);
+    }
 
     /** Dynamic amount, with drain flag, no exemption. */
     public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient, boolean controllerGainsLifeLost) {
-        this(amount, recipient, controllerGainsLifeLost, null);
+        this(amount, recipient, controllerGainsLifeLost, null, null);
     }
 
     /** Fixed amount, with drain flag. */
     public LoseLifeEffect(int amount, LoseLifeRecipient recipient, boolean controllerGainsLifeLost) {
-        this(new Fixed(amount), recipient, controllerGainsLifeLost, null);
+        this(new Fixed(amount), recipient, controllerGainsLifeLost, null, null);
     }
 
     /** Dynamic amount, non-drain. */
     public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient) {
-        this(amount, recipient, false, null);
+        this(amount, recipient, false, null, null);
     }
 
     /** Fixed amount, non-drain. */
     public LoseLifeEffect(int amount, LoseLifeRecipient recipient) {
-        this(new Fixed(amount), recipient, false, null);
+        this(new Fixed(amount), recipient, false, null, null);
     }
 
     /** Fixed amount, non-drain, skipping players who control a matching permanent. */
@@ -57,7 +65,7 @@ public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
 
     /** Fixed amount, controller loses life, non-drain (self life-loss cost/drawback). */
     public LoseLifeEffect(int amount) {
-        this(new Fixed(amount), LoseLifeRecipient.CONTROLLER, false, null);
+        this(new Fixed(amount), LoseLifeRecipient.CONTROLLER, false, null, null);
     }
 
     @Override

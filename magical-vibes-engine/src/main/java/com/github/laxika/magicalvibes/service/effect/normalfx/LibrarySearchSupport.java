@@ -105,6 +105,8 @@ public class LibrarySearchSupport {
                 continue;
             }
 
+            gameData.playersWhoSearchedLibraryThisTurn.add(nextPlayerId);
+
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
             if (deck == null || deck.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));

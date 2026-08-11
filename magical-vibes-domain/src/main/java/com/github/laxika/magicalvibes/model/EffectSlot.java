@@ -45,6 +45,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    ON_CONTROLLER_COUNTERS_SPELL,
     /**
      * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
      * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
@@ -209,6 +210,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land card is put into the controller's graveyard from their library.
      *  Fires on permanents the graveyard owner controls. */
     ON_ALLY_LAND_CARD_MILLED,
+    /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
+    ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
      *  Uses the card's printed types (not battlefield creature-ness), so tokens never trigger and a
@@ -224,6 +227,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
      *  Used by Profane Memento. */
     ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+    /**
+     * Triggers whenever a non-token card is put into an opponent's graveyard from anywhere
+     * (battlefield, hand, library, stack, exile). Fires on permanents controlled by an opponent of
+     * the graveyard owner. The trigger's target context is the graveyard owner.
+     */
+    ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a land (any player's) is put into a graveyard from the battlefield. Fires
      *  for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
      *  {@code TriggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers}. Used by

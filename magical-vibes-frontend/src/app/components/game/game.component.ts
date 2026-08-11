@@ -1314,6 +1314,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.choosingKickerPermanent) {
+      if (perm && !perm.tapped) {
+        this.choice.targeting.toggleKickerPermanent(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingBuybackSacrifice) {
       if (perm && isPermanentLand(perm)) {
         this.choice.targeting.toggleBuybackSacrifice(perm.id);
@@ -1595,6 +1601,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.payingForAbility) { t.cancelPendingAbility(); return true; }
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
+    if (t.choosingKickerPermanent) { t.cancelKickerPermanent(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
@@ -1620,7 +1627,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
-      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingBuyback
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard
       || t.targetingGraveyard;

@@ -928,6 +928,9 @@ public class ActivatedAbilityExecutionService {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
+                        if (gameQueryService.isCreature(gameData, permanent)) {
+                            gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
+                        }
                     }
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
@@ -1042,6 +1045,9 @@ public class ActivatedAbilityExecutionService {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
+                }
             }
         }
     }

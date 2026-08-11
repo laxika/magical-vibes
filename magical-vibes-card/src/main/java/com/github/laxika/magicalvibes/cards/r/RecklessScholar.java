@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "81")
+@CardRegistration(set = "ZEN", collectorNumber = "60")
 public class RecklessScholar extends Card {
 
     public RecklessScholar() {

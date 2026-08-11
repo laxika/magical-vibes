@@ -169,6 +169,7 @@ public class PermanentViewFactory {
                 .handActivatedAbilities(List.of())
                 .transformable(false)
                 .kickerCost(null)
+                .kickerRequiresTap(false)
                 .buybackCost(null)
                 .modalChoicesRequired(0)
                 .modalChoicesMax(0)

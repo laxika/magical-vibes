@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "81")
+@CardRegistration(set = "ZEN", collectorNumber = "80")
 public class BloodSeeker extends Card {
 
     public BloodSeeker() {

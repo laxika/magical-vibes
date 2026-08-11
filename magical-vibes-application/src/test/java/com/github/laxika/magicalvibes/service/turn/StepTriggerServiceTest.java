@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -563,6 +564,37 @@ class StepTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 10);
             gd.playerLifeTotals.put(player2Id, 11);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Controller-life-at-least intervening-if triggers at the threshold")
+        void controllerLifeAtLeastTriggersAtThreshold() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Felidar Sovereign");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new ConditionalEffect(new ControllerLifeAtLeast(40), new WinGameEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerLifeTotals.put(player1Id, 40);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Felidar Sovereign");
+        }
+
+        @Test
+        @DisplayName("Controller-life-at-least intervening-if suppresses the trigger below the threshold")
+        void controllerLifeAtLeastSuppressesBelowThreshold() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Felidar Sovereign");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new ConditionalEffect(new ControllerLifeAtLeast(40), new WinGameEffect()));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerLifeTotals.put(player1Id, 39);
 
             sut.handleUpkeepTriggers(gd);
 

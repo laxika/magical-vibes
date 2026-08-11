@@ -23,6 +23,7 @@ public final class LibrarySearchTriggerHelper {
 
     public static void checkOpponentSearchTriggers(GameData gameData, GameLogService gameLogService,
                                                    UUID searchingPlayerId) {
+        gameData.playersWhoSearchedLibraryThisTurn.add(searchingPlayerId);
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             if (controllerId.equals(searchingPlayerId)) return;
 

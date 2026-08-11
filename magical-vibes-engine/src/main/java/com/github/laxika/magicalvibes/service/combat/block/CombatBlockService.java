@@ -376,6 +376,7 @@ public class CombatBlockService {
         if (blockLifeTaxTotal > 0) {
             int currentLife = gameData.playerLifeTotals.get(defenderId);
             gameData.playerLifeTotals.put(defenderId, currentLife - blockLifeTaxTotal);
+            gameData.lifeLostThisTurn.merge(defenderId, blockLifeTaxTotal, Integer::sum);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }

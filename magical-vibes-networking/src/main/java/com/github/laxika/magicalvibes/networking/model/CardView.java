@@ -71,6 +71,7 @@ public record CardView(
         List<ActivatedAbilityView> handActivatedAbilities,
         boolean transformable,
         String kickerCost,
+        boolean kickerRequiresTap,
         String buybackCost,
         boolean buybackRequiresSacrifice,
         int buybackDiscardCount,

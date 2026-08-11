@@ -13,10 +13,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param filter           predicate to match discardable hand cards
  * @param thenEffect       effect to execute after a successful discard
  * @param cardDescription  human-readable description of what is discarded (e.g. "a land card")
+ * @param condition        optional predicate tested against the discarded card before executing
+ *                         {@code thenEffect}
  */
 public record DiscardCardThenEffect(
         CardPredicate filter,
         CardEffect thenEffect,
-        String cardDescription
+        String cardDescription,
+        CardPredicate condition
 ) implements CardEffect {
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription) {
+        this(filter, thenEffect, cardDescription, null);
+    }
 }

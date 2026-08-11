@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -43,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,6 +80,7 @@ public class MiscTriggerCollectorService {
     private final ExileService exileService;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     // @Lazy to break indirect circular dependency:
     // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlSupport permanentControlSupport;
@@ -89,6 +93,7 @@ public class MiscTriggerCollectorService {
                                        ExileService exileService,
                                        @Lazy DrawService drawService,
                                        AmountEvaluationService amountEvaluationService,
+                                       ConditionEvaluationService conditionEvaluationService,
                                        @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameLogService = gameLogService;
@@ -98,6 +103,7 @@ public class MiscTriggerCollectorService {
         this.exileService = exileService;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
         this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
     }
@@ -608,6 +614,27 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCardPutIntoGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (card put into controller's graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -626,6 +653,56 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class,
+            slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleConditionalCardPutIntoOpponentGraveyard(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(conditional)),
+                cardPut.graveyardOwnerId(),
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCardPutIntoOpponentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                cardPut.graveyardOwnerId(),
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
         return true;
     }
 

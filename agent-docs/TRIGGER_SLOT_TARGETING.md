@@ -122,6 +122,7 @@ combat damage step is processed.
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
+| `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost). Single permanent/player targets use `AttackTriggerTarget`; multi-target / "up to N" (`needsSlotBySlotTargetSelection`) reuses `ETBTokenMultiTargetTrigger` (Archon of the Triumvirate) | Attack |
 | `ON_ATTACKS_UNBLOCKED` (graveyard-targeting) | `CombatBlockService.collectUnblockedAttackTriggers` routes effects implementing `GraveyardCardChoosingEffect` (Rysorian Badger's `ExileCardsFromGraveyardEffect`) to `GraveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting` — an up-to-N multi-select over the defending player's graveyard, filtered by `graveyardChoiceFilter()`, as the trigger goes on the stack. The attacker rides along as `sourcePermanentId` (for "if you do, it assigns no combat damage"); no matching cards ⇒ the trigger is still pushed with 0 targets | Declare blockers |
@@ -205,6 +206,9 @@ whenever a non-token land card actually enters their graveyard from their librar
 `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),
+`ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Quest for Ancient Secrets; fires on every permanent the
+graveyard owner controls whenever a non-token card enters their graveyard from any zone — checked in
+`GraveyardService.addCardToGraveyard`),
 `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,

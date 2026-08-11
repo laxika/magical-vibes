@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "109")
+@CardRegistration(set = "ZEN", collectorNumber = "111")
 public class SorinMarkov extends Card {
 
     public SorinMarkov() {

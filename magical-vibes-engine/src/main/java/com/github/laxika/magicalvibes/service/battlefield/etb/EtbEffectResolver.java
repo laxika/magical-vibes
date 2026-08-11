@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -83,6 +84,8 @@ public class EtbEffectResolver {
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
+                // Not-kicked ETB clauses use the same cast-time context.
+                case NotKicked ignored -> !ctx.kicked() ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
                 // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.

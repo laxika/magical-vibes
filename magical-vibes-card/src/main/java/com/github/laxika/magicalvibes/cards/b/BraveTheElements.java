@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "10")
+@CardRegistration(set = "ZEN", collectorNumber = "4")
 public class BraveTheElements extends Card {
 
     public BraveTheElements() {

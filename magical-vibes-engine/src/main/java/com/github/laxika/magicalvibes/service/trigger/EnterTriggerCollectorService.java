@@ -206,6 +206,24 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        if (mayPay.sourceIsTriggeringPermanent()) {
+            UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+            if (enteringPermanentId == null) {
+                return true;
+            }
+            if (mayPay.targetSpec() != TargetSpec.NONE) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(mayPay)),
+                        enteringPermanentId, enteringPermanentId));
+            } else {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay,
+                        pe.mayPayTargetCardId(), enteringPermanentId);
+            }
+            logTriggered(match);
+            log.info("Game {} - {} triggers for {} entering (may pay mana)",
+                    match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+            return true;
+        }
         UUID targetCardId = mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 ? pe.mayPayTargetCardId()
                 : null;

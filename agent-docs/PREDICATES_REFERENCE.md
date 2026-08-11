@@ -59,6 +59,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsAuraAttachedToSourcePredicate` | `()` | an Aura permanent currently attached to the **source** permanent, whoever controls the Aura — needs game data + `sourceCardId`. Pair with `DestroyAllPermanentsEffect` for "Destroy all Auras attached to CARDNAME" (Hakim, Loreweaver) |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsBattlePredicate` | `()` | battles. Layer-aware like the planeswalker leaf; the permanent half of `TargetPredicates.anyTarget()` (CR 115.4) and the only leaf that separates it from `creatureOrPlaneswalker()`. Deliberately **not** in `matchesStaticFilter`'s whitelist — no static ability filters on "battle" |
+| `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |

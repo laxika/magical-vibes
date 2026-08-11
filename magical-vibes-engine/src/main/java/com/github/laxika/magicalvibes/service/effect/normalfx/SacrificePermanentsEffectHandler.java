@@ -191,7 +191,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : apnapPlayers(gameData)) {
             if (opponentsOnly && playerId.equals(controllerId)) {
                 continue;
             }
@@ -247,6 +247,17 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
      */
     private boolean isSacrificeProtected(GameData gameData, StackEntry entry, UUID playerId) {
         return !gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId());
+    }
+
+    private List<UUID> apnapPlayers(GameData gameData) {
+        List<UUID> orderedPlayers = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = orderedPlayers.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) {
+            return orderedPlayers;
+        }
+        List<UUID> rotated = new ArrayList<>(orderedPlayers.subList(activeIndex, orderedPlayers.size()));
+        rotated.addAll(orderedPlayers.subList(0, activeIndex));
+        return rotated;
     }
 
     /**

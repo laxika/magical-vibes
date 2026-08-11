@@ -237,6 +237,9 @@ All paths relative to `cards/`.
 | Controls-subtype self-boost + unblockable | `j/JacesSentinel.java` | STATIC ConditionalEffect(new ControlsPermanent(PermanentHasSubtypePredicate(JACE)), StaticBoostEffect(1, 0, SELF)) + ConditionalEffect(new ControlsPermanent(PermanentHasSubtypePredicate(JACE)), GrantEffectEffect(CantBeBlockedEffect, SELF)) â€” +1/+0 and can't be blocked as long as you control a Jace planeswalker |
 | Escalating upkeep symmetrical exile | `d/DescentIntoMadness.java` | UPKEEP_TRIGGERED `SequenceEffect.of(PutCountersOnSelfEffect(CounterType.DESPAIR), EachPlayerExilesPermanentsOrCardsFromHandEffect(CountersOnSource(CounterType.DESPAIR)))` â€” one stack entry, so the exile count reads the counter the same trigger just added; players pick freely across their battlefield and hand and the enchantment can exile itself |
 
+| Opponent end-step quest counter + threshold token ability | `l/LuminarchAscension.java` | OPPONENT_END_STEP_TRIGGERED `ConditionalEffect(ControllerDidntLoseLifeThisTurn, MayEffect(PutCountersOnSelfEffect(QUEST)))` + activated `CreateTokenEffect(4/4 Angel, FLYING)` gated by `withRequiredSourceCounters(QUEST, 4)` |
+| Any card enters your graveyard + graveyard reset ability | `q/QuestForAncientSecrets.java` | `ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE MayEffect(PutCountersOnSelfEffect(QUEST))` + activated `RemoveCounterFromSourceCost(5, QUEST)` + `SacrificeSelfCost` + `ShuffleGraveyardIntoLibraryEffect(true)` |
+
 ## Auras
 
 | Pattern | Reference | Notes |

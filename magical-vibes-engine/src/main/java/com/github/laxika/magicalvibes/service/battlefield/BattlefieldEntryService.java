@@ -1478,8 +1478,8 @@ public class BattlefieldEntryService {
             return false;
         }
         PermanentPredicate effectPredicate = EffectResolution.targetPredicateOf(wrapped);
-        if (!(card.getTargetFilter() instanceof PermanentPredicateTargetFilter)
-                && effectPredicate == null) {
+        TargetFilter targetFilter = card.getTargetFilter();
+        if (targetFilter == null && effectPredicate == null) {
             return false;
         }
         FilterContext ctx = FilterContext.of(gameData)
@@ -1491,8 +1491,8 @@ public class BattlefieldEntryService {
             for (Permanent p : battlefield) {
                 boolean matches = effectPredicate == null
                         || predicateEvaluationService.matchesPermanentPredicate(p, effectPredicate, ctx);
-                if (matches && card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                    matches = predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx);
+                if (matches && targetFilter != null) {
+                    matches = predicateEvaluationService.checkTargetFilter(targetFilter, p, ctx).isEmpty();
                 }
                 if (matches) return false;
             }

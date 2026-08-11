@@ -1066,6 +1066,10 @@ public class GameQueryService {
         return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.BATTLE);
     }
 
+    public boolean isKindred(GameData gameData, Permanent permanent) {
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.KINDRED);
+    }
+
     private boolean hasEffectiveCardType(Permanent permanent, StaticBonus bonus, CardType type) {
         if (bonus.cardTypeOverriding()) {
             return bonus.grantedCardTypes().contains(type);

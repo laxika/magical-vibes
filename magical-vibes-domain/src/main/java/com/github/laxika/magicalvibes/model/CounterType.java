@@ -65,6 +65,7 @@ public enum CounterType {
     POLYP,
     PLAGUE,
     PRESSURE,
+    QUEST,
     RUST,
     PLUS_ONE_PLUS_ONE,
     PLUS_ONE_PLUS_ZERO,

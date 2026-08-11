@@ -131,6 +131,17 @@ public class CardViewFactory {
                 : buybackEffect.hasDiscardCost() ? "Discard " + buybackEffect.discardCount() + " cards"
                 : null;
 
+        KickerEffect kickerEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof KickerEffect)
+                .map(e -> (KickerEffect) e)
+                .findFirst().orElse(null);
+        String kickerCost = kickerEffect == null ? null
+                : kickerEffect.hasManaCost() ? kickerEffect.cost()
+                : kickerEffect.hasSacrificeCost() ? "Sacrifice " + kickerEffect.sacrificeDescription()
+                : kickerEffect.hasTapCost() ? "Tap " + kickerEffect.tapDescription()
+                : null;
+        boolean kickerRequiresTap = kickerEffect != null && kickerEffect.hasTapCost();
+
         return new CardView(
                 card.getId(),
                 card.getName(),
@@ -174,15 +185,8 @@ public class CardViewFactory {
                 graveyardAbilityViews,
                 handAbilityViews,
                 card.getBackFaceCard() != null,
-                card.getEffects(EffectSlot.STATIC).stream()
-                        .filter(e -> e instanceof KickerEffect)
-                        .map(e -> {
-                            KickerEffect ke = (KickerEffect) e;
-                            if (ke.hasManaCost()) return ke.cost();
-                            if (ke.hasSacrificeCost()) return "Sacrifice " + ke.sacrificeDescription();
-                            return null;
-                        })
-                        .findFirst().orElse(null),
+                kickerCost,
+                kickerRequiresTap,
                 buybackCost,
                 buybackEffect != null && buybackEffect.hasSacrificeCost(),
                 buybackEffect != null ? buybackEffect.discardCount() : 0,

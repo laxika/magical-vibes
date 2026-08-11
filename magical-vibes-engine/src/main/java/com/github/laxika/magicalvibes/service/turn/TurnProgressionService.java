@@ -373,6 +373,7 @@ public class TurnProgressionService {
         gameData.additionalLandsThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
+        gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
@@ -396,6 +397,7 @@ public class TurnProgressionService {
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
+        gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
         gameData.playersAttackedThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);

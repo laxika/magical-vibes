@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "81")
+@CardRegistration(set = "ZEN", collectorNumber = "67")
 public class SpellPierce extends Card {
 
     public SpellPierce() {

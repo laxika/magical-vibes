@@ -90,6 +90,11 @@ export class TargetingChoiceService {
     this.kickerCardName = '';
     this.kickerCost = '';
     this.pendingKicked = false;
+    this.choosingKickerPermanent = false;
+    this.kickerPermanentCardIndex = -1;
+    this.kickerPermanentDescription = '';
+    this.kickerPermanentSelectedId.set(null);
+    this.pendingKickerPermanentId = null;
     // Buyback
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
@@ -259,6 +264,11 @@ export class TargetingChoiceService {
   kickerCardName = '';
   kickerCost = '';
   private pendingKicked = false;
+  choosingKickerPermanent = false;
+  kickerPermanentCardIndex = -1;
+  kickerPermanentDescription = '';
+  kickerPermanentSelectedId = signal<string | null>(null);
+  private pendingKickerPermanentId: string | null = null;
 
   choosingBuyback = false;
   buybackCardIndex = -1;
@@ -581,10 +591,18 @@ export class TargetingChoiceService {
   confirmKicker(): void {
     this.pendingKicked = true;
     const savedIndex = this.kickerCardIndex;
+    const card = this.gameSignal()?.hand[savedIndex];
     this.choosingKicker = false;
     this.kickerCardIndex = -1;
     this.kickerCardName = '';
     this.kickerCost = '';
+    if (card?.kickerRequiresTap) {
+      this.choosingKickerPermanent = true;
+      this.kickerPermanentCardIndex = savedIndex;
+      this.kickerPermanentDescription = card.kickerCost ?? '';
+      this.kickerPermanentSelectedId.set(null);
+      return;
+    }
     this.continuePlayCard(savedIndex);
   }
 
@@ -604,6 +622,34 @@ export class TargetingChoiceService {
     this.kickerCardName = '';
     this.kickerCost = '';
     this.pendingKicked = false;
+    this.pendingKickerPermanentId = null;
+  }
+
+  toggleKickerPermanent(permanentId: string): void {
+    if (!this.choosingKickerPermanent) return;
+    this.kickerPermanentSelectedId.set(
+      this.kickerPermanentSelectedId() === permanentId ? null : permanentId);
+  }
+
+  confirmKickerPermanent(): void {
+    const selectedId = this.kickerPermanentSelectedId();
+    if (!this.choosingKickerPermanent || selectedId == null) return;
+    const savedIndex = this.kickerPermanentCardIndex;
+    this.pendingKickerPermanentId = selectedId;
+    this.choosingKickerPermanent = false;
+    this.kickerPermanentCardIndex = -1;
+    this.kickerPermanentDescription = '';
+    this.kickerPermanentSelectedId.set(null);
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelKickerPermanent(): void {
+    this.choosingKickerPermanent = false;
+    this.kickerPermanentCardIndex = -1;
+    this.kickerPermanentDescription = '';
+    this.kickerPermanentSelectedId.set(null);
+    this.pendingKicked = false;
+    this.pendingKickerPermanentId = null;
   }
 
   confirmBuyback(): void {
@@ -1020,6 +1066,10 @@ export class TargetingChoiceService {
     if (this.pendingKicked) {
       msg.kicked = true;
       this.pendingKicked = false;
+    }
+    if (this.pendingKickerPermanentId != null) {
+      msg.sacrificePermanentId = this.pendingKickerPermanentId;
+      this.pendingKickerPermanentId = null;
     }
     if (this.pendingBuyback) {
       msg.buyback = true;

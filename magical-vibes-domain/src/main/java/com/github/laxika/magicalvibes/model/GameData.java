@@ -83,6 +83,8 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Players who searched their own libraries this turn, including searches that found no card. */
+    public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -967,9 +969,9 @@ public class GameData {
     public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks how much life each player has lost so far this turn (damage causes loss of life, so this
-     *  accumulates both direct life loss and damage). Recorded from the shared life-loss trigger hook.
-     *  Used by Wound Reflection ("each opponent loses life equal to the life they lost this turn").
-     *  Cleared at the start of each turn. */
+     *  accumulates both direct life loss and damage). Recorded from the shared life-loss trigger hook
+     *  and direct life-payment bookkeeping. Used by Wound Reflection ("each opponent loses life equal
+     *  to the life they lost this turn"). Cleared at the start of each turn. */
     public final Map<UUID, Integer> lifeLostThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks how much life each player lost during the immediately preceding turn. */
@@ -984,6 +986,9 @@ public class GameData {
      *  {@link #combatDamageToPlayersThisTurn}, gives every source that dealt any damage to a player
      *  (Giltspire Avenger). Cleared at turn cleanup. */
     public final Map<UUID, Set<UUID>> noncombatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks which creature permanents dealt damage to which players this turn. */
+    public final Map<UUID, Set<UUID>> creatureDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which creatures attacked which players this turn ("target creature that attacked you
      *  this turn", Jabari's Influence). Maps attacking permanent UUID → set of attacked player UUIDs;
@@ -1008,6 +1013,16 @@ public class GameData {
             return;
         }
         noncombatDamageToPlayersThisTurn
+                .computeIfAbsent(sourcePermanentId, k -> ConcurrentHashMap.newKeySet())
+                .add(playerId);
+    }
+
+    /** Records that a creature permanent dealt damage to a player this turn. */
+    public void recordCreatureDamageSourceToPlayer(UUID sourcePermanentId, UUID playerId) {
+        if (sourcePermanentId == null || playerId == null) {
+            return;
+        }
+        creatureDamageToPlayersThisTurn
                 .computeIfAbsent(sourcePermanentId, k -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
     }
@@ -2445,16 +2460,20 @@ public class GameData {
      * stack entry so that the wrapped effect can reference it at resolution time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay, UUID targetCardId) {
+        queueMayAbility(sourceCard, controllerId, mayPay, targetCardId, null);
+    }
+
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,
+                                UUID targetCardId, UUID sourcePermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(mayPay))
+                new ArrayList<>(List.of(mayPay)),
+                targetCardId,
+                sourcePermanentId
         );
-        if (targetCardId != null) {
-            entry.setTargetId(targetCardId);
-        }
         stack.add(entry);
     }
 
@@ -2692,6 +2711,8 @@ public class GameData {
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.creatureDamageToPlayersThisTurn.forEach((k, v) ->
+                copy.creatureDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.playersAttackedThisTurn.forEach((k, v) ->
                 copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
         copy.damageDealtThisTurnBySource.putAll(this.damageDealtThisTurnBySource);
@@ -2996,6 +3017,7 @@ public class GameData {
             copy.skippedStepOrPhasesThisTurn.put(playerId, copiedKinds);
         });
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
+        copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));

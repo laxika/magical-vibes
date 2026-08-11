@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
@@ -235,6 +236,20 @@ public class DrawService {
                     null,
                     null,
                     counterDrawReplacementSource.getId()));
+            return;
+        }
+
+        Permanent archmageAscensionSource = findCounterThresholdDrawReplacementSource(
+                gameData, playerId, CounterType.QUEST);
+        if (archmageAscensionSource != null) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    archmageAscensionSource.getCard(),
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ARCHMAGE_ASCENSION)),
+                    "Search your library for a card instead of drawing?",
+                    null,
+                    null,
+                    archmageAscensionSource.getId()));
             return;
         }
 
@@ -567,6 +582,26 @@ public class DrawService {
                     .map(CounterDrawReplacementEffect.class::cast)
                     .anyMatch(effect -> effect.counterType() == counterType);
             if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private Permanent findCounterThresholdDrawReplacementSource(GameData gameData, UUID playerId,
+                                                                  CounterType counterType) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean active = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(CounterThresholdDrawReplacementEffect.class::isInstance)
+                    .map(CounterThresholdDrawReplacementEffect.class::cast)
+                    .anyMatch(effect -> effect.counterType() == counterType
+                            && permanent.getCounterCount(effect.counterType()) >= effect.minimumCounters());
+            if (active) {
                 return permanent;
             }
         }

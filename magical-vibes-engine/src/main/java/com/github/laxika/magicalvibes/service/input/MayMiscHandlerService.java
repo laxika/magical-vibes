@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -39,6 +41,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryEffectHandler;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +72,7 @@ public class MayMiscHandlerService {
     private final LifeSupport lifeSupport;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
+    private final SearchLibraryEffectHandler searchLibraryEffectHandler;
     @Autowired @Lazy
     private PermanentCounterSupport permanentCounterSupport;
     // @Lazy to break circular dependency:
@@ -222,6 +226,30 @@ public class MayMiscHandlerService {
                         gameData.id, player.getUsername(), ability.sourceCard().getName());
             }
             playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.ARCHMAGE_ASCENSION) {
+            StackEntry searchEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ability.sourceCard(),
+                    drawingPlayerId,
+                    ability.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new SearchLibraryEffect())),
+                    0,
+                    ability.sourcePermanentId());
+            searchLibraryEffectHandler.resolve(gameData, searchEntry, new SearchLibraryEffect());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " replaces the draw with ", ability.sourceCard(), "."));
+            log.info("Game {} - {} replaces a draw with a library search from {}",
+                    gameData.id, player.getUsername(), ability.sourceCard().getName());
+
+            if (!gameData.interaction.isAwaitingInput()) {
+                playerInputService.processNextMayAbility(gameData);
+            }
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             }

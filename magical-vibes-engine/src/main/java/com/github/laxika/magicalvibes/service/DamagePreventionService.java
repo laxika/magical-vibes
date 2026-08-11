@@ -309,13 +309,20 @@ public class DamagePreventionService {
             damage = applyGlobalPreventionShield(gameData, damage);
             damage = applyDamagePreventionLifeGainShield(gameData, permanent.getId(), damage);
             if (damage <= 0) return 0;
-            int shield = permanent.getDamagePreventionShield();
-            if (shield <= 0 || damage <= 0) return damage;
-            int prevented = Math.min(shield, damage);
-            permanent.setDamagePreventionShield(shield - prevented);
-            return damage - prevented;
+            return applyPermanentDamagePreventionShield(gameData, permanent, damage);
         }
         return damage;
+    }
+
+    public int applyPermanentDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData) || damage <= 0) return damage;
+
+        int shield = permanent.getDamagePreventionShield();
+        if (shield <= 0) return damage;
+
+        int prevented = Math.min(shield, damage);
+        permanent.setDamagePreventionShield(shield - prevented);
+        return damage - prevented;
     }
 
     /**

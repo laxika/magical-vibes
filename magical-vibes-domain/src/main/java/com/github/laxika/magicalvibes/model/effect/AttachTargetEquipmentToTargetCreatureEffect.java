@@ -9,6 +9,6 @@ public record AttachTargetEquipmentToTargetCreatureEffect() implements CardEffec
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.playerOrPermanent());
+        return TargetSpec.benign(TargetPredicates.permanent());
     }
 }

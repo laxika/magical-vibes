@@ -374,6 +374,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null, true);
     }
 
+    public void castKickedSorceryWithTap(Player player, int cardIndex, UUID targetId, UUID tappedPermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, tappedPermanentId, null, null, null, null, true);
+    }
+
     public void castInstantWithBuyback(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null,

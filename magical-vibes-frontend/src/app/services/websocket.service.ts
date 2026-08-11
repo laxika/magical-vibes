@@ -186,6 +186,7 @@ export interface Card {
   handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
+  kickerRequiresTap: boolean;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
   buybackDiscardCount?: number;

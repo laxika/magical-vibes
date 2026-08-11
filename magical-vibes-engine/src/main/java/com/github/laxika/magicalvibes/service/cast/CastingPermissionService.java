@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffe
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
@@ -91,6 +92,7 @@ public class CastingPermissionService {
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return false;
+        if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
@@ -342,6 +344,29 @@ public class CastingPermissionService {
     }
 
     /**
+     * Iona, Shield of Emeria: opponents of a source permanent's controller can't cast spells of
+     * that permanent's chosen color. Colorless spells and permanents without a chosen color are
+     * unaffected.
+     */
+    public boolean isOpponentsChosenColorSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card) {
+        if (card.getColors() == null || card.getColors().isEmpty()) return false;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(castingPlayerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getChosenColor() != null
+                        && card.getColors().contains(perm.getChosenColor())
+                        && perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(OpponentsCantCastSpellsOfChosenColorEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Ethersworn Canonist: "Each player who has cast a nonartifact spell this turn can't cast
      * additional nonartifact spells." Returns true if {@code card} is a nonartifact spell, some
      * permanent carries the effect, and {@code playerId} has already cast a nonartifact spell this
@@ -445,6 +470,7 @@ public class CastingPermissionService {
                                      Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
+        if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
     }
 

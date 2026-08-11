@@ -32,6 +32,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for "whenever a spell or ability you control counters a spell" triggers. */
+    record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
+
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
@@ -245,7 +248,10 @@ public sealed interface TriggerContext {
      * @param causeControllerId the controller of the spell or ability that caused it (an opponent)
      */
     record LandPutIntoGraveyard(Card landCard, UUID graveyardOwnerId,
-                                UUID causeControllerId) implements TriggerContext {}
+                                 UUID causeControllerId) implements TriggerContext {}
+
+    /** Context for controller-graveyard triggers that care about any non-token card. */
+    record CardPutIntoGraveyard(Card card, UUID graveyardOwnerId) implements TriggerContext {}
 
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}

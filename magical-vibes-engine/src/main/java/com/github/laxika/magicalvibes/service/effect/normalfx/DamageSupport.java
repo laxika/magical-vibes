@@ -574,6 +574,8 @@ public class DamageSupport {
                     gameLogService.append(gameData, GameLog.textCardText("Damage to ", targetPermanent.getCard(), " is prevented."));
                     return;
                 }
+                loyaltyDamage = damagePreventionService.applyPermanentDamagePreventionShield(
+                        gameData, targetPermanent, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
@@ -873,6 +875,9 @@ public class DamageSupport {
                 gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
                 entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
+                if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
+                    gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
+                }
                 recordRedSpellDamage(gameData, entry, source, playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);

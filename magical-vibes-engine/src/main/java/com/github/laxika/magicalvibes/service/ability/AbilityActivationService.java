@@ -674,6 +674,7 @@ public class AbilityActivationService {
         }
 
         gameData.playerLifeTotals.put(playerId, life - 1);
+        gameData.lifeLostThisTurn.merge(playerId, 1, Integer::sum);
         gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
 
         String logEntry = player.getUsername() + " pays 1 life to add {C} (Channel).";
@@ -2287,6 +2288,7 @@ public class AbilityActivationService {
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             int amount = payLifeCost.get().effectiveAmount(currentLife, sourceCounterCount(permanent, payLifeCost.get()));
             gameData.playerLifeTotals.put(playerId, currentLife - amount);
+            gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
         }
 
         // discardCardIndex < 0 means the interactive path already paid all required discards.
@@ -3782,6 +3784,7 @@ public class AbilityActivationService {
         if (phyrexianLifeCost > 0) {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
+            gameData.lifeLostThisTurn.merge(playerId, phyrexianLifeCost, Integer::sum);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
         }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "M14", collectorNumber = "142")
+@CardRegistration(set = "ZEN", collectorNumber = "128")
 public class GoblinShortcutter extends Card {
 
     public GoblinShortcutter() {

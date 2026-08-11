@@ -277,6 +277,7 @@ public class PermanentCounterSupport {
             case PRESSURE -> { target.setCounterCount(CounterType.PRESSURE, target.getCounterCount(CounterType.PRESSURE) + count); yield "pressure"; }
             case POLYP -> { target.setCounterCount(CounterType.POLYP, target.getCounterCount(CounterType.POLYP) + count); yield "polyp"; }
             case PLAGUE -> { target.setCounterCount(CounterType.PLAGUE, target.getCounterCount(CounterType.PLAGUE) + count); yield "plague"; }
+            case QUEST -> { target.setCounterCount(CounterType.QUEST, target.getCounterCount(CounterType.QUEST) + count); yield "quest"; }
             case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
             case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             case TOWER -> { target.setCounterCount(CounterType.TOWER, target.getCounterCount(CounterType.TOWER) + count); yield "tower"; }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -37,6 +39,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -64,12 +67,12 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
-            case TARGET_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
+            case TARGET_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);
-            case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, false);
-            case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, true);
+            case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
+            case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
         }
     }
 
@@ -96,7 +99,8 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void loseTargetPlayerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+    private void loseTargetPlayerLife(GameData gameData, StackEntry entry, LoseLifeEffect effect,
+            int amount, String sourceName) {
         UUID targetPlayerId = entry.getTargetId();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
@@ -104,6 +108,10 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
+
+            if (controllerGainsLifeLost(gameData, entry, effect) && amount > 0) {
+                lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount);
+            }
 
             String lossLog = targetName + " loses " + amount + " life (" + sourceName + ").";
             gameLogService.append(gameData, GameLog.text(lossLog));
@@ -131,11 +139,11 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate));
     }
 
-    private void eachPlayerLosesLife(GameData gameData, LoseLifeEffect e, UUID controllerId,
-            int amount, String sourceName, boolean opponentsOnly) {
+    private void eachPlayerLosesLife(GameData gameData, LoseLifeEffect e, StackEntry entry,
+            UUID controllerId, int amount, String sourceName, boolean opponentsOnly) {
         // The X-scaled drain (Exsanguinate) short-circuits on non-positive X before touching any
         // life total — preserves the former EachOpponentLosesXLife... early-out.
-        if (e.controllerGainsLifeLost() && amount <= 0) {
+        if (controllerGainsLifeLost(gameData, entry, e) && amount <= 0) {
             return;
         }
 
@@ -153,8 +161,15 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             totalLifeLost += amount;
         }
 
-        if (e.controllerGainsLifeLost() && totalLifeLost > 0) {
+        if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {
             lifeSupport.applyGainLife(gameData, controllerId, totalLifeLost);
         }
+    }
+
+    private boolean controllerGainsLifeLost(GameData gameData, StackEntry entry, LoseLifeEffect effect) {
+        return effect.controllerGainsLifeLost()
+                && (effect.controllerGainsLifeLostCondition() == null
+                || conditionEvaluationService.isMet(gameData, effect.controllerGainsLifeLostCondition(),
+                ConditionContext.forStackEntry(entry)));
     }
 }

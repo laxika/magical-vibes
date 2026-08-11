@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -41,6 +42,7 @@ public class CounterSupport {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
+    private final TriggerCollectionService triggerCollectionService;
     // @Lazy breaks the cycle: EffectResolutionService → EffectHandlerRegistry →
     // CounterUnlessPaysEffectHandler → CounterSupport → EffectResolutionService.
     private final EffectResolutionService effectResolutionService;
@@ -50,12 +52,14 @@ public class CounterSupport {
                           GameLogService gameLogService,
                           GameQueryService gameQueryService,
                           StateTriggerService stateTriggerService,
+                          @Lazy TriggerCollectionService triggerCollectionService,
                           @Lazy EffectResolutionService effectResolutionService) {
         this.graveyardService = graveyardService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
         this.stateTriggerService = stateTriggerService;
+        this.triggerCollectionService = triggerCollectionService;
         this.effectResolutionService = effectResolutionService;
     }
 
@@ -109,6 +113,8 @@ public class CounterSupport {
             }
         }
 
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
         if (isAbility) {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), "'s ability is countered."));
@@ -132,6 +138,8 @@ public class CounterSupport {
             gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
         }
 
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
                 source.getCard().getName(), target.getCard().getName());
@@ -152,6 +160,7 @@ public class CounterSupport {
                 source.getCard().getName(), target.getCard().getName());
 
         if (target.isCopy()) {
+            notifyCounteredSpell(gameData, source.getControllerId(), target);
             return null;
         }
         if (applyControlledCounterExileReplacement(gameData, source, target)) {
@@ -159,6 +168,7 @@ public class CounterSupport {
         }
 
         gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
         return target.getPhysicalCard();
     }
 
@@ -194,6 +204,7 @@ public class CounterSupport {
 
         
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
         return gained;
     }
@@ -210,6 +221,8 @@ public class CounterSupport {
             }
             exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
         }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
@@ -279,6 +292,16 @@ public class CounterSupport {
                 sourceCard.getName(), new ArrayList<>(onNotPaidEffects), 0);
         riderEntry.setTargetId(notPayingPlayerId);
         effectResolutionService.resolveEffects(gameData, riderEntry);
+    }
+
+    public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
+        if (target == null || isAbility(target)) return;
+        triggerCollectionService.checkControllerCountersSpellTriggers(gameData, counteringPlayerId);
+    }
+
+    private boolean isAbility(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
     }
 
     public boolean sharesCardType(Card card, Set<CardType> types) {

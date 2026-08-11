@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M13", collectorNumber = "79")
 @CardRegistration(set = "M15", collectorNumber = "84")
+@CardRegistration(set = "ZEN", collectorNumber = "76")
 public class WelkinTern extends Card {
 
     public WelkinTern() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "143")
+@CardRegistration(set = "ZEN", collectorNumber = "129")
 public class GoblinWarPaint extends Card {
 
     public GoblinWarPaint() {

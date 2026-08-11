@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
@@ -716,6 +717,24 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
                                 gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.threshold());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ControllerLifeAtLeast lifeCheck) {
+                    if (conditionEvaluationService.isMet(gameData, lifeCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life >= {})",
+                                gameData.id, perm.getCard().getName(), lifeCheck.threshold());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof EachPlayerLifeAtMost eachLifeCheck) {
