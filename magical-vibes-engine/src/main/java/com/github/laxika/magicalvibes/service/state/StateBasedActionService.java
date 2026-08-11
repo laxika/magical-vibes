@@ -159,6 +159,7 @@ public class StateBasedActionService {
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
             gameData.exilePlayAnyManaType.remove(cardId);
+            gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
             gameData.graveyardPlayPermissions.remove(cardId);

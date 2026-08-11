@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesO
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
@@ -646,15 +647,23 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player is able to gain life (i.e. no
-     * {@link PlayersCantGainLifeEffect} is present on any battlefield and
-     * no {@link LifeTotalCantChangeEffect} prevents life changes).
+     * {@link PlayersCantGainLifeEffect} is present on any battlefield, no opponent controls an
+     * {@link OpponentsCantGainLifeEffect}, and no {@link LifeTotalCantChangeEffect} prevents life
+     * changes).
      */
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
         if (gameData.playersWhoCantGainLifeRestOfGame.contains(playerId)) return false;
         if (gameData.playersWhoCantGainLifeThisTurn.contains(playerId)) return false;
         if (gameData.playersCantGainLifeThisTurn) return false;
-        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
+        if (anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class)) return false;
+        for (UUID otherId : gameData.playerBattlefields.keySet()) {
+            if (!otherId.equals(playerId)
+                    && playerBattlefieldHasStaticEffect(gameData, otherId, OpponentsCantGainLifeEffect.class)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class SpellTarget {
     private final int minTargets;
     private final int maxTargets;
     private final int index;
+    private final DynamicAmount dynamicMaxTargets;
     /**
      * When true the number of targets scales with the spell's X: the effective max
      * is {@code min(xValue, maxTargets)} and the effective min is {@code min(xValue, minTargets)}.
@@ -34,16 +36,22 @@ public class SpellTarget {
     private final boolean xScaled;
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
-        this(card, filter, minTargets, maxTargets, index, false);
+        this(card, filter, minTargets, maxTargets, index, false, null);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index, boolean xScaled) {
+        this(card, filter, minTargets, maxTargets, index, xScaled, null);
+    }
+
+    SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index,
+                boolean xScaled, DynamicAmount dynamicMaxTargets) {
         this.card = card;
         this.filter = filter;
         this.minTargets = minTargets;
         this.maxTargets = maxTargets;
         this.index = index;
         this.xScaled = xScaled;
+        this.dynamicMaxTargets = dynamicMaxTargets;
     }
 
     /**

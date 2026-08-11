@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ORI", collectorNumber = "116")
+@CardRegistration(set = "THS", collectorNumber = "103")
 public class ReturnedCentaur extends Card {
 
     public ReturnedCentaur() {

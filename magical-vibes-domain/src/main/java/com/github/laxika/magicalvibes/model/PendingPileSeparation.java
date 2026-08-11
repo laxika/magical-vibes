@@ -23,12 +23,17 @@ import java.util.UUID;
  * to be played/cast for free from exile with everything else staying exiled; {@code HAND} (Unesh)
  * puts the chosen pile into the controller's hand and the other into their graveyard. It is ignored
  * for permanent-pile mode.
+ *
+ * <p>{@code controllerChoosesPile} is true for the usual Fact-or-Fiction-style flow, where the
+ * opponent separates and the controller chooses. It is false for Steam Augury, where the
+ * controller separates and the opponent chooses.
  */
 public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                     List<UUID> allPermanentIds,
                                     List<Card> cards, Map<UUID, UUID> cardOwners,
                                     List<UUID> pile1Ids, List<UUID> pile2Ids,
-                                    CardPileDisposition disposition)
+                                    CardPileDisposition disposition,
+                                    boolean controllerChoosesPile)
         implements PendingInteraction {
 
     public PendingPileSeparation {
@@ -45,7 +50,17 @@ public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                  List<Card> cards, Map<UUID, UUID> cardOwners,
                                  List<UUID> pile1Ids, List<UUID> pile2Ids) {
         this(controllerId, targetPlayerId, allPermanentIds, cards, cardOwners, pile1Ids, pile2Ids,
-                CardPileDisposition.BATTLEFIELD);
+                CardPileDisposition.BATTLEFIELD, true);
+    }
+
+    /** Card-pile variant with the usual opponent-separates/controller-chooses roles. */
+    public PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
+                                 List<UUID> allPermanentIds,
+                                 List<Card> cards, Map<UUID, UUID> cardOwners,
+                                 List<UUID> pile1Ids, List<UUID> pile2Ids,
+                                 CardPileDisposition disposition) {
+        this(controllerId, targetPlayerId, allPermanentIds, cards, cardOwners, pile1Ids, pile2Ids,
+                disposition, true);
     }
 
     /** Card-pile mode (Boneyard Parley, Brilliant Ultimatum, Unesh) when the held-out card list is non-empty. */

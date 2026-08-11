@@ -16,8 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  * cost to obey the requirement.
  *
  * @param requirement which requirement to impose; see {@link CombatRequirement}
- * @param scope       whom the requirement lands on; only {@link GrantScope#TARGET} and
- *                    {@link GrantScope#ALL_OWN_CREATURES} are supported
+ * @param scope       whom the requirement lands on; {@link GrantScope#TARGET} targets a creature,
+ *                    {@link GrantScope#SELF} applies to the source permanent, and
+ *                    {@link GrantScope#ALL_OWN_CREATURES} applies to every creature the controller controls
  */
 public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) implements CardEffect {
 
@@ -36,6 +37,9 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
      */
     @Override
     public TargetSpec targetSpec() {
+        if (scope == GrantScope.SELF) {
+            return new TargetSpec(null, false, null, true, 1);
+        }
         if (scope != GrantScope.TARGET) {
             return TargetSpec.NONE;
         }

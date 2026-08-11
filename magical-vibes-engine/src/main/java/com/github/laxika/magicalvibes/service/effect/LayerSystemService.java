@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -176,10 +177,19 @@ public class LayerSystemService {
      */
     public record L4Contribution(List<CardSubtype> grantedSubtypes, boolean subtypeOverriding,
                                  boolean landSubtypeOverriding, CardType grantedCardType,
-                                 CardSupertype grantedSupertype, boolean cardTypeOverriding) {
+                                 CardSupertype grantedSupertype, boolean cardTypeOverriding,
+                                 List<CardType> overriddenCardTypes) {
 
         public L4Contribution {
             grantedSubtypes = grantedSubtypes == null ? List.of() : List.copyOf(grantedSubtypes);
+            overriddenCardTypes = overriddenCardTypes == null ? List.of() : List.copyOf(overriddenCardTypes);
+        }
+
+        public L4Contribution(List<CardSubtype> grantedSubtypes, boolean subtypeOverriding,
+                              boolean landSubtypeOverriding, CardType grantedCardType,
+                              CardSupertype grantedSupertype, boolean cardTypeOverriding) {
+            this(grantedSubtypes, subtypeOverriding, landSubtypeOverriding, grantedCardType,
+                    grantedSupertype, cardTypeOverriding, List.of());
         }
 
         /** Single-subtype contribution. */
@@ -222,6 +232,9 @@ public class LayerSystemService {
             }
             if (cardTypeOverriding) {
                 accumulator.setCardTypeOverriding(true);
+            }
+            if (!overriddenCardTypes.isEmpty()) {
+                accumulator.setGrantedCardTypes(overriddenCardTypes);
             }
         }
     }
@@ -721,6 +734,7 @@ public class LayerSystemService {
      */
     private static long hashCard(long h, Card card) {
         h = mix(h, System.identityHashCode(card));
+        h = mix(h, card.getManaCost() == null ? 0 : card.getManaCost().hashCode());
         h = mix(h, card.getPower() == null ? -1 : card.getPower());
         h = mix(h, card.getToughness() == null ? -1 : card.getToughness());
         h = mix(h, enumOrdinal(card.getType()));
@@ -1285,6 +1299,15 @@ public class LayerSystemService {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, grant.cardType(), null));
+                }
+            }
+            case SetCardTypesEffect set -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(instance, set.scope(), null, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
+                    record(board, instance, target, new L4Contribution(
+                            List.of(), false, false, null, null, true,
+                            List.copyOf(set.cardTypes())));
                 }
             }
             case GrantSupertypeToEnchantedPermanentEffect grant -> {

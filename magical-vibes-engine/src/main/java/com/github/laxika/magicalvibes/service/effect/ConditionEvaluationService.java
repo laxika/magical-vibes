@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPer
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
+import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
+import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
@@ -137,6 +139,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedB
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
@@ -220,6 +223,8 @@ public class ConditionEvaluationService {
                     isMetalcraftMet(gameData, ctx);
             case Delirium ignored ->
                     isDeliriumMet(gameData, ctx);
+            case DevotionToColorAtLeast c ->
+                    devotionToColorAtLeast(gameData, ctx, c);
             case Coven ignored ->
                     isCovenMet(gameData, ctx);
             case Morbid ignored ->
@@ -253,6 +258,7 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null
                             && gameData.getSpellsCastThisTurn(ctx.targetId()).stream()
                                     .noneMatch(spell -> spell.hasType(CardType.CREATURE));
+            case ExtraTurn ignored -> gameData.currentTurnIsExtraTurn;
             case GainedLifeThisTurn gainedLife ->
                     ctx.controllerId() != null
                             && gameData.getLifeGainedThisTurn(ctx.controllerId()) >= gainedLife.minimumAmount();
@@ -514,6 +520,10 @@ public class ConditionEvaluationService {
             case SourceIsRenowned ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isRenowned();
+            }
+            case SourceIsMonstrous ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isMonstrous();
             }
             case SourceCounterThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -847,6 +857,21 @@ public class ConditionEvaluationService {
             found.addAll(card.getAdditionalTypes());
         }
         return found.size() >= 4;
+    }
+
+    private boolean devotionToColorAtLeast(GameData gameData, ConditionContext ctx,
+                                           DevotionToColorAtLeast condition) {
+        if (ctx.controllerId() == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        int devotion = 0;
+        for (Permanent permanent : battlefield) {
+            var manaCost = permanent.getCard().getParsedManaCost();
+            if (manaCost != null) {
+                devotion += manaCost.countColorSymbols(condition.color());
+            }
+        }
+        return devotion >= condition.threshold();
     }
 
     private boolean isSourceEquipped(GameData gameData, ConditionContext ctx) {

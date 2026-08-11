@@ -19,7 +19,7 @@ import java.util.Set;
  *
  * @param scope           which shield-state slot to write
  * @param amount          the shield size for {@code NEXT_*} scopes ({@code null} for ALL-style scopes)
- * @param combatOnly      combat-only window for the target-creature scopes (Foxfire)
+ * @param combatOnly      combat-only window for the controller and target-creature scopes
  * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
  * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS};
@@ -91,6 +91,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.NEXT_TO_CONTROLLER, new Fixed(amount), false, null, null, null);
     }
 
+    /** "Prevent the next {@code amount} combat damage that would be dealt to you." */
+    public static PreventDamageEffect nextCombatToController(int amount) {
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_CONTROLLER, new Fixed(amount), true, null, null, null);
+    }
+
     /** "Prevent the next {@code amount} damage that would be dealt to ~." */
     public static PreventDamageEffect nextToSelf(int amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_SELF, new Fixed(amount), false, null, null, null);
@@ -149,6 +154,11 @@ public record PreventDamageEffect(
     /** "Prevent all combat damage that would be dealt this turn." */
     public static PreventDamageEffect allCombat() {
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT, null, false, null, null, null);
+    }
+
+    /** "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). */
+    public static PreventDamageEffect allCombatToPlayers() {
+        return new PreventDamageEffect(PreventionScope.ALL_COMBAT_TO_PLAYERS, null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt to creatures this turn." */

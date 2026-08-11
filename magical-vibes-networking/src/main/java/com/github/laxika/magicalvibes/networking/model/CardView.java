@@ -58,6 +58,7 @@ public record CardView(
         boolean token,
         String watermark,
         boolean hasAlternateCastingCost,
+        boolean alternateCostRequiresTarget,
         int alternateCostLifePayment,
         int alternateCostSacrificeCount,
         int alternateCostTapCount,

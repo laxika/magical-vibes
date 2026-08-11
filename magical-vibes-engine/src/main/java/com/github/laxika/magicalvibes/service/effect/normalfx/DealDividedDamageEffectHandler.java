@@ -9,12 +9,18 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,6 +41,13 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
+    @Autowired
+    private AmountEvaluationService amountEvaluationService;
+    @Autowired
+    private InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private PredicateEvaluationService predicateEvaluationService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return DealDividedDamageEffect.class;
@@ -47,6 +60,10 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
         switch (e.mode()) {
             case CHOSEN -> {
                 if (e.etbAssignments()) {
+                    if (e.targetRestriction() != null) {
+                        resolveResolutionTimeAssignments(gameData, entry, e);
+                        return;
+                    }
                     Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
                     gameData.pendingETBDamageAssignments = Map.of();
                     // dealDividedDamageToAnyTargets already calls checkWinCondition internally.
@@ -91,6 +108,64 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    private void resolveResolutionTimeAssignments(GameData gameData, StackEntry entry,
+                                                  DealDividedDamageEffect effect) {
+        List<UUID> targets = entry.targetsForEffect(effect);
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int total = amountEvaluationService.evaluate(gameData, effect.totalDamage(),
+                AmountContext.forStackEntry(entry, source));
+        Map<UUID, Integer> assignments = new LinkedHashMap<>();
+        for (Map.Entry<UUID, Integer> assignment : gameData.pendingETBDamageAssignments.entrySet()) {
+            if (targets.contains(assignment.getKey()) && assignment.getValue() > 0) {
+                assignments.put(assignment.getKey(), assignment.getValue());
+            }
+        }
+
+        UUID pendingTargetId = gameData.pendingDividedDamageTargetId;
+        if (pendingTargetId != null) {
+            Integer chosen = gameData.chosenXValue;
+            gameData.chosenXValue = null;
+            gameData.pendingDividedDamageTargetId = null;
+            if (chosen == null || !targets.contains(pendingTargetId)) {
+                gameData.pendingETBDamageAssignments = assignments;
+                return;
+            }
+            assignments.put(pendingTargetId, chosen);
+            gameData.pendingETBDamageAssignments = assignments;
+        }
+
+        int assignedTotal = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (targets.isEmpty() || total <= 0) {
+            gameData.pendingETBDamageAssignments = Map.of();
+            return;
+        }
+
+        if (assignments.keySet().containsAll(targets)) {
+            gameData.pendingETBDamageAssignments = Map.of();
+            if (assignedTotal == total) {
+                dealToAssignments(gameData, entry, effect, assignments);
+            }
+            return;
+        }
+
+        int remainingTargets = (int) targets.stream().filter(id -> !assignments.containsKey(id)).count();
+        int remainingDamage = total - assignedTotal;
+        if (remainingDamage < remainingTargets) {
+            gameData.pendingETBDamageAssignments = Map.of();
+            return;
+        }
+
+        UUID nextTarget = targets.stream().filter(id -> !assignments.containsKey(id)).findFirst().orElseThrow();
+        int min = remainingTargets == 1 ? remainingDamage : 1;
+        int max = remainingDamage - remainingTargets + 1;
+        gameData.pendingDividedDamageTargetId = nextTarget;
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                entry.getControllerId(), min, max,
+                entry.getCard().getName() + "'s ability — Choose damage for the target creature.",
+                entry.getCard().getName()));
+    }
+
     private void dealToAssignments(GameData gameData, StackEntry entry, DealDividedDamageEffect e,
                                    Map<UUID, Integer> assignments) {
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -113,6 +188,12 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
             // planeswalker or battle at resolution (e.g. an animated land that reverted) is an
             // illegal target and isn't affected (CR 608.2b) — never burn lands.
             if (!targetIsPlayer && !damageSupport.isAnyTargetDamageRecipient(gameData, targetPermanent)) {
+                continue;
+            }
+
+            if (!targetIsPlayer && e.targetRestriction() != null && predicateEvaluationService != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, targetPermanent,
+                    e.targetRestriction())) {
                 continue;
             }
 

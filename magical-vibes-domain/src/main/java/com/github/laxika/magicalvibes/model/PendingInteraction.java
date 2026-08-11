@@ -41,6 +41,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.IllicitAuctionBidChoice,
+        PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.AttachAurasChoice,
@@ -688,6 +689,22 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Choose one nonland card from a target player's hand or graveyard to exile. */
+    record ExileNonlandCardFromTargetHandOrGraveyardChoice(
+            UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

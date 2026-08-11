@@ -115,6 +115,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
      *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
     ON_CONTROLLER_DISCARDS,
+    /** Triggers whenever this permanent's controller scries. Checked by
+     *  {@code TriggerCollectionService.checkScryTriggers}. */
+    ON_CONTROLLER_SCRIES,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -282,6 +285,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkBecomesRenownedTriggers}, alongside
      *  {@code ON_SELF_BECOMES_RENOWNED}. Used by Valeron Wardens ({@code DrawCardEffect(1)}). */
     ON_ALLY_CREATURE_BECOMES_RENOWNED,
+    /** Triggers whenever this creature becomes monstrous for the first time. */
+    ON_SELF_BECOMES_MONSTROUS,
     /** Triggers whenever this permanent phases out — from the untap step's phasing turn-based action
      *  (CR 702.26a) or from an effect that phases it out. Fires only on the permanent that phased
      *  out, driven from {@code PhasingService} via

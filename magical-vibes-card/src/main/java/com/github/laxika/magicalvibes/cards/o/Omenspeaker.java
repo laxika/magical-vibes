@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "64")
+@CardRegistration(set = "THS", collectorNumber = "57")
 public class Omenspeaker extends Card {
 
     public Omenspeaker() {

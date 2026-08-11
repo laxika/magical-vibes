@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,8 +40,11 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DoesntUntapEffect doesntUntap = (DoesntUntapEffect) effect;
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty()) {
             return;
         }
         UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -50,16 +54,26 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
 
         switch (doesntUntap.condition()) {
             case WHILE_SOURCE_ON_BATTLEFIELD -> {
-                target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
-                
-                gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as you control ", entry.getCard(), "."));
-                log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
+                for (UUID targetId : targetIds) {
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                    if (target == null) {
+                        continue;
+                    }
+                    target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
+                    gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as you control ", entry.getCard(), "."));
+                    log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
+                }
             }
             case WHILE_SOURCE_TAPPED -> {
-                target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
-                
-                gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as ", entry.getCard(), " remains tapped."));
-                log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
+                for (UUID targetId : targetIds) {
+                    Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                    if (target == null) {
+                        continue;
+                    }
+                    target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
+                    gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as ", entry.getCard(), " remains tapped."));
+                    log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
+                }
             }
             case ALWAYS -> {
                 // SELF/ENCHANTED + ALWAYS are static effects handled by UntapStepService; never resolved on the stack.

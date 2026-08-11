@@ -19,22 +19,36 @@ package com.github.laxika.magicalvibes.model.effect;
  * permanent, put all cards exiled with it into their owner's graveyard" is honoured when control
  * changes or it leaves the battlefield. Used by Duplicity; see
  * {@link ExileCardFromHandFaceDownWithSourceEffect} for the same flag on the hand-exile variant.
+ *
+ * <p>When {@code targetedOpponent} is true, {@code scope} uses the chosen player target instead of
+ * the derived opponent context used by combat-damage and two-player triggered abilities.
  */
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
-                                          boolean toGraveyardOnControlLoss, LibraryScope scope)
+                                          boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                          boolean targetedOpponent)
         implements CombatDamageTriggerContextEffect {
 
     /** Face-down exile from the controller's own library (Colfenor's Plans). */
     public ExileTopCardsToSourceEffect(int count) {
-        this(count, true, false, LibraryScope.CONTROLLER);
+        this(count, true, false, LibraryScope.CONTROLLER, false);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown) {
-        this(count, faceDown, false, LibraryScope.CONTROLLER);
+        this(count, faceDown, false, LibraryScope.CONTROLLER, false);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss) {
-        this(count, faceDown, toGraveyardOnControlLoss, LibraryScope.CONTROLLER);
+        this(count, faceDown, toGraveyardOnControlLoss, LibraryScope.CONTROLLER, false);
+    }
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss,
+                                       LibraryScope scope) {
+        this(count, faceDown, toGraveyardOnControlLoss, scope, false);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetedOpponent ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     /**
@@ -45,6 +59,7 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
      */
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return scope == LibraryScope.TARGET_OPPONENT ? TriggerContext.DAMAGED_PLAYER : null;
+        return scope == LibraryScope.TARGET_OPPONENT && !targetedOpponent
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

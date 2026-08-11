@@ -192,9 +192,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Targeted "when this permanent leaves the battlefield" trigger ({@code EffectSlot.ON_SELF_LEAVES_BATTLEFIELD}),
-     *  e.g. Meadowboon — "put a +1/+1 counter on each creature target player controls." */
-    record SelfLeavesTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+    /** Targeted ability whose source permanent triggered, with the target chosen as it is put on the stack. */
+    record SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      String eventDescription, UUID sourcePermanentId) implements PermanentChoiceContext {
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
+            this(sourceCard, controllerId, effects, "leaves-the-battlefield", null);
+        }
+
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription) {
+            this(sourceCard, controllerId, effects, eventDescription, null);
+        }
+    }
 
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
@@ -563,13 +572,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                       int currentGroupIndex, int chosenInCurrentGroup,
-                                      List<Integer> groupSizes) implements PermanentChoiceContext {
+                                      List<Integer> groupSizes, int xValue) implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                           int currentGroupIndex, int chosenInCurrentGroup) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, List.of());
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0);
         }
     }
 

@@ -1241,10 +1241,20 @@ public class SpellCastTriggerCollectorService {
                     ? resolved
                     : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
                             trigger.manaCost(), e, "Pay " + trigger.manaCost() + "?")).toList();
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
-                    spellManaSpentX, match.permanent().getId()
-            ));
+            Card sourceCard = match.permanent().getCard();
+            boolean multiTarget = sourceCard.getSpellTargets().size() > 1
+                    || sourceCard.getSpellTargets().stream()
+                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);
+            if (multiTarget) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        sourceCard, match.controllerId(), queued, match.permanent().getId(),
+                        List.of(), 0, 0));
+            } else {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        sourceCard, match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
+                        spellManaSpentX, match.permanent().getId()
+                ));
+            }
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
         } else {

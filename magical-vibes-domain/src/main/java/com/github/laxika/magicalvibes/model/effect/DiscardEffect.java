@@ -20,13 +20,20 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                                the discarding player chooses which cards to discard
  * @param stopAfterDiscardingType matching card type that makes the remaining discard optional;
  *                                {@code null} for an ordinary discard
+ * @param onlyIfSacrificed       when {@code true}, an {@code ON_DEATH} effect only triggers when
+ *                                its source was sacrificed
  */
 public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
-                            CardType stopAfterDiscardingType)
+                            CardType stopAfterDiscardingType, boolean onlyIfSacrificed)
         implements CombatDamageTriggerContextEffect {
 
     public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random) {
-        this(amount, recipient, random, null);
+        this(amount, recipient, random, null, false);
+    }
+
+    public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
+                         CardType stopAfterDiscardingType) {
+        this(amount, recipient, random, stopAfterDiscardingType, false);
     }
 
     /** Fixed count, chosen or random per {@code random}. */
@@ -49,6 +56,10 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
         this(new Fixed(amount), recipient, false);
     }
 
+    public static DiscardEffect sacrificeOnly(int amount) {
+        return new DiscardEffect(new Fixed(amount), DiscardRecipient.TARGET_PLAYER, false, null, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return recipient == DiscardRecipient.TARGET_PLAYER
@@ -58,5 +69,10 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
     @Override
     public TriggerContext combatDamageTriggerContext() {
         return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
     }
 }

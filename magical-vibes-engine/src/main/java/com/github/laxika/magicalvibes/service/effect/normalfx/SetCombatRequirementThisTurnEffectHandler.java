@@ -43,7 +43,10 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID targetId = e.scope() == GrantScope.SELF
+                ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
+                : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }

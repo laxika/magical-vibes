@@ -229,6 +229,24 @@ class CopySpellEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("Copy can be controlled by the target spell's controller")
+            void copyCanBeControlledByTargetSpellController() {
+                Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+                StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                        List.of(), null);
+                gd.stack.add(targetEntry);
+
+                Card charlatanCard = createCard("Meletis Charlatan");
+                StackEntry charlatanEntry = copySpellTriggerEntry(charlatanCard, player2Id, counselCard.getId());
+
+                copySpellHandler.resolve(gd, charlatanEntry, CopySpellEffect.forTargetSpellController());
+
+                StackEntry copyEntry = gd.stack.getLast();
+                assertThat(copyEntry.getControllerId()).isEqualTo(player1Id);
+                assertThat(gd.pendingMayAbilities).isEmpty();
+            }
+
+            @Test
             @DisplayName("Copy card has a new identity A?€�t different UUID from original")
             void copyHasNewCardIdentity() {
                 Card counselCard = createSpellCard("Counsel of the Soratami", List.of());

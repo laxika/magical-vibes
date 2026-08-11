@@ -52,6 +52,10 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));
             }
+            case ALL_COMBAT_TO_PLAYERS -> {
+                gameData.preventAllCombatDamageToPlayers = true;
+                gameLogService.append(gameData, GameLog.text("All combat damage that would be dealt to players will be prevented this turn."));
+            }
             case ALL_TO_CREATURES -> {
                 gameData.preventAllDamageToAllCreatures = true;
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to creatures this turn is prevented."));
@@ -122,11 +126,15 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         if (controllerId == null) return;
         int amount = evaluate(gameData, entry, e);
 
-        int currentShield = gameData.playerDamagePreventionShields.getOrDefault(controllerId, 0);
-        gameData.playerDamagePreventionShields.put(controllerId, currentShield + amount);
+        var shields = e.combatOnly()
+                ? gameData.playerCombatDamagePreventionShields
+                : gameData.playerDamagePreventionShields;
+        int currentShield = shields.getOrDefault(controllerId, 0);
+        shields.put(controllerId, currentShield + amount);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = "The next " + amount + " damage that would be dealt to " + controllerName + " is prevented.";
+        String logEntry = "The next " + amount + (e.combatOnly() ? " combat damage " : " damage ")
+                + "that would be dealt to " + controllerName + " is prevented.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Prevention shield {} added to controller {}", gameData.id, amount, controllerName);
     }

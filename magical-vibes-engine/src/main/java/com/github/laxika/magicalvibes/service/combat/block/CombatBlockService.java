@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -95,6 +96,7 @@ public class CombatBlockService {
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardTargetingService graveyardTargetingService;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -395,7 +397,7 @@ public class CombatBlockService {
         // that band becomes blocked by that same blocker (even one it couldn't otherwise block, e.g.
         // a flyer). Applied after validation, so these consequential blocks don't count against
         // max-blocks or menace.
-        applyBandSharedBlocking(attackerBattlefield, defenderBattlefield, blockerAssignments);
+        applyBandSharedBlocking(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
         if (!blockerAssignments.isEmpty()) {
             String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
@@ -1067,7 +1069,8 @@ public class CombatBlockService {
      * up "blocking" a flying band-mate) and are applied only after all declared blocks have been
      * validated, so they never count toward max-blocks or menace requirements.
      */
-    private void applyBandSharedBlocking(List<Permanent> attackerBattlefield,
+    private void applyBandSharedBlocking(GameData gameData,
+                                         List<Permanent> attackerBattlefield,
                                          List<Permanent> defenderBattlefield,
                                          List<BlockerAssignment> blockerAssignments) {
         Map<UUID, List<Integer>> bandMembers = groupAttackingBands(attackerBattlefield);
@@ -1091,6 +1094,7 @@ public class CombatBlockService {
                     blocker.addBlockingTarget(memberIdx);
                     blocker.addBlockingTargetId(member.getId());
                     member.setBlockedOrWasBlockedSinceLastUpkeep(true);
+                    recordCombatBlockOpponentSubtypes(gameData, blocker, member);
                 }
             }
         }
@@ -1489,7 +1493,12 @@ public class CombatBlockService {
         int additionalBlocks = creature.getAdditionalBlocksUntilEndOfTurn();
         for (Permanent p : battlefield) {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GrantAdditionalBlockEffect e) {
+                CardEffect effectiveEffect = staticEffectConditionResolver.resolve(gameData, p,
+                        gameQueryService.findPermanentController(gameData, p.getId()), effect);
+                if (effectiveEffect == null) {
+                    continue;
+                }
+                if (effectiveEffect instanceof GrantAdditionalBlockEffect e) {
                     if (e.controlledFilter() != null) {
                         // Grant applies to each of the source controller's permanents matching the filter.
                         FilterContext ctx = FilterContext.of(gameData)
@@ -1515,7 +1524,7 @@ public class CombatBlockService {
                         // Non-creature, non-attachable (e.g. enchantment) — global effect
                         additionalBlocks += e.additionalBlocks();
                     }
-                } else if (effect instanceof GrantAdditionalBlockPerEquipmentEffect
+                } else if (effectiveEffect instanceof GrantAdditionalBlockPerEquipmentEffect
                         && p.getId().equals(creature.getId())) {
                     for (Permanent eq : battlefield) {
                         if (eq.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
@@ -1824,6 +1833,9 @@ public class CombatBlockService {
     private void recordCombatBlockOpponentSubtypes(GameData gameData, Permanent blocker, Permanent attacker) {
         recordCombatOpponentSubtypes(gameData, blocker, attacker);
         recordCombatOpponentSubtypes(gameData, attacker, blocker);
+        gameData.combatOpponentIdsBlockedByThisTurn
+                .computeIfAbsent(blocker.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(attacker.getId());
         gameData.creaturesBlockedThisTurn.add(attacker.getId());
     }
 

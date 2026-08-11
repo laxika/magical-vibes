@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
@@ -35,6 +36,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
@@ -720,6 +723,26 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("handleEnchantedCreatureControllerDrawsCard")
+    class EnchantedCreatureControllerDrawsCard {
+
+        @Test
+        @DisplayName("Bakes the dying creature's controller as the draw target")
+        void bakesControllerId() {
+            Card aura = createEnchantment("Fate Foretold");
+            var effect = new DrawCardForTargetPlayerEffect(1);
+            Permanent perm = new Permanent(aura);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 0, 0);
+
+            svc.handleEnchantedCreatureControllerDrawsCard(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER2_ID);
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
     @DisplayName("handleEnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness")
     class EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness {
 
@@ -973,6 +996,20 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleAnyCreatureDeathPutCounters(match(perm, PLAYER1_ID, effect), effect, ctx);
 
+            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("TapPermanentsEffect sets sourcePermanentId")
+        void tapSetsSourcePermanentId() {
+            Card watcher = createCreature("Fleshmad Steed", 2, 2);
+            var effect = new TapPermanentsEffect(TapUntapScope.SELF);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
+
+            svc.handleAnyCreatureDeathTap(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
 

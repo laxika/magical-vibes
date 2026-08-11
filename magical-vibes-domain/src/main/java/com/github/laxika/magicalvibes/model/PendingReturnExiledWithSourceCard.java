@@ -10,10 +10,15 @@ import java.util.UUID;
  * <p>{@code toBattlefield} sends the chosen card to the battlefield instead of the hand; it enters
  * under {@code controllerId}'s control per CR 110.2a, which may differ from its owner.
  */
-public record PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId)
+public record PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId,
+                                                CardSubtype grantedSubtype)
         implements PendingInteraction {
 
+    public PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId) {
+        this(toBattlefield, controllerId, null);
+    }
+
     public PendingReturnExiledWithSourceCard() {
-        this(false, null);
+        this(false, null, null);
     }
 }

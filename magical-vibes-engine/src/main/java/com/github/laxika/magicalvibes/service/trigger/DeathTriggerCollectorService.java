@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceE
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
@@ -73,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -667,6 +670,18 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ReturnEnchantedCreatureAndReattachAuraOnDeathEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleReturnEnchantedCreatureAndReattachAura(TriggerMatchContext match,
+            ReturnEnchantedCreatureAndReattachAuraOnDeathEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        CardEffect effectForStack = epd.dyingCreatureCardId() != null
+                ? new ReturnEnchantedCreatureAndReattachAuraOnDeathEffect(epd.dyingCreatureCardId())
+                : effect;
+        addEnchantedPermanentDeathEntry(match, effectForStack);
+        return true;
+    }
+
     @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureControllerLosesLife(TriggerMatchContext match,
             EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
@@ -679,6 +694,28 @@ public class DeathTriggerCollectorService {
         CardEffect baked = new EnchantedCreatureControllerLosesLifeEffect(
                 amount, epd.dyingPermanentControllerId());
         addEnchantedPermanentDeathEntry(match, baked);
+        return true;
+    }
+
+    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureControllerDrawsCard(TriggerMatchContext match,
+            DrawCardForTargetPlayerEffect effect, TriggerContext ctx) {
+        // Fate Foretold: the dying creature's controller draws, not the Aura's controller.
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                epd.dyingPermanentControllerId(),
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s ability triggers (enchanted permanent put into graveyard)."));
+        log.info("Game {} - {} triggers (enchanted permanent put into graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 
@@ -1257,6 +1294,22 @@ public class DeathTriggerCollectorService {
         // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
         // permanent id to locate this creature at resolution (Galvanic Juggernaut); ENCHANTED reads
         // the same id to find the Aura/Equipment whose host untaps (Thornbite Staff).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = TapPermanentsEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathTap(TriggerMatchContext match,
+            TapPermanentsEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -1868,7 +1921,7 @@ public class DeathTriggerCollectorService {
         CreateTokenEffect frozen = blueprint.withPowerToughness(
                 amountEvaluationService.evaluate(match.gameData(), blueprint.power(), amountContext),
                 amountEvaluationService.evaluate(match.gameData(), blueprint.toughness(), amountContext));
-        match.gameData().queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
+        match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                 match.permanent().getCard(), sl.controllerId(),
                 new ArrayList<>(List.of(new CreateTokenForTargetPlayerEffect(frozen)))
         ));
@@ -1897,10 +1950,10 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         // Graveyard-targeting self-leaves triggers (e.g. Offalsnout) also queue as a
-        // SelfLeavesTriggerTarget; the queue processor routes them to a graveyard card choice.
+        // The queue processor routes graveyard targets to a card choice.
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
+            match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {

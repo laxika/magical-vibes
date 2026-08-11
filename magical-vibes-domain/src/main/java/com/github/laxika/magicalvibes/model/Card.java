@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -452,6 +453,17 @@ public class Card {
     }
 
     /**
+     * Declares an optional target group whose maximum is evaluated when an ETB trigger is put on
+     * the stack. The fixed cap is only a sanity ceiling for target-position handling.
+     */
+    public SpellTarget targetUpTo(DynamicAmount dynamicMaxTargets, TargetFilter filter, int cap) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false, dynamicMaxTargets);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
      * Wrapper effects (conditional, may) register their inner effects under the same index,
      * because resolution unwraps them before dispatching to the handler — the handler must be
@@ -483,6 +495,11 @@ public class Card {
             case SequenceEffect e -> {
                 for (CardEffect step : e.steps()) {
                     registerEffectTargetIndex(step, targetIndex);
+                }
+            }
+            case SpellCastTriggerEffect e -> {
+                for (CardEffect resolvedEffect : e.resolvedEffects()) {
+                    registerEffectTargetIndex(resolvedEffect, targetIndex);
                 }
             }
             // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control
@@ -553,6 +570,10 @@ public class Card {
      */
     public boolean hasXScaledTargets() {
         return spellTargets.stream().anyMatch(SpellTarget::isXScaled);
+    }
+
+    public boolean hasDynamicTargetCount() {
+        return spellTargets.stream().anyMatch(st -> st.getDynamicMaxTargets() != null);
     }
 
     /**
@@ -633,7 +654,8 @@ public class Card {
     public void copyTargetingFrom(Card original) {
         assertMutable();
         for (SpellTarget st : original.spellTargets) {
-            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex(), st.isXScaled()));
+            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex(),
+                    st.isXScaled(), st.getDynamicMaxTargets()));
         }
         effectTargetIndexMap.putAll(original.effectTargetIndexMap);
         castTimeTargetFilter = original.castTimeTargetFilter;

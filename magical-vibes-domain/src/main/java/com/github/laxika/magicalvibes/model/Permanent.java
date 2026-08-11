@@ -25,6 +25,7 @@ public class Permanent {
     private final UUID id;
     private Card card;
     private final Card originalCard;
+    @Setter private boolean bestow;
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
@@ -437,6 +438,8 @@ public class Permanent {
     /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
      *  and read by "if it's renowned" abilities. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean renowned;
+    /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean monstrous;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
@@ -530,6 +533,7 @@ public class Permanent {
         card.freeze();
         this.card = card;
         this.originalCard = card;
+        this.bestow = false;
         this.tapped = false;
         this.attackedThisTurn = false;
         this.summoningSick = true;
@@ -544,6 +548,7 @@ public class Permanent {
         this.id = source.id;
         this.card = source.card;
         this.originalCard = source.originalCard;
+        this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
         this.attacking = source.attacking;
@@ -676,6 +681,7 @@ public class Permanent {
         this.prowl = source.prowl;
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
+        this.monstrous = source.monstrous;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);

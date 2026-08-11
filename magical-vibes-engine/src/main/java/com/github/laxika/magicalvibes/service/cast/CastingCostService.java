@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -625,7 +626,14 @@ public class CastingCostService {
      */
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
-        if (altCastOpt.isEmpty()) return false;
+        if (altCastOpt.isEmpty()) {
+            var bestowCast = card.getCastingOption(BestowCast.class);
+            if (bestowCast.isEmpty()) return false;
+            return bestowCast.get().getCost(ManaCastingCost.class)
+                    .map(cost -> new ManaCost(cost.manaCost()).canPay(
+                            gameData.playerManaPools.get(playerId), getCastCostModifier(gameData, playerId, card)))
+                    .orElse(false);
+        }
         AlternateHandCast altCast = altCastOpt.get();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
 

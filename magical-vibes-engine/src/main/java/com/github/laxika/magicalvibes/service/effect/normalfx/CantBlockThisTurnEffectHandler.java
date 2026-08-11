@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -33,11 +34,12 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CantBlockThisTurnEffect) effect;
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry);
-            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
-            case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e);
-            case ALL_CREATURES -> resolveAllCreatures(gameData, e);
+            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
+            case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e, filterContext);
+            case ALL_CREATURES -> resolveAllCreatures(gameData, e, filterContext);
             default -> throw new IllegalStateException("Unsupported can't-block scope: " + e.scope());
         }
     }
@@ -69,7 +71,8 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 
-    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e) {
+    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e,
+                                                FilterContext filterContext) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
@@ -91,7 +94,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         for (Permanent p : battlefield) {
             if (gameQueryService.isCreature(gameData, p)
                     && (e.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
                 p.setCantBlockThisTurn(true);
                 count++;
             }
@@ -108,7 +111,8 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
      * "Other creatures that player controls can't block this turn" — the affected player is the
      * target permanent's controller, and the target itself is deliberately left able to block.
      */
-    private void resolveTargetControllersOtherCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e) {
+    private void resolveTargetControllersOtherCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e,
+                                                        FilterContext filterContext) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
@@ -124,7 +128,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             if (!p.getId().equals(targetId)
                     && gameQueryService.isCreature(gameData, p)
                     && (e.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
                 p.setCantBlockThisTurn(true);
                 count++;
             }
@@ -138,7 +142,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveAllCreatures(GameData gameData, CantBlockThisTurnEffect e) {
+    private void resolveAllCreatures(GameData gameData, CantBlockThisTurnEffect e, FilterContext filterContext) {
         int count = 0;
         for (UUID playerId : gameData.playerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -146,7 +150,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p)
                         && (e.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                            || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
                     p.setCantBlockThisTurn(true);
                     count++;
                 }

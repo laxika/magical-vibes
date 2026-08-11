@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "11")
+@CardRegistration(set = "THS", collectorNumber = "22")
 public class LastBreath extends Card {
 
     public LastBreath() {

@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
@@ -1039,6 +1040,8 @@ public class PredicateEvaluationService {
             case PermanentHasAtLeastCountersPredicate atLeastCountersPredicate ->
                     permanent.getCounterCount(atLeastCountersPredicate.counterType())
                             >= atLeastCountersPredicate.minimum();
+            case PermanentCounterCountAtLeastPredicate counterCountPredicate ->
+                    permanent.getCounterCount(counterCountPredicate.counterType()) >= counterCountPredicate.threshold();
             case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
@@ -1184,6 +1187,7 @@ public class PredicateEvaluationService {
             case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);

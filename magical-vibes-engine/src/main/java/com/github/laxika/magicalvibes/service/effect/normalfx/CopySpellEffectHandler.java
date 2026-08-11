@@ -54,7 +54,9 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID copyControllerId = entry.getControllerId();
+        UUID copyControllerId = copyEffect.copyForTargetController()
+                ? targetEntry.getControllerId()
+                : entry.getControllerId();
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
         // Creature-copy mode (Choreographed Sparks): the copy is a token that gains haste and is
         // sacrificed at the next end step. The sacrifice is registered when the token enters the

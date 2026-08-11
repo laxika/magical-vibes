@@ -551,6 +551,29 @@ class LookAtTopCardsEffectHandlerTest {
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
             verifyNoInteractions(sessionManager);
         }
+
+        @Test
+        @DisplayName("Any-number battlefield choice can exile the remaining revealed cards")
+        void anyNumberBattlefieldChoiceExilesRemainingCards() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Forest"));
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> !((Card) inv.getArgument(0)).getName().equals("Lightning Bolt"));
+
+            LookAtTopCardsEffect effect = new LookAtTopCardsEffect(
+                    new Fixed(3), new Fixed(3), new CardTypePredicate(CardType.CREATURE),
+                    LookDestination.EXILE, true, LibrarySearchDestination.BATTLEFIELD, true);
+            handler.resolve(gd, entryFor("Xenagos, the Reveler", effect), effect);
+
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.remainingToExile()).isTrue();
+            assertThat(choice.reorderRemainingToBottom()).isFalse();
+            assertThat(choice.randomRemainingToBottom()).isFalse();
+        }
     }
 
     // =========================================================================

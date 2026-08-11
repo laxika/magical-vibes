@@ -66,6 +66,8 @@ public class GameData {
     public TurnStep currentStep;
     public UUID activePlayerId;
     public int turnNumber;
+    /** Whether the turn currently in progress was taken from the extra-turn queue. */
+    public boolean currentTurnIsExtraTurn;
     /**
      * Number of turns each player has taken so far this game, including the turn currently in progress
      * and any extra turns. Used by cards that speak of "your first, second, or third turns of the game".
@@ -268,6 +270,8 @@ public class GameData {
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
     public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
+    /** Player IDs → remaining combat-damage-only prevention shields for this turn. */
+    public final Map<UUID, Integer> playerCombatDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
@@ -284,6 +288,8 @@ public class GameData {
     public final Map<UUID, Integer> skipNextUntapStepCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
+    /** When true, all combat damage that would be dealt to players is prevented this turn (Defend the Hearth). */
+    public boolean preventAllCombatDamageToPlayers;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
     public boolean preventAllDamageToAllCreatures;
     /** When true, all damage that would be dealt by creatures is prevented this turn (Ethereal Haze). */
@@ -351,6 +357,8 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
+    /** Target awaiting a resolution-time damage-allocation answer for a divided damage effect. */
+    public UUID pendingDividedDamageTargetId;
     public PendingAbilityCounterCostActivation pendingAbilityCounterCostActivation;
     /**
      * Resolution-time "choose a creature type" answer for a spell/ability that has no permanent
@@ -902,6 +910,8 @@ public class GameData {
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
      *  Cleared during cleanup step. */
     public final Set<UUID> exilePlayAnyManaType = ConcurrentHashMap.newKeySet();
+    /** Exiled card UUIDs that may be cast spending mana of any type for as long as they remain exiled. */
+    public final Set<UUID> exilePlayAnyManaTypeWhileExiled = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that may be played from exile without paying their mana cost (e.g. Oracle's Vault's
      *  second ability). Complements {@link #exilePlayPermissions} — the card must also hold a play
      *  permission — and is cleared during the cleanup step. */
@@ -1141,6 +1151,10 @@ public class GameData {
      *  the current combat, so it still answers "all creatures that blocked or were blocked by it this turn"
      *  across multiple combat phases. Used by Venomous Breath. */
     public final Map<UUID, Set<UUID>> combatBlockOpponentIdsThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks, per blocker, the attacking creatures it blocked this turn. Used by Triton Tactics,
+     * which affects creatures blocked by its chosen creatures rather than creatures that blocked them. */
+    public final Map<UUID, Set<UUID>> combatOpponentIdsBlockedByThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks the attacking creatures that became blocked this turn (recorded at declare-blockers time,
      *  attacker direction only — blocking does not count). Turn-scoped and independent of the current
@@ -2257,7 +2271,11 @@ public class GameData {
 
     /** Removes an exiled card by card ID. Returns true if found and removed. */
     public boolean removeFromExile(UUID cardId) {
-        return exiledCards.removeIf(e -> e.card().getId().equals(cardId));
+        boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
+        if (removed) {
+            exilePlayAnyManaTypeWhileExiled.remove(cardId);
+        }
+        return removed;
     }
 
     /** Finds an exiled card entry by card ID, or null if not found. */
@@ -2460,10 +2478,12 @@ public class GameData {
         copy.currentStep = this.currentStep;
         copy.activePlayerId = this.activePlayerId;
         copy.turnNumber = this.turnNumber;
+        copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
+        copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
@@ -2485,6 +2505,7 @@ public class GameData {
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.pendingDividedDamageTargetId = this.pendingDividedDamageTargetId;
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
@@ -2654,6 +2675,7 @@ public class GameData {
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
+        copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
@@ -2700,6 +2722,8 @@ public class GameData {
         copy.creaturesBlockedThisTurn.addAll(this.creaturesBlockedThisTurn);
         this.combatBlockOpponentIdsThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentIdsThisTurn.put(k, new HashSet<>(v)));
+        this.combatOpponentIdsBlockedByThisTurn.forEach((k, v) ->
+                copy.combatOpponentIdsBlockedByThisTurn.put(k, new HashSet<>(v)));
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
@@ -2910,6 +2934,7 @@ public class GameData {
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
+        copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
         copy.exilePlayWithoutPayingManaCost.addAll(this.exilePlayWithoutPayingManaCost);
         copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);

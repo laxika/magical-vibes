@@ -39,7 +39,7 @@ public class BecomeCopyOfTargetCreatureEffectHandler implements NormalEffectHand
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 entry.getControllerId(),
-                List.of(new BecomeCopyOfTargetCreatureEffect()),
+                List.of((BecomeCopyOfTargetCreatureEffect) effect),
                 entry.getCard().getName() + " — You may have this creature become a copy of " + targetPerm.getCard().getName() + ".",
                 targetId
         ));

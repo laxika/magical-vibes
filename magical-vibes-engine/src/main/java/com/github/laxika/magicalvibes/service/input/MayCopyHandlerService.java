@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -88,8 +89,8 @@ public class MayCopyHandlerService {
                 }
             }
 
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-                triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
@@ -449,9 +450,18 @@ public class MayCopyHandlerService {
         String originalName = sourcePermanent.getCard().getName();
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
 
-        // Retain the upkeep copy ability per "except it has this ability"
+        // Retain the source's copy ability per "except it has this ability".
         Card copiedCard = sourcePermanent.getCard();
-        copiedCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new BecomeCopyOfTargetCreatureEffect());
+        BecomeCopyOfTargetCreatureEffect copyEffect = ability.effects().stream()
+                .filter(BecomeCopyOfTargetCreatureEffect.class::isInstance)
+                .map(BecomeCopyOfTargetCreatureEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+        EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
+        for (EffectRegistration registration : sourcePermanent.getOriginalCard()
+                .getEffectRegistrations(retainedEffectSlot)) {
+            copiedCard.addEffect(retainedEffectSlot, registration.effect(), registration.triggerMode());
+        }
 
         String targetName = targetPerm.getCard().getName();
         

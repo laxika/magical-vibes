@@ -28,8 +28,15 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  */
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                           boolean exileInsteadOfDie, int targetGroup,
-                                          Condition unpreventableWhen)
+                                          Condition unpreventableWhen,
+                                          boolean onlyIfSacrificed)
         implements DamageDealingEffect {
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen, false);
+    }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate, boolean exileInsteadOfDie, int targetGroup) {
         this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, null);
@@ -49,6 +56,10 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage) {
         this(damage, false, false, -1, null);
+    }
+
+    public static DealDamageToAnyTargetEffect sacrificeOnly(int damage) {
+        return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, true);
     }
 
     /** "Deals damage to any target; that damage can't be prevented while {@code unpreventableWhen} holds" (Banefire). */
@@ -79,5 +90,10 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     @Override
     public boolean canDamagePlayers() {
         return true;
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
     }
 }

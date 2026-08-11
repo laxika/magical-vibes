@@ -428,7 +428,16 @@ public class DamagePreventionService {
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+        return applyPlayerPreventionShield(gameData, playerId, damage, false);
+    }
+
+    public int applyCombatPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+        return applyPlayerPreventionShield(gameData, playerId, damage, true);
+    }
+
+    private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage, boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (combatDamage && gameData.preventAllCombatDamageToPlayers) return 0;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
         if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) return 0;
@@ -439,6 +448,15 @@ public class DamagePreventionService {
         damage = applyRedirectShields(gameData, playerId, damage);
         damage = applyGlobalPreventionShield(gameData, damage);
         damage = applyDamagePreventionLifeGainShield(gameData, playerId, damage);
+        if (damage <= 0) return 0;
+        if (combatDamage) {
+            int combatShield = gameData.playerCombatDamagePreventionShields.getOrDefault(playerId, 0);
+            if (combatShield > 0) {
+                int prevented = Math.min(combatShield, damage);
+                gameData.playerCombatDamagePreventionShields.put(playerId, combatShield - prevented);
+                damage -= prevented;
+            }
+        }
         if (damage <= 0) return 0;
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;

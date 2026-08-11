@@ -190,6 +190,7 @@ public class TurnCleanupService {
         });
 
         gameData.playerDamagePreventionShields.clear();
+        gameData.playerCombatDamagePreventionShields.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
@@ -201,6 +202,7 @@ public class TurnCleanupService {
         gameData.damagePreventionLifeGainShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
+        gameData.preventAllCombatDamageToPlayers = false;
         gameData.preventAllDamageToAllCreatures = false;
         gameData.preventAllDamageByCreatures = false;
         gameData.combatDamageExemptPredicate = null;

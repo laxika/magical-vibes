@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "145")
+@CardRegistration(set = "THS", collectorNumber = "107")
 public class Thoughtseize extends Card {
 
     public Thoughtseize() {

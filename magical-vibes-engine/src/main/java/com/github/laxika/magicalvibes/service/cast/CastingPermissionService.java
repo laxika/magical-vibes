@@ -888,6 +888,13 @@ public class CastingPermissionService {
      */
     public Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> anyManaIds = new HashSet<>();
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            UUID permittedPlayer = gameData.exilePlayPermissions.get(entry.card().getId());
+            if (gameData.exilePlayAnyManaTypeWhileExiled.contains(entry.card().getId())
+                    && playerId.equals(permittedPlayer)) {
+                anyManaIds.add(entry.card().getId());
+            }
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -927,7 +934,9 @@ public class CastingPermissionService {
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
-        if (gameData.exilePlayAnyManaType.contains(cardId)) return true;
+        if (gameData.exilePlayAnyManaType.contains(cardId)
+                || (gameData.exilePlayAnyManaTypeWhileExiled.contains(cardId)
+                && playerId.equals(gameData.exilePlayPermissions.get(cardId)))) return true;
 
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);

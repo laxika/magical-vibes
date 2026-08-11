@@ -25,6 +25,7 @@ public sealed interface PermanentPredicate permits
         PermanentControlledBySourceControllerPredicate,
         PermanentControlledContinuouslySinceBeginningOfTurnPredicate,
         PermanentControllerControlsPermanentPredicate,
+        PermanentCounterCountAtLeastPredicate,
         PermanentDealtDamageThisTurnPredicate,
         PermanentDealtDamageToAnythingThisTurnPredicate,
         PermanentDealtDamageToSourceControllerThisTurnPredicate,

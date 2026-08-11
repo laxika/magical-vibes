@@ -499,7 +499,7 @@ public class GraveyardService {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                gameData.queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                         card, ownerId, new ArrayList<>(List.of(effect))));
                 continue;
             }

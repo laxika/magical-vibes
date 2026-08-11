@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "M15", collectorNumber = "214")
+@CardRegistration(set = "THS", collectorNumber = "212")
 public class BronzeSable extends Card {
 
     public BronzeSable() {

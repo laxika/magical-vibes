@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndO
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -89,9 +90,11 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
                     || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatTaps(gameData);
+            combatService.processEndOfCombatCombatOpponentTaps(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
@@ -263,9 +266,11 @@ public class TurnProgressionService {
         gameData.mindControllerPlayerId = null;
 
         UUID nextActive;
+        boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
+            currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
         } else {
             List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
@@ -291,6 +296,7 @@ public class TurnProgressionService {
         }
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
+        gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a).
@@ -411,6 +417,7 @@ public class TurnProgressionService {
         gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentIdsThisTurn.clear();
+        gameData.combatOpponentIdsBlockedByThisTurn.clear();
         gameData.creaturesBlockedThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
@@ -230,17 +231,41 @@ public class CombatService {
         List<TapAndSkipUntapAtEndOfCombat> actions =
                 gameData.drainDelayedActions(TapAndSkipUntapAtEndOfCombat.class);
         for (TapAndSkipUntapAtEndOfCombat action : actions) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (perm == null) {
-                continue;
-            }
-            tapUntapSupport.tapPermanent(gameData, perm);
-            perm.setSkipUntapCount(perm.getSkipUntapCount() + 1);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    " is tapped and doesn't untap during its controller's next untap step."));
-            log.info("Game {} - {} tapped and untap-locked at end of combat", gameData.id,
-                    perm.getCard().getName());
+            tapAndSkipUntapAtEndOfCombat(gameData, action.permanentId());
         }
+    }
+
+    /**
+     * Taps each creature that was blocked by one of Triton Tactics' chosen creatures and gives it the
+     * same one-untap-step lock as Joven's Ferrets. The directional block map is read at end of combat,
+     * so the spell can resolve before blockers are declared.
+     */
+    public void processEndOfCombatCombatOpponentTaps(GameData gameData) {
+        List<TapCombatOpponentsAtEndOfCombat> actions =
+                gameData.drainDelayedActions(TapCombatOpponentsAtEndOfCombat.class);
+        Set<UUID> opponentIds = new java.util.LinkedHashSet<>();
+        for (TapCombatOpponentsAtEndOfCombat action : actions) {
+            Set<UUID> combatOpponents = gameData.combatOpponentIdsBlockedByThisTurn.get(action.creatureId());
+            if (combatOpponents != null) {
+                opponentIds.addAll(combatOpponents);
+            }
+        }
+        for (UUID opponentId : opponentIds) {
+            tapAndSkipUntapAtEndOfCombat(gameData, opponentId);
+        }
+    }
+
+    private void tapAndSkipUntapAtEndOfCombat(GameData gameData, UUID permanentId) {
+        Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
+        if (perm == null) {
+            return;
+        }
+        tapUntapSupport.tapPermanent(gameData, perm);
+        perm.setSkipUntapCount(perm.getSkipUntapCount() + 1);
+        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                " is tapped and doesn't untap during its controller's next untap step."));
+        log.info("Game {} - {} tapped and untap-locked at end of combat", gameData.id,
+                perm.getCard().getName());
     }
 
     /**

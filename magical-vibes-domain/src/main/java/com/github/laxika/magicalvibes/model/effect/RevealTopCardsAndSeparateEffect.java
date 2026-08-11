@@ -11,13 +11,24 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
  * (Jace, Architect of Thought's −2).
  *
  * <p>Non-targeting. Resolution removes the top {@code count} cards from the controller's library,
- * hands the pile split to an opponent, then lets the controller choose which pile goes to their
- * hand. Reuses the shared card-pile flow ({@code PendingPileSeparation}).
+ * hands the pile split to the appropriate player, then lets the appropriate player choose which
+ * pile goes to their hand. When {@code controllerSeparates} is true, the controller separates and
+ * an opponent chooses. Reuses the shared card-pile flow ({@code PendingPileSeparation}).
  */
-public record RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition) implements CardEffect {
+public record RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
+                                              boolean controllerSeparates) implements CardEffect {
 
     /** Fact-or-Fiction default: the unchosen pile goes to the controller's graveyard. */
     public RevealTopCardsAndSeparateEffect(int count) {
-        this(count, CardPileDisposition.HAND);
+        this(count, CardPileDisposition.HAND, false);
+    }
+
+    public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition) {
+        this(count, disposition, false);
+    }
+
+    /** Steam Augury variant: the controller separates and an opponent chooses a pile. */
+    public RevealTopCardsAndSeparateEffect(int count, boolean controllerSeparates) {
+        this(count, CardPileDisposition.HAND, controllerSeparates);
     }
 }

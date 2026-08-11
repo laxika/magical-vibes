@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -196,8 +196,8 @@ public class TargetLegalityService {
             throw new IllegalStateException("Must select graveyard targets");
         }
         for (CardEffect effect : effects) {
-            if (effect instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect toTopEffect) {
-                validateGraveyardToTopOfLibraryTargets(gameData, playerId, toTopEffect, targetCardIds);
+            if (effect instanceof TargetedGraveyardCardsEffect libraryEffect) {
+                validateTargetedGraveyardCardLibraryEffect(gameData, playerId, libraryEffect, targetCardIds);
                 break;
             }
             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
@@ -345,15 +345,14 @@ public class TargetLegalityService {
     }
 
     /**
-     * "Put up to N target [type] cards from a player's graveyard on top of their library" activated
-     * from a permanent (Lodestone Bauble). No more than N distinct cards, each still in a graveyard
-     * and matching the filter, and — for the non-controller scopes — all in the same graveyard, since
-     * the wording picks a single player.
+     * Validates an activated effect that moves up to N target cards from one graveyard into a
+     * library. No more than N distinct cards may be chosen, each still in a graveyard and matching
+     * the filter, and — for the non-controller scopes — all in the same graveyard.
      */
-    private void validateGraveyardToTopOfLibraryTargets(GameData gameData, UUID playerId,
-                                                        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect,
-                                                        List<UUID> targetCardIds) {
-        if (effect.maxTargets() != PutTargetCardsFromGraveyardOnTopOfLibraryEffect.ANY_NUMBER
+    private void validateTargetedGraveyardCardLibraryEffect(GameData gameData, UUID playerId,
+                                                            TargetedGraveyardCardsEffect effect,
+                                                            List<UUID> targetCardIds) {
+        if (effect.maxTargets() != 0
                 && targetCardIds.size() > effect.maxTargets()) {
             throw new IllegalStateException("Cannot target more than " + effect.maxTargets() + " cards");
         }

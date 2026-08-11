@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M19", collectorNumber = "59")
+@CardRegistration(set = "THS", collectorNumber = "51")
 public class HorizonScholar extends Card {
 
     public HorizonScholar() {

@@ -298,6 +298,7 @@ export class TargetingChoiceService {
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
   alternateCostDiscardsHandCard = false;
+  alternateCostRequiresTarget = false;
   alternateCostSelectedIds = signal<string[]>([]);
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
@@ -444,6 +445,7 @@ export class TargetingChoiceService {
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
         this.alternateCostDiscardsHandCard = card.alternateCostDiscardsHandCard ?? false;
+        this.alternateCostRequiresTarget = card.alternateCostRequiresTarget ?? false;
         return;
       }
 
@@ -963,6 +965,26 @@ export class TargetingChoiceService {
     const g = this.gameSignal();
     this.validTargetPlayerIds.set(new Set(g?.playerIds ?? []));
     this.targetingPrompt = 'Choose a target for ' + card.name + '.';
+  }
+
+  private enterBestowTargeting(card: Card, cardIndex: number): void {
+    this.selectingTarget = true;
+    this.targetingCardIndex = cardIndex;
+    this.targetingCardName = card.name;
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
+    this.pendingAbilityXValue = null;
+    this.pendingConvokeCard = null;
+    const creatureIds = new Set<string>();
+    for (const p of this.myBattlefieldFn()) {
+      if (isPermanentCreature(p)) creatureIds.add(p.id);
+    }
+    for (const p of this.opponentBattlefieldFn()) {
+      if (isPermanentCreature(p)) creatureIds.add(p.id);
+    }
+    this.validTargetIds.set(creatureIds);
+    this.validTargetPlayerIds.set(new Set());
+    this.targetingPrompt = 'Choose a creature for ' + card.name + ' to enchant.';
   }
 
   private sendPlayCardMessage(cardIndex: number, targetId: string | null, extra?: Record<string, any>): void {
@@ -1792,6 +1814,16 @@ export class TargetingChoiceService {
       this.selectingAlternateCostHandCard = true;
       return;
     }
+    if (this.alternateCostRequiresTarget) {
+      const savedIndex = this.alternateCostCardIndex;
+      const g = this.gameSignal();
+      const card = g?.hand[savedIndex];
+      this.resetAlternateCostState();
+      if (card) {
+        this.enterBestowTargeting(card, savedIndex);
+      }
+      return;
+    }
     // Free / condition-only alternate cost (no permanent or hand payment)
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
@@ -1821,6 +1853,7 @@ export class TargetingChoiceService {
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostDiscardsHandCard = false;
+    this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
     this.continuePlayCard(spellIndex);
   }
@@ -1872,6 +1905,7 @@ export class TargetingChoiceService {
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostDiscardsHandCard = false;
+    this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
     this.pendingAlternateExileHandIndex = null;
   }

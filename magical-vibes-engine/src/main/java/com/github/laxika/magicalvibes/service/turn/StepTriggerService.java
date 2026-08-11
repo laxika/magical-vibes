@@ -3,7 +3,9 @@ import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldSelfReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
+import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
@@ -329,6 +331,7 @@ public class StepTriggerService {
         // of their next upkeep" — only at the owner's own upkeep.
         resolveDelayedSelfReturns(gameData,
                 pending -> pending.atNextUpkeep() && pending.ownerId().equals(gameData.activePlayerId));
+        resolveDelayedGraveyardCardsUnderControlAtUpkeep(gameData);
 
         // Delayed "draw N cards at the beginning of the next turn's upkeep" (e.g. Library of Lat-Nam).
         // Drained regardless of who the active player is — the scheduling player draws.
@@ -2543,6 +2546,74 @@ public class StepTriggerService {
         }
     }
 
+    /** Resolves delayed simultaneous graveyard returns scheduled for a player's next upkeep. */
+    private void resolveDelayedGraveyardCardsUnderControlAtUpkeep(GameData gameData) {
+        if (!gameData.hasDelayedAction(DelayedGraveyardCardsToBattlefieldUnderControl.class,
+                action -> action.controllerId().equals(gameData.activePlayerId))) {
+            return;
+        }
+
+        List<DelayedGraveyardCardsToBattlefieldUnderControl> pendingReturns =
+                gameData.drainDelayedActions(DelayedGraveyardCardsToBattlefieldUnderControl.class,
+                        action -> action.controllerId().equals(gameData.activePlayerId));
+        for (DelayedGraveyardCardsToBattlefieldUnderControl pending : pendingReturns) {
+            List<DelayedReturningGraveyardCard> returningCards = new ArrayList<>();
+            for (UUID cardId : pending.cardIds()) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                if (card == null || ownerId == null) {
+                    log.info("Game {} - Delayed simultaneous return for card {} skipped (no longer in a graveyard)",
+                            gameData.id, cardId);
+                    continue;
+                }
+                if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, " can't return from the graveyard; it stays in the graveyard."));
+                    continue;
+                }
+                returningCards.add(new DelayedReturningGraveyardCard(card, ownerId));
+            }
+            if (returningCards.isEmpty()) {
+                continue;
+            }
+
+            for (DelayedReturningGraveyardCard returningCard : returningCards) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, returningCard.card().getId());
+            }
+
+            Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+            List<Permanent> simultaneouslyEntered = new ArrayList<>();
+            for (DelayedReturningGraveyardCard returningCard : returningCards) {
+                Card card = returningCard.card();
+                Permanent permanent = new Permanent(card);
+                permanent.setEnteredFromGraveyardOwnerId(returningCard.ownerId());
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, pending.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
+                simultaneouslyEntered.add(permanent);
+
+                if (!pending.controllerId().equals(returningCard.ownerId())) {
+                    gameData.stolenCreatures.put(permanent.getId(), returningCard.ownerId());
+                    creatureControlService.applyControlEffect(gameData, pending.controllerId(), permanent,
+                            new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                            ControlDuration.PERMANENT.toEffectDuration(), null,
+                            "Rescue from the Underworld");
+                }
+
+                String playerName = gameData.playerIdToName.get(pending.controllerId());
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " returns to the battlefield under " + playerName + "'s control (Rescue from the Underworld)."));
+                log.info("Game {} - {} returns under {}'s control (Rescue from the Underworld)",
+                        gameData.id, card.getName(), playerName);
+            }
+            for (DelayedReturningGraveyardCard returningCard : returningCards) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(
+                        gameData, pending.controllerId(), returningCard.card(), null, false);
+            }
+        }
+    }
+
+    private record DelayedReturningGraveyardCard(Card card, UUID ownerId) {}
+
     public void handleEndStepTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
 
@@ -2854,6 +2925,37 @@ public class StepTriggerService {
         // Process delayed graveyard-to-battlefield self returns (Sand Golem); the upkeep-scheduled
         // ones (Phytotitan) are left in the queue for handleUpkeepTriggers.
         resolveDelayedSelfReturns(gameData, pending -> !pending.atNextUpkeep());
+
+        if (gameData.hasDelayedAction(DelayedReturnAuraAttachedToPermanent.class)) {
+            List<DelayedReturnAuraAttachedToPermanent> pendingReturns =
+                    gameData.drainDelayedActions(DelayedReturnAuraAttachedToPermanent.class);
+            for (DelayedReturnAuraAttachedToPermanent pending : pendingReturns) {
+                Permanent enchantedPermanent = gameQueryService.findPermanentById(
+                        gameData, pending.enchantedPermanentId());
+                if (enchantedPermanent == null || !gameQueryService.isCreature(gameData, enchantedPermanent)) {
+                    continue;
+                }
+
+                Card auraCard = gameQueryService.findCardInGraveyardById(gameData, pending.auraCardId());
+                if (auraCard == null) {
+                    continue;
+                }
+
+                permanentRemovalService.removeCardFromGraveyardById(gameData, pending.auraCardId());
+                Permanent auraPermanent = new Permanent(auraCard);
+                auraPermanent.setAttachedTo(enchantedPermanent.getId());
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, pending.auraOwnerId(), auraPermanent);
+                triggerCollectionService.checkAuraAttachedTriggers(
+                        gameData, auraCard, enchantedPermanent.getId());
+                gameLogService.append(gameData, GameLog.builder()
+                        .card(auraCard)
+                        .text(" returns to the battlefield attached to ")
+                        .card(enchantedPermanent.getCard())
+                        .text(" (delayed trigger).")
+                        .build());
+            }
+        }
 
         // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal)
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {

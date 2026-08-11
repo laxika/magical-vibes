@@ -22,10 +22,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link RevealTopCardsAndSeparateEffect}: reveal the top {@code count} cards of the
- * controller's library, then hand the pile split to an opponent. Reuses the shared card-pile
+ * controller's library, then hand the pile split to the appropriate player. Reuses the shared card-pile
  * separation flow ({@link PendingPileSeparation} with {@link CardPileDisposition#HAND}); the
- * opponent's pile selection and the controller's pile choice (chosen pile → hand, other →
- * graveyard) are completed by {@code GraveyardReturnSupport}. (Unesh, Criosphinx Sovereign.)
+ * pile separator and chooser depend on the effect variant, while the chosen pile goes to hand
+ * and the other to the graveyard. (Unesh, Criosphinx Sovereign; Steam Augury.)
  */
 @Slf4j
 @Component
@@ -77,9 +77,11 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         }
 
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
-                List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition()));
+                List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition(),
+                !e.controllerSeparates()));
 
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, revealedCards, revealedCards.size(),
+        UUID separatorId = e.controllerSeparates() ? controllerId : opponentId;
+        playerInputService.beginMultiGraveyardChoice(gameData, separatorId, revealedCards, revealedCards.size(),
                 "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 }

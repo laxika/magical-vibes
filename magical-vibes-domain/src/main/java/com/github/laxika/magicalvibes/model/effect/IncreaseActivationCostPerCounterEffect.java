@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 
 /**
  * Increases the generic mana portion of an activated ability's cost by {increasePerCounter} for each
@@ -14,5 +17,15 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * on this Aura.") with a printed cost of {0}.
  */
 public record IncreaseActivationCostPerCounterEffect(CounterType counterType, int increasePerCounter)
-        implements CostEffect {
+        implements ActivationCostModifierEffect {
+
+    @Override
+    public DynamicAmount amount() {
+        return new Scaled(new CountersOnSource(counterType), increasePerCounter);
+    }
+
+    @Override
+    public boolean reducesGenericCost() {
+        return false;
+    }
 }

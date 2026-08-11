@@ -855,6 +855,18 @@ public class TriggerCollectionService {
      * damage to a player (e.g. Niv-Mizzet, Dracogenius's ping). Combat damage uses the richer
      * collector in {@code CombatDamageService} instead — do not call this from the combat path.
      */
+    public void checkScryTriggers(GameData gameData, UUID scryingPlayerId) {
+        var ctx = new TriggerContext.Scry(scryingPlayerId);
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(scryingPlayerId);
+        if (ownBattlefield == null) {
+            return;
+        }
+
+        for (Permanent perm : List.copyOf(ownBattlefield)) {
+            dispatchSlot(gameData, perm, scryingPlayerId, EffectSlot.ON_CONTROLLER_SCRIES, ctx);
+        }
+    }
+
     public void checkSourceDealsDamageToPlayerTriggers(GameData gameData, Permanent source,
                                                        UUID controllerId, UUID damagedPlayerId,
                                                        int damageDealt) {
@@ -2759,6 +2771,22 @@ public class TriggerCollectionService {
         });
     }
 
+    /** Fires the newly monstrous permanent's own triggered abilities. */
+    public void checkBecomesMonstrousTriggers(GameData gameData, Permanent monstrousPermanent,
+                                               UUID controllerId) {
+        checkBecomesMonstrousTriggers(gameData, monstrousPermanent, controllerId, 0);
+    }
+
+    public void checkBecomesMonstrousTriggers(GameData gameData, Permanent monstrousPermanent,
+                                               UUID controllerId, int xValue) {
+        TriggerContext.SelfBecomesMonstrous context =
+                new TriggerContext.SelfBecomesMonstrous(controllerId, xValue);
+        for (CardEffect effect : monstrousPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_MONSTROUS)) {
+            var match = new TriggerMatchContext(gameData, monstrousPermanent, controllerId, effect);
+            registry.dispatch(match, EffectSlot.ON_SELF_BECOMES_MONSTROUS, effect, context);
+        }
+    }
+
     /**
      * "Whenever this permanent phases out" triggers (e.g. Teferi's Imp). Called from
      * {@code PhasingService} <em>before</em> the permanent leaves the battlefield: a phased-out
@@ -3194,8 +3222,8 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
     }
 
-    public void processNextSelfLeavesTriggerTarget(GameData gameData) {
-        triggeredAbilityQueueService.processNextSelfLeavesTriggerTarget(gameData);
+    public void processNextSelfTriggeredAbilityTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget(gameData);
     }
 
     public void processNextDiscardSelfTrigger(GameData gameData) {

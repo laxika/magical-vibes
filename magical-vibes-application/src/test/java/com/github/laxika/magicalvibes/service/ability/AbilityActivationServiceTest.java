@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -87,6 +89,7 @@ class AbilityActivationServiceTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private ExileService exileService;
+    @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
@@ -473,6 +476,33 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+        }
+
+        @Test
+        @DisplayName("Dynamic activation cost reduction lowers the generic mana requirement")
+        void dynamicActivationCostReductionLowersManaRequirement() {
+            Card artifact = createGenericArtifact("Cost Reducer");
+            artifact.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}",
+                    List.of(new ReduceActivationCostEffect(new Fixed(2)),
+                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    "Pay less mana to add a counter"
+            ));
+            Permanent perm = addReadyPermanent(player1Id, artifact);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
         }

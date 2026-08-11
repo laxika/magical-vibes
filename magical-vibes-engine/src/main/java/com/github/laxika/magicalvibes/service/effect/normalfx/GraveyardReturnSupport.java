@@ -1500,8 +1500,8 @@ public class GraveyardReturnSupport {
 
 
     /**
-     * Step 1: opponent has assigned cards to Pile 1. Unselected cards form Pile 2.
-     * Prompt controller to choose which pile to put onto the battlefield.
+     * Step 1: the separator has assigned cards to Pile 1. Unselected cards form Pile 2.
+     * Prompt the appropriate player to choose which pile receives the disposition.
      */
     public void completeCardPileSeparationStep1(GameData gameData, List<UUID> pile1CardIds) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
@@ -1519,7 +1519,8 @@ public class GraveyardReturnSupport {
         // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it. Preserve the
         // disposition so BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both survive the re-queue.
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
-                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition()));
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition(),
+                state.controllerChoosesPile()));
 
         // Phyrexian Portal's piles are face down, so neither the log nor the controller's prompt may
         // name their cards — both piles are identified by card count alone.
@@ -1527,14 +1528,15 @@ public class GraveyardReturnSupport {
         String pile1Desc = faceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
         String pile2Desc = faceDown ? describePileSize(pile2) : buildCardPileDescription(state.cards(), pile2);
 
-        UUID opponentId = state.targetPlayerId();
-        String opponentName = gameData.playerIdToName.get(opponentId);
+        UUID separatorId = state.controllerChoosesPile() ? state.targetPlayerId() : state.controllerId();
+        UUID chooserId = state.controllerChoosesPile() ? state.controllerId() : state.targetPlayerId();
+        String separatorName = gameData.playerIdToName.get(separatorId);
         if (faceDown) {
-            gameLogService.append(gameData, GameLog.text(opponentName
+            gameLogService.append(gameData, GameLog.text(separatorName
                     + " separates the cards into two face-down piles. Pile 1: " + pile1Desc
                     + ". Pile 2: " + pile2Desc + "."));
         } else {
-            GameLog.Builder pileLog = GameLog.builder().text(opponentName + " separates cards into two piles. Pile 1: ");
+            GameLog.Builder pileLog = GameLog.builder().text(separatorName + " separates cards into two piles. Pile 1: ");
             appendCardPile(pileLog, state.cards(), pile1);
             pileLog.text(". Pile 2: ");
             appendCardPile(pileLog, state.cards(), pile2);
@@ -1549,13 +1551,13 @@ public class GraveyardReturnSupport {
             default -> "put onto the battlefield";
         };
         String prompt = "Choose a pile to " + destText + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, controllerId, List.of(), prompt));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, chooserId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
     }
 
     /**
-     * Step 2: controller has chosen a pile. Put chosen pile onto the battlefield under controller's control;
-     * return the other pile to their owners' graveyards.
+     * Step 2: the chooser has selected a pile. Apply the disposition to the chosen pile and send the
+     * other pile to the appropriate destination.
      */
     public void completeCardPileSeparationStep2(GameData gameData, boolean accepted) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
@@ -1576,7 +1578,9 @@ public class GraveyardReturnSupport {
         
         
 
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
+        UUID chooserId = state.controllerChoosesPile() ? controllerId : state.targetPlayerId();
+        String chooserName = gameData.playerIdToName.get(chooserId);
+        gameLogService.append(gameData, GameLog.text(chooserName + " chooses " + chosenPileName + "."));
 
         if (state.disposition() == CardPileDisposition.HAND_AND_BOTTOM) {
             // Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom

@@ -4,6 +4,8 @@ All paths relative to `cards/`.
 
 ## Activated abilities
 
+| Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileAllOpponentsHandsEffect` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |
+
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Tap to damage any | `p/ProdigalPyromancer.java` | `(true, null, DealDamageToAnyTargetEffect, true)` |

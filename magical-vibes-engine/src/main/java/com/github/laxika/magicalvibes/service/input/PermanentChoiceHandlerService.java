@@ -129,8 +129,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDiscardControllerTrigger(gameData, permanentId, dct);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
-        } else if (context instanceof PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
-            triggerHandler.handleSelfLeavesTrigger(gameData, permanentId, slt);
+        } else if (context instanceof PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
+            triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {

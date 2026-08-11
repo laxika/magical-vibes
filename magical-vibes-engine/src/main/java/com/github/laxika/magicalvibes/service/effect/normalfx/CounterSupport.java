@@ -103,9 +103,9 @@ public class CounterSupport {
                 return;
             }
             if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
-                exileService.exileCard(gameData, target.getControllerId(), target.getCard());
+                exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
+                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getPhysicalCard());
             }
         }
 
@@ -129,7 +129,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return;
             }
-            gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
+            gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
         }
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
@@ -158,8 +158,8 @@ public class CounterSupport {
             return null;
         }
 
-        gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
-        return target.getCard();
+        gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+        return target.getPhysicalCard();
     }
 
     /**
@@ -184,10 +184,11 @@ public class CounterSupport {
                 return null;
             }
             Card spell = target.getCard();
+            Card physicalCard = target.getPhysicalCard();
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
-                gained = spell;
+                gained = physicalCard;
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), spell);
+                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), physicalCard);
             }
         }
 
@@ -207,7 +208,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return;
             }
-            exileService.exileCard(gameData, target.getControllerId(), target.getCard());
+            exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
         }
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
@@ -233,7 +234,7 @@ public class CounterSupport {
             return false;
         }
 
-        Card spell = target.getCard();
+        Card spell = target.getPhysicalCard();
         exileService.exileCard(gameData, target.getControllerId(), spell);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 spell,

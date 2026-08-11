@@ -88,7 +88,15 @@ public class AuraAttachmentService {
                         && !gameData.playerIds.contains(p.getAttachedTo())
                         && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null;
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
-                    if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    if (p.isBestow()) {
+                        p.setCard(p.getOriginalCard());
+                        p.setBestow(false);
+                        p.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        anyUnattached = true;
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
+                        log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
+                    } else if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
@@ -169,6 +177,14 @@ public class AuraAttachmentService {
                     
                     gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
                     log.info("Game {} - {} unattached ({})", gameData.id, p.getCard().getName(), reason);
+                } else if (p.isBestow()) {
+                    p.setCard(p.getOriginalCard());
+                    p.setBestow(false);
+                    p.setAttachedTo(null);
+                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                    anyUnattached = true;
+                    gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
+                    log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
                 } else {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     it.remove();

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,11 +71,18 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                     : gameData.playerIdToName.get(controllerId) + " scries " + scryAmount
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
+            if (!targetLibrary) {
+                triggerCollectionService.checkScryTriggers(gameData, controllerId);
+            }
             return;
         }
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
+
+        if (!targetLibrary) {
+            triggerCollectionService.checkScryTriggers(gameData, controllerId);
+        }
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.Scry(controllerId, topCards, false, libraryOwnerId));

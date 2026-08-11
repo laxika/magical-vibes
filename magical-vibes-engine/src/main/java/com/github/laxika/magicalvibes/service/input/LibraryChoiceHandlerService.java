@@ -1614,6 +1614,18 @@ public class LibraryChoiceHandlerService {
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. The rest are put into their graveyard.").build());
             }
+        } else if (libraryRevealChoice.remainingToExile()) {
+            for (Card card : remainingCards) {
+                exileService.exileCard(gameData, controllerId, card);
+            }
+
+            if (selectedCards.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(playerName + " puts no cards onto the battlefield. The rest are exiled."));
+            } else {
+                gameLogService.append(gameData,
+                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                                .text(" onto the battlefield. The rest are exiled.").build());
+            }
         } else if (libraryRevealChoice.randomRemainingToBottom()) {
             // Shuffle remaining cards and put them on the bottom of the library (Gishath, etc.)
             Collections.shuffle(remainingCards);
@@ -1915,7 +1927,7 @@ public class LibraryChoiceHandlerService {
             for (Card card : allRevealedCards) {
                 if (chosenIds.contains(card.getId())) {
                     returnCardExiledWithSourceToBattlefieldEffectHandler.returnToBattlefield(
-                            gameData, returnControllerId, card, "exile");
+                            gameData, returnControllerId, card, "exile", pending.grantedSubtype());
                     break;
                 }
             }

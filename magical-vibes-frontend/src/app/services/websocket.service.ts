@@ -173,6 +173,7 @@ export interface Card {
   token: boolean;
   watermark: string | null;
   hasAlternateCastingCost: boolean;
+  alternateCostRequiresTarget?: boolean;
   alternateCostLifePayment: number;
   alternateCostSacrificeCount: number;
   alternateCostTapCount: number;

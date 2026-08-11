@@ -146,8 +146,8 @@ public class AutoPassService {
         }
 
         // Process any pending targeted leaves-the-battlefield triggers (e.g. Meadowboon)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
 
         // Process any pending explore targeted triggers

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
@@ -50,6 +51,8 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -85,6 +88,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
@@ -101,6 +105,11 @@ public class ChoiceHandlerService {
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
+            handleDevotionManaColorChosen(gameData, player, colorName, ctx);
+            return;
         }
 
         // Mana color choice (Chromatic Star, etc.)
@@ -385,6 +394,44 @@ public class ChoiceHandlerService {
         // condition (e.g. Lurebound Scarecrow controlling no permanents of the chosen color).
         stateBasedActionService.performStateBasedActions(gameData);
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleDevotionManaColorChosen(GameData gameData, Player player, String colorName,
+                                               ChoiceContext.DevotionManaColorChoice ctx) {
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        int amount = source == null
+                ? 0
+                : amountEvaluationService.evaluate(gameData,
+                        new ColorManaSymbolsAmongControlledPermanents(manaColor),
+                        AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
+        if (amount > 0) {
+            ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+            manaPool.add(manaColor, amount);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureMana(manaColor, amount);
+            }
+        }
+
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+        }
+
+        String manaWord = amount == 1 ? "one" : String.valueOf(amount);
+        if (source == null) {
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana."));
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana from ",
+                    source.getCard(), "."));
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

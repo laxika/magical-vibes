@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "38")
+@CardRegistration(set = "THS", collectorNumber = "50")
 public class Griptide extends Card {
 
     public Griptide() {

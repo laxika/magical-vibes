@@ -30,6 +30,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code searchPlayer} selects whose library is searched; it defaults to the stack entry's
  * controller and can use the active player for effects such as Oath of Lieges.
  *
+ * @param onlyIfSacrificed when true, an {@code ON_DEATH} trigger only fires when its source was
+ *                         sacrificed
+ *
  * <p>Replaced the {@code SearchLibraryFor*} family (to-hand tutors, by-name searches, to-top,
  * creature-to-battlefield with MV/colour/subtype constraints, and card-types-to-battlefield).
  */
@@ -43,31 +46,32 @@ public record SearchLibraryEffect(
         boolean grantHaste,
         boolean exileAtEndStep,
         AnimatePermanentsEffect animateFound,
-        LibrarySearchPlayer searchPlayer
+        LibrarySearchPlayer searchPlayer,
+        boolean onlyIfSacrificed
 ) implements CardEffect {
 
     /** Unrestricted single-card tutor to hand (e.g. Diabolic Tutor). */
     public SearchLibraryEffect() {
         this(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /** Single card matching {@code filter} to hand (basic land, artifact, creature, …). */
     public SearchLibraryEffect(CardPredicate filter) {
         this(new Fixed(1), filter, LibrarySearchDestination.HAND, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /** Single card matching {@code filter} to the given destination. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination) {
         this(count, filter, destination, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /**
@@ -76,13 +80,13 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(CardPredicate filter, int count, int castFromGraveyardCount) {
         this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /** Single card matching {@code filter} to the given destination with a dynamic mana-value bound. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, ManaValueBound manaValueBound) {
         this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /**
@@ -92,7 +96,7 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, boolean requireDifferentNames) {
         this(count, filter, destination, manaValueBound, 1, requireDifferentNames, false, false, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /**
@@ -102,7 +106,7 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean grantHaste, boolean exileAtEndStep) {
         this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep, null,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /**
@@ -111,13 +115,25 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, AnimatePermanentsEffect animateFound) {
         this(count, filter, LibrarySearchDestination.BATTLEFIELD, null, 1, false, false, false, animateFound,
-                LibrarySearchPlayer.CONTROLLER);
+                LibrarySearchPlayer.CONTROLLER, false);
     }
 
     /** Single-card search using the specified player as the library owner. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                LibrarySearchPlayer searchPlayer) {
-        this(count, filter, destination, null, 1, false, false, false, null, searchPlayer);
+        this(count, filter, destination, null, 1, false, false, false, null, searchPlayer, false);
+    }
+
+    /** Up to {@code count} matching cards to the battlefield tapped, only after this source was sacrificed. */
+    public static SearchLibraryEffect sacrificeOnly(DynamicAmount count, CardPredicate filter,
+                                                    LibrarySearchDestination destination) {
+        return new SearchLibraryEffect(count, filter, destination, null, 1, false,
+                false, false, null, LibrarySearchPlayer.CONTROLLER, true);
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
     }
 
     @Override

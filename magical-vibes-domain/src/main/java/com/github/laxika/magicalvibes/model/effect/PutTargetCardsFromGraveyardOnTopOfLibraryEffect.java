@@ -18,7 +18,7 @@ public record PutTargetCardsFromGraveyardOnTopOfLibraryEffect(
         CardPredicate filter,
         int maxTargets,
         GraveyardSearchScope source
-) implements CardEffect {
+) implements TargetedGraveyardCardsEffect {
 
     /** Sentinel for "any number of target cards" (capped only by the graveyard contents). */
     public static final int ANY_NUMBER = 0;

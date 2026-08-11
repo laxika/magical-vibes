@@ -45,6 +45,7 @@ class CostEffectClassificationTest {
             "ExileTopCardOfGraveyardCost",
             "ExileTopCardOfLibraryCost",
             "IncreaseActivationCostPerCounterEffect",
+            "ReduceActivationCostEffect",
             "MillControllerCost",
             "OpponentCreatesTokensCost",
             "PayManaCost",

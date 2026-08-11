@@ -198,9 +198,9 @@ public class TriggeredAbilityQueueService {
         return true;
     }
 
-    public void processNextSelfLeavesTriggerTarget(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            PermanentChoiceContext.SelfLeavesTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+    public void processNextSelfTriggeredAbilityTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
 
             // Graveyard-targeting self-leaves trigger (e.g. Offalsnout): choose a target card in a
             // graveyard to exile, at the time the trigger is put on the stack.
@@ -225,15 +225,15 @@ public class TriggeredAbilityQueueService {
                     TriggerTargetCollector.Options.END_STEP);
 
             if (result.validTargets().isEmpty()) {
-                gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+                gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s leaves-the-battlefield trigger has no valid targets."));
-                log.info("Game {} - {} leaves-battlefield trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
+                        "'s " + pending.eventDescription() + " trigger has no valid targets."));
+                log.info("Game {} - {} {} trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName(), pending.eventDescription());
                 continue;
             }
 
-            gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+            gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
@@ -243,8 +243,9 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s leaves-the-battlefield trigger - choose " + targetDescription + "."));
-            log.info("Game {} - {} leaves-battlefield trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+                    "'s " + pending.eventDescription() + " trigger - choose " + targetDescription + "."));
+            log.info("Game {} - {} {} trigger awaiting target selection", gameData.id,
+                    pending.sourceCard().getName(), pending.eventDescription());
             return;
         }
     }
@@ -266,7 +267,7 @@ public class TriggeredAbilityQueueService {
      * {@code false} if the trigger was skipped for lack of a legal target (caller should continue).
      */
     private boolean beginSelfLeavesGraveyardTarget(GameData gameData,
-            PermanentChoiceContext.SelfLeavesTriggerTarget pending, ExileGraveyardCardsEffect gyExile) {
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending, ExileGraveyardCardsEffect gyExile) {
         CardPredicate filter = gyExile.filter();
 
         List<Card> matchingCards = new ArrayList<>();
@@ -283,7 +284,7 @@ public class TriggeredAbilityQueueService {
             }
         }
 
-        gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+        gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
 
         if (matchingCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

@@ -90,6 +90,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -127,6 +129,7 @@ public class ActivatedAbilityExecutionService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
     private final GameMutationCoordinator mutationCoordinator;
@@ -376,7 +379,8 @@ public class ActivatedAbilityExecutionService {
                     && abilityEffects.stream().noneMatch(e -> e instanceof CostEffect)
                     && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect
                             || (e instanceof AwardAnyColorManaEffect anyColor
-                                    && anyColor.restriction() == ManaSpendRestriction.NONE));
+                                    && anyColor.restriction() == ManaSpendRestriction.NONE)
+                            || manaAbilityEffectHandlerRegistry.isRevertable(e));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             java.util.EnumMap<ManaColor, Integer> poolBefore =
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
@@ -631,6 +635,12 @@ public class ActivatedAbilityExecutionService {
             CardEffect effect = effectsToResolve.get(effectIndex);
             if ((chosenLandManaReplacement || dampingReplacement || twistReplacement)
                     && effect instanceof ManaProducingEffect) {
+                continue;
+            }
+            ManaAbilityEffectHandler manaAbilityEffectHandler = manaAbilityEffectHandlerRegistry.getHandler(effect);
+            if (manaAbilityEffectHandler != null) {
+                manaAbilityEffectHandler.resolve(gameData, playerId, player, permanent,
+                        manaMultiplier, isCreatureSource);
                 continue;
             }
             if (effect instanceof AwardManaEffect award) {
@@ -980,8 +990,8 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
@@ -1366,8 +1376,8 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }

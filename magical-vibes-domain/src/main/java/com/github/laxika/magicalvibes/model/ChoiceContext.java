@@ -93,6 +93,11 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** A mana ability that adds mana equal to the chosen color's devotion. */
+    record DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,
+                                   int manaMultiplier) implements ChoiceContext {
+    }
+
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}

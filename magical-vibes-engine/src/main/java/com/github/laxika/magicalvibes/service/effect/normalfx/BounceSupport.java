@@ -75,7 +75,7 @@ public class BounceSupport {
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
 
         if (!target.isCopy()) {
-            Card spell = target.getCard();
+            Card spell = target.getPhysicalCard();
             UUID ownerId = spell.getOwnerId() != null ? spell.getOwnerId() : target.getControllerId();
             gameData.playerHands.computeIfAbsent(ownerId, id -> new java.util.ArrayList<>()).add(spell);
         }

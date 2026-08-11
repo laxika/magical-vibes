@@ -15,10 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,7 +31,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ETBTokenTargetService {
 
     private final GameQueryService gameQueryService;
@@ -37,6 +38,31 @@ public class ETBTokenTargetService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
+    private final AmountEvaluationService amountEvaluationService;
+
+    @Autowired
+    public ETBTokenTargetService(GameQueryService gameQueryService,
+                                 PredicateEvaluationService predicateEvaluationService,
+                                 GameLogService gameLogService,
+                                 PlayerInputService playerInputService,
+                                 TargetLegalityService targetLegalityService,
+                                 AmountEvaluationService amountEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameLogService = gameLogService;
+        this.playerInputService = playerInputService;
+        this.targetLegalityService = targetLegalityService;
+        this.amountEvaluationService = amountEvaluationService;
+    }
+
+    public ETBTokenTargetService(GameQueryService gameQueryService,
+                                 PredicateEvaluationService predicateEvaluationService,
+                                 GameLogService gameLogService,
+                                 PlayerInputService playerInputService,
+                                 TargetLegalityService targetLegalityService) {
+        this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
+                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService));
+    }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
@@ -144,13 +170,14 @@ public class ETBTokenTargetService {
             }
 
             SpellTarget group = groups.get(idx);
+            int effectiveMaxTargets = effectiveMaxTargets(gameData, pending, group);
 
-            if (chosenInGroup >= group.getMaxTargets()) {
+            if (chosenInGroup >= effectiveMaxTargets) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup)));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
                 continue;
             }
 
@@ -165,7 +192,7 @@ public class ETBTokenTargetService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup)));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
                 continue;
             }
 
@@ -221,7 +248,7 @@ public class ETBTokenTargetService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup)));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
                 continue;
             }
 
@@ -245,6 +272,20 @@ public class ETBTokenTargetService {
         }
     }
 
+    private int effectiveMaxTargets(GameData gameData,
+                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                    SpellTarget group) {
+        if (group.getDynamicMaxTargets() == null) {
+            return group.getMaxTargets();
+        }
+        Permanent source = pending.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0));
+        return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+    }
+
     private void pushMultiTargetETBStackEntry(GameData gameData,
                                                PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
         Card card = pending.sourceCard();
@@ -256,7 +297,7 @@ public class ETBTokenTargetService {
                 pending.controllerId(),
                 abilityLabel,
                 new ArrayList<>(pending.effects()),
-                0,
+                pending.xValue(),
                 null,
                 pending.sourcePermanentId(),
                 Map.of(),

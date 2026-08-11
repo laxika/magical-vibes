@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -58,6 +59,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -106,6 +108,54 @@ public class MiscTriggerCollectorService {
      */
     public void setPermanentControlSupport(PermanentControlSupport permanentControlSupport) {
         this.permanentControlSupport = permanentControlSupport;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_MONSTROUS)
+    private boolean handleSelfBecomesMonstrous(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfBecomesMonstrous sm = (TriggerContext.SelfBecomesMonstrous) ctx;
+        Card card = match.permanent().getCard();
+        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_MONSTROUS);
+        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
+            return true;
+        }
+
+        boolean needsTarget = triggeredEffects.stream().anyMatch(triggeredEffect ->
+                triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsTarget) {
+            boolean multiTarget = card.getSpellTargets().stream()
+                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
+                    || card.getSpellTargets().size() > 1;
+            if (multiTarget) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, sm.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
+                        List.of(), 0, 0, List.of(), sm.xValue()));
+            } else {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, sm.controllerId(), new ArrayList<>(triggeredEffects),
+                        "becomes monstrous", match.permanent().getId()));
+            }
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    sm.controllerId(),
+                    card.getName() + "'s ability",
+                    new ArrayList<>(triggeredEffects),
+                    sm.xValue(),
+                    null,
+                    match.permanent().getId(),
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of()));
+        }
+        gameLogService.append(match.gameData(), GameLog.cardThen(card,
+                "'s ability triggers (became monstrous)."));
+        log.info("Game {} - {} triggers on becoming monstrous", match.gameData().id,
+                card.getName());
+        return true;
     }
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAndSacrificedCardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -41,6 +42,28 @@ public class GraveyardTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    @ValidatesTarget(RegisterDelayedReturnTargetAndSacrificedCardsEffect.class)
+    public void validateDelayedReturnTargetAndSacrificedCards(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
+        }
+        UUID controllerId = tvs.findSourcePermanentController(ctx);
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
+        }
+    }
 
     @ValidatesTarget(ReturnCardFromGraveyardEffect.class)
     public void validateReturnCardFromGraveyard(TargetValidationContext ctx, ReturnCardFromGraveyardEffect effect) {

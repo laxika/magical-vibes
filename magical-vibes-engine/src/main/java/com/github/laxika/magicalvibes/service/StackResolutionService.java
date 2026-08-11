@@ -175,8 +175,8 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -242,7 +242,13 @@ public class StackResolutionService {
 
     /** Permanent enters with front-face identity; Disturb/siege-defeat flips current face to the back. */
     private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
-        Permanent perm = new Permanent(card);
+        return createEnteringPermanent(entry, card, characteristics, false);
+    }
+
+    private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics,
+                                              boolean bestowAsAura) {
+        Permanent perm = new Permanent(entry.getBestowOriginalCard() != null
+                ? entry.getBestowOriginalCard() : card);
         perm.setCastFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
@@ -257,7 +263,10 @@ public class StackResolutionService {
                 .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance)) {
             perm.setSacrificeAtNextCleanup(true);
         }
-        if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
+        if (bestowAsAura) {
+            perm.setCard(characteristics);
+            perm.setBestow(true);
+        } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
         }
@@ -270,10 +279,11 @@ public class StackResolutionService {
      */
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID controllerId = entry.getControllerId();
+        Card physicalCard = entry.getPhysicalCard();
         if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
-            exileService.exileCard(gameData, controllerId, card);
+            exileService.exileCard(gameData, controllerId, physicalCard);
         } else {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, physicalCard);
         }
     }
 
@@ -441,6 +451,13 @@ public class StackResolutionService {
             return;
         }
 
+        if (entry.getBestowOriginalCard() != null
+                && (entry.getTargetId() == null
+                || targetLegalityService.isTargetIllegalOnResolution(gameData, entry))) {
+            resolveBestowAsCreature(gameData, entry, controllerId);
+            return;
+        }
+
         // Aura that enchants a player (e.g. Curses)
         if (characteristics.isAura() && characteristics.isEnchantPlayer() && entry.getTargetId() != null) {
             UUID targetPlayerId = entry.getTargetId();
@@ -477,7 +494,7 @@ public class StackResolutionService {
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
             } else {
-                Permanent perm = createEnteringPermanent(entry, card, characteristics);
+                Permanent perm = createEnteringPermanent(entry, card, characteristics, true);
                 perm.setAttachedTo(entry.getTargetId());
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                         entry.getXValue(), entry.isKicked());
@@ -604,6 +621,23 @@ public class StackResolutionService {
 
             checkLegendRuleIfIdle(gameData, controllerId);
         }
+    }
+
+    private void resolveBestowAsCreature(GameData gameData, StackEntry entry, UUID controllerId) {
+        Card card = entry.getBestowOriginalCard();
+        if (beginChooseCardNameOnEnter(gameData, controllerId, card)) {
+            return;
+        }
+
+        Permanent perm = createEnteringPermanent(entry, card, card);
+        controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                entry.getXValue(), entry.isKicked());
+        Card enteredCard = perm.getCard();
+        logEnterBattlefield(gameData, enteredCard, controllerId);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, controllerId, enteredCard, null, true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        checkLegendRuleIfIdle(gameData, controllerId);
     }
 
     private void resolveArtifactSpell(GameData gameData, StackEntry entry) {

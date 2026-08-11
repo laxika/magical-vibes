@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantB
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
@@ -2814,6 +2815,21 @@ class GameQueryServiceTest {
         void returnsFalseWhenNoProtection() {
             assertThat(gqs.playerHasProtectionFromColor(gd, player2Id, CardColor.RED)).isFalse();
             assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, null)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("canPlayerGainLife")
+    class CanPlayerGainLife {
+
+        @Test
+        @DisplayName("opponent-only life-gain prohibition leaves its controller unaffected")
+        void opponentOnlyProhibition() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Erebos", new OpponentsCantGainLifeEffect()));
+
+            assertThat(gqs.canPlayerGainLife(gd, player1Id)).isTrue();
+            assertThat(gqs.canPlayerGainLife(gd, player2Id)).isFalse();
         }
     }
 

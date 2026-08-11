@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "133")
+@CardRegistration(set = "THS", collectorNumber = "176")
 public class SavageSurge extends Card {
 
     public SavageSurge() {

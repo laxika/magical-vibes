@@ -189,24 +189,29 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleSelfLeavesTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
+    public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
+                                            PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 slt.sourceCard(),
                 slt.controllerId(),
                 slt.sourceCard().getName() + "'s ability",
-                new ArrayList<>(slt.effects())
+                new ArrayList<>(slt.effects()),
+                null,
+                slt.sourcePermanentId()
         );
         entry.setTargetId(targetId);
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);
         
-        gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s leaves-the-battlefield trigger targets " + targetName + ".").build());
-        log.info("Game {} - {} leaves-battlefield trigger targets {}", gameData.id, slt.sourceCard().getName(), targetName);
+        gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s "
+                + slt.eventDescription() + " trigger targets " + targetName + ".").build());
+        log.info("Game {} - {} {} trigger targets {}", gameData.id, slt.sourceCard().getName(),
+                slt.eventDescription(), targetName);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
             return;
         }
 
@@ -1278,7 +1283,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
-                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes)));
+                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 

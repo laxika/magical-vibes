@@ -92,8 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
-import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
@@ -386,10 +385,16 @@ public class AbilityActivationService {
     static boolean isAwaitingOwnManaColorChoice(GameData gameData, UUID playerId) {
         PendingInteraction.ColorChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        return choice != null
-                && playerId.equals(choice.playerId())
-                && choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice
-                && manaChoice.restrictedToCreatureSubtype() == null
+        if (choice == null || !playerId.equals(choice.playerId())) {
+            return false;
+        }
+        if (choice.context() instanceof ChoiceContext.DevotionManaColorChoice) {
+            return true;
+        }
+        if (!(choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice)) {
+            return false;
+        }
+        return manaChoice.restrictedToCreatureSubtype() == null
                 && !manaChoice.flashbackOnly()
                 && !manaChoice.instantSorceryOnly()
                 && !manaChoice.spellOrAbilitySubtype()
@@ -2900,16 +2905,18 @@ public class AbilityActivationService {
                 castingCostService.getActivatedAbilityActivationCostReduction(gameData, permanent, ability),
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
+        AmountContext activationCostContext = new AmountContext(
+                playerId, permanent, null, effectiveXValue, 0);
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof ReduceActivationCostPerCounterEffect reduce) {
-                int counterReduction = Math.min(
-                        permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
-                        Math.max(0, genericCost));
-                additionalGenericCost -= counterReduction;
-            }
-            if (effect instanceof IncreaseActivationCostPerCounterEffect increase) {
-                additionalGenericCost +=
-                        permanent.getCounterCount(increase.counterType()) * increase.increasePerCounter();
+            if (effect instanceof ActivationCostModifierEffect modifier) {
+                int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                if (modifier.reducesGenericCost()) {
+                    int reduction = Math.min(
+                            amount, Math.max(0, genericCost + additionalGenericCost));
+                    additionalGenericCost -= reduction;
+                } else {
+                    additionalGenericCost += amount;
+                }
             }
         }
         return additionalGenericCost;

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,8 @@ class ScryEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -92,7 +95,8 @@ class ScryEffectHandlerTest {
                 gameLogService,
                 interactionHandlerRegistry,
                 new AmountEvaluationService(mock(PredicateEvaluationService.class), gameQueryService),
-                gameQueryService);
+                gameQueryService,
+                triggerCollectionService);
 
     }
 
@@ -132,6 +136,7 @@ class ScryEffectHandlerTest {
                 scryEffectHandler.resolve(gd, entry, effect);
 
                 verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
+                verifyNoInteractions(triggerCollectionService);
             }
 
             @Test
@@ -145,6 +150,7 @@ class ScryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
+                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
             }
 
             @Test
@@ -163,6 +169,7 @@ class ScryEffectHandlerTest {
                 verifyNoInteractions(sessionManager);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
+                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
             }
 
             @Test

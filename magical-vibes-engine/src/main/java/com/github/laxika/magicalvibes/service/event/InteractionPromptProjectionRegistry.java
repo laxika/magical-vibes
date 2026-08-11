@@ -79,6 +79,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
+        register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
+                this::projectExileNonlandCardFromTargetHandOrGraveyardChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
@@ -424,6 +426,19 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.");
+    }
+
+    private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(
+            GameData gameData, PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice interaction) {
+        UUID targetPlayerId = interaction.targetPlayerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(targetPlayerId, List.of()), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "Choose a nonland card from that player's hand or graveyard to exile.");
     }
 
     private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(

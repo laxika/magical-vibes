@@ -1170,7 +1170,9 @@ public class CombatDamageService {
                     continue;
                 }
 
-                if (effect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
+                CardEffect specialEffect = effect instanceof ConditionalEffect conditional
+                        ? conditional.wrapped() : effect;
+                if (specialEffect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
                     if (damageDealt < destroyEffect.minimumDamage()) {
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
@@ -2072,7 +2074,7 @@ public class CombatDamageService {
             state.poisonDamageToDefendingPlayer = 0;
         }
         state.damageToDefendingPlayer = Math.max(unpreventable,
-                damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer));
+                damagePreventionService.applyCombatPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer));
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
@@ -2128,6 +2130,7 @@ public class CombatDamageService {
             }
         }
 
+        state.poisonDamageToDefendingPlayer = damagePreventionService.applyCombatPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         // Glacial Chasm also prevents infect combat damage (still damage, so no poison counters).
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
@@ -2206,7 +2209,7 @@ public class CombatDamageService {
                 String targetName = gameData.playerIdToName.get(targetId);
                 gameLogService.append(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
 
-                int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+                int redirectEffective = damagePreventionService.applyCombatPlayerPreventionShield(gameData, targetId, damage);
                 processPendingRedirectDamage(gameData);
 
                 if (redirectEffective > 0) {

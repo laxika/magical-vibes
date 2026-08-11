@@ -87,6 +87,7 @@ public class StackEntry {
     @Setter private boolean castWhenSorceryCouldNotBeCast;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
+    private Card bestowOriginalCard;
     /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
      *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
     @Setter private boolean prowl;
@@ -139,6 +140,8 @@ public class StackEntry {
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringCardId;
+    /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
+    @Setter private UUID sacrificedCardId;
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -418,6 +421,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
         this.evoked = source.evoked;
+        this.bestowOriginalCard = source.bestowOriginalCard;
         this.prowl = source.prowl;
         this.overloaded = source.overloaded;
         this.damageSourceCard = source.damageSourceCard;
@@ -429,6 +433,7 @@ public class StackEntry {
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
+        this.sacrificedCardId = source.sacrificedCardId;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
@@ -488,6 +493,14 @@ public class StackEntry {
      */
     public Card getEffectiveDamageSourceCard() {
         return damageSourceCard != null ? damageSourceCard : card;
+    }
+
+    public void setBestowOriginalCard(Card bestowOriginalCard) {
+        this.bestowOriginalCard = freezeCard(bestowOriginalCard);
+    }
+
+    public Card getPhysicalCard() {
+        return bestowOriginalCard != null ? bestowOriginalCard : card;
     }
 
     /**

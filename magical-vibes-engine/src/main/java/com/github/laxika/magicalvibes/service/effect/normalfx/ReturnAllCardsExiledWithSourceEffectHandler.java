@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -10,7 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +27,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,12 +41,30 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             return;
         }
 
+        ReturnAllCardsExiledWithSourceEffect returnEffect =
+                (ReturnAllCardsExiledWithSourceEffect) effect;
+        if (returnEffect.turnFaceUp()) {
+            for (int i = 0; i < gameData.exiledCards.size(); i++) {
+                ExiledCardEntry exiledEntry = gameData.exiledCards.get(i);
+                if (sourcePermanentId.equals(exiledEntry.sourcePermanentId())
+                        && exiledEntry.faceDown()) {
+                    gameData.exiledCards.set(i, new ExiledCardEntry(exiledEntry.card(),
+                            exiledEntry.ownerId(), exiledEntry.sourcePermanentId(), false,
+                            exiledEntry.exilerId()));
+                }
+            }
+        }
+
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .filter(e -> returnEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        e.card(), returnEffect.filter(), entry.getCard().getId()))
                 .toList();
 
-        boolean underControllerControl =
-                ((ReturnAllCardsExiledWithSourceEffect) effect).underControllerControl();
+        boolean underControllerControl = returnEffect.underControllerControl();
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
 
         for (ExiledCardEntry exiledEntry : toReturn) {
             Card card = exiledEntry.card();
@@ -51,7 +74,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             }
 
             Permanent perm = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
+                    enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(perm);
 
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",

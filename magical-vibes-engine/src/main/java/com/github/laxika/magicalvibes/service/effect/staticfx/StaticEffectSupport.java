@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -205,6 +206,9 @@ public class StaticEffectSupport {
                 accumulator.addGrantedSubtype(subtype);
             }
             accumulator.addKeywords(animate.grantedKeywords());
+        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF) {
+            accumulator.setCardTypeOverriding(true);
+            accumulator.setGrantedCardTypes(set.cardTypes());
         }
     }
 

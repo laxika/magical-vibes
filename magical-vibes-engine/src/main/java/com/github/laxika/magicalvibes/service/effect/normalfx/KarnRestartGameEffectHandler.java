@@ -212,6 +212,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentIdsThisTurn.clear();
+        gameData.combatOpponentIdsBlockedByThisTurn.clear();
         gameData.creaturesBlockedThisTurn.clear();
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.combatDamagePlayerAssignments.clear();
@@ -224,6 +225,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
         gameData.chosenXValue = null;
+        gameData.pendingDividedDamageTargetId = null;
         gameData.pendingAbilityActivation = null;
         gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
         gameData.pendingReturnToHandOnDiscardType = null;
@@ -234,6 +236,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.damageRedirectShields.clear();
         gameData.damagePreventionLifeGainShields.clear();
         gameData.preventAllCombatDamage = false;
+        gameData.preventAllCombatDamageToPlayers = false;
         gameData.preventAllDamageToAllCreatures = false;
         gameData.preventAllDamageByCreatures = false;
         gameData.combatDamageExemptPredicate = null;
@@ -261,6 +264,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.cardsDrawnThisTurn.put(playerId, 0);
             gameData.cardsDiscardedThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
+            gameData.playerCombatDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));
             gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());

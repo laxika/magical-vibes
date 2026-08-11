@@ -1603,6 +1603,7 @@ public class BattlefieldEntryService {
             boolean enteredFromExile = justEnteredPermanent != null && justEnteredPermanent.isEnteredFromExile();
             boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard || enteredFromExile
                     || card.hasType(CardType.LAND);
+            boolean hasDynamicTargetCount = card.hasDynamicTargetCount();
 
             // A surviving gate-conditional ETB (Metalcraft, Morbid, Raid, … — the gate was met
             // as the permanent entered) that targets never chose a target at cast time
@@ -1622,7 +1623,8 @@ public class BattlefieldEntryService {
                             && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            if (gateConditionalNeedsTarget
+            if (hasDynamicTargetCount
+                    || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
                     || (cardNeedsTarget && !hasTarget && choosesTargetAtTriggerTime)) {
                 // CR 603.3: no target was chosen at cast time — the ETB target is gated behind

@@ -198,8 +198,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
             }
 
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
-                triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }

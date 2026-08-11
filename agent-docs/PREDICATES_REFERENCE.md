@@ -89,6 +89,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentHasProtectionFromColorPredicate` | `(CardColor)` | permanents with protection from that color (Escaped Shapeshifter). One color per instance — "protection from any color" is five predicates. Inside static-bonus assembly it answers from printed protection + the in-flight layer-6 state instead of re-entering `computeStaticBonus` |
 | `PermanentHasCountersPredicate` | `(CounterType)` | permanents with one or more counters of the specified type (supports ANY for any counter) |
 | `PermanentHasAtLeastCountersPredicate` | `(CounterType, int minimum)` | permanents with at least `minimum` counters of the specified type; evaluated through the layer-aware predicate service when combined with other permanent filters |
+| `PermanentCounterCountAtLeastPredicate` | `(CounterType, int threshold)` | permanents with at least the specified number of counters of the given type |
 | `PermanentHasCumulativeUpkeepPredicate` | `()` | permanents that have cumulative upkeep (printed or granted) |
 
 ### Static power/toughness/mana-value predicates

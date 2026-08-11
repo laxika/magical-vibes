@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService.Stati
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -150,6 +151,11 @@ public class StaticBonusAccumulator {
 
     public Set<CardType> getGrantedCardTypes() {
         return grantedCardTypes;
+    }
+
+    public void setGrantedCardTypes(Collection<CardType> cardTypes) {
+        grantedCardTypes.clear();
+        grantedCardTypes.addAll(cardTypes);
     }
 
     public void addGrantedSupertype(CardSupertype supertype) {

@@ -102,7 +102,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    // you may put matching card(s) onto the battlefield, rest on the bottom
+    // you may put matching card(s) onto the battlefield, rest to the effect's destination
     // (Mayael the Anima / Mitotic Manipulation: one card via LibrarySearch;
     //  Nissa, Genesis Mage −10: any number via LibraryRevealChoice + random bottom)
 
@@ -122,10 +122,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 .toList();
 
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
+        boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
         boolean anyNumber = chooseCount > 1 || randomBottom;
 
         if (matchingCards.isEmpty()) {
-            if (randomBottom) {
+            if (remainingToExile) {
+                for (Card card : topCards) {
+                    gameData.addToExile(controllerId, card);
+                }
+            } else if (randomBottom) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
             } else {
                 libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
@@ -138,7 +143,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     LibrarySearchParams.builder(controllerId, matchingCards)
                             .canFailToFind(true)
                             .sourceCards(topCards)
-                            .reorderRemainingToBottom(true)
+                            .reorderRemainingToBottom(!remainingToExile)
+                            .restToExile(remainingToExile)
                             .shuffleAfterSelection(false)
                             .prompt("You may put one of these cards onto the battlefield.")
                             .destination(e.chosenDestination())
@@ -149,12 +155,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         int maxCount = Math.min(chooseCount, matchingCards.size());
-        String prompt = randomBottom
+        String prompt = remainingToExile
+                ? "Choose any number of eligible cards to put onto the battlefield. Exile the rest."
+                : randomBottom
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library.";
         List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, topCards, cardIds, false, false, !randomBottom, randomBottom, false, 0, null,
+                controllerId, topCards, cardIds, false, false,
+                !randomBottom && !remainingToExile, randomBottom, remainingToExile, 0, null,
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 

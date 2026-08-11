@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "166")
+@CardRegistration(set = "THS", collectorNumber = "145")
 public class TitansStrength extends Card {
 
     public TitansStrength() {

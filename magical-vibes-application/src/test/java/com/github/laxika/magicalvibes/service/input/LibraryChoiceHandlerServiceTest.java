@@ -485,6 +485,29 @@ class LibraryChoiceHandlerServiceTest {
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("bottom of their library") && logEntry.plainText().contains("random order")));
         }
+
+        @Test
+        @DisplayName("Selected cards go to battlefield and remaining cards are exiled")
+        void selectedToBattlefieldRestToExile() {
+            Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+            Card instant = createCard("Shock", CardType.INSTANT);
+
+            List<Card> allCards = List.of(dino, land, instant);
+            Set<UUID> validIds = Set.of(dino.getId());
+
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                    player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
+                    false, false, false, false, true, 0, null, validIds.size(), "Choose."));
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+            service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(exileService).exileCard(gd, player1Id, land);
+            verify(exileService).exileCard(gd, player1Id, instant);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
     }
 
     // =========================================================================

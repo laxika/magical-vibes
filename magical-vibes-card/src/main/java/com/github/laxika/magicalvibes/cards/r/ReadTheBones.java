@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "114")
+@CardRegistration(set = "THS", collectorNumber = "101")
 public class ReadTheBones extends Card {
 
     public ReadTheBones() {

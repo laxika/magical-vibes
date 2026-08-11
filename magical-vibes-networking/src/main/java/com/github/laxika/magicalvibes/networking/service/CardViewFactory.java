@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CastingOption;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
@@ -106,7 +108,8 @@ public class CardViewFactory {
                 ? create(card.getBackFaceCard())
                 : null;
 
-        var altCastOpt = card.getCastingOption(AlternateHandCast.class);
+        var altCastOpt = card.getCastingOption(AlternateHandCast.class).map(a -> (CastingOption) a)
+                .or(() -> card.getCastingOption(BestowCast.class).map(b -> (CastingOption) b));
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
         int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
         int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
@@ -159,6 +162,7 @@ public class CardViewFactory {
                 card.isToken(),
                 card.getWatermark(),
                 hasAlternateCastingCost,
+                card.getCastingOption(BestowCast.class).isPresent(),
                 alternateCostLifePayment,
                 alternateCostSacrificeCount,
                 alternateCostTapCount,

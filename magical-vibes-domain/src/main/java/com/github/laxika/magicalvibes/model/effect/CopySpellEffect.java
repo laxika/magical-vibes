@@ -12,15 +12,29 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *                           "choose new targets for the copy" prompt.
  * @param sacrificeAtEndStep when true, the token copy is sacrificed at the beginning of the next
  *                           end step (Choreographed Sparks' creature-copy mode).
+ * @param copyForTargetController when true, the copy is controlled by the controller of the
+ *                                target spell instead of the controller of the copying effect
+ *                                (Meletis Charlatan).
  */
 public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
-                              boolean sacrificeAtEndStep) implements CardEffect {
+                              boolean sacrificeAtEndStep, boolean copyForTargetController) implements CardEffect {
 
     /** No-filter form — used by spells like Twincast where the filter is on the Card's SpellTarget. */
-    public CopySpellEffect() { this(null, false, false); }
+    public CopySpellEffect() { this(null, false, false, false); }
 
     /** Filter-only form — used by ETB copy triggers like Naru Meha. */
-    public CopySpellEffect(StackEntryPredicate spellFilter) { this(spellFilter, false, false); }
+    public CopySpellEffect(StackEntryPredicate spellFilter) { this(spellFilter, false, false, false); }
+
+    /** Existing full form for ordinary and creature-spell copies. */
+    public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
+                           boolean sacrificeAtEndStep) {
+        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, false);
+    }
+
+    /** Form for effects that give the target spell's controller control of the copy. */
+    public static CopySpellEffect forTargetSpellController() {
+        return new CopySpellEffect(null, false, false, true);
+    }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
 }

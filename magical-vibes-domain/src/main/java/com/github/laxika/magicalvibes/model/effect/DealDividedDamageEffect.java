@@ -34,9 +34,10 @@ import java.util.List;
  * @param maxTargets        maximum number of targets, {@code 0} = unbounded.
  * @param canTargetPlayers  whether players may be targeted (creatures and/or players).
  * @param damagedCreaturesCantBlock    if {@code true}, creatures dealt damage this way can't block this turn.
- * @param etbAssignments    if {@code true} (CHOSEN only), the assignments come from
- *                          {@code GameData.pendingETBDamageAssignments} and resolve outside the
- *                          standard targeting pipeline (ETB/attack divided damage).
+ * @param etbAssignments    if {@code true} (CHOSEN only), assignments come from
+ *                          {@code GameData.pendingETBDamageAssignments}; a null target restriction
+ *                          uses the non-targeting ETB path, while a non-null restriction keeps
+ *                          the declared targets and prompts for amounts at resolution.
  * @param tapDamagedCreatures if {@code true}, each creature dealt damage this way is tapped.
  * @param damagedPlayersCantCastNoncreatureSpells if {@code true}, each player dealt damage this way
  *                          can't cast noncreature spells for the rest of the turn.
@@ -126,6 +127,13 @@ public record DealDividedDamageEffect(
                 new PermanentIsCreaturePredicate(), 0, false, false, false);
     }
 
+    /** X damage divided as chosen at resolution among any number of target creatures. */
+    public static DealDividedDamageEffect xAmongTargetCreaturesAtResolution() {
+        return new DealDividedDamageEffect(
+                new XValue(), null, DivisionMode.CHOSEN,
+                new PermanentIsCreaturePredicate(), 0, false, false, true);
+    }
+
     /**
      * X damage divided as you choose among any number of target creatures; creatures dealt damage
      * this way can't block this turn (Huatli, Warrior Poet).
@@ -150,9 +158,9 @@ public record DealDividedDamageEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        // ETB divided damage collects its targets through GameData.pendingETBDamageAssignments,
-        // bypassing the standard targeting system — no spec-level targeting.
-        if (etbAssignments) {
+        // Non-targeting ETB divided damage collects its targets through the pending assignment
+        // buffer. Resolution-time divided damage with a restriction still declares its targets.
+        if (etbAssignments && targetRestriction == null) {
             return TargetSpec.NONE;
         }
         // What this effect may target is declared honestly: "any target" (CR 115.4 — a creature,

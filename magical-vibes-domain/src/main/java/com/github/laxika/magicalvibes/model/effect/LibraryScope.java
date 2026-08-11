@@ -14,9 +14,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * </ul>
  *
  * <p>Distinct from {@link LibraryOwner}, which is about <em>inspecting</em> a library and whose
- * {@code TARGET_PLAYER} is a genuine chosen player target. {@code TARGET_OPPONENT} here is never
- * chosen by the controller — it is derived from the trigger context — so it declares no
- * {@code TargetSpec}.
+ * {@code TARGET_PLAYER} is a genuine chosen player target. The ordinary
+ * {@code TARGET_OPPONENT} use here is derived from the trigger context and declares no
+ * {@code TargetSpec}; {@link ExileTopCardsToSourceEffect#targetedOpponent()} enables the chosen
+ * opponent variant used by targeted activated abilities.
  */
 public enum LibraryScope {
     CONTROLLER,
