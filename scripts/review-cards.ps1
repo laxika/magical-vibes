@@ -2,7 +2,9 @@
 #   .\scripts\review-cards.ps1 sos 1 5
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner claude
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner grok
+#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
+#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Effort xhigh
 #
 # The muse runner drives the claude CLI against Meta's Muse endpoint and needs
 # $env:MODEL_API_KEY to be set first:
@@ -21,16 +23,22 @@ param(
     [Parameter(Mandatory = $true, Position = 2)]
     [int] $To,
 
-    # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok), or
-    # "muse" (the claude CLI pointed at Meta's Muse endpoint).
-    [ValidateSet("claude", "grok", "muse")]
+    # Which CLI to run: "claude" (default), "grok" (Cursor agent with Grok),
+    # "codex", or "muse" (the claude CLI pointed at Meta's Muse endpoint).
+    [ValidateSet("claude", "grok", "codex", "muse")]
     [string] $Runner = "claude",
 
     # Model override. Defaults depend on -Runner:
     #   claude -> claude-opus-4-8
     #   grok   -> cursor-grok-4.5-high
+    #   codex  -> gpt-5.6-luna
     #   muse   -> muse-spark-1.2-contributor
-    [string] $Model
+    [string] $Model,
+
+    # Reasoning effort for the codex runner. Defaults to "xhigh" and is ignored
+    # by the other runners.
+    [ValidateSet("low", "medium", "high", "xhigh", "max")]
+    [string] $Effort
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,12 +51,25 @@ if ($From -gt $To) {
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
     $Model = switch ($Runner) {
         "grok" { "cursor-grok-4.5-high" }
+        "codex" { "gpt-5.6-luna" }
         "muse" { "muse-spark-1.2-contributor" }
         default { "claude-opus-4-8" }
     }
 }
 
-$cliName = if ($Runner -eq "grok") { "agent" } else { "claude" }
+if (-not $PSBoundParameters.ContainsKey("Effort") -or [string]::IsNullOrWhiteSpace($Effort)) {
+    $Effort = "xhigh"
+}
+
+if ($Runner -ne "codex" -and $PSBoundParameters.ContainsKey("Effort")) {
+    Write-Warning "-Effort is only supported by the codex runner; ignoring it for $Runner."
+}
+
+$cliName = switch ($Runner) {
+    "grok" { "agent" }
+    "codex" { "codex" }
+    default { "claude" }
+}
 if (-not (Get-Command $cliName -ErrorAction SilentlyContinue)) {
     Write-Error "The '$cliName' CLI was not found on PATH."
     exit 1
@@ -74,8 +95,14 @@ $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or pres
 
 $total = $To - $From + 1
 $index = 0
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
-Write-Host "Runner: $Runner  Model: $Model"
+if ($Runner -eq "codex") {
+    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
+}
+else {
+    Write-Host "Runner: $Runner  Model: $Model"
+}
 
 $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
 Write-Host "Warming Card Info cache for $($SetCode.ToUpperInvariant())..."
@@ -96,6 +123,12 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
 
     if ($Runner -eq "grok") {
         & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
+    }
+    elseif ($Runner -eq "codex") {
+        # *>$null needs a non-Stop EAP on Windows PowerShell 5.1, or native stderr
+        # aborts/deadlocks under the script-level $ErrorActionPreference=Stop.
+        $reasoningConfig = "model_reasoning_effort=`"$Effort`""
+        & { $ErrorActionPreference = "Ignore"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
     }
     else {
         & claude --permission-mode auto --model $Model -p $prompt --append-system-prompt $systemPrompt
