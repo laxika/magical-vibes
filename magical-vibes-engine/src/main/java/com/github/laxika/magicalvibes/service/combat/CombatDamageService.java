@@ -858,14 +858,19 @@ public class CombatDamageService {
                                                      boolean skipDeadBlockers, DamagePhaseSnapshot snap) {
         boolean atkHasDeathtouch = atkStats.deathtouch();
         int remaining = atkStats.combatDamage();
-        for (int blkIdx : blkIndices) {
-            if (skipDeadBlockers && state.deadDefenderIndices.contains(blkIdx)) continue;
+        List<Integer> damageRecipients = blkIndices.stream()
+                .filter(blkIdx -> !skipDeadBlockers || !state.deadDefenderIndices.contains(blkIdx))
+                .toList();
+        for (int i = 0; i < damageRecipients.size(); i++) {
+            int blkIdx = damageRecipients.get(i);
             Permanent blk = defBf.get(blkIdx);
             int blockerDamageSoFar = blk.getMarkedDamage() + state.defDamageTaken.getOrDefault(blkIdx, 0);
             int lethalNeeded = atkHasDeathtouch
                     ? Math.max(0, 1 - blockerDamageSoFar)
                     : snap.defenderStats().get(blkIdx).toughness() - blockerDamageSoFar;
-            int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
+            int dmg = i == damageRecipients.size() - 1
+                    ? remaining
+                    : Math.min(remaining, Math.max(0, lethalNeeded));
             if (!(damagePreventableFrom(gameData, snap.damagePreventable(), atk)
                     && snap.isBlockerProtectedFromAttacker(atkIdx, blkIdx))) {
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
@@ -2015,9 +2020,6 @@ public class CombatDamageService {
             int unpreventable = Math.min(entry.getValue(), unpreventableDamageTaken.getOrDefault(idx, 0));
             int dmg = Math.max(unpreventable,
                     damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true));
-            // Divine Deflection: a shield covering this permanent's controller may have prevented
-            // some of that damage and queued it to be dealt on to the shield's own target.
-            processPendingRedirectDamage(gameData);
             if (dmg > 0) {
                 recordCombatMarkedDamage(perm, dmg, damageTakenBySource.getOrDefault(idx, Map.of()));
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
@@ -2027,6 +2029,7 @@ public class CombatDamageService {
                     perm.setDamagedByDeathtouch(true);
                 }
             }
+            processPendingRedirectDamage(gameData);
         }
     }
 

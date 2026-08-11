@@ -233,9 +233,6 @@ public class DamageSupport {
             return;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
-        // Divine Deflection: a shield covering this permanent's controller may have prevented some of
-        // that damage and queued it to be dealt on to the shield's own target.
-        processPendingRedirectDamage(gameData);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
         // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
         // reduced amount; the loyalty branch below then removes the reduced amount.
@@ -316,6 +313,7 @@ public class DamageSupport {
                 if (damage > 0) {
                     checkSpellLifelink(gameData, entry, damage);
                 }
+                processPendingRedirectDamage(gameData);
                 return;
             }
         }
@@ -336,6 +334,7 @@ public class DamageSupport {
                 if (damage > 0) {
                     checkSpellLifelink(gameData, entry, damage);
                 }
+                processPendingRedirectDamage(gameData);
                 return;
             }
         }
@@ -378,6 +377,7 @@ public class DamageSupport {
                 target.setDamagedByDeathtouch(true);
             }
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
+            processPendingRedirectDamage(gameData);
             return;
         }
 
@@ -396,6 +396,7 @@ public class DamageSupport {
             checkSpellLifelink(gameData, entry, damage);
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
         }
+        processPendingRedirectDamage(gameData);
     }
 
     /**
@@ -1067,7 +1068,7 @@ public class DamageSupport {
                 continue;
             }
             String targetName = gameData.playerIdToName.get(targetId);
-            String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
+            String protectedName = protectedRecipientName(gameData, redirect);
 
             gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
                     " prevents " + damage + " damage to " + protectedName + "."));
@@ -1101,7 +1102,7 @@ public class DamageSupport {
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPermanent == null) return;
 
-        String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
+        String protectedName = protectedRecipientName(gameData, redirect);
         gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
                 " prevents " + damage + " damage to " + protectedName + "."));
 
@@ -1115,6 +1116,15 @@ public class DamageSupport {
                 redirect.sourcePermanentId());
         dealCreatureDamage(gameData, tempEntry, targetPermanent, damage);
         processPendingRedirectDamage(gameData);
+    }
+
+    private String protectedRecipientName(GameData gameData, DamageRedirectShield redirect) {
+        if (redirect.protectedPermanentId() != null) {
+            Permanent protectedPermanent = gameQueryService.findPermanentById(
+                    gameData, redirect.protectedPermanentId());
+            return protectedPermanent == null ? "the target creature" : protectedPermanent.getCard().getName();
+        }
+        return gameData.playerIdToName.get(redirect.protectedPlayerId());
     }
 
     /**

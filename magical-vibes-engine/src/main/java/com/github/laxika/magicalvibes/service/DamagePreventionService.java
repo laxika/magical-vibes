@@ -314,7 +314,7 @@ public class DamagePreventionService {
             // the controller. Prevented damage is queued for the shield's source to deal on.
             UUID permanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             if (permanentControllerId != null) {
-                damage = applyRedirectShields(gameData, permanentControllerId, damage, true);
+                damage = applyRedirectShields(gameData, permanentControllerId, permanent.getId(), damage, true);
                 if (damage <= 0) return 0;
             }
             damage = applyGlobalPreventionShield(gameData, damage);
@@ -517,7 +517,7 @@ public class DamagePreventionService {
      * Returns the remaining damage after redirect shield prevention.
      */
     private int applyRedirectShields(GameData gameData, UUID playerId, int damage) {
-        return applyRedirectShields(gameData, playerId, damage, false);
+        return applyRedirectShields(gameData, playerId, null, damage, false);
     }
 
     /**
@@ -525,7 +525,8 @@ public class DamagePreventionService {
      *                               player controls, so only shields that cover their permanents
      *                               (Divine Deflection) apply
      */
-    private int applyRedirectShields(GameData gameData, UUID playerId, int damage, boolean forControlledPermanent) {
+    private int applyRedirectShields(GameData gameData, UUID playerId, UUID permanentId, int damage,
+                                     boolean forControlledPermanent) {
         if (damage <= 0 || gameData.damageRedirectShields.isEmpty()) return damage;
 
         int remaining = damage;
@@ -534,8 +535,12 @@ public class DamagePreventionService {
 
         while (it.hasNext() && remaining > 0) {
             DamageRedirectShield shield = it.next();
-            if (!shield.protectedPlayerId().equals(playerId)) continue;
-            if (forControlledPermanent && !shield.coversControlledPermanents()) continue;
+            if (shield.protectedPermanentId() != null) {
+                if (!shield.protectedPermanentId().equals(permanentId)) continue;
+            } else {
+                if (!shield.protectedPlayerId().equals(playerId)) continue;
+                if (forControlledPermanent && !shield.coversControlledPermanents()) continue;
+            }
 
             int prevented = Math.min(shield.remainingAmount(), remaining);
             remaining -= prevented;
@@ -548,8 +553,8 @@ public class DamagePreventionService {
 
             if (prevented > 0) {
                 gameData.pendingRedirectDamage.add(new DamageRedirectShield(
-                        playerId, prevented, shield.sourcePermanentId(), shield.sourceCard(),
-                        shield.redirectTargetId(), shield.coversControlledPermanents()));
+                        shield.protectedPlayerId(), prevented, shield.sourcePermanentId(), shield.sourceCard(),
+                        shield.redirectTargetId(), shield.coversControlledPermanents(), shield.protectedPermanentId()));
             }
         }
 
