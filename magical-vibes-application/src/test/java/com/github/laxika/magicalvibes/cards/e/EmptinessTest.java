@@ -29,8 +29,9 @@ class EmptinessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castCreature(player1, 0, 0, creature.getId());
+        harness.castCreature(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -64,7 +65,9 @@ class EmptinessTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Emptiness()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castCreatureWithEvoke(player1, 0, creature.getId());
+        harness.castCreatureWithEvoke(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 

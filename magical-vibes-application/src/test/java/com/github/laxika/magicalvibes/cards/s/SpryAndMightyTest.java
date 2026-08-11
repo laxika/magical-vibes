@@ -44,7 +44,7 @@ class SpryAndMightyTest extends BaseCardTest {
     }
 
     @Test
-    void oneCreatureGetsTrampleWhenPowerDifferenceIsZero() {
+    void doesNothingWhenTwoCreaturesCannotBeChosen() {
         Permanent creature = addCreature(2);
         harness.setHand(player1, List.of(new SpryAndMighty()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -57,7 +57,7 @@ class SpryAndMightyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addCreature(int power) {

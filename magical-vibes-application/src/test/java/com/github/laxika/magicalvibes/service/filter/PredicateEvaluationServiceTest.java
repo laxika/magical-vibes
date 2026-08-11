@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -1503,6 +1504,22 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
                     new PermanentIsArtifactPredicate(),
                     new PermanentIsLandPredicate())), ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("the source-permanent predicate uses the source snapshot or explicit source ID")
+        void sourcePermanentUsesContextIdentity() {
+            Permanent source = addPermanent(player1Id, createEnchantment("Sterling Grove"));
+            Permanent other = addPermanent(player1Id, createEnchantment("Glorious Anthem"));
+            PermanentIsSourcePermanentPredicate predicate = new PermanentIsSourcePermanentPredicate();
+
+            FilterContext snapshotContext = ctx().withSourcePermanentSnapshot(source);
+            assertThat(evaluator.matchesStaticFilter(source, predicate, snapshotContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(other, predicate, snapshotContext)).isFalse();
+
+            FilterContext idContext = ctx().withSourcePermanentId(source.getId());
+            assertThat(evaluator.matchesStaticFilter(source, predicate, idContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(other, predicate, idContext)).isFalse();
         }
 
         @Test

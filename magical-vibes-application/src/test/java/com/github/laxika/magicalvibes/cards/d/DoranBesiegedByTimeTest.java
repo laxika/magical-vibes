@@ -78,7 +78,11 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         Permanent blocker = addReadyCreature(player2, new GiantSpider());
         attacker.setAttacking(true);
 
-        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(blocker.getEffectivePower()).isEqualTo(2);

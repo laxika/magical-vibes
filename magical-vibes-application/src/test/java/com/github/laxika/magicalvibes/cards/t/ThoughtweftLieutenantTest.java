@@ -22,7 +22,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ThoughtweftLieutenant()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AmrouKithkin()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -78,7 +78,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AmrouKithkin()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -94,7 +94,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         Permanent recipient = findPermanent(player1, "Grizzly Bears");
 
         harness.setHand(player1, List.of(new AmrouKithkin()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -44,8 +44,7 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
         if (creatureIds.isEmpty()) {
             return;
         }
-        if (creatureIds.size() == 1) {
-            completeChoice(gameData, creatureIds, entry);
+        if (creatureIds.size() < 2) {
             return;
         }
 

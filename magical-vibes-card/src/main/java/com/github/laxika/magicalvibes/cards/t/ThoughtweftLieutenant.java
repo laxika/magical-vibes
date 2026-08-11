@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,9 +22,8 @@ public class ThoughtweftLieutenant extends Card {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                         new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.KITHKIN),
-                                new BoostTargetCreatureEffect(1, 1)))
-                .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                        new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.KITHKIN),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                                SequenceEffect.of(
+                                        new BoostTargetCreatureEffect(1, 1),
+                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))));
     }
 }

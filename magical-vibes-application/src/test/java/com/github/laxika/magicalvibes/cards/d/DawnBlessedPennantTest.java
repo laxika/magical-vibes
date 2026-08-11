@@ -21,6 +21,7 @@ class DawnBlessedPennantTest extends BaseCardTest {
     @DisplayName("Choosing a subtype offers only the types named by Dawn-Blessed Pennant")
     void subtypeChoiceIsRestricted() {
         harness.setHand(player1, List.of(new DawnBlessedPennant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();

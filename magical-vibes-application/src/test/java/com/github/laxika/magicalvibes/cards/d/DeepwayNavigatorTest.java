@@ -27,6 +27,7 @@ class DeepwayNavigatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(merfolk.isTapped()).isFalse();
         assertThat(bear.isTapped()).isTrue();

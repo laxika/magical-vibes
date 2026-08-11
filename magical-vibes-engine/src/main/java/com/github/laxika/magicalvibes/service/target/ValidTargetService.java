@@ -179,7 +179,7 @@ public class ValidTargetService {
                         !java.util.Objects.equals(requiredControllerId,
                                 gameQueryService.findPermanentController(gameData, id)));
             }
-            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+            if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
                         .map(id -> gameQueryService.findPermanentController(gameData, id))
@@ -422,7 +422,7 @@ public class ValidTargetService {
                     return !targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
                 });
             }
-            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+            if (isOnePerControllerConstraint(ability.getMultiTargetConstraint())
                     && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
                 Set<UUID> selectedControllers = alreadySelectedIds.stream()
                         .map(id -> gameQueryService.findPermanentController(gameData, id))
@@ -923,7 +923,7 @@ public class ValidTargetService {
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
-            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+            if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
                         .map(id -> {
@@ -948,6 +948,11 @@ public class ValidTargetService {
             }
         }
         return validIds;
+    }
+
+    private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
+        return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
     }
 
     private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, List<CardEffect> spellEffects, UUID controllerId, Integer xValue) {

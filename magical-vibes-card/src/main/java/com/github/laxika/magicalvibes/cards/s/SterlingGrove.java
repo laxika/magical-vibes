@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -21,7 +24,9 @@ public class SterlingGrove extends Card {
 
     public SterlingGrove() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
-                new PermanentIsEnchantmentPredicate()));
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsEnchantmentPredicate(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

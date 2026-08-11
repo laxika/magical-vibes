@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -32,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ETBTokenTargetServiceTest {
@@ -144,5 +148,29 @@ class ETBTokenTargetServiceTest {
         // Group 0 (gated out) is skipped; the controller is prompted for group 1's target instead.
         verify(playerInputService).beginAnyTargetChoice(
                 eq(gd), eq(player1Id), anyList(), eq(List.of(player1Id)), contains("target 2"));
+    }
+
+    @Test
+    @DisplayName("A one-per-controller trigger cannot stop while a legal controller remains")
+    void mandatoryOnePerControllerDoesNotOfferStop() {
+        UUID player2Id = UUID.randomUUID();
+        gd.orderedPlayerIds.add(player2Id);
+        Card creatureCard = new Card();
+        Permanent candidate = new Permanent(creatureCard);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>(List.of(candidate))));
+        when(gameQueryService.isCreature(gd, candidate)).thenReturn(true);
+
+        Card card = new Card();
+        card.setName("Sylvan Primordial");
+        card.setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        var effect = new DestroyTargetPermanentEffect();
+        card.target(null, 0, 99).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(effect), UUID.randomUUID(), List.of(), 0, 0));
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 1.1"));
     }
 }

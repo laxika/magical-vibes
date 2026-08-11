@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SylvanPrimordial extends Card {
 
     public SylvanPrimordial() {
-        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
+        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
         target(TargetFilters.noncreaturePermanentAnOpponentControls(), 0, 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new DestroyTargetPermanentsThenEffect(new SearchLibraryEffect(

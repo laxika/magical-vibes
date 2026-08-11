@@ -23,7 +23,7 @@ class DeepchannelDuelistTest extends BaseCardTest {
         Permanent merfolk = addMerfolk(player1);
 
         assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(2);
     }
 
     @Test
@@ -38,7 +38,7 @@ class DeepchannelDuelistTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opponentMerfolk)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentMerfolk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentMerfolk)).isEqualTo(1);
     }
 
     @Test

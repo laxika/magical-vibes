@@ -58,10 +58,10 @@ class CartoucheOfZealTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CartoucheOfZeal()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        // Group 0 = enchant your creature, group 1 = target creature that can't block.
-        harness.castEnchantment(player1, 0, List.of(mine.getId(), opponentBlocker.getId()));
-        harness.passBothPriorities(); // resolve aura → attach + ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger
+        harness.castEnchantment(player1, 0, mine.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBlocker.getId());
+        harness.passBothPriorities();
 
         assertThat(opponentBlocker.isCantBlockThisTurn()).isTrue();
         // The enchant target (group 0) must NOT be marked can't-block.

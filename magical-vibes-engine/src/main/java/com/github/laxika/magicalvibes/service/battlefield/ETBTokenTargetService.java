@@ -263,7 +263,7 @@ public class ETBTokenTargetService {
                 }
             }
 
-            if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+            if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !pending.chosenTargetsSoFar().isEmpty()) {
                 List<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()
                         .map(id -> gameQueryService.findPermanentController(gameData, id))
@@ -292,7 +292,10 @@ public class ETBTokenTargetService {
             }
 
             boolean minMet = chosenInGroup >= group.getMinTargets();
-            if (minMet && !validPlayerTargets.contains(pending.controllerId())) {
+            boolean mustChooseRemainingController =
+                    card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+            if (minMet && !mustChooseRemainingController
+                    && !validPlayerTargets.contains(pending.controllerId())) {
                 validPlayerTargets.add(pending.controllerId());
             }
 
@@ -309,6 +312,11 @@ public class ETBTokenTargetService {
                     gameData.id, card.getName(), idx, chosenInGroup);
             return;
         }
+    }
+
+    private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
+        return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
     }
 
     private int effectiveMaxTargets(GameData gameData,

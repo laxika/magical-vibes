@@ -1693,6 +1693,7 @@ public class BattlefieldEntryService {
             if ((hasDynamicTargetCount && !hasTarget)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
+                    || auraETBTargetNeedsSelection
                     || (etbNeedsTarget && !hasTarget)) {
                 // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
                 // an intervening-if, or the permanent wasn't cast (token copy, or returned from

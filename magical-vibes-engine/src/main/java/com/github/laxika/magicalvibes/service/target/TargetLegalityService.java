@@ -966,7 +966,8 @@ public class TargetLegalityService {
             validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
             return;
         }
-        if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             validateAtMostOnePerController(gameData, targetIds);
             return;
         }
@@ -997,7 +998,7 @@ public class TargetLegalityService {
                         }
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
-                         AT_MOST_ONE_PER_CONTROLLER -> {
+                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE -> {
                         // Handled by early returns above.
                     }
                 }

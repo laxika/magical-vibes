@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -73,6 +74,7 @@ public class MultiPermanentChoiceHandlerService {
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
+    private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
     private final LifeSupport lifeSupport;
     private final DamagePreventionService damagePreventionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
@@ -159,6 +161,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference
+                && permanentIds.size() != 2) {
+            throw new IllegalStateException("Exactly two creatures must be selected");
         }
 
         if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter enterCtx) {
@@ -300,6 +306,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
+            handleChooseTwoCreaturesByPowerDifference(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -309,6 +317,15 @@ public class MultiPermanentChoiceHandlerService {
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }
+    }
+
+    private void handleChooseTwoCreaturesByPowerDifference(GameData gameData, List<UUID> permanentIds) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution entry");
+        }
+        chooseTwoCreaturesByPowerDifferenceEffectHandler.completeChoice(gameData, permanentIds, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificeSelfToDestroy(GameData gameData, UUID playerId, List<UUID> permanentIds,

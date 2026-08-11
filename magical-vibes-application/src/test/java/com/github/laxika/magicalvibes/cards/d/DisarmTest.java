@@ -59,7 +59,7 @@ class DisarmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Card is not playable");
+                .hasMessage("Target must be a creature");
     }
 
     private Permanent addEquipment(com.github.laxika.magicalvibes.model.Player player, Permanent target) {

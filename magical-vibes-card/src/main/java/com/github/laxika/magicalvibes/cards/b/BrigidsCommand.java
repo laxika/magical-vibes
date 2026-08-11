@@ -53,7 +53,7 @@ public class BrigidsCommand extends Card {
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control fights target creature an opponent controls",
-                        List.of(new FightTargetsEffect()),
+                        List.of(new FightTargetsEffect(1, 2)),
                         List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls()))
         ), 2));
     }

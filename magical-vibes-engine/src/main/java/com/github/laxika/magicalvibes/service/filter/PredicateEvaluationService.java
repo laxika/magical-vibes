@@ -1311,6 +1311,14 @@ public class PredicateEvaluationService {
                 yield sourceAura != null && sourceAura.isAttached()
                         && sourceAura.getAttachedTo().equals(permanent.getId());
             }
+            case PermanentIsSourcePermanentPredicate ignored -> {
+                UUID sourcePermanentId = context == null ? null : context.sourcePermanentId();
+                if (sourcePermanentId != null) {
+                    yield sourcePermanentId.equals(permanent.getId());
+                }
+                Permanent source = context == null ? null : context.sourcePermanentSnapshot();
+                yield source != null && source.getId().equals(permanent.getId());
+            }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 // Recursion-safe: both colour sets come from the in-flight layer state (or the
                 // permanents' own stored colours), never from computeStaticBonus. Konda's Banner.

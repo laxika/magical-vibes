@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ class SterlingGroveTest extends BaseCardTest {
     @DisplayName("Other enchantments you control have shroud")
     void otherEnchantmentsYouControlHaveShroud() {
         Permanent grove = new Permanent(new SterlingGrove());
-        Permanent otherEnchantment = new Permanent(new GreaterAuramancy());
+        Permanent otherEnchantment = new Permanent(new GloriousAnthem());
         gd.playerBattlefields.get(player1.getId()).addAll(List.of(grove, otherEnchantment));
 
         assertThat(gqs.hasKeyword(gd, grove, Keyword.SHROUD)).isFalse();

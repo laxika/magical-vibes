@@ -42,16 +42,37 @@ class SylvanPrimordialTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No target chosen means nothing is destroyed and no search happens")
-    void noTargetsMeansNoSearch() {
-        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+    @DisplayName("No legal target means nothing is destroyed and no search happens")
+    void noLegalTargetsMeansNoSearch() {
         harness.setLibrary(player1, List.of(new Forest()));
 
         castSylvanPrimordial(List.of());
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(plains.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A legal permanent controlled by an opponent must be targeted")
+    void legalOpponentPermanentMustBeTargeted() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setLibrary(player1, List.of(new Forest()));
+        prepareCast();
+
+        harness.castCreature(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(plains.getId());
+        assertThat(choice.validPlayerIds()).doesNotContain(player1.getId());
+
+        harness.handlePermanentChosen(player1, plains.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(plains.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     @Test

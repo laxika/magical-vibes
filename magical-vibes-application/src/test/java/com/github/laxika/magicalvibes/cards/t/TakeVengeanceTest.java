@@ -39,6 +39,6 @@ class TakeVengeanceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessage("Target must be a tapped creature");
     }
 }
