@@ -87,7 +87,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveSelf(GameData gameData, StackEntry entry) {
-        UUID selfId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;

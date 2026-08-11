@@ -29,6 +29,8 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var unblockable = (MakeCreatureUnblockableEffect) effect;
+
         // Multi-target: make each target in the group unblockable (e.g. Open into Wonder's
         // "X target creatures can't be blocked this turn").
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
@@ -38,9 +40,11 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
             return;
         }
 
-        // Self-targeting triggers (e.g. Repartee) populate sourcePermanentId rather than targetId;
-        // fall back to it so "this creature can't be blocked this turn" works off the stack.
-        UUID targetId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        // Self-targeting triggers (e.g. Repartee) use sourcePermanentId; targetId may carry
+        // separate context about the spell or player that caused the trigger.
+        UUID targetId = unblockable.selfTargeting() && entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId()
+                : entry.getTargetId();
         makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId));
     }
 

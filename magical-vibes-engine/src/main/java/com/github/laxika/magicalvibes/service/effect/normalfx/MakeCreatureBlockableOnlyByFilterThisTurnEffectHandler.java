@@ -31,10 +31,10 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (MakeCreatureBlockableOnlyByFilterThisTurnEffect) effect;
-        // Self-targeting triggers populate sourcePermanentId rather than targetId
-        // (same pattern as MakeCreatureUnblockableEffect).
+        // A self-targeting effect uses the source permanent even when targetId carries
+        // separate context about the spell or player that caused the trigger.
         UUID permanentId = grant.selfTargeting()
-                ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
+                ? (entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId())
                 : entry.getTargetId();
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {

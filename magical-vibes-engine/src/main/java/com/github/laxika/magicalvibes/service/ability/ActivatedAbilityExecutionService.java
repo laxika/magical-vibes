@@ -361,8 +361,6 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
                 && !snapshotEffects.isEmpty()
-                // A direct draw moves a card from the library, so the ability is not a mana ability.
-                && snapshotEffects.stream().noneMatch(e -> e instanceof DrawCardEffect)
                 && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {

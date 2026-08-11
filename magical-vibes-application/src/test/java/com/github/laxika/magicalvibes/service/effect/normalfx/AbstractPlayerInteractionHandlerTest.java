@@ -45,6 +45,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected PermanentRemovalService permanentRemovalService;
     @Mock protected BattlefieldEntryService battlefieldEntryService;
     @Mock protected TriggerCollectionService triggerCollectionService;
+    @Mock protected CoinFlipService coinFlipService;
     @Mock protected InteractionHandlerRegistry interactionHandlerRegistry;
 
     protected EffectHandlerRegistry registry;
@@ -68,7 +69,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
                 handlerName, support, registry, gameLogService, cardRevealService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
-                permanentRemovalService, graveyardService, interactionHandlerRegistry);
+                permanentRemovalService, graveyardService, interactionHandlerRegistry, coinFlipService);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -125,7 +126,7 @@ player1Id = UUID.randomUUID();
 
                 millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService).addCardToGraveyard(gd, player2Id, creature);
+                verify(graveyardService).addCardToGraveyard(gd, player2Id, creature, Zone.LIBRARY);
                 verify(permanentControlSupport).applyCreateToken(
                         eq(gd), eq(player1Id), any(CreateTokenEffect.class), eq("ISD"));
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
@@ -145,7 +146,7 @@ player1Id = UUID.randomUUID();
 
                 millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService).addCardToGraveyard(gd, player2Id, land);
+                verify(graveyardService).addCardToGraveyard(gd, player2Id, land, Zone.LIBRARY);
                 verifyNoInteractions(permanentControlSupport);
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
             }

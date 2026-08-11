@@ -24,6 +24,6 @@ public class BraidsCabalMinion extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate())),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.ACTIVE_PLAYER));
     }
 }

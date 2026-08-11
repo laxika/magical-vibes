@@ -360,7 +360,6 @@ public class DamageSupport {
         // Record only — the state-based action check (CR 704.5g/704.5h) is the single place
         // creatures die from damage; it runs after the current resolution completes.
         target.addMarkedDamage(damageSourceKey(entry, damageSource), damage);
-        gameData.recordDamageToPermanent(target.getId(), damage);
         if (sourceHasDeathtouch) {
             target.setDamagedByDeathtouch(true);
         }

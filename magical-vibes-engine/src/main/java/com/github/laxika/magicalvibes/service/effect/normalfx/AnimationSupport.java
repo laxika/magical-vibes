@@ -73,8 +73,8 @@ public class AnimationSupport {
      *
      * <p>Supports "up to N target" abilities (Fendeep Summoner) by iterating over
      * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
-     * self/target animation still reads {@code entry.getTargetId()}. A SELF-scope animation queued by
-     * a triggered ability carries no target at all and falls back to {@code entry.getSourcePermanentId()}.
+     * self/target animation still reads {@code entry.getTargetId()}. A SELF-scope animation always
+     * uses {@code entry.getSourcePermanentId()}, even when the entry carries separate trigger context.
      *
      * <p>ENCHANTED_PERMANENT scope animates the permanent the source Aura is attached to, re-derived
      * at resolution and ignoring any target on the entry (the Genju cycle's "enchanted Plains becomes
@@ -88,15 +88,13 @@ public class AnimationSupport {
                 return;
             }
             targetIds = List.of(enchantedId);
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
+            targetIds = List.of(entry.getSourcePermanentId());
         } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
-        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
-            // A triggered self-animation carries the source only as sourcePermanentId — activated
-            // abilities bind it as the target, triggers do not (Jade Idol).
-            targetIds = List.of(entry.getSourcePermanentId());
         } else {
             return;
         }

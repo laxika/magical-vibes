@@ -1267,21 +1267,14 @@ public class SpellCastTriggerCollectorService {
             } else if (selfTarget) {
                 UUID selfTargetId = attachedSelfTarget
                         ? match.permanent().getAttachedTo()
-                        : null;
+                        : castingPlayerId;
                 entry = spellManaSpentX > 0
-                        ? attachedSelfTarget
-                            ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                                match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
-                                selfTargetId, match.permanent().getId(), null, null, null, null)
-                            : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                                match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
-                                match.permanent().getId())
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
+                            selfTargetId, match.permanent().getId(), null, null, null, null)
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                             match.permanent().getCard().getName() + "'s ability", resolved, selfTargetId,
                             match.permanent().getId());
-                // Self-bound non-targeting triggers may also need the caster after the triggering
-                // spell leaves the stack, so retain that contextual player separately from the source.
-                entry.setTargetId(castingPlayerId);
                 entry.setNonTargeting(true);
             } else {
                 entry = spellManaSpentX > 0

@@ -33,7 +33,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet());
+                anySet(), isNull());
     }
 
     @Test
@@ -53,7 +53,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true),
-                isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet());
+                isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet(),
+                isNull());
     }
 
     @Test
@@ -72,7 +73,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
-                isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet());
+                isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet(),
+                isNull());
     }
 
     @Test
@@ -91,7 +93,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
-                isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet());
+                isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet(),
+                isNull());
     }
 
     @Test

@@ -15,6 +15,6 @@ public class MolderSlug extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
                 1,
                 new PermanentIsArtifactPredicate(),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.ACTIVE_PLAYER));
     }
 }
