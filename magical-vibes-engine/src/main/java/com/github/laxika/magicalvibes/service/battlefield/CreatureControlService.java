@@ -266,8 +266,9 @@ public class CreatureControlService {
                 stale = source == null || !source.isAttached()
                         || !source.getAttachedTo().equals(fe.affectedPermanentId());
             } else if (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
-                UUID sourceController = fe.sourcePermanentId() == null ? null
-                        : gameData.findControllerOf(fe.sourcePermanentId());
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = sourceController == null || !sourceController.equals(fe.controllerId());
             } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS) {
                 // Infernal Denizen: only the source's presence matters, not who controls it.

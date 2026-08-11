@@ -835,7 +835,7 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield false;
                 }
-                UUID controllerId = gameData.findControllerOf(permanent.getId());
+                UUID controllerId = gameData.findControllerOf(permanent);
                 yield controllerId != null && gameQueryService.isPlayerBeingAttacked(gameData, controllerId);
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
