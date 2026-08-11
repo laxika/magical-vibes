@@ -2154,6 +2154,10 @@ public class AbilityActivationService {
             }
         }
 
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            handler.validateCanPay(gameData, playerId);
+        }
+
         // The variable X of a remove-X-counters cost is announced before targets are checked
         // (CR 601.2b announces X, CR 601.2c announces targets), so this prompt has to run ahead of
         // the target legality pass below: a target filter that reads X (Quillmane Baku's "creature

@@ -1642,14 +1642,10 @@ public class SpellCastingService {
                 }
             } else {
                 validateModalTargetKind(gameData, wasModal, filteredSpellEffects, targetId);
-            if (spliced) {
-                targetLegalityService.validateSpellTargeting(gameData, card, filteredSpellEffects,
-                        targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
-            } else {
-                targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId,
-                        unwrappedNeedsTarget, effectiveXValue);
-            }
-                if (kicked) {
+                if (spliced) {
+                    targetLegalityService.validateSpellTargeting(gameData, card, filteredSpellEffects,
+                            targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
+                } else if (kicked) {
                     targetLegalityService.validateSpellTargeting(
                             gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, true);
                 } else {
@@ -2036,6 +2032,7 @@ public class SpellCastingService {
             if (additionalCostPayment.sacrificedCardId() != null) {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
             }
+            entry.setPutCounterCostPaid(isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             if (hasModalEtb) {
                 entry.setEtbMode(xValue != null ? xValue : 0);
             }
@@ -2726,6 +2723,10 @@ public class SpellCastingService {
             }
             if (additionalCostPayment.sacrificedCardId() != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setSacrificedCardId(additionalCostPayment.sacrificedCardId());
+            }
+            if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setPutCounterCostPaid(
+                        isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             }
             if (!repeatedAdditionalCosts.isEmpty() && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -4159,6 +4160,7 @@ public class SpellCastingService {
         }
         boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.remove(exileCardId)
                 || sourceFreeCast;
+        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.remove(exileCardId);
         gameData.removeFromExile(exileCardId);
         gameData.exilePlayPermissions.remove(exileCardId);
         gameData.exilePlayAnyManaTypeWhileExiled.remove(exileCardId);
@@ -4312,6 +4314,7 @@ public class SpellCastingService {
             );
         }
         stackEntry.setSourceZone(Zone.EXILE);
+        stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         gameData.stack.add(stackEntry);
 
         // Use null hand list — card was already removed from exile

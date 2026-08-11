@@ -37,7 +37,7 @@ class OverloadTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 harness.getPermanentId(player2, "Darksteel Ingot")))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("mana value 2 or less");
     }
 
     @Test

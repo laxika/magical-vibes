@@ -60,7 +60,6 @@ class KirolAttentiveFirstYearTest extends BaseCardTest {
     @DisplayName("Requires two untapped creatures to pay the activation cost")
     void requiresTwoUntappedCreatures() {
         Permanent kirol = addCreatureReady(player1, new KirolAttentiveFirstYear());
-        addCreatureReady(player1, new GrizzlyBears());
         UUID triggerId = createTrialOfZealTrigger();
 
         assertThatThrownBy(() -> harness.activateAbility(

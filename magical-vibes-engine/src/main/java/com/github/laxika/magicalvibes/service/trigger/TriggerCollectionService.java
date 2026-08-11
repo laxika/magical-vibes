@@ -4747,7 +4747,8 @@ public class TriggerCollectionService {
 
         Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
         var ctx = new TriggerContext.PermanentEnters(
-                enteringCreature, controllerId, null, 1 + extraWizardTriggers, null);
+                enteringCreature, controllerId, null, 1 + extraWizardTriggers,
+                enteringPermanent != null ? enteringPermanent.getId() : null);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : new ArrayList<>(battlefield)) {
@@ -4955,8 +4956,6 @@ public class TriggerCollectionService {
             }
         }
         final UUID resolvedEnteringPermanentId = enteringPermanentId;
-        var ctx = new TriggerContext.PermanentEnters(
-                enteringCard, enteringControllerId, enteringControllerId, 1, resolvedEnteringPermanentId);
 
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD);
@@ -4965,38 +4964,13 @@ public class TriggerCollectionService {
             // Each effect in this slot is its own triggered ability (Nature's Wrath has two), so a
             // card whose entry matches both conditions is dispatched separately.
             for (CardEffect effect : effects) {
-                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, playerId);
-                if (resolved == null) continue;
-
                 int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                         gameData, playerId, enteringControllerId, enteringCard);
-                for (int i = 0; i < triggerCount; i++) {
-                    if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                                perm.getCard(), enteringControllerId, new ArrayList<>(List.of(resolved)), perm.getId(),
-                                resolvedEnteringPermanentId, resolvedEnteringPermanentId));
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} any-permanent-enters trigger awaiting target", gameData.id,
-                                perm.getCard().getName());
-                        continue;
-                    }
-
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(resolved)),
-                            enteringControllerId,
-                            perm.getId());
-                    entry.setNonTargeting(true);
-                    entry.setTriggeringPermanentId(resolvedEnteringPermanentId);
-                    entry.setTriggeringCardId(enteringCard.getId());
-                    gameData.stack.add(entry);
-
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} any-permanent-enters trigger queued", gameData.id, perm.getCard().getName());
-                }
+                var effectContext = new TriggerContext.PermanentEnters(
+                        enteringCard, enteringControllerId, enteringControllerId,
+                        triggerCount, resolvedEnteringPermanentId);
+                dispatchEnter(gameData, perm, playerId,
+                        EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, effect, effectContext);
             }
         });
     }

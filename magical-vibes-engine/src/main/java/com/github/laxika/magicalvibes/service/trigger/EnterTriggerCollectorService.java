@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
@@ -526,11 +527,12 @@ public class EnterTriggerCollectorService {
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureDealsPowerDamageToEachOpponent(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
-        if (effect.recipient() != DamageRecipient.EACH_OPPONENT) {
-            return false;
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (effect.recipient() != DamageRecipient.EACH_OPPONENT
+                || !(effect.amount() instanceof SourcePower)) {
+            return handleEnterDefault(match, effect, ctx);
         }
 
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
         if (enteringPermanent == null) {
             return true;

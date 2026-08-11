@@ -59,7 +59,7 @@ class RefreshTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 harness.getPermanentId(player1, "Fountain of Youth")))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessageContaining("Target must be a creature");
     }
 
     private Permanent permanentOf(Player player, String name) {

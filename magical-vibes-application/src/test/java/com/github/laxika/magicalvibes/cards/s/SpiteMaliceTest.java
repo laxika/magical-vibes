@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,10 @@ class SpiteMaliceTest extends BaseCardTest {
     @Test
     @DisplayName("Spite counters a noncreature spell")
     void spiteCountersNoncreatureSpell() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player2, bears);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player2, List.of(might));
         harness.addMana(player2, ManaColor.GREEN, 4);
@@ -42,6 +45,9 @@ class SpiteMaliceTest extends BaseCardTest {
     @Test
     @DisplayName("Spite cannot target a creature spell")
     void spiteCannotTargetCreatureSpell() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player2, List.of(bears));
         harness.addMana(player2, ManaColor.GREEN, 2);

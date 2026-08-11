@@ -118,6 +118,8 @@ class CastingCostServiceTest {
     private void evaluateCardTypePredicates() {
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
     }
 
     private static CardAnyOfPredicate instantOrSorcery() {
@@ -366,7 +368,7 @@ class CastingCostServiceTest {
                             new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(inv -> {
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(inv -> {
                 Card card = inv.getArgument(0);
                 CardTypePredicate pred = inv.getArgument(1);
                 return card.hasType(pred.cardType());
@@ -521,7 +523,7 @@ class CastingCostServiceTest {
                             new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(warchief));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardSubtypePredicate pred = inv.getArgument(1);
@@ -567,6 +569,11 @@ class CastingCostServiceTest {
                             new CardTypePredicate(CardType.INSTANT), 3, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+                Card card = invocation.getArgument(0);
+                CardTypePredicate pred = invocation.getArgument(1);
+                return card.hasType(pred.cardType());
+            });
             when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
                 Card card = invocation.getArgument(0);
                 CardTypePredicate pred = invocation.getArgument(1);

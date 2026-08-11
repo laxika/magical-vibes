@@ -131,7 +131,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
-        boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD && !e.optional();
+        boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
         boolean anyNumber = chooseCount > 1 || randomBottom;
 
         if (matchingCards.isEmpty()) {
@@ -159,7 +159,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                         LibrarySearchParams.builder(controllerId, matchingCards)
                                 .reveals(true)
-                                .canFailToFind(false)
+                                .canFailToFind(e.optional())
                                 .sourceCards(new ArrayList<>(topCards))
                                 .restToGraveyard(true)
                                 .shuffleAfterSelection(false)
@@ -167,7 +167,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                                 .destination(e.chosenDestination())
                                 .build(),
                         prompt,
-                        false));
+                        e.optional()));
                 return;
             }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(

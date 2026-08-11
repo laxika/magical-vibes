@@ -830,7 +830,16 @@ public class PredicateEvaluationService {
             case PermanentNotPredicate notPredicate ->
                     !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
             case PermanentIsSourcePermanentPredicate ignored -> {
-                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (filterContext == null) {
+                    yield false;
+                }
+                if (filterContext.sourcePermanentId() != null) {
+                    yield filterContext.sourcePermanentId().equals(permanent.getId());
+                }
+                Permanent sourcePermanent = filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                }
                 yield sourcePermanent != null && sourcePermanent.getId().equals(permanent.getId());
             }
             case PermanentIsSourceCardPredicate ignored ->

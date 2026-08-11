@@ -269,6 +269,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
+        } else if (context instanceof PermanentChoiceContext.BlightCreatureChoice blight) {
+            battlefieldHandler.handleBlightCreatureChoice(gameData, permanentId, blight);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentBlightsCreature blight) {
+            battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {

@@ -104,6 +104,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
@@ -438,6 +439,32 @@ public class PermanentChoiceBattlefieldHandlerService {
                                                             PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock context) {
         defendingPlayerChoosesCreatureToBlockEffectHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBlightCreatureChoice(GameData gameData, UUID permanentId,
+                                           PermanentChoiceContext.BlightCreatureChoice context) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
+        if (creature == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+        StackEntry sourceEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s ability",
+                new ArrayList<>(),
+                0,
+                context.sourcePermanentId());
+        blightEffectHandler.placeCountersAndQueueThen(gameData, sourceEntry, creature, context.effect());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleEachOpponentBlightsCreature(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentBlightsCreature context) {
+        eachOpponentBlightsEffectHandler.completeChoice(gameData, permanentId, context);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleOpponentChoosesCreatureYouGainControl(GameData gameData, UUID permanentId,

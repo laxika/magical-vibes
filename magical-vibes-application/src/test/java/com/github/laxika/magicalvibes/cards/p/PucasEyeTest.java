@@ -28,6 +28,7 @@ class PucasEyeTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeCast);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBeforeCast - 1);
