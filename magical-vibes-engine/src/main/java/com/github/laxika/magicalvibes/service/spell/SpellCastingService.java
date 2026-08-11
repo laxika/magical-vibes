@@ -1491,6 +1491,9 @@ public class SpellCastingService {
                 if (card.getManaCost() != null) {
                     ManaCost cost = new ManaCost(card.getManaCost() + escalateManaSuffix);
                     if (cost.hasX()) {
+                        if (effectiveXValue < 0) {
+                            throw new IllegalStateException("X value cannot be negative");
+                        }
                         int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                         int totalAdditionalCost = additionalCost + perTargetCost;
                         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);

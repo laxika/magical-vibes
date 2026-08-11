@@ -133,7 +133,10 @@ class EnterTriggerCollectorServiceTest {
         addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
 
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -146,8 +149,10 @@ class EnterTriggerCollectorServiceTest {
         source.addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+        Card entering = enteringCreature(4, 4);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
 
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(4, 4), 0);
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -193,8 +198,10 @@ class EnterTriggerCollectorServiceTest {
     void allyCreatureNabanDoubling() {
         addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
+        Card entering = enteringCreature(4, 4);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
 
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(4, 4), 1);
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 1);
 
         assertThat(gd.stack).hasSize(2);
     }

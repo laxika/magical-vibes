@@ -614,7 +614,12 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = CardEffect.class,
+                    slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    })
     private boolean handleCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();

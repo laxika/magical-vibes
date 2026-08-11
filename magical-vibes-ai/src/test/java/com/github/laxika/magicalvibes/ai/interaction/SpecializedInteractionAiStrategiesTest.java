@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -138,6 +139,55 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void exiledCardMayPlayChoosesTheFirstEligibleCard() throws Exception {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+
+        new ExiledCardMayPlayChoiceAiStrategy().answer(
+                new PendingInteraction.ExiledCardMayPlayChoice(aiPlayerId, List.of(first, second)),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
+    void magesContestPassesTheBid() throws Exception {
+        new MagesContestBidChoiceAiStrategy().answer(
+                new PendingInteraction.MagesContestBidChoice(
+                        aiPlayerId, 3, 10, "Mages' Contest", UUID.randomUUID(), UUID.randomUUID()),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(0));
+    }
+
+    @Test
+    void targetLibraryDestinationKeepsTheOfferedPosition() throws Exception {
+        new TargetLibraryDestinationChoiceAiStrategy().answer(
+                new PendingInteraction.TargetLibraryDestinationChoice(
+                        aiPlayerId, UUID.randomUUID(), "Target", "Second from top"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.ListChoiceMade("Second from top"));
+    }
+
+    @Test
+    void vividCardChoiceChoosesTheFirstEligibleCard() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+
+        new VividCardChoiceAiStrategy().answer(
+                new PendingInteraction.VividCardChoice(
+                        aiPlayerId, List.of(first, second), List.of(first.getId(), second.getId()),
+                        List.of(CardColor.BLUE), 0, List.of(), "Choose a card"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId())));
+    }
+
+    @Test
     void allNewSpecializedTypesAreRegistered() {
         assertThat(AiInteractionStrategies.registeredTypes()).contains(
                 PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
@@ -146,7 +196,11 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.SylvanLibraryChoice.class,
                 PendingInteraction.AdNauseamRepeatChoice.class,
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
-                PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class);
+                PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
+                PendingInteraction.ExiledCardMayPlayChoice.class,
+                PendingInteraction.MagesContestBidChoice.class,
+                PendingInteraction.TargetLibraryDestinationChoice.class,
+                PendingInteraction.VividCardChoice.class);
     }
 
     private InteractionAnswer capturedAnswer() throws Exception {

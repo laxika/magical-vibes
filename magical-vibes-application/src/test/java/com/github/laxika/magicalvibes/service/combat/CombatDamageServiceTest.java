@@ -194,6 +194,8 @@ class CombatDamageServiceTest {
     private void stubDamageResolution() {
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
+        lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gameData), any(UUID.class)))
@@ -241,6 +243,9 @@ class CombatDamageServiceTest {
         // damagedPermanentId is null on the player path, so match it with any() rather than any(UUID.class).
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
                 eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
+                eq(gameData), any(UUID.class), any(), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Palisade Giant / RedirectPlayerDamageToSelfEffect (includeOtherPermanents): pass-through when no
         // absorbing permanent is set up. Called unconditionally for combat damage to creatures.

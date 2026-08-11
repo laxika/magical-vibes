@@ -732,8 +732,8 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
-        @DisplayName("Targeted spell with no valid targets puts card back in graveyard")
-        void targetedSpellNoTargetsPutsCardBackInGraveyard() {
+        @DisplayName("Targeted spell with no valid targets stays in graveyard")
+        void targetedSpellNoTargetsStaysInGraveyard() {
             allowGraveyardCasting();
             Card card = createInstant("No Targets");
             CardEffect permanentOnly = new CardEffect() {
@@ -746,7 +746,8 @@ class MayCastHandlerServiceTest {
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER2_ID, card);
+            verify(permanentRemovalService, never()).removeCardFromGraveyardById(gd, card.getId());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             assertThat(gd.stack).isEmpty();
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }

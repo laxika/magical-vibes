@@ -28,6 +28,7 @@ public final class AiInteractionStrategies {
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
         register(new ExiledSpellCopyChoiceAiStrategy());
+        register(new ExiledCardMayPlayChoiceAiStrategy());
         register(new ExileInstantOrSorcerySpellCostChoiceAiStrategy());
         register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());
         register(new BrilliantUltimatumPileChoiceAiStrategy());
@@ -41,6 +42,7 @@ public final class AiInteractionStrategies {
         register(new IntuitionSearchChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
+        register(new MagesContestBidChoiceAiStrategy());
         register(new ExileNonlandCardFromTargetHandOrGraveyardChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
@@ -65,6 +67,8 @@ public final class AiInteractionStrategies {
         register(new ExiledPermanentPutOntoBattlefieldChoiceAiStrategy());
         register(new LimDulsVaultRepeatChoiceAiStrategy());
         register(new LimDulsVaultOrderChoiceAiStrategy());
+        register(new TargetLibraryDestinationChoiceAiStrategy());
+        register(new VividCardChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
     }
 
