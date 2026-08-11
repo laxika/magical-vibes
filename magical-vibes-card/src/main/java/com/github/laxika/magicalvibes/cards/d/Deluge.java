@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "79")
+@CardRegistration(set = "ODY", collectorNumber = "80")
 public class Deluge extends Card {
 
     public Deluge() {

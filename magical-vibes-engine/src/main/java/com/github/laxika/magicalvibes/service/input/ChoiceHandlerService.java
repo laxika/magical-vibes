@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
@@ -2179,7 +2180,7 @@ public class ChoiceHandlerService {
             if (card.getName().equals(cardName)) {
                 gameData.addCardToHand(controllerId, card);
             } else {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
         }
 

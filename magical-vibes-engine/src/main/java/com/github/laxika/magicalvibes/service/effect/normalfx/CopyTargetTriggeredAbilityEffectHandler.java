@@ -59,6 +59,7 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
         copyEntry.setDamageSourceCard(targetEntry.getDamageSourceCard());
         copyEntry.setTriggeringPermanentId(targetEntry.getTriggeringPermanentId());
+        copyEntry.setTriggeringPermanentControllerId(targetEntry.getTriggeringPermanentControllerId());
         copyEntry.setTriggeringCardId(targetEntry.getTriggeringCardId());
         copyEntry.setEventValue(targetEntry.getEventValue());
         copyEntry.setSourcePermanentSnapshot(targetEntry.getSourcePermanentSnapshot());

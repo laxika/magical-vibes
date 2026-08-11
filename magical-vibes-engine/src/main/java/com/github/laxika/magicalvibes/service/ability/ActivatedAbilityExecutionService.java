@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
@@ -81,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -114,6 +116,7 @@ import java.util.UUID;
 public class ActivatedAbilityExecutionService {
 
     private final DamagePreventionService damagePreventionService;
+    private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
@@ -931,6 +934,12 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard()));
+            } else if (effect instanceof DrawCardEffect draw) {
+                int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
+                for (int i = 0; i < amount; i++) {
+                    drawService.resolveDrawCard(gameData, playerId);
+                }
             } else if (effect instanceof PutCountersOnSelfEffect counters
                     && !gameQueryService.cantHaveCounters(gameData, permanent)) {
                 // "Add one mana of any color. Put a brick counter on this artifact." (Pyramid of the

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "202")
+@CardRegistration(set = "ODY", collectorNumber = "204")
 public class Magnivore extends Card {
 
     public Magnivore() {

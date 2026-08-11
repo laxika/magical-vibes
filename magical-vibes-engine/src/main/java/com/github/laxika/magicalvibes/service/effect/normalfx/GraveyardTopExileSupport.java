@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,43 @@ public class GraveyardTopExileSupport {
                 playerName + " exiles ", card, " from their graveyard."));
         log.info("Game {} - {} exiles {} from the top of their graveyard", gameData.id, playerName,
                 card.getName());
+        return true;
+    }
+
+    /** Returns the indices of all cards matching an arbitrary-card graveyard exile cost. */
+    public List<Integer> matchingIndices(GameData gameData, UUID playerId, ExileCardFromGraveyardCost cost) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return List.of();
+        }
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            Card card = graveyard.get(i);
+            boolean typeMatches = cost.requiredType() == null
+                    || card.hasType(cost.requiredType())
+                    || (cost.alternateType() != null && card.hasType(cost.alternateType()));
+            boolean subtypeMatches = cost.requiredSubtype() == null
+                    || card.getSubtypes().contains(cost.requiredSubtype());
+            if (typeMatches && subtypeMatches) {
+                matchingIndices.add(i);
+            }
+        }
+        return matchingIndices;
+    }
+
+    /** Exiles the sole matching arbitrary graveyard card; returns false when ambiguous or unavailable. */
+    public boolean exileSoleMatching(GameData gameData, UUID playerId, ExileCardFromGraveyardCost cost) {
+        List<Integer> matchingIndices = matchingIndices(gameData, playerId, cost);
+        if (matchingIndices.size() != 1) {
+            return false;
+        }
+        Card card = gameData.playerGraveyards.get(playerId).remove((int) matchingIndices.getFirst());
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        exileService.exileCard(gameData, playerId, card);
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " exiles ", card, " from their graveyard."));
+        log.info("Game {} - {} exiles {} from their graveyard", gameData.id, playerName, card.getName());
         return true;
     }
 }

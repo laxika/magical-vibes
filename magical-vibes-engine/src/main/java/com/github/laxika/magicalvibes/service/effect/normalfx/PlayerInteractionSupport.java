@@ -121,11 +121,15 @@ public class PlayerInteractionSupport {
                 + " (or decline to finish)."
                 : "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
         UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
+        UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
+                && gameData.pendingEffectResolutionEntry != null
+                ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
                 effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
                 effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                 repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
-                effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes());
+                effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
+                returnExiledSourceCardId);
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

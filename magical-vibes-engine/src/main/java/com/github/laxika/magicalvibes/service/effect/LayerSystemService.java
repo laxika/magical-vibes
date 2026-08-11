@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
+import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -693,13 +693,14 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
         h = hashEnums(h, p.getTransientCreatureTypeOverrides());
-        // Lands this permanent turned into Forests (Gaea's Liege) drive a layer-4 type grant.
-        long forestedSum = 0;
-        for (UUID forested : p.getForestedLandIds()) {
-            forestedSum += mix64(forested.hashCode());
+        // Source-bound land type changes drive a layer-4 type grant.
+        long trackedLandTypesSum = 0;
+        for (Map.Entry<UUID, CardSubtype> trackedLand : p.getLandTypesUntilSourceLeaves().entrySet()) {
+            trackedLandTypesSum += mix64(trackedLand.getKey().hashCode()
+                    ^ (31L * (trackedLand.getValue() == null ? 0 : trackedLand.getValue().ordinal())));
         }
-        h = mix(h, forestedSum);
-        h = mix(h, p.getForestedLandIds().size());
+        h = mix(h, trackedLandTypesSum);
+        h = mix(h, p.getLandTypesUntilSourceLeaves().size());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
             h = mix(h, System.identityHashCode(replacement));
@@ -1438,18 +1439,22 @@ public class LayerSystemService {
                     }
                 }
             }
-            case TrackedLandsBecomeForestEffect ignored -> {
-                // Gaea's Liege: each land its {T} ability recorded becomes a Forest (CR 305.7).
+            case TrackedLandsBecomeBasicLandTypeEffect e -> {
+                // Each recorded land becomes the effect's fixed basic land type.
                 manage(board, instance);
                 if (instance.source() == null) return;
-                for (UUID landId : instance.source().permanent().getForestedLandIds()) {
+                for (Map.Entry<UUID, CardSubtype> trackedLand
+                        : instance.source().permanent().getLandTypesUntilSourceLeaves().entrySet()) {
+                    UUID landId = trackedLand.getKey();
                     PermanentSlot target = slotsById.get(landId);
                     if (target == null || isSource(instance, target)) continue;
                     CharacteristicState state = states.get(landId);
                     if (state == null || !state.hasCardType(CardType.LAND)) continue;
-                    setLandType(state, landId, CardSubtype.FOREST, landTypeOverrides);
+                    CardSubtype subtype = trackedLand.getValue();
+                    if (subtype != e.subtype()) continue;
+                    setLandType(state, landId, subtype, landTypeOverrides);
                     record(board, instance, target, new L4Contribution(
-                            CardSubtype.FOREST, true, true, null, null));
+                            subtype, true, true, null, null));
                 }
             }
             case AnimateNoncreatureArtifactsEffect ignored -> {

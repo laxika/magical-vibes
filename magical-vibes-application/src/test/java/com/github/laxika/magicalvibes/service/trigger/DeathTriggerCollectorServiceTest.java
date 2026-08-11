@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -1124,6 +1125,24 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("MayPayManaEffect binds a dying-card-aware wrapped effect")
+        void mayPayBindsDyingCardAwareWrappedEffect() {
+            Card dying = createCreature("Dead Creature", 2, 2);
+            Card watcher = createCreature("Decaying Soil", 0, 0);
+            var returnEffect = new ReturnTriggeringCardToOwnerHandEffect();
+            var mayPay = new MayPayManaEffect("{1}", returnEffect, "Pay 1?");
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
+
+            svc.handleAllyNontokenMayPay(match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            var queued = (MayPayManaEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            var bound = (ReturnTriggeringCardToOwnerHandEffect) queued.wrapped();
+            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
         }
     }
 

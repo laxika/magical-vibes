@@ -44,10 +44,23 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean attachSourceEquipment, boolean enterAttacking,
                                          boolean drawAndRepeat, boolean putAnyNumber,
                                          boolean faceDown, int faceDownPower, int faceDownToughness,
-                                         Set<CardType> faceDownCardTypes) implements CardEffect {
+                                         Set<CardType> faceDownCardTypes,
+                                         boolean returnExiledSourceIfSacrificed) implements CardEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber,
+                                      boolean faceDown, int faceDownPower, int faceDownToughness,
+                                      Set<CardType> faceDownCardTypes) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -132,5 +145,12 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(new CardTruePredicate(),
                 "card", false, false, false, false, false, false, false, true,
                 true, power, toughness, cardTypes);
+    }
+
+    /** Shifty Doppelganger: return its exiled source card if the entered creature is sacrificed. */
+    public PutCardToBattlefieldEffect returningExiledSourceIfSacrificed() {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "118")
+@CardRegistration(set = "ODY", collectorNumber = "108")
 public class TimeStretch extends Card {
 
     public TimeStretch() {

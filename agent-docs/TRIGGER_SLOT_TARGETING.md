@@ -197,6 +197,9 @@ land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`
 `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Countryside Crusher; fires on every permanent the
 graveyard owner controls whenever a non-token land card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`, the single zone→graveyard choke point),
+`ON_ALLY_LAND_CARD_MILLED` (Pedantic Learning; fires on every permanent the graveyard owner controls
+whenever a non-token land card actually enters their graveyard from their library — checked in
+`GraveyardService.addCardToGraveyard` after replacement effects),
 `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),

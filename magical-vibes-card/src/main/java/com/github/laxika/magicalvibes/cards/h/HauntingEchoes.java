@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAnd
 
 @CardRegistration(set = "M10", collectorNumber = "98")
 @CardRegistration(set = "M11", collectorNumber = "99")
+@CardRegistration(set = "ODY", collectorNumber = "142")
 public class HauntingEchoes extends Card {
 
     public HauntingEchoes() {

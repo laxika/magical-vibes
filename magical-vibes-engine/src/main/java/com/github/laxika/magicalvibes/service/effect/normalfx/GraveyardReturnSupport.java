@@ -167,7 +167,11 @@ public class GraveyardReturnSupport {
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
-        if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
+        UUID graveyardOwnerId = targetCard == null
+                ? null
+                : gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                targetCard, effect.filter(), sourceCardId, gameData, graveyardOwnerId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
@@ -225,7 +229,6 @@ public class GraveyardReturnSupport {
         // A card returned to HAND or to the top of a library always goes to its owner's zone
         // (only BATTLEFIELD returns can put a card under a non-owner's control). Resolve the
         // graveyard owner before removal.
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         UUID destinationPlayerId = controllerId;
         if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY

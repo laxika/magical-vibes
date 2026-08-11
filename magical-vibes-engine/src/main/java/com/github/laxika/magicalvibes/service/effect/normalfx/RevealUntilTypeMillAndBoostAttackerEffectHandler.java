@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAttackerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -88,7 +89,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
 
         // Put all revealed cards into the graveyard
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, defenderId, card);
+            graveyardService.addCardToGraveyard(gameData, defenderId, card, Zone.LIBRARY);
         }
 
         String millLog = defenderName + " puts " + revealedCount + " revealed "

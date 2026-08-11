@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -84,6 +85,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class ActivatedAbilityExecutionServiceTest {
 
     @Mock private DamagePreventionService damagePreventionService;
+    @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private StateBasedActionService stateBasedActionService;
@@ -205,6 +207,24 @@ class ActivatedAbilityExecutionServiceTest {
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
             assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
+            assertThat(gameData.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Mana ability resolves a draw rider immediately without using the stack")
+        void drawsImmediately() {
+            Card card = createCard("Test Mana Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new AwardManaEffect(ManaColor.BLUE),
+                    new DrawCardEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Draw a card.");
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(drawService).resolveDrawCard(gameData, player1Id);
             assertThat(gameData.stack).isEmpty();
         }
 

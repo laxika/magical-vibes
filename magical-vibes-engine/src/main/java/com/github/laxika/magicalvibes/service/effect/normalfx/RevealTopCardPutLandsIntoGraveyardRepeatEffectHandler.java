@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutLandsIntoGraveyardRepeatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -50,7 +51,7 @@ public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements No
             }
 
             deck.removeFirst();
-            graveyardService.addCardToGraveyard(gameData, controllerId, topCard);
+            graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", topCard, " into their graveyard."));
             landsBinned++;
         }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "120")
+@CardRegistration(set = "ODY", collectorNumber = "170")
 public class ZombieInfestation extends Card {
 
     public ZombieInfestation() {

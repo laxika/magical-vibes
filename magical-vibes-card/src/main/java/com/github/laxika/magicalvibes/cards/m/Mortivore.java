@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "161")
 @CardRegistration(set = "9ED", collectorNumber = "147")
+@CardRegistration(set = "ODY", collectorNumber = "152")
 public class Mortivore extends Card {
 
     public Mortivore() {

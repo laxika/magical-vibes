@@ -156,6 +156,32 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost graveyardCost) {
+            List<Integer> matchingIndices = graveyardTopExileSupport.matchingIndices(
+                    gameData, entry.getControllerId(), graveyardCost);
+            if (matchingIndices.isEmpty()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Exile a card from your graveyard?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            if (graveyardTopExileSupport.exileSoleMatching(gameData, entry.getControllerId(), graveyardCost)) {
+                return;
+            }
+            interactionHandlerRegistry.begin(gameData, com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardChoice
+                    .builder(entry.getControllerId(), matchingIndices,
+                            com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.EXILE,
+                            "Choose a card to exile from your graveyard.")
+                    .mandatory(true)
+                    .build());
+            return;
+        }
+
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
             // "Have an opponent create a … token" (Varchild's War-Riders): nothing can make this
             // unpayable, so the only question is whether the controller wants to pay.
@@ -201,6 +227,27 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             payCounterOnSourceCost(gameData, entry, counterCost);
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost counterCost) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null || !canPayCounterFromSource(source, counterCost)) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                String counterName = permanentCounterSupport.counterTypeName(counterCost.counterType());
+                String counterText = counterCost.count() == 1
+                        ? "a " + counterName + " counter"
+                        : counterCost.count() + " " + counterName + " counters";
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), entry.getControllerId(), List.of(e),
+                        entry.getCard().getName() + " - Remove " + counterText + " from it?",
+                        null, null, entry.getSourcePermanentId()));
+                return;
+            }
+            payCounterFromSourceCost(gameData, entry, counterCost);
             return;
         }
 
@@ -361,6 +408,28 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, cost.counterType(), cost.count());
+    }
+
+    /** Pays a source-counter forced cost, returning false if the source or required counters are gone. */
+    public boolean payCounterFromSourceCost(GameData gameData, StackEntry entry,
+            com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null || !canPayCounterFromSource(source, cost)) {
+            return false;
+        }
+
+        permanentCounterSupport.removeCountersFromPermanent(gameData, source, cost.counterType(), cost.count());
+        return true;
+    }
+
+    private boolean canPayCounterFromSource(Permanent source,
+            com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost cost) {
+        if (cost.counterType() == com.github.laxika.magicalvibes.model.CounterType.ANY) {
+            return source.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE)
+                    + source.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)
+                    >= cost.count();
+        }
+        return source.getCounterCount(cost.counterType()) >= cost.count();
     }
 
     /** Whether the player's graveyard holds at least one card matching {@code predicate}. */

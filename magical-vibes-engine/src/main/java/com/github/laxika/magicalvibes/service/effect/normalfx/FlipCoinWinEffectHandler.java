@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +45,10 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
+
+        if (wonFlip) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        }
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();
         if (branch == null) {

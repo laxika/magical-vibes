@@ -535,11 +535,12 @@ Behaviour changes, both in the rules-correct direction and both pinned by a fail
 
 `CREATURE`, `PERMANENT` and `PLAYER_OR_PERMANENT` are unchanged.
 
-**No implemented card has a `LAND`-spec may-ability** (checked: the four `LAND` producers are
+**Graceful Antelope is the first implemented card with a `LAND`-spec may-ability** (the four `LAND` producers are
 `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`, `GrantBasicLandTypeToTargetEffect`,
-`TargetLandBecomesForestUntilSourceLeavesEffect`, `DestroyAttachmentsOnTargetCreatureEffect(…, LAND)`,
-and no card combines one with a `MayEffect`). That regression therefore lives in a new
-`MayAbilityHandlerServiceTest` (`service/input/`), which builds the service by hand over a **real**
+`TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect`, `DestroyAttachmentsOnTargetCreatureEffect(…, LAND)`,
+and Graceful Antelope combines the land spec with a `MayEffect`). The existing
+`MayAbilityHandlerServiceTest` (`service/input/`) remains the service-level regression test; it
+builds the service by hand over a **real**
 `PredicateEvaluationService` + `TargetPredicateEvaluationService` — the Step 2 note applies here too,
 a mocked predicate evaluator silently rejects every candidate. `PLAYER_OR_PLANESWALKER` *did* have a
 real card: `BoggartShenanigansTest` now covers a planeswalker being offered and losing a loyalty

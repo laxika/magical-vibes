@@ -625,6 +625,8 @@ public class GameData {
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Aegis of Honor: redirect the next damage from an instant or sorcery spell dealt to a protected player onto that spell's controller. */
+    public final List<UUID> playerNextInstantOrSorceryDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Soltari Guerrillas: redirect the next combat damage a specific source would deal to an opponent onto a fixed creature. */
     public final List<SourceNextCombatDamageToOpponentRedirectShield> sourceNextCombatDamageToOpponentRedirectShields =
             Collections.synchronizedList(new ArrayList<>());
@@ -947,6 +949,9 @@ public class GameData {
      *  spell can scale off the card just discarded (Blast of Genius). */
     public int lastDiscardedCardManaValue;
 
+    /** Counts colored mana symbols on the most recently milled card. */
+    public final Map<ManaColor, Integer> lastMilledCardColorSymbols = new ConcurrentHashMap<>();
+
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
      *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
     public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
@@ -1060,6 +1065,19 @@ public class GameData {
      *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
      *  Cleared at start of new turn. */
     public final Set<UUID> permanentsDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks the total damage actually dealt to each permanent this turn. Prevented damage is not
+     *  included, and the total survives regeneration. Cleared at start of new turn. */
+    public final Map<UUID, Integer> damageDealtToPermanentsThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that {@code amount} damage was dealt to {@code permanentId} this turn. */
+    public void recordDamageToPermanent(UUID permanentId, int amount) {
+        if (permanentId == null || amount <= 0) {
+            return;
+        }
+        permanentsDealtDamageThisTurn.add(permanentId);
+        damageDealtToPermanentsThisTurn.merge(permanentId, amount, Integer::sum);
+    }
 
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
@@ -2592,6 +2610,7 @@ public class GameData {
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
+        copy.playerNextInstantOrSorceryDamageRedirectShields.addAll(this.playerNextInstantOrSorceryDamageRedirectShields);
         copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.damagePreventionLifeGainShields.addAll(this.damagePreventionLifeGainShields);
@@ -2645,6 +2664,7 @@ public class GameData {
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
         copy.lastDiscardedCardManaValue = this.lastDiscardedCardManaValue;
+        copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
@@ -2660,6 +2680,7 @@ public class GameData {
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
         copy.handSizeAtTurnStart.putAll(this.handSizeAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
+        copy.damageDealtToPermanentsThisTurn.putAll(this.damageDealtToPermanentsThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);

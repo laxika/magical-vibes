@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -101,7 +102,7 @@ public class GuildFeudSupport {
                 .collect(Collectors.toList());
 
         if (creatureIds.isEmpty()) {
-            revealed.forEach(card -> graveyardService.addCardToGraveyard(gameData, revealerId, card));
+            revealed.forEach(card -> graveyardService.addCardToGraveyard(gameData, revealerId, card, Zone.LIBRARY));
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals no creature card and puts the revealed cards into their graveyard."));
             return false;

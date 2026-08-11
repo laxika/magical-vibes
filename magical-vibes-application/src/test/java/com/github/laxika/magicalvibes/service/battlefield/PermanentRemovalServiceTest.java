@@ -214,6 +214,25 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Sacrifice kind can return a card exiled for the delayed effect")
+        void sacrificeKindReturnsLinkedExiledCard() {
+            Permanent creature = addPermanent(player1Id, createCreature("Temporary Creature"));
+            Card source = createArtifact("Exiled Source");
+            gd.addToExile(player1Id, source);
+            stubGraveyardForCreature(creature, player1Id);
+            gd.queueDelayedAction(new DelayedPermanentAction(creature.getId(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, source.getId()));
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+
+            assertThat(gd.findExiledCard(source.getId())).isNull();
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
+                    argThat(permanent -> permanent.getCard().equals(source)));
+            verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(source), isNull(), eq(false));
+        }
+
+        @Test
         @DisplayName("Return-to-hand kind returns the permanent to its owner's hand")
         void returnToHandKindMovesToHand() {
             Permanent perm = addPermanent(player1Id, createCreature("Bouncy Creature"));

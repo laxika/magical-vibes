@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
@@ -1167,7 +1168,8 @@ public class TriggerCollectionService {
      * batched damage event (already summed across simultaneous targets) so each watcher can react
      * once. Callers pass the single summed total per source per damage event.
      */
-    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId, int totalDamage) {
+    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                   UUID sourcePermanentId, int totalDamage) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
         var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, totalDamage);
@@ -1208,6 +1210,24 @@ public class TriggerCollectionService {
         for (CardEffect effect : selfEffects) {
             var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
             registry.dispatch(match, EffectSlot.ON_SELF_DEALS_DAMAGE, effect, ctx);
+        }
+
+        for (DelayedWatchedCreatureDealsDamage watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureDealsDamage.class)) {
+            if (!watch.watchedPermanentId().equals(sourcePermanentId)) continue;
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watch.sourceCard(),
+                    watch.controllerId(),
+                    watch.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(watch.effects()),
+                    (UUID) null,
+                    (UUID) null);
+            trigger.setNonTargeting(true);
+            trigger.setEventValue(totalDamage);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
         }
     }
 
@@ -2377,7 +2397,10 @@ public class TriggerCollectionService {
                 if (delayedDestroy.selfOnly() && !watcher.getId().equals(damageSource.getId())) continue;
                 if (damagedCreatureId == null) continue;
                 if (delayedDestroy.sourceFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, delayedDestroy.sourceFilter())) {
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        damageSource,
+                        delayedDestroy.sourceFilter(),
+                        FilterContext.of(gameData).withSourcePermanentSnapshot(watcher))) {
                     continue;
                 }
 
@@ -3023,7 +3046,7 @@ public class TriggerCollectionService {
     }
 
     public void checkLifeGainTriggers(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount,
-                                       Card sourceCard, StackEntryType sourceEntryType) {
+            Card sourceCard, StackEntryType sourceEntryType) {
         if (lifeGainedAmount <= 0) return;
 
         var ctx = new TriggerContext.LifeGain(gainingPlayerId, lifeGainedAmount, sourceCard, sourceEntryType);
@@ -3698,6 +3721,47 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires "whenever you win a coin flip" triggers for the winning player's battlefield. */
+    public void checkControllerWinsCoinFlipTriggers(GameData gameData, UUID winningPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(winningPlayerId);
+        if (battlefield == null) return;
+
+        TriggerContext ctx = new TriggerContext.CoinFlipWon(winningPlayerId);
+        for (Permanent perm : List.copyOf(battlefield)) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP)) {
+                var match = new TriggerMatchContext(gameData, perm, winningPlayerId, effect);
+                registry.dispatch(match, EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP, effect, ctx);
+            }
+        }
+    }
+
+    /**
+     * Fires Karmic Justice triggers for a noncreature permanent actually destroyed while resolving
+     * an opponent's spell or ability. The destroyed permanent is also checked as a source because
+     * its triggered ability still triggers when it is destroyed by that spell or ability.
+     */
+    public void checkNoncreaturePermanentDestroyedByOpponentTriggers(GameData gameData,
+                                                                      Permanent destroyedPermanent,
+                                                                      UUID destroyedControllerId,
+                                                                      UUID causeControllerId) {
+        if (causeControllerId == null || causeControllerId.equals(destroyedControllerId)) return;
+
+        var ctx = new TriggerContext.NoncreaturePermanentDestroyed(
+                destroyedPermanent.getCard(), destroyedControllerId, causeControllerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(destroyedControllerId);
+        if (battlefield != null) {
+            for (Permanent perm : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, perm, destroyedControllerId,
+                        EffectSlot.ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT, ctx);
+            }
+        }
+        if (!destroyedPermanent.getCard().getEffects(
+                EffectSlot.ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT).isEmpty()) {
+            dispatchSlot(gameData, destroyedPermanent, destroyedControllerId,
+                    EffectSlot.ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT, ctx);
+        }
+    }
+
     /**
      * Fires ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Countryside Crusher) whenever a
      * land card is put into its owner's graveyard from any zone. Fires on every permanent the graveyard
@@ -3710,6 +3774,17 @@ public class TriggerCollectionService {
 
         for (Permanent perm : List.copyOf(battlefield)) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
+        }
+    }
+
+    /** Fires library-origin land-card triggers after a land has actually entered the graveyard. */
+    public void checkLandCardMilledTriggers(GameData gameData, UUID graveyardOwnerId, Card landCard) {
+        var ctx = new TriggerContext.LandCardMilled(landCard, graveyardOwnerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_ALLY_LAND_CARD_MILLED, ctx);
         }
     }
 

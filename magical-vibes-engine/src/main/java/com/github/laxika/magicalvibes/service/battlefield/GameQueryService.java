@@ -2520,6 +2520,7 @@ public class GameQueryService {
                 && !layeredTouched
                 && accumulator.getKeywords().isEmpty()
                 && accumulator.getGrantedActivatedAbilities().isEmpty()
+                && accumulator.getGrantedEffects().isEmpty()
                 && accumulator.getProtectionColors().isEmpty()
                 && accumulator.getGrantedColors().isEmpty()
                 && accumulator.getGrantedSubtypes().isEmpty()
@@ -3805,7 +3806,7 @@ public class GameQueryService {
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && !p.isAuraEffectsIgnoredThisTurn()
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectMatcher)));
+                        .anyMatch(e -> isActiveEffect(gameData, p, creature, e, effectMatcher)));
     }
 
     /**
@@ -3853,25 +3854,32 @@ public class GameQueryService {
             if (effect instanceof EnchantedPermanentConditionalEffect) {
                 continue;
             }
-            if (matchesLureBlockerFilter(gameData, attacker, blocker, effect)) {
+            if (matchesLureBlockerFilter(gameData, attacker, attacker, blocker, effect)) {
                 return true;
             }
         }
         return gameData.anyPermanentMatches(aura ->
                 aura.isAttached() && attacker.getId().equals(aura.getAttachedTo())
                         && aura.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> matchesLureBlockerFilter(gameData, attacker, blocker, e)));
+                        .anyMatch(e -> matchesLureBlockerFilter(gameData, attacker, aura, blocker, e)));
     }
 
-    private boolean matchesLureBlockerFilter(GameData gameData, Permanent attacker, Permanent blocker,
-                                             CardEffect effect) {
+    private boolean matchesLureBlockerFilter(GameData gameData, Permanent attacker, Permanent source,
+                                             Permanent blocker, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            UUID controllerId = findPermanentController(gameData, source.getId());
+            return controllerId != null
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(source, controllerId))
+                    && matchesLureBlockerFilter(gameData, attacker, source, blocker, conditional.wrapped());
+        }
         // Gift of the Deity wraps lure in EnchantedPermanentConditionalEffect ("as long as enchanted
         // is green") — same unwrap as hasAuraWithEffect / isActiveEffect.
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
             CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
-            return active != null && matchesLureBlockerFilter(gameData, attacker, blocker, active);
+            return active != null && matchesLureBlockerFilter(gameData, attacker, source, blocker, active);
         }
         if (!(effect instanceof MustBeBlockedByAllCreaturesEffect lure)) {
             return false;
@@ -4007,14 +4015,22 @@ public class GameQueryService {
         return total[0];
     }
 
-    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect,
+    private boolean isActiveEffect(GameData gameData, Permanent aura, Permanent creature, CardEffect effect,
                                    Predicate<CardEffect> effectMatcher) {
         if (effectMatcher.test(effect)) return true;
+        if (effect instanceof ConditionalEffect conditional) {
+            UUID controllerId = findPermanentController(gameData, aura.getId());
+            if (controllerId == null || !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(aura, controllerId))) {
+                return false;
+            }
+            return isActiveEffect(gameData, aura, creature, conditional.wrapped(), effectMatcher);
+        }
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
             CardEffect activeEffect = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
-            return activeEffect != null && effectMatcher.test(activeEffect);
+            return activeEffect != null && isActiveEffect(gameData, aura, creature, activeEffect, effectMatcher);
         }
         return false;
     }

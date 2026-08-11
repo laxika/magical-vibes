@@ -18,6 +18,8 @@ public enum TargetLibraryAction {
     MAY_SHUFFLE,
     /** The controller puts one of the looked-at cards into that player's graveyard; the rest go back on top (Cruel Fate, Wu Spy). */
     PUT_ONE_INTO_GRAVEYARD,
+    /** Reveal the looked-at cards publicly, then put one into that player's graveyard and the rest back on top (Balshan Beguiler). */
+    REVEAL_AND_PUT_ONE_INTO_GRAVEYARD,
     /** The controller exiles one of the looked-at cards (mandatory); the rest go back on top in any order (Sealed Fate). */
     EXILE_ONE,
     /**

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MadnessCast;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -101,14 +103,26 @@ public class GraveyardService {
      */
     public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        gameData.lastMilledCardColorSymbols.clear();
         int cardsToMill = Math.min(count, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
         for (Card card : milledCards) {
-            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card);
+            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
             if (entered) {
                 cardsEnteredGraveyard.add(card);
+            }
+        }
+        if (!cardsEnteredGraveyard.isEmpty()) {
+            ManaCost manaCost = cardsEnteredGraveyard.getLast().getParsedManaCost();
+            if (manaCost != null) {
+                for (ManaColor color : ManaColor.COLORS) {
+                    int symbols = manaCost.countColorSymbols(color);
+                    if (symbols > 0) {
+                        gameData.lastMilledCardColorSymbols.put(color, symbols);
+                    }
+                }
             }
         }
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -325,6 +339,9 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            if (sourceZone == Zone.LIBRARY) {
+                triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
+            }
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
             triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -356,6 +373,35 @@ public class GraveyardService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} cards from graveyard", gameData.id, playerName, toExile);
         return toExile;
+    }
+
+    /**
+     * Exiles exactly {@code count} actual cards from the front of a player's graveyard when that
+     * many cards are available. Tokens in the graveyard do not count and remain in place for the
+     * engine's token-cleanup handling.
+     */
+    public boolean exileExactlyCardsFromGraveyard(GameData gameData, UUID playerId, int count) {
+        if (count <= 0) return true;
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) return false;
+
+        List<Card> exiled = graveyard.stream()
+                .filter(card -> !card.isToken())
+                .limit(count)
+                .toList();
+        if (exiled.size() < count) return false;
+
+        for (Card card : exiled) {
+            graveyard.remove(card);
+            exileService.exileCard(gameData, playerId, card);
+        }
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " exiles " + count + " card" + (count != 1 ? "s" : "")
+                + " from their graveyard.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} exiles {} cards from graveyard", gameData.id, playerName, count);
+        return true;
     }
 
     /**

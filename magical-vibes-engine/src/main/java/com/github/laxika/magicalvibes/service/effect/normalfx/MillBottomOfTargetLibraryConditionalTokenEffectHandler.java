@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
@@ -46,7 +47,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
         }
 
         Card bottomCard = deck.removeLast();
-        graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard);
+        graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard, Zone.LIBRARY);
 
         gameLogService.append(gameData, GameLog.textCardText(targetPlayerName + " puts " , bottomCard, " from the bottom of their library into their graveyard."));
         log.info("Game {} - {} ability: {} puts {} from bottom of library into graveyard",

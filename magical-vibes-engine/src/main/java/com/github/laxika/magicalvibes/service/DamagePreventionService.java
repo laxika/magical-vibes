@@ -630,6 +630,11 @@ public class DamagePreventionService {
      */
     public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
                                                             UUID recipientId) {
+        return applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermanentId, damage, recipientId, false);
+    }
+
+    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
+                                                            UUID recipientId, boolean combatDamage) {
         if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
             return damage;
         }
@@ -638,6 +643,9 @@ public class DamagePreventionService {
         while (it.hasNext()) {
             var shield = it.next();
             if (!shield.sourceId().equals(sourcePermanentId)) {
+                continue;
+            }
+            if (shield.combatOnly() && !combatDamage) {
                 continue;
             }
             if (shield.recipientId() != null && !shield.recipientId().equals(recipientId)) {
@@ -691,6 +699,25 @@ public class DamagePreventionService {
         gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                 sourceControllerId, damage, source.getCard(), sourceControllerId));
         return 0;
+    }
+
+    /**
+     * Applies Aegis of Honor's one-shot replacement effect to direct damage from an instant or
+     * sorcery spell. Returns the replacement recipient, or {@code null} when no shield matches.
+     */
+    public UUID applyNextInstantOrSorceryDamageRedirectShield(GameData gameData, StackEntry entry,
+                                                               UUID protectedPlayerId, int damage) {
+        if (damage <= 0 || entry == null || protectedPlayerId == null
+                || entry.getSourcePermanentId() != null
+                || (entry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && entry.getEntryType() != StackEntryType.SORCERY_SPELL)
+                || gameData.playerNextInstantOrSorceryDamageRedirectShields.isEmpty()) {
+            return null;
+        }
+        if (!gameData.playerNextInstantOrSorceryDamageRedirectShields.remove(protectedPlayerId)) {
+            return null;
+        }
+        return entry.getControllerId();
     }
 
     /**
@@ -1116,6 +1143,28 @@ public class DamagePreventionService {
             boolean sourceIsCreature,
             boolean sourceIsArtifact
     ) {
+        return applyControllerFixedPerSourceDamagePrevention(
+                gameData, playerId, damage, sourceIsCreature, sourceIsArtifact, null);
+    }
+
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage, boolean sourceIsCreature) {
+        return applyControllerFixedPerSourceDamagePrevention(gameData, playerId, damage, sourceIsCreature, false, null);
+    }
+
+    /**
+     * Urza's Armor-style prevention with an optional source-color restriction. A null source-color
+     * set means that only unrestricted effects can match; callers should pass the source's effective
+     * damage colors when color-restricted effects need to be evaluated.
+     */
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
+                                                              boolean sourceIsCreature, Set<CardColor> sourceColors) {
+        return applyControllerFixedPerSourceDamagePrevention(
+                gameData, playerId, damage, sourceIsCreature, false, sourceColors);
+    }
+
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
+                                                              boolean sourceIsCreature, boolean sourceIsArtifact,
+                                                              Set<CardColor> sourceColors) {
         if (!gameQueryService.isDamagePreventable(gameData)) return 0;
         if (damage <= 0) return 0;
 
@@ -1128,6 +1177,8 @@ public class DamagePreventionService {
                 .map(e -> (PreventFixedDamagePerSourceToControllerEffect) e)
                 .filter(e -> (!e.creatureSourcesOnly() || sourceIsCreature)
                         && (!e.artifactSourcesOnly() || sourceIsArtifact))
+                .filter(e -> e.sourceColors() == null
+                        || (sourceColors != null && e.sourceColors().stream().anyMatch(sourceColors::contains)))
                 .mapToInt(PreventFixedDamagePerSourceToControllerEffect::amount)
                 .sum();
         return Math.min(damage, reduction);

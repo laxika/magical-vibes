@@ -203,7 +203,7 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
                 } else if (toGraveyard) {
-                    graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
+                    graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
                     if (grantHaste) {
@@ -341,7 +341,7 @@ public class LibraryChoiceHandlerService {
                     }
                     graveyardLog.text(" into their graveyard.");
                     for (Card card : new ArrayList<>(sourceCards)) {
-                        graveyardService.addCardToGraveyard(gameData, deckOwnerId, card);
+                        graveyardService.addCardToGraveyard(gameData, deckOwnerId, card, Zone.LIBRARY);
                     }
                     gameLogService.append(gameData, graveyardLog.build());
                 }
@@ -893,6 +893,7 @@ public class LibraryChoiceHandlerService {
             graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
         } else if (destination == LibrarySearchDestination.REVEAL_ONLY) {
             deck.add(chosenCard);
+            graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
         } else if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -1602,7 +1603,7 @@ public class LibraryChoiceHandlerService {
         // Handle remaining cards based on destination
         if (libraryRevealChoice.remainingToGraveyard()) {
             for (Card card : remainingCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
 
             if (selectedCards.isEmpty()) {
@@ -1724,7 +1725,7 @@ public class LibraryChoiceHandlerService {
         // Handle remaining cards
         if (remainingToGraveyard) {
             for (Card card : remainingCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
             log.info("Game {} - {} puts {} card(s) to hand, {} to graveyard", gameData.id, playerName, selectedCards.size(), remainingCards.size());
 
@@ -1832,7 +1833,7 @@ public class LibraryChoiceHandlerService {
                     controllerName + " puts ", toHand, " into their hand."));
         }
         for (Card card : toGraveyard) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
         if (!toGraveyard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text("The rest are put into " + controllerName

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -63,7 +64,7 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
 
         if (eligibleCards.isEmpty()) {
             for (Card card : revealedCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
             String graveyardLog = playerName + " finds no eligible permanent cards. All revealed cards are put into their graveyard.";
             gameLogService.append(gameData, GameLog.text(graveyardLog));

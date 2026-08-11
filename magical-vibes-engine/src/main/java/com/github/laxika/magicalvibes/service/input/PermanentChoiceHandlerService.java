@@ -61,6 +61,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachAllAurasToAnotherPermanent(gameData, permanentId, attachAll);
         } else if (context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach) {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
+        } else if (context instanceof PermanentChoiceContext.AttachSourceAuraToChosenPermanent attachAura) {
+            battlefieldHandler.handleAttachSourceAuraToChosenPermanent(gameData, permanentId, attachAura);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
             battlefieldHandler.handleLegendRule(gameData, playerId, permanentId, legendRule);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp) {

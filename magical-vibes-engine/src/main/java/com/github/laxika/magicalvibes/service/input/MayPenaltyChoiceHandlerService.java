@@ -1417,6 +1417,27 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
         }
 
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost graveyardCost) {
+            List<Integer> matchingIndices = graveyardTopExileSupport.matchingIndices(
+                    gameData, sourceControllerId, graveyardCost);
+            if (matchingIndices.size() == 1
+                    && graveyardTopExileSupport.exileSoleMatching(gameData, sourceControllerId, graveyardCost)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (matchingIndices.size() > 1) {
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                        .builder(sourceControllerId, matchingIndices, GraveyardChoiceDestination.EXILE,
+                                "Choose a card to exile from your graveyard.")
+                        .mandatory(true)
+                        .build());
+                return;
+            }
+            // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost tokenCost) {
             // Nothing can make this cost unpayable, so accepting always pays it in full.
             UUID opponentId = gameQueryService.getOpponentId(gameData, sourceControllerId);
@@ -1446,6 +1467,18 @@ public class MayPenaltyChoiceHandlerService {
             forcedCostOrElseEffectHandler.payCounterOnSourceCost(gameData, counterEntry, counterCost);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost counterCost) {
+            StackEntry counterEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                    ability.sourceCard().getName() + "'s ability", List.of(effect),
+                    ability.targetCardId(), ability.sourcePermanentId());
+            if (forcedCostOrElseEffectHandler.payCounterFromSourceCost(gameData, counterEntry, counterCost)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but the source or required counters are gone — fall through to the penalty.
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {

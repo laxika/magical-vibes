@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "214")
+@CardRegistration(set = "ODY", collectorNumber = "198")
 public class KamahlPitFighter extends Card {
 
     public KamahlPitFighter() {

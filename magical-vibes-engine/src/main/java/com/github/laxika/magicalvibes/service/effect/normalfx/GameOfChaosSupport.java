@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class GameOfChaosSupport {
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final CoinFlipService coinFlipService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Performs one Game of Chaos coin flip from the spell controller's perspective at the given life
@@ -41,6 +43,10 @@ public class GameOfChaosSupport {
         gameLogService.append(gameData, GameLog.text(sourceName + ": " + controllerName
                 + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")"
                 + coinFlipService.replacementDetails(result) + "."));
+
+        if (controllerWins) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        }
 
         UUID decidingPlayer;
         if (controllerWins) {

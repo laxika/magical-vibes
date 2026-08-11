@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -28,19 +31,29 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardForSameNameCardsInGraveyardsOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
@@ -72,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCo
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -92,6 +106,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 
 import com.github.laxika.magicalvibes.model.GameLog;
 /**
@@ -149,6 +164,117 @@ public class SpellCastTriggerCollectorService {
         );
         triggerEntry.setNonTargeting(true);
         match.gameData().stack.add(triggerEntry);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCreateSquirrelTokensForSameNameCardsOnSpellCast(
+            TriggerMatchContext match, CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        CreateTokenEffect token = new CreateTokenEffect(
+                new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER),
+                "Squirrel", 1, 1, CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CreateTokenForTargetPlayerEffect(token))),
+                sc.castingPlayerId(),
+                match.permanent().getId()
+        );
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleDamageForSameNameCardsOnSpellCast(
+            TriggerMatchContext match, DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        CardEffect damage = new DealDamageToPlayersEffect(
+                new Scaled(new CardsInGraveyard(
+                        new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER), 2),
+                DamageRecipient.TRIGGERING_PLAYER);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(damage)),
+                sc.castingPlayerId(),
+                match.permanent().getId()
+        );
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleGainLifeForSameNameCardsOnSpellCast(
+            TriggerMatchContext match, GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        CardEffect lifeGain = new GainLifeEffect(
+                new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER),
+                GainLifeRecipient.TRIGGERING_PLAYER);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(lifeGain)),
+                sc.castingPlayerId(),
+                match.permanent().getId()
+        );
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCounterUnlessPaysForSameNameCardsOnSpellCast(
+            TriggerMatchContext match,
+            CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        CounterUnlessPaysEffect counterUnlessPays = new CounterUnlessPaysEffect(
+                new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER));
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(counterUnlessPays)),
+                sc.spellCard().getId(),
+                Zone.STACK));
+        return true;
+    }
+
+    @CollectsTrigger(value = DiscardForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleDiscardForSameNameCardsOnSpellCast(
+            TriggerMatchContext match, DiscardForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        DiscardEffect discard = new DiscardEffect(
+                new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER),
+                DiscardRecipient.TARGET_PLAYER);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(discard)));
+        entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -1153,6 +1279,10 @@ public class SpellCastTriggerCollectorService {
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                             match.permanent().getCard().getName() + "'s ability", resolved, selfTargetId,
                             match.permanent().getId());
+                // Self-bound non-targeting triggers may also need the caster after the triggering
+                // spell leaves the stack, so retain that contextual player separately from the source.
+                entry.setTargetId(castingPlayerId);
+                entry.setNonTargeting(true);
             } else {
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),

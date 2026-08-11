@@ -109,11 +109,20 @@ public class CastingCostService {
      * {@link #computeTargetBasedCostReduction}).
      */
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
-        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId));
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
-        CostModificationContext context = new CostModificationContext(gameData, playerId, card);
+        return getCastCostModifier(gameData, playerId, card, snapshot, false);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, boolean flashbackCost) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), flashbackCost);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, boolean flashbackCost) {
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
         int delta = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);

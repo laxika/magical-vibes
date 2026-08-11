@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesToHandThenRestEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -113,7 +114,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
             return;
         }
         for (Card card : cards) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
         GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
         appendCardList(builder, cards);

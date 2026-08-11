@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
@@ -96,7 +98,8 @@ public class AdditionalSpellCostService {
             DiscardXCardsCost.class,
             EscalateDiscardCost.class,
             EscalateManaCost.class,
-            RepeatableAdditionalManaCost.class);
+            RepeatableAdditionalManaCost.class,
+            ChooseXValueCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -131,7 +134,8 @@ public class AdditionalSpellCostService {
             DiscardXCardsCost discardXCardsCost,
             EscalateDiscardCost escalateDiscardCost,
             EscalateManaCost escalateManaCost,
-            RepeatableAdditionalManaCost repeatableManaCost
+            RepeatableAdditionalManaCost repeatableManaCost,
+            ChooseXValueCost chooseXValueCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -147,7 +151,7 @@ public class AdditionalSpellCostService {
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
-                    || repeatableManaCost != null;
+                    || repeatableManaCost != null || chooseXValueCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -232,12 +236,13 @@ public class AdditionalSpellCostService {
         EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
         EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
         RepeatableAdditionalManaCost repeatableManaCost = removeFirst(effects, RepeatableAdditionalManaCost.class);
+        ChooseXValueCost chooseXValueCost = removeFirst(effects, ChooseXValueCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 putCounterCost, payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
                 discardCost, discardRandomCost, discardOrPay,
-                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost);
+                discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost, chooseXValueCost);
     }
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
@@ -328,6 +333,8 @@ public class AdditionalSpellCostService {
                 }
                 // Paying X life is always payable — X may be announced as 0.
                 case PayXLifeCost ignored -> { }
+                // Choosing X consumes no resource and is always satisfiable within its declared range.
+                case ChooseXValueCost ignored -> { }
                 // A fixed life payment is only legal while the life total covers it (CR 119.4).
                 case PayLifeCost cost -> {
                     if (!lifeAndSacAllowed) return false;
@@ -401,6 +408,15 @@ public class AdditionalSpellCostService {
      */
     public void validateAll(GameData gameData, Player player, Card card,
                             ExtractedCosts costs, CostSelection selection) {
+        validateAll(gameData, player, card, costs, selection, null);
+    }
+
+    /**
+     * Validates additional costs while retaining the announced X value for costs whose amount
+     * must match the spell's mana-cost X.
+     */
+    public void validateAll(GameData gameData, Player player, Card card,
+                            ExtractedCosts costs, CostSelection selection, Integer announcedXValue) {
         if (costs.payLifeCost() != null) {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
         }
@@ -472,7 +488,7 @@ public class AdditionalSpellCostService {
         }
         if (costs.exileXCardsCost() != null) {
             validateExileXCardsFromGraveyardCost(gameData, player, card, costs.exileXCardsCost(),
-                    selection.exileGraveyardCardIndices());
+                    selection.exileGraveyardCardIndices(), announcedXValue);
         }
         if (costs.exileNCardsCost() != null) {
             validateExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(),
@@ -491,6 +507,17 @@ public class AdditionalSpellCostService {
         }
         if (costs.escalateManaCost() != null) {
             validateEscalateManaCost(card, costs.escalateManaCost(), selection.escalateModeCount());
+        }
+        if (costs.chooseXValueCost() != null) {
+            validateChooseXValueCost(card, costs.chooseXValueCost(), announcedXValue != null ? announcedXValue : 0);
+        }
+    }
+
+    /** Validates the caster's chosen X against a range declared by an additional cast cost. */
+    public void validateChooseXValueCost(Card card, ChooseXValueCost cost, int chosenXValue) {
+        if (chosenXValue < cost.minValue() || chosenXValue > cost.maxValue()) {
+            throw new IllegalStateException("X must be between " + cost.minValue() + " and "
+                    + cost.maxValue() + " for " + card.getName());
         }
     }
 
@@ -874,9 +901,21 @@ public class AdditionalSpellCostService {
     /** Validates the "exile X cards from your graveyard" cost without mutating anything. */
     public void validateExileXCardsFromGraveyardCost(GameData gameData, Player player, Card card,
                                                      ExileXCardsFromGraveyardCost cost, List<Integer> exileGraveyardCardIndices) {
+        validateExileXCardsFromGraveyardCost(gameData, player, card, cost, exileGraveyardCardIndices, null);
+    }
+
+    private void validateExileXCardsFromGraveyardCost(GameData gameData, Player player, Card card,
+                                                      ExileXCardsFromGraveyardCost cost,
+                                                      List<Integer> exileGraveyardCardIndices,
+                                                      Integer announcedXValue) {
         List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
         if (exileGraveyardCardIndices == null) {
             throw new IllegalStateException("Must specify cards to exile from your graveyard to cast " + card.getName());
+        }
+        if (announcedXValue != null && card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                && exileGraveyardCardIndices.size() != announcedXValue) {
+            throw new IllegalStateException("Must exile exactly " + announcedXValue
+                    + " cards from your graveyard to cast " + card.getName());
         }
         if (graveyard == null && !exileGraveyardCardIndices.isEmpty()) {
             throw new IllegalStateException("No cards in graveyard to exile");
@@ -956,7 +995,7 @@ public class AdditionalSpellCostService {
     /** Validates a random-discard additional cast cost without mutating the hand. */
     public void validateRandomDiscardCost(GameData gameData, Player player, Card card) {
         List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || hand.isEmpty()) {
+        if (hand == null || hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) {
             throw new IllegalStateException("Must discard a card at random to cast " + card.getName());
         }
     }

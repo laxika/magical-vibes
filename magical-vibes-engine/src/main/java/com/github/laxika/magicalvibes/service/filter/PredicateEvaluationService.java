@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -68,6 +69,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceContro
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
@@ -300,6 +302,14 @@ public class PredicateEvaluationService {
                     card.getPower() != null && card.getPower() >= p.minPower();
             case CardPowerAtMostPredicate p ->
                     card.getPower() != null && card.getPower() <= p.maxPower();
+            case CardSharesCardTypeWithImprintedCardPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield true;
+                }
+                Card imprintedCard = gameData.imprintedCards.get(sourceCardId);
+                yield imprintedCard != null && java.util.Arrays.stream(CardType.values())
+                        .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
+            }
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
             case CardSharesNameWithAPermanentPredicate ignored ->
@@ -1018,6 +1028,9 @@ public class PredicateEvaluationService {
                 }
                 yield permanent.getCounterCount(hasCountersPredicate.counterType()) > 0;
             }
+            case PermanentHasAtLeastCountersPredicate atLeastCountersPredicate ->
+                    permanent.getCounterCount(atLeastCountersPredicate.counterType())
+                            >= atLeastCountersPredicate.minimum();
             case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
@@ -1162,6 +1175,7 @@ public class PredicateEvaluationService {
             case PermanentColorInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);

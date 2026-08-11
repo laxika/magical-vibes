@@ -144,6 +144,7 @@ public sealed interface Condition permits
         SpellXAtLeast,
         TargetPermanentManaValueEqualsControllerUnspentMana,
         TargetPermanentMatches,
+        TargetToughnessAtMostControllerGraveyardCount,
         TargetPlayerHandEmpty,
         TargetSpellCanBeCountered,
         TargetSpellMatches,

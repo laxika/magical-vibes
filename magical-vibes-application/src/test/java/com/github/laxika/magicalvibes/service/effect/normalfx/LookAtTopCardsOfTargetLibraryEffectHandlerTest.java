@@ -217,6 +217,32 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     }
 
     @Nested
+    class RevealAndPutOneIntoGraveyard {
+
+        @Test
+        @DisplayName("Reveals all looked-at cards before opening the graveyard choice")
+        void revealsCardsToAllPlayers() {
+            stubCardViewFactory();
+            Card first = createCard("Grizzly Bears");
+            Card second = createCard("Llanowar Elves");
+            gd.playerDecks.get(player2Id).add(first);
+            gd.playerDecks.get(player2Id).add(second);
+
+            LookAtTopCardsOfTargetLibraryEffect effect =
+                    new LookAtTopCardsOfTargetLibraryEffect(2,
+                            TargetLibraryAction.REVEAL_AND_PUT_ONE_INTO_GRAVEYARD);
+            handler.resolve(gd, entryTargeting("Balshan Beguiler", effect), effect);
+
+            verify(cardRevealService).revealToAllPlayers(
+                    gd, player2Id, GameEventFact.RevealZone.LIBRARY, List.of(first, second));
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().reveals()).isTrue();
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.GRAVEYARD);
+        }
+    }
+
+    @Nested
     class KeepOneOnTopRestToGraveyard {
 
         @Test

@@ -11,5 +11,7 @@ public enum GainLifeRecipient {
      * is two-player, so the opponent is derived rather than chosen, leaving the entry's target slot
      * free — the same approach {@link TargetOpponentMayDrawCardEffect} takes.
      */
-    OPPONENT
+    OPPONENT,
+    /** The player whose action caused the trigger ("that player"; Aven Shrine). */
+    TRIGGERING_PLAYER
 }

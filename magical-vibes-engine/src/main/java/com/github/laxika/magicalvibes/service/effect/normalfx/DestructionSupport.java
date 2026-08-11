@@ -205,7 +205,7 @@ public class DestructionSupport {
         try {
             beginSimultaneousCreatureDeaths(gameData, actuallyDying);
             for (Permanent perm : actuallyDying) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                permanentRemovalService.destroyPermanentToGraveyard(gameData, perm);
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }

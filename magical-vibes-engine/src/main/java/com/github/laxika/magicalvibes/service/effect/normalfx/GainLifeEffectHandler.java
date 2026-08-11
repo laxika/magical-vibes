@@ -62,6 +62,15 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.recipient() == GainLifeRecipient.TRIGGERING_PLAYER) {
+            UUID triggeringPlayerId = entry.getTargetId();
+            if (triggeringPlayerId != null && gameData.playerIds.contains(triggeringPlayerId)) {
+                lifeSupport.applyGainLife(gameData, triggeringPlayerId, amount, null,
+                        entry.getCard(), entry.getEntryType());
+            }
+            return;
+        }
+
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount, null,
                 entry.getCard(), entry.getEntryType());
     }

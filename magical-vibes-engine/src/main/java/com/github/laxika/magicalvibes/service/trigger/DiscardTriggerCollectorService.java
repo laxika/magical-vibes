@@ -51,6 +51,7 @@ public class DiscardTriggerCollectorService {
     private final TriggerCollectionService triggerCollectionService;
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));

@@ -24,6 +24,7 @@ import java.util.UUID;
  *                                   prevention, so it applies even while damage can't be prevented
  * @param lifeGainPlayerId           player who gains life equal to the prevented damage; null when
  *                                   the shield has no life-gain rider
+ * @param combatOnly                 whether this shield only applies to combat damage
  */
 public record SourceNextDamageToAnyTargetShield(
         UUID sourceId,
@@ -32,7 +33,15 @@ public record SourceNextDamageToAnyTargetShield(
         UUID passageControllerId,
         UUID recipientId,
         int damageMultiplier,
-        UUID lifeGainPlayerId) {
+        UUID lifeGainPlayerId,
+        boolean combatOnly) {
+
+    public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,
+                                             UUID passageControllerId, UUID recipientId, int damageMultiplier,
+                                             UUID lifeGainPlayerId) {
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId,
+                damageMultiplier, lifeGainPlayerId, false);
+    }
 
     /** Sanctum Guardian / Circle of Despair: prevention only, no rider. */
     public SourceNextDamageToAnyTargetShield(UUID sourceId) {
@@ -58,5 +67,15 @@ public record SourceNextDamageToAnyTargetShield(
     /** Desperate Gambit's won flip: the next damage event from this source is doubled, not prevented. */
     public static SourceNextDamageToAnyTargetShield doubling(UUID sourceId) {
         return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2, null);
+    }
+
+    /** Impulsive Maneuvers's won flip: the next combat damage event from this source is doubled. */
+    public static SourceNextDamageToAnyTargetShield combatDoubling(UUID sourceId) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 2, null, true);
+    }
+
+    /** Impulsive Maneuvers's lost flip: the next combat damage event from this source is prevented. */
+    public static SourceNextDamageToAnyTargetShield combatPrevention(UUID sourceId) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, null, true);
     }
 }

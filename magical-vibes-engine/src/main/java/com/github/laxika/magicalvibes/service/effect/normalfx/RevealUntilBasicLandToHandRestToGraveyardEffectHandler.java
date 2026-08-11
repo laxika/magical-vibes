@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilBasicLandToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -71,7 +72,7 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
         }
 
         for (Card card : rest) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
 
         log.info("Game {} - {} resolving {} — basicLand={}, {} cards to graveyard",

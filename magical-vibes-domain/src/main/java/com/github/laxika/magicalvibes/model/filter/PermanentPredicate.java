@@ -29,6 +29,7 @@ public sealed interface PermanentPredicate permits
         PermanentDealtDamageToAnythingThisTurnPredicate,
         PermanentDealtDamageToSourceControllerThisTurnPredicate,
         PermanentHasAnySubtypePredicate,
+        PermanentHasAtLeastCountersPredicate,
         PermanentHasCountersPredicate,
         PermanentHasCumulativeUpkeepPredicate,
         PermanentHasGreatestManaValueAmongAllCreaturesPredicate,

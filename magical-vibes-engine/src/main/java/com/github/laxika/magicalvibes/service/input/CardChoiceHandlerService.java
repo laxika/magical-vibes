@@ -98,6 +98,7 @@ public class CardChoiceHandlerService {
         int faceDownPower = 0;
         int faceDownToughness = 0;
         Set<CardType> faceDownCardTypes = Set.of();
+        UUID returnExiledSourceCardId = null;
         CardPredicate drawAndRepeatPredicate = null;
         String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
@@ -116,6 +117,7 @@ public class CardChoiceHandlerService {
             sacrificeUnlessPayGenericReduction = hc.sacrificeUnlessPayGenericReduction();
             drawAndRepeat = hc.drawAndRepeat();
             putAnyNumber = hc.putAnyNumber();
+            returnExiledSourceCardId = hc.returnExiledSourceCardId();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
             faceDown = hc.faceDown();
@@ -175,7 +177,8 @@ public class CardChoiceHandlerService {
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
                         sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
-                        faceDown, faceDownPower, faceDownToughness, faceDownCardTypes);
+                        faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                        returnExiledSourceCardId);
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
                 if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
                         && !gameData.interaction.isAwaitingInput()) {
@@ -1099,7 +1102,9 @@ public class CardChoiceHandlerService {
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                              UUID attachEquipmentCardId, boolean enterAttacking,
                                              Integer sacrificeUnlessPayGenericReduction, boolean faceDown,
-                                             int faceDownPower, int faceDownToughness, Set<CardType> faceDownCardTypes) {
+                                             int faceDownPower, int faceDownToughness,
+                                             Set<CardType> faceDownCardTypes,
+                                             UUID returnExiledSourceCardId) {
         Permanent permanent = new Permanent(card);
         if (faceDown) {
             permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
@@ -1139,7 +1144,8 @@ public class CardChoiceHandlerService {
         }
 
         if (sacrificeAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId));
         }
 
         // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice

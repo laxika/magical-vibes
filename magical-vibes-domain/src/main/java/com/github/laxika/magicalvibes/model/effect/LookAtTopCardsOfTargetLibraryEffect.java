@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param action what the controller does with the looked-at cards
  */
 public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action)
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public LookAtTopCardsOfTargetLibraryEffect(int count, TargetLibraryAction action) {
         this(new Fixed(count), action);
@@ -33,9 +33,15 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
     public TargetSpec targetSpec() {
         return switch (action) {
             case MAY_SHUFFLE -> TargetSpec.benign(TargetPredicates.player());
-            case KEEP_ONE_ON_TOP_EXILE_REST, KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD, MAY_PUT_TOP_ON_BOTTOM ->
+            case PUT_ONE_INTO_GRAVEYARD, REVEAL_AND_PUT_ONE_INTO_GRAVEYARD,
+                    KEEP_ONE_ON_TOP_EXILE_REST, KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD, MAY_PUT_TOP_ON_BOTTOM ->
                     TargetSpec.harmful(TargetPredicates.player());
-            default -> CardEffect.super.targetSpec();
+            default -> CombatDamageTriggerContextEffect.super.targetSpec();
         };
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -150,6 +150,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
@@ -470,6 +471,8 @@ public class ConditionEvaluationService {
                 yield target != null && manaPool != null
                         && target.getCard().getManaValue() == manaPool.getTotalAllMana();
             }
+            case TargetToughnessAtMostControllerGraveyardCount ignored ->
+                    targetToughnessAtMostControllerGraveyardCount(gameData, ctx);
             case TargetSpellCanBeCountered ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
@@ -1059,6 +1062,15 @@ public class ConditionEvaluationService {
             if (matches) count++;
         }
         return count;
+    }
+
+    private boolean targetToughnessAtMostControllerGraveyardCount(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) return false;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target == null) return false;
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        int graveyardSize = graveyard == null ? 0 : (int) graveyard.stream().filter(card -> !card.isToken()).count();
+        return gameQueryService.getEffectiveToughness(gameData, target) <= graveyardSize;
     }
 
     /**

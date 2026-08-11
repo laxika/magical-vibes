@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWi
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.LastMilledCardColorSymbols;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
@@ -283,12 +285,18 @@ public class AmountEvaluationService {
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToOpponentsThisTurn ignored ->
                     damageDealtToOpponentsThisTurn(gameData, ctx);
+            case DamageDealtToTargetPermanentThisTurn ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.damageDealtToPermanentsThisTurn
+                                    .getOrDefault(ctx.targetPermanentId(), 0);
             case TotalPowerOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalToughnessOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
             case LastDiscardedCardManaValue ignored ->
                     gameData.lastDiscardedCardManaValue;
+            case LastMilledCardColorSymbols a ->
+                    gameData.lastMilledCardColorSymbols.getOrDefault(a.color(), 0);
             case ImprintedCardManaValue ignored ->
                     imprintedCardManaValue(gameData, ctx);
             case ImprintedCreaturePower ignored ->
@@ -606,6 +614,8 @@ public class AmountEvaluationService {
             if (graveyard == null) continue;
             for (Card card : graveyard) {
                 if (card.isToken()) continue;
+                if (count.excludeSourceCard() && ctx.sourceCard() != null
+                        && ctx.sourceCard().getId().equals(card.getId())) continue;
                 if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
                     matches++;
                 }

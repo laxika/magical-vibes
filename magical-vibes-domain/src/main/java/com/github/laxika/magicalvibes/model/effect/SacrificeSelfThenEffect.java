@@ -37,10 +37,12 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect)
         return this;
     }
 
-    /** Targeting is the payload's — the sacrifice half never targets. */
+    /** The payload supplies chosen targets; the wrapper also needs its source bound for sacrifice. */
     @Override
     public TargetSpec targetSpec() {
-        return thenEffect.targetSpec();
+        TargetSpec payload = thenEffect.targetSpec();
+        return new TargetSpec(payload.declaredTarget(), payload.harmful(), payload.predicate(), true,
+                payload.playerTargetCount());
     }
 
     /**

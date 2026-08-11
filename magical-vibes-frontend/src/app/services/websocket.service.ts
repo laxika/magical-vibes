@@ -162,6 +162,9 @@ export interface Card {
   colorIdentity?: string[];
   needsTarget: boolean;
   needsSpellTarget: boolean;
+  requiresXValue?: boolean;
+  xValueMin?: number;
+  xValueMax?: number;
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   hasConvoke: boolean;

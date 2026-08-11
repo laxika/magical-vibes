@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "67")
+@CardRegistration(set = "ODY", collectorNumber = "62")
 public class AuraGraft extends Card {
 
     public AuraGraft() {

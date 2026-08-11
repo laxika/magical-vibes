@@ -922,7 +922,7 @@ public class CombatDamageService {
                 // it as marked damage plus the CR 704.5h deathtouch memory — the state-based
                 // action check at the end of the damage step performs any destruction.
                 redirectTarget.addMarkedDamage(null, state.damageRedirectedToGuard);
-                gameData.permanentsDealtDamageThisTurn.add(redirectTarget.getId());
+                gameData.recordDamageToPermanent(redirectTarget.getId(), state.damageRedirectedToGuard);
                 if (state.deathtouchDamageRedirectedToGuard) {
                     redirectTarget.setDamagedByDeathtouch(true);
                 }
@@ -1013,7 +1013,8 @@ public class CombatDamageService {
             UUID controllerId = state.combatDamageDealerControllers.get(source);
             if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
-            triggerCollectionService.queueSourceDealsDamageReflections(gameData, source.getCard(), controllerId, damageDealt);
+            triggerCollectionService.queueSourceDealsDamageReflections(
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealt);
         }
     }
 
@@ -1990,7 +1991,7 @@ public class CombatDamageService {
             processPendingRedirectDamage(gameData);
             if (dmg > 0) {
                 recordCombatMarkedDamage(perm, dmg, damageTakenBySource.getOrDefault(idx, Map.of()));
-                gameData.permanentsDealtDamageThisTurn.add(perm.getId());
+                gameData.recordDamageToPermanent(perm.getId(), dmg);
                 // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
                 // not when a prevention shield consumed the whole step's damage.
                 if (deathtouchIndices.contains(idx)) {
@@ -2075,6 +2076,14 @@ public class CombatDamageService {
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
+        state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        processPendingRedirectDamage(gameData);
+        boolean lichReplaced = damageSupport.applyNefariousLichReplacement(gameData, defenderId,
+                state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0;
+        if (lichReplaced) {
+            state.damageToDefendingPlayer = 0;
+            state.poisonDamageToDefendingPlayer = 0;
+        } else {
         // Immortal Coil: prevent all combat damage to its controller and exile a card from their
         // graveyard for each 1 damage prevented (before any infect conversion, so it never becomes poison).
         // Glacial Chasm: prevent all combat damage that would be dealt to its controller.
@@ -2119,7 +2128,6 @@ public class CombatDamageService {
             }
         }
 
-        state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         // Glacial Chasm also prevents infect combat damage (still damage, so no poison counters).
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
@@ -2137,6 +2145,7 @@ public class CombatDamageService {
             gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
             String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
             gameLogService.append(gameData, GameLog.text(logEntry));
+        }
         }
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
@@ -2219,7 +2228,7 @@ public class CombatDamageService {
                     // Record only — the state-based action check (CR 704.5g) performs any
                     // destruction once the current damage event finishes.
                     targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
-                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
+                    gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage);
                 }
             }
         }
@@ -2289,7 +2298,7 @@ public class CombatDamageService {
             damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), pw.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
-            damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId());
+            damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
             if (damagePreventionService.isColorDamagePreventedForTarget(
                     gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk))) {
@@ -2382,7 +2391,7 @@ public class CombatDamageService {
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
-                damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId);
+                damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId, true);
                 processEyeForAnEyeReflections(gameData);
                 // Battletide Alchemist: the defending player prevents up to (Clerics they control) of this attacker's damage.
                 int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
@@ -2397,13 +2406,15 @@ public class CombatDamageService {
                         defenderId,
                         damage,
                         true,
-                        gameQueryService.isArtifact(gameData, atk));
+                        gameQueryService.isArtifact(gameData, atk),
+                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
                 if (fixedPrevented > 0) {
                     damage -= fixedPrevented;
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage);
+                damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -2510,7 +2521,7 @@ public class CombatDamageService {
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
-        damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage, target.getId());
+        damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage, target.getId(), true);
         processEyeForAnEyeReflections(gameData);
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
         damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(

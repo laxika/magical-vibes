@@ -43,6 +43,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,18 +62,30 @@ public class ValidTargetService {
     private final TargetLegalityService targetLegalityService;
     private final TargetValidationService targetValidationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Autowired
     public ValidTargetService(GameQueryService gameQueryService,
                               PredicateEvaluationService predicateEvaluationService,
                               TargetLegalityService targetLegalityService,
                               TargetValidationService targetValidationService,
-                              TargetPredicateEvaluationService targetPredicateEvaluationService) {
+                              TargetPredicateEvaluationService targetPredicateEvaluationService,
+                              AmountEvaluationService amountEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.targetLegalityService = targetLegalityService;
         this.targetValidationService = targetValidationService;
         this.targetPredicateEvaluationService = targetPredicateEvaluationService;
+        this.amountEvaluationService = amountEvaluationService;
+    }
+
+    public ValidTargetService(GameQueryService gameQueryService,
+                              PredicateEvaluationService predicateEvaluationService,
+                              TargetLegalityService targetLegalityService,
+                              TargetValidationService targetValidationService,
+                              TargetPredicateEvaluationService targetPredicateEvaluationService) {
+        this(gameQueryService, predicateEvaluationService, targetLegalityService, targetValidationService,
+                targetPredicateEvaluationService, new AmountEvaluationService(predicateEvaluationService, gameQueryService));
     }
 
     /**
@@ -95,6 +109,7 @@ public class ValidTargetService {
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
         boolean isMultiTarget = card.getMaxTargets() > 1;
+        int effectiveXValue = resolveCastTimeXValue(gameData, card, controllerId, xValue);
 
         // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
         // mode selection; resolve to the chosen mode's effects so targeting reflects that mode.
@@ -214,11 +229,23 @@ public class ValidTargetService {
         int responseMinTargets = card.getMinTargets();
         int responseMaxTargets = card.getMaxTargets();
         if (card.hasXScaledTargets()) {
-            int effectiveX = xValue != null ? xValue : 0;
-            responseMinTargets = card.getEffectiveMinTargets(effectiveX);
-            responseMaxTargets = card.getEffectiveMaxTargets(effectiveX);
+            responseMinTargets = card.getEffectiveMinTargets(effectiveXValue);
+            responseMaxTargets = card.getEffectiveMaxTargets(effectiveXValue);
         }
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
+        int announced = announcedXValue != null ? announcedXValue : 0;
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::cast)
+                .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect::castTimeXValue)
+                .filter(amount -> amount != null)
+                .findFirst()
+                .map(amount -> amountEvaluationService.evaluate(gameData, amount,
+                        AmountContext.forCasting(controllerId, announced, card)))
+                .orElse(announced);
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */

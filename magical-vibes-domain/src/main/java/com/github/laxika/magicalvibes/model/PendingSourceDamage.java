@@ -13,11 +13,13 @@ public final class PendingSourceDamage {
 
     private final Card sourceCard;
     private final UUID controllerId;
+    private final UUID sourcePermanentId;
     private int amount;
 
-    public PendingSourceDamage(Card sourceCard, UUID controllerId, int amount) {
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
+        this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
     }
 
@@ -27,6 +29,10 @@ public final class PendingSourceDamage {
 
     public UUID getControllerId() {
         return controllerId;
+    }
+
+    public UUID getSourcePermanentId() {
+        return sourcePermanentId;
     }
 
     public int getAmount() {

@@ -19,6 +19,11 @@ public sealed interface MultiPermanentChoiceContext {
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }
 
+    /** Deal damage to a creature the damaged player controls (combat damage trigger). */
+    record DealDamageToDamagedPlayerControls(StackEntry damageEntry, int damage)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */
     record DestroyDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
@@ -230,6 +235,16 @@ public sealed interface MultiPermanentChoiceContext {
      * attack, and each chosen creature that didn't attack is destroyed at that turn's end step.
      */
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
+    record CulturalExchange(Card sourceCard, UUID chooserId, UUID firstPlayerId, UUID secondPlayerId,
+                            List<UUID> firstChosenIds, boolean firstSelection) implements MultiPermanentChoiceContext {
+
+        public CulturalExchange {
+            firstChosenIds = List.copyOf(firstChosenIds);
+        }
+
     }
 
     /**

@@ -500,6 +500,15 @@ export class TargetingChoiceService {
       return;
     }
 
+    if (card.requiresXValue === true) {
+      this.choosingXValue = true;
+      this.xValueCardIndex = index;
+      this.xValueCardName = card.name;
+      this.xValueInput = card.xValueMin ?? 0;
+      this.xValueMaximum = card.xValueMax ?? 0;
+      return;
+    }
+
     const hasXCost = card.manaCost?.includes('{X}') ?? false;
 
     if (hasXCost) {
@@ -892,6 +901,16 @@ export class TargetingChoiceService {
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
       this.modeSelectedIndices = [];
+      return;
+    }
+
+    if (card.requiresXValue === true) {
+      this.pendingZoneCard = card;
+      this.choosingXValue = true;
+      this.xValueCardIndex = 0;
+      this.xValueCardName = card.name;
+      this.xValueInput = card.xValueMin ?? 0;
+      this.xValueMaximum = card.xValueMax ?? 0;
       return;
     }
 

@@ -68,6 +68,21 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Test
+    @DisplayName("TRIGGERING_PLAYER payer prompts the player whose action caused the trigger")
+    void triggeringPlayerPayerPromptsTriggeringPlayer() {
+        Card card = createCard("Unifying Theory");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{2}", wrapped, "Pay {2}?",
+                MayPayPayer.TRIGGERING_PLAYER);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), player2Id);
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
     @DisplayName("An additional life cost is carried onto the pending may ability")
     void additionalLifeCostIsCarried() {
         Card card = createCard("Purgatory");

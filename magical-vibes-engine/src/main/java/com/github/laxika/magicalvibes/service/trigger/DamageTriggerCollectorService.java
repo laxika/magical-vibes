@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamageSourcePermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
@@ -449,6 +450,37 @@ public class DamageTriggerCollectorService {
         ));
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE life-loss trigger fires",
+                gameData.id, aura.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    private boolean handleEnchantedCreatureDealtDamageCreateTokens(TriggerMatchContext match,
+            CreateTokenEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent aura = match.permanent();
+        UUID enchantedCreatureControllerId = gameQueryService.findPermanentController(
+                gameData, dc.damagedCreature().getId());
+        if (enchantedCreatureControllerId == null) return false;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                aura.getCard(),
+                enchantedCreatureControllerId,
+                aura.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                aura.getId()
+        );
+        entry.setEventValue(dc.damageDealt());
+        gameData.stack.add(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
+        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE token trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
     }

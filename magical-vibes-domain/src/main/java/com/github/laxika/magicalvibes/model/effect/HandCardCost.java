@@ -67,6 +67,15 @@ public interface HandCardCost extends CostEffect {
 
     /**
      * The verb used in prompts and the game log ("discard" / "exile" / "put on top of your library").
+     * When true, the card paid for this cost is remembered on the source card for the ability's
+     * resolution (for example, to compare its card types with a target card).
+     */
+    default boolean imprintOnSource() {
+        return false;
+    }
+
+    /**
+     * The verb used in prompts and the game log ("discard" / "exile").
      */
     default String payVerb() {
         if (exilesPaidCards()) {

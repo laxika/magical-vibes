@@ -39,7 +39,7 @@ public class PlayCardRequestDispatchService {
             gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                     listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
                     listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                    request.sacrificePermanentId());
+                    request.sacrificePermanentId(), request.damageAssignments());
             return;
         }
         if (request.fromExileCardId() != null) {

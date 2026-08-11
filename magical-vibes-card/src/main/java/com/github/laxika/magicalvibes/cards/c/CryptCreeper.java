@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "91")
+@CardRegistration(set = "ODY", collectorNumber = "125")
 public class CryptCreeper extends Card {
 
     public CryptCreeper() {

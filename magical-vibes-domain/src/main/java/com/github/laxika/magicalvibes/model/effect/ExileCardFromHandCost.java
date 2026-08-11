@@ -9,9 +9,12 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param predicate optional predicate cards must match (null = any card)
  * @param label     human-readable label for the card quality, used in UI messages (may be null)
- * @param count     number of cards that must be exiled (default 1)
+ * @param count          number of cards that must be exiled (default 1)
+ * @param imprintOnSource when true, remember the exiled card on the source card for the ability's
+ *                        resolution
  */
-public record ExileCardFromHandCost(CardPredicate predicate, String label, int count) implements HandCardCost {
+public record ExileCardFromHandCost(CardPredicate predicate, String label, int count,
+                                    boolean imprintOnSource) implements HandCardCost {
 
     public ExileCardFromHandCost {
         if (count < 1) {
@@ -20,11 +23,15 @@ public record ExileCardFromHandCost(CardPredicate predicate, String label, int c
     }
 
     public ExileCardFromHandCost() {
-        this(null, null, 1);
+        this(null, null, 1, false);
     }
 
     public ExileCardFromHandCost(CardPredicate predicate, String label) {
-        this(predicate, label, 1);
+        this(predicate, label, 1, false);
+    }
+
+    public ExileCardFromHandCost(CardPredicate predicate, String label, int count) {
+        this(predicate, label, count, false);
     }
 
     @Override

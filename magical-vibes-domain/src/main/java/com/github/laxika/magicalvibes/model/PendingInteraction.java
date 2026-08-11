@@ -49,6 +49,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.AlternatingHandExileChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
+        PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -1195,6 +1196,34 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * Select any number of cards from a graveyard as an activated ability cost. The selected count
+     * becomes the ability's X value; the cards are held in this record until the cost is paid.
+     */
+    record ActivatedAbilityGraveyardExileCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                     int abilityIndex, UUID targetId, Zone targetZone,
+                                                     java.util.List<Card> cards, String prompt)
+            implements PendingInteraction {
+
+        public ActivatedAbilityGraveyardExileCostChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, cards.size());
+        }
+    }
+
+    /**
      * Common surface of the six hand-card choice kinds: the deciding player, the selectable hand
      * indices in begin-time order, and the exact begin-time prompt (also re-sent on
      * reconnect). Implemented by the records below so generic consumers (AI heuristics, the
@@ -1220,8 +1249,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
                           String drawAndRepeatLabel, boolean putAnyNumber,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
-                          java.util.Set<CardType> faceDownCardTypes)
+                          java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId)
             implements PendingInteraction, HandChoice {
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                              boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber,
+                              boolean faceDown, int faceDownPower, int faceDownToughness,
+                              java.util.Set<CardType> faceDownCardTypes) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                    attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                    drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
+                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, null);
+        }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -1230,7 +1272,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               String drawAndRepeatLabel, boolean putAnyNumber) {
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
                     enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
-                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of());
+                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of(), null);
+        }
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                              boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber, UUID returnExiledSourceCardId) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                    attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
+                    drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
+                    false, 0, 0, java.util.Set.of(), returnExiledSourceCardId);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {

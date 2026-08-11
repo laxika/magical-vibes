@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -19,11 +20,14 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,6 +51,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    @Lazy
+    private GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -252,7 +259,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         if (matchingCards.isEmpty()) {
             if (toGraveyard) {
                 for (Card card : topCards) {
-                    gameData.playerGraveyards.get(controllerId).add(card);
+                    graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
                 }
                 GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
                 appendCardList(restBuilder, topCards);
@@ -465,7 +472,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (eligibleCards.isEmpty()) {
             for (Card card : topCards) {
-                gameData.playerGraveyards.get(controllerId).add(card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
             GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(restBuilder, topCards);
@@ -483,7 +490,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             List<Card> remainingCards = new ArrayList<>(topCards);
             remainingCards.removeAll(eligibleCards);
             for (Card card : remainingCards) {
-                gameData.playerGraveyards.get(controllerId).add(card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
 
             GameLog.Builder handBuilder = GameLog.builder().text(playerName + " puts ");

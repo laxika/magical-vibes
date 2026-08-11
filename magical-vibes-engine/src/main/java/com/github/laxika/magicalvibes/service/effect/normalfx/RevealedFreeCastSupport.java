@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.MayCastRevealedSpellWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -72,7 +73,7 @@ public class RevealedFreeCastSupport {
         log.text(" into their graveyard.");
 
         for (Card card : new ArrayList<>(heldCards)) {
-            graveyardService.addCardToGraveyard(gameData, ownerId, card);
+            graveyardService.addCardToGraveyard(gameData, ownerId, card, Zone.LIBRARY);
         }
         gameLogService.append(gameData, log.build());
     }

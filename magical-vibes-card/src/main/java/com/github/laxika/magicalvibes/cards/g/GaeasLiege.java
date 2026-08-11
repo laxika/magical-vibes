@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesForestUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,13 +30,13 @@ public class GaeasLiege extends Card {
 
         // Keeps every land recorded by the ability below a Forest for as long as this creature is
         // on the battlefield.
-        addEffect(EffectSlot.STATIC, new TrackedLandsBecomeForestEffect());
+        addEffect(EffectSlot.STATIC, new TrackedLandsBecomeBasicLandTypeEffect(CardSubtype.FOREST));
 
         // {T}: Target land becomes a Forest until this creature leaves the battlefield.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TargetLandBecomesForestUntilSourceLeavesEffect()),
+                List.of(new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.FOREST)),
                 "{T}: Target land becomes a Forest until this creature leaves the battlefield.",
                 TargetFilters.land()));
     }

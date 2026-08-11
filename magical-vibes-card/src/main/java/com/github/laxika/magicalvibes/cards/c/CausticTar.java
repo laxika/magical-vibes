@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "89")
+@CardRegistration(set = "ODY", collectorNumber = "122")
 public class CausticTar extends Card {
 
     public CausticTar() {

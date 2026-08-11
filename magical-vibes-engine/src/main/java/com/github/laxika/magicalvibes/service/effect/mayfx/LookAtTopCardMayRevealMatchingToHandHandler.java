@@ -5,15 +5,19 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect.Stage;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +32,9 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    @Autowired
+    @Lazy
+    private GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -83,7 +90,7 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
         if (effect.stage() == Stage.MAY_GRAVEYARD) {
             if (accepted && deck != null && !deck.isEmpty()) {
                 Card topCard = deck.removeFirst();
-                gameData.playerGraveyards.get(controllerId).add(topCard);
+                graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " puts ")
                         .card(topCard)

@@ -5,14 +5,18 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +28,9 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    @Lazy
+    private GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +84,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
             } else {
                 // No eligible cards — put all into graveyard
                 for (Card card : revealedCards) {
-                    gameData.playerGraveyards.get(controllerId).add(card);
+                    graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
                 }
                 String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
                 gameLogService.append(gameData, GameLog.text(noEligibleLog));

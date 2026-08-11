@@ -25,6 +25,9 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
 
     @Override
     public TargetSpec targetSpec() {
-        return wrapped.targetSpec();
+        TargetSpec wrappedSpec = wrapped.targetSpec();
+        return wrappedSpec != TargetSpec.NONE || elseEffect == null
+                ? wrappedSpec
+                : elseEffect.targetSpec();
     }
 }

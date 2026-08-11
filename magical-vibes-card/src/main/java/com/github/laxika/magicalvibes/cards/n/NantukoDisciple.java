@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "268")
+@CardRegistration(set = "ODY", collectorNumber = "253")
 public class NantukoDisciple extends Card {
 
     public NantukoDisciple() {

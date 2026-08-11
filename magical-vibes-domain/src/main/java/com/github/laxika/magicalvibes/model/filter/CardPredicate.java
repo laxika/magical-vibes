@@ -30,6 +30,7 @@ public sealed interface CardPredicate permits
         CardNotPredicate,
         CardPowerAtLeastPredicate,
         CardPowerAtMostPredicate,
+        CardSharesCardTypeWithImprintedCardPredicate,
         CardSharesNameWithAPermanentPredicate,
         CardSubtypePredicate,
         CardSupertypePredicate,

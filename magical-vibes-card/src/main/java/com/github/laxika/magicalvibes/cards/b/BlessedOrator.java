@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "6")
+@CardRegistration(set = "ODY", collectorNumber = "12")
 public class BlessedOrator extends Card {
 
     public BlessedOrator() {

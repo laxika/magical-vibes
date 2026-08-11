@@ -9,13 +9,17 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -25,6 +29,9 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    @Autowired
+    @Lazy
+    private GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,7 +79,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
             log.info("Game {} - {} puts {} onto the battlefield ({})",
                     gameData.id, playerName, topCard.getName(), sourceName);
         } else {
-            gameData.playerGraveyards.get(controllerId).add(topCard);
+            graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their graveyard (" + sourceName + ").").build());
         }
     }

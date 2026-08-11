@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "9ED", collectorNumber = "128")
 @CardRegistration(set = "8ED", collectorNumber = "132")
+@CardRegistration(set = "ODY", collectorNumber = "133")
 public class Execute extends Card {
 
     public Execute() {

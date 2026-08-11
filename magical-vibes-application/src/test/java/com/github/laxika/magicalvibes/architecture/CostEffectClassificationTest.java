@@ -85,6 +85,7 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
+            "ChooseXValueCost",
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
             "ExileNCardsFromGraveyardCost",

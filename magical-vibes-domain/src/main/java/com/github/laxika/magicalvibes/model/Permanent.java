@@ -372,11 +372,10 @@ public class Permanent {
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent is on the battlefield."
      *  Unlike {@link #untapPreventedByPermanentIds}, the tapped state of the source does not matter. */
     private final Set<UUID> untapPreventedWhileSourceOnBattlefieldIds = new HashSet<>();
-    /** Ids of lands this permanent has turned into a Forest "until this creature leaves the
-     *  battlefield" (Gaea's Liege's {@code {T}} ability). Read by {@code TrackedLandsBecomeForestEffect}
-     *  in layer 4; the grant ends automatically when this permanent leaves (its static effects stop
-     *  being collected). Survives turn resets — not cleared by {@link #resetModifiers()}. */
-    private final Set<UUID> forestedLandIds = new HashSet<>();
+    /** Basic land types applied to lands by this permanent until it leaves the battlefield. The
+     *  layered static effect reads this map, so the grants survive turn resets but end when this
+     *  permanent's static effects stop being collected. */
+    private final Map<UUID, CardSubtype> landTypesUntilSourceLeaves = new HashMap<>();
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
@@ -655,7 +654,7 @@ public class Permanent {
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
-        this.forestedLandIds.addAll(source.forestedLandIds);
+        this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);

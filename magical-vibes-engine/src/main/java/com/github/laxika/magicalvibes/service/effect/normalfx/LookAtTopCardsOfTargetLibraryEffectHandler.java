@@ -46,6 +46,8 @@ import org.springframework.stereotype.Component;
  *       {@link ShuffleLibraryEffect} (Visions; the cards stay on top, no reordering).</li>
  *   <li>{@code PUT_ONE_INTO_GRAVEYARD} — mandatory pick of one card for that player's graveyard,
  *       rest back on top in any order (Cruel Fate, Wu Spy).</li>
+ *   <li>{@code REVEAL_AND_PUT_ONE_INTO_GRAVEYARD} — public reveal followed by the same mandatory
+ *       graveyard pick (Balshan Beguiler).</li>
  *   <li>{@code MAY_PUT_TOP_ON_BOTTOM} — the single top card is shown in a may-ability prompt and,
  *       if accepted, moved to the bottom of that player's library (Coral Fighters).</li>
  *   <li>{@code KEEP_ONE_ON_TOP_EXILE_REST} — the target player picks one card to put back on top of
@@ -109,7 +111,9 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName);
             case PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry, controllerId,
-                    targetPlayerId, deck, actual, controllerName, targetName);
+                    targetPlayerId, deck, actual, controllerName, targetName, false);
+            case REVEAL_AND_PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry,
+                    controllerId, targetPlayerId, deck, actual, controllerName, targetName, true);
             case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, controllerId,
                     targetPlayerId, deck, controllerName, targetName);
             case KEEP_ONE_ON_TOP_EXILE_REST -> resolveKeepOneOnTopExileRest(gameData, entry,
@@ -292,14 +296,30 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     }
 
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,
-            UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
+            UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName,
+            boolean reveal) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
-        gameLogService.append(gameData, GameLog.text(
-                controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
+        if (reveal) {
+            GameLog.Builder revealLog = GameLog.builder().text(targetName + " reveals the top ");
+            revealLog.text(LibraryRevealSupport.pluralCards(actual)).text(" of their library: ");
+            for (int i = 0; i < topCards.size(); i++) {
+                if (i > 0) {
+                    revealLog.text(", ");
+                }
+                revealLog.card(topCards.get(i));
+            }
+            gameLogService.append(gameData, revealLog.text(".").build());
+            cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
+                    GameEventFact.RevealZone.LIBRARY, topCards);
+        } else {
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
+        }
         List<Card> sourceCards = new ArrayList<>(topCards);
         String prompt = "Put one of these cards into that player's graveyard. The rest will be put on top of the library in any order.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
+                        .reveals(reveal)
                         .canFailToFind(false)
                         .targetPlayerId(targetPlayerId)
                         .sourceCards(sourceCards)

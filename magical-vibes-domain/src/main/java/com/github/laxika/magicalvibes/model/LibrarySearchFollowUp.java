@@ -147,7 +147,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /** One player's "may search for up to {@code count} basic land cards" pick. */
-    public record BasicLandsPick(UUID playerId, int count) {
+    public record BasicLandsPick(UUID playerId, int count, boolean enterTapped) {
+
+        public BasicLandsPick(UUID playerId, int count) {
+            this(playerId, count, false);
+        }
     }
 
     /**

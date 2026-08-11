@@ -186,6 +186,7 @@ public class PermanentCounterSupport {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
             case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
+            case LUCK -> { target.setCounterCount(CounterType.LUCK, target.getCounterCount(CounterType.LUCK) + count); yield "luck"; }
             case PLUS_ONE_PLUS_ONE -> {
                 if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
                     yield null;
@@ -250,6 +251,7 @@ public class PermanentCounterSupport {
             }
             case DESPAIR -> { target.setCounterCount(CounterType.DESPAIR, target.getCounterCount(CounterType.DESPAIR) + count); yield "despair"; }
             case DEATH -> { target.setCounterCount(CounterType.DEATH, target.getCounterCount(CounterType.DEATH) + count); yield "death"; }
+            case DELAY -> { target.setCounterCount(CounterType.DELAY, target.getCounterCount(CounterType.DELAY) + count); yield "delay"; }
             case DEVOTION -> { target.setCounterCount(CounterType.DEVOTION, target.getCounterCount(CounterType.DEVOTION) + count); yield "devotion"; }
             case DIVINITY -> { target.setCounterCount(CounterType.DIVINITY, target.getCounterCount(CounterType.DIVINITY) + count); yield "divinity"; }
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
@@ -274,6 +276,7 @@ public class PermanentCounterSupport {
             case GROWTH -> { target.setCounterCount(CounterType.GROWTH, target.getCounterCount(CounterType.GROWTH) + count); yield "growth"; }
             case PRESSURE -> { target.setCounterCount(CounterType.PRESSURE, target.getCounterCount(CounterType.PRESSURE) + count); yield "pressure"; }
             case POLYP -> { target.setCounterCount(CounterType.POLYP, target.getCounterCount(CounterType.POLYP) + count); yield "polyp"; }
+            case PLAGUE -> { target.setCounterCount(CounterType.PLAGUE, target.getCounterCount(CounterType.PLAGUE) + count); yield "plague"; }
             case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
             case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             case TOWER -> { target.setCounterCount(CounterType.TOWER, target.getCounterCount(CounterType.TOWER) + count); yield "tower"; }
@@ -299,6 +302,7 @@ public class PermanentCounterSupport {
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
             case MAGNET -> { target.setCounterCount(CounterType.MAGNET, target.getCounterCount(CounterType.MAGNET) + count); yield "magnet"; }
+            case MINE -> { target.setCounterCount(CounterType.MINE, target.getCounterCount(CounterType.MINE) + count); yield "mine"; }
             case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             case MUSTER -> { target.setCounterCount(CounterType.MUSTER, target.getCounterCount(CounterType.MUSTER) + count); yield "muster"; }
             case WIND -> { target.setCounterCount(CounterType.WIND, target.getCounterCount(CounterType.WIND) + count); yield "wind"; }
@@ -370,6 +374,7 @@ public class PermanentCounterSupport {
             case WISH -> "wish";
             case SLIME -> "slime";
             case AIM -> "aim";
+            case DELAY -> "delay";
             default -> counterType.name().toLowerCase();
         };
     }
@@ -389,6 +394,31 @@ public class PermanentCounterSupport {
                 .build());
         log.info("Game {} - {} removes {} {} counter(s)", gameData.id, target.getCard().getName(),
                 removed, counterTypeName(counterType));
+    }
+
+    public void removeCountersFromPermanent(GameData gameData, Permanent permanent,
+                                            CounterType counterType, int count) {
+        int remaining = count;
+        if (counterType == CounterType.ANY) {
+            int minusOneCounters = permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+            int removeMinusOne = Math.min(minusOneCounters, remaining);
+            permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minusOneCounters - removeMinusOne);
+            remaining -= removeMinusOne;
+            if (remaining > 0) {
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remaining);
+            }
+        } else {
+            permanent.setCounterCount(counterType,
+                    permanent.getCounterCount(counterType) - count);
+        }
+
+        String counterName = counterTypeName(counterType);
+        String counterText = count == 1
+                ? "a " + counterName + " counter"
+                : count + " " + counterName + " counters";
+        gameLogService.append(gameData, GameLog.cardThen(
+                permanent.getCard(), " removes " + counterText + "."));
     }
 
     private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {

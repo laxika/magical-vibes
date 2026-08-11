@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "94")
+@CardRegistration(set = "ODY", collectorNumber = "91")
 public class Peek extends Card {
 
     public Peek() {

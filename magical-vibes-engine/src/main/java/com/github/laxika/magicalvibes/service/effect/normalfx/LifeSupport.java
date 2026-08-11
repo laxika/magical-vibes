@@ -5,12 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -22,12 +27,23 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class LifeSupport {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    @Lazy
+    private final DrawService drawService;
+
+    public LifeSupport(GameQueryService gameQueryService,
+                       GameLogService gameLogService,
+                       TriggerCollectionService triggerCollectionService,
+                       @Lazy DrawService drawService) {
+        this.gameQueryService = gameQueryService;
+        this.gameLogService = gameLogService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.drawService = drawService;
+    }
 
     public void applyGainLife(GameData gameData, UUID controllerId, int amount) {
         applyGainLife(gameData, controllerId, amount, null);
@@ -51,6 +67,12 @@ public class LifeSupport {
         if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
+            return;
+        }
+        if (amount > 0 && hasNefariousLichLifeGainReplacement(gameData, controllerId)) {
+            for (int i = 0; i < amount; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
             return;
         }
         // Tainted Remedy turns the whole gain event into an equal life loss. Per CR 119.10 a gain of
@@ -100,6 +122,12 @@ public class LifeSupport {
                 gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
                 return false;
             }
+            if (hasNefariousLichLifeGainReplacement(gameData, playerId)) {
+                for (int i = currentLife; i < newLife; i++) {
+                    drawService.resolveDrawCard(gameData, playerId);
+                }
+                return true;
+            }
             if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)) {
                 applyLifeLoss(gameData, playerId, newLife - currentLife, "replaced life gain");
                 return true;
@@ -144,5 +172,12 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
+    }
+
+    private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream().anyMatch(permanent ->
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
     }
 }

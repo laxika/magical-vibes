@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,10 +75,16 @@ public class MayMiscHandlerService {
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
     private TriggerCollectionService triggerCollectionService;
+    @Autowired @Lazy
+    private GraveyardService graveyardService;
 
     /** Setter for manual (non-Spring) construction (tests, AI simulator). */
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
         this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public void setGraveyardService(GraveyardService graveyardService) {
+        this.graveyardService = graveyardService;
     }
 
     public void handleEquipmentAttachChoice(GameData gameData, Player player, boolean accepted,
@@ -229,6 +237,19 @@ public class MayMiscHandlerService {
             return;
         }
 
+        if (effect.kind() == DrawReplacementKind.OBSTINATE_FAMILIAR) {
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw with ",
+                    ability.sourceCard(), "."));
+            log.info("Game {} - {} skips draw with {}", gameData.id, playerName,
+                    ability.sourceCard().getName());
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
             // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
             // drawing player's library goes into that player's graveyard instead of being drawn.
@@ -237,7 +258,7 @@ public class MayMiscHandlerService {
             List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
             if (deck != null && !deck.isEmpty()) {
                 Card top = deck.removeFirst();
-                gameData.playerGraveyards.get(drawingPlayerId).add(top);
+                graveyardService.addCardToGraveyard(gameData, drawingPlayerId, top, Zone.LIBRARY);
                 gameLogService.append(gameData, GameLog.textCardText(playerName + "'s ", top, " is put into their graveyard."));
                 log.info("Game {} - {}'s revealed {} put into graveyard by {}",
                         gameData.id, playerName, top.getName(), ability.sourceCard().getName());
@@ -338,7 +359,7 @@ public class MayMiscHandlerService {
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            gameData.playerGraveyards.get(controllerId).add(topCard);
+            graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " into their graveyard (surveil)."));
@@ -371,7 +392,7 @@ public class MayMiscHandlerService {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
             }
             Card topCard = deck.removeFirst();
-            gameData.playerGraveyards.get(libraryOwnerId).add(topCard);
+            graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);
             gameLogService.append(gameData, GameLog.builder().card(topCard).text(" is put into " + ownerName + "'s graveyard.").build());
             log.info("Game {} - {} put into {}'s graveyard (Eye Spy)",
                     gameData.id, topCard.getName(), ownerName);
@@ -389,7 +410,7 @@ public class MayMiscHandlerService {
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            gameData.playerGraveyards.get(controllerId).add(topCard);
+            graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" into their graveyard.").build());
             log.info("Game {} - {} puts {} into graveyard (explore)",

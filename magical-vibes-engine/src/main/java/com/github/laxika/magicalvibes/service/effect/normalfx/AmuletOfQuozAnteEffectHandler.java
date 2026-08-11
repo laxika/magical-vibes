@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -76,6 +78,10 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.textCardText(
                 controllerName + (wonFlip ? " wins" : " loses") + " the coin flip for ", sourceCard,
                 coinFlipService.replacementDetails(result) + "."));
+
+        if (wonFlip) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        }
 
         UUID losingPlayerId = wonFlip ? opponentId : controllerId;
         UUID winningPlayerId = wonFlip ? controllerId : opponentId;

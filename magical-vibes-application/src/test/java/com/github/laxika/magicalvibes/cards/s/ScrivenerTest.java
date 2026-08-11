@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.cards.p.Ponder;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,14 +13,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScrivenerTest extends BaseCardTest {
 
-    /**
-     * Casts Scrivener and resolves it onto the battlefield, then accepts the may ability.
-     */
-    private void castAndAcceptMay() {
+    private void castScrivener() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Scrivener()));
@@ -30,102 +25,60 @@ class ScrivenerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("ETB returns the chosen instant card from the graveyard")
+    void returnsChosenInstantToHand() {
+        HolyDay holyDay = new HolyDay();
+        Unsummon unsummon = new Unsummon();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), holyDay, unsummon));
+
+        castScrivener();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(holyDay.getId(), unsummon.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(unsummon.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Unsummon");
+        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Resolving Scrivener triggers may ability prompt")
-    void resolvingTriggersMayPrompt() {
-        harness.setGraveyard(player1, List.of(new Opt()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Scrivener()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @DisplayName("The optional return can be declined")
+    void returnCanBeDeclined() {
+        HolyDay holyDay = new HolyDay();
+        harness.setGraveyard(player1, List.of(holyDay));
 
-        harness.castCreature(player1, 0);
+        castScrivener();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertNotInHand(player1, "Holy Day");
     }
 
     @Test
-    @DisplayName("Declining may ability does not return anything")
-    void decliningMaySkipsAbility() {
-        harness.setGraveyard(player1, List.of(new Opt()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Scrivener()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @DisplayName("A non-instant card is not a legal target")
+    void nonInstantIsNotTargetable() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        castScrivener();
 
-        assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Opt");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Returns an instant card from graveyard to hand")
-    void returnsInstantFromGraveyardToHand() {
-        harness.setGraveyard(player1, List.of(new Opt()));
-        castAndAcceptMay();
+    @DisplayName("An empty graveyard produces no target choice")
+    void emptyGraveyardProducesNoChoice() {
+        castScrivener();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        harness.assertInHand(player1, "Opt");
-        harness.assertNotInGraveyard(player1, "Opt");
-    }
-
-    @Test
-    @DisplayName("Chooses a specific instant when multiple cards are in the graveyard")
-    void choosesSpecificInstant() {
-        harness.setGraveyard(player1, List.of(new Ponder(), new Opt()));
-        castAndAcceptMay();
-
-        harness.handleGraveyardCardChosen(player1, 1);
-
-        harness.assertInHand(player1, "Opt");
-        harness.assertInGraveyard(player1, "Ponder");
-    }
-
-    @Test
-    @DisplayName("Cannot return a non-instant card")
-    void cannotReturnNonInstant() {
-        harness.setGraveyard(player1, List.of(new Ponder(), new Opt()));
-        castAndAcceptMay();
-
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
-    }
-
-    @Test
-    @DisplayName("No effect if graveyard has no instant cards")
-    void noEffectWithNoInstantsInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Ponder()));
-        castAndAcceptMay();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no instant card"));
-    }
-
-    @Test
-    @DisplayName("Player can decline graveyard choice")
-    void playerCanDeclineGraveyardChoice() {
-        harness.setGraveyard(player1, List.of(new Opt()));
-        castAndAcceptMay();
-
-        harness.handleGraveyardCardChosen(player1, -1);
-
-        harness.assertInGraveyard(player1, "Opt");
-        harness.assertNotInHand(player1, "Opt");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 }

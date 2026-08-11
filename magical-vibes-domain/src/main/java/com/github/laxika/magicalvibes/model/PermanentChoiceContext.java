@@ -30,6 +30,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  {@code auraPermanentId} onto the chosen creature or land. */
     record ReattachSourceAuraAfterSacrifice(UUID auraPermanentId, UUID permanentToSacrificeId) implements PermanentChoiceContext {}
 
+    /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
+    record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
+
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
     record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}

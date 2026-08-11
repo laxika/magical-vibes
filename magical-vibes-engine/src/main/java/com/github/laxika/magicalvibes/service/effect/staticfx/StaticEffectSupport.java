@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -173,6 +174,14 @@ public class StaticEffectSupport {
                     || grant.scope() == GrantScope.ALL_OWN_CREATURES
                     || grant.scope() == GrantScope.OWN_PERMANENTS) {
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
+            }
+        } else if (wrapped instanceof GrantColorEffect grant) {
+            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
+                    || selfInScope(context, grant.scope(), null)) {
+                accumulator.addGrantedColor(grant.color());
+                if (grant.overriding()) {
+                    accumulator.setColorOverriding(true);
+                }
             }
         } else if (wrapped instanceof GrantTriggeredAbilityEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED

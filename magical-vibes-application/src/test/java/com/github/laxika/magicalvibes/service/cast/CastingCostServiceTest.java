@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargeting
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
@@ -270,6 +271,38 @@ class CastingCostServiceTest {
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isEqualTo(-2);
             // Enchantment is unaffected
             assertThat(svc.getCastCostModifier(gd, player1Id, enchantment, snapshot)).isZero();
+        }
+
+        @Test
+        @DisplayName("Flashback cost modification applies only to flashback costs")
+        void flashbackCostModificationAppliesOnlyToFlashbackCosts() {
+            Card stone = new Card();
+            stone.addEffect(EffectSlot.STATIC,
+                    new ModifyFlashbackCostEffect(-2, CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
+
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, true)).isEqualTo(-2);
+        }
+
+        @Test
+        @DisplayName("Opponent-scoped flashback cost modification applies to the opponent")
+        void opponentFlashbackCostModificationAppliesToOpponent() {
+            Card stone = new Card();
+            stone.addEffect(EffectSlot.STATIC,
+                    new ModifyFlashbackCostEffect(2, CostModificationScope.OPPONENT));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
+
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, true)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player2Id, spell, snapshot, true)).isEqualTo(2);
         }
 
         @Test
@@ -1046,6 +1079,18 @@ class CastingCostServiceTest {
             gd.playerHands.get(player1Id).add(spell);
             // Only the spell itself in hand — it is on the stack when costs are paid, so it
             // can never be its own discard.
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardRandomCardCost — needs another card in hand")
+        void discardRandomCardCost() {
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost());
+            gd.playerHands.get(player1Id).add(spell);
+
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
             gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));

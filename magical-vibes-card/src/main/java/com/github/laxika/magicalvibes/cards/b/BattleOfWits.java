@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "65")
 @CardRegistration(set = "M13", collectorNumber = "44")
+@CardRegistration(set = "ODY", collectorNumber = "69")
 public class BattleOfWits extends Card {
 
     public BattleOfWits() {

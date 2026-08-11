@@ -10,9 +10,14 @@ import java.util.UUID;
  * kinds only (e.g. "destroy it at end of combat, it can't be regenerated" triggers).
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                     boolean cannotBeRegenerated) implements DelayedAction {
+                                     boolean cannotBeRegenerated, UUID returnExiledCardId) implements DelayedAction {
+
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
+                                  boolean cannotBeRegenerated) {
+        this(permanentId, kind, cannotBeRegenerated, null);
+    }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind) {
-        this(permanentId, kind, false);
+        this(permanentId, kind, false, null);
     }
 }

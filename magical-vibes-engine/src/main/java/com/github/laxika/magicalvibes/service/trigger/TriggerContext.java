@@ -100,6 +100,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for triggers that fire when a player wins a coin flip. */
+    record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
+
     /**
      * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).
      */
@@ -240,6 +243,13 @@ public sealed interface TriggerContext {
      */
     record LandPutIntoGraveyard(Card landCard, UUID graveyardOwnerId,
                                 UUID causeControllerId) implements TriggerContext {}
+
+    /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
+    record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}
+
+    /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
+    record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
+                                         UUID causeControllerId) implements TriggerContext {}
 
     /**
      * Context for ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Soulcipher Board).

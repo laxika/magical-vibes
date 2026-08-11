@@ -1007,6 +1007,12 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId);
     }
 
+    public void castFlashback(Player player, int graveyardCardIndex, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(),
+                null, null, List.of(), null, null, damageAssignments);
+    }
+
     public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds);

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
@@ -92,6 +93,12 @@ public class CardViewFactory {
         List<ModalOptionView> modalOptions = modalEffect == null ? null
                 : modalEffect.options().stream().map(this::createModalOptionView).toList();
 
+        ChooseXValueCost xValueCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseXValueCost.class::isInstance)
+                .map(ChooseXValueCost.class::cast)
+                .findFirst()
+                .orElse(null);
+
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
         // The prepare spell itself has no back face, so this recurses exactly one level.
@@ -141,6 +148,9 @@ public class CardViewFactory {
                 card.getColorIdentity(),
                 EffectResolution.needsTarget(card),
                 EffectResolution.needsSpellTarget(card),
+                xValueCost != null,
+                xValueCost != null ? xValueCost.minValue() : 0,
+                xValueCost != null ? xValueCost.maxValue() : 0,
                 abilityViews,
                 card.getLoyalty(),
                 card.getKeywords().contains(Keyword.CONVOKE),

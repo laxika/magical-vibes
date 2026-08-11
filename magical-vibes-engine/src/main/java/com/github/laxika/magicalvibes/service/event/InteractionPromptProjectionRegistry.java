@@ -94,6 +94,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.GraveyardChoice.class, this::projectGraveyardChoice);
         register(PendingInteraction.GraveyardExileCostChoice.class,
                 this::projectGraveyardExileCostChoice);
+        register(PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
+                this::projectActivatedAbilityGraveyardExileCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
@@ -547,6 +549,12 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.GraveyardExileCostChoice interaction) {
         return InteractionPromptMessage.graveyardIndexPick(
                 interaction.validIndices(), interaction.prompt(), false);
+    }
+
+    private InteractionPromptMessage projectActivatedAbilityGraveyardExileCostChoice(
+            GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectHandChoice(

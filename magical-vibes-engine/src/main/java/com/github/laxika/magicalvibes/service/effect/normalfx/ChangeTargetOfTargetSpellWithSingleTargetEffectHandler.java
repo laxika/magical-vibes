@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,20 +32,24 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
+        resolve(gameData, entry.getControllerId(), entry.getTargetId(), entry.getCard(), effect);
+    }
+
+    public void resolve(GameData gameData, UUID controllerId, UUID targetCardId, Card sourceCard, CardEffect effect) {
+        StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetCardId);
         if (targetSpell == null) {
             return;
         }
 
         if (!targetSpell.isSingleTarget()) {
             
-            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
+            gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }
 
         boolean creatureTargetsOnly = ((ChangeTargetOfTargetSpellWithSingleTargetEffect) effect).creatureTargetsOnly();
         if (creatureTargetsOnly && !isCreatureId(gameData, targetSpell.getTargetId())) {
-            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " doesn't target a creature)."));
+            gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " doesn't target a creature)."));
             return;
         }
 
@@ -60,7 +65,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId()));
         playerInputService.beginPermanentChoice(
                 gameData,
-                entry.getControllerId(),
+                controllerId,
                 validNewTargets,
                 "Choose a new target for " + targetSpell.getCard().getName() + "."
         );

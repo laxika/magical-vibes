@@ -317,6 +317,23 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleAttachSourceAuraToChosenPermanent(GameData gameData, UUID permanentId,
+                                                        PermanentChoiceContext.AttachSourceAuraToChosenPermanent ctx) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.auraPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (aura == null || target == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        aura.setAttachedTo(target.getId());
+        aura.setTimestamp(gameData.nextTimestamp());
+        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleLegendRule(GameData gameData, UUID playerId, UUID permanentId, PermanentChoiceContext.LegendRule legendRule) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();
@@ -1017,6 +1034,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                         + coinFlipService.replacementDetails(result) + "."
                 : playerName + " loses the coin flip for Desperate Gambit"
                         + coinFlipService.replacementDetails(result) + "."));
+
+        if (wonFlip) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, ctx.controllerId());
+        }
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
                 ? com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.doubling(permanentId)

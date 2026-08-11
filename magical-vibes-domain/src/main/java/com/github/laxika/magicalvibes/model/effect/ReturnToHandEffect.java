@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
@@ -26,13 +27,14 @@ import java.util.UUID;
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
  * </ul>
  */
-public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect {
+public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
     private final int lifeLoss;
     private final int drawCount;
     private final UUID enchantedPermanentId;
+    private final DynamicAmount castTimeXValue;
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
         this(scope, filter, lifeLoss, drawCount, null);
@@ -40,11 +42,17 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId) {
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null);
+    }
+
+    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
+                               UUID enchantedPermanentId, DynamicAmount castTimeXValue) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
         this.enchantedPermanentId = enchantedPermanentId;
+        this.castTimeXValue = castTimeXValue;
     }
 
     public static ReturnToHandEffect target() {
@@ -57,6 +65,10 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
 
     public static ReturnToHandEffect targetAndControllerDraws(int drawCount) {
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, drawCount);
+    }
+
+    public static ReturnToHandEffect targetWithCastTimeXValue(DynamicAmount castTimeXValue) {
+        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0, null, castTimeXValue);
     }
 
     public static ReturnToHandEffect self() {
@@ -126,6 +138,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
 
     public int drawCount() {
         return drawCount;
+    }
+
+    @Override
+    public DynamicAmount castTimeXValue() {
+        return castTimeXValue;
     }
 
     @Override

@@ -18,21 +18,33 @@ import java.util.List;
  *
  * @param predicate       condition to check after state-based actions, or {@code null}
  * @param sourcePredicate layer-aware condition on the source permanent, or {@code null}
+ * @param referencedPermanentPredicate selects a non-targeting permanent reference when the
+ *                                     trigger fires, or {@code null}
  * @param effects         effects to put on the stack when triggered
  * @param description     log/stack description for the triggered ability
+ *
+ * <p>The optional {@code referencedPermanentPredicate} is evaluated across all battlefields and
+ * stores the first matching permanent as a non-targeting reference on the triggered stack entry.</p>
  */
 public record StateTriggerEffect(
         StateTriggerPredicate predicate,
         PermanentPredicate sourcePredicate,
+        PermanentPredicate referencedPermanentPredicate,
         List<CardEffect> effects,
         String description
 ) implements CardEffect {
 
     public StateTriggerEffect(StateTriggerPredicate predicate, List<CardEffect> effects, String description) {
-        this(predicate, null, effects, description);
+        this(predicate, null, null, effects, description);
+    }
+
+    public StateTriggerEffect(StateTriggerPredicate predicate,
+                              PermanentPredicate referencedPermanentPredicate,
+                              List<CardEffect> effects, String description) {
+        this(predicate, null, referencedPermanentPredicate, effects, description);
     }
 
     public StateTriggerEffect(PermanentPredicate sourcePredicate, List<CardEffect> effects, String description) {
-        this(null, sourcePredicate, effects, description);
+        this(null, sourcePredicate, null, effects, description);
     }
 }

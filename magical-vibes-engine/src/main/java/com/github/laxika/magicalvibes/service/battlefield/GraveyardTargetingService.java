@@ -656,6 +656,13 @@ public class GraveyardTargetingService {
 
     public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                         StackEntryType entryType, CardPredicate filter) {
+        handleAnyNumberGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter,
+                card.getEffects(EffectSlot.SPELL));
+    }
+
+    public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                        StackEntryType entryType, CardPredicate filter,
+                                                        List<CardEffect> spellEffects) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId);
         if (graveyard != null) {
@@ -669,7 +676,7 @@ public class GraveyardTargetingService {
         int maxTargets = matchingCards.size();
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;

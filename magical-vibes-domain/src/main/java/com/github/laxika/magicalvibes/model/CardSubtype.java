@@ -17,6 +17,7 @@ public enum CardSubtype {
     ANTELOPE("Antelope"),
     AUROCHS("Aurochs"),
     APE("Ape"),
+    ATOG("Atog"),
     ARCHER("Archer"),
     ARTIFICER("Artificer"),
     ADVISOR("Advisor"),

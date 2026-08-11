@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -83,7 +84,7 @@ public class RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffectHan
 
         // All revealed noncreature cards go to the target player's graveyard.
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
         }
 
         if (foundCreature != null && !gameData.interaction.isAwaitingInput()) {

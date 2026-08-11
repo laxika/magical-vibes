@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -96,6 +97,55 @@ class DamageTriggerCollectorServiceTest {
     private TriggerMatchContext match(Permanent perm, UUID controllerId,
             com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
+    class CreateTokensOnEnchantedCreatureDamage {
+
+        @Test
+        @DisplayName("queues tokens for the enchanted creature's current controller and records damage")
+        void queuesTokensForEnchantedCreatureController() {
+            Permanent aura = createPermanent("Druid's Call");
+            Permanent creature = createPermanent("Hill Giant");
+            CreateTokenEffect effect = new CreateTokenEffect(new EventValue(), "Squirrel", 1, 1,
+                    com.github.laxika.magicalvibes.model.CardColor.GREEN,
+                    java.util.List.of(com.github.laxika.magicalvibes.model.CardSubtype.SQUIRREL),
+                    java.util.Set.of(), java.util.Set.of());
+            var ctx = new TriggerContext.DamageToCreature(creature, 3, player1Id);
+
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("does not queue a trigger when no damage was dealt")
+        void skipsZeroDamage() {
+            Permanent aura = createPermanent("Druid's Call");
+            Permanent creature = createPermanent("Hill Giant");
+            CreateTokenEffect effect = new CreateTokenEffect(new EventValue(), "Squirrel", 1, 1,
+                    com.github.laxika.magicalvibes.model.CardColor.GREEN,
+                    java.util.List.of(com.github.laxika.magicalvibes.model.CardSubtype.SQUIRREL),
+                    java.util.Set.of(), java.util.Set.of());
+            var ctx = new TriggerContext.DamageToCreature(creature, 0, player1Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     // ===== ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect =====

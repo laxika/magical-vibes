@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "P02", collectorNumber = "10")
 @CardRegistration(set = "AVR", collectorNumber = "4")
 @CardRegistration(set = "M14", collectorNumber = "4")
+@CardRegistration(set = "ODY", collectorNumber = "3")
 public class AngelicWall extends Card {
 }

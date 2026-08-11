@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "68")
+@CardRegistration(set = "ODY", collectorNumber = "78")
 public class Concentrate extends Card {
 
     public Concentrate() {

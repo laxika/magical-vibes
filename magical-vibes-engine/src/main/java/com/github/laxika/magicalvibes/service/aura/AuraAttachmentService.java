@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -269,9 +272,9 @@ public class AuraAttachmentService {
     }
 
     /**
-     * Auras whose protection grant explicitly keeps the Aura attached even when the Aura's own
-     * color is protected. The fixed-color form is used by Spectra Ward and the chosen-color form
-     * by Ward of Lights.
+     * Auras whose protection grant explicitly keeps the Aura attached even when the Aura itself is
+     * among the protected sources. The fixed-color form is used by Spectra Ward, the chosen-color
+     * form by Ward of Lights, and the card-type form by Tattoo Ward.
      */
     private boolean grantsSelfExemptProtection(Permanent attachment) {
         return attachment.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -281,6 +284,11 @@ public class AuraAttachmentService {
                     }
                     if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
                         return fixedProtection.scope() == GrantScope.ENCHANTED_CREATURE;
+                    }
+                    if (effect instanceof GrantEffectEffect grant
+                            && grant.scope() == GrantScope.ENCHANTED_CREATURE
+                            && grant.effect() instanceof ProtectionFromCardTypesEffect cardTypeProtection) {
+                        return cardTypeProtection.cardTypes().contains(CardType.ENCHANTMENT);
                     }
                     return false;
                 });

@@ -20,8 +20,25 @@ public record PendingMayAbility(
         UUID attackedTargetId,
         UUID activePlayerId,
         UUID choicePlayerId,
-        Permanent sourcePermanentSnapshot
+        Permanent sourcePermanentSnapshot,
+        UUID sourceControllerId
 ) {
+
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,
+                             UUID attackedTargetId, UUID activePlayerId, UUID choicePlayerId,
+                             Permanent sourcePermanentSnapshot) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
+                choicePlayerId, sourcePermanentSnapshot, null);
+    }
+
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, UUID sourceControllerId) {
+        this(sourceCard, controllerId, effects, description, targetCardId, null, null, null,
+                0, 0, null, null, null, null, sourceControllerId);
+    }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
                              UUID targetCardId, String manaCost, UUID sourcePermanentId,

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentO
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -55,6 +57,7 @@ import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDr
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -81,6 +84,7 @@ public class DrawService {
     // @Lazy: handler → InputCompletionService → … can reach back into draw/resolution paths.
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
     private final LifeSupport lifeSupport;
+    private final GraveyardService graveyardService;
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -89,7 +93,8 @@ public class DrawService {
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
-                       @Lazy LifeSupport lifeSupport) {
+                       @Lazy LifeSupport lifeSupport,
+                       @Lazy GraveyardService graveyardService) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -98,6 +103,7 @@ public class DrawService {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
         this.lifeSupport = lifeSupport;
+        this.graveyardService = graveyardService;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -116,6 +122,17 @@ public class DrawService {
         Permanent sharedFateSource = findSharedFateSource(gameData);
         if (sharedFateSource != null) {
             resolveSharedFateDrawReplacement(gameData, playerId, sharedFateSource);
+            return;
+        }
+
+        Card maySkipDrawSource = findMaySkipDrawSourceCard(gameData, playerId);
+        if (maySkipDrawSource != null) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    maySkipDrawSource,
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.OBSTINATE_FAMILIAR)),
+                    "Skip this draw with " + maySkipDrawSource.getName() + "?"
+            ));
             return;
         }
 
@@ -392,6 +409,22 @@ public class DrawService {
                 .build());
         log.info("Game {} - {} exiles the top card of an opponent's library face down with Shared Fate",
                 gameData.id, playerName);
+    }
+
+    private Card findMaySkipDrawSourceCard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof MaySkipDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {
@@ -726,7 +759,7 @@ public class DrawService {
 
         if (revealed.hasType(CardType.CREATURE)) {
             deck.removeFirst();
-            gameData.playerGraveyards.get(playerId).add(revealed);
+            graveyardService.addCardToGraveyard(gameData, playerId, revealed, Zone.LIBRARY);
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " puts ", revealed, " into their graveyard."));
             log.info("Game {} - {} puts revealed creature {} into graveyard (Enduring Renewal)",

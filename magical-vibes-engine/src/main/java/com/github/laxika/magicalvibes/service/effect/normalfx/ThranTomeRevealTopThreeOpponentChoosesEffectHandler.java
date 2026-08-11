@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ThranTomeRevealTopThreeOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -56,7 +57,7 @@ public class ThranTomeRevealTopThreeOpponentChoosesEffectHandler implements Norm
 
         if (actual == 1) {
             Card card = deck.removeFirst();
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             return;
         }
 

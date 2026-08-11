@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -117,6 +118,32 @@ class StateTriggerServiceTest {
             assertThat(entry.getStateTriggerEffectIndex()).isZero();
             assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
+        }
+
+        @Test
+        @DisplayName("Stores a selected non-targeting permanent on the triggered stack entry")
+        void storesSelectedPermanentReference() {
+            Card selectedCard = new Card();
+            selectedCard.setType(CardType.CREATURE);
+            Permanent selected = new Permanent(selectedCard);
+            gd.playerBattlefields.get(player2Id).add(selected);
+            StateTriggerEffect trigger = new StateTriggerEffect(
+                    (gameData, perm, controllerId) -> true,
+                    new PermanentIsCreaturePredicate(),
+                    List.of(new GainLifeEffect(1)),
+                    "Reference trigger"
+            );
+            Permanent source = new Permanent(createCardWithStateTrigger("Trigger Card", trigger));
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(source),
+                    eq(trigger.referencedPermanentPredicate()), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(selected),
+                    eq(trigger.referencedPermanentPredicate()), any())).thenReturn(true);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            sut.checkStateTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(selected.getId());
         }
 
         @Test

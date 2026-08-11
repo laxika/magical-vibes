@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
@@ -83,7 +84,7 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
         // All revealed cards go to the target player's graveyard.
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
         }
 
         log.info("Game {} - {} reveals {} cards ({} lands) to their graveyard from Mind Funeral-style mill",

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
@@ -194,6 +195,7 @@ public class TurnCleanupService {
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
+        gameData.playerNextInstantOrSorceryDamageRedirectShields.clear();
         gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.damagePreventionLifeGainShields.clear();
@@ -217,6 +219,7 @@ public class TurnCleanupService {
         gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.spellsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();

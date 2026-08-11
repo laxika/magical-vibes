@@ -133,4 +133,10 @@ public record AmountContext(
     public static AmountContext forCasting(UUID castingPlayerId, int xValue) {
         return new AmountContext(castingPlayerId, null, null, xValue, 0);
     }
+
+    /** Cast-time context for a spell whose source card is still in a zone being counted. */
+    public static AmountContext forCasting(UUID castingPlayerId, int xValue, Card sourceCard) {
+        return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null,
+                List.of(), sourceCard);
+    }
 }

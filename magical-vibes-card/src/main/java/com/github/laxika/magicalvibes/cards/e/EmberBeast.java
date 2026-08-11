@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "89")
+@CardRegistration(set = "ODY", collectorNumber = "190")
 public class EmberBeast extends Card {
 
     public EmberBeast() {

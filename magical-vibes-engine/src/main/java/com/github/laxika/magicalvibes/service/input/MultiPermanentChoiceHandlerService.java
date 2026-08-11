@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -64,6 +65,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
+    private final DamageSupport damageSupport;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
@@ -84,6 +86,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
             tappedLandSacrificeDamageIfSubtypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CulturalExchangeSupport
+            culturalExchangeSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -128,6 +132,12 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.CulturalExchange culturalExchange
+                && !culturalExchange.firstSelection()
+                && permanentIds.size() != culturalExchange.firstChosenIds().size()) {
+            throw new IllegalStateException("Must select exactly "
+                    + culturalExchange.firstChosenIds().size() + " creatures");
+        }
         if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource powerCtx
                 && !permanentIds.isEmpty()
                 && totalEffectivePower(gameData, permanentIds) < powerCtx.requiredPower()) {
@@ -135,6 +145,10 @@ public class MultiPermanentChoiceHandlerService {
             // so leave the prompt standing rather than sacrificing creatures for nothing.
             throw new IllegalStateException("Selected creatures have total power below "
                     + powerCtx.requiredPower());
+        }
+        if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
         }
 
         if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter enterCtx) {
@@ -168,6 +182,8 @@ public class MultiPermanentChoiceHandlerService {
 
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
+            handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
             handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
@@ -226,6 +242,8 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
             handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.CulturalExchange ctx) {
+            culturalExchangeSupport.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesCreateTokens ctx) {
@@ -404,6 +422,20 @@ public class MultiPermanentChoiceHandlerService {
                 log.info("Game {} - {} exiled by combat damage trigger", gameData.id, target.getCard().getName());
 
                 permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleDealDamageToDamagedPlayerControls(GameData gameData, List<UUID> permanentIds,
+                                                         MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+        if (target != null && gameQueryService.isCreature(gameData, target)) {
+            StackEntry damageEntry = context.damageEntry();
+            int damage = gameQueryService.applyDamageMultiplier(gameData, context.damage(), damageEntry);
+            if (!damageSupport.isDamagePreventedForCreature(gameData, damageEntry, target)) {
+                damageSupport.dealCreatureDamage(gameData, damageEntry, target, damage);
             }
         }
 

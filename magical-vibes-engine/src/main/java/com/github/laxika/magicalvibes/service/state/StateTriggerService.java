@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,11 @@ public class StateTriggerService {
                     if (gameData.stateTriggerOnStack.contains(key)) continue;
 
                     if (conditionMet(gameData, trigger, perm, playerId)) {
+                        Permanent referencedPermanent = findReferencedPermanent(
+                                gameData, trigger.referencedPermanentPredicate(), perm, playerId);
+                        if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
+                            continue;
+                        }
                         gameData.stateTriggerOnStack.add(key);
 
                         StackEntry entry = new StackEntry(
@@ -87,6 +93,13 @@ public class StateTriggerService {
                                 null,
                                 perm.getId()
                         );
+                        if (referencedPermanent != null) {
+                            entry.setTriggeringPermanentId(referencedPermanent.getId());
+                            entry.setTriggeringPermanentControllerId(playerIdOf(
+                                    gameData, referencedPermanent.getId()));
+                            entry.setTriggeringCardId(referencedPermanent.getCard().getId());
+                            entry.setDamageSourceCard(referencedPermanent.getCard());
+                        }
                         entry.setStateTriggerEffectIndex(i);
                         gameData.stack.add(entry);
 
@@ -97,6 +110,37 @@ public class StateTriggerService {
                 }
             }
         }
+    }
+
+    private Permanent findReferencedPermanent(GameData gameData,
+                                              PermanentPredicate predicate,
+                                              Permanent sourcePermanent, UUID controllerId) {
+        if (predicate == null) {
+            return null;
+        }
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(sourcePermanent.getCard().getId())
+                .withSourceControllerId(controllerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, predicate, context)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
+    private UUID playerIdOf(GameData gameData, UUID permanentId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.stream().anyMatch(p -> p.getId().equals(permanentId))) {
+                return playerId;
+            }
+        }
+        return null;
     }
 
     /**

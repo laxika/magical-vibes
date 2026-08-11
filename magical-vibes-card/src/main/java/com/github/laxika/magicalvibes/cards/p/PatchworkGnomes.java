@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "299")
+@CardRegistration(set = "ODY", collectorNumber = "306")
 public class PatchworkGnomes extends Card {
 
     public PatchworkGnomes() {

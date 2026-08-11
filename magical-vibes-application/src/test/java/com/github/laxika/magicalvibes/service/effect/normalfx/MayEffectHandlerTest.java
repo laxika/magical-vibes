@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,5 +48,23 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(player2Id);
                 assertThat(gd.pendingMayAbilities.getFirst().sourcePermanentId()).isEqualTo(sourcePermanentId);
+            }
+
+            @Test
+            @DisplayName("Offers a MayEffect with a decline branch to the target permanent's controller")
+            void offersChoiceToTargetPermanentController() {
+                Card card = createCard("Blazing Salvo");
+                DrawCardEffect accepted = new DrawCardEffect(1);
+                GainLifeEffect declined = new GainLifeEffect(1);
+                MayEffect mayEffect = new MayEffect(accepted, "Choose?", declined,
+                        MayChoicePlayer.TARGET_PERMANENT_CONTROLLER);
+                UUID targetPermanentId = UUID.randomUUID();
+                when(gameQueryService.findPermanentController(gd, targetPermanentId)).thenReturn(player2Id);
+                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayEffect), targetPermanentId);
+
+                resolveEffect(gd, entry, mayEffect);
+
+                assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+                assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(accepted);
             }
 }

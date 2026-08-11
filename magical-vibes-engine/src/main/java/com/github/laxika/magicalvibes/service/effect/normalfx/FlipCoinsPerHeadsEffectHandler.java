@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +41,7 @@ public class FlipCoinsPerHeadsEffectHandler implements NormalEffectHandlerBean {
             physicalFlips += result.physicalFlips();
             if (result.heads()) {
                 heads++;
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
             }
         }
 

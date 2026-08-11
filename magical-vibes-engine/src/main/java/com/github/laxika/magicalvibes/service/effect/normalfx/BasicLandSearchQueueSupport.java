@@ -102,14 +102,18 @@ public class BasicLandSearchQueueSupport {
         }
 
         int count = pick.count();
+        boolean enterTapped = pick.enterTapped();
+        String destinationText = enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         String prompt = "You may search your library for up to " + count + " basic land card"
-                + (count == 1 ? "" : "s") + " and put them onto the battlefield (" + count + " remaining).";
+                + (count == 1 ? "" : "s") + " and put them" + destinationText + " (" + count + " remaining).";
 
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId,
                 LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
                         .remainingCount(count)
                         .canFailToFind(true)
-                        .destination(LibrarySearchDestination.BATTLEFIELD)
+                        .destination(enterTapped
+                                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                                : LibrarySearchDestination.BATTLEFIELD)
                         .filterPredicate(BASIC_LAND)
                         .followUp(followUp)
                         .build(), prompt, true);

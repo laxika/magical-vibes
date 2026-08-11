@@ -53,7 +53,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -804,6 +806,23 @@ class GameQueryServiceTest {
 
             assertThat(gqs.hasKeyword(perm, bonus, Keyword.DOUBLE_STRIKE)).isFalse();
         }
+    }
+
+    @Test
+    @DisplayName("retains granted effects on a noncreature permanent")
+    void retainsGrantedEffectsOnNoncreaturePermanent() {
+        CardEffect carrierEffect = new DoubleDamageEffect();
+        CardEffect grantedEffect = new CantBeCounteredEffect();
+        Card enchantment = new Card();
+        enchantment.setName("Test Enchantment");
+        enchantment.setType(CardType.ENCHANTMENT);
+        enchantment.addEffect(EffectSlot.STATIC, carrierEffect);
+        when(staticEffectRegistry.getSelfHandler(carrierEffect))
+                .thenReturn((context, effect, accumulator) -> accumulator.addGrantedEffect(grantedEffect));
+        Permanent permanent = addPermanent(player1Id, enchantment);
+
+        assertThat(gqs.computeStaticBonus(gd, permanent).grantedEffects())
+                .containsExactly(grantedEffect);
     }
 
     // ===== withQueryScope =====
@@ -2375,6 +2394,20 @@ class GameQueryServiceTest {
                             new PreventAllDamageToAndByEnchantedCreatureEffect(),
                             new EnchantedCreatureCantAttackOrBlockEffect())));
             aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature,
+                    e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isTrue();
+        }
+
+        @Test
+        @DisplayName("unwraps ConditionalEffect when its condition is met")
+        void predicateOverloadUnwrapsGenericConditionalEffect() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent aura = addPermanent(player1Id, createAura("Kirtar's Desire",
+                    new ConditionalEffect(new GraveyardCardThreshold(7, null),
+                            new EnchantedCreatureCantAttackOrBlockEffect(false, true))));
+            aura.setAttachedTo(creature.getId());
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
 
             assertThat(gqs.hasAuraWithEffect(gd, creature,
                     e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isTrue();

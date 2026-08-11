@@ -110,6 +110,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerIfLifeAtMostEffect;
@@ -204,6 +205,7 @@ public class StepTriggerService {
     private final ParadigmService paradigmService;
     private final ValidTargetService validTargetService;
     private final CreatureControlService creatureControlService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
     private final ETBTokenTargetService etbTokenTargetService;
 
@@ -223,6 +225,7 @@ public class StepTriggerService {
                               @Lazy ParadigmService paradigmService,
                               ValidTargetService validTargetService,
                               CreatureControlService creatureControlService,
+                              GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                               GrantedUpkeepEffectSupport grantedUpkeepEffectSupport,
                               @Lazy ETBTokenTargetService etbTokenTargetService) {
         this.drawService = drawService;
@@ -241,6 +244,7 @@ public class StepTriggerService {
         this.paradigmService = paradigmService;
         this.validTargetService = validTargetService;
         this.creatureControlService = creatureControlService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.grantedUpkeepEffectSupport = grantedUpkeepEffectSupport;
         this.etbTokenTargetService = etbTokenTargetService;
     }
@@ -3372,7 +3376,10 @@ public class StepTriggerService {
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
             for (Permanent perm : activeBattlefield) {
-                List<CardEffect> controllerEndStepEffects = perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
+                List<CardEffect> controllerEndStepEffects = new ArrayList<>(
+                        perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                controllerEndStepEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : controllerEndStepEffects) {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class SetChosenColorUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
@@ -24,7 +26,9 @@ public class SetChosenColorUntilEndOfTurnEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var colorEffect = (SetChosenColorUntilEndOfTurnEffect) effect;
+        UUID targetId = colorEffect.targeted() ? entry.getTargetId() : entry.getSourcePermanentId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }

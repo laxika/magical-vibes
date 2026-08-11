@@ -4,5 +4,6 @@ public enum DrawReplacementKind {
     ABUNDANCE,
     ZURS_WEIRDING,
     ISLAND_SANCTUARY,
-    STUDY_COUNTER
+    STUDY_COUNTER,
+    OBSTINATE_FAMILIAR
 }

@@ -194,12 +194,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
      *  the graveyard owner controls. */
     ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT,
+    /** Triggers when a noncreature permanent the controller controls is destroyed by a spell or
+     *  ability an opponent controls. Used by Karmic Justice. */
+    ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT,
     /** Triggers whenever a land card the controller owns is put into their graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
      *  Checked in {@code GraveyardService.addCardToGraveyard} (the single zone→graveyard choke point)
      *  via {@code TriggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers}. Used by
      *  Countryside Crusher. */
     ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a land card is put into the controller's graveyard from their library.
+     *  Fires on permanents the graveyard owner controls. */
+    ON_ALLY_LAND_CARD_MILLED,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
      *  Uses the card's printed types (not battlefield creature-ness), so tokens never trigger and a
@@ -392,6 +398,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  wrapper. Used by Nature's Wrath / Eye of Singularity. */
     ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
+    /** Triggers whenever this permanent's controller wins a coin flip. */
+    ON_CONTROLLER_WINS_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,

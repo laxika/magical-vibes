@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GraveyardTransformedRe
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
@@ -141,6 +142,9 @@ class StepTriggerServiceTest {
     private CreatureControlService creatureControlService;
 
     @Mock
+    private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
+
+    @Mock
     private GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
 
     @Mock
@@ -176,6 +180,7 @@ class StepTriggerServiceTest {
                 paradigmService,
                 validTargetService,
                 creatureControlService,
+                grantedTriggeredAbilitySupport,
                 grantedUpkeepEffectSupport,
                 etbTokenTargetService);
 
@@ -1202,6 +1207,22 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Jin-Gitaxias, Core Augur");
+        }
+
+        @Test
+        @DisplayName("Granted controller end-step effect pushes trigger onto stack")
+        void grantedControllerEndStepEffectPushesTrigger() {
+            Card card = createCardWithName("Granted End Step Card");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gd, permanent, EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
+                    .thenReturn(List.of(new GainLifeEffect(1)));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Granted End Step Card");
         }
 
         @Test

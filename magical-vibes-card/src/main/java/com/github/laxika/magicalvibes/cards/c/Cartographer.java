@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EXO", collectorNumber = "107")
+@CardRegistration(set = "ODY", collectorNumber = "232")
 public class Cartographer extends Card {
 
     public Cartographer() {

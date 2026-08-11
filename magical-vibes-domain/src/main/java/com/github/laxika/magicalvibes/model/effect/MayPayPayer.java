@@ -28,5 +28,8 @@ public enum MayPayPayer {
      * {@code targetId} ("that creature's controller may pay {X}", Chain Stasis). Unlike
      * {@link #ENCHANTED_CONTROLLER}, the {@code targetId} is a permanent, not a player.
      */
-    TARGET_PERMANENT_CONTROLLER
+    TARGET_PERMANENT_CONTROLLER,
+
+    /** The player whose action caused the trigger, carried on the stack entry's {@code targetId}. */
+    TRIGGERING_PLAYER
 }
