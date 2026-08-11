@@ -1652,20 +1652,15 @@ public class LayerSystemService {
         }
     }
 
-    /** Marks a static-sourced pure-L4 effect as owned by the pass: the legacy handler is
-     *  skipped during assembly and the recorded contributions are replayed instead. Keyed by
+    /** Marks a pure-L4 effect as owned by the pass so its recorded contributions can be replayed
+     *  during assembly. Keyed by
      *  the ORIGINAL (pre-text-change) instance — the assembly iterates the card's slots. */
     private static void manage(LayeredBoardState board, EffectInstance instance) {
-        if (instance.floating() == null) {
-            board.managedL4Effects().add(instance.original());
-        }
+        board.managedL4Effects().add(instance.original());
     }
 
     private static void record(LayeredBoardState board, EffectInstance instance, PermanentSlot target,
                                L4Contribution contribution) {
-        if (instance.floating() != null) {
-            return;
-        }
         board.l4Contributions()
                 .computeIfAbsent(instance.original(), key -> new HashMap<>())
                 .put(target.permanent().getId(), contribution);

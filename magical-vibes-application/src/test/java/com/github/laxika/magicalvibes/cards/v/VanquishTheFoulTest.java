@@ -60,6 +60,6 @@ class VanquishTheFoulTest extends BaseCardTest {
 
         assertThatThrownBy(() -> addManaAndCast(giant.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("power 4 or greater");
     }
 }

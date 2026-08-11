@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -56,7 +57,7 @@ class PlayCardRequestDispatchServiceTest {
         verify(gameService).playCard(eq(gameData), eq(player), eq(3), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
-                eq(false));
+                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -70,6 +71,8 @@ class PlayCardRequestDispatchServiceTest {
         UUID altSacrifice = UUID.randomUUID();
         UUID imposedSacrifice = UUID.randomUUID();
         UUID multiSacrifice = UUID.randomUUID();
+        UUID beholdPermanent = UUID.randomUUID();
+        UUID multiBeholdPermanent = UUID.randomUUID();
         Map<UUID, Integer> damage = Map.of(targetId, 2);
 
         PlayCardRequest request = new PlayCardRequest(1, 4, targetId, damage,
@@ -79,7 +82,9 @@ class PlayCardRequestDispatchServiceTest {
                 5, List.of(6, 7),
                 true, null, null,
                 8, List.of(9, 10), List.of(imposedSacrifice), List.of(multiSacrifice),
-                List.of("{1}{G}"), true);
+                List.of("{1}{G}"), true, null,
+                beholdPermanent, 11, List.of(multiBeholdPermanent), List.of(12, 13),
+                null, "ELF", false);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -87,7 +92,8 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of(extraTarget)), eq(List.of(convoke)), eq(true), eq(sacrifice), eq(2),
                 eq(List.of(altSacrifice)), eq(5), eq(List.of(6, 7)), eq(true), eq(8),
                 eq(List.of(9, 10)), eq(List.of(imposedSacrifice)), eq(List.of(multiSacrifice)),
-                eq(List.of("{1}{G}")), eq(true));
+                eq(List.of("{1}{G}")), eq(true), eq(beholdPermanent), eq(11),
+                eq(List.of(multiBeholdPermanent)), eq(List.of(12, 13)), eq(CardSubtype.ELF));
         verifyNoMoreInteractions(gameService);
     }
 
@@ -103,7 +109,7 @@ class PlayCardRequestDispatchServiceTest {
         verify(gameService).playCard(eq(gameData), eq(player), eq(0), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
-                eq(false));
+                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -146,7 +152,8 @@ class PlayCardRequestDispatchServiceTest {
 
         dispatchService.dispatch(gameData, player, request);
 
-        verify(gameService).playCardFromExile(eq(gameData), eq(player), eq(exileCardId), isNull(), isNull());
+        verify(gameService).playCardFromExile(
+                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()));
         verifyNoMoreInteractions(gameService);
     }
 }

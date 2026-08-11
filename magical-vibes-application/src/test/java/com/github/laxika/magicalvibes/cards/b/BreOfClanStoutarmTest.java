@@ -24,6 +24,7 @@ class BreOfClanStoutarmTest extends BaseCardTest {
     void grantsKeywordsUntilEndOfTurn() {
         harness.addToBattlefield(player1, new BreOfClanStoutarm());
         harness.addToBattlefield(player1, new GrizzlyBears());
+        findPermanent(player1, "Bre of Clan Stoutarm").setSummoningSick(false);
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -116,6 +117,7 @@ class BreOfClanStoutarmTest extends BaseCardTest {
 
     private void addBreWithLifeGain(List<Card> library, int lifeGained) {
         harness.addToBattlefield(player1, new BreOfClanStoutarm());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, library);
         gd.lifeGainedThisTurn.put(player1.getId(), lifeGained);
     }

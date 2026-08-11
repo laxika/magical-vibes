@@ -505,6 +505,12 @@ public class StackEntry {
         effectsToResolve = updated;
     }
 
+    public void replaceEffectToResolve(int index, CardEffect effect) {
+        List<CardEffect> updated = new ArrayList<>(effectsToResolve);
+        updated.set(index, effect);
+        effectsToResolve = updated;
+    }
+
     /**
      * Returns the card to use as the damage source for protection and prevention checks.
      * Normally this is the same as {@link #getCard()}, but for equipment-granted abilities

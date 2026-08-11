@@ -44,7 +44,7 @@ public final class AnyColorManaChoiceSupport {
                                            boolean fromCreature,
                                            CardSubtype chosenSubtype) {
         return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, null);
+                fromCreature, chosenSubtype, null, null);
     }
 
     public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
@@ -55,6 +55,19 @@ public final class AnyColorManaChoiceSupport {
                                            boolean fromCreature,
                                            CardSubtype chosenSubtype,
                                            Card sourceCard) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, null);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData,
+                                           UUID playerId,
+                                           AwardAnyColorManaEffect effect,
+                                           int amount,
+                                           boolean fromCreature,
+                                           CardSubtype chosenSubtype,
+                                           Card sourceCard,
+                                           UUID sourcePermanentId) {
         if (amount <= 0) {
             return false;
         }
@@ -62,6 +75,9 @@ public final class AnyColorManaChoiceSupport {
                 choiceContext(gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard);
         if (choiceContext == null) {
             return false;
+        }
+        if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
+            choiceContext = choiceContext.withSourcePermanentId(sourcePermanentId);
         }
         List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 ? imprintedCardColors(gameData, sourceCard)

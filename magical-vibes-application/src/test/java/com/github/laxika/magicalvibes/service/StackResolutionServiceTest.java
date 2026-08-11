@@ -286,7 +286,7 @@ class StackResolutionServiceTest {
                 gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
                 return null;
             }).when(battlefieldEntryService).handleCreatureEnteredBattlefield(
-                    any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean(), any());
+                    any(), any(), any(), any(), anyBoolean(), anyInt(), anyInt(), anyBoolean(), any());
 
             svc.resolveTopOfStack(gd);
 

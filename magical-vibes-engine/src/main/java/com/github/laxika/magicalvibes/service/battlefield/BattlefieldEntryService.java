@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1650,7 +1651,8 @@ public class BattlefieldEntryService {
 
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty()) {
-            boolean hasTarget = targetId != null || !targetIds.isEmpty();
+            List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
+            boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
             // A permanent that entered without a target chosen at cast time — a token copy,
             // a creature put onto the battlefield from a graveyard via undying / reanimation,
@@ -1751,7 +1753,7 @@ public class BattlefieldEntryService {
                         Map.of(),
                         null,
                         List.of(),
-                        targetIds != null ? targetIds : List.of()
+                        activeTargetIds
                 );
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
@@ -1773,7 +1775,7 @@ public class BattlefieldEntryService {
                             Map.of(),
                             null,
                             List.of(),
-                            targetIds != null ? targetIds : List.of()
+                            activeTargetIds
                     );
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
@@ -1918,5 +1920,26 @@ public class BattlefieldEntryService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private List<UUID> targetsForActiveEtbGroups(Card card, List<CardEffect> effects, List<UUID> targetIds) {
+        if (targetIds == null || targetIds.isEmpty() || card.getSpellTargets().isEmpty()) {
+            return targetIds == null ? List.of() : targetIds;
+        }
+        List<UUID> activeTargets = new ArrayList<>();
+        int consumed = 0;
+        for (SpellTarget group : card.getSpellTargets()) {
+            int size = Math.min(group.getMaxTargets(), targetIds.size() - consumed);
+            if (size <= 0) {
+                break;
+            }
+            boolean active = !card.bindsEffectToTargetGroup(group.getIndex())
+                    || effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) == group.getIndex());
+            if (active) {
+                activeTargets.addAll(targetIds.subList(consumed, consumed + size));
+            }
+            consumed += size;
+        }
+        return List.copyOf(activeTargets);
     }
 }

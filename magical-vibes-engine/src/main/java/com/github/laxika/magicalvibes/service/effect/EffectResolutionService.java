@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -132,8 +134,10 @@ public class EffectResolutionService {
 
             // Conditional wrapper: re-check condition at resolution time (intervening-if)
             if (effect instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        conditionContext)) {
+                boolean evaluatedWhenEtbTriggered = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && conditional.condition() instanceof ColorSpentToCast;
+                if (!evaluatedWhenEtbTriggered
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -265,6 +269,9 @@ public class EffectResolutionService {
                 boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
                         || gameData.resolvingMayEffectFromStack
                         || gameData.rerunCurrentEffectAfterInteraction;
+                if (rerunCurrentEffect && effectToResolve != effect) {
+                    entry.replaceEffectToResolve(i, effectToResolve);
+                }
                 gameData.pendingEffectResolutionEntry = entry;
                 gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;
                 return;

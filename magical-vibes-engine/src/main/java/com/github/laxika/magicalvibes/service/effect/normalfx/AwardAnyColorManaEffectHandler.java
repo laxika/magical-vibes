@@ -47,7 +47,7 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
         boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                 entry.getControllerId(), e, amount, false, source == null ? null : source.getChosenSubtype(),
-                source == null ? null : source.getCard());
+                source == null ? null : source.getCard(), source == null ? null : source.getId());
         if (prompted) {
             String playerName = gameData.playerIdToName.get(entry.getControllerId());
             log.info("Game {} - Awaiting {} to choose a mana color ({})", gameData.id, playerName, e.restriction());

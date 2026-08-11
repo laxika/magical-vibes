@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -18,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -139,6 +143,43 @@ class EffectResolutionServiceTest {
         EffectHandler handler = mock(EffectHandler.class);
         lenient().when(registry.getHandler(effect)).thenReturn(handler);
         return handler;
+    }
+
+    @Test
+    @DisplayName("An ETB color-spent condition already accepted at trigger time resolves its effect")
+    void etbColorSpentConditionIsNotRecheckedAfterCastSnapshotClears() {
+        Card card = createCard("Color-spent creature");
+        CardEffect wrapped = new DrawCardEffect();
+        CardEffect conditional = new ConditionalEffect(new ColorSpentToCast(ManaColor.BLUE, 2), wrapped);
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(conditional), UUID.randomUUID());
+        EffectHandler handler = stubHandler(wrapped);
+
+        effectResolutionService.resolveEffects(gd, entry);
+
+        verify(handler).resolve(gd, entry, wrapped);
+    }
+
+    @Test
+    @DisplayName("An accepted may-pay resumes its inner effect after nested input")
+    void acceptedMayPayResumesInnerEffectAfterNestedInput() {
+        CardEffect wrapped = new DrawCardEffect(1);
+        CardEffect mayPay = new MayPayManaEffect("{1}", wrapped, "Pay {1}?");
+        StackEntry entry = createEntry(createCard("Nested choice"), player1Id, List.of(mayPay));
+        EffectHandler handler = stubHandler(wrapped);
+        gd.resolvedMayAccepted = true;
+
+        doAnswer(invocation -> {
+            gd.rerunCurrentEffectAfterInteraction = true;
+            gd.interaction.beginInteraction(new PendingInteraction.XValueChoice(
+                    player1Id, 0, 1, "Choose", "Nested choice", false));
+            return null;
+        }).when(handler).resolve(gd, entry, wrapped);
+
+        effectResolutionService.resolveEffects(gd, entry);
+
+        assertThat(entry.getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+        assertThat(gd.pendingEffectResolutionIndex).isZero();
     }
 
     // =========================================================================

@@ -1938,6 +1938,10 @@ public class SpellCastingService {
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                     : null;
+            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot =
+                    EffectResolution.hasColorSpentCondition(card)
+                            ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                            : null;
             if (usingAlternateCost) {
                 if (usingBestowCost) {
                     payBestowCastingCost(gameData, player, card, targetingTax);
@@ -1972,6 +1976,13 @@ public class SpellCastingService {
                         convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
                 gameData.setSpellCastConvergeValue(card.getId(), converge);
                 stackX = converge;
+            }
+            if (colorsSpentSnapshot != null) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
+                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
+                gameData.setSpellCastManaSpentByColor(card.getId(), ManaPool.coloredManaSpent(
+                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
             }
             StackEntry entry;
             if (card.isAura() && needsSingleGraveyardTargeting) {
@@ -2748,6 +2759,7 @@ public class SpellCastingService {
                 gameData.stack.getLast().setOverloaded(true);
             }
             if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setBeholdChosenSubtype(beholdChosenSubtype);
                 gameData.stack.getLast().setSourceZone(Zone.HAND);
             }
             finishSpellCast(gameData, playerId, player, hand, card);

@@ -2593,6 +2593,9 @@ public class GameQueryService {
         AccumulatorSnapshot beforeIndefinite = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (board.isManagedL4(floating.effect())) {
+                    board.replayL4Contribution(floating.effect(), target.getId(), accumulator);
+                }
                 if (floating.effect() instanceof BuffTargetCreatureIndefinitelyEffect buff
                         && target.getId().equals(floating.affectedPermanentId())) {
                     accumulator.addPower(buff.powerBoost());
@@ -3945,6 +3948,10 @@ public class GameQueryService {
                 && gameData.playersSpellsCantBeCounteredThisTurn.contains(stackEntry.getControllerId())) {
             return true;
         }
+        if (stackEntry != null && playerBattlefieldHasStaticEffect(gameData, stackEntry.getControllerId(),
+                ControllerSpellsCantBeCounteredEffect.class)) {
+            return true;
+        }
         if (!hasCardType(card, CardType.CREATURE)) {
             return false;
         }
@@ -5029,6 +5036,7 @@ public class GameQueryService {
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
+        result *= getSourceDamageMultiplier(gameData, controllerId, source);
         result *= getPermanentDamageMultiplier(gameData, source.getId());
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {

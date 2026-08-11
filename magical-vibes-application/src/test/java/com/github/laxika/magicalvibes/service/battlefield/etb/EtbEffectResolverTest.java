@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -173,6 +174,24 @@ class EtbEffectResolverTest {
 
         assertThat(resolver.resolve(ctx(true, 0, false), fromHand)).isSameAs(wrapped);
         assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isNull();
+    }
+
+    @Test
+    @DisplayName("ColorSpentToCast: snapshots the cast-time result into the ETB trigger")
+    void colorSpentToCastConditional() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        ConditionalEffect twoWhite = new ConditionalEffect(
+                new ColorSpentToCast(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2), wrapped);
+        java.util.EnumMap<com.github.laxika.magicalvibes.model.ManaColor, Integer> spent =
+                new java.util.EnumMap<>(com.github.laxika.magicalvibes.model.ManaColor.class);
+
+        spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
+        gameData.setSpellCastManaSpentByColor(card.getId(), spent);
+        assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isSameAs(twoWhite);
+
+        spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
+        gameData.setSpellCastManaSpentByColor(card.getId(), spent);
+        assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isNull();
     }
 
     @Test

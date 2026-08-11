@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
@@ -75,8 +76,8 @@ public class EtbEffectResolver {
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->
                 new GainLifeEffect(ctx.card().getToughness()));
 
-        // Conditional ETB effects: unwrap types (Kicked / CastFromZone) resolve to the inner effect
-        // when met, gate types (Metalcraft / Morbid / Raid / ControlsAnother) stay wrapped for
+        // Conditional ETB effects: immutable cast-time conditions are evaluated while the trigger
+        // is created, gate types (Metalcraft / Morbid / Raid / ControlsAnother) stay wrapped for
         // re-evaluation at stack resolution, and every other condition passes through unchanged.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
@@ -98,6 +99,9 @@ public class EtbEffectResolver {
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
                                 ? conditional.wrapped() : null;
+                case ColorSpentToCast colorSpent ->
+                        conditionEvaluationService.isMet(ctx.gameData(), colorSpent, conditionContext)
+                                ? effect : null;
                 // "if you cast it" is true for a spell cast from any zone, but not for a copy or
                 // a permanent put onto the battlefield by an effect.
                 case WasCast ignored ->

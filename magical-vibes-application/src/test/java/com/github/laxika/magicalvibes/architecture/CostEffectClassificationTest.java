@@ -76,8 +76,8 @@ class CostEffectClassificationTest {
             "UntapMultiplePermanentsCost");
 
     /**
-     * Spell-handled cost types that are paid without the caster choosing one of their battlefield
-     * permanents (life, cards, graveyard cards, escalate, or "sacrifice everything"). Every other
+     * Spell-handled cost types that do not use the generic single-permanent payment field. These
+     * either consume a non-permanent resource or have a dedicated selection route. Every other
      * spell-handled cost is paid via {@code PlayCardRequest.sacrificePermanentId} and must expose
      * the permanent it consumes through {@code CostEffect.consumedPermanentFilter()}.
      */
@@ -98,6 +98,8 @@ class CostEffectClassificationTest {
             "EscalateDiscardCost",
             "EscalateManaCost",
             "RepeatableAdditionalManaCost",
+            "BeholdCost",
+            "BeholdAndExileCost",
             "DelveCost");
 
     private static final String EFFECT_PKG_PATH =

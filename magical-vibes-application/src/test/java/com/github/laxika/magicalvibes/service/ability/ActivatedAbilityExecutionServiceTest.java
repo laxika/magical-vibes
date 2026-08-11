@@ -210,7 +210,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isEqualTo(1);
             assertThat(gameData.stack).isEmpty();
-            verify(playerInteractionSupport).applyDrawCards(gameData, player1Id, 1);
+            verify(drawService).resolveDrawCard(gameData, player1Id);
         }
 
         @Test

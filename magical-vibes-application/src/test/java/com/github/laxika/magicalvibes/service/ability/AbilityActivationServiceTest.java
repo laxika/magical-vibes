@@ -1511,7 +1511,7 @@ class AbilityActivationServiceTest {
                     .thenReturn(false);
             when(gameQueryService.isArtifact(perm)).thenReturn(true);
             when(castingCostService.getTargetingSubtypeTax(
-                    gameData, player1Id, targetId, null)).thenReturn(2);
+                    gameData, player1Id, targetId, null, true)).thenReturn(2);
 
             ManaPool insufficientPool = new ManaPool();
             insufficientPool.add(ManaColor.COLORLESS, 2);

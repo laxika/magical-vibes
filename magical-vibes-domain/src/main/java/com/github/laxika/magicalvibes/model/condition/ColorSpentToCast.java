@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 /**
  * At least {@code minimumAmount} mana of {@code color} was spent to cast this spell (including
  * generic costs paid with that color). The per-color amounts are snapshotted at cast time into
- * {@code GameData.spellCastManaSpentByColor} and read back when the spell resolves.
+ * {@code GameData.spellCastManaSpentByColor} and read back when the spell resolves or its
+ * enter-the-battlefield triggers are created.
  */
 public record ColorSpentToCast(ManaColor color, int minimumAmount) implements Condition {
 

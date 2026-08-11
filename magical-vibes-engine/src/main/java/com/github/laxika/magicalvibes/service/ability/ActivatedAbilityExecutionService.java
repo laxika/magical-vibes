@@ -771,7 +771,8 @@ public class ActivatedAbilityExecutionService {
                 int picks = amountEvaluationService.evaluate(gameData, anyColor.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
                 boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
-                        playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard());
+                        playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
+                        permanent.getId());
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);

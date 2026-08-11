@@ -3202,6 +3202,7 @@ public class GameData {
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
+        copy.activeTriggeredAbilityCopies = this.activeTriggeredAbilityCopies;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));
         copy.oncePerTurnGraveyardCastPermissionsUsedThisTurn.addAll(this.oncePerTurnGraveyardCastPermissionsUsedThisTurn);
