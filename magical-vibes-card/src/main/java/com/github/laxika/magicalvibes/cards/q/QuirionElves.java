@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "234")
+@CardRegistration(set = "INV", collectorNumber = "203")
 public class QuirionElves extends Card {
 
     public QuirionElves() {

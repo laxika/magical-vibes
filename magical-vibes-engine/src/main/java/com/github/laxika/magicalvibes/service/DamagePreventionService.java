@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndE
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -218,6 +219,16 @@ public class DamagePreventionService {
             return damage;
         }
         if (gameQueryService.isDamagePreventable(gameData)) {
+            int incomingDamage = damage;
+            int selfDamagePrevented = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(SelfDamagePreventionEffect.class::isInstance)
+                    .map(SelfDamagePreventionEffect.class::cast)
+                    .mapToInt(effect -> effect.preventedDamage(incomingDamage))
+                    .sum();
+            if (selfDamagePrevented > 0) {
+                damage -= Math.min(damage, selfDamagePrevented);
+                if (damage <= 0) return 0;
+            }
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
@@ -553,6 +564,20 @@ public class DamagePreventionService {
         if (sourcePermanentId == null) return false;
         Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
         return preventedSources != null && preventedSources.contains(sourcePermanentId);
+    }
+
+    /** Applies whole-turn chosen-source prevention to player damage and its optional color rider. */
+    public int applySourceDamagePreventionForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                                    int damage, Set<CardColor> sourceColors) {
+        if (!isSourceDamagePreventedForPlayer(gameData, playerId, sourcePermanentId)) return damage;
+
+        Set<UUID> lifeGainSources = gameData.playerSourceDamagePreventionLifeGainIds.get(playerId);
+        if (damage > 0 && lifeGainSources != null && lifeGainSources.contains(sourcePermanentId)
+                && sourceColors != null
+                && (sourceColors.contains(CardColor.BLACK) || sourceColors.contains(CardColor.RED))) {
+            lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
+        }
+        return 0;
     }
 
     /**

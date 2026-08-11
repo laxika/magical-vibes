@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -72,6 +73,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -216,6 +218,12 @@ public class CombatAttackService {
             }
         }
 
+        int maximumAttackers = CombatHelper.getMaximumAttackers(gameData);
+        if (attackerIndices.size() > maximumAttackers) {
+            throw new IllegalStateException("No more than " + maximumAttackers
+                    + " creature" + (maximumAttackers == 1 ? "" : "s") + " can attack each combat");
+        }
+
         // CR 508.1c: validate "can't attack alone" — if any declared attacker has this restriction,
         // there must be at least 2 total attackers
         validateCantAttackAlone(battlefield, attackerIndices);
@@ -229,6 +237,8 @@ public class CombatAttackService {
 
         // Orcish Conscripts: "can't attack unless at least N other creatures also attack"
         validateCountAlsoAttacks(battlefield, attackerIndices);
+
+        validateMatchingCreatureAlsoAttacks(gameData, battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
@@ -1396,6 +1406,28 @@ public class CombatAttackService {
                             throw new IllegalStateException(restricted.getCard().getName()
                                     + " can't attack unless at least " + effect.otherCount()
                                     + " other creatures attack");
+                        }
+                    });
+        }
+    }
+
+    private void validateMatchingCreatureAlsoAttacks(GameData gameData, List<Permanent> battlefield,
+                                                     List<Integer> attackerIndices) {
+        for (int idx : attackerIndices) {
+            Permanent restricted = battlefield.get(idx);
+            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(MatchingAttackerRestrictionEffect.class::isInstance)
+                    .map(MatchingAttackerRestrictionEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> {
+                        boolean matchingAttacker = attackerIndices.stream()
+                                .filter(other -> other != idx)
+                                .map(battlefield::get)
+                                .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, other, effect.matchingAttackerPredicate()));
+                        if (!matchingAttacker) {
+                            throw new IllegalStateException(restricted.getCard().getName()
+                                    + " can't attack unless " + effect.restrictionDescription());
                         }
                     });
         }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "107")
 @CardRegistration(set = "TMP", collectorNumber = "87")
+@CardRegistration(set = "INV", collectorNumber = "72")
 public class ShimmeringWings extends Card {
 
     public ShimmeringWings() {

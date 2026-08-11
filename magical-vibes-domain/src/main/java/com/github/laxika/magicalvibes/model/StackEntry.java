@@ -29,6 +29,8 @@ public class StackEntry {
     @Setter private UUID targetId;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
+    @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
     private final Zone targetZone;
     @Setter private List<UUID> targetCardIds;
     @Setter private TargetFilter targetFilter;
@@ -154,7 +156,7 @@ public class StackEntry {
     /** Power and toughness of the entering permanent when an evolve trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;
     @Setter private Integer triggeringPermanentToughnessAtTrigger;
-    private final List<UUID> targetIds;
+    private List<UUID> targetIds;
     /**
      * Whether {@link #targetIds} was derived from the controller-announced amount assignments
      * (divided damage / prevention / counter distribution) rather than from the card's declared
@@ -402,6 +404,7 @@ public class StackEntry {
         this.targetId = source.targetId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
         this.targetFilter = source.targetFilter;
@@ -538,6 +541,25 @@ public class StackEntry {
         if (targetIndex >= 0 && targetIndex < targetIds.size()) {
             illegalTargetIndices.add(targetIndex);
         }
+    }
+
+    public void replaceTargetIdAt(int targetIndex, UUID targetId) {
+        if (targetIndex < 0 || targetIndex >= targetIds.size()) {
+            throw new IllegalArgumentException("Invalid target index");
+        }
+        List<UUID> updated = new ArrayList<>(targetIds);
+        updated.set(targetIndex, targetId);
+        targetIds = List.copyOf(updated);
+        illegalTargetIndices.remove(targetIndex);
+    }
+
+    public void replaceTargetCardIdAt(int targetIndex, UUID targetId) {
+        if (targetIndex < 0 || targetIndex >= targetCardIds.size()) {
+            throw new IllegalArgumentException("Invalid target index");
+        }
+        List<UUID> updated = new ArrayList<>(targetCardIds);
+        updated.set(targetIndex, targetId);
+        targetCardIds = List.copyOf(updated);
     }
 
     /**

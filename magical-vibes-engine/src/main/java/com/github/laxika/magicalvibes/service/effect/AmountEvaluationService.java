@@ -183,8 +183,8 @@ public class AmountEvaluationService {
                     countPermanents(gameData, c, ctx);
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
-            case BasicLandTypesAmongControlledLands ignored ->
-                    countBasicLandTypesAmongControlledLands(gameData, ctx);
+            case BasicLandTypesAmongControlledLands domainAmount ->
+                    countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
             case CardsInExile c ->
@@ -539,15 +539,19 @@ public class AmountEvaluationService {
      * count in both branches; static evaluation reads them through the recursion-safe accessor,
      * which falls back to printed types only for a land whose own static bonus is being assembled.
      */
-    private int countBasicLandTypesAmongControlledLands(GameData gameData, AmountContext ctx) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return 0;
+    private int countBasicLandTypesAmongControlledLands(
+            GameData gameData, BasicLandTypesAmongControlledLands amount, AmountContext ctx) {
         java.util.Set<CardSubtype> found = java.util.EnumSet.noneOf(CardSubtype.class);
-        for (Permanent permanent : battlefield) {
-            if (!permanent.getCard().hasType(CardType.LAND)) continue;
-            found.addAll(GameQueryService.isStaticEvaluationActive()
-                    ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
-                    : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!permanent.getCard().hasType(CardType.LAND)) continue;
+                found.addAll(GameQueryService.isStaticEvaluationActive()
+                        ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
+                        : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
+            }
         }
         return found.size();
     }

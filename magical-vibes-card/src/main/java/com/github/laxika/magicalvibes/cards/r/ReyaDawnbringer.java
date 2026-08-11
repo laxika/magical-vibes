@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "35")
+@CardRegistration(set = "INV", collectorNumber = "33")
 public class ReyaDawnbringer extends Card {
 
     public ReyaDawnbringer() {

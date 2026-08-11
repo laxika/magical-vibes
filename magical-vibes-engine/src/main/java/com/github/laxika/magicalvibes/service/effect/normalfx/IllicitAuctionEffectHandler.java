@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,14 +38,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
 
-    /** Generous cap on a single bid; a life loss can exceed the bidder's life total (per ruling). */
-    private static final int MAX_BID = 999;
-
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
     private final LifeSupport lifeSupport;
+    private final LifeBidAuctionSupport lifeBidAuctionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,18 +61,15 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             if (target == null) {
                 return;
             }
-            state.reset();
-            state.active = true;
             UUID controllerId = entry.getControllerId();
-            state.order.add(controllerId);
+            List<UUID> order = new ArrayList<>();
+            order.add(controllerId);
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(controllerId)) {
-                    state.order.add(playerId);
+                    order.add(playerId);
                 }
             }
-            state.highBid = 0;
-            state.highBidderId = controllerId;
-            state.index = 0; // points at the controller, who opens the bidding at 0
+            lifeBidAuctionSupport.begin(gameData, order, 0);
             promptNextBidderOrFinish(gameData, entry, cardName);
             return;
         }
@@ -83,9 +80,7 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             UUID bidder = state.currentBidderId;
             String bidderName = gameData.playerIdToName.get(bidder);
 
-            if (bid > state.highBid) {
-                state.highBid = bid;
-                state.highBidderId = bidder;
+            if (lifeBidAuctionSupport.recordBid(gameData, bid)) {
                 gameLogService.append(gameData, GameLog.text(bidderName + " bids " + bid + " life for " + cardName + "."));
             } else {
                 gameLogService.append(gameData, GameLog.text(bidderName + " passes on " + cardName + "."));
@@ -100,9 +95,8 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
      */
     private void promptNextBidderOrFinish(GameData gameData, StackEntry entry, String cardName) {
         IllicitAuctionState state = gameData.illicitAuction;
-        state.index = (state.index + 1) % state.order.size();
-        UUID next = state.order.get(state.index);
-        if (next.equals(state.highBidderId)) {
+        UUID next = lifeBidAuctionSupport.advanceToNextBidder(gameData);
+        if (next == null) {
             finish(gameData, entry, cardName);
             return;
         }
@@ -113,7 +107,7 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
                 new PendingInteraction.IllicitAuctionBidChoice(
                         next,
                         state.highBid,
-                        MAX_BID,
+                        LifeBidAuctionSupport.MAX_BID,
                         cardName,
                         entry.getTargetId(),
                         state.highBidderId));

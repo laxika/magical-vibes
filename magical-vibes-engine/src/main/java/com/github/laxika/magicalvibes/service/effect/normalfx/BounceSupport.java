@@ -1,19 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -27,6 +32,7 @@ import java.util.UUID;
 public class BounceSupport {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final StateTriggerService stateTriggerService;
@@ -45,6 +51,33 @@ public class BounceSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
+    }
+
+    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color) {
+        applyReturnAllPermanentsOfColorToHand(gameData, entry, color, null);
+    }
+
+    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color,
+            PermanentPredicate filter) {
+        List<Permanent> toReturn = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                toReturn.addAll(battlefield.stream()
+                        .filter(permanent -> gameQueryService.getEffectiveColors(gameData, permanent).contains(color)
+                                && (filter == null || predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, filter)))
+                        .toList()));
+
+        for (Permanent permanent : toReturn) {
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+            log.info("Game {} - {} returned to owner's hand by {}",
+                    gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+        }
+
+        if (!toReturn.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 
     /**

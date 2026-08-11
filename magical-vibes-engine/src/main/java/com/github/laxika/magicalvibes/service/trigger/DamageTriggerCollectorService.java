@@ -809,6 +809,7 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 sd.sourcePermanentId());
+        entry.setEventValue(sd.totalDamage());
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

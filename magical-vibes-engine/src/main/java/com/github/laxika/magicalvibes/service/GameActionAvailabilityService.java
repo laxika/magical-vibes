@@ -252,11 +252,17 @@ public class GameActionAvailabilityService {
         // Spells whose declared targets are all optional ("up to one/N target …") can always be
         // cast by choosing zero targets, even if no legal target exists (e.g. Stress Dream).
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0;
-        if (!allTargetsOptional
-                && EffectResolution.needsSpellCastTarget(card)
-                && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId,
-                        maxAnnounceableX(card, pool))) {
-            return false;
+        if (!allTargetsOptional && EffectResolution.needsSpellCastTarget(card)) {
+            Integer maxXValue = maxAnnounceableX(card, pool);
+            boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
+                    gameData, card, playerId, maxXValue);
+            if (!hasValidTarget && canAffordKickerCost(gameData, playerId, card, pool, additionalGenericCost)) {
+                hasValidTarget = validTargetService.hasValidTargetsForSpell(
+                        gameData, card, playerId, maxXValue, true);
+            }
+            if (!hasValidTarget) {
+                return false;
+            }
         }
 
         // MTG rule 601.2b: can't cast if additional cost requiring N graveyard cards can't be paid
@@ -296,6 +302,56 @@ public class GameActionAvailabilityService {
     private Integer maxAnnounceableX(Card card, ManaPool pool) {
         ManaCost cost = card.getParsedManaCost();
         return cost != null && cost.hasX() ? cost.calculateMaxX(pool) : null;
+    }
+
+    private boolean canAffordKickerCost(GameData gameData, UUID playerId, Card card,
+                                        ManaPool pool, int additionalGenericCost) {
+        KickerEffect kicker = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(KickerEffect.class::isInstance)
+                .map(KickerEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (kicker == null) {
+            return false;
+        }
+        if (kicker.hasSacrificeCost()
+                && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, kicker.sacrificePredicate()))) {
+            return false;
+        }
+        if (!kicker.hasManaCost()) {
+            return true;
+        }
+        if (card.getManaCost() == null) {
+            return false;
+        }
+
+        String combinedManaCost = card.getManaCost() + kicker.cost();
+        if (additionalGenericCost > 0) {
+            combinedManaCost += "{" + additionalGenericCost + "}";
+        }
+        ManaCost totalCost = new ManaCost(combinedManaCost);
+        int kickerXValue = totalCost.hasX() ? totalCost.calculateMaxX(pool) : 0;
+        boolean isArtifact = card.hasType(CardType.ARTIFACT);
+        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
+        boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
+        boolean kickedOnlyGreen = pool.getKickedOnlyGreen() > 0;
+        boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
+        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
+                ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+        Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
+        boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
+                || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly
+                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
+        return hasRestricted
+                ? totalCost.canPay(pool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
+                instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
+                creatureSpellOnly, false, legendarySpellOnly)
+                : totalCost.canPay(pool, kickerXValue);
     }
 
     /**

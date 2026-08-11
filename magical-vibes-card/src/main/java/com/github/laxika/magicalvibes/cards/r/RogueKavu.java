@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "213")
+@CardRegistration(set = "INV", collectorNumber = "160")
 public class RogueKavu extends Card {
 
     public RogueKavu() {

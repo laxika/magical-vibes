@@ -41,6 +41,7 @@ public sealed interface Condition permits
         CastFromZone,
         CastNotFromHand,
         ChosenColorStrictlyMostCommonAmongOpponentNontokens,
+        ColorMostCommonAmongAllPermanents,
         ColorSpentToCast,
         ControllerCastAnotherSpellThisTurn,
         ControllerCastSpellThisTurn,

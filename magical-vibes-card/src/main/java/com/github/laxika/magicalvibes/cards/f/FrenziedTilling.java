@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "166")
+@CardRegistration(set = "INV", collectorNumber = "247")
 public class FrenziedTilling extends Card {
 
     public FrenziedTilling() {

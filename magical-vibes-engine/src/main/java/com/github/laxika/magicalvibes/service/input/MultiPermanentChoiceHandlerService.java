@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -66,6 +68,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
     private final DamageSupport damageSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
@@ -83,6 +87,9 @@ public class MultiPermanentChoiceHandlerService {
             .ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler keepOneOfEachTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesOneOfEachTypeEffectHandler eachPlayerSacrificesOneOfEachTypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
             tappedLandSacrificeDamageIfSubtypeHandler;
@@ -128,7 +135,8 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
-        if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
+        if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice)
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
@@ -284,12 +292,16 @@ public class MultiPermanentChoiceHandlerService {
             handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx) {
             handleEachPlayerSacrificeOneOfEachTypeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
+            handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
             handlePileSeparation(gameData, permanentIds);
+        } else if (gameData.hasPendingInteraction(PendingBendOrBreak.class)) {
+            bendOrBreakEffectHandler.completeLandSeparation(gameData, permanentIds);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }
@@ -1660,6 +1672,19 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleEachPlayerChoosesLandOfEachBasicTypeChoice(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice context) {
+        eachPlayerChoosesLandOfEachBasicTypeHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleExileTetraviteTokensPutCountersOnSource(GameData gameData, List<UUID> permanentIds,
                                                                MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource context) {
         UUID sourceId = context.sourcePermanentId();
@@ -1779,7 +1804,14 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
-        destructionSupport.completePileSeparationStep1(gameData, permanentIds);
+        PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (state.disposition() == CardPileDisposition.ATTACKERS) {
+            fightOrFlightSupport.completePileSeparationStep1(gameData, permanentIds);
+        } else if (state.disposition() == CardPileDisposition.BLOCKERS) {
+            standOrFallSupport.completePileSeparationStep1(gameData, permanentIds);
+        } else {
+            destructionSupport.completePileSeparationStep1(gameData, permanentIds);
+        }
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

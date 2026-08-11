@@ -62,6 +62,7 @@ public sealed interface DelayedAction permits
         DelayedDestroyCreatureDamagedByWatchedCreature,
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
+        DelayedSacrificeTargetPermanentAtEndStep,
         AddManaAtNextMainPhase,
         EchoAtNextUpkeep,
         LoseLifeAtNextDrawStepUnlessPays,

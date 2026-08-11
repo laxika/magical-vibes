@@ -39,6 +39,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
 
+    record PsychicBattleRetarget(UUID spellCardId, UUID controllerId, Card sourceCard, int targetIndex)
+            implements PermanentChoiceContext {}
+
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
     /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
@@ -103,6 +106,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
     record CannibalizeChoice(Card sourceCard, UUID controllerId,
                              UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+    /** Barrin's Spite: the creatures' controller picks which target to sacrifice; the other returns
+     *  to its owner's hand. */
+    record SacrificeOneOfTwoThenReturnOtherToHand(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
+                                                  UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
@@ -217,7 +224,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Prevent all damage [the chosen source] would deal this turn" — to the controller only
      *  (Auriok Replica) or to everything (Burrenton Forge-Tender). The legal source choices are
      *  already filtered when the choice begins. */
-    record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly) implements PermanentChoiceContext {}
+    record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly,
+                                     boolean gainLifeForBlackOrRedSource) implements PermanentChoiceContext {
+        public PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly) {
+            this(controllerId, controllerOnly, false);
+        }
+    }
 
     record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
 
@@ -684,6 +696,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  (tracking creature mana when {@code creatureSource}). Begun inline during mana-ability resolution. */
     record ManaAbilityAddToChosenPlayer(ManaColor color, int amount, boolean creatureSource,
                                         String sourceCardName) implements PermanentChoiceContext {}
+
+    /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
+    record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}
 
     /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
      *  value is the one they must pay for or sacrifice. */

@@ -115,8 +115,15 @@ public class LandTapTriggerCollectorService {
                 gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
         CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
+        boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
+                gameData, tappingPlayerId, match.permanent().getId());
+        if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+            damagePreventionService.applySourceDamagePreventionForPlayer(
+                    gameData, tappingPlayerId, match.permanent().getId(), damage,
+                    gameQueryService.getEffectiveColors(gameData, match.permanent()));
+        }
         if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, match.permanent().getId())
+                && !sourceDamagePrevented
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);

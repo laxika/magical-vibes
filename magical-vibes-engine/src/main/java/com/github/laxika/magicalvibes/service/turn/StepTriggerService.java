@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
@@ -199,6 +201,7 @@ public class StepTriggerService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final LifeSupport lifeSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTransformedReturnService graveyardTransformedReturnService;
     private final GraveyardTargetingService graveyardTargetingService;
@@ -219,6 +222,7 @@ public class StepTriggerService {
                               GameLogService gameLogService,
                               PlayerInputService playerInputService,
                               PermanentRemovalService permanentRemovalService,
+                              LifeSupport lifeSupport,
                               BattlefieldEntryService battlefieldEntryService,
                               GraveyardTransformedReturnService graveyardTransformedReturnService,
                               GraveyardTargetingService graveyardTargetingService,
@@ -238,6 +242,7 @@ public class StepTriggerService {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.permanentRemovalService = permanentRemovalService;
+        this.lifeSupport = lifeSupport;
         this.battlefieldEntryService = battlefieldEntryService;
         this.graveyardTransformedReturnService = graveyardTransformedReturnService;
         this.graveyardTargetingService = graveyardTargetingService;
@@ -1374,7 +1379,7 @@ public class StepTriggerService {
                 }
 
                 ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(grant.manaCost()),
+                        new PayManaCost(grant.manaCost(), null, null, false, grant.lifeAmount(), false),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
                 gameData.stack.add(new StackEntry(
@@ -1924,6 +1929,7 @@ public class StepTriggerService {
                     gameData.playerIdToName.get(activePlayerId));
             return;
         }
+        Integer currentTurnSkip = gameData.skipDrawStepThisTurn.remove(activePlayerId);
 
         // A one-shot skip queued earlier (e.g. Ivory Gargoyle's death trigger) consumes one draw step.
         int queuedSkips = gameData.skipNextDrawStepCount.getOrDefault(activePlayerId, 0);
@@ -1936,6 +1942,13 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (queued skip)", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            return;
+        }
+
+        if (currentTurnSkip != null && currentTurnSkip == gameData.turnNumber) {
+            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} skips draw step (current-turn effect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
 
@@ -2655,6 +2668,31 @@ public class StepTriggerService {
                         "The card exiled with " + sourceName + " is put into its owner's graveyard."));
                 log.info("Game {} - unplayed card exiled with {} put into owner's graveyard at end step",
                         gameData.id, sourceName);
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedSacrificeTargetPermanentAtEndStep.class)) {
+            List<DelayedSacrificeTargetPermanentAtEndStep> pending =
+                    gameData.drainDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class);
+            for (DelayedSacrificeTargetPermanentAtEndStep action : pending) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (permanent == null
+                        || !action.controllerId().equals(
+                                gameQueryService.findPermanentController(gameData, permanent.getId()))) {
+                    continue;
+                }
+
+                int toughness = Math.max(0, gameQueryService.getEffectiveToughness(gameData, permanent));
+                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (!permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                    continue;
+                }
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, sacrificingPlayerId, permanent.getCard());
+                gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
+                lifeSupport.applyGainLife(gameData, action.controllerId(), toughness,
+                        action.sourceCard().getName(), action.sourceCard(), StackEntryType.TRIGGERED_ABILITY);
+                permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
 

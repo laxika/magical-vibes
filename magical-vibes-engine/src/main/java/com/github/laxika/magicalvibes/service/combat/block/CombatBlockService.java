@@ -289,6 +289,12 @@ public class CombatBlockService {
 
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
         }
+        int maximumBlockers = CombatHelper.getMaximumBlockers(gameData);
+        if (blockerUsageCount.size() > maximumBlockers) {
+            throw new IllegalStateException("No more than " + maximumBlockers
+                    + " distinct creature" + (maximumBlockers == 1 ? "" : "s")
+                    + " can block each combat");
+        }
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 

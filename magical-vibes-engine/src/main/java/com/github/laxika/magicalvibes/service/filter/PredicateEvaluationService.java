@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -82,10 +83,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromCol
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -181,10 +188,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -439,6 +448,8 @@ public class PredicateEvaluationService {
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
             }
+            case PermanentHasNonManaActivatedAbilityPredicate ignored ->
+                    hasNonManaActivatedAbility(gameData, permanent);
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
@@ -506,6 +517,13 @@ public class PredicateEvaluationService {
             }
             case PermanentSharesCardTypeWithSourcePermanentPredicate ignored ->
                     sharesCardTypeWithSourcePermanent(permanent, filterContext);
+            case PermanentSharesMostCommonColorPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                yield permanent.getEffectiveColors().stream()
+                        .anyMatch(color -> ColorMostCommonAmongAllPermanents.isMostCommon(gameData, color));
+            }
             case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
                     yield false;
@@ -1026,6 +1044,16 @@ public class PredicateEvaluationService {
                 String chosenName = sourcePermanent == null ? null : sourcePermanent.getChosenName();
                 yield chosenName != null && chosenName.equals(permanent.getCard().getName());
             }
+            case PermanentHasSourceChosenColorPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                CardColor chosenColor = sourcePermanent == null ? null : sourcePermanent.getChosenColor();
+                yield chosenColor != null
+                        && matchesPermanentPredicate(permanent,
+                                new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);
+            }
             case PermanentNamedPredicate namedPredicate ->
                     permanent.getCard().getName().equals(namedPredicate.cardName());
             case PermanentNameInPredicate nameInPredicate ->
@@ -1189,6 +1217,11 @@ public class PredicateEvaluationService {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 String chosenName = source == null ? null : source.getChosenName();
                 yield chosenName != null && chosenName.equals(permanent.getCard().getName());
+            }
+            case PermanentHasSourceChosenColorPredicate ignored -> {
+                CardColor chosen = sourceChosenColor(context);
+                yield chosen != null
+                        && matchesStaticLeaf(permanent, new PermanentColorInPredicate(Set.of(chosen)));
             }
             case PermanentColorInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -1453,6 +1486,33 @@ public class PredicateEvaluationService {
         if (context.gameData() == null || context.sourceCardId() == null) return null;
         Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
         return source == null ? null : source.getChosenSubtype();
+    }
+
+    private CardColor sourceChosenColor(FilterContext context) {
+        if (context == null) return null;
+        if (context.sourcePermanentSnapshot() != null) {
+            return context.sourcePermanentSnapshot().getChosenColor();
+        }
+        if (context.gameData() == null || context.sourceCardId() == null) return null;
+        Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
+        return source == null ? null : source.getChosenColor();
+    }
+
+    private boolean hasNonManaActivatedAbility(GameData gameData, Permanent permanent) {
+        List<ActivatedAbility> abilities = new ArrayList<>();
+        if (gameData == null) {
+            abilities.addAll(permanent.getCard().getActivatedAbilities());
+        } else {
+            GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+            if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                abilities.addAll(permanent.getCard().getActivatedAbilities());
+            }
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
+        }
+        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
+        abilities.addAll(permanent.getTemporaryActivatedAbilities());
+        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        return abilities.stream().anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
     }
 
     /**

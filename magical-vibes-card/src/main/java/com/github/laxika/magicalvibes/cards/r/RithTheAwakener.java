@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DRB", collectorNumber = "12")
+@CardRegistration(set = "INV", collectorNumber = "267")
 public class RithTheAwakener extends Card {
 
     public RithTheAwakener() {

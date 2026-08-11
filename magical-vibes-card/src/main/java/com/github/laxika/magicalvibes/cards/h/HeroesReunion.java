@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "168")
+@CardRegistration(set = "INV", collectorNumber = "250")
 public class HeroesReunion extends Card {
 
     public HeroesReunion() {

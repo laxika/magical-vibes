@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EXO", collectorNumber = "56")
+@CardRegistration(set = "INV", collectorNumber = "98")
 public class CursedFlesh extends Card {
 
     public CursedFlesh() {

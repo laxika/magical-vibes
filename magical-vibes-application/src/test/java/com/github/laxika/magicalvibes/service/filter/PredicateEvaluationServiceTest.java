@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -9,11 +10,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -46,8 +50,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -73,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -496,6 +503,29 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentHasNonManaActivatedAbilityPredicate matches a land with a non-mana ability")
+        void nonManaActivatedAbilityPredicateMatches() {
+            Card utilityLand = createLand("Utility Land");
+            utilityLand.addActivatedAbility(new ActivatedAbility(false, null,
+                    List.of(new DrawCardEffect()), "Draw a card."));
+            Permanent perm = addPermanent(player1Id, utilityLand);
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentHasNonManaActivatedAbilityPredicate rejects a land with only mana abilities")
+        void nonManaActivatedAbilityPredicateRejectsManaOnlyLand() {
+            Card manaLand = createLand("Mana Land");
+            manaLand.addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
+            Permanent perm = addPermanent(player1Id, manaLand);
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsArtifactPredicate matches artifact")
         void artifactPredicateMatches() {
             Permanent perm = addPermanent(player1Id, createArtifact("Angel's Feather"));
@@ -837,6 +867,45 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentSharesMostCommonColorPredicate matches a tied color")
+        void sharesMostCommonColorMatchesTiedColor() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("White Creature", 1, 1, CardColor.WHITE));
+            addPermanent(player2Id, createCreature("Blue Creature", 1, 1, CardColor.BLUE));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, target,
+                    new PermanentSharesMostCommonColorPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentSharesMostCommonColorPredicate counts every color of a multicolored permanent")
+        void sharesMostCommonColorCountsMulticoloredPermanents() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("White Creature", 1, 1, CardColor.WHITE));
+            Card blueRed = createCreature("Blue Red Creature", 1, 1, CardColor.BLUE);
+            blueRed.setColors(List.of(CardColor.BLUE, CardColor.RED));
+            addPermanent(player2Id, blueRed);
+            Card secondBlueRed = createCreature("Second Blue Red Creature", 1, 1, CardColor.BLUE);
+            secondBlueRed.setColors(List.of(CardColor.BLUE, CardColor.RED));
+            addPermanent(player2Id, secondBlueRed);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, target,
+                    new PermanentSharesMostCommonColorPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentSharesMostCommonColorPredicate rejects a less common color")
+        void sharesMostCommonColorRejectsLessCommonColor() {
+            Permanent target = addPermanent(player1Id,
+                    createCreature("White Creature", 1, 1, CardColor.WHITE));
+            addPermanent(player2Id, createCreature("Blue Creature 1", 1, 1, CardColor.BLUE));
+            addPermanent(player2Id, createCreature("Blue Creature 2", 1, 1, CardColor.BLUE));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, target,
+                    new PermanentSharesMostCommonColorPredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentDealtDamageThisTurnPredicate matches permanent dealt damage this turn")
         void dealtDamageThisTurnPredicateMatches() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
@@ -954,6 +1023,35 @@ class PredicateEvaluationServiceTest {
 
             source.setChosenSubtype(CardSubtype.GOBLIN);
             assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentHasSourceChosenSubtypePredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasSourceChosenColorPredicate matches a permanent with the source's chosen color")
+        void sourceChosenColorMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Red Creature", 2, 2, CardColor.RED));
+            Card sourceCard = createCreature("Teferi's Moat", 0, 0, CardColor.WHITE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenColor(CardColor.RED);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenColorPredicate(), ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentHasSourceChosenColorPredicate rejects another color and an unchosen source")
+        void sourceChosenColorRejects() {
+            Permanent perm = addPermanent(player1Id, createCreature("Red Creature", 2, 2, CardColor.RED));
+            Card sourceCard = createCreature("Teferi's Moat", 0, 0, CardColor.WHITE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(sourceCard.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenColorPredicate(), ctx)).isFalse();
+
+            source.setChosenColor(CardColor.BLUE);
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenColorPredicate(), ctx)).isFalse();
         }
 
         @Test

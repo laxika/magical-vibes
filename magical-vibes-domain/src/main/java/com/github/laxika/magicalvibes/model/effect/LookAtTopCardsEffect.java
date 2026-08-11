@@ -63,6 +63,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                          {@code TOP_OF_LIBRARY})
  * @param optional          when true the choice is a "may" — the player can decline / pick fewer,
  *                          and no auto-move-to-hand shortcut applies
+ * @param gainLifeEqualToChosenCardManaValue when true, gain life equal to the mana value of the
+ *                                           chosen card
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -71,14 +73,23 @@ public record LookAtTopCardsEffect(
         LookDestination restDestination,
         boolean reveal,
         LibrarySearchDestination chosenDestination,
-        boolean optional
+        boolean optional,
+        boolean gainLifeEqualToChosenCardManaValue
 ) implements CardEffect {
 
     /** Mandatory choose-to-hand shape (the original 5-field form). */
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
-                LibrarySearchDestination.HAND, false);
+                LibrarySearchDestination.HAND, false, false);
+    }
+
+    /** Canonical form without the optional chosen-card life-gain rider. */
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
+                chosenDestination, optional, false);
     }
 
     /** One card to hand, the rest on the bottom of the library. */
@@ -112,6 +123,13 @@ public record LookAtTopCardsEffect(
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */
     public static LookAtTopCardsEffect chooseNToHandRestToGraveyard(int lookCount, int chooseCount) {
         return chooseNToHandRestToGraveyard(lookCount, chooseCount, null, false);
+    }
+
+    /** Reveal the top cards, put one into hand, the rest into the graveyard, and gain life equal
+     * to the chosen card's mana value (Reviving Vapors). */
+    public static LookAtTopCardsEffect chooseOneToHandRestToGraveyardGainLifeEqualToManaValue(int lookCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, false, true);
     }
 
     /** Up to {@code chooseCount} matching cards to hand (optionally revealed), the rest into the graveyard. */

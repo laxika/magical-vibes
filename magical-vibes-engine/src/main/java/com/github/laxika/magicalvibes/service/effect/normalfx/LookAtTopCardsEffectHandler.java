@@ -54,6 +54,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     @Autowired
     @Lazy
     private GraveyardService graveyardService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -473,7 +474,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (handChoicePredicate == null) {
-            resolveWithoutPredicate(gameData, entry, controllerId, topCards, playerName, count, toHandCount);
+            resolveWithoutPredicate(gameData, entry, controllerId, topCards, playerName, count, toHandCount,
+                    e.gainLifeEqualToChosenCardManaValue());
             return;
         }
 
@@ -495,6 +497,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         if (eligibleCards.size() <= toHandCount) {
             for (Card card : eligibleCards) {
                 gameData.addCardToHand(controllerId, card);
+            }
+            if (e.gainLifeEqualToChosenCardManaValue() && !eligibleCards.isEmpty()) {
+                gainLifeForChosenCard(gameData, entry, eligibleCards.getFirst());
             }
             List<Card> remainingCards = new ArrayList<>(topCards);
             remainingCards.removeAll(eligibleCards);
@@ -521,7 +526,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds, true, true, false, false, false, 0, null, toHandCount,
                 actionVerb + " the top " + count + " cards of your library. Put " + handWord
-                        + " into your hand. The rest are put into your graveyard."));
+                        + " into your hand. The rest are put into your graveyard.",
+                e.gainLifeEqualToChosenCardManaValue() ? 1 : 0,
+                e.gainLifeEqualToChosenCardManaValue()));
 
         if (!e.reveal()) {
             gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
@@ -531,10 +538,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveWithoutPredicate(GameData gameData, StackEntry entry, UUID controllerId,
-            List<Card> topCards, String playerName, int count, int toHandCount) {
+            List<Card> topCards, String playerName, int count, int toHandCount,
+            boolean gainLifeEqualToChosenCardManaValue) {
         if (count <= toHandCount) {
             for (Card card : topCards) {
                 gameData.addCardToHand(controllerId, card);
+            }
+            if (gainLifeEqualToChosenCardManaValue && !topCards.isEmpty()) {
+                gainLifeForChosenCard(gameData, entry, topCards.getFirst());
             }
             String logMsg = count == 1
                     ? playerName + " looks at the top card of their library and puts it into their hand."
@@ -549,7 +560,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds, true, true, false, false, false, 0, null, toHandCount,
                 "Look at the top " + count + " cards of your library. Put " + handWord
-                        + " into your hand. The rest are put into your graveyard."));
+                        + " into your hand. The rest are put into your graveyard.",
+                gainLifeEqualToChosenCardManaValue ? 1 : 0,
+                gainLifeEqualToChosenCardManaValue));
 
         gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
@@ -574,5 +587,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
         }
         return eligibleCards;
+    }
+
+    private void gainLifeForChosenCard(GameData gameData, StackEntry entry, Card chosenCard) {
+        int manaValue = chosenCard.getManaValue();
+        if (manaValue <= 0) {
+            return;
+        }
+        lifeSupport.applyGainLife(gameData, entry.getControllerId(), manaValue,
+                entry.getCard().getName(), entry.getCard(), entry.getEntryType());
     }
 }

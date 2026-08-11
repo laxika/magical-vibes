@@ -445,6 +445,21 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Global Ruin: the current player chose a land for the current basic land type. The kept
+     * permanent IDs accumulate across all players and type passes until the remaining lands are
+     * sacrificed.
+     */
+    record EachPlayerChoosesLandOfEachBasicTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                      int typeIndex, java.util.List<UUID> keptIds,
+                                                      String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandOfEachBasicTypeChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
+        }
+    }
+
+    /**
      * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
      * controls to phase out (one pass of land / artifact / creature). Completion phases them out
      * then advances to the next pass via {@code EquipoiseSupport}.

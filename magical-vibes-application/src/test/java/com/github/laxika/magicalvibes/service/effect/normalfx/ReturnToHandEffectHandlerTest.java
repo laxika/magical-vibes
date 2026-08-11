@@ -78,7 +78,8 @@ class ReturnToHandEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
-        bounceSupport = new BounceSupport(gameQueryService, gameLogService, permanentRemovalService, stateTriggerService);
+        bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
+                permanentRemovalService, stateTriggerService);
         handler = new ReturnToHandEffectHandler(gameQueryService, gameLogService, gameOutcomeService,
                 permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport);
     }

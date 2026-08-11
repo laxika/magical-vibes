@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "151")
+@CardRegistration(set = "INV", collectorNumber = "299")
 public class ChromaticSphere extends Card {
 
     public ChromaticSphere() {

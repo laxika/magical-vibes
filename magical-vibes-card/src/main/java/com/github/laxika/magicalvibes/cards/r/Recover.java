@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "172")
+@CardRegistration(set = "INV", collectorNumber = "122")
 public class Recover extends Card {
 
     public Recover() {

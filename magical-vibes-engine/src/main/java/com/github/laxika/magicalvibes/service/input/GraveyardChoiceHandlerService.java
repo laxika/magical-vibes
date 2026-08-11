@@ -328,6 +328,7 @@ public class GraveyardChoiceHandlerService {
                         log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                                 player.getUsername(), card.getName());
                         pendingEntry.setTargetId(card.getId());
+                        triggerCollectionService.checkTargetChoiceTriggers(gameData, pendingEntry);
                         effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
                         if (!gameData.interaction.isAwaitingInput()) {
                             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -359,6 +360,7 @@ public class GraveyardChoiceHandlerService {
                             null
                     );
                     gameData.stack.add(entry);
+                    triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
                 }
             }
         }
@@ -615,6 +617,7 @@ public class GraveyardChoiceHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
                     !pendingFlashback);
+            triggerCollectionService.checkTargetChoiceTriggers(gameData, spellEntry);
             inputCompletionService.publishStateAfterInput(gameData);
         } else {
             // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
@@ -653,6 +656,7 @@ public class GraveyardChoiceHandlerService {
                 );
             }
             gameData.stack.add(triggeredEntry);
+            triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
 
             if (cardIds.isEmpty()) {
                 String triggerLog = description + " triggers targeting no cards.";

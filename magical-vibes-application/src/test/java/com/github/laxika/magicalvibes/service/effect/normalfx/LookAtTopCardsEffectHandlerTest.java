@@ -60,6 +60,7 @@ class LookAtTopCardsEffectHandlerTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private GraveyardService graveyardService;
+    @Mock private LifeSupport lifeSupport;
 
     private LibraryRevealSupport libraryRevealSupport;
     private LookAtTopCardsEffectHandler handler;
@@ -106,7 +107,7 @@ class LookAtTopCardsEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry =
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService);
         handler = new LookAtTopCardsEffectHandler(gameLogService, libraryRevealSupport, gameQueryService,
-                predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry);
+                predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry, lifeSupport);
         ReflectionTestUtils.setField(handler, "graveyardService", graveyardService);
     }
 

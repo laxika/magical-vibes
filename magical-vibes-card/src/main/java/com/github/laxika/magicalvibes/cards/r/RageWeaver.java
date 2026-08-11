@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "223")
+@CardRegistration(set = "INV", collectorNumber = "159")
 public class RageWeaver extends Card {
 
     public RageWeaver() {

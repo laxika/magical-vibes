@@ -18,10 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Handles the Goblin Recruiter choice: from the held-out matching {@code pool}, the controller
- * picks any number of cards to reveal and put on top of their library. The unchosen matching cards
- * are returned to the library, the library is shuffled, and the chosen cards are placed on top
- * (ordered via {@link PendingInteraction.LibraryReorder} when more than one is kept).
+ * Handles a search-to-top choice: from the held-out matching {@code pool}, the controller picks
+ * any number of cards to reveal and put on top of their library. The unchosen matching cards are
+ * returned to the library, the library is shuffled, and the chosen cards are placed on top (ordered
+ * via {@link PendingInteraction.LibraryReorder} when more than one is kept).
  */
 @Slf4j
 @Component
@@ -115,7 +115,7 @@ public class SearchLibraryToTopChoiceInteractionHandler
                     "Put these cards on top of your library in any order (top to bottom)."));
         }
 
-        log.info("Game {} - Goblin Recruiter: {} put {} card(s) on top, shuffled {} back",
+        log.info("Game {} - search-to-top: {} put {} card(s) on top, shuffled {} back",
                 gameData.id, controllerName, chosen.size(), rest.size());
     }
 

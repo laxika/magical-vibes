@@ -52,6 +52,7 @@ public enum CardSet {
     SET_DGM("DGM"),
     SET_INR("INR"),
     SET_ICE("ICE"),
+    SET_INV("INV"),
     SET_ALL("ALL"),
     SET_MIR("MIR"),
     SET_VIS("VIS"),

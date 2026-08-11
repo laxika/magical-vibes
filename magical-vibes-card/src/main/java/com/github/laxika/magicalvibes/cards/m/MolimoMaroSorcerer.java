@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "280")
+@CardRegistration(set = "INV", collectorNumber = "199")
 public class MolimoMaroSorcerer extends Card {
 
     public MolimoMaroSorcerer() {

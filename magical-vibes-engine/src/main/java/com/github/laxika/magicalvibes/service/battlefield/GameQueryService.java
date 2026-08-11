@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityTimingEffect;
+import com.github.laxika.magicalvibes.model.effect.BasicLandManaProducesAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
@@ -89,6 +90,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosen
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
@@ -138,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SharedColorDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -811,6 +814,29 @@ public class GameQueryService {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns whether a basic land currently produces mana of a color chosen by its controller due
+     * to a static effect controlled by that same player.
+     */
+    public boolean basicLandManaProducesAnyColor(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null
+                || !isLand(gameData, permanent)
+                || !hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(BasicLandManaProducesAnyColorEffect.class::isInstance);
     }
 
     /**
@@ -2702,7 +2728,8 @@ public class GameQueryService {
         }
         if (!bonus.losesAllAbilities()
                 && target.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ProtectionFromColorsOfPermanentsYouControlEffect.class::isInstance)
+                        .anyMatch(effect -> effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
+                                && protection.scope() == null)
                 && controlsPermanentOfColor(gameData, target, sourceColor)) {
             return true;
         }
@@ -2744,6 +2771,26 @@ public class GameQueryService {
                         && aura.getChosenColor() != null && effectiveColors.contains(aura.getChosenColor())
                         && aura.getCard().getEffects(EffectSlot.STATIC).stream()
                                 .anyMatch(PreventColorDamageToEnchantedCreatureEffect.class::isInstance));
+    }
+
+    /**
+     * Well-Laid Plans: returns {@code true} when a global shared-color creature damage prevention
+     * effect is active and the source and recipient are different creatures with at least one
+     * current color in common.
+     */
+    public boolean isDamageBetweenCreaturesOfSharedColorPrevented(GameData gameData,
+                                                                   Permanent target,
+                                                                   Permanent source) {
+        if (target == null || source == null || target.getId().equals(source.getId())) return false;
+        if (!isDamagePreventable(gameData) || !isCreature(gameData, target) || !isCreature(gameData, source)) {
+            return false;
+        }
+        Set<CardColor> targetColors = getEffectiveColors(gameData, target);
+        Set<CardColor> sourceColors = getEffectiveColors(gameData, source);
+        if (targetColors.isEmpty() || sourceColors.stream().noneMatch(targetColors::contains)) return false;
+        return gameData.anyPermanentMatches(permanent ->
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(SharedColorDamagePreventionEffect.class::isInstance));
     }
 
     /**
@@ -3665,6 +3712,29 @@ public class GameQueryService {
             }
         });
         return total[0];
+    }
+
+    /**
+     * Applies global damage replacement effects to one damage event. The amount is passed through
+     * each matching effect once, so a replacement can make the event too small for a later copy to
+     * apply.
+     */
+    public int applyDamageReplacementEffects(GameData gameData, int damage) {
+        if (damage <= 0) {
+            return damage;
+        }
+        int[] result = {damage};
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ReplaceDamageAboveThresholdEffect replacement
+                            && result[0] >= replacement.threshold()) {
+                        result[0] = replacement.replacementDamage();
+                    }
+                }
+            }
+        });
+        return result[0];
     }
 
     /**

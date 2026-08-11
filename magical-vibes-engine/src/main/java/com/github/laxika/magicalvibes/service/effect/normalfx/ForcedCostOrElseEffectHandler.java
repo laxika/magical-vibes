@@ -49,6 +49,17 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             // A dynamic reduction (Draco's Domain) is resolved now so the prompt and the accept
             // handler both use the already-reduced cost carried on the PendingMayAbility.
             String effectiveCost = payCost.manaCost();
+            if (payCost.useSourceManaCost()) {
+                Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                com.github.laxika.magicalvibes.model.Card sourceCard = source != null
+                        ? source.getCard() : entry.getCard();
+                effectiveCost = sourceCard.getManaCost();
+                if (effectiveCost == null || effectiveCost.isEmpty()) {
+                    // A permanent with no mana cost cannot pay its mana cost.
+                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    return;
+                }
+            }
             if (payCost.genericReduction() != null || payCost.genericIncrease() != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 var context = com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source);

@@ -213,25 +213,33 @@ public class AttackLegalityService {
         // Restrictions come from static abilities of the protected player's permanents (Form of the
         // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
         // "until your next turn" shield, which persists independently of its source permanent).
-        List<CardEffect> restrictions = new ArrayList<>();
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(protectedPlayerId);
         if (defenderBattlefield != null) {
-            for (Permanent perm : defenderBattlefield) {
-                restrictions.addAll(perm.getCard().getEffects(EffectSlot.STATIC));
+            for (Permanent source : defenderBattlefield) {
+                FilterContext context = FilterContext.of(gameData)
+                        .withSourceCardId(source.getCard().getId())
+                        .withSourceControllerId(protectedPlayerId);
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                            && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                                    attacker, restriction.exemptionPredicate(), context)) {
+                        return false;
+                    }
+                }
             }
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
                 if (protectedPlayerId.equals(fe.affectedPlayerId())) {
-                    restrictions.add(fe.effect());
+                    CardEffect effect = fe.effect();
+                    if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                            && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, attacker, restriction.exemptionPredicate())) {
+                        return false;
+                    }
                 }
-            }
-        }
-        for (CardEffect effect : restrictions) {
-            if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                    && (targetIsPlayer || restriction.protectsPlaneswalkers())
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
-                return false;
             }
         }
         return true;
@@ -260,16 +268,20 @@ public class AttackLegalityService {
     }
 
     /**
-     * Oracle en-Vec lock ("the chosen creatures attack if able, and other creatures can't attack").
-     * While {@code gameData.chosenAttackersThisTurn} holds a chosen set, only creatures inside every
-     * such set may attack — so an empty choice bars everyone, and creatures that entered after the
-     * choice are barred too. No entries = no restriction.
+     * Attack restrictions that allow only a recorded set of creatures. An empty choice bars
+     * everyone, and creatures that entered after the choice are barred too. No entries means no
+     * restriction.
      */
     private boolean isOutsideChosenAttackers(GameData gameData, Permanent creature) {
-        if (gameData.chosenAttackersThisTurn.isEmpty()) {
+        if (gameData.chosenAttackersThisTurn.isEmpty() && gameData.attackableCreaturesThisTurn.isEmpty()) {
             return false;
         }
         for (Set<UUID> chosen : gameData.chosenAttackersThisTurn.values()) {
+            if (!chosen.contains(creature.getId())) {
+                return true;
+            }
+        }
+        for (Set<UUID> chosen : gameData.attackableCreaturesThisTurn.values()) {
             if (!chosen.contains(creature.getId())) {
                 return true;
             }

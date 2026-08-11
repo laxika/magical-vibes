@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "WTH", collectorNumber = "37")
+@CardRegistration(set = "INV", collectorNumber = "51")
 public class Disrupt extends Card {
 
     public Disrupt() {

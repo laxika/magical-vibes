@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "267")
+@CardRegistration(set = "INV", collectorNumber = "255")
 public class Lobotomy extends Card {
 
     public Lobotomy() {

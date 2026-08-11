@@ -1345,7 +1345,7 @@ public class SpellCastingService {
             if (multipleSpellTargets) {
                 targetLegalityService.validateMultiSpellTargetsOnStack(gameData, card, targetIds, playerId);
             } else {
-                targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId, effectiveXValue);
+                targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId, effectiveXValue, kicked);
             }
         }
 
@@ -1445,6 +1445,13 @@ public class SpellCastingService {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId,
                         unwrappedNeedsTarget, effectiveXValue);
             }
+                if (kicked) {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, true);
+                } else {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
+                }
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
             String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
@@ -1728,7 +1735,7 @@ public class SpellCastingService {
                 paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked, sacrificeCostReduction, targetingTax, escalateManaSuffix);
             }
             if (kicked && kickerEffect != null) {
-                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
+                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool, effectiveXValue);
             }
             if (buyback && buybackEffect != null) {
                 payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
@@ -1891,7 +1898,7 @@ public class SpellCastingService {
                 paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked, targetSubtypeCostReduction, targetingTax, escalateManaSuffix);
             }
             if (kicked && kickerEffect != null) {
-                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool);
+                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool, resolvedXValue);
             }
             if (buyback && buybackEffect != null) {
                 payBuybackCost(gameData, player, card, buybackEffect, sacrificePermanentId,
@@ -3220,6 +3227,7 @@ public class SpellCastingService {
         Card card = graveyard.get(graveyardCardIndex);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -3286,6 +3294,9 @@ public class SpellCastingService {
                 && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
                 && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
+        }
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
+            throw new IllegalStateException("Card is not playable");
         }
 
         // Validate timing (aftermath / flashback half may differ in type from the parent split card)
@@ -3681,6 +3692,7 @@ public class SpellCastingService {
         Card card = exiledEntry.card();
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -3929,6 +3941,7 @@ public class SpellCastingService {
         Card card = deck.getFirst();
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
+                || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -4771,9 +4784,10 @@ public class SpellCastingService {
      * is pre-validated by the caller and paid only after the kicker mana succeeded.
      */
     private void payKickerCost(GameData gameData, Player player, Card card, KickerEffect kickerEffect,
-                               UUID sacrificePermanentId, ManaPool preManaPaymentPool) {
+                               UUID sacrificePermanentId, ManaPool preManaPaymentPool, int kickerXValue) {
         try {
-            gameData.addSpellCastManaSpent(card.getId(), computeKickerManaPayment(gameData, player, card, kickerEffect, sacrificePermanentId));
+            gameData.addSpellCastManaSpent(card.getId(), computeKickerManaPayment(gameData, player, card, kickerEffect,
+                    sacrificePermanentId, kickerXValue));
         } catch (IllegalStateException e) {
             if (preManaPaymentPool != null) {
                 gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
@@ -4782,25 +4796,30 @@ public class SpellCastingService {
         }
     }
 
-    private int computeKickerManaPayment(GameData gameData, Player player, Card card, KickerEffect kickerEffect, UUID sacrificePermanentId) {
+    private int computeKickerManaPayment(GameData gameData, Player player, Card card, KickerEffect kickerEffect,
+                                         UUID sacrificePermanentId, int kickerXValue) {
         UUID playerId = player.getId();
         int manaSpent = 0;
 
         // Pay mana cost if any
         if (kickerEffect.hasManaCost()) {
             ManaCost kickerCost = new ManaCost(kickerEffect.cost());
+            int xValue = kickerCost.hasX() ? kickerXValue : 0;
+            if (xValue < 0) {
+                throw new IllegalStateException("X value cannot be negative");
+            }
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             if (pool.getKickedOnlyGreen() > 0) {
-                if (!kickerCost.canPay(pool, 0, false, false, false, true)) {
+                if (!kickerCost.canPay(pool, xValue, false, false, false, true)) {
                     throw new IllegalStateException("Not enough mana to pay kicker cost");
                 }
-                kickerCost.pay(pool, 0, false, false, false, true);
+                kickerCost.pay(pool, xValue, false, false, false, true);
             } else {
-                if (!kickerCost.canPay(pool)) {
+                if (!kickerCost.canPay(pool, xValue)) {
                     throw new IllegalStateException("Not enough mana to pay kicker cost");
                 }
-                kickerCost.pay(pool, 0);
+                kickerCost.pay(pool, xValue);
             }
             manaSpent = before - pool.getTotalAllMana();
         }

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -98,6 +99,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
     @Mock private LifeSupport lifeSupport;
+    @Mock private PlayerInteractionSupport playerInteractionSupport;
     @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
@@ -191,6 +193,24 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
             assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
             assertThat(gameData.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Mana ability can draw immediately after producing mana")
+        void manaAbilityDrawsInline() {
+            Card card = createCard("Test Mana Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1), new DrawCardEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Sacrifice this artifact: Add {C}. Draw a card.");
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(gameData.stack).isEmpty();
+            verify(playerInteractionSupport).applyDrawCards(gameData, player1Id, 1);
         }
 
         @Test

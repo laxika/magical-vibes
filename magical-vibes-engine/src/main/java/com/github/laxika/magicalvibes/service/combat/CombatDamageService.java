@@ -238,6 +238,20 @@ public class CombatDamageService {
         applyPlaneswalkerDamage(gameData, state);
         checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers(gameData, state, defenderId);
 
+        for (var entry : state.combatDamageDealt.entrySet()) {
+            if (entry.getValue() > 0) {
+                triggerCollectionService.collectEnchantedCreatureDealsDamageTriggers(
+                        gameData, entry.getKey(), entry.getValue(), state.enchantedCreatureDealsDamageTriggers);
+            }
+        }
+
+        for (Permanent source : state.combatDamageDealt.keySet()) {
+            List<CardEffect> effects = new ArrayList<>(
+                    source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
+            effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
+            state.selfDealsCombatDamageEffects.put(source, effects);
+        }
+
         // Snapshot attacker IDs so blocking state can be cleaned up for attackers that die.
         Set<UUID> attackerIdsBefore = new HashSet<>();
         for (Permanent p : atkBf) {
@@ -293,6 +307,7 @@ public class CombatDamageService {
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
@@ -1031,7 +1046,8 @@ public class CombatDamageService {
             if (controllerId == null) controllerId = gameData.findControllerOf(source);
             if (controllerId == null) continue;
             triggerCollectionService.queueSourceDealsCombatDamageTriggers(
-                    gameData, source.getCard(), controllerId, source.getId(), damageDealt);
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealt,
+                    state.selfDealsCombatDamageEffects.get(source));
         }
     }
 
@@ -2305,6 +2321,7 @@ public class CombatDamageService {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;
             }
+            damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
@@ -2352,6 +2369,8 @@ public class CombatDamageService {
             }
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
+            damagePreventionService.applySourceDamagePreventionForPlayer(
+                    gameData, defenderId, atk.getId(), damage, gameQueryService.getEffectiveColors(gameData, atk));
         } else {
             // Tok-Tok, Volcano Born: an attacker of a matching colour deals that much combat damage
             // plus N to the defending player instead (CR 614.1). Applied per attacker, before the
@@ -2360,6 +2379,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
                         gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
             }
+            damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
@@ -2521,8 +2541,9 @@ public class CombatDamageService {
                                            Map<Integer, Integer> unpreventableDamageTakenMap,
                                            Set<Integer> deathtouchDamagedSet,
                                            Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
+        int replacedDamage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
         withSourceUnpreventableDamage(gameData, source, () -> applyCombatCreatureDamageInternal(
-                gameData, source, sourceStats, target, targetIdx, damage, damageTakenMap,
+                gameData, source, sourceStats, target, targetIdx, replacedDamage, damageTakenMap,
                 unpreventableDamageTakenMap, deathtouchDamagedSet, damageTakenBySourceMap));
     }
 
@@ -2584,6 +2605,10 @@ public class CombatDamageService {
         }
         // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

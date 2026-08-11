@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "204")
+@CardRegistration(set = "INV", collectorNumber = "156")
 public class Obliterate extends Card {
 
     public Obliterate() {

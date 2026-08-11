@@ -27,6 +27,13 @@ import java.util.UUID;
  * <p>{@code controllerChoosesPile} is true for the usual Fact-or-Fiction-style flow, where the
  * opponent separates and the controller chooses. It is false for Steam Augury, where the
  * controller separates and the opponent chooses.
+ * puts the chosen pile into the controller's hand and the other into their graveyard;
+ * {@code OPPONENT_CHOOSES_EXILE} (Death or Glory) lets the opponent choose the pile to exile and
+ * returns the other pile to the battlefield; {@code ATTACKERS} (Fight or Flight) makes the chosen
+ * pile the only creatures that can attack this turn; {@code BLOCKERS} (Stand or Fall) makes the
+ * chosen pile the only creatures that can block this turn; {@code DESTROY} (Do or Die) destroys
+ * the creatures in the chosen pile without allowing regeneration. The other dispositions are
+ * ignored for permanent-pile mode.
  */
 public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                     List<UUID> allPermanentIds,

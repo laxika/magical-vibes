@@ -16,8 +16,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -87,6 +90,9 @@ class MayAbilityHandlerServiceTest {
                 mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class),
                 mock(DestructionSupport.class),
+                mock(BendOrBreakEffectHandler.class),
+                mock(FightOrFlightSupport.class),
+                mock(StandOrFallSupport.class),
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),
                 mock(MayAbilityTapCostService.class),

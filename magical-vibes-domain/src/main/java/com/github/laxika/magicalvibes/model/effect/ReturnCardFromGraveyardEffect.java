@@ -95,6 +95,8 @@ import lombok.Builder;
  *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
  * @param sacrificeAtEndStep   {@code true} to schedule the permanent for sacrifice at the beginning of the
  *                             next end step (Apprentice Necromancer)
+ * @param returnToHandAtEndStep {@code true} to schedule a pre-targeted returned permanent for return to
+ *                             its owner's hand at the beginning of the next end step (Cauldron Dance)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
@@ -201,6 +203,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean grantHaste,
         boolean exileAtEndStep,
         boolean sacrificeAtEndStep,
+        boolean returnToHandAtEndStep,
         boolean requiresManaValueEqualsX,
         boolean requiresManaValueAtMostX,
         CardColor grantColor,

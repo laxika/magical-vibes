@@ -81,6 +81,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 this::projectExileNonlandCardFromTargetHandOrGraveyardChoice);
+        register(PendingInteraction.MagesContestBidChoice.class, this::projectMagesContestBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
@@ -368,7 +369,7 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 interaction.pool().size(),
-                "Choose any number of " + interaction.subtypeLabel()
+                "Choose any number of " + interaction.cardLabel()
                         + " cards to reveal and put on top of your library.");
     }
 
@@ -400,6 +401,23 @@ public class InteractionPromptProjectionRegistry {
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
         String prompt = "Bid life for control of " + targetName + " (current high bid: "
+                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
+                + interaction.highBid() + " to bid, or " + interaction.highBid()
+                + " or less to pass.";
+        return InteractionPromptMessage.numberPick(
+                prompt, interaction.maxBid(), interaction.cardName());
+    }
+
+    private InteractionPromptMessage projectMagesContestBidChoice(
+            GameData gameData, PendingInteraction.MagesContestBidChoice interaction) {
+        StackEntry target = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(interaction.targetSpellId()))
+                .findFirst()
+                .orElse(null);
+        String targetName = target != null ? target.getCard().getName() : "the spell";
+        String highBidderName =
+                gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
+        String prompt = "Bid life to counter " + targetName + " (current high bid: "
                 + interaction.highBid() + " by " + highBidderName + "). Enter more than "
                 + interaction.highBid() + " to bid, or " + interaction.highBid()
                 + " or less to pass.";
@@ -844,7 +862,8 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
-                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
+                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
+                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice;
     }
 
     private <T extends PendingInteraction> void register(

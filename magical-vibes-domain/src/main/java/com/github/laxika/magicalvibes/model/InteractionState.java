@@ -15,6 +15,7 @@ public class InteractionState {
     private PermanentChoiceContext permanentChoiceContext;
     private Card pendingAuraCard;
     private UUID pendingAuraOwnerId;
+    private StackEntry pendingAuraResolutionEntry;
     private UUID pendingEquipmentAttachEquipmentId;
     private UUID pendingEquipmentAttachTargetId;
 
@@ -28,6 +29,8 @@ public class InteractionState {
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
+        copy.pendingAuraResolutionEntry = this.pendingAuraResolutionEntry == null
+                ? null : new StackEntry(this.pendingAuraResolutionEntry);
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
         copy.pendingEquipmentAttachTargetId = this.pendingEquipmentAttachTargetId;
         return copy;
@@ -132,6 +135,16 @@ public class InteractionState {
         UUID ownerId = this.pendingAuraOwnerId;
         this.pendingAuraOwnerId = null;
         return ownerId;
+    }
+
+    public void setPendingAuraResolutionEntry(StackEntry entry) {
+        this.pendingAuraResolutionEntry = entry;
+    }
+
+    public StackEntry consumePendingAuraResolutionEntry() {
+        StackEntry entry = this.pendingAuraResolutionEntry;
+        this.pendingAuraResolutionEntry = null;
+        return entry;
     }
 
     // ========================================================================

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
 
@@ -175,6 +176,12 @@ public sealed interface ChoiceContext {
     record ColorSetChoice(UUID targetId, UUID controllerId, String sourceCardName) implements ChoiceContext {}
 
     /**
+     * The controller chooses one color for all targeted creatures until end of turn.
+     */
+    record ColorSetTargetsChoice(List<UUID> targetIds, UUID controllerId, String sourceCardName)
+            implements ChoiceContext {}
+
+    /**
      * A single color choice that grants the chosen controller and each permanent they control
      * protection from the chosen color until end of turn (e.g. Faith's Shield fateful hour).
      */
@@ -188,6 +195,12 @@ public sealed interface ChoiceContext {
      * {@code GameData.chosenSpellSubtype} and effect resolution resumes.
      */
     record SpellCreatureTypeChoice(UUID controllerId) implements ChoiceContext {}
+
+    /** Choosing a color at resolution for a spell with no permanent to store it on. */
+    record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
+
+    /** Choosing a number at resolution for a spell with no permanent to store it on. */
+    record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
@@ -365,6 +378,14 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
+     * Desperate Research: the controller names a non-basic-land card, then reveals the top
+     * {@code count} cards of their library, putting every revealed card with that name into their
+     * hand and exiling the rest.
+     */
+    record ChooseNameRevealTopCardsToHandRestToExileChoice(UUID controllerId, Card sourceCard, int count)
+            implements ChoiceContext {}
+
+    /**
      * Comply: the controller names a card; until their next turn, their opponents can't cast spells
      * with that name. Stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
      */
@@ -410,6 +431,25 @@ public sealed interface ChoiceContext {
     record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
+     * The controller chooses a color at resolution, then chooses one card of that color from the
+     * target player's revealed hand for that player to discard.
+     */
+    record ChooseColorThenDiscardFromTargetHandChoice(UUID controllerId, UUID targetPlayerId)
+            implements ChoiceContext {}
+
+    /**
+     * The controller chooses a color at resolution, then every permanent of that color returns to
+     * its owner's hand (Wash Out).
+     */
+    record ReturnAllPermanentsOfChosenColorChoice(UUID controllerId, PermanentPredicate filter)
+            implements ChoiceContext {
+
+        public ReturnAllPermanentsOfChosenColorChoice(UUID controllerId) {
+            this(controllerId, null);
+        }
+    }
+
+    /**
      * The controller chooses a color at resolution; {@code targetPlayerId} then exiles the top
      * {@code count} cards of their library and, for each exiled card of the chosen color, the
      * controller creates a token from {@code tokenTemplate} (Oona, Queen of the Fae).
@@ -436,6 +476,10 @@ public sealed interface ChoiceContext {
     record CreateTokensPerPermanentOfChosenColorChoice(UUID controllerId,
                                                        com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                                        String sourceSetCode) implements ChoiceContext {}
+
+    /** The controller chooses a color at resolution, then gains one life per matching permanent. */
+    record GainLifePerPermanentOfChosenColorChoice(UUID controllerId, Card sourceCard,
+                                                   StackEntryType sourceEntryType) implements ChoiceContext {}
 
     /**
      * Hall of Gemstone: {@code playerId} (the player whose upkeep it is) chooses a color; until end

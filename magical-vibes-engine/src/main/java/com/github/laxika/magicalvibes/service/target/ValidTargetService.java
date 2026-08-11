@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -149,7 +150,8 @@ public class ValidTargetService {
             List<CardEffect> effectiveSpellEffects = spellEffects;
             gameData.forEachPermanent((playerId, perm) -> {
                 if (excludeIds.contains(perm.getId())) return;
-                if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter, effectiveSpellEffects)) {
+                if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                        effectiveSpellEffects, xValue, kicked)) {
                     validPermanentIds.add(perm.getId());
                 }
             });
@@ -524,6 +526,11 @@ public class ValidTargetService {
     /** As above, evaluating an X-dependent target filter at {@code xValue} ({@code null} means X = 0). */
     private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
                                                   UUID castingPlayerId, Integer xValue) {
+        return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, xValue, null);
+    }
+
+    private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
+                                                  UUID castingPlayerId, Integer xValue, Boolean kicked) {
         // Structural targeting rules (protection, can't-be-targeted, shroud, hexproof, hexproof-from-color)
         // are owned by the shared spell-target core; enumeration adds only the card's TargetFilter.
         if (!targetLegalityService.checkSpellPermanentTargetableReason(gameData, perm, spellCard, castingPlayerId).isEmpty()) {
@@ -531,7 +538,8 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (!passesTargetFilter(gameData, spellCard.getTargetFilter(), perm, spellCard.getId(), castingPlayerId, xValue)) {
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(), kicked),
+                perm, spellCard.getId(), castingPlayerId, xValue)) {
             return false;
         }
 
@@ -554,6 +562,13 @@ public class ValidTargetService {
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter,
                                             List<CardEffect> spellEffects, Integer xValue) {
+        return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                spellEffects, xValue, null);
+    }
+
+    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
+                                            boolean isMultiTarget, TargetFilter positionFilter,
+                                            List<CardEffect> spellEffects, Integer xValue, Boolean kicked) {
         // For multi-target spells with per-position filters, use protection/hexproof checks
         // but skip the global targetFilter from canPermanentBeTargetedBySpell, since the
         // per-position filter below handles type restriction for each target group.
@@ -562,13 +577,14 @@ public class ValidTargetService {
                 return false;
             }
         } else {
-            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId, xValue)) {
+            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId, xValue, kicked)) {
                 return false;
             }
         }
 
         // Per-position filter for multi-target spells
-        if (!passesTargetFilter(gameData, positionFilter, perm, card.getId(), controllerId, xValue)) {
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(positionFilter, kicked),
+                perm, card.getId(), controllerId, xValue)) {
             return false;
         }
 
@@ -784,11 +800,17 @@ public class ValidTargetService {
      * Killing Glare as unplayable whenever every creature has power 1 or more.
      */
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, Integer maxXValue) {
+        return hasValidTargetsForSpell(gameData, card, controllerId, maxXValue, false);
+    }
+
+    /** As above, evaluating permanent target filters for a kicked cast when {@code kicked} is true. */
+    public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId,
+                                           Integer maxXValue, boolean kicked) {
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         boolean isMultiTarget = card.getMaxTargets() > 1;
 
         if (allowedTargets.contains(TargetType.PERMANENT)
-                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue)) {
+                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue, kicked)) {
             return true;
         }
 
@@ -842,12 +864,17 @@ public class ValidTargetService {
      */
     private boolean anyAnnounceableXHasPermanentTarget(GameData gameData, Card card, UUID controllerId,
                                                        boolean isMultiTarget, Integer maxXValue) {
+        return anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue, false);
+    }
+
+    private boolean anyAnnounceableXHasPermanentTarget(GameData gameData, Card card, UUID controllerId,
+                                                       boolean isMultiTarget, Integer maxXValue, boolean kicked) {
         for (int x = maxXValue == null ? 0 : maxXValue; x >= 0; x--) {
             Integer xValue = maxXValue == null ? null : x;
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent perm : battlefield) {
                     if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null,
-                            card.getEffects(EffectSlot.SPELL), xValue)) {
+                            card.getEffects(EffectSlot.SPELL), xValue, kicked)) {
                         return true;
                     }
                 }
@@ -1100,6 +1127,13 @@ public class ValidTargetService {
         } catch (IllegalStateException e) {
             return false;
         }
+    }
+
+    private TargetFilter targetFilterForKickedCast(TargetFilter targetFilter, Boolean kicked) {
+        if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
+            return new PermanentPredicateTargetFilter(filter.predicateFor(Boolean.TRUE.equals(kicked)), filter.errorMessage());
+        }
+        return targetFilter;
     }
 
     /**

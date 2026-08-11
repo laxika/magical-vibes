@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
+import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
@@ -626,6 +627,8 @@ public class ConditionEvaluationService {
                         && ChosenColorStrictlyMostCommonAmongOpponentNontokens.isStrictlyMostCommon(
                                 gameData, source, ctx.controllerId());
             }
+            case ColorMostCommonAmongAllPermanents c ->
+                    ColorMostCommonAmongAllPermanents.isMostCommon(gameData, c.color());
             case CardsLeftGraveyardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseCardsLeftGraveyardThisTurn.contains(ctx.controllerId());

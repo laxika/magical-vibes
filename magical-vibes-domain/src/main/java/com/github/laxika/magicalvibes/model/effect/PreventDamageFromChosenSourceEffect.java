@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param scope                       which shield is installed for the chosen source
  * @param gainLife                    NEXT_DAMAGE_TO_CONTROLLER only: gain life equal to the prevented damage
+ * @param gainLifeForBlackOrRedSource ALL_DAMAGE_THIS_TURN/controllerOnly only: gain life equal to each
+ *                                    prevented damage event from a black or red source
  * @param controllerOnly              ALL_DAMAGE_THIS_TURN only: shield only the controller, not all recipients
  * @param sourceFilter                restricts which permanents are legal source choices; {@code null} = any
  * @param sourceLabel                 human-readable label for the restriction, used in the choice prompt
@@ -34,6 +36,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param sourceSharesColorWithImprintedCard
  *                                    restrict the choice to sources sharing a colour with the card imprinted
  *                                    on the ability's source permanent
+ * @param sourceActivationManaColor   restrict the choice to sources sharing a colour with mana spent on
+ *                                    this activation (Protective Sphere)
  * @param exileFromLibrary            NEXT_DAMAGE_TO_CONTROLLER only: exile cards from the top of the
  *                                    controller's library equal to the damage prevented this way (Bone Mask)
  * @param damageRedSourceController   NEXT_DAMAGE_TO_ANY_TARGET only: if prevented damage is from a red
@@ -43,13 +47,42 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record PreventDamageFromChosenSourceEffect(
         ChosenSourcePreventionScope scope,
         boolean gainLife,
+        boolean gainLifeForBlackOrRedSource,
         boolean controllerOnly,
         PermanentPredicate sourceFilter,
         String sourceLabel,
         boolean sourceChosenColor,
         boolean sourceSharesColorWithImprintedCard,
+        boolean sourceActivationManaColor,
         boolean exileFromLibrary,
         boolean damageRedSourceController) implements CardEffect {
+
+    public PreventDamageFromChosenSourceEffect(
+            ChosenSourcePreventionScope scope,
+            boolean gainLife,
+            boolean controllerOnly,
+            PermanentPredicate sourceFilter,
+            String sourceLabel,
+            boolean sourceChosenColor,
+            boolean exileFromLibrary,
+            boolean damageRedSourceController) {
+        this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor, false,
+                false, exileFromLibrary, damageRedSourceController);
+    }
+
+    public PreventDamageFromChosenSourceEffect(
+            ChosenSourcePreventionScope scope,
+            boolean gainLife,
+            boolean controllerOnly,
+            PermanentPredicate sourceFilter,
+            String sourceLabel,
+            boolean sourceChosenColor,
+            boolean sourceActivationManaColor,
+            boolean exileFromLibrary,
+            boolean damageRedSourceController) {
+        this(scope, gainLife, false, controllerOnly, sourceFilter, sourceLabel, sourceChosenColor,
+                false, sourceActivationManaColor, exileFromLibrary, damageRedSourceController);
+    }
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage." */
     public static PreventDamageFromChosenSourceEffect nextDamageToYou() {
@@ -139,6 +172,26 @@ public record PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, null, null, false, false, false, false);
     }
 
+    /** Samite Ministration: prevent all damage from the chosen source to you, gaining life for black or red damage prevented. */
+    public static PreventDamageFromChosenSourceEffect allDamageToYouAndGainLifeForBlackOrRedSource() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, true, null, null,
+                false, false, false, false, false);
+    }
+
+    /** Protective Sphere: prevent all damage to you from a chosen source matching the activation mana's colour. */
+    public static PreventDamageFromChosenSourceEffect allDamageToYouOfActivationManaColor() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, null, null, false, true, false, false);
+    }
+
+    /** Prevent all damage to you from a chosen source matching the supplied filter. */
+    public static PreventDamageFromChosenSourceEffect allDamageToYou(PermanentPredicate sourceFilter,
+                                                                     String sourceLabel) {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, true, sourceFilter, sourceLabel, false, false, false, false);
+    }
+
     /** Burrenton Forge-Tender: prevent all damage a matching chosen source would deal this turn. */
     public static PreventDamageFromChosenSourceEffect allDamage(PermanentPredicate sourceFilter,
                                                                 String sourceLabel) {
@@ -149,6 +202,7 @@ public record PreventDamageFromChosenSourceEffect(
     /** Mourner's Shield: prevent all damage from a chosen source sharing a color with the imprinted card. */
     public static PreventDamageFromChosenSourceEffect allDamageFromSourceSharingColorWithImprintedCard() {
         return new PreventDamageFromChosenSourceEffect(
-                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, false, null, null, false, true, false, false);
+                ChosenSourcePreventionScope.ALL_DAMAGE_THIS_TURN, false, false, false, null, null,
+                false, true, false, false, false);
     }
 }

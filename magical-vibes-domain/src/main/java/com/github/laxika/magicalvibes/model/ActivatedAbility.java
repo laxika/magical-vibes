@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import lombok.Getter;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -32,6 +34,8 @@ public class ActivatedAbility {
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
+    /** Colors that may be spent on X in this ability's mana cost, or null when unrestricted. */
+    private Set<ManaColor> xColorRestrictions;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
     private int minCardsInHandToActivate;
     /** Maximum number of cards the controller may have in hand to activate, or null for no restriction (e.g. Dread Wanderer's "one or fewer cards in hand" = 1). Set via {@link #withMaxCardsInHand(int)}. */
@@ -250,7 +254,16 @@ public class ActivatedAbility {
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
+        copy.xColorRestrictions = this.xColorRestrictions == null
+                ? null
+                : EnumSet.copyOf(this.xColorRestrictions);
         return copy;
+    }
+
+    /** Restricts every mana spent on this ability's X cost to one color. */
+    public ActivatedAbility withXColorRestriction(ManaColor color) {
+        this.xColorRestrictions = EnumSet.of(color);
+        return this;
     }
 
     /**
@@ -506,15 +519,15 @@ public class ActivatedAbility {
     }
 
     /**
-     * True when no effect offers a permanent target as an alternative to the spell target. The dual
-     * effects are exactly the ones that reach {@code targetsSpellOnStack} without declaring a spell
-     * leaf — their spec describes the permanent half and the spell half rides on a dedicated record
-     * component.
+     * True when no effect offers a permanent target as an alternative to the spell target. A dual
+     * spell/permanent target must therefore not be inferred as spell-only merely because its spec
+     * also admits a spell leaf.
      */
     private boolean isSpellOnlyTarget() {
         return effects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
-                .allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL));
+                .allMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL)
+                        && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
     }
 
     /**

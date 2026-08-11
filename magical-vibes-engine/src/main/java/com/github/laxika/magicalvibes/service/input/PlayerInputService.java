@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import lombok.RequiredArgsConstructor;
@@ -118,7 +119,14 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceCardId));
+                returnExiledSourceCardId, null));
+    }
+
+    public void beginCardChoiceThenReturnSourceToHand(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                       String prompt, UUID sourcePermanentId) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, false, false, false, null, false, null,
+                false, null, null, false, sourcePermanentId));
     }
 
     /** Flash-style: choose a creature to put onto the battlefield, then pay its cost reduced by N or sacrifice it. */
@@ -248,6 +256,37 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (discard all cards of that color)", gameData.id, playerName);
     }
 
+    public void beginChooseColorThenDiscardFromTargetHandChoice(GameData gameData, UUID controllerId,
+            UUID targetPlayerId) {
+        ChoiceContext.ChooseColorThenDiscardFromTargetHandChoice ctx =
+                new ChoiceContext.ChooseColorThenDiscardFromTargetHandChoice(controllerId, targetPlayerId);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (choose one matching hand card to discard)",
+                gameData.id, playerName);
+    }
+
+    public void beginReturnAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId) {
+        beginReturnAllPermanentsOfChosenColorChoice(gameData, controllerId, null);
+    }
+
+    public void beginReturnAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId,
+            PermanentPredicate filter) {
+        ChoiceContext.ReturnAllPermanentsOfChosenColorChoice ctx =
+                new ChoiceContext.ReturnAllPermanentsOfChosenColorChoice(controllerId, filter);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (return all permanents of that color)", gameData.id, playerName);
+    }
+
     public void beginExileTopCardsChosenColorTokensChoice(GameData gameData, UUID controllerId, UUID targetPlayerId,
             int count, com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate, String sourceSetCode) {
         ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx =
@@ -272,6 +311,19 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
+    }
+
+    public void beginGainLifePerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
+            Card sourceCard, StackEntryType sourceEntryType) {
+        ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx =
+                new ChoiceContext.GainLifePerPermanentOfChosenColorChoice(controllerId, sourceCard, sourceEntryType);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (Treva life-per-permanent)", gameData.id, playerName);
     }
 
     /**
@@ -331,6 +383,19 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a color (target becomes chosen color)", gameData.id, playerName);
+    }
+
+    public void beginColorSetChoiceForTargets(GameData gameData, UUID controllerId, List<UUID> targetIds,
+                                               String sourceCardName) {
+        ChoiceContext.ColorSetTargetsChoice ctx =
+                new ChoiceContext.ColorSetTargetsChoice(new ArrayList<>(targetIds), controllerId, sourceCardName);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color for target creatures", gameData.id, playerName);
     }
 
     /**
@@ -498,6 +563,28 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+    }
+
+    public void beginSpellColorChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellColorChoice choiceContext = new ChoiceContext.SpellColorChoice(playerId);
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a color for a spell", gameData.id, playerName);
+    }
+
+    public void beginSpellNumberChoice(GameData gameData, UUID playerId, int maxNumber) {
+        ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId);
+        List<String> numbers = java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxNumber))
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, numbers, "Choose a number."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a number for a spell", gameData.id, playerName);
     }
 
     public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {

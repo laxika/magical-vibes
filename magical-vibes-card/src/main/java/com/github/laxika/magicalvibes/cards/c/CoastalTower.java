@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "8ED", collectorNumber = "323")
+@CardRegistration(set = "INV", collectorNumber = "321")
 public class CoastalTower extends Card {
 
     public CoastalTower() {

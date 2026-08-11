@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "169")
+@CardRegistration(set = "INV", collectorNumber = "142")
 public class CrownOfFlames extends Card {
 
     public CrownOfFlames() {

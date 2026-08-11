@@ -14,6 +14,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "147")
+@CardRegistration(set = "INV", collectorNumber = "108")
 public class HateWeaver extends Card {
 
     public HateWeaver() {

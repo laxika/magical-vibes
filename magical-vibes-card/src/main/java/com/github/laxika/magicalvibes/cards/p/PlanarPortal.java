@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "311")
+@CardRegistration(set = "INV", collectorNumber = "308")
 public class PlanarPortal extends Card {
 
     public PlanarPortal() {

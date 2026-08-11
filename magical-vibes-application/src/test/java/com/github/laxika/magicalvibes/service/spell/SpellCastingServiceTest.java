@@ -19,10 +19,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -61,6 +63,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -338,6 +341,21 @@ class SpellCastingServiceTest {
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null, null, null, true, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Card is not playable from graveyard");
+        }
+
+        @Test
+        @DisplayName("Applies spell-casting restrictions to graveyard spells")
+        void appliesSpellCastingRestrictionsToGraveyardSpells() {
+            Card instant = createInstant("Test Instant", "{R}");
+            gd.playerGraveyards.get(player1Id).add(instant);
+            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(true);
+            when(castingPermissionService.findFilteredGraveyardPermissionSource(gd, player1Id, instant))
+                    .thenReturn(Optional.of(UUID.randomUUID()));
+            when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, instant)).thenReturn(false);
+
+            assertThatThrownBy(() -> svc.playFlashbackSpell(gd, player1, 0, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Card is not playable");
         }
     }
 
@@ -1028,6 +1046,23 @@ class SpellCastingServiceTest {
 
             // Paid {R} (base) + 3 (X) = 4 total
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("Pays X kicker cost from pool")
+        void paysXKickerCost() {
+            Card card = createCreature("Test Kicker Creature", "{4}{G}{G}");
+            card.addEffect(EffectSlot.STATIC, new KickerEffect("{X}"));
+            setHand(player1Id, List.of(card));
+            addMana(player1Id, ManaColor.GREEN, 9);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, 3, null, null, List.of(), List.of(), false,
+                    null, null, null, null, null, true);
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().isKicked()).isTrue();
         }
     }
 

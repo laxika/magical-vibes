@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -67,6 +69,14 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             }
             sourceFilter = new PermanentColorInPredicate(Set.of(chosenColor));
             sourceLabel = chosenColor.name().toLowerCase(Locale.ROOT);
+        } else if (e.sourceActivationManaColor()) {
+            Set<CardColor> activationColors = EnumSet.noneOf(CardColor.class);
+            for (ManaColor manaColor : entry.getActivationManaSpent().keySet()) {
+                if (manaColor != ManaColor.COLORLESS) {
+                    activationColors.add(CardColor.valueOf(manaColor.name()));
+                }
+            }
+            sourceFilter = new PermanentColorInPredicate(activationColors);
         }
 
         List<UUID> validIds = collectValidSourceIds(gameData, sourceFilter);
@@ -127,8 +137,12 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                         + " prevent that damage.";
             }
             case ALL_DAMAGE_THIS_TURN -> {
-                context = new PermanentChoiceContext.PreventDamageSourceChoice(controllerId, e.controllerOnly());
-                prompt = e.controllerOnly()
+                context = new PermanentChoiceContext.PreventDamageSourceChoice(
+                        controllerId, e.controllerOnly(), e.gainLifeForBlackOrRedSource());
+                prompt = e.sourceActivationManaColor()
+                        ? "Choose a source that shares a color with the mana spent on this activation. Prevent all damage it would deal "
+                                + (e.controllerOnly() ? "to you" : "") + " this turn."
+                        : e.controllerOnly()
                         ? "Choose a source. Prevent all damage it would deal to you this turn."
                         : e.sourceSharesColorWithImprintedCard()
                                 ? "Choose a source that shares a color with the exiled card. Prevent all damage it would deal this turn."

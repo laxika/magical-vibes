@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "145")
+@CardRegistration(set = "INV", collectorNumber = "169")
 public class Skizzik extends Card {
 
     public Skizzik() {

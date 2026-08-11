@@ -16,6 +16,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "109")
+@CardRegistration(set = "INV", collectorNumber = "74")
 public class SkyWeaver extends Card {
 
     public SkyWeaver() {

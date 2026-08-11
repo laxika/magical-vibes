@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "6ED", collectorNumber = "84")
 @CardRegistration(set = "5ED", collectorNumber = "107")
 @CardRegistration(set = "4ED", collectorNumber = "89")
+@CardRegistration(set = "INV", collectorNumber = "65")
 public class PhantasmalTerrain extends Card {
 
     public PhantasmalTerrain() {

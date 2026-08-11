@@ -389,6 +389,17 @@ class PlayerInputServiceTest {
             assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color.");
         }
+
+        @Test
+        @DisplayName("Stores the chosen-color life-gain context")
+        void storesChosenColorLifeGainContext() {
+            Card sourceCard = createCreature("Treva");
+            svc.beginGainLifePerPermanentOfChosenColorChoice(gd, PLAYER1_ID, sourceCard,
+                    com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                    .isInstanceOf(ChoiceContext.GainLifePerPermanentOfChosenColorChoice.class);
+        }
     }
 
     // ========================================================================

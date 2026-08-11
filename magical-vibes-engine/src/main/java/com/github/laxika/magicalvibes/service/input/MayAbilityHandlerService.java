@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -77,6 +79,9 @@ public class MayAbilityHandlerService {
     
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
+    private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
@@ -96,6 +101,9 @@ public class MayAbilityHandlerService {
                                     TurnProgressionService turnProgressionService,
                                     EffectResolutionService effectResolutionService,
                                     DestructionSupport destructionSupport,
+                                    BendOrBreakEffectHandler bendOrBreakEffectHandler,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
@@ -114,6 +122,9 @@ public class MayAbilityHandlerService {
         
         this.effectResolutionService = effectResolutionService;
         this.destructionSupport = destructionSupport;
+        this.bendOrBreakEffectHandler = bendOrBreakEffectHandler;
+        this.fightOrFlightSupport = fightOrFlightSupport;
+        this.standOrFallSupport = standOrFallSupport;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
@@ -139,7 +150,11 @@ public class MayAbilityHandlerService {
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum, Unesh)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
+            if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
+                fightOrFlightSupport.completePileSeparationStep2(gameData, accepted);
+            } else if (pileSeparation.disposition() == CardPileDisposition.BLOCKERS) {
+                standOrFallSupport.completePileSeparationStep2(gameData, accepted);
+            } else if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep2(gameData, accepted);
             } else if (pileSeparation.cardPileMode()) {
                 // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both flow through step 2, which branches on disposition.
@@ -147,6 +162,12 @@ public class MayAbilityHandlerService {
             } else {
                 destructionSupport.completePileSeparationStep2(gameData, accepted);
             }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PendingBendOrBreak.class)) {
+            bendOrBreakEffectHandler.completePileChoice(gameData, accepted);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }

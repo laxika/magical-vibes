@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -64,6 +65,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -531,6 +533,43 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 99, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Invalid ability index");
+        }
+    }
+
+    @Nested
+    @DisplayName("activateAbility — random discard costs")
+    class ActivateAbilityRandomDiscardCost {
+
+        @Test
+        @DisplayName("Pays every card required by a counted random-discard cost")
+        void paysEveryRequiredRandomDiscard() {
+            Card card = createArtifactWithRandomDiscardAbility(2);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Card first = createGenericArtifact("First discard");
+            Card second = createGenericArtifact("Second discard");
+            gameData.playerHands.get(player1Id).addAll(List.of(first, second));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(gameData.playerHands.get(player1Id)).isEmpty();
+            verify(graveyardService, times(2)).addCardToGraveyard(eq(gameData), eq(player1Id), any(Card.class));
+        }
+
+        @Test
+        @DisplayName("Rejects a random-discard cost when the hand is too small")
+        void rejectsTooFewRandomDiscardCards() {
+            Card card = createArtifactWithRandomDiscardAbility(2);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerHands.get(player1Id).add(createGenericArtifact("Only discard"));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("2 cards");
+            assertThat(gameData.playerHands.get(player1Id)).hasSize(1);
         }
     }
 
@@ -1737,6 +1776,19 @@ class AbilityActivationServiceTest {
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
                 false, manaCost, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Pay mana to add counter"
+        ));
+        return card;
+    }
+
+    private Card createArtifactWithRandomDiscardAbility(int count) {
+        Card card = new Card();
+        card.setName("Test Random Discard Artifact");
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{0}");
+        card.setColor(null);
+        card.addActivatedAbility(new ActivatedAbility(
+                false, null, List.of(new DiscardRandomCardCost(count), new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                "Discard cards at random"
         ));
         return card;
     }

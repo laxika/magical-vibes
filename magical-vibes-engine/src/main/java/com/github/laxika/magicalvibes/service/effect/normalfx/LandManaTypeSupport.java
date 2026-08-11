@@ -58,6 +58,10 @@ public class LandManaTypeSupport {
             return Set.of(fixedColor);
         }
 
+        if (gameQueryService.basicLandManaProducesAnyColor(gameData, land)) {
+            return EnumSet.copyOf(ManaColor.COLORS);
+        }
+
         if (!overriddenColors.isEmpty()) {
             return EnumSet.copyOf(overriddenColors);
         }

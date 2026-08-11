@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -1717,6 +1718,21 @@ class GameQueryServiceTest {
                     source.getId());
 
             assertThat(gqs.applyDamageMultiplier(gd, 3, entry)).isEqualTo(6);
+        }
+    }
+
+    @Nested
+    @DisplayName("applyDamageReplacementEffects")
+    class DamageReplacementEffects {
+
+        @Test
+        @DisplayName("replaces damage at the threshold and leaves smaller damage unchanged")
+        void replacesDamageAtThreshold() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Divine Presence", new ReplaceDamageAboveThresholdEffect(4, 3)));
+
+            assertThat(gqs.applyDamageReplacementEffects(gd, 4)).isEqualTo(3);
+            assertThat(gqs.applyDamageReplacementEffects(gd, 3)).isEqualTo(3);
         }
     }
 

@@ -26,31 +26,37 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * @param genericIncrease      generic-mana increase applied at resolution, or {@code null} for none
  * @param forCumulativeUpkeep  whether this payment is a cumulative upkeep cost
  * @param lifeAmount           additional life to pay with the mana (0 for mana-only costs)
+ * @param useSourceManaCost    whether to use the source permanent's mana cost at resolution
  */
 public record PayManaCost(
         String manaCost, DynamicAmount genericReduction, DynamicAmount genericIncrease,
-        boolean forCumulativeUpkeep, int lifeAmount)
+        boolean forCumulativeUpkeep, int lifeAmount, boolean useSourceManaCost)
         implements CostEffect {
 
     public PayManaCost(String manaCost) {
-        this(manaCost, null, null, false, 0);
+        this(manaCost, null, null, false, 0, false);
     }
 
     public PayManaCost(String manaCost, DynamicAmount genericReduction) {
-        this(manaCost, genericReduction, null, false, 0);
+        this(manaCost, genericReduction, null, false, 0, false);
     }
 
     public PayManaCost(String manaCost, DynamicAmount genericReduction, boolean forCumulativeUpkeep) {
-        this(manaCost, genericReduction, null, forCumulativeUpkeep, 0);
+        this(manaCost, genericReduction, null, forCumulativeUpkeep, 0, false);
     }
 
     public PayManaCost(String manaCost, DynamicAmount genericReduction, boolean forCumulativeUpkeep, int lifeAmount) {
-        this(manaCost, genericReduction, null, forCumulativeUpkeep, lifeAmount);
+        this(manaCost, genericReduction, null, forCumulativeUpkeep, lifeAmount, false);
     }
 
     /** "Pay {base} plus {1} per …" — the increase is evaluated when the ability resolves. */
     public static PayManaCost withGenericIncrease(String manaCost, DynamicAmount genericIncrease) {
-        return new PayManaCost(manaCost, null, genericIncrease, false, 0);
+        return new PayManaCost(manaCost, null, genericIncrease, false, 0, false);
+    }
+
+    /** "Pay its mana cost" — the source permanent's current mana cost is used at resolution. */
+    public static PayManaCost forSourceManaCost() {
+        return new PayManaCost(null, null, null, false, 0, true);
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "39")
+@CardRegistration(set = "INV", collectorNumber = "89")
 public class WorldlyCounsel extends Card {
 
     public WorldlyCounsel() {

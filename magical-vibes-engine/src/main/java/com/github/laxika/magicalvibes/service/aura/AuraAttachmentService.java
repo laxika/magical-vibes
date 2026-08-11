@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -305,6 +306,9 @@ public class AuraAttachmentService {
                             && grant.scope() == GrantScope.ENCHANTED_CREATURE
                             && grant.effect() instanceof ProtectionFromCardTypesEffect cardTypeProtection) {
                         return cardTypeProtection.cardTypes().contains(CardType.ENCHANTMENT);
+                    }
+                    if (effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect dynamicProtection) {
+                        return dynamicProtection.scope() == GrantScope.ENCHANTED_CREATURE;
                     }
                     return false;
                 });

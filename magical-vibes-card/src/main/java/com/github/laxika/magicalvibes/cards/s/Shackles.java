@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "18")
+@CardRegistration(set = "INV", collectorNumber = "37")
 public class Shackles extends Card {
 
     public Shackles() {

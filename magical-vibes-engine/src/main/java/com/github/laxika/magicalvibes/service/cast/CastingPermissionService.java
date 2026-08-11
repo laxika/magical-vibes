@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithMa
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -95,6 +96,7 @@ public class CastingPermissionService {
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
+        if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
@@ -379,6 +381,24 @@ public class CastingPermissionService {
                 .anyMatch(cast -> !cast.hasType(CardType.ARTIFACT));
     }
 
+    public boolean isSpellCastingRestrictedByMostRecentSpell(GameData gameData, Card card) {
+        Card mostRecentSpell = gameData.getMostRecentSpellCastThisTurn();
+        if (mostRecentSpell == null) return false;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingRestrictionEffect restriction
+                            && restriction.preventsCasting(mostRecentSpell, card)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean anyPlayerControlsEtherswornCanonist(GameData gameData) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -468,6 +488,7 @@ public class CastingPermissionService {
      */
     public boolean isSpellRestricted(GameData gameData, UUID playerId, Card card,
                                      Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
@@ -600,6 +621,7 @@ public class CastingPermissionService {
             case COMBAT_AFTER_BLOCKERS ->
                     gameData.currentStep.isCombatPhase()
                             && gameData.currentStep.ordinal() >= TurnStep.DECLARE_BLOCKERS.ordinal();
+            case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
             case DECLARE_BLOCKERS ->
                     gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
             case OPPONENTS_TURN_BEFORE_ATTACKERS ->

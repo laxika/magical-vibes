@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "55")
+@CardRegistration(set = "INV", collectorNumber = "82")
 public class TowerDrake extends Card {
 
     public TowerDrake() {

@@ -331,6 +331,8 @@ public class TurnProgressionService {
         // able, every other creature is barred, and each of them is destroyed at this turn's end step
         // if it didn't attack.
         gameData.chosenAttackersThisTurn.clear();
+        gameData.attackableCreaturesThisTurn.clear();
+        gameData.blockableCreaturesThisTurn.clear();
         Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
         if (chosenAttackers != null) {
             gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);

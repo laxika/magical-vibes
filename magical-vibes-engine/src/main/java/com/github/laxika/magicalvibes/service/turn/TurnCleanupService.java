@@ -214,6 +214,7 @@ public class TurnCleanupService {
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
+        gameData.playerSourceDamagePreventionLifeGainIds.clear();
         gameData.playerSourceNextDamageShields.clear();
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.eyeForAnEyeShields.clear();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -779,7 +780,7 @@ public class DestructionSupport {
 
         // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), targetPlayerId,
-                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2));
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition()));
 
         // Build pile descriptions for the prompt
         String pile1Desc = buildPileDescription(gameData, pile1);
@@ -788,8 +789,8 @@ public class DestructionSupport {
         String controllerName = gameData.playerIdToName.get(state.controllerId());
         gameLogService.append(gameData, GameLog.text(controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
 
-        // Prompt target player to choose which pile to sacrifice
-        String prompt = "Choose a pile to sacrifice. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
+        String action = state.disposition() == CardPileDisposition.DESTROY ? "destroy" : "sacrifice";
+        String prompt = "Choose a pile to " + action + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, targetPlayerId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
     }
@@ -804,14 +805,23 @@ public class DestructionSupport {
         UUID targetPlayerId = state.targetPlayerId();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        String sacrificedDesc = buildPileDescription(gameData, pileToSacrifice);
-        gameLogService.append(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + sacrificedDesc + "."));
+        String pileDescription = buildPileDescription(gameData, pileToSacrifice);
+        if (state.disposition() == CardPileDisposition.DESTROY) {
+            gameLogService.append(gameData, GameLog.text(playerName + " destroys " + pileName + ": " + pileDescription + "."));
 
-        // Sacrifice all permanents in the chosen pile
-        for (UUID permId : pileToSacrifice) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            List<Permanent> creaturesToDestroy = pileToSacrifice.stream()
+                    .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                    .filter(perm -> perm != null && gameQueryService.isCreature(gameData, perm))
+                    .toList();
+            destroyBatch(gameData, creaturesToDestroy, "Do or Die", true);
+        } else {
+            gameLogService.append(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
+
+            for (UUID permId : pileToSacrifice) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                }
             }
         }
 

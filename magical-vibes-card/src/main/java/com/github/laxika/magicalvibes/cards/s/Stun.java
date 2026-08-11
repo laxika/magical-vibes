@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "10E", collectorNumber = "240")
 @CardRegistration(set = "TMP", collectorNumber = "207")
+@CardRegistration(set = "INV", collectorNumber = "172")
 public class Stun extends Card {
 
     public Stun() {

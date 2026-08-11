@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "34")
+@CardRegistration(set = "INV", collectorNumber = "31")
 public class RevivingDose extends Card {
 
     public RevivingDose() {

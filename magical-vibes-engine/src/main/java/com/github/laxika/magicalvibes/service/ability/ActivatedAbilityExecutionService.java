@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -100,6 +101,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -132,6 +134,7 @@ public class ActivatedAbilityExecutionService {
     private final ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
+    private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
 
     /**
@@ -612,6 +615,18 @@ public class ActivatedAbilityExecutionService {
                                     gameData.id, player.getUsername());
                         }
                     }
+                } else if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
+                    int totalMana = calculateTotalManaProduction(gameData, playerId, permanent,
+                            snapshotEffects, xValue) * manaMultiplier;
+                    if (totalMana > 0) {
+                        twistReplacement = true;
+                        ChoiceContext.ManaColorChoice choiceContext =
+                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                        List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
+                        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                                playerId, null, null, choiceContext, colors,
+                                "Choose a color of mana to add."));
+                    }
                 }
             }
         }
@@ -893,8 +908,15 @@ public class ActivatedAbilityExecutionService {
                         new AmountContext(playerId, permanent, null, 0, 0));
                 if (gameQueryService.isDamagePreventable(gameData)) {
                     CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
+                    boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
+                            gameData, playerId, permanent.getId());
+                    if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+                        damagePreventionService.applySourceDamagePreventionForPlayer(
+                                gameData, playerId, permanent.getId(), damage,
+                                gameQueryService.getEffectiveColors(gameData, permanent));
+                    }
                     if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                            || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                            || sourceDamagePrevented
                             || gameData.isPreventedFromDealingDamage(permanent.getId())
                             || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                         damage = 0;
@@ -951,6 +973,10 @@ public class ActivatedAbilityExecutionService {
                 for (int i = 0; i < amount; i++) {
                     drawService.resolveDrawCard(gameData, playerId);
                 }
+            } else if (effect instanceof ManaAbilityCardDrawingEffect draw) {
+                int amount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
+                playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
             } else if (effect instanceof PutCountersOnSelfEffect counters
                     && !gameQueryService.cantHaveCounters(gameData, permanent)) {
                 // "Add one mana of any color. Put a brick counter on this artifact." (Pyramid of the
@@ -1012,8 +1038,15 @@ public class ActivatedAbilityExecutionService {
         String playerName = gameData.playerIdToName.get(playerId);
         if (gameQueryService.isDamagePreventable(gameData)) {
             CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
+            boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
+                    gameData, playerId, permanent.getId());
+            if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+                damagePreventionService.applySourceDamagePreventionForPlayer(
+                        gameData, playerId, permanent.getId(), damage,
+                        gameQueryService.getEffectiveColors(gameData, permanent));
+            }
             if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                    || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                    || sourceDamagePrevented
                     || gameData.isPreventedFromDealingDamage(permanent.getId())
                     || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                 damage = 0;
@@ -1372,6 +1405,8 @@ public class ActivatedAbilityExecutionService {
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         stackEntry.setSourcePermanentSnapshot(permanent);
+        Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
+        stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so
         // ChosenPermanentPower can read its power as the ability resolves (Impelled Giant).
         stackEntry.setChosenPermanentId(permanent.getChosenPermanentId());

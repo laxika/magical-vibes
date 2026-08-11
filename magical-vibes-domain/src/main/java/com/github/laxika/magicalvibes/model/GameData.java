@@ -92,6 +92,8 @@ public class GameData {
      * {@link #getSpellCastOrdinalThisTurn}.
      */
     private final List<UUID> spellCastOrderThisTurn = Collections.synchronizedList(new ArrayList<>());
+    /** The spell most recently cast by any player this turn, regardless of controller. */
+    private Card mostRecentSpellCastThisTurn;
     /**
      * Per-player count of spells cast this game, keyed by spell name. Unlike {@link #spellsCastThisTurn}
      * this persists for the whole game. Populated by {@link #recordSpellCast}; read via
@@ -278,6 +280,8 @@ public class GameData {
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
+    /** Player IDs → turn number whose draw step is skipped by a current-turn effect. */
+    public final Map<UUID, Integer> skipDrawStepThisTurn = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming turns they must skip (Chronatog). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextTurnCount = new ConcurrentHashMap<>();
     /** Player IDs → steps or phases skipped for the rest of their current turn. */
@@ -368,6 +372,10 @@ public class GameData {
      * cleared by the effect handler that re-runs after the choice completes.
      */
     public CardSubtype chosenSpellSubtype;
+    /** Resolution-time "choose a color" answer for a spell with no permanent to store it on. */
+    public CardColor chosenSpellColor;
+    /** Resolution-time "choose a number" answer for a spell with no permanent to store it on. */
+    public Integer chosenSpellNumber;
     /**
      * Generic re-entry signal: when set, {@code EffectResolutionService} re-runs the current
      * effect (rather than advancing to the next) after the pending interaction completes.
@@ -499,6 +507,8 @@ public class GameData {
      *  A source may hold more than one pending return (e.g. Realm Razer exiles all lands). */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
+    /** Whole-turn chosen-source prevention entries that gain life for black or red damage prevented. */
+    public final Map<UUID, Set<UUID>> playerSourceDamagePreventionLifeGainIds = new ConcurrentHashMap<>();
     /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
     public final List<PlayerSourceNextDamageShield> playerSourceNextDamageShields = Collections.synchronizedList(new ArrayList<>());
     /** One-shot shields (Sanctum Guardian / Honorable Passage): prevent the next damage event from a
@@ -1218,6 +1228,12 @@ public class GameData {
     /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
     public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
 
+    /** Active this turn: affectedPlayerId -> creatures allowed to attack by a pile effect. */
+    public final Map<UUID, Set<UUID>> attackableCreaturesThisTurn = new ConcurrentHashMap<>();
+
+    /** Active this turn: affectedPlayerId -> creatures allowed to block by a pile effect. */
+    public final Map<UUID, Set<UUID>> blockableCreaturesThisTurn = new ConcurrentHashMap<>();
+
     /** Intimidation Bolt — "Other creatures can't attack this turn." Each resolution appends the
      *  targeted (exempted) creature's permanent ID; a creature may attack only if its ID equals every
      *  entry, so multiple copies stack and an empty list means no restriction. A dead target's ID
@@ -1896,6 +1912,7 @@ public class GameData {
     public void recordSpellCast(UUID playerId, Card card) {
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
         spellCastOrderThisTurn.add(card.getId());
+        mostRecentSpellCastThisTurn = card;
         spellNameCastCountsThisGame.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                 .merge(card.getName(), 1, Integer::sum);
         consumeNextSpellFlashGrant(playerId, card);
@@ -2097,6 +2114,14 @@ public class GameData {
     }
 
     /**
+     * Returns the spell most recently cast by any player this turn, or {@code null} if no spell has
+     * been cast yet.
+     */
+    public Card getMostRecentSpellCastThisTurn() {
+        return mostRecentSpellCastThisTurn;
+    }
+
+    /**
      * Returns true if no spells have been cast by any player this turn.
      */
     public boolean isSpellsCastThisTurnEmpty() {
@@ -2119,6 +2144,7 @@ public class GameData {
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
         spellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
+        mostRecentSpellCastThisTurn = null;
     }
 
     public static final int STARTING_LIFE_TOTAL = 20;
@@ -2531,6 +2557,8 @@ public class GameData {
         copy.pendingDividedDamageTargetId = this.pendingDividedDamageTargetId;
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
+        copy.chosenSpellColor = this.chosenSpellColor;
+        copy.chosenSpellNumber = this.chosenSpellNumber;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
         copy.effectResolutionDepth = this.effectResolutionDepth;
@@ -2691,6 +2719,7 @@ public class GameData {
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
+        copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
@@ -2838,6 +2867,8 @@ public class GameData {
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) ->
                 copy.playerSourceDamagePreventionIds.put(k, new HashSet<>(v)));
+        this.playerSourceDamagePreventionLifeGainIds.forEach((k, v) ->
+                copy.playerSourceDamagePreventionLifeGainIds.put(k, new HashSet<>(v)));
 
         // --- GraveyardTargetOperationState ---
         copy.graveyardTargetOperation.card = this.graveyardTargetOperation.card;
@@ -2989,6 +3020,8 @@ public class GameData {
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
+        this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
+        this.blockableCreaturesThisTurn.forEach((playerId, ids) -> copy.blockableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
@@ -3014,6 +3047,7 @@ public class GameData {
         copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
+        copy.skipDrawStepThisTurn.putAll(this.skipDrawStepThisTurn);
         copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
         copy.skipNextUntapStepCount.putAll(this.skipNextUntapStepCount);
         this.skippedStepOrPhasesThisTurn.forEach((playerId, kinds) -> {

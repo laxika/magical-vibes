@@ -42,6 +42,11 @@ public enum SpellCastTimingRestriction {
     COMBAT_AFTER_BLOCKERS,
 
     /**
+     * "Cast this spell only during combat." Cauldron Dance.
+     */
+    ONLY_DURING_COMBAT,
+
+    /**
      * "Cast this spell only during the declare blockers step." Dazzling Beauty. Legal for any
      * player during any player's declare-blockers step.
      */

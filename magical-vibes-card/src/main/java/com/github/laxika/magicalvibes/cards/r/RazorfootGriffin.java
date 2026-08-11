@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M15", collectorNumber = "27")
 @CardRegistration(set = "8ED", collectorNumber = "36")
 @CardRegistration(set = "7ED", collectorNumber = "32")
+@CardRegistration(set = "INV", collectorNumber = "29")
 public class RazorfootGriffin extends Card {
 }

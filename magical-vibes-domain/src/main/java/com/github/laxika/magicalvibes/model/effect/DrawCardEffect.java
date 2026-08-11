@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
  * Controller draws {@code amount} cards, one at a time (so draw-replacement effects and
  * "whenever you draw" triggers see each individual draw).
  */
-public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) implements CardDrawingEffect {
+public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) implements ManaAbilityCardDrawingEffect {
 
     public DrawCardEffect(DynamicAmount amount) {
         this(amount, false);

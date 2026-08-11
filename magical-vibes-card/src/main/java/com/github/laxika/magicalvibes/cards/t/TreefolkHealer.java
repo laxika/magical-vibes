@@ -1,0 +1,21 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+
+import java.util.List;
+
+@CardRegistration(set = "INV", collectorNumber = "218")
+public class TreefolkHealer extends Card {
+
+    public TreefolkHealer() {
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{2}{W}",
+                List.of(PreventDamageEffect.nextToTarget(2)),
+                "{2}{W}, {T}: Prevent the next 2 damage that would be dealt to any target this turn."
+        ));
+    }
+}

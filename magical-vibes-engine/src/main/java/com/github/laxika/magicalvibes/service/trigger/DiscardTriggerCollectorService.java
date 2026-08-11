@@ -75,8 +75,15 @@ public class DiscardTriggerCollectorService {
                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
         CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
+        boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
+                gameData, discardingPlayerId, match.permanent().getId());
+        if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+            damagePreventionService.applySourceDamagePreventionForPlayer(
+                    gameData, discardingPlayerId, match.permanent().getId(), damage,
+                    gameQueryService.getEffectiveColors(gameData, match.permanent()));
+        }
         if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, match.permanent().getId())
+                && !sourceDamagePrevented
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);

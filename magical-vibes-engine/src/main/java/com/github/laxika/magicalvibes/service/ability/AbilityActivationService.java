@@ -238,7 +238,11 @@ public class AbilityActivationService {
         ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
                 ? gameQueryService.fixedLandManaColor(gameData, permanent)
                 : null;
-        Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND) && fixedLandColor == null
+        boolean anyColorReplacement = permanent.getCard().hasType(CardType.LAND)
+                && fixedLandColor == null
+                && gameQueryService.basicLandManaProducesAnyColor(gameData, permanent);
+        Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND)
+                && fixedLandColor == null && !anyColorReplacement
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
                 : Set.of();
         if (chosenLandManaReplacement) {
@@ -265,6 +269,26 @@ public class AbilityActivationService {
                 if (isCreatureSource) {
                     manaPool.addCreatureMana(fixedLandColor, totalMana);
                 }
+            }
+        } else if (anyColorReplacement) {
+            int totalMana = 0;
+            if (!overriddenManaColors.isEmpty()) {
+                totalMana = manaMultiplier;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors,
+                        "Choose a color of mana to add."));
             }
         } else if (!twistedColors.isEmpty()) {
             int totalMana = 0;
@@ -571,7 +595,9 @@ public class AbilityActivationService {
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
-        Set<ManaColor> twistedColors = fixedLandColor == null
+        boolean anyColorReplacement = fixedLandColor == null
+                && gameQueryService.basicLandManaProducesAnyColor(gameData, permanent);
+        Set<ManaColor> twistedColors = fixedLandColor == null && !anyColorReplacement
                 ? gameQueryService.twistedLandManaColors(gameData, permanent)
                 : Set.of();
         if (fixedLandColor != null) {
@@ -589,6 +615,26 @@ public class AbilityActivationService {
             if (totalMana > 0) {
                 manaPool.add(fixedLandColor, totalMana);
                 manaPool.addSpellOnlyMana(fixedLandColor, totalMana);
+            }
+        } else if (anyColorReplacement) {
+            int totalMana = 0;
+            if (!overriddenManaColors.isEmpty()) {
+                totalMana = 1;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect);
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        new ChoiceContext.ManaColorChoice(playerId, false, totalMana);
+                List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors,
+                        "Choose a color of mana to add."));
             }
         } else if (!twistedColors.isEmpty()) {
             int totalMana = 0;
@@ -2275,7 +2321,8 @@ public class AbilityActivationService {
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, subtypeSpellOrAbilityContext, additionalGenericCost);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                    subtypeSpellOrAbilityContext, additionalGenericCost, ability.getXColorRestrictions());
             recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
         } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
@@ -2481,9 +2528,13 @@ public class AbilityActivationService {
             payDiscardHandCost(gameData, player);
         }
 
-        // Pay discard-a-card-at-random cost
-        if (abilityEffects.stream().anyMatch(e -> e instanceof DiscardRandomCardCost)) {
-            payRandomDiscardCost(gameData, player);
+        // Pay random-discard cost
+        int randomDiscardCount = abilityEffects.stream()
+                .filter(DiscardRandomCardCost.class::isInstance)
+                .mapToInt(effect -> ((DiscardRandomCardCost) effect).count())
+                .sum();
+        if (randomDiscardCount > 0) {
+            payRandomDiscardCost(gameData, player, randomDiscardCount);
         }
 
         // Pay reveal-two-color-sharing-cards cost: reveal a qualifying pair (cards stay in hand)
@@ -3132,8 +3183,13 @@ public class AbilityActivationService {
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
-            if (preCheck.hasX()) {
-                if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
+            if (preCheck.hasX() && ability.getXColorRestrictions() != null) {
+                if (!preCheck.canPay(manaPool, xValue, ability.getXColorRestrictions(), additionalGenericCost)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+            } else if (preCheck.hasX()) {
+                if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx,
+                        false, false, false, null, soaCtx, false, artifactCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
@@ -3210,11 +3266,16 @@ public class AbilityActivationService {
             }
         }
 
-        // Random-discard cost needs at least one card in hand
-        if (abilityEffects.stream().anyMatch(e -> e instanceof DiscardRandomCardCost)) {
+        // Random-discard cost needs enough cards in hand
+        int randomDiscardCount = abilityEffects.stream()
+                .filter(DiscardRandomCardCost.class::isInstance)
+                .mapToInt(effect -> ((DiscardRandomCardCost) effect).count())
+                .sum();
+        if (randomDiscardCount > 0) {
             List<Card> hand = gameData.playerHands.get(playerId);
-            if (hand == null || hand.isEmpty()) {
-                throw new IllegalStateException("Must have a card to discard at random to activate ability");
+            if (hand == null || hand.size() < randomDiscardCount) {
+                throw new IllegalStateException("Must have " + randomDiscardCount
+                        + " cards to discard at random to activate ability");
             }
         }
 
@@ -3731,8 +3792,23 @@ public class AbilityActivationService {
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext, Set<CardSubtype> subtypeSpellOrAbilityContext, int additionalCost) {
+        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                subtypeSpellOrAbilityContext, additionalCost, null);
+    }
+
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue,
+                             boolean artifactContext, boolean myrContext,
+                             Set<CardSubtype> subtypeSpellOrAbilityContext, int additionalCost,
+                             Set<ManaColor> xColorRestrictions) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (cost.hasX() && xColorRestrictions != null) {
+            if (!cost.canPay(pool, effectiveXValue, xColorRestrictions, additionalCost)) {
+                throw new IllegalStateException("Not enough mana to activate ability");
+            }
+            cost.pay(pool, effectiveXValue, xColorRestrictions, additionalCost);
+            return;
+        }
         boolean hasSubtypeSoa = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
         boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa;
 
@@ -4020,20 +4096,22 @@ public class AbilityActivationService {
         log.info("Game {} - {} discards hand of {} cards as activation cost", gameData.id, player.getUsername(), discarded.size());
     }
 
-    private void payRandomDiscardCost(GameData gameData, Player player) {
+    private void payRandomDiscardCost(GameData gameData, Player player, int count) {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             return;
         }
 
-        Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
-        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
-        gameData.discardCausedByOpponent = false;
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        for (int i = 0; i < count && !hand.isEmpty(); i++) {
+            Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            gameData.discardCausedByOpponent = false;
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
 
-        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " at random as an activation cost."));
-        log.info("Game {} - {} discards {} at random as activation cost", gameData.id, player.getUsername(), discarded.getName());
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " at random as an activation cost."));
+            log.info("Game {} - {} discards {} at random as activation cost", gameData.id, player.getUsername(), discarded.getName());
+        }
     }
 
     private List<Integer> collectGraveyardIndicesForType(List<Card> graveyard, CardType requiredType, CardSubtype requiredSubtype) {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "8")
 @CardRegistration(set = "MIR", collectorNumber = "5")
+@CardRegistration(set = "INV", collectorNumber = "9")
 public class BlindingLight extends Card {
 
     public BlindingLight() {

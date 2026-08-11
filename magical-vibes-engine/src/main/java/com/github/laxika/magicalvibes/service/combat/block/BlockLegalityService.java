@@ -138,7 +138,8 @@ public class BlockLegalityService {
     public boolean canBlock(BlockLegalityContext context, Permanent creature) {
         if (!gameQueryService.isCreature(context.gameData, creature)
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
-                || creature.isCantBlockThisTurn()) {
+                || creature.isCantBlockThisTurn()
+                || isOutsideChosenBlockers(context.gameData, creature)) {
             return false;
         }
         if (blockerFacts(context, creature).prohibitedFromBlocking()) {
@@ -193,6 +194,9 @@ public class BlockLegalityService {
         GameData gameData = context.gameData;
         if (blocker.isTapped() && !canBlockAsThoughUntapped(context, blocker)) {
             return BlockDenial.CANT_BLOCK;
+        }
+        if (isOutsideChosenBlockers(gameData, blocker)) {
+            return BlockDenial.CANT_BLOCK_THIS_TURN;
         }
         BlockLegalityContext.AttackerFacts atk = context.attackerFacts.computeIfAbsent(
                 attacker.getId(), id -> buildAttackerFacts(context, attacker));
@@ -279,6 +283,15 @@ public class BlockLegalityService {
             return BlockDenial.PROTECTION;
         }
         return null;
+    }
+
+    private boolean isOutsideChosenBlockers(GameData gameData, Permanent creature) {
+        for (Set<UUID> chosen : gameData.blockableCreaturesThisTurn.values()) {
+            if (!chosen.contains(creature.getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether a static permission lets this tapped creature block as though it were untapped. */
@@ -386,31 +399,45 @@ public class BlockLegalityService {
         boolean unblockable = gameQueryService.hasCantBeBlocked(gameData, attacker);
         List<BlockabilityRestrictionEffect> pairRestrictions = new ArrayList<>(2);
         boolean cantBeBlockedByLessPower = false;
+        List<AttackerRestriction> restrictions = new ArrayList<>();
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                if (!unblockable) {
-                    // Defender-condition unblockable (e.g. "can't be blocked if defending player controls a Forest")
-                    if (restriction.unblockableIfDefenderControls() != null
-                            && !(restriction.unblockableIfDefenderControlsIsLandwalk() && context.landwalkIgnored)
-                            && defenderControls(context, restriction.unblockableIfDefenderControls())) {
+                restrictions.add(new AttackerRestriction(attacker, restriction));
+            }
+        }
+        for (Permanent source : context.attachedTo(attacker)) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof BlockabilityRestrictionEffect restriction
+                        && (restriction.unblockableIfDefenderControls() != null
+                        || restriction.blockableOnlyBy() != null
+                        || restriction.cantBeBlockedByCreaturesMatching() != null)) {
+                    restrictions.add(new AttackerRestriction(source, restriction));
+                }
+            }
+        }
+        for (AttackerRestriction attackerRestriction : restrictions) {
+            BlockabilityRestrictionEffect restriction = attackerRestriction.effect();
+            if (!unblockable) {
+                if (restriction.unblockableIfDefenderControls() != null
+                        && !(restriction.unblockableIfDefenderControlsIsLandwalk() && context.landwalkIgnored)
+                        && defenderControls(context, attackerRestriction.source(), restriction.unblockableIfDefenderControls())) {
+                    unblockable = true;
+                }
+                if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
+                    if (controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId)) {
                         unblockable = true;
                     }
-                    if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
-                        UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
-                        if (controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId)) {
-                            unblockable = true;
-                        }
-                    }
-                    if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
-                        unblockable = true;
-                    }
                 }
-                if (restriction.cantBeBlockedByCreaturesWithLessPower()) {
-                    cantBeBlockedByLessPower = true;
+                if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
+                    unblockable = true;
                 }
-                if (restriction.blockableOnlyBy() != null || restriction.cantBeBlockedByCreaturesMatching() != null) {
-                    pairRestrictions.add(restriction);
-                }
+            }
+            if (restriction.cantBeBlockedByCreaturesWithLessPower()) {
+                cantBeBlockedByLessPower = true;
+            }
+            if (restriction.blockableOnlyBy() != null || restriction.cantBeBlockedByCreaturesMatching() != null) {
+                pairRestrictions.add(restriction);
             }
         }
         if (!unblockable && !context.landwalkIgnored) {
@@ -422,7 +449,6 @@ public class BlockLegalityService {
                 }
             }
         }
-        addAuraGrantedBlockingRestrictions(context, attacker, pairRestrictions);
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         boolean intimidate = gameQueryService.hasKeyword(attacker, bonus, Keyword.INTIMIDATE);
         BlockDenial landwalkDenial = null;
@@ -515,17 +541,14 @@ public class BlockLegalityService {
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
-    /** Appends the blocker-dependent restrictions the auras attached to {@code creature} grant it. */
-    private void addAuraGrantedBlockingRestrictions(BlockLegalityContext context, Permanent creature,
-                                                    List<BlockabilityRestrictionEffect> restrictions) {
-        for (Permanent aura : context.attachedTo(creature)) {
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof BlockabilityRestrictionEffect restriction
-                        && (restriction.blockableOnlyBy() != null
-                        || restriction.cantBeBlockedByCreaturesMatching() != null)) {
-                    restrictions.add(restriction);
-                }
-            }
-        }
+    private boolean defenderControls(BlockLegalityContext context, Permanent source, PermanentPredicate predicate) {
+        FilterContext filterContext = FilterContext.of(context.gameData)
+                .withSourceCardId(source.getCard().getId())
+                .withSourcePermanentSnapshot(source);
+        return context.defenderBattlefield.stream()
+                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext));
+    }
+
+    private record AttackerRestriction(Permanent source, BlockabilityRestrictionEffect effect) {
     }
 }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -104,6 +105,7 @@ public class CardChoiceHandlerService {
         int faceDownToughness = 0;
         Set<CardType> faceDownCardTypes = Set.of();
         UUID returnExiledSourceCardId = null;
+        UUID returnSourcePermanentId = null;
         CardPredicate drawAndRepeatPredicate = null;
         String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
@@ -129,6 +131,7 @@ public class CardChoiceHandlerService {
             faceDownPower = hc.faceDownPower();
             faceDownToughness = hc.faceDownToughness();
             faceDownCardTypes = hc.faceDownCardTypes();
+            returnSourcePermanentId = hc.returnSourcePermanentId();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -184,6 +187,13 @@ public class CardChoiceHandlerService {
                         sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                         returnExiledSourceCardId);
+                if (returnSourcePermanentId != null) {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    if (pendingEntry != null) {
+                        pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                                List.of(ReturnToHandEffect.self()));
+                    }
+                }
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
                 if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
                         && !gameData.interaction.isAwaitingInput()) {

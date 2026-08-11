@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -74,6 +75,12 @@ public class LibraryRevealSupport {
 
     public List<String> collectAllCardNamesInGame(GameData gameData) {
         return collectCardNamesInGame(gameData, card -> true);
+    }
+
+    /** Every distinct card name in the game except basic land card names (Desperate Research). */
+    public List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
+        return collectCardNamesInGame(gameData,
+                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)));
     }
 
     private List<String> collectCardNamesInGame(GameData gameData, java.util.function.Predicate<Card> candidate) {

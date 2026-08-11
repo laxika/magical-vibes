@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 /**
- * How the chosen / unchosen piles of a card-pile separation ({@link PendingPileSeparation}) are
+ * How the chosen / unchosen piles of a pile separation ({@link PendingPileSeparation}) are
  * disposed of once the controller has picked a pile.
  */
 public enum CardPileDisposition {
@@ -24,5 +24,13 @@ public enum CardPileDisposition {
      * they choose go to the controller's graveyard and every other card goes to the controller's
      * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
      */
-    GIFTS_UNGIVEN
+    GIFTS_UNGIVEN,
+    /** Death or Glory: the opponent chooses which pile is exiled; the other returns to the battlefield. */
+    OPPONENT_CHOOSES_EXILE,
+    /** Fight or Flight: the chosen pile contains the only creatures that can attack this turn. */
+    ATTACKERS,
+    /** Stand or Fall: the chosen pile contains the only creatures that can block this turn. */
+    BLOCKERS,
+    /** Do or Die: target player chooses the pile whose creatures are destroyed without regeneration. */
+    DESTROY
 }

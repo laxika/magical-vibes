@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "152")
+@CardRegistration(set = "INV", collectorNumber = "121")
 public class RecklessSpite extends Card {
 
     public RecklessSpite() {

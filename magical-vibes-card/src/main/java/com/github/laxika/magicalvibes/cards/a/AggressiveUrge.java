@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "250")
+@CardRegistration(set = "INV", collectorNumber = "181")
 public class AggressiveUrge extends Card {
 
     public AggressiveUrge() {

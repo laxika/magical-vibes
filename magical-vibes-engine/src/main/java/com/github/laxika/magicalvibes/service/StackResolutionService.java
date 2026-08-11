@@ -522,7 +522,9 @@ public class StackResolutionService {
                 }
 
                 // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)
-                maybeBeginBasicLandTypeChoice(gameData, controllerId, characteristics);
+                if (maybeBeginBasicLandTypeChoice(gameData, controllerId, characteristics)) {
+                    gameData.interaction.setPendingAuraResolutionEntry(entry);
+                }
 
                 // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
                 ChooseColorEffect auraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -853,6 +855,13 @@ public class StackResolutionService {
         }
     }
 
+    public void completeDeferredAuraResolution(GameData gameData, StackEntry entry) {
+        Card characteristics = disturbCharacteristics(entry, entry.getCard());
+        battlefieldEntryService.processCreatureETBEffects(gameData, entry.getControllerId(), characteristics,
+                entry.getTargetId(), true, entry.getTargetIds());
+        handleSpellDisposition(gameData, entry);
+    }
+
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
         handleSpellDisposition(gameData, entry);
@@ -1031,20 +1040,21 @@ public class StackResolutionService {
         }
     }
 
-    private void maybeBeginBasicLandTypeChoice(GameData gameData, UUID controllerId, Card characteristics) {
+    private boolean maybeBeginBasicLandTypeChoice(GameData gameData, UUID controllerId, Card characteristics) {
         ChooseBasicLandTypeOnEnterEffect choose = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseBasicLandTypeOnEnterEffect)
                 .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
                 .findFirst()
                 .orElse(null);
         if (choose == null) {
-            return;
+            return false;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         Permanent justEntered = bf.get(bf.size() - 1);
         playerInputService.beginBasicLandTypeChoice(
                 gameData, controllerId, justEntered.getId(), false, choose.choicesRequired() > 1,
                 choose.allowedTypes());
+        return true;
     }
 
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {

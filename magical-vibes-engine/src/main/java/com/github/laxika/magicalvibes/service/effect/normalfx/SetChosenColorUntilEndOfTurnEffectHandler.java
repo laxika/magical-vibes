@@ -26,14 +26,15 @@ public class SetChosenColorUntilEndOfTurnEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var colorEffect = (SetChosenColorUntilEndOfTurnEffect) effect;
-        UUID targetId = colorEffect.targeted() ? entry.getTargetId() : entry.getSourcePermanentId();
+        SetChosenColorUntilEndOfTurnEffect chosenColor = (SetChosenColorUntilEndOfTurnEffect) effect;
+        UUID targetId = chosenColor.targeted() ? entry.getTargetId() : entry.getSourcePermanentId();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
+        if (target == null && (!chosenColor.canTargetSpell()
+                || gameQueryService.findStackEntryByCardId(gameData, targetId) == null)) {
             return;
         }
 
-        playerInputService.beginColorSetChoice(gameData, entry.getControllerId(), target.getId(),
+        playerInputService.beginColorSetChoice(gameData, entry.getControllerId(), targetId,
                 entry.getCard().getName());
     }
 }

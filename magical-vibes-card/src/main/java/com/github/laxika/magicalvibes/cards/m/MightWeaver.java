@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "278")
+@CardRegistration(set = "INV", collectorNumber = "198")
 public class MightWeaver extends Card {
 
     public MightWeaver() {

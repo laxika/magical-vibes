@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceSpellHandlerService spellHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final AbilityActivationService abilityActivationService;
+    private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -77,6 +79,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.CannibalizeChoice cannibalize) {
             battlefieldHandler.handleCannibalizeChoice(gameData, permanentId, cannibalize);
+        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand sacrificeOneOfTwo) {
+            battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
             battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
         } else if (context instanceof PermanentChoiceContext.TormentSacrifice tormentSacrifice) {
@@ -121,6 +125,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
             spellHandler.handleSpellRetarget(gameData, permanentId, retarget);
+        } else if (context instanceof PermanentChoiceContext.PsychicBattleRetarget retarget) {
+            spellHandler.handlePsychicBattleRetarget(gameData, permanentId, retarget);
         } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
             triggerHandler.handleSpellTargetTrigger(gameData, permanentId, stt);
         } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
@@ -259,6 +265,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
         } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
+        } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {
+            bendOrBreakEffectHandler.completeOpponentChoice(gameData, permanentId);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);
         } else {

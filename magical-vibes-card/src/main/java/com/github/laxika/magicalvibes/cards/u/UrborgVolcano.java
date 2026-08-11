@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "8ED", collectorNumber = "327")
+@CardRegistration(set = "INV", collectorNumber = "330")
 public class UrborgVolcano extends Card {
 
     public UrborgVolcano() {

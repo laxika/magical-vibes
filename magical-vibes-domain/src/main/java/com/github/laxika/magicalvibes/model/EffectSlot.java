@@ -137,6 +137,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code checkAllyPermanentSacrificedTriggers} for sacrifice-self / sacrifice-as-cost). Used by
      *  Thraximundar. */
     ON_ANY_CREATURE_SACRIFICED,
+    /** Triggered when a player chooses one or more targets for a spell or ability. */
+    ON_ANY_PLAYER_CHOOSES_TARGETS,
     ON_BECOMES_TARGET_OF_SPELL,
     /** Triggers when this permanent becomes the target of an Aura spell (any player's — the Aura's
      *  controller is irrelevant). Spells only; an Aura already on the battlefield being moved by an
@@ -329,6 +331,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  fires only when the damaged player is the aura's controller. Reuses
      *  {@code EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} for resolution. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
+    /** Triggers whenever the creature this Aura is attached to deals damage to anything. */
+    ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
     ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,

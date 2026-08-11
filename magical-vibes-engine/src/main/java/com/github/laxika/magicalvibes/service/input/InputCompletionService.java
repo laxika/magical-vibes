@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
 
 /**
  * Shared completion logic for input handler services.
@@ -26,6 +30,8 @@ public class InputCompletionService {
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final EffectResolutionService effectResolutionService;
+    @Autowired
+    private ObjectProvider<StackResolutionService> stackResolutionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -54,6 +60,11 @@ public class InputCompletionService {
         if (gameData.interaction.isAwaitingInput()) return;
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            StackEntry pendingAuraEntry = gameData.interaction.consumePendingAuraResolutionEntry();
+            if (pendingAuraEntry != null) {
+                stackResolutionService.getObject().completeDeferredAuraResolution(gameData, pendingAuraEntry);
+            }
+
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. Ponder: after "you may shuffle" resolves, continue with "draw a card")
             if (gameData.pendingEffectResolutionEntry != null) {

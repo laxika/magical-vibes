@@ -110,7 +110,10 @@ public class PotentialManaService {
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
                         ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
-                Set<ManaColor> twisted = fixedLandColor == null
+                boolean anyColorReplacement = perm.getCard().hasType(CardType.LAND)
+                        && fixedLandColor == null
+                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
+                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
                         : Set.of();
                 if (fixedLandColor != null) {
@@ -122,6 +125,13 @@ public class PotentialManaService {
                         if (isCreature) {
                             virtual.addCreatureMana(fixedLandColor, amount);
                         }
+                    }
+                } else if (anyColorReplacement) {
+                    ManaColor amountKey = overriddenColor != null ? overriddenColor
+                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
+                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
+                    if (amount > 0) {
+                        addAnyColorManaToVirtualPool(virtual, amount, isCreature);
                     }
                 } else if (!twisted.isEmpty()) {
                     addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature);
@@ -192,7 +202,10 @@ public class PotentialManaService {
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
                         ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
-                Set<ManaColor> twisted = fixedLandColor == null
+                boolean anyColorReplacement = perm.getCard().hasType(CardType.LAND)
+                        && fixedLandColor == null
+                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
+                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
                         : Set.of();
                 if (fixedLandColor != null) {
@@ -201,6 +214,13 @@ public class PotentialManaService {
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
                         virtual.add(fixedLandColor, amount);
+                    }
+                } else if (anyColorReplacement) {
+                    ManaColor amountKey = overriddenColor != null ? overriddenColor
+                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
+                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
+                    if (amount > 0) {
+                        addAnyColorManaToVirtualPool(virtual, amount, false);
                     }
                 } else if (!twisted.isEmpty()) {
                     addTwistedManaToVirtualPool(virtual, twisted, 1, false);
@@ -261,7 +281,10 @@ public class PotentialManaService {
                 ManaColor fixedLandColor = perm.getCard().hasType(CardType.LAND)
                         ? gameQueryService.fixedLandManaColor(gameData, perm)
                         : null;
-                Set<ManaColor> twisted = fixedLandColor == null
+                boolean anyColorReplacement = perm.getCard().hasType(CardType.LAND)
+                        && fixedLandColor == null
+                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
+                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
                         ? gameQueryService.twistedLandManaColors(gameData, perm)
                         : Set.of();
                 if (fixedLandColor != null) {
@@ -274,6 +297,9 @@ public class PotentialManaService {
                             virtual.addCreatureMana(fixedLandColor, amount);
                         }
                     }
+                } else if (anyColorReplacement) {
+                    // This replacement opens the same color-choice interaction as an any-color
+                    // mana ability, so it is excluded from the safe pool.
                 } else if (!twisted.isEmpty()) {
                     // Multi-color Reality Twist prompts; treat like a choice source in the safe pool.
                     if (twisted.size() == 1) {

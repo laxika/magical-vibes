@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -744,7 +745,10 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL),
+            @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    })
     private boolean handleKickedSpellCastTrigger(TriggerMatchContext match,
             KickedSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1228,6 +1232,10 @@ public class SpellCastTriggerCollectorService {
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);
         int spellManaSpentX = needsSpellManaSpentX
                 ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
+        boolean carriesTriggeringSpellManaValue = resolved.stream()
+                .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance);
+        int triggeringSpellManaValue = carriesTriggeringSpellManaValue
+                ? spellManaValue(match.gameData(), spellCard) : 0;
 
         if (match.rawEffect() instanceof MayEffect may) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(
@@ -1324,6 +1332,9 @@ public class SpellCastTriggerCollectorService {
             // Contextual "it" = the spell that caused the trigger, still on the stack below this
             // ability (Bloodlord of Vaasgoth's bloodthirst grant).
             entry.setTriggeringCardId(spellCard.getId());
+            if (carriesTriggeringSpellManaValue) {
+                entry.setEventValue(triggeringSpellManaValue);
+            }
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1363,6 +1374,11 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return null;
+    }
+
+    private int spellManaValue(com.github.laxika.magicalvibes.model.GameData gameData, Card spellCard) {
+        StackEntry spellEntry = findStackEntryForCard(gameData, spellCard.getId());
+        return spellCard.getManaValue() + (spellEntry == null ? 0 : spellEntry.getXValue());
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {

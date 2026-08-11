@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.SoulBurnEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "161")
+@CardRegistration(set = "INV", collectorNumber = "124")
 public class SoulBurn extends Card {
 
     public SoulBurn() {

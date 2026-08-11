@@ -498,6 +498,9 @@ public class AiManaManager {
         if (fixedColor != null) {
             return Set.of(fixedColor);
         }
+        if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
+            return new LinkedHashSet<>(ManaColor.COLORS);
+        }
         Set<ManaColor> twistedColors = gameQueryService.twistedLandManaColors(gameData, permanent);
         if (!twistedColors.isEmpty()) {
             return twistedColors;

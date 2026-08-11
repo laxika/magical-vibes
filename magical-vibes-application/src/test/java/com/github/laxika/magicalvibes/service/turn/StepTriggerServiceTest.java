@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -38,6 +40,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
@@ -49,6 +53,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -74,6 +79,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -120,6 +126,9 @@ class StepTriggerServiceTest {
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private LifeSupport lifeSupport;
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
@@ -172,6 +181,7 @@ class StepTriggerServiceTest {
                 gameLogService,
                 playerInputService,
                 permanentRemovalService,
+                lifeSupport,
                 battlefieldEntryService,
                 graveyardTransformedReturnService,
                 graveyardTargetingService,
@@ -350,6 +360,32 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Global upkeep grant can require a life payment")
+        void globalUpkeepGrantCanRequireLifePayment() {
+            gd.turnNumber = 2;
+            Card grantCard = createCardWithName("Vile Consumption");
+            grantCard.addEffect(EffectSlot.STATIC,
+                    new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsCreaturePredicate(), 1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(grantCard));
+
+            Card creatureCard = createCardWithName("Creature");
+            creatureCard.setType(CardType.CREATURE);
+            Permanent creature = new Permanent(creatureCard);
+            gd.playerBattlefields.get(player1Id).add(creature);
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(gd), eq(creature), any(PermanentIsCreaturePredicate.class))).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            ForcedCostOrElseEffect payOrSacrifice = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            PayManaCost payment = (PayManaCost) payOrSacrifice.forcedCost();
+            assertThat(payment.manaCost()).isEmpty();
+            assertThat(payment.lifeAmount()).isEqualTo(1);
         }
 
         @Test
@@ -1581,6 +1617,29 @@ class StepTriggerServiceTest {
                     DelayedPermanentActionKind.DESTROY_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+        }
+
+        @Test
+        @DisplayName("Sacrifices the delayed target and gains life equal to its toughness")
+        void sacrificesDelayedTargetAndGainsLife() {
+            Card sourceCard = createCardWithName("Spinal Embrace");
+            Card targetCard = createCardWithName("Target Creature");
+            Permanent target = new Permanent(targetCard);
+            gd.playerBattlefields.get(player1Id).add(target);
+            gd.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStep(
+                    target.getId(), player1Id, sourceCard));
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(4);
+            when(permanentRemovalService.removePermanentToGraveyard(gd, target)).thenReturn(true);
+
+            sut.handleEndStepTriggers(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
+            verify(lifeSupport).applyGainLife(
+                    gd, player1Id, 4, "Spinal Embrace", sourceCard, StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class)).isEmpty();
         }
 
         @Test

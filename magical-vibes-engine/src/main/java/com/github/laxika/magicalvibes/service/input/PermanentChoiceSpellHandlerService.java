@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -43,6 +45,7 @@ public class PermanentChoiceSpellHandlerService {
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -51,7 +54,8 @@ public class PermanentChoiceSpellHandlerService {
                                               PlayerInputService playerInputService,
                                               @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
-                                              @Lazy InputCompletionService inputCompletionService) {
+                                              @Lazy InputCompletionService inputCompletionService,
+                                              PsychicBattleSupport psychicBattleSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -60,6 +64,7 @@ public class PermanentChoiceSpellHandlerService {
         this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
+        this.psychicBattleSupport = psychicBattleSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -91,6 +96,38 @@ public class PermanentChoiceSpellHandlerService {
         // async retarget (e.g. Wild Ricochet's "Then copy that spell" after retargeting the original).
         // For flows with nothing left to resolve this is a no-op that falls through to auto-pass.
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePsychicBattleRetarget(GameData gameData, UUID permanentId,
+                                             PermanentChoiceContext.PsychicBattleRetarget retarget) {
+        StackEntry targetSpell = psychicBattleSupport.findTargetEntry(gameData, retarget.spellCardId());
+        if (targetSpell == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
+        gameLogService.append(gameData, GameLog.text(
+                targetSpell.getCard().getName() + " now targets " + getTargetDisplayName(gameData, permanentId) + "."));
+
+        boolean nextChoiceQueued = psychicBattleSupport.queueNextChoice(
+                gameData, retarget.sourceCard(), retarget.controllerId(),
+                retarget.spellCardId(), retarget.targetIndex() + 1);
+
+        if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
+        } else {
+            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        if (nextChoiceQueued) {
+            playerInputService.processNextMayAbility(gameData);
+        } else {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleLibraryCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.LibraryCastSpellTarget lct) {

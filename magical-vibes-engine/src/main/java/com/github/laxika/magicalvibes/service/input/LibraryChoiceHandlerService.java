@@ -89,6 +89,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
@@ -1497,6 +1498,10 @@ public class LibraryChoiceHandlerService {
         if (uniqueIds.size() != cardIds.size()) {
             throw new IllegalStateException("Duplicate card IDs in selection");
         }
+        if (cardIds.size() < libraryRevealChoice.minCount()
+                || cardIds.size() > libraryRevealChoice.maxCount()) {
+            throw new IllegalStateException("Invalid number of cards selected");
+        }
 
         UUID controllerId = libraryRevealChoice.playerId();
         List<Card> allRevealedCards = libraryRevealChoice.allCards();
@@ -1569,7 +1574,9 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
-                    libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom());
+                    libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom(),
+                    libraryRevealChoice.gainLifeEqualToSelectedCardManaValue(),
+                    gameData.pendingEffectResolutionEntry);
             return;
         }
 
@@ -1688,9 +1695,33 @@ public class LibraryChoiceHandlerService {
                                               List<Card> selectedCards, List<Card> remainingCards,
                                               boolean reorderRemainingToBottom, boolean remainingToGraveyard,
                                               boolean remainingToExile, boolean randomRemainingToBottom) {
+        resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
+                reorderRemainingToBottom, remainingToGraveyard, remainingToExile,
+                randomRemainingToBottom, false, null);
+    }
+
+    private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
+                                              List<Card> selectedCards, List<Card> remainingCards,
+                                              boolean reorderRemainingToBottom, boolean remainingToGraveyard,
+                                              boolean remainingToExile, boolean randomRemainingToBottom,
+                                              boolean gainLifeEqualToSelectedCardManaValue,
+                                              StackEntry sourceEntry) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
+        }
+
+        if (gainLifeEqualToSelectedCardManaValue && !selectedCards.isEmpty()) {
+            Card chosenCard = selectedCards.getFirst();
+            int manaValue = chosenCard.getManaValue();
+            if (manaValue > 0) {
+                if (sourceEntry != null && sourceEntry.getCard() != null) {
+                    lifeSupport.applyGainLife(gameData, controllerId, manaValue,
+                            sourceEntry.getCard().getName(), sourceEntry.getCard(), sourceEntry.getEntryType());
+                } else {
+                    lifeSupport.applyGainLife(gameData, controllerId, manaValue);
+                }
+            }
         }
 
         // Rest exiled (Browse): one card to hand, the others exiled face up.

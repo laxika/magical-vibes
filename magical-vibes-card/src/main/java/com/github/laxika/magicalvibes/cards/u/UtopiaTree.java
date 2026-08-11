@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 
 @CardRegistration(set = "9ED", collectorNumber = "277")
+@CardRegistration(set = "INV", collectorNumber = "219")
 public class UtopiaTree extends Card {
 
     public UtopiaTree() {

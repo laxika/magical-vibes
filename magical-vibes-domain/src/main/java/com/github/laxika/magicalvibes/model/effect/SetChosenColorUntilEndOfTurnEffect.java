@@ -1,20 +1,30 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Target permanent becomes a color the controller chooses until end of turn (CR 105.3 / layer 5).
- * On resolution the controller is prompted for a color ({@code ChoiceContext.ColorSetChoice}); the
- * choice handler then applies the same floating layer-5 color-setting effect as
- * {@link GrantColorUntilEndOfTurnEffect} (which replaces all previous colors). The self-scoped
- * form is used for abilities such as Wild Mongrel; the default form targets a permanent.
+ * Target permanent becomes a color the controller chooses until end of turn (layer 5);
+ * the spell-capable form also supports a target spell. On resolution the controller is prompted
+ * for a color, and the choice handler applies the same floating color-setting effect as
+ * {@link GrantColorUntilEndOfTurnEffect}. Used by Distorting Lens, Blind Seer, and self-scoped
+ * color-changing abilities.
  */
-public record SetChosenColorUntilEndOfTurnEffect(boolean targeted) implements CardEffect {
+public record SetChosenColorUntilEndOfTurnEffect(boolean canTargetSpell, boolean targeted) implements CardEffect {
 
     public SetChosenColorUntilEndOfTurnEffect() {
-        this(true);
+        this(false, true);
+    }
+
+    public SetChosenColorUntilEndOfTurnEffect(boolean canTargetSpell) {
+        this(canTargetSpell, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return targeted ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+        if (!targeted) {
+            return TargetSpec.NONE;
+        }
+        TargetPredicate target = canTargetSpell
+                ? TargetPredicates.anyOf(TargetPredicates.permanent(), TargetPredicates.spellOnStack())
+                : TargetPredicates.permanent();
+        return TargetSpec.benign(target);
     }
 }

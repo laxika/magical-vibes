@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "195")
+@CardRegistration(set = "INV", collectorNumber = "206")
 public class Restock extends Card {
 
     public Restock() {

@@ -160,6 +160,34 @@ public class PermanentChoiceBattlefieldHandlerService {
     }
 
     /**
+     * Barrin's Spite: the creatures' controller has picked which target to sacrifice; the other
+     * target returns to its owner's hand.
+     */
+    public void handleSacrificeOneOfTwoThenReturnOtherToHand(GameData gameData, UUID permanentId,
+                                                             PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        UUID otherId = permanentId.equals(context.firstPermanentId())
+                ? context.secondPermanentId()
+                : context.firstPermanentId();
+
+        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
+
+        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
+        if (other != null && permanentRemovalService.removePermanentToHand(gameData, other)) {
+            gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is returned to its owner's hand."));
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id,
+                    other.getCard().getName(), context.sourceCard().getName());
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Valleymaker's mana ability: the activating player has chosen {@code chosenPlayerId} as the
      * recipient; add the produced mana to that player's pool. The activating player retains priority
      * (mana abilities don't change priority), so we simply resume the auto-pass loop afterward.
@@ -767,6 +795,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameData.playerSourceDamagePreventionIds
                     .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                     .add(permanentId);
+            if (preventSource.gainLifeForBlackOrRedSource()) {
+                gameData.playerSourceDamagePreventionLifeGainIds
+                        .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                        .add(permanentId);
+            }
             gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
                     " would deal to " + playerName + " is prevented this turn."));
         } else {

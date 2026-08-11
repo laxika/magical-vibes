@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -241,6 +242,16 @@ public class EnterTriggerCollectorService {
         int amount = amountEvaluationService.evaluate(match.gameData(), gainLife.amount(),
                 new AmountContext(match.controllerId(), match.permanent(), null, 0, 0));
         return enqueueGainLife(match, ctx, amount);
+    }
+
+    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureDrawEnteringController(TriggerMatchContext match,
+            DrawCardForTargetPlayerEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        enqueue(match, effect, pe.enteringControllerId(), pe.perEffectTriggerCount());
+        logTriggered(match);
+        return true;
     }
 
     @CollectsTrigger(value = GainLifeEqualToToughnessEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
