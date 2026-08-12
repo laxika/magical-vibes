@@ -3328,7 +3328,32 @@ public class TriggerCollectionService {
             }
         });
 
+        collectGraveyardOpponentLifeGainTriggers(gameData, gainingPlayerId);
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+    }
+
+    private void collectGraveyardOpponentLifeGainTriggers(GameData gameData, UUID gainingPlayerId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(gainingPlayerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE)) {
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} triggers from the graveyard when an opponent gains life",
+                            gameData.id, card.getName());
+                }
+            }
+        }
     }
 
     /**
@@ -5373,6 +5398,13 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                 gameData, landControllerId, landControllerId, enteringLand);
+        UUID enteringPermanentId = null;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard() == enteringLand) {
+                enteringPermanentId = permanent.getId();
+                break;
+            }
+        }
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringLand) continue;
 
@@ -5386,7 +5418,9 @@ public class TriggerCollectionService {
                 if (resolved instanceof ConditionalEffect conditional
                         && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, landControllerId))) {
+                                ConditionContext.forPermanent(perm, landControllerId)
+                                        .withTriggeringCard(enteringLand)
+                                        .withTriggeringPermanentId(enteringPermanentId))) {
                     log.info("Game {} - {} ally-land trigger skipped ({}) not met",
                             gameData.id, perm.getCard().getName(), conditional.conditionName());
                     continue;
@@ -5416,7 +5450,8 @@ public class TriggerCollectionService {
                             needsPlayerTarget && !needsPermanentTarget,
                             targetFilter,
                             0,
-                            perm.getId()
+                            perm.getId(),
+                            enteringPermanentId
                     ));
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s landfall ability triggers — choose a target."));

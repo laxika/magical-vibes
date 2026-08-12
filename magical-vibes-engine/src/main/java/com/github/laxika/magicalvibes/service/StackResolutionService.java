@@ -572,7 +572,8 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, characteristics, entry.getTargetId(), true, entry.getTargetIds());
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, characteristics,
+                            entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
                 }
             }
         } else {

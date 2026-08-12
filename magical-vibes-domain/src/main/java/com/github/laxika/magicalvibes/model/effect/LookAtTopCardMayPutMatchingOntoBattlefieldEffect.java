@@ -8,5 +8,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>Used by Into the Wilds with {@code CardTypePredicate(LAND)}.
  */
-public record LookAtTopCardMayPutMatchingOntoBattlefieldEffect(CardPredicate predicate) implements CardEffect {
+public record LookAtTopCardMayPutMatchingOntoBattlefieldEffect(CardPredicate predicate,
+                                                                 boolean enterTapped)
+        implements CardEffect {
+
+    public LookAtTopCardMayPutMatchingOntoBattlefieldEffect(CardPredicate predicate) {
+        this(predicate, false);
+    }
 }

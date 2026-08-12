@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -364,6 +365,22 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(bear, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(elf, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
             assertThat(evaluator.matchesCardPredicate(changeling, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardNameInControllerGraveyardPredicate matches a name in the perspective player's graveyard")
+        void cardNameInControllerGraveyardPredicateMatches() {
+            Card matchingCard = createCreature("Shock", 0, 0, CardColor.RED);
+            gd.playerGraveyards.get(player1Id).add(matchingCard);
+
+            CardNameInControllerGraveyardPredicate predicate = new CardNameInControllerGraveyardPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(createCreature("Shock", 0, 0, CardColor.RED),
+                    predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(createCreature("Lightning Bolt", 0, 0, CardColor.RED),
+                    predicate, null, gd, player1Id)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(createCreature("Shock", 0, 0, CardColor.RED),
+                    predicate, null, gd, player2Id)).isFalse();
         }
 
         @Test

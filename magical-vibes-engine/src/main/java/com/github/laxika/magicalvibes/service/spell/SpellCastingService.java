@@ -413,6 +413,16 @@ public class SpellCastingService {
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
     }
 
+    private static Card selectedModalDoubleFacedLandFace(Card card, int modeIndex) {
+        if (!card.isModalDoubleFaced()) {
+            return card;
+        }
+        if (modeIndex < 0 || modeIndex > 1 || card.getBackFaceCard() == null) {
+            throw new IllegalStateException("Invalid modal double-faced land face");
+        }
+        return modeIndex == 0 ? card : card.getBackFaceCard();
+    }
+
     /**
      * Unwraps a {@link ConditionalEffect} so graveyard-targeting detection can see the inner effect
      * (e.g. a "if {B} was spent" reanimate on Torrent of Souls). Non-conditional effects pass through.
@@ -529,7 +539,7 @@ public class SpellCastingService {
                         }
                     }
                 }
-                return 0;
+                return card.isModalDoubleFaced() ? chosenModeIndices.getFirst() : 0;
             }
         }
         return effectiveXValue;
@@ -1132,21 +1142,24 @@ public class SpellCastingService {
             if (!graveyardCard.hasType(CardType.LAND)) {
                 throw new IllegalStateException("Only lands can be played from graveyard");
             }
+            Card landFace = selectedModalDoubleFacedLandFace(graveyardCard, effectiveXValue);
             permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
             gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
+            Permanent permanent = new Permanent(graveyardCard);
+            permanent.setCard(landFace);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             gameLogService.append(gameData,
-                    GameLog.playerPlays(player.getUsername(), graveyardCard, " from graveyard."));
+                    GameLog.playerPlays(player.getUsername(), landFace, " from graveyard."));
 
-            log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
+            log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), landFace.getName());
 
             // Process ETB effects for lands (e.g. Glimmerpost)
-            battlefieldEntryService.processLandETBEffects(gameData, playerId, graveyardCard);
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, graveyardCard);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -1275,26 +1288,17 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
 
-        // For modal spells, derive targeting from the chosen mode's unwrapped effect;
-        // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
-        // Spliced-on effects (CR 702.47b) become part of the host spell, so they may add targeting
-        // requirements the host card itself never declares (Soulless Revival onto a targetless Arcane).
-        boolean spliced = !pendingSpliceCosts.isEmpty();
-        boolean deriveTargetingFromResolvedEffects = wasModal || overloaded || spliced;
-        boolean unwrappedNeedsSpellTarget = deriveTargetingFromResolvedEffects
-                ? filteredSpellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
-                : EffectResolution.needsSpellTarget(card);
-        // Per MTG rule 601.2c, only the spell itself determines whether a target is required
-        // at cast time. ETB triggered abilities choose targets when they go on the stack after
-        // the permanent enters, so isNeedsSpellCastTarget() (which excludes ETB effects) is correct.
-        boolean unwrappedNeedsTarget = deriveTargetingFromResolvedEffects
-                ? filteredSpellEffects.stream().anyMatch(e -> {
-                    TargetSpec spec = e.targetSpec();
-                    return spec.admits(TargetPredicate.Kind.PERMANENT)
-                            || spec.admits(TargetPredicate.Kind.PLAYER)
-                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-                })
-                : EffectResolution.needsSpellCastTarget(card);
+        // Kicker can add a target to a spell that is otherwise targetless (e.g. Unstable Footing),
+        // so cast-time targeting must use the branch selected by the kicker choice. The raw effect
+        // list remains on the stack entry so resolution can still evaluate other conditions there.
+        List<CardEffect> targetingSpellEffects = EffectResolution.resolveEffects(
+                filteredSpellEffects, kicked, overloaded, null);
+        boolean unwrappedNeedsSpellTarget = targetingSpellEffects.stream()
+                .anyMatch(EffectResolution::targetsSpellOnStack);
+        // ETB triggered abilities choose targets after a permanent enters; this helper only sees
+        // the spell's effects and therefore does not make ETB targets cast-time requirements.
+        boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
+                targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
         // Targets multiple distinct spells on the stack. Two shapes qualify:
         //  - a modal mode that declares more than one spell target() slot (Choreographed Sparks' "both":
         //    one instant/sorcery spell + one creature spell);
@@ -1576,7 +1580,7 @@ public class SpellCastingService {
 
         // For modal spells, graveyard-targeting is determined by the chosen mode's unwrapped effects
         // (the raw SPELL slot holds only the ChooseOneEffect, which reports no graveyard targeting).
-        List<CardEffect> graveyardTargetingSource = wasModal || spliced ? filteredSpellEffects : card.getEffects(EffectSlot.SPELL);
+        List<CardEffect> graveyardTargetingSource = targetingSpellEffects;
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
                 .map(SpellCastingService::unwrapConditional)
@@ -1663,16 +1667,8 @@ public class SpellCastingService {
                 }
             } else {
                 validateModalTargetKind(gameData, wasModal, filteredSpellEffects, targetId);
-                if (spliced) {
-                    targetLegalityService.validateSpellTargeting(gameData, card, filteredSpellEffects,
-                            targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
-                } else if (kicked) {
-                    targetLegalityService.validateSpellTargeting(
-                            gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, true);
-                } else {
-                    targetLegalityService.validateSpellTargeting(
-                            gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
-                }
+                targetLegalityService.validateSpellTargeting(gameData, card, targetingSpellEffects,
+                        targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
             String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
@@ -1885,21 +1881,24 @@ public class SpellCastingService {
 
         if (card.hasType(CardType.LAND)) {
             // Lands bypass the stack — go directly onto battlefield
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+            Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
+            Permanent permanent = new Permanent(card);
+            permanent.setCard(landFace);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), card));
+            gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), landFace));
 
-            log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
+            log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), landFace.getName());
 
             // A land whose entry is replaced by "sacrifice an untapped [land] instead" (Balduvian
             // Trading Post) parks the entry on a permanent choice; ETB effects and auto-pass must
             // wait until that choice resumes the entry.
             if (!gameData.interaction.isAwaitingInput()) {
                 // Process ETB effects for lands (e.g. Glimmerpost)
-                battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+                battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
                 if (!gameData.interaction.isAwaitingInput()) {
-                    triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+                    triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
                     turnProgressionService.resolveAutoPass(gameData);
                 }
             }
@@ -4214,16 +4213,19 @@ public class SpellCastingService {
         gameData.exilePlayAnyManaTypeWhileExiled.remove(exileCardId);
 
         if (card.hasType(CardType.LAND)) {
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+            Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
+            Permanent permanent = new Permanent(card);
+            permanent.setCard(landFace);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             gameLogService.append(gameData,
-                    GameLog.playerPlays(player.getUsername(), card, " from exile."));
-            log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
+                    GameLog.playerPlays(player.getUsername(), landFace, " from exile."));
+            log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), landFace.getName());
 
-            battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -4470,11 +4472,6 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
 
-        // Grafdigger's Cage etc.: players can't cast spells from libraries.
-        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
-            throw new IllegalStateException("Spells can't be cast from libraries");
-        }
-
         UUID playerId = player.getId();
 
         // Verify the player can cast from top of library
@@ -4484,6 +4481,42 @@ public class SpellCastingService {
         }
 
         Card card = deck.getFirst();
+        if (card.hasType(CardType.LAND)) {
+            if (!castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId)) {
+                throw new IllegalStateException("No effect allowing play of lands from library top");
+            }
+            if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
+                throw new IllegalStateException("Card is not playable");
+            }
+
+            deck.removeFirst();
+            Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
+            Permanent permanent = new Permanent(card);
+            permanent.setCard(landFace);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+            gameLogService.append(gameData,
+                    GameLog.playerPlays(player.getUsername(), landFace, " from the top of their library."));
+            log.info("Game {} - {} plays {} from library top", gameData.id, player.getUsername(), landFace.getName());
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        // Grafdigger's Cage etc.: players can't cast spells from libraries.
+        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
+            throw new IllegalStateException("Spells can't be cast from libraries");
+        }
+
+        // Verify the player can cast from top of library
+        Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
+        if (castableTypes.isEmpty()) {
+            throw new IllegalStateException("No effect allowing cast from library top");
+        }
+
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)

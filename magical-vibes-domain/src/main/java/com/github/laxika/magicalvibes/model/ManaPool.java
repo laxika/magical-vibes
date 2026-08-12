@@ -82,6 +82,8 @@ public class ManaPool {
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
     /** Per-restriction, per-color mana that can only be spent on a subtype or matching planeswalker spell. */
     private final Map<ManaRestriction.SubtypeOrPlaneswalkerSpells, EnumMap<ManaColor, Integer>> subtypeOrPlaneswalkerSpellMana = new HashMap<>();
+    /** Mana spendable for any Cleric, Rogue, Warrior, or Wizard spell or ability (Base Camp). */
+    private final EnumMap<ManaColor, Integer> partySpellOrAbilityMana = new EnumMap<>(ManaColor.class);
     /**
      * Per-color mana that can only be spent to cast a creature spell of any type (e.g. Ancient
      * Ziggurat). Distinct from {@link #subtypeCreatureMana}, which is restricted to one chosen
@@ -130,6 +132,7 @@ public class ManaPool {
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
+            partySpellOrAbilityMana.put(color, 0);
         }
     }
 
@@ -169,6 +172,7 @@ public class ManaPool {
         for (Map.Entry<ManaRestriction.SubtypeOrPlaneswalkerSpells, EnumMap<ManaColor, Integer>> entry : source.subtypeOrPlaneswalkerSpellMana.entrySet()) {
             subtypeOrPlaneswalkerSpellMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        partySpellOrAbilityMana.putAll(source.partySpellOrAbilityMana);
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
@@ -256,6 +260,7 @@ public class ManaPool {
         spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
         subtypeOrPlaneswalkerSpellMana.clear();
+        partySpellOrAbilityMana.replaceAll((color, amount) -> 0);
         exiledCardOnlyMana.clear();
     }
 
@@ -323,6 +328,9 @@ public class ManaPool {
             for (int value : colorMap.values()) {
                 total += value;
             }
+        }
+        for (int value : partySpellOrAbilityMana.values()) {
+            total += value;
         }
         total += getCreatureSpellOnlyManaTotal();
         total += getManaValueAtLeastFourOnlyManaTotal();
@@ -849,6 +857,17 @@ public class ManaPool {
         }).merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana spendable for any of the given subtypes, sharing one bucket for the party types. */
+    public void addSubtypeSpellOrAbilityMana(Set<CardSubtype> subtypes, ManaColor color, int amount) {
+        if (containsPartySubtype(subtypes)) {
+            partySpellOrAbilityMana.merge(color, amount, Integer::sum);
+            return;
+        }
+        for (CardSubtype subtype : subtypes) {
+            addSubtypeSpellOrAbilityMana(subtype, color, amount);
+        }
+    }
+
     /** Total spell-or-ability mana of the given color available across all matching subtypes. */
     public int getSubtypeSpellOrAbilityManaForColor(Set<CardSubtype> subtypes, ManaColor color) {
         int total = 0;
@@ -857,6 +876,9 @@ public class ManaPool {
             if (colorMap != null) {
                 total += colorMap.getOrDefault(color, 0);
             }
+        }
+        if (containsPartySubtype(subtypes)) {
+            total += partySpellOrAbilityMana.getOrDefault(color, 0);
         }
         return total;
     }
@@ -870,6 +892,11 @@ public class ManaPool {
                 for (int v : colorMap.values()) {
                     total += v;
                 }
+            }
+        }
+        if (containsPartySubtype(subtypes)) {
+            for (int v : partySpellOrAbilityMana.values()) {
+                total += v;
             }
         }
         return total;
@@ -891,6 +918,17 @@ public class ManaPool {
                 remaining -= toRemove;
             }
         }
+        if (remaining > 0 && containsPartySubtype(subtypes)) {
+            int available = partySpellOrAbilityMana.getOrDefault(color, 0);
+            partySpellOrAbilityMana.put(color, Math.max(0, available - remaining));
+        }
+    }
+
+    private static boolean containsPartySubtype(Set<CardSubtype> subtypes) {
+        return subtypes != null && (subtypes.contains(CardSubtype.CLERIC)
+                || subtypes.contains(CardSubtype.ROGUE)
+                || subtypes.contains(CardSubtype.WARRIOR)
+                || subtypes.contains(CardSubtype.WIZARD));
     }
 
     public void addSubtypeOrPlaneswalkerSpellMana(ManaRestriction.SubtypeOrPlaneswalkerSpells restriction,
@@ -1047,6 +1085,7 @@ public class ManaPool {
         spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
         subtypeOrPlaneswalkerSpellMana.clear();
+        partySpellOrAbilityMana.replaceAll((color, amount) -> 0);
         exiledCardOnlyMana.clear();
     }
 
@@ -1092,6 +1131,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeOrPlaneswalkerSpellMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
@@ -1129,6 +1169,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeOrPlaneswalkerSpellMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {

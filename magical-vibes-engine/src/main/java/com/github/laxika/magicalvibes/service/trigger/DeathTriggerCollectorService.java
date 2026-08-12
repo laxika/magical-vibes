@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMa
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
@@ -1510,6 +1511,22 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathCounterOnEnchanted(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
         // Sadistic Glee: needs its source Aura's permanent id to re-derive the enchanted creature.
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalReplacementEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathConditionalReplacement(TriggerMatchContext match,
+            ConditionalReplacementEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

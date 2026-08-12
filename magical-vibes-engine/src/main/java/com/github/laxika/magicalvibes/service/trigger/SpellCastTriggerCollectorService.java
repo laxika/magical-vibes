@@ -641,6 +641,11 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        if (trigger.intervening() != null && !conditionEvaluationService.isMet(match.gameData(),
+                trigger.intervening(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
             if (se.getCard().getId().equals(sc.spellCard().getId())) {
@@ -657,8 +662,11 @@ public class SpellCastTriggerCollectorService {
         }
 
         StackEntry snapshot = new StackEntry(spellEntry);
-        CopyControllerCastSpellEffect copyEffect =
+        CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords());
+        if (trigger.intervening() != null) {
+            copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
+        }
 
         // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
         // prompt; accepting puts the copy-creating ability on the stack.

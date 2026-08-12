@@ -85,6 +85,8 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Players whose creature spell was countered by an opponent this turn (Summoning Trap). */
+    public final Set<UUID> playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who searched their own libraries this turn, including searches that found no card. */
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
     /**
@@ -227,6 +229,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
+    /** Players whose noncreature permanents were destroyed by an opponent's spell or ability this turn. */
+    public final Set<UUID> playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks card IDs each player cycled or discarded this turn (populated in the central discard hook
      *  {@code TriggerCollectionService.checkDiscardTriggers}; cycling is a discard). Used by Shadow of the Grave. */
     public final Map<UUID, Set<UUID>> cardsDiscardedOrCycledThisTurn = new ConcurrentHashMap<>();
@@ -2034,6 +2038,13 @@ public class GameData {
         consumeNextCreatureSpellEmpowerments(playerId, card);
     }
 
+    /** Records that a creature spell cast by {@code playerId} was countered by an opponent this turn. */
+    public void recordCreatureSpellCounteredByOpponentThisTurn(UUID playerId) {
+        if (playerId != null) {
+            playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn.add(playerId);
+        }
+    }
+
     /**
      * Adds a pending "the next creature spell you cast this turn ..." grant for the player
      * (Savage Summoning).
@@ -2888,6 +2899,8 @@ public class GameData {
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
+        copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
+                .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
@@ -3001,6 +3014,8 @@ public class GameData {
                 copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
+        copy.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn
+                .addAll(this.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn);
         this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         this.cardsDiscardedOrCycledThisTurn.forEach((k, v) ->

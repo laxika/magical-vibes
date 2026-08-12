@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "216")
 @CardRegistration(set = "INR", collectorNumber = "254")
+@CardRegistration(set = "ZEN", collectorNumber = "197")
 public class BlazingTorch extends Card {
 
     public BlazingTorch() {

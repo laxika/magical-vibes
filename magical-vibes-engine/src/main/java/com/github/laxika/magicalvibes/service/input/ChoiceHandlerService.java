@@ -66,6 +66,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -506,9 +507,16 @@ public class ChoiceHandlerService {
         int amount = ctx.amount();
         if (ctx.spellOrAbilitySubtype()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
-            manaPool.addSubtypeSpellOrAbilityMana(ctx.restrictedToCreatureSubtype(), manaColor, 1);
+            Set<CardSubtype> restrictedSubtypes = ctx.restrictedToSpellOrAbilitySubtypes();
+            if (restrictedSubtypes == null) {
+                restrictedSubtypes = Set.of(ctx.restrictedToCreatureSubtype());
+            }
+            manaPool.addSubtypeSpellOrAbilityMana(restrictedSubtypes, manaColor, 1);
 
-            String subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
+            String subtypeLabel = restrictedSubtypes.stream()
+                    .map(CardSubtype::getDisplayName)
+                    .toList()
+                    .toString();
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
                     + " mana (" + subtypeLabel + " spells or abilities only).";
             gameLogService.append(gameData, GameLog.text(logEntry));

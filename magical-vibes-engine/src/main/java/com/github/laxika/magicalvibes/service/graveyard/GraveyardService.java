@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToH
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
@@ -283,13 +283,28 @@ public class GraveyardService {
             return false;
         }
 
-        // "If [this creature] would die, put it on top of its owner's library instead" (Gravebane Zombie)
+        // "If [this creature] would die, put it on top or bottom of its owner's library instead"
         // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
-        if (sourceZone == Zone.BATTLEFIELD && hasPutOnTopOfLibraryInsteadOfDyingEffect(card)) {
+        DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
+                ? getDyingCreatureLibraryReplacementEffect(card)
+                : null;
+        if (libraryReplacement != null) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
-            deck.add(0, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of dying."));
-            log.info("Game {} - {} replacement effect: put on top of library instead of dying", gameData.id, card.getName());
+            String position;
+            String positionPhrase;
+            if (libraryReplacement.putOnBottom()) {
+                deck.add(card);
+                position = "bottom";
+                positionPhrase = "the bottom";
+            } else {
+                deck.add(0, card);
+                position = "top";
+                positionPhrase = "top";
+            }
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is put on " + positionPhrase + " of its owner's library instead of dying."));
+            log.info("Game {} - {} replacement effect: put on {} of library instead of dying",
+                    gameData.id, card.getName(), position);
             return false;
         }
 
@@ -767,9 +782,12 @@ public class GraveyardService {
                 .orElseThrow();
     }
 
-    private boolean hasPutOnTopOfLibraryInsteadOfDyingEffect(Card card) {
+    private DyingCreatureLibraryReplacementEffect getDyingCreatureLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PutOnTopOfLibraryInsteadOfDyingEffect);
+                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {

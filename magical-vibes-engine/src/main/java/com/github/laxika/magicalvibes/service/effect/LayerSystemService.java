@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -2101,6 +2102,14 @@ public class LayerSystemService {
                         state.addProtectionColors(protection.colors());
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), protection);
+                    }
+                    case GrantEffectEffect grant -> {
+                        if (grant.scope() != GrantScope.TARGET) {
+                            continue;
+                        }
+                        state.addStaticEffect(grant.effect());
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), grant.effect());
                     }
                     default -> {
                         continue;

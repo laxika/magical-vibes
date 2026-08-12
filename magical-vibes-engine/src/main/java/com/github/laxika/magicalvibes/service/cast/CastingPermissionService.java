@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
@@ -694,6 +695,31 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PlayLandsFromTopOfLibraryEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean canPlayLandNow(GameData gameData, UUID playerId, Card card) {
+        return card.hasType(CardType.LAND)
+                && playerId.equals(gameData.activePlayerId)
+                && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameData.getMaxLandsThisTurn(playerId)
+                && gameData.stack.isEmpty()
+                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !isLandPlayRestricted(gameData, playerId)
+                && !isLandPlayForbiddenByChosenName(gameData, card);
     }
 
     /**

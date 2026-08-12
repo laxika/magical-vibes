@@ -198,7 +198,7 @@ public class GrantedAbilityViewFactory {
     private String formatTargetingRestriction(TargetingRestrictionEffect restriction) {
         if (restriction.mode() == TargetColorMode.ANY) {
             if (restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
-                    && restriction.opponentOnly()) {
+                    && restriction.opponentOnly() && restriction.hexproofLike()) {
                 return "Hexproof";
             }
             if (restriction.kind() == TargetingSourceKind.SPELLS) {

@@ -405,6 +405,8 @@ public class TurnProgressionService {
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
+        gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
+        gameData.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn.clear();
         gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();

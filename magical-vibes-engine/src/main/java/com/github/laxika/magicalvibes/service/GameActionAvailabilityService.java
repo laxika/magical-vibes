@@ -264,8 +264,12 @@ public class GameActionAvailabilityService {
         // MTG rule 601.2c: a spell can't be cast unless a legal set of targets can be chosen for it.
         // Spells whose declared targets are all optional ("up to one/N target …") can always be
         // cast by choosing zero targets, even if no legal target exists (e.g. Stress Dream).
+        List<CardEffect> targetingSpellEffects = EffectResolution.resolveEffects(
+                card.getEffects(EffectSlot.SPELL), false, null);
+        boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
+                targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
         boolean allTargetsOptional = !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0;
-        if (!allTargetsOptional && EffectResolution.needsSpellCastTarget(card)) {
+        if (!allTargetsOptional && needsSpellCastTarget) {
             Integer maxXValue = maxAnnounceableX(card, pool);
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);

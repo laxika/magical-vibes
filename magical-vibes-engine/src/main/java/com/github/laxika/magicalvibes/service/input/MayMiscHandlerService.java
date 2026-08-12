@@ -486,12 +486,20 @@ public class MayMiscHandlerService {
      * stays on top of the library.
      */
     public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted) {
+        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, false);
+    }
+
+    public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted,
+                                                            boolean enterTapped) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
             Permanent perm = new Permanent(topCard);
+            if (enterTapped) {
+                perm.tap();
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             if (topCard.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);

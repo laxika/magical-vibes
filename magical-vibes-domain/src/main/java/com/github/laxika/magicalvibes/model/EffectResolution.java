@@ -84,6 +84,11 @@ public final class EffectResolution {
             } else if (effect instanceof ConditionalReplacementEffect cre
                     && cre.condition() instanceof Kicked && kicked != null) {
                 resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
+            } else if (effect instanceof ConditionalEffect ce
+                    && ce.condition() instanceof Kicked && kicked != null) {
+                if (kicked) {
+                    resolved.add(ce.wrapped());
+                }
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {
                 if (coe.choicesRequired() == 1 && coe.choicesMax() == 1) {
                     List<ChooseOneEffect.ChooseOneOption> options = coe.options();

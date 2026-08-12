@@ -958,5 +958,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  combat or not) this slot is creature- and combat-only and puts a real triggered ability on the
      *  stack whose {@code targetId} is the damaging creature, so {@code DestroyTargetPermanentEffect}
      *  resolves as "destroy that creature" without targeting. Used by Teysa, Envoy of Ghosts. */
-    ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU
+    ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
+    /** Triggers whenever an opponent of this card's owner gains life while this card is in
+     *  that owner's graveyard. */
+    GRAVEYARD_ON_OPPONENT_GAINS_LIFE
 }

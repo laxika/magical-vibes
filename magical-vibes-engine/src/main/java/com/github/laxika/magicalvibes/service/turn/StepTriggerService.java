@@ -634,6 +634,15 @@ public class StepTriggerService {
                 if (upkeepEffects.isEmpty()) continue;
             }
 
+            // Intervening-if on a targeted upkeep ability must be checked before its target is
+            // chosen as the trigger is put on the stack.
+            upkeepEffects.removeIf(e -> e instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && conditional.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId)));
+            if (upkeepEffects.isEmpty()) continue;
+
             // Puca's Mischief: two interdependent nonland-permanent targets chosen at trigger time
             // (one you control, one an opponent controls with equal or lesser mana value). The
             // MayEffect wrapper is carried through so the "you may" is honoured at resolution.

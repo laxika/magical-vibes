@@ -24,6 +24,7 @@ public sealed interface CardPredicate permits
         CardIsTokenPredicate,
         CardIsSelfPredicate,
         CardKeywordPredicate,
+        CardNameInControllerGraveyardPredicate,
         CardMaxManaValuePredicate,
         CardMinManaValuePredicate,
         CardNamedPredicate,

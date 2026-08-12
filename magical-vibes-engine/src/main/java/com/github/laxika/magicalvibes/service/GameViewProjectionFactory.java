@@ -574,12 +574,20 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
+        boolean canPlayLandFromTop = castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
             return playable;
         }
 
         Card topCard = deck.getFirst();
+
+        if (topCard.hasType(CardType.LAND)) {
+            if (canPlayLandFromTop && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
+                playable.add(cardViewFactory.create(topCard));
+            }
+            return playable;
+        }
 
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
                 || topCard.getManaCost() == null) {

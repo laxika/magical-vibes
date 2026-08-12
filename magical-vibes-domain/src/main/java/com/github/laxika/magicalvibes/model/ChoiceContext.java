@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,26 +21,28 @@ public sealed interface ChoiceContext {
                            List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
                            boolean artifactSpellOrAbilityOnly,
                            boolean grantsUncounterable, boolean manaValueAtLeastFour,
-                           UUID sourcePermanentId) implements ChoiceContext {
+                           UUID sourcePermanentId,
+                           Set<CardSubtype> restrictedToSpellOrAbilitySubtypes) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                                List<ManaColor> fixedColorOptions, boolean creatureSpellOnly) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly, false, false, false, null);
+                    spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly,
+                    false, false, false, null, null);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, null, false, false, false, false, null);
+                    spellOrAbilitySubtype, null, false, false, false, false, null, null);
         }
 
         public ManaColorChoice withSourcePermanentId(UUID sourcePermanentId) {
             return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
                     flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, fixedColorOptions,
                     creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
-                    manaValueAtLeastFour, sourcePermanentId);
+                    manaValueAtLeastFour, sourcePermanentId, restrictedToSpellOrAbilitySubtypes);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
@@ -76,6 +79,13 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, false, amount, subtype, false, false, true);
         }
 
+        /** "Add one mana of any color" restricted to the four party creature types. */
+        public static ManaColorChoice partySpellOrAbility(UUID playerId, int amount) {
+            return new ManaColorChoice(playerId, false, amount, null, false, false, true,
+                    null, false, false, false, false, null,
+                    Set.of(CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD));
+        }
+
         /**
          * "Add N mana, each chosen individually from a fixed list of colors" (filter lands such as
          * Fire-Lit Thicket's "Add {R}{R}, {R}{G}, or {G}{G}"). Each mana's color is picked separately
@@ -98,7 +108,7 @@ public sealed interface ChoiceContext {
         public static ManaColorChoice artifactSpellOrAbilityOnly(UUID playerId, int amount) {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, null,
-                    false, true, false, false, null);
+                    false, true, false, false, null, null);
         }
 
         /**
@@ -109,14 +119,14 @@ public sealed interface ChoiceContext {
         public static ManaColorChoice chosenSubtypeCreatureUncounterable(UUID playerId, int amount, CardSubtype subtype) {
             return new ManaColorChoice(
                     playerId, false, amount, subtype, false, false, false, null,
-                    false, false, true, false, null);
+                    false, false, true, false, null, null);
         }
 
         /** "Add N mana of any one color, spendable only to cast spells with mana value 4 or greater." */
         public static ManaColorChoice manaValueAtLeastFour(UUID playerId, int amount) {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, null,
-                    false, false, false, true, null);
+                    false, false, false, true, null, null);
         }
     }
 

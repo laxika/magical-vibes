@@ -277,6 +277,7 @@ public class PermanentCounterSupport {
             case BRICK -> { target.setCounterCount(CounterType.BRICK, target.getCounterCount(CounterType.BRICK) + count); yield "brick"; }
             case GEM -> { target.setCounterCount(CounterType.GEM, target.getCounterCount(CounterType.GEM) + count); yield "gem"; }
             case ELIXIR -> { target.setCounterCount(CounterType.ELIXIR, target.getCounterCount(CounterType.ELIXIR) + count); yield "elixir"; }
+            case EON -> { target.setCounterCount(CounterType.EON, target.getCounterCount(CounterType.EON) + count); yield "eon"; }
             case EYEBALL -> { target.setCounterCount(CounterType.EYEBALL, target.getCounterCount(CounterType.EYEBALL) + count); yield "eyeball"; }
             case FADE -> { target.setCounterCount(CounterType.FADE, target.getCounterCount(CounterType.FADE) + count); yield "fade"; }
             case GOLD -> { target.setCounterCount(CounterType.GOLD, target.getCounterCount(CounterType.GOLD) + count); yield "gold"; }

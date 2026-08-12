@@ -189,6 +189,8 @@ public class Card {
     private TargetFilter castTimeTargetFilter;
     private String watermark;
     private Card backFaceCard;
+    /** True when this card's face is chosen while it is played from a zone, rather than transformed. */
+    private boolean modalDoubleFaced;
     private List<CastingOption> castingOptions = new ArrayList<>();
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
@@ -311,6 +313,7 @@ public class Card {
         this.castTimeTargetFilter = source.castTimeTargetFilter;
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
+        this.modalDoubleFaced = source.modalDoubleFaced;
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.morphCost = source.morphCost;
         this.morphRevealCost = source.morphRevealCost;
@@ -418,6 +421,7 @@ public class Card {
     public void setAttachRestriction(PermanentPredicate attachRestriction) { assertMutable(); this.attachRestriction = attachRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
+    public void setModalDoubleFaced(boolean modalDoubleFaced) { assertMutable(); this.modalDoubleFaced = modalDoubleFaced; }
 
     // ── Target-first builder API ──────────────────────────────────────
 

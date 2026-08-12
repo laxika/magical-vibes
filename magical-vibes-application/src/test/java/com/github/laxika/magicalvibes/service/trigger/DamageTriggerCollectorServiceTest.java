@@ -99,6 +99,65 @@ class DamageTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
     }
 
+    @Test
+    @DisplayName("preserves a may wrapper for source damage to an opponent triggers")
+    void preservesMayWrapperForAllySourceDamageToOpponent() {
+        Permanent quest = createPermanent("Quest for Pure Flame");
+        MayEffect effect = new MayEffect(
+                new PutCountersOnSelfEffect(CounterType.QUEST),
+                "Put a quest counter on Quest for Pure Flame?");
+        var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2);
+
+        boolean result = registry.dispatch(
+                match(quest, player1Id, effect),
+                EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("queues a may ability for combat damage to a creature")
+    void queuesMayForAllyCombatDamageToCreature() {
+        Permanent quest = createPermanent("Quest for the Gemblades");
+        Permanent source = createPermanent("Grizzly Bears");
+        Permanent damaged = createPermanent("Serra Angel");
+        MayEffect effect = new MayEffect(
+                new PutCountersOnSelfEffect(CounterType.QUEST),
+                "Put a quest counter on Quest for the Gemblades?");
+        var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, true);
+
+        boolean result = registry.dispatch(
+                match(quest, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(quest.getId());
+    }
+
+    @Test
+    @DisplayName("does not queue a may ability for noncombat damage to a creature")
+    void doesNotQueueMayForNoncombatDamageToCreature() {
+        Permanent quest = createPermanent("Quest for the Gemblades");
+        Permanent source = createPermanent("Grizzly Bears");
+        Permanent damaged = createPermanent("Serra Angel");
+        MayEffect effect = new MayEffect(
+                new PutCountersOnSelfEffect(CounterType.QUEST),
+                "Put a quest counter on Quest for the Gemblades?");
+        var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
+
+        boolean result = registry.dispatch(
+                match(quest, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     @Nested
     @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
     class CreateTokensOnEnchantedCreatureDamage {

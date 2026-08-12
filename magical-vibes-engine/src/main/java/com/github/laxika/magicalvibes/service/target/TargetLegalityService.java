@@ -1634,9 +1634,9 @@ public class TargetLegalityService {
         // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
         boolean hexproofLifted = gameQueryService.isCreature(gameData, target)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId);
-        if (!hexproofLifted && targetController != null && !targetController.equals(sourcePlayerId)) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
-                    || gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)) {
+        if (targetController != null && !targetController.equals(sourcePlayerId)) {
+            if ((!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF))
+                    || gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
             }
         }

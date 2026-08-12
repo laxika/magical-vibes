@@ -1651,6 +1651,27 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether an opponent-controlled spell or ability is blocked by a granted targeting
+     * restriction on this permanent. Hexproof-ignoring effects bypass only restrictions marked as
+     * hexproof-like; cards that use the same wording without granting hexproof remain protected.
+     */
+    public boolean cantBeTargetedByOpponentSpellsOrAbilities(GameData gameData, Permanent permanent,
+                                                               UUID targetingControllerId) {
+        UUID targetControllerId = findPermanentController(gameData, permanent.getId());
+        if (targetControllerId == null || targetControllerId.equals(targetingControllerId)) {
+            return false;
+        }
+        boolean hexproofLifted = isCreature(gameData, permanent)
+                && ignoresOpponentCreatureHexproof(gameData, targetingControllerId);
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(e -> e instanceof TargetingRestrictionEffect r
+                        && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                        && r.opponentOnly()
+                        && r.mode() == TargetColorMode.ANY
+                        && (!hexproofLifted || !r.hexproofLike()));
+    }
+
+    /**
      * Returns {@code true} if {@code controllerId} controls a permanent whose static effects let
      * them target opponents' hexproof creatures as though they didn't have hexproof (Glaring
      * Spotlight). Only hexproof is lifted — shroud and protection still apply.

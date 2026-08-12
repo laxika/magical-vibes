@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M13", collectorNumber = "141")
+@CardRegistration(set = "ZEN", collectorNumber = "137")
 public class MarkOfMutiny extends Card {
 
     public MarkOfMutiny() {

@@ -99,6 +99,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTargetId(permanentId);
             }
         }
+        entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         pushTriggeredEntry(gameData, entry);
 
         if (declined) {

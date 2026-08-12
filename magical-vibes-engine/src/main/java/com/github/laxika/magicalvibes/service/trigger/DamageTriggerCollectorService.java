@@ -76,6 +76,22 @@ public class DamageTriggerCollectorService {
     private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    private boolean handleAllyCreatureDealsCombatDamageToCreatureMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
+        if (!dc.combatDamage() || dc.damagedCreatureId() == null || match.permanent() == null) return false;
+
+        GameData gameData = match.gameData();
+        gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                null, match.permanent().getId());
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers after an ally creature dealt combat damage to a creature",
+                gameData.id, match.permanent().getCard().getName());
+        return true;
+    }
+
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
 
     @CollectsTrigger(value = ExileDamagedCreatureEffect.class,
@@ -565,10 +581,24 @@ public class DamageTriggerCollectorService {
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtDamageToOpponentPutCounters(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
+    }
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtDamageToOpponentMay(TriggerMatchContext match,
+            MayEffect effect, TriggerContext ctx) {
+        return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
+    }
+
+    private boolean queueAllySourceDealtDamageToOpponentTrigger(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
-        if (effect.excludeDamageSource() && perm.getId().equals(dc.sourcePermanentId())) {
+        CardEffect counterEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
+        if (counterEffect instanceof PutCountersOnSelfEffect putCounters
+                && putCounters.excludeDamageSource()
+                && perm.getId().equals(dc.sourcePermanentId())) {
             return false;
         }
 
@@ -580,8 +610,6 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 perm.getId());
-        // Snapshot the damage dealt so the effect's EventValue amount ("put that many theft
-        // counters") reads it back at resolution.
         entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 

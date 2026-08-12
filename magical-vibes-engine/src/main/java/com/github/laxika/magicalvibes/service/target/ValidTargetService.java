@@ -854,17 +854,25 @@ public class ValidTargetService {
      * Killing Glare as unplayable whenever every creature has power 1 or more.
      */
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, Integer maxXValue) {
-        return hasValidTargetsForSpell(gameData, card, controllerId, maxXValue, false);
+        return hasValidTargetsForSpell(gameData, card, controllerId, maxXValue, null);
     }
 
-    /** As above, evaluating permanent target filters for a kicked cast when {@code kicked} is true. */
+    /**
+     * As above, using a known kicker choice when the spell's target shape depends on it.
+     */
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId,
-                                           Integer maxXValue, boolean kicked) {
-        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+                                           Integer maxXValue, Boolean kicked) {
+        List<CardEffect> spellEffects = kicked == null
+                ? card.getEffects(EffectSlot.SPELL)
+                : EffectResolution.resolveEffects(card.getEffects(EffectSlot.SPELL), kicked, null);
+        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
+                spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                card.isAura(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
 
         if (allowedTargets.contains(TargetType.PERMANENT)
-                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue, kicked)) {
+                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue,
+                spellEffects, kicked)) {
             return true;
         }
 
@@ -917,18 +925,14 @@ public class ValidTargetService {
      * {@code {X}}, which are checked once at the filter's default X = 0.
      */
     private boolean anyAnnounceableXHasPermanentTarget(GameData gameData, Card card, UUID controllerId,
-                                                       boolean isMultiTarget, Integer maxXValue) {
-        return anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue, false);
-    }
-
-    private boolean anyAnnounceableXHasPermanentTarget(GameData gameData, Card card, UUID controllerId,
-                                                       boolean isMultiTarget, Integer maxXValue, boolean kicked) {
+                                                       boolean isMultiTarget, Integer maxXValue,
+                                                       List<CardEffect> spellEffects, Boolean kicked) {
         for (int x = maxXValue == null ? 0 : maxXValue; x >= 0; x--) {
             Integer xValue = maxXValue == null ? null : x;
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent perm : battlefield) {
                     if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null,
-                            card.getEffects(EffectSlot.SPELL), xValue, kicked)) {
+                            spellEffects, xValue, kicked)) {
                         return true;
                     }
                 }
@@ -1165,11 +1169,8 @@ public class ValidTargetService {
         }
 
         // Granted hexproof-like effect (TargetingRestrictionEffect hexproof, e.g. Asceticism)
-        if (!hexproofLifted && gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
-                return true;
-            }
+        if (gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, perm, controllerId)) {
+            return true;
         }
 
         return false;

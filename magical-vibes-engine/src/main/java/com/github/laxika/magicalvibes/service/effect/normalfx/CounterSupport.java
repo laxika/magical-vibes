@@ -298,6 +298,13 @@ public class CounterSupport {
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
         if (target == null || isAbility(target)) return;
+        if (!target.isCopy()
+                && target.getCard() != null
+                && target.getCard().hasType(CardType.CREATURE)
+                && counteringPlayerId != null
+                && !counteringPlayerId.equals(target.getControllerId())) {
+            gameData.recordCreatureSpellCounteredByOpponentThisTurn(target.getControllerId());
+        }
         triggerCollectionService.checkControllerCountersSpellTriggers(gameData, counteringPlayerId);
     }
 

@@ -17,12 +17,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -973,7 +973,8 @@ public class TriggeredAbilityQueueService {
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             for (CardEffect effect : pending.effects()) {
                 CardEffect targetEffect = unwrapConditionalEffect(effect);
-                if (targetEffect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                ReturnCardFromGraveyardEffect returnEffect = targetedReturnEffect(effect);
+                if (returnEffect != null) {
                     filter = returnEffect.filter();
                     lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                     scope = returnEffect.source();
@@ -1064,6 +1065,19 @@ public class TriggeredAbilityQueueService {
             effect = conditional.wrapped();
         }
         return effect;
+    }
+
+    private ReturnCardFromGraveyardEffect targetedReturnEffect(CardEffect effect) {
+        if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+            return returnEffect;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return targetedReturnEffect(conditional.wrapped());
+        }
+        if (effect instanceof MayEffect may) {
+            return targetedReturnEffect(may.wrapped());
+        }
+        return null;
     }
 
     public void processNextExploreTriggerTarget(GameData gameData) {

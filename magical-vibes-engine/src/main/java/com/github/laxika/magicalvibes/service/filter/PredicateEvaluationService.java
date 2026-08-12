@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -356,6 +358,10 @@ public class PredicateEvaluationService {
             }
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
+            case CardNameInControllerGraveyardPredicate ignored ->
+                    gameData != null && cardOwnerId != null
+                            && gameData.playerGraveyards.getOrDefault(cardOwnerId, List.of()).stream()
+                            .anyMatch(graveyardCard -> graveyardCard.getName().equals(card.getName()));
             case CardSharesNameWithAPermanentPredicate ignored ->
                     gameData != null && gameData.playerBattlefields.values().stream()
                             .flatMap(java.util.List::stream)
@@ -884,6 +890,17 @@ public class PredicateEvaluationService {
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();
+            case PermanentEnteredBattlefieldThisTurnPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID currentCardId = permanent.getCard().getId();
+                UUID originalCardId = permanent.getOriginalCard().getId();
+                yield gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                        .flatMap(List::stream)
+                        .anyMatch(card -> card.getId().equals(currentCardId)
+                                || card.getId().equals(originalCardId));
+            }
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
                 // "Target creature you cast this turn" — identity match against the spells the
                 // source's controller cast this turn, so tokens and non-cast arrivals never match.

@@ -138,6 +138,8 @@ public final class AnyColorManaChoiceSupport {
                     ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
+            case PARTY_SPELL_OR_ABILITY ->
+                    ChoiceContext.ManaColorChoice.partySpellOrAbility(playerId, amount);
         };
     }
 

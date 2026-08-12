@@ -70,5 +70,11 @@ public enum ManaSpendRestriction {
     SUBTYPE_SPELL_OR_ABILITY,
 
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
-    MANA_VALUE_AT_LEAST_FOUR
+    MANA_VALUE_AT_LEAST_FOUR,
+
+    /**
+     * Spendable only to cast Cleric, Rogue, Warrior, or Wizard spells or activate abilities of those
+     * subtypes (Base Camp).
+     */
+    PARTY_SPELL_OR_ABILITY
 }

@@ -1,0 +1,35 @@
+package com.github.laxika.magicalvibes.cards.v;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "ZEN", collectorNumber = "229")
+public class VerdantCatacombs extends Card {
+
+    public VerdantCatacombs() {
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(
+                        new PayLifeCost(1),
+                        new SacrificeSelfCost(),
+                        new SearchLibraryEffect(
+                                new CardAnyOfPredicate(List.of(
+                                        new CardSubtypePredicate(CardSubtype.SWAMP),
+                                        new CardSubtypePredicate(CardSubtype.FOREST))),
+                                LibrarySearchDestination.BATTLEFIELD)
+                ),
+                "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle."
+        ));
+    }
+}

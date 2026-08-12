@@ -928,6 +928,10 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
+                UUID destroyingControllerId = gameData.currentlyResolvingControllerId;
+                if (destroyingControllerId != null && !destroyingControllerId.equals(controllerId)) {
+                    gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.add(controllerId);
+                }
                 triggerCollectionService.checkNoncreaturePermanentDestroyedByOpponentTriggers(
                         gameData, target, controllerId, gameData.currentlyResolvingControllerId);
             }
