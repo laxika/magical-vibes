@@ -17,7 +17,7 @@ class GrubsCommandTest extends BaseCardTest {
 
     @Test
     void copyAndDestroyModesResolveAgainstTheSameGoblin() {
-        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinSappers());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinSappers());
         harness.setHand(player1, List.of(new GrubsCommand()));
         addMana();
 
@@ -27,9 +27,9 @@ class GrubsCommandTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken());
-        assertThat(gd.playerBattlefields.get(player2.getId()))
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(goblin.getId()));
-        harness.assertInGraveyard(player2, "Goblin Sappers");
+        harness.assertInGraveyard(player1, "Goblin Sappers");
     }
 
     @Test
@@ -42,6 +42,7 @@ class GrubsCommandTest extends BaseCardTest {
         Island island = new Island();
         GrizzlyBears nonGoblin = new GrizzlyBears();
         harness.setLibrary(player2, List.of(firstGoblin, forest, secondGoblin, island, nonGoblin));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GrubsCommand()));
         addMana();
 

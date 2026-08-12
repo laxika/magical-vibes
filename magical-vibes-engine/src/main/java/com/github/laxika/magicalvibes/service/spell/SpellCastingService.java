@@ -447,6 +447,18 @@ public class SpellCastingService {
                 .orElse(announcedXValue);
     }
 
+    private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue) {
+        if (card.getXValueCap() == null) {
+            return;
+        }
+        int cap = amountEvaluationService.evaluate(gameData, card.getXValueCap(),
+                com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(
+                        controllerId, xValue, card));
+        if (xValue > cap) {
+            throw new IllegalStateException("X can't be greater than " + cap);
+        }
+    }
+
     private static Card bestowRuntimeCopyForHandCast(List<Card> hand, int cardIndex) {
         Card card = hand.get(cardIndex).createRuntimeCopy();
         card.setType(CardType.ENCHANTMENT);
@@ -1190,6 +1202,7 @@ public class SpellCastingService {
                 ? bestowRuntimeCopyForHandCast(hand, cardIndex)
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        validateXValueCap(gameData, card, playerId, effectiveXValue);
         boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
@@ -1716,9 +1729,11 @@ public class SpellCastingService {
         // still paid below. Paying it flags the spell (gameData.conspiredSpellIds) so that a single
         // "copy it, you may choose a new target for the copy" trigger is queued above the spell when
         // spell-cast triggers are collected in finishSpellCast().
-        if (!conspireCreatureIds.isEmpty()
-                && (card.getKeywords().contains(Keyword.CONSPIRE)
-                || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONSPIRE))) {
+        if (!conspireCreatureIds.isEmpty()) {
+            if (!card.getKeywords().contains(Keyword.CONSPIRE)
+                    && !hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONSPIRE)) {
+                throw new IllegalStateException(card.getName() + " doesn't have conspire");
+            }
             if (conspireCreatureIds.size() != 2 || conspireCreatureIds.get(0).equals(conspireCreatureIds.get(1))) {
                 throw new IllegalStateException("Conspire requires two different untapped creatures you control");
             }
@@ -3623,6 +3638,7 @@ public class SpellCastingService {
 
         Card card = graveyard.get(graveyardCardIndex);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -4116,6 +4132,7 @@ public class SpellCastingService {
         int additionalCounterCost = permittedPlayer != null && permittedPlayer.equals(playerId)
                 ? 0 : sourceCounterCost.orElse(0);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -4449,6 +4466,7 @@ public class SpellCastingService {
 
         Card card = deck.getFirst();
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {

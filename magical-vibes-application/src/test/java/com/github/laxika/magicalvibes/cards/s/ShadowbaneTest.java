@@ -81,11 +81,11 @@ class ShadowbaneTest extends BaseCardTest {
         bears.addBlockingTarget(0);
         resolveCombat(player2);
 
-        // The lethal damage Bog Wraith assigns to the blocker is prevented, so the 2/2 survives
-        // and its controller gains that much life because Bog Wraith is black.
+        // All 3 damage Bog Wraith assigns to the blocker is prevented, so the 2/2 survives
+        // and its controller gains 3 life because Bog Wraith is black.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        harness.assertLife(player1, 22);
+        harness.assertLife(player1, 23);
     }
 
     @Test

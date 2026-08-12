@@ -54,7 +54,7 @@ class RepelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test

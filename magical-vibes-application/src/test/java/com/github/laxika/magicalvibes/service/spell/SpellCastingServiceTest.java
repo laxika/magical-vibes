@@ -382,7 +382,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
-            verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
+            verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1206,7 +1206,7 @@ class SpellCastingServiceTest {
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
-            verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
+            verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones

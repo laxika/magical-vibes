@@ -130,8 +130,7 @@ public class EnterTriggerCollectorService {
 
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {
                 return true;
