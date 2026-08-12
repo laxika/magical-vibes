@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "95")
+@CardRegistration(set = "ECL", collectorNumber = "360")
 public class ChampionOfTheWeird extends Card {
 
     public ChampionOfTheWeird() {

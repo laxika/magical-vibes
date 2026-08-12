@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "159")
+@CardRegistration(set = "ECL", collectorNumber = "322")
+@CardRegistration(set = "ECL", collectorNumber = "399")
 public class SpinerockTyrant extends Card {
 
     public SpinerockTyrant() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "76")
+@CardRegistration(set = "ECL", collectorNumber = "288")
 public class SyggWanderwineWisdom extends Card {
 
     public SyggWanderwineWisdom() {

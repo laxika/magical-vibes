@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "171")
+@CardRegistration(set = "ECL", collectorNumber = "365")
 public class ChampionsOfThePerfect extends Card {
 
     public ChampionsOfThePerfect() {

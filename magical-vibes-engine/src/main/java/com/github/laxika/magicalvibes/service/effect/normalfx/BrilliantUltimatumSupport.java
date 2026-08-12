@@ -170,10 +170,12 @@ public class BrilliantUltimatumSupport {
         gameData.removeFromExile(card.getId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-        triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
         gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
-        battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
+        battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+        }
     }
 
     private String describePile(List<Card> allCards, List<UUID> cardIds) {

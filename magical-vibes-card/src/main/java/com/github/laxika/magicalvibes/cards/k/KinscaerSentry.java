@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "22")
+@CardRegistration(set = "ECL", collectorNumber = "300")
 public class KinscaerSentry extends Card {
 
     public KinscaerSentry() {

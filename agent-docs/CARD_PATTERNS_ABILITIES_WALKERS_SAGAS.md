@@ -50,6 +50,7 @@ All paths relative to `cards/`.
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
 | Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE)` |
+| Land (restricted chosen-type spells or abilities) | `e/EclipsedRealms.java` | ON_ENTER_BATTLEFIELD `ChooseSubtypeOnEnterEffect(allowedTypes)` + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_SPELL_OR_ABILITY)` |
 | Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorManaEffect(3, CREATURE_SPELL_ONLY), false)` |
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
 | Mana dork (G or U + conditional Nissa life) | `a/AvidReclaimer.java` | two `{T}` abilities: AwardManaEffect(GREEN\|BLUE) + ConditionalEffect(ControlsPermanent(NISSA), GainLifeEffect(2)) — conditional rider resolved inline on mana abilities |

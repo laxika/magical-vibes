@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesOfChosenTypeFromGraveyardEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "91")
+@CardRegistration(set = "ECL", collectorNumber = "359")
+@CardRegistration(set = "ECL", collectorNumber = "385")
+@CardRegistration(set = "ECL", collectorNumber = "395")
 public class BloodlineBidding extends Card {
 
     public BloodlineBidding() {

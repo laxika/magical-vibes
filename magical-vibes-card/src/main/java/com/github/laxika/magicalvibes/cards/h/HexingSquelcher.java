@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "145")
+@CardRegistration(set = "ECL", collectorNumber = "317")
 public class HexingSquelcher extends Card {
 
     public HexingSquelcher() {

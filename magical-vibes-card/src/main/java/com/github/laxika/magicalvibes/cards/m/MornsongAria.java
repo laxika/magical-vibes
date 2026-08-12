@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndSearchesLibraryToHandEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "111")
+@CardRegistration(set = "ECL", collectorNumber = "361")
 public class MornsongAria extends Card {
 
     public MornsongAria() {

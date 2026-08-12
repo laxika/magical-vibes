@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThi
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "134")
+@CardRegistration(set = "ECL", collectorNumber = "364")
 public class EndBlazeEpiphany extends Card {
 
     public EndBlazeEpiphany() {

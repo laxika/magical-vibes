@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "121")
+@CardRegistration(set = "ECL", collectorNumber = "314")
 public class TasterOfWares extends Card {
 
     public TasterOfWares() {

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "212")
+@CardRegistration(set = "ECL", collectorNumber = "293")
 public class Deceit extends Card {
 
     public Deceit() {

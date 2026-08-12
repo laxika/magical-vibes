@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "54")
+@CardRegistration(set = "ECL", collectorNumber = "357")
+@CardRegistration(set = "ECL", collectorNumber = "384")
+@CardRegistration(set = "ECL", collectorNumber = "394")
+@CardRegistration(set = "ECL", collectorNumber = "408")
 public class HarmonizedCrescendo extends Card {
 
     public HarmonizedCrescendo() {

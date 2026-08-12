@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePow
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "224")
+@CardRegistration(set = "ECL", collectorNumber = "372")
 public class FigureOfFable extends Card {
 
     public FigureOfFable() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "47")
+@CardRegistration(set = "ECL", collectorNumber = "303")
 public class DisruptorOfCurrents extends Card {
 
     public DisruptorOfCurrents() {

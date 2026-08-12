@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "151")
+@CardRegistration(set = "ECL", collectorNumber = "319")
+@CardRegistration(set = "ECL", collectorNumber = "388")
+@CardRegistration(set = "ECL", collectorNumber = "398")
 public class MeekAttack extends Card {
 
     public MeekAttack() {

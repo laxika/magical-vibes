@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCards
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "165")
+@CardRegistration(set = "ECL", collectorNumber = "323")
 public class AuroraAwakener extends Card {
 
     public AuroraAwakener() {

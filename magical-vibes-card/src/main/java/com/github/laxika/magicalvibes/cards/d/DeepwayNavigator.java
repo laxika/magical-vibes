@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "214")
+@CardRegistration(set = "ECL", collectorNumber = "370")
 public class DeepwayNavigator extends Card {
 
     public DeepwayNavigator() {

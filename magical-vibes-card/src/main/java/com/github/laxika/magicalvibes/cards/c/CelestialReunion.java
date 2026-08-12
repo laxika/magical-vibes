@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 @CardRegistration(set = "ECL", collectorNumber = "170")
+@CardRegistration(set = "ECL", collectorNumber = "326")
 public class CelestialReunion extends Card {
 
     public CelestialReunion() {

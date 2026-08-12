@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "20")
+@CardRegistration(set = "ECL", collectorNumber = "299")
+@CardRegistration(set = "ECL", collectorNumber = "407")
 public class Kinbinding extends Card {
 
     public Kinbinding() {

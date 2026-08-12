@@ -53,4 +53,17 @@ class AwardAnyColorManaEffectHandlerTest extends AbstractPlayerInteractionHandle
 
         verify(interactionHandlerRegistry, never()).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
     }
+
+    @Test
+    @DisplayName("A chosen-subtype spell-or-ability restriction prompts for nothing without a source permanent")
+    void chosenSubtypeSpellOrAbilityWithoutSourceAddsNothing() {
+        Card card = createCard("Eclipsed Realms");
+        AwardAnyColorManaEffect effect =
+                new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_SPELL_OR_ABILITY);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(interactionHandlerRegistry, never()).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
+    }
 }

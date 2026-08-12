@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "48")
+@CardRegistration(set = "ECL", collectorNumber = "304")
 public class FlitterwingNuisance extends Card {
 
     public FlitterwingNuisance() {

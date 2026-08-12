@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ECL", collectorNumber = "27")
+@CardRegistration(set = "ECL", collectorNumber = "301")
 public class MorningtidesLight extends Card {
 
     public MorningtidesLight() {

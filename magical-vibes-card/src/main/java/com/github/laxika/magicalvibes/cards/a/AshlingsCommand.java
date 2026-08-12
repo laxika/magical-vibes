@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "205")
+@CardRegistration(set = "ECL", collectorNumber = "330")
 public class AshlingsCommand extends Card {
 
     public AshlingsCommand() {

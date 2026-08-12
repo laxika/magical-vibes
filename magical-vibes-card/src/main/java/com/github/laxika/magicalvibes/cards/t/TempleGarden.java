@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "248")
+@CardRegistration(set = "ECL", collectorNumber = "268")
+@CardRegistration(set = "ECL", collectorNumber = "351")
 public class TempleGarden extends Card {
 
     public TempleGarden() {

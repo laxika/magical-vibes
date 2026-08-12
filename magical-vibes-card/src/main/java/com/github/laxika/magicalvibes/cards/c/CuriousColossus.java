@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "12")
+@CardRegistration(set = "ECL", collectorNumber = "298")
 public class CuriousColossus extends Card {
 
     public CuriousColossus() {

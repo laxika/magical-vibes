@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "232")
+@CardRegistration(set = "ECL", collectorNumber = "375")
 public class LluwenImperfectNaturalist extends Card {
 
     public LluwenImperfectNaturalist() {

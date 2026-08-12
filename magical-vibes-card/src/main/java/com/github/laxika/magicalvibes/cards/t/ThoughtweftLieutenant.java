@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "246")
+@CardRegistration(set = "ECL", collectorNumber = "343")
 public class ThoughtweftLieutenant extends Card {
 
     public ThoughtweftLieutenant() {

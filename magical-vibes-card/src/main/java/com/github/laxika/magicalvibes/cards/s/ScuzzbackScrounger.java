@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "153")
+@CardRegistration(set = "ECL", collectorNumber = "320")
 public class ScuzzbackScrounger extends Card {
 
     public ScuzzbackScrounger() {

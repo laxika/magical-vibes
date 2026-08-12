@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToOwnPermanentsO
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "193")
+@CardRegistration(set = "ECL", collectorNumber = "367")
+@CardRegistration(set = "ECL", collectorNumber = "391")
+@CardRegistration(set = "ECL", collectorNumber = "401")
 public class SelflessSafewright extends Card {
 
     public SelflessSafewright() {

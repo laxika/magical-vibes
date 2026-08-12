@@ -1131,10 +1131,11 @@ public class SpellCastingService {
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
 
             // Process ETB effects for lands (e.g. Glimmerpost)
-            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, graveyardCard, null, false);
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, graveyardCard);
-
-            turnProgressionService.resolveAutoPass(gameData);
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, graveyardCard);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, graveyardCard);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
             return;
         }
 
@@ -1866,10 +1867,11 @@ public class SpellCastingService {
             // wait until that choice resumes the entry.
             if (!gameData.interaction.isAwaitingInput()) {
                 // Process ETB effects for lands (e.g. Glimmerpost)
-                battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
-
-                turnProgressionService.resolveAutoPass(gameData);
+                battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
             }
         } else if (card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT)
                 || card.hasType(CardType.ARTIFACT) || card.hasType(CardType.PLANESWALKER)
@@ -4183,9 +4185,11 @@ public class SpellCastingService {
                     GameLog.playerPlays(player.getUsername(), card, " from exile."));
             log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
 
-            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
-            turnProgressionService.resolveAutoPass(gameData);
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
             return;
         }
 

@@ -558,7 +558,12 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    List<CardSubtype> allowedSubtypes) {
-        ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId);
+        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, false);
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   List<CardSubtype> allowedSubtypes, boolean landPlay) {
+        ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId, landPlay);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
                 ? Arrays.stream(CardSubtype.values())

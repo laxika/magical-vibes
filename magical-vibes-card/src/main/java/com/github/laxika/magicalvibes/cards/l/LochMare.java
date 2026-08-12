@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "57")
+@CardRegistration(set = "ECL", collectorNumber = "307")
 public class LochMare extends Card {
 
     public LochMare() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "204")
+@CardRegistration(set = "ECL", collectorNumber = "368")
 public class AbigaleEloquentFirstYear extends Card {
 
     public AbigaleEloquentFirstYear() {

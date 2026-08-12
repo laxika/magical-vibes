@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "168")
+@CardRegistration(set = "ECL", collectorNumber = "325")
 public class BristlebaneBattler extends Card {
 
     public BristlebaneBattler() {

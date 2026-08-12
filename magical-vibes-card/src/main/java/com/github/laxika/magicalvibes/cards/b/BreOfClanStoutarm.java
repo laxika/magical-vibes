@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "207")
+@CardRegistration(set = "ECL", collectorNumber = "369")
 public class BreOfClanStoutarm extends Card {
 
     public BreOfClanStoutarm() {

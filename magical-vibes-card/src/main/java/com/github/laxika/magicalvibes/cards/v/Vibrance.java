@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "249")
+@CardRegistration(set = "ECL", collectorNumber = "295")
 public class Vibrance extends Card {
 
     public Vibrance() {

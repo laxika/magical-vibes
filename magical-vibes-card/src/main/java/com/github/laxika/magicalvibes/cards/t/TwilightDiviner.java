@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "122")
+@CardRegistration(set = "ECL", collectorNumber = "315")
 public class TwilightDiviner extends Card {
 
     public TwilightDiviner() {

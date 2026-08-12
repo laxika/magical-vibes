@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "69")
+@CardRegistration(set = "ECL", collectorNumber = "403")
 public class SilvergillMentor extends Card {
 
     public SilvergillMentor() {

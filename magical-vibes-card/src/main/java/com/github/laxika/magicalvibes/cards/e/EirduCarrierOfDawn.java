@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "13")
+@CardRegistration(set = "ECL", collectorNumber = "286")
 public class EirduCarrierOfDawn extends Card {
 
     public EirduCarrierOfDawn() {

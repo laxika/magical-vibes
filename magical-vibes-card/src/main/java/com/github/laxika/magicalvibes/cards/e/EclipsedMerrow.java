@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "221")
+@CardRegistration(set = "ECL", collectorNumber = "339")
 public class EclipsedMerrow extends Card {
 
     public EclipsedMerrow() {

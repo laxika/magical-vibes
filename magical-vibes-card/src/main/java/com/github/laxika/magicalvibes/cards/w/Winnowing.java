@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureForEachPlayerThenSacrificeNonsharingCreaturesEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "43")
+@CardRegistration(set = "ECL", collectorNumber = "355")
+@CardRegistration(set = "ECL", collectorNumber = "382")
+@CardRegistration(set = "ECL", collectorNumber = "392")
 public class Winnowing extends Card {
 
     public Winnowing() {

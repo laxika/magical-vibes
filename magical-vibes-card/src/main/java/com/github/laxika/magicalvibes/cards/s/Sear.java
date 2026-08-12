@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "154")
+@CardRegistration(set = "ECL", collectorNumber = "405")
 public class Sear extends Card {
 
     public Sear() {

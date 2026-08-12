@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "74")
+@CardRegistration(set = "ECL", collectorNumber = "309")
 public class Sunderflock extends Card {
 
     public Sunderflock() {

@@ -1878,6 +1878,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
   - `FLASHBACK_ONLY` — flashback-only mana (Altar of the Lost `(2, FLASHBACK_ONLY)`)
   - `CREATURE_SPELL_ONLY` — any creature spell, no chosen type; cannot pay abilities (Ancient Ziggurat `(1, …)`, Somberwald Sage `(3, …)`)
   - `CHOSEN_SUBTYPE_CREATURE` / `CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE` — creature spells of the source's `ChooseSubtypeOnEnterEffect` type, spell-only; the `_UNCOUNTERABLE` form also makes that spell uncounterable (Pillar of Origins / Unclaimed Territory; Cavern of Souls)
+  - `CHOSEN_SUBTYPE_SPELL_OR_ABILITY` — spells of the source's chosen `ChooseSubtypeOnEnterEffect` type or activated abilities of permanents of that type (Eclipsed Realms)
   - `SUBTYPE_SPELL` — spells of the effect's **printed** `subtype`, spell-only (Sliver Hive `(1, SUBTYPE_SPELL, SLIVER)`). Same bucket as `CHOSEN_SUBTYPE_CREATURE`; the type is on the card rather than chosen as the source enters
   - `SUBTYPE_SPELL_OR_ABILITY` — spells of the effect's `subtype` **or** activated abilities of permanents of it (Smokebraider `(2, SUBTYPE_SPELL_OR_ABILITY, ELEMENTAL)`). These two are the only restrictions that use the `subtype` component
 - `AwardChosenColorManaEffect()` — mana ability: add one mana of the source permanent's chosen color (`Permanent.getChosenColor()`). Pair with `ON_ENTER_BATTLEFIELD ChooseColorOnEnterEffect`; rewritten into a concrete `AwardManaEffect` at activation. Produces nothing if no color was chosen (Quirion Elves)

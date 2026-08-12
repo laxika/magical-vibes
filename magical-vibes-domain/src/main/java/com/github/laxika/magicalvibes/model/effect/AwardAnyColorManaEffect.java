@@ -69,7 +69,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                     amount instanceof Fixed fixed ? fixed.value() : 0;
             case IMPRINTED_CARD_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
                  ARTIFACT_SPELLS_OR_ABILITIES, FLASHBACK_ONLY,
-                 SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY, MANA_VALUE_AT_LEAST_FOUR -> 0;
+                 CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
+                 MANA_VALUE_AT_LEAST_FOUR -> 0;
         };
     }
 }

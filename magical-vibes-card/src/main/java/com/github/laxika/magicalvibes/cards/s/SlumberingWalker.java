@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "35")
+@CardRegistration(set = "ECL", collectorNumber = "302")
 public class SlumberingWalker extends Card {
 
     public SlumberingWalker() {

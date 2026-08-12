@@ -1384,6 +1384,22 @@ public class BattlefieldEntryService {
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, List.of());
     }
 
+    public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
+                .map(ChooseSubtypeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+            playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
+                    subtypeChoice.allowedSubtypes(), true);
+            return;
+        }
+        processCreatureETBEffects(gameData, controllerId, card, null, false);
+    }
+
     public void processFaceDownCreatureETBTriggers(GameData gameData, UUID controllerId, Card card) {
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
@@ -1401,6 +1417,19 @@ public class BattlefieldEntryService {
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                           boolean wasCastFromHand, int etbMode, int xValue,
                                           boolean kicked, List<UUID> targetIds) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
+                .map(ChooseSubtypeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
+            playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
+                    subtypeChoice.allowedSubtypes());
+            return;
+        }
+
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
@@ -1410,8 +1439,6 @@ public class BattlefieldEntryService {
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
         List<CardEffect> triggeredEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
         int additionalElementalTriggers = enteringPermanent == null ? 0
                 : gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, controllerId, enteringPermanent);

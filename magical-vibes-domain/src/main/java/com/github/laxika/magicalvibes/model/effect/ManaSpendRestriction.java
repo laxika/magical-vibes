@@ -44,6 +44,12 @@ public enum ManaSpendRestriction {
     CHOSEN_SUBTYPE_CREATURE,
 
     /**
+     * Spendable only to cast spells of the source permanent's chosen creature subtype or activate
+     * abilities of permanents of that subtype.
+     */
+    CHOSEN_SUBTYPE_SPELL_OR_ABILITY,
+
+    /**
      * As {@link #CHOSEN_SUBTYPE_CREATURE}, and the spell it pays for can't be countered
      * (Cavern of Souls).
      */

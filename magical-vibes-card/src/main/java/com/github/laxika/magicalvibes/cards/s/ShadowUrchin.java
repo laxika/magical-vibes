@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "242")
+@CardRegistration(set = "ECL", collectorNumber = "379")
 public class ShadowUrchin extends Card {
 
     public ShadowUrchin() {

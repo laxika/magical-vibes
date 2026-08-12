@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "65")
+@CardRegistration(set = "ECL", collectorNumber = "358")
 public class RimefireTorque extends Card {
 
     public RimefireTorque() {

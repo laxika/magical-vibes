@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "156")
+@CardRegistration(set = "ECL", collectorNumber = "321")
 public class SoulImmolation extends Card {
 
     private static final PermanentPredicate OPPONENT_CREATURE = new PermanentAllOfPredicate(List.of(

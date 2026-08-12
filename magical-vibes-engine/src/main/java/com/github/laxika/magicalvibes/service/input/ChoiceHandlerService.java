@@ -1778,6 +1778,9 @@ public class ChoiceHandlerService {
             // was pending). Now that the type is chosen, process them — e.g. Brass Herald's "reveal the
             // top four cards" trigger, which reads the chosen type from the permanent.
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, true);
+            if (ctx.landPlay()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), perm.getCard());
+            }
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

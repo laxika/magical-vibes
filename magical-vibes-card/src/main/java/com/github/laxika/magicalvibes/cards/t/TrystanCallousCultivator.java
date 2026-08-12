@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "199")
+@CardRegistration(set = "ECL", collectorNumber = "291")
 public class TrystanCallousCultivator extends Card {
 
     public TrystanCallousCultivator() {

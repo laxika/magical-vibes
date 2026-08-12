@@ -207,7 +207,11 @@ public sealed interface ChoiceContext {
      */
     record MassProtectionColorChoice(UUID controllerId) implements ChoiceContext {}
 
-    record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
+    record SubtypeChoice(UUID permanentId, boolean landPlay) implements ChoiceContext {
+        public SubtypeChoice(UUID permanentId) {
+            this(permanentId, false);
+        }
+    }
 
     /**
      * The controller chooses a creature type at resolution for a spell/ability that has no

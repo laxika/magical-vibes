@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesTopUntilTotalManaValueMayCastThisTurnEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "216")
+@CardRegistration(set = "ECL", collectorNumber = "371")
 public class DreamHarvest extends Card {
 
     public DreamHarvest() {

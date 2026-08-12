@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "247")
+@CardRegistration(set = "ECL", collectorNumber = "344")
 public class TrystansCommand extends Card {
 
     public TrystansCommand() {

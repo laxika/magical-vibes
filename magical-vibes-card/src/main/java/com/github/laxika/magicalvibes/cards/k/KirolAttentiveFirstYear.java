@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "231")
+@CardRegistration(set = "ECL", collectorNumber = "374")
 public class KirolAttentiveFirstYear extends Card {
 
     public KirolAttentiveFirstYear() {

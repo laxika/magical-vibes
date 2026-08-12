@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "202")
+@CardRegistration(set = "ECL", collectorNumber = "406")
 public class VirulentEmissary extends Card {
 
     public VirulentEmissary() {

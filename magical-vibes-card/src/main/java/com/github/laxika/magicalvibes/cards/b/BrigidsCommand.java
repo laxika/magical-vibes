@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "208")
+@CardRegistration(set = "ECL", collectorNumber = "332")
 public class BrigidsCommand extends Card {
 
     public BrigidsCommand() {
