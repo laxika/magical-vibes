@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "293")
+@CardRegistration(set = "M20", collectorNumber = "323")
 public class Gravewaker extends Card {
 
     public Gravewaker() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -935,6 +936,16 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
+        return enqueueNoncombatDamageTrigger(match, effect);
+    }
+
+    @CollectsTrigger(value = BoostAllOwnCreaturesEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    private boolean handleNoncombatDamageBoostAllOwnCreatures(TriggerMatchContext match,
+            BoostAllOwnCreaturesEffect effect, TriggerContext ctx) {
+        return enqueueNoncombatDamageTrigger(match, effect);
+    }
+
+    private boolean enqueueNoncombatDamageTrigger(TriggerMatchContext match, CardEffect effect) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 

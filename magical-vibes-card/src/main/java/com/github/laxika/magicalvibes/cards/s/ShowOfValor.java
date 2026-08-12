@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "34")
 @CardRegistration(set = "M14", collectorNumber = "33")
+@CardRegistration(set = "M20", collectorNumber = "311")
 public class ShowOfValor extends Card {
 
     public ShowOfValor() {

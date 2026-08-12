@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -756,6 +757,30 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — BoostAllOwnCreaturesEffect")
+    class NoncombatDamageBoostAllOwnCreatures {
+
+        @Test
+        @DisplayName("puts the team boost trigger on the stack")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Wildfire Elemental");
+            var effect = new BoostAllOwnCreaturesEffect(1, 0);
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
         }
     }
 }

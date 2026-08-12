@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "116")
+@CardRegistration(set = "M20", collectorNumber = "340")
 public class FrilledSandwalla extends Card {
 
     public FrilledSandwalla() {

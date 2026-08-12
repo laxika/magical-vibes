@@ -224,7 +224,8 @@ public enum CardSubtype {
     ARCANE("Arcane"),
     GATE("Gate"),
     SOLTARI("Soltari"),
-    ZUBERA("Zubera");
+    ZUBERA("Zubera"),
+    YANLING("Yanling");
 
     @Getter
     private final String displayName;

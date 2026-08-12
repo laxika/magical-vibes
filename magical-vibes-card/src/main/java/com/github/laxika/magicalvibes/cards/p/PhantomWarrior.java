@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "88")
 @CardRegistration(set = "M10", collectorNumber = "66")
 @CardRegistration(set = "M14", collectorNumber = "67")
+@CardRegistration(set = "M20", collectorNumber = "316")
 @CardRegistration(set = "POR", collectorNumber = "65")
 @CardRegistration(set = "WTH", collectorNumber = "48")
 public class PhantomWarrior extends Card {

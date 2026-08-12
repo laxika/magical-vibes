@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "110")
+@CardRegistration(set = "M20", collectorNumber = "325")
 public class SorinsThirst extends Card {
 
     public SorinsThirst() {

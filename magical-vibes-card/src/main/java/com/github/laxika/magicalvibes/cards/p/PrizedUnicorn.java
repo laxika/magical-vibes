@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 
 @CardRegistration(set = "M10", collectorNumber = "199")
 @CardRegistration(set = "M11", collectorNumber = "193")
+@CardRegistration(set = "M20", collectorNumber = "342")
 public class PrizedUnicorn extends Card {
 
     public PrizedUnicorn() {

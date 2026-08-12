@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "29")
 @CardRegistration(set = "M12", collectorNumber = "34")
 @CardRegistration(set = "M14", collectorNumber = "34")
+@CardRegistration(set = "M20", collectorNumber = "312")
 public class SiegeMastodon extends Card {
 }

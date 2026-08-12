@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "118")
+@CardRegistration(set = "M20", collectorNumber = "324")
 public class SkeletonArcher extends Card {
 
     public SkeletonArcher() {

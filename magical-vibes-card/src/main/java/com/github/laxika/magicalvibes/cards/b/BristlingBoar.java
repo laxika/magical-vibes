@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "170")
+@CardRegistration(set = "M20", collectorNumber = "338")
 public class BristlingBoar extends Card {
 
     public BristlingBoar() {
