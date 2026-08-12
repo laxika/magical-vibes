@@ -683,6 +683,24 @@ class HardAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("Hard AI ignores a blocker-declaration event for another player")
+    void ignoresBlockerDeclarationForAnotherPlayer() {
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(player1.getId()));
+        AiGameActions actions = Mockito.mock(AiGameActions.class);
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player2, harness.getGameRegistry(), actions,
+                harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                harness.getTargetValidationService(), harness.getTargetLegalityService());
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        verify(actions, never()).handleDeclareBlockers(any());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class).decidingPlayerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
     @DisplayName("Hard AI blocker declaration does not leave game stuck")
     void blockerDeclarationDoesNotStick() {
         FakeConnection aiConn = new FakeConnection("ai-hard-test");

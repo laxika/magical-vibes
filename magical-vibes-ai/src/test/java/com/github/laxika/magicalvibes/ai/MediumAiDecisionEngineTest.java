@@ -314,6 +314,24 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("Medium AI ignores a blocker-declaration event for another player")
+    void ignoresBlockerDeclarationForAnotherPlayer() {
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(human.getId()));
+        AiGameActions actions = Mockito.mock(AiGameActions.class);
+        MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
+                gd.id, aiPlayer, harness.getGameRegistry(), actions,
+                harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                harness.getTargetValidationService(), harness.getTargetLegalityService());
+
+        engine.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        verify(actions, never()).handleDeclareBlockers(any());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class).decidingPlayerId())
+                .isEqualTo(human.getId());
+    }
+
+    @Test
     @DisplayName("Medium AI casts higher-value spell when multiple available")
     void castsHigherValueSpell() {
         giveAiPriority();

@@ -161,11 +161,19 @@ public abstract class AiDecisionEngine {
             case MULLIGAN -> handleInitialMulligan();
             case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
             case ATTACKER_DECLARATION -> {
-                if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) != null) {
+                PendingInteraction active = gameData.interaction.activeInteraction();
+                if (active instanceof PendingInteraction.AttackerDeclaration
+                        && isAuthorizedFor(gameData, active)) {
                     handleAttackers(gameData);
                 }
             }
-            case BLOCKER_DECLARATION -> handleBlockers(gameData);
+            case BLOCKER_DECLARATION -> {
+                PendingInteraction active = gameData.interaction.activeInteraction();
+                if (active instanceof PendingInteraction.BlockerDeclaration
+                        && isAuthorizedFor(gameData, active)) {
+                    handleBlockers(gameData);
+                }
+            }
             case INTERACTION -> handleInteractionPrompt(gameData);
             case COMBAT_DAMAGE_ASSIGNMENT -> choiceHandler.handleCombatDamageAssignment(gameData);
         }
@@ -194,6 +202,10 @@ public abstract class AiDecisionEngine {
             return active.decidingPlayerId();
         }
         return aiPlayer.getId();
+    }
+
+    private boolean isAuthorizedFor(GameData gameData, PendingInteraction interaction) {
+        return AiUtils.isRespondingFor(gameData, aiPlayer.getId(), interaction.decidingPlayerId());
     }
 
     // ===== Overridable Choice Handlers =====

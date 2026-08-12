@@ -646,12 +646,26 @@ class EasyAiDecisionEngineTest {
         // block legality returns false for the restricted creature
         when(blockLegalityService.canBlock(nullable(BlockLegalityContext.class), eq(cantBlocker))).thenReturn(false);
 
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(aiPlayer.getId()));
         createEngine().handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
         // Should declare no blockers since the only creature can't block
         ArgumentCaptor<DeclareBlockersRequest> captor = ArgumentCaptor.forClass(DeclareBlockersRequest.class);
         verify(messageHandler).handleDeclareBlockers(captor.capture());
         assertThat(captor.getValue().blockerAssignments()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Easy AI ignores a blocker-declaration event for another player")
+    void ignoresBlockerDeclarationForAnotherPlayer() {
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(opponentId));
+
+        createEngine().handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        verify(messageHandler, never()).handleDeclareBlockers(any());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class).decidingPlayerId())
+                .isEqualTo(opponentId);
     }
 
     // ===== Spell casting restrictions (cost modifiers, spell limits) =====
