@@ -19,7 +19,7 @@ const RULES_PAGE = `<html><body>
 // Same shape as the real download: BOM, CRLF, a table of contents that repeats the section
 // headers, indented continuation paragraphs, examples, and a trailing glossary.
 const RULES_TXT = [
-  '﻿Magic: The Gathering Comprehensive Rules',
+  '﻿Magic Comprehensive Rules',
   '',
   'These rules are effective as of June 19, 2026.',
   '',

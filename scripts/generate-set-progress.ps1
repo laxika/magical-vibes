@@ -575,7 +575,7 @@ $template = @'
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Magical Vibes &mdash; Card Implementation Progress</title>
-<meta name="description" content="Implementation progress of Magic: The Gathering sets in the Magical Vibes engine.">
+<meta name="description" content="Implementation progress of Magic sets in the Magical Vibes engine.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:wght@400;600;700&display=swap">
@@ -909,7 +909,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
   <header class="banner">
     <div>
       <h1>Magical Vibes</h1>
-      <p>Card implementation progress across every Magic: The Gathering set</p>
+      <p>Card implementation progress across every Magic set</p>
     </div>
     <div class="hero">
       <div class="hero-value" id="hero-value">&mdash;</div>
