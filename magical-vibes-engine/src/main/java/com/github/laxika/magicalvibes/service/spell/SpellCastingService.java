@@ -1181,7 +1181,10 @@ public class SpellCastingService {
             } else if (hasSacrificeForCostReduction) {
                 // Allow — sacrifice cost reduction will be validated during casting
             } else {
-                if (targetId != null && cardCheck.getTargetFilter() != null) {
+                if (targetId != null
+                        && cardCheck.getTargetFilter() != null
+                        && (gameQueryService.findPermanentById(gameData, targetId) != null
+                            || gameData.playerIds.contains(targetId))) {
                     targetLegalityService.validateSpellTargeting(
                             gameData, cardCheck, targetId, null, playerId, true);
                 }

@@ -19,7 +19,7 @@ public class WildMongrel extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new BoostSelfEffect(1, 1),
-                        new SetChosenColorUntilEndOfTurnEffect(false)
+                        new SetChosenColorUntilEndOfTurnEffect(false, false)
                 ),
                 "Discard a card: This creature gets +1/+1 and becomes the color of your choice until end of turn."
         ));
