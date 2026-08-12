@@ -1093,6 +1093,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax)) {
             return true;
         }
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                gameData, plan.card, plan.xValue, plan.targetingTax);
+        if (convokeCreatureIds == null) {
+            return false;
+        }
         final int idx = plan.handIndex;
         final UUID fTargetId = plan.targetId;
         final Integer fXValue = plan.xValue;
@@ -1104,7 +1109,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
-                        fMultiTargets, null, null, fSacrifice,
+                        fMultiTargets, convokeCreatureIds, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null,
                         fDiscardHandCardIndex, null, null, fMultiSacrificeIds)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -1426,6 +1431,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 }
                 int costMod = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int effectiveCost = Math.max(0, card.getManaValue() + costMod);
+                ManaCost cost = new ManaCost(card.getManaCost());
+                if (!cost.canPayWithConvoke(virtualPool, costMod, List.of())) {
+                    effectiveCost = Math.max(0,
+                            effectiveCost - countUntappedConvokeCreatures(gameData, card));
+                }
                 candidates.add(new CastCandidate(i, value, effectiveCost));
             }
         }

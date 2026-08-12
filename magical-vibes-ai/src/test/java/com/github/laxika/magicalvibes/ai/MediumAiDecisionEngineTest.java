@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -64,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -166,6 +168,33 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies untapped creatures for convoke")
+    void castsConvokeSpellWithUntappedCreatures() {
+        giveAiPriority();
+        giveAiIslands(2);
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        firstCreature.setSummoningSick(false);
+        secondCreature.setSummoningSick(false);
+
+        Card convokeSpell = new Card();
+        convokeSpell.setName("Convoke Test Creature");
+        convokeSpell.setType(CardType.CREATURE);
+        convokeSpell.setManaCost("{3}{U}");
+        convokeSpell.setPower(4);
+        convokeSpell.setToughness(4);
+        convokeSpell.setKeywords(EnumSet.of(Keyword.CONVOKE));
+        harness.setHand(aiPlayer, List.of(convokeSpell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(convokeSpell);
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(secondCreature.isTapped()).isTrue();
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
@@ -29,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -1691,6 +1694,98 @@ public abstract class AiDecisionEngine {
             manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
         }
         return gameData.interaction.isAwaitingInput();
+    }
+
+    /**
+     * Selects the smallest prefix of the player's untapped creatures that lets the spell's
+     * remaining mana cost be paid with the current mana pool and convoke. Mana is tapped first so
+     * creatures that also produce mana cannot be announced for both costs.
+     *
+     * @return the selected creature IDs, an empty list when no convoke is needed, or {@code null}
+     * when the current state cannot pay the cost with any legal convoke selection
+     */
+    protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
+                                                  int targetingTax) {
+        if (!hasConvokeAbility(gameData, card) || card.getManaCost() == null) {
+            return List.of();
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(aiPlayer.getId());
+        if (pool == null) {
+            return null;
+        }
+
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax;
+        ManaCost cost = new ManaCost(card.getManaCost());
+        int additionalGenericCost = costModifier
+                + (cost.hasX() && xValue != null ? xValue : 0);
+        List<ManaColor> contributions = new ArrayList<>();
+        if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
+            return List.of();
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield == null) {
+            return null;
+        }
+
+        List<UUID> selectedIds = new ArrayList<>();
+        for (Permanent permanent : battlefield) {
+            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)) {
+                continue;
+            }
+            selectedIds.add(permanent.getId());
+            contributions.add(convokeManaColor(gameData, permanent));
+            if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
+                return List.copyOf(selectedIds);
+            }
+        }
+        return null;
+    }
+
+    protected int countUntappedConvokeCreatures(GameData gameData, Card card) {
+        if (!hasConvokeAbility(gameData, card)) {
+            return 0;
+        }
+        return (int) gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .count();
+    }
+
+    private boolean hasConvokeAbility(GameData gameData, Card card) {
+        if (card.getKeywords().contains(Keyword.CONVOKE)) {
+            return true;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == Keyword.CONVOKE
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private ManaColor convokeManaColor(GameData gameData, Permanent permanent) {
+        Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, permanent);
+        if (colors != null) {
+            for (CardColor color : colors) {
+                ManaColor manaColor = ManaColor.fromCode(color.getCode());
+                if (manaColor != null) {
+                    return manaColor;
+                }
+            }
+        }
+        CardColor color = gameQueryService.getEffectiveColor(gameData, permanent);
+        return color != null ? ManaColor.fromCode(color.getCode()) : null;
     }
 
     protected AiManaManager.ManaTapAction manaTapAction() {

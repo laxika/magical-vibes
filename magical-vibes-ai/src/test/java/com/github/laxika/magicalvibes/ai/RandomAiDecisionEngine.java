@@ -604,6 +604,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+            if (convokeCreatureIds == null) {
+                telemetry.recordSkip("spell: convoke cost unpayable", card.getName());
+                continue;
+            }
+
             // Chosen after mana payment: tapping can sacrifice a permanent for mana, which would
             // invalidate a selection made earlier and get the whole cast rejected.
             List<UUID> multiSacrificeIds = selectRandomMultiSacrificeTargets(gameData, card);
@@ -622,7 +628,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null, finalMultiSacrificeIds)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null, finalMultiSacrificeIds)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

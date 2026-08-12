@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,6 +94,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -432,6 +434,35 @@ class HardAiDecisionEngineTest {
         // Myr Superion should be on the stack A?€�t creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies untapped creatures for convoke")
+    void castsConvokeSpellWithUntappedCreatures() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        givePlayerIslands(player1, 2);
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        firstCreature.setSummoningSick(false);
+        secondCreature.setSummoningSick(false);
+
+        Card convokeSpell = new Card();
+        convokeSpell.setName("Convoke Test Creature");
+        convokeSpell.setType(CardType.CREATURE);
+        convokeSpell.setManaCost("{3}{U}");
+        convokeSpell.setPower(4);
+        convokeSpell.setToughness(4);
+        convokeSpell.setKeywords(EnumSet.of(Keyword.CONVOKE));
+        harness.setHand(player1, List.of(convokeSpell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(convokeSpell);
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(secondCreature.isTapped()).isTrue();
     }
 
     // ===== ETB removal forced onto own board =====

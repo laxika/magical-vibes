@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -217,6 +220,47 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void suppliesUntappedCreaturesForConvokeSpell() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new Island());
+        harness.addToBattlefield(aiPlayer, new Island());
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        firstCreature.setSummoningSick(false);
+        secondCreature.setSummoningSick(false);
+
+        Card convokeSpell = new Card();
+        convokeSpell.setName("Convoke Test Creature");
+        convokeSpell.setType(CardType.CREATURE);
+        convokeSpell.setManaCost("{3}{U}");
+        convokeSpell.setPower(4);
+        convokeSpell.setToughness(4);
+        convokeSpell.setKeywords(EnumSet.of(Keyword.CONVOKE));
+        harness.setHand(aiPlayer, List.of(convokeSpell));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(convokeSpell);
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(secondCreature.isTapped()).isTrue();
     }
 
     @Test

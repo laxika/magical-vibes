@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,6 +63,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -215,6 +217,33 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies untapped creatures for convoke")
+        void castsConvokeSpellWithUntappedCreatures() {
+            giveAiPriority();
+            giveManaSources(Island::new, 2);
+            Permanent firstCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            Permanent secondCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            firstCreature.setSummoningSick(false);
+            secondCreature.setSummoningSick(false);
+
+            Card convokeSpell = new Card();
+            convokeSpell.setName("Convoke Test Creature");
+            convokeSpell.setType(CardType.CREATURE);
+            convokeSpell.setManaCost("{3}{U}");
+            convokeSpell.setPower(4);
+            convokeSpell.setToughness(4);
+            convokeSpell.setKeywords(EnumSet.of(Keyword.CONVOKE));
+            testHarness.setHand(aiTestPlayer, List.of(convokeSpell));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(convokeSpell);
+            assertThat(firstCreature.isTapped()).isTrue();
+            assertThat(secondCreature.isTapped()).isTrue();
         }
 
         @Test

@@ -228,6 +228,10 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        if (convokeCreatureIds == null) {
+            return false;
+        }
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
@@ -240,7 +244,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -396,6 +400,10 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        if (convokeCreatureIds == null) {
+            return false;
+        }
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
@@ -407,7 +415,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {
