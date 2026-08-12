@@ -35,6 +35,23 @@ public interface CostModificationHandlerBean {
     int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source);
 
     /**
+     * Whether this modifier must be evaluated after ordinary cost increases and reductions.
+     * Minimum-cost effects use this to apply their floor to the already-adjusted mana cost.
+     */
+    default boolean appliesAfterOtherCostModifiers() {
+        return false;
+    }
+
+    /**
+     * Evaluates a modifier that runs after ordinary modifiers. The accumulated delta includes
+     * every earlier modifier in the current cast-cost calculation.
+     */
+    default int modifyCostAfterOtherModifiers(CostModificationContext context, CardEffect effect,
+                                              CostModificationSource source, int accumulatedModifier) {
+        return modifyCost(context, effect, source);
+    }
+
+    /**
      * Returns a signed generic-mana delta for an optional buyback cost. Ordinary cast-cost
      * modifiers do not affect buyback costs unless they override this method.
      */

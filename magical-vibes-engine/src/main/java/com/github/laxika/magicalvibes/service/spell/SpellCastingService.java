@@ -1093,6 +1093,7 @@ public class SpellCastingService {
         if (casterPool != null) {
             casterPool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, playerId));
             casterPool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, playerId));
+            casterPool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, playerId));
         }
 
         List<Card> handEarly = gameData.playerHands.get(playerId);
@@ -1252,7 +1253,7 @@ public class SpellCastingService {
         if (!usingAlternateCost && !Objects.equals(printedManaCost, card.getManaCost())) {
             ManaPool modePool = gameData.playerManaPools.get(playerId);
             ManaCost modeCost = card.getParsedManaCost();
-            int modeAdditionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+            int modeAdditionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue);
             if (modeCost != null && !modeCost.canPay(modePool, modeAdditionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay " + card.getManaCost()
                         + " for " + card.getName());
@@ -1483,7 +1484,8 @@ public class SpellCastingService {
         if (!usingAlternateCost && !castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
             // Check if a non-zero alternative cost from the battlefield is affordable (e.g. Jodah)
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
+            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
+                    + targetingTax;
             boolean usingBattlefieldAlternativeCost = false;
             String manaCostString = card.getManaCost() != null
                     ? card.getManaCost() + escalateManaSuffix : escalateManaSuffix;
@@ -1545,7 +1547,8 @@ public class SpellCastingService {
                 // Validate creature-only mana restriction (e.g. Myr Superion)
                 if (card.isRequiresCreatureMana()) {
                     ManaCost creatureCost = new ManaCost(card.getManaCost() + escalateManaSuffix);
-                    int additionalCostForCreature = castingCostService.getCastCostModifier(gameData, playerId, card);
+                    int additionalCostForCreature = castingCostService.getCastCostModifier(
+                            gameData, playerId, card, effectiveXValue);
                     if (!creatureCost.canPayCreatureOnly(pool, additionalCostForCreature)) {
                         throw new IllegalStateException("Can only spend mana produced by creatures to cast this spell");
                     }
@@ -1554,7 +1557,8 @@ public class SpellCastingService {
         } else if (!usingAlternateCost && !escalateManaSuffix.isEmpty()) {
             // Free cast from battlefield (e.g. As Foretold): mana cost is waived, but escalate is still paid.
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
+            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
+                    + targetingTax;
             ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
             if (!escalateOnly.canPay(pool, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay escalate cost");
@@ -1937,7 +1941,7 @@ public class SpellCastingService {
             }
             int maximumDelveReduction = castingCostService.maximumDelveReduction(
                     gameData, playerId, card, manaCostX,
-                    castingCostService.getCastCostModifier(gameData, playerId, card)
+                    castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
                             - sacrificeCostReduction + targetingTax);
             if (additionalCosts.delveCost() != null) {
                 additionalSpellCostService.validateDelveCost(gameData, player, card, additionalCosts.delveCost(),
@@ -2111,7 +2115,7 @@ public class SpellCastingService {
             if (targetSubtypeCostReduction == 0 && !usingAlternateCost && castingCostService.hasTargetBasedCastCostReduction(card)) {
                 ManaCost validationCost = new ManaCost(card.getManaCost());
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                int costModifier = castingCostService.getCastCostModifier(gameData, playerId, card);
+                int costModifier = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue);
                 if (!validationCost.canPay(pool, costModifier)) {
                     throw new IllegalStateException("Not enough mana — target does not qualify for cost reduction");
                 }
@@ -2124,7 +2128,7 @@ public class SpellCastingService {
                     gameData, player, card, additionalCosts, costSelection, effectiveXValue);
             int maximumDelveReduction = castingCostService.maximumDelveReduction(
                     gameData, playerId, card, resolvedXValue + perTargetCost,
-                    castingCostService.getCastCostModifier(gameData, playerId, card)
+                    castingCostService.getCastCostModifier(gameData, playerId, card, resolvedXValue)
                             - targetSubtypeCostReduction + targetingTax);
             if (additionalCosts.delveCost() != null) {
                 additionalSpellCostService.validateDelveCost(gameData, player, card, additionalCosts.delveCost(),
@@ -3809,7 +3813,8 @@ public class SpellCastingService {
 
         // Validate and pay flashback / disturb / graveyard cast cost
         boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
-        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, paysFlashbackCost);
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, playerId, card, paysFlashbackCost, effectiveXValue);
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
@@ -4724,7 +4729,8 @@ public class SpellCastingService {
         if (totalMana.isEmpty()) return 0;
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
-        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) - extraCostReduction + targetingTax;
+        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
+                - extraCostReduction + targetingTax;
 
         // Alternative zero cost (e.g. Rooftop Storm, As Foretold): skip the mana cost, but escalate
         // is still paid (CR 702.124c — free cast waives the mana cost, not additional costs).

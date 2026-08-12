@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostUn
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostExceptOnControllersTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ModifyFlashbackCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.MinimumSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenNameSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenSubtypeSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForMatchingSpellsEffectHandler;
@@ -36,6 +37,7 @@ public final class CostModificationTestRegistry {
 
         CostModificationHandlerRegistry registry = new CostModificationHandlerRegistry();
         registry.register(new ReduceBuybackCostEffectHandler());
+        registry.register(new MinimumSpellCostEffectHandler());
         registry.register(new IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler());
         registry.register(new IncreaseSpellCostEffectHandler(predicateEvaluationService, amountEvaluationService));
         registry.register(new IncreaseSpellCostExceptOnControllersTurnEffectHandler());

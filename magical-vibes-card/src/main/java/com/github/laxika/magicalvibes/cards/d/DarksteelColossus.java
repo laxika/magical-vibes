@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacement
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "208")
+@CardRegistration(set = "DST", collectorNumber = "109")
 public class DarksteelColossus extends Card {
 
     public DarksteelColossus() {

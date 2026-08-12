@@ -705,10 +705,11 @@ public class TargetLegalityService {
             if (peaceTalks != null) return Optional.of(peaceTalks);
             String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId, card);
             if (playerReason != null) return Optional.of(playerReason);
-            if (card != null && card.getColor() != null
-                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, card.getColor())) {
+            CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
+            if (effectiveColor != null
+                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, effectiveColor)) {
                 return Optional.of(gameData.playerIdToName.get(targetId)
-                        + " has protection from " + card.getColor().name().toLowerCase());
+                        + " has protection from " + effectiveColor.name().toLowerCase());
             }
             if (card != null
                     && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, card.getName())) {
@@ -1215,9 +1216,9 @@ public class TargetLegalityService {
                             gameData, entry.getTargetId(), entry.getControllerId(), entry.getCard());
                     if (playerReason != null) {
                         targetFizzled = true;
-                    } else if (entry.getCard() != null && entry.getCard().getColor() != null
-                            && gameQueryService.playerHasProtectionFromColor(gameData, entry.getTargetId(),
-                                    entry.getCard().getColor())) {
+                    } else if (effectiveSpellColors(gameData, entry).stream()
+                            .anyMatch(color -> gameQueryService.playerHasProtectionFromColor(
+                                    gameData, entry.getTargetId(), color))) {
                         targetFizzled = true;
                     } else if (entry.getCard() != null
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, entry.getTargetId(),
@@ -1344,8 +1345,9 @@ public class TargetLegalityService {
                 return false;
             }
             Card sourceCard = entry.getCard();
-            if (sourceCard != null && sourceCard.getColor() != null
-                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, sourceCard.getColor())) {
+            CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
+            if (effectiveColor != null
+                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, effectiveColor)) {
                 return false;
             }
             if (sourceCard != null
@@ -1493,22 +1495,7 @@ public class TargetLegalityService {
     }
 
     private Set<CardColor> effectiveSpellColors(GameData gameData, StackEntry entry) {
-        Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(entry.getCard().getId());
-        if (temporary != null) {
-            return temporary;
-        }
-        Set<CardColor> indefinite = gameData.spellColorOverrides.get(entry.getCard().getId());
-        if (indefinite != null) {
-            return indefinite;
-        }
-        // Mirrors Permanent.getEffectiveColors: the plural list is the Scryfall-loaded answer, but a
-        // card that only carries the singular colour must not read as colourless for protection.
-        List<CardColor> intrinsic = entry.getCard().getColors();
-        if (intrinsic != null && !intrinsic.isEmpty()) {
-            return Set.copyOf(intrinsic);
-        }
-        CardColor single = entry.getCard().getColor();
-        return single != null ? Set.of(single) : Set.of();
+        return gameQueryService.getEffectiveCardColors(gameData, entry.getCard());
     }
 
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
@@ -1623,11 +1610,12 @@ public class TargetLegalityService {
                 && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, sourcePlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
         }
+        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
-                && sourceCard != null && sourceCard.getColor() != null
-                && gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, sourceCard.getColor())) {
+                && effectiveColor != null
+                && gameQueryService.playerHasHexproofFromColor(gameData, targetPlayerId, effectiveColor)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has hexproof from "
-                    + sourceCard.getColor().name().toLowerCase();
+                    + effectiveColor.name().toLowerCase();
         }
         return null;
     }
@@ -1723,8 +1711,9 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromOpponents(gameData, target, sourcePlayerId)) {
             return target.getCard().getName() + " has protection from the source's controller";
         }
-        if (gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
-            return target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase();
+        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
+        if (effectiveColor != null && gameQueryService.hasProtectionFrom(gameData, target, effectiveColor)) {
+            return target.getCard().getName() + " has protection from " + effectiveColor.name().toLowerCase();
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
@@ -1732,8 +1721,9 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
-        if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor(), sourcePlayerId)) {
-            return target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells";
+        if (effectiveColor != null
+                && gameQueryService.cantBeTargetedBySpellColor(gameData, target, effectiveColor, sourcePlayerId)) {
+            return target.getCard().getName() + " can't be the target of " + effectiveColor.name().toLowerCase() + " spells";
         }
         if (gameQueryService.cantBeTargetedByAnySpell(gameData, target)) {
             return target.getCard().getName() + " can't be the target of spells";
@@ -1928,10 +1918,8 @@ public class TargetLegalityService {
             return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
-            var colors = stackEntry.getCard().getColors();
-            return colors != null && !colors.isEmpty()
-                    ? colors.stream().anyMatch(colorInPredicate.colors()::contains)
-                    : colorInPredicate.colors().contains(stackEntry.getCard().getColor());
+            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
+                    .anyMatch(colorInPredicate.colors()::contains);
         }
         if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);

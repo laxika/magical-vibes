@@ -881,6 +881,7 @@ public class AbilityActivationService {
         if (pool != null) {
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
+            pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
@@ -2032,6 +2033,7 @@ public class AbilityActivationService {
             // affordability check and payment honor it.
             pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
             pool.setWhiteSpendableAsAnyColor(gameQueryService.canSpendWhiteManaAsAnyColor(gameData, player.getId()));
+            pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {

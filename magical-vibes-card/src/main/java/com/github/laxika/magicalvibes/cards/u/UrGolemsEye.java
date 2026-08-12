@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "314")
+@CardRegistration(set = "DST", collectorNumber = "155")
 public class UrGolemsEye extends Card {
 
     public UrGolemsEye() {

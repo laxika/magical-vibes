@@ -26,12 +26,21 @@ public final class CombatHelper {
 
     private CombatHelper() {}
 
-    public static boolean isCantBeBlockedDueToDefenderCondition(PredicateEvaluationService predicateEvaluationService,
+    public static boolean isCantBeBlockedDueToDefenderCondition(GameQueryService gameQueryService,
+                                                          PredicateEvaluationService predicateEvaluationService,
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
         boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData);
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockabilityRestrictionEffect restriction
+                    && hasDefenderCondition(restriction, landwalkIgnored)
+                    && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
+                    attacker, restriction.unblockableIfDefenderControls())) {
+                return true;
+            }
+        }
+        for (CardEffect effect : gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects()) {
             if (effect instanceof BlockabilityRestrictionEffect restriction
                     && hasDefenderCondition(restriction, landwalkIgnored)
                     && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,

@@ -93,6 +93,8 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerSacrificesOneOfEachTypeEffectHandler eachPlayerSacrificesOneOfEachTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
@@ -140,7 +142,8 @@ public class MultiPermanentChoiceHandlerService {
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
-                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice)
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice
+                || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
@@ -304,6 +307,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerSacrificeOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
             handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {
+            handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
@@ -1711,6 +1716,19 @@ public class MultiPermanentChoiceHandlerService {
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice context) {
         eachPlayerChoosesLandOfEachBasicTypeHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseLandOfEachBasicTypeThenDestroyChoice(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice context) {
+        chooseLandOfEachBasicTypeThenDestroyHandler.completeChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

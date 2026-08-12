@@ -69,7 +69,13 @@ public sealed interface TriggerContext {
      * Context for damage-dealt-to-controller triggers that only care about the amount
      * (ON_CONTROLLER_DEALT_DAMAGE, e.g. Living Artifact). Fired once per damage source.
      */
-    record DamageToControllerAmount(UUID damagedPlayerId, int amount) implements TriggerContext {}
+    record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId)
+            implements TriggerContext {
+
+        public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
+            this(damagedPlayerId, amount, null);
+        }
+    }
 
     /**
      * Context for ally-permanent-sacrificed triggers (ON_ALLY_PERMANENT_SACRIFICED).

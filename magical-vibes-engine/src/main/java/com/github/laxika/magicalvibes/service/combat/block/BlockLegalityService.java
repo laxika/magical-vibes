@@ -400,7 +400,13 @@ public class BlockLegalityService {
         List<BlockabilityRestrictionEffect> pairRestrictions = new ArrayList<>(2);
         boolean cantBeBlockedByLessPower = false;
         List<AttackerRestriction> restrictions = new ArrayList<>();
+        GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                restrictions.add(new AttackerRestriction(attacker, restriction));
+            }
+        }
+        for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 restrictions.add(new AttackerRestriction(attacker, restriction));
             }
@@ -449,7 +455,6 @@ public class BlockLegalityService {
                 }
             }
         }
-        GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         boolean intimidate = gameQueryService.hasKeyword(attacker, bonus, Keyword.INTIMIDATE);
         BlockDenial landwalkDenial = null;
         if (!context.landwalkIgnored) {

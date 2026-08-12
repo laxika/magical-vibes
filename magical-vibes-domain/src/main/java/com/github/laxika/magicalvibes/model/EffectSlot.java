@@ -367,6 +367,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  is snapshotted onto the triggered ability's event value. */
     ON_COMBAT_DAMAGE_TO_SELF,
     ON_OPENING_HAND_REVEAL,
+    /** Special actions offered while a player is deciding whether to mulligan. */
+    MULLIGAN_ACTION,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     /** Triggers whenever an opponent of this permanent's controller searches their own library

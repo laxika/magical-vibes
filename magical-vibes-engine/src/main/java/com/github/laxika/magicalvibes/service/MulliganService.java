@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,8 +48,10 @@ public class MulliganService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final GameOutcomeService gameOutcomeService;
 
     public void keepHand(GameData gameData, Player player) {
+        ensureNoPendingMulliganAction(gameData);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
@@ -135,9 +139,88 @@ public class MulliganService {
     }
 
     public void mulligan(GameData gameData, Player player) {
+        ensureNoPendingMulliganAction(gameData);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
+
+        if (queueSerumPowderChoice(gameData, player)) {
+            return;
+        }
+
+        performMulligan(gameData, player);
+    }
+
+    public void resolveSerumPowderChoice(GameData gameData, Player player, boolean accepted,
+                                         PendingMayAbility ability) {
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to use ", ability.sourceCard(), "."));
+            performMulligan(gameData, player);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+        int cardsToDraw = hand.size();
+        List<Card> cardsToExile = new ArrayList<>(hand);
+
+        hand.clear();
+        for (Card card : cardsToExile) {
+            gameData.addToExile(player.getId(), card);
+        }
+
+        int drawn = 0;
+        while (drawn < cardsToDraw) {
+            if (deck.isEmpty()) {
+                if (gameOutcomeService.resolveLoss(gameData, player.getId(), LossReason.EMPTY_LIBRARY)
+                        == LossOutcome.LOSES) {
+                    UUID winnerId = gameData.orderedPlayerIds.stream()
+                            .filter(id -> !id.equals(player.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    gameLogService.append(gameData, GameLog.text(
+                            player.getUsername() + " attempted to draw from an empty library and loses the game."));
+                    gameOutcomeService.declareWinner(gameData, winnerId);
+                }
+                break;
+            }
+            hand.add(deck.removeFirst());
+            drawn++;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles their hand and draws " + drawn + " card"
+                        + (drawn == 1 ? "" : "s") + " with ", ability.sourceCard(), "."));
+        log.info("Game {} - {} used Serum Powder to exile {} card(s) and draw {} card(s)",
+                gameData.id, player.getUsername(), cardsToExile.size(), drawn);
+        invalidateForAllPlayers(gameData);
+    }
+
+    private boolean queueSerumPowderChoice(GameData gameData, Player player) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null) {
+            return false;
+        }
+        for (Card card : hand) {
+            List<CardEffect> effects = card.getEffects(EffectSlot.MULLIGAN_ACTION);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    card,
+                    player.getId(),
+                    List.of(effects.getFirst()),
+                    card.getName() + " - Use this card to exile your hand and draw that many cards?"
+            ));
+            invalidateForAllPlayers(gameData);
+            playerInputService.processNextMayAbility(gameData);
+            return true;
+        }
+        return false;
+    }
+
+    private void performMulligan(GameData gameData, Player player) {
         int currentMulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
         if (currentMulliganCount >= 7) {
             throw new IllegalStateException("Maximum mulligans reached");
@@ -173,6 +256,12 @@ public class MulliganService {
                         player.getId(),
                         GameEventFact.DecisionKind.MULLIGAN),
                 GameEventAudience.player(player.getId()));
+    }
+
+    private void ensureNoPendingMulliganAction(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()) {
+            throw new IllegalStateException("You must answer the pending mulligan action first");
+        }
     }
 
     private void checkStartGame(GameData gameData) {

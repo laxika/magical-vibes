@@ -694,8 +694,9 @@ public class ValidTargetService {
             return false;
         }
 
-        if (!controllerId.equals(playerId) && sourceCard != null && sourceCard.getColor() != null
-                && gameQueryService.playerHasHexproofFromColor(gameData, playerId, sourceCard.getColor())) {
+        var effectiveSourceColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
+        if (!controllerId.equals(playerId) && effectiveSourceColor != null
+                && gameQueryService.playerHasHexproofFromColor(gameData, playerId, effectiveSourceColor)) {
             return false;
         }
 
@@ -754,7 +755,8 @@ public class ValidTargetService {
         }
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
-        if (isBlockedByHexproofFromColor(gameData, perm, sourceCard != null ? sourceCard.getColor() : null, controllerId)) {
+        var effectiveSourceColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
+        if (isBlockedByHexproofFromColor(gameData, perm, effectiveSourceColor, controllerId)) {
             return false;
         }
 
@@ -775,7 +777,7 @@ public class ValidTargetService {
             if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
                 return false;
             }
-            if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
+            if (effectiveSourceColor != null && gameQueryService.hasProtectionFrom(gameData, perm, effectiveSourceColor)) {
                 return false;
             }
             if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {

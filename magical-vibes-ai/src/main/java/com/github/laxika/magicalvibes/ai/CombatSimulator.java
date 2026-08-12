@@ -977,7 +977,7 @@ public class CombatSimulator {
         int toughness = gameQueryService.getEffectiveToughness(perm, bonus);
 
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
-                || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
+                || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield, bonus)
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
                 || hasLandwalkAgainstDefender(perm, bonus, defenderBattlefield);
 
@@ -1034,9 +1034,23 @@ public class CombatSimulator {
     }
 
     private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,
-                                                           List<Permanent> defenderBattlefield) {
+                                                           List<Permanent> defenderBattlefield,
+                                                           GameQueryService.StaticBonus bonus) {
         if (defenderBattlefield == null) return false;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
+                if (defenderPredicate == null) {
+                    continue;
+                }
+                boolean defenderMatches = defenderBattlefield.stream()
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, defenderPredicate));
+                if (defenderMatches) {
+                    return true;
+                }
+            }
+        }
+        for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
                 if (defenderPredicate == null) {

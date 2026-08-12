@@ -479,6 +479,16 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Sundering Titan: the controller chose a land for the current basic land type. */
+    record ChooseLandOfEachBasicTypeThenDestroyChoice(UUID controllerId, int typeIndex,
+                                                      java.util.List<UUID> chosenIds,
+                                                      String sourceName)
+            implements MultiPermanentChoiceContext {
+        public ChooseLandOfEachBasicTypeThenDestroyChoice {
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
     /**
      * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
      * controls to phase out (one pass of land / artifact / creature). Completion phases them out

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -256,8 +257,9 @@ public class TargetValidationService {
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
         }
-        if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, ctx.sourceCard().getColor())) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getColor().name().toLowerCase());
+        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(ctx.gameData(), ctx.sourceCard());
+        if (effectiveColor != null && gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from " + effectiveColor.name().toLowerCase());
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");

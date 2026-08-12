@@ -114,8 +114,18 @@ public class CastingCostService {
         return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false);
     }
 
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false,
+                xValue);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
         return getCastCostModifier(gameData, playerId, card, snapshot, false);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, false, xValue);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, boolean flashbackCost) {
@@ -123,17 +133,43 @@ public class CastingCostService {
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   boolean flashbackCost, int xValue) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                flashbackCost, xValue);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost) {
-        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, 0);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, boolean flashbackCost, int xValue) {
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card,
+                flashbackCost, xValue);
         int delta = 0;
+        List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
-                delta += handler.modifyCost(context, effect, CostModificationSource.SPELL_ITSELF);
+                if (handler.appliesAfterOtherCostModifiers()) {
+                    afterOtherModifiers.add(new CollectedCostModifier(
+                            handler, effect, CostModificationSource.SPELL_ITSELF));
+                } else {
+                    delta += handler.modifyCost(context, effect, CostModificationSource.SPELL_ITSELF);
+                }
             }
         }
         for (CollectedCostModifier modifier : snapshot.modifiers()) {
-            delta += modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
+            if (modifier.handler().appliesAfterOtherCostModifiers()) {
+                afterOtherModifiers.add(modifier);
+            } else {
+                delta += modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
+            }
+        }
+        for (CollectedCostModifier modifier : afterOtherModifiers) {
+            delta += modifier.handler().modifyCostAfterOtherModifiers(
+                    context, modifier.effect(), modifier.source(), delta);
         }
         return delta;
     }

@@ -222,6 +222,13 @@ public class GraveyardTargetValidators {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target must be a " + label);
         }
+        if (effect.scope() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+            UUID controllerId = tvs.findSourcePermanentController(ctx);
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
+        }
     }
 
     @ValidatesTarget(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.class)

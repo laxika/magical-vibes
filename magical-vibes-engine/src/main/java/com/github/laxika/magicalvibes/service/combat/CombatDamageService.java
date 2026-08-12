@@ -366,7 +366,8 @@ public class CombatDamageService {
                 // source's controller is the active player (an opponent of the defender).
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
                 // Night Dealings: "whenever a source you control deals damage to another player".
-                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
+                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
+                        gameData, defenderId, activeId, dmgEntry.getKey().getId(), dmgEntry.getValue());
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you".
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
                         gameData, defenderId, null, dmgEntry.getKey(), dmgEntry.getValue());
@@ -2510,7 +2511,8 @@ public class CombatDamageService {
                         damage,
                         true,
                         gameQueryService.isArtifact(gameData, atk),
-                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
+                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)),
+                        true);
                 if (fixedPrevented > 0) {
                     damage -= fixedPrevented;
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "

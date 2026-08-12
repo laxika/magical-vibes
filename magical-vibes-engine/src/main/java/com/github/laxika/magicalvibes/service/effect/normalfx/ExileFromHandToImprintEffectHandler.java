@@ -48,7 +48,8 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), null)
+                    && (!e.manaValueEqualsX() || hand.get(i).getManaValue() == entry.getXValue())) {
                 validIndices.add(i);
             }
         }

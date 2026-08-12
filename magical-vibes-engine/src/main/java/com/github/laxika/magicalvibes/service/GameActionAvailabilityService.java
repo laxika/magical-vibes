@@ -98,6 +98,10 @@ public class GameActionAvailabilityService {
             return Map.of();
         }
         VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
+            fullPool = new VirtualManaPool(fullPool);
+            fullPool.setAllManaSpendableAsAnyColor(true);
+        }
         Map<UUID, List<Integer>> result = new HashMap<>();
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown()) {
@@ -116,6 +120,9 @@ public class GameActionAvailabilityService {
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
                         poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
+                        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
+                            poolWithoutSource.setAllManaSpendableAsAnyColor(true);
+                        }
                     }
                     pool = poolWithoutSource;
                 }
@@ -230,6 +237,12 @@ public class GameActionAvailabilityService {
         if (gameQueryService.canSpendWhiteManaAsAnyColor(gameData, playerId) && !pool.isWhiteSpendableAsAnyColor()) {
             ManaPool flagged = new ManaPool(pool);
             flagged.setWhiteSpendableAsAnyColor(true);
+            pool = flagged;
+        }
+        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId) && !pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool flagged = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
         }
         boolean landPlayable = card.hasType(CardType.LAND)

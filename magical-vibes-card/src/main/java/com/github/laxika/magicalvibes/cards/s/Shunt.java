@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "10E", collectorNumber = "233")
+@CardRegistration(set = "DST", collectorNumber = "68")
 public class Shunt extends Card {
 
     public Shunt() {

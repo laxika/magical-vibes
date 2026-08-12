@@ -673,8 +673,15 @@ public class DamageSupport {
      */
     public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage,
                                                 Predicate<Permanent> filter, boolean exileInsteadOfDie) {
+        damageAllCreaturesOnBattlefield(gameData, entry, damage, filter, exileInsteadOfDie, false);
+    }
+
+    public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage,
+                                                Predicate<Permanent> filter, boolean exileInsteadOfDie,
+                                                boolean cantRegenerate) {
         gameData.forEachBattlefield((playerId, battlefield) ->
-                damageFilteredCreatures(gameData, entry, p -> damage, battlefield, filter, exileInsteadOfDie)
+                damageFilteredCreatures(gameData, entry, p -> damage, battlefield, filter,
+                        exileInsteadOfDie, cantRegenerate)
         );
     }
 
@@ -692,6 +699,15 @@ public class DamageSupport {
         );
     }
 
+    public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage,
+                                                Predicate<Permanent> filter, boolean exileInsteadOfDie,
+                                                boolean cantRegenerate) {
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                damageFilteredCreatures(gameData, entry, damage, battlefield, filter,
+                        exileInsteadOfDie, cantRegenerate)
+        );
+    }
+
     public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
         damageFilteredCreatures(gameData, entry, damage, permanents, filter, false);
     }
@@ -699,6 +715,12 @@ public class DamageSupport {
     public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage,
                                         Collection<Permanent> permanents, Predicate<Permanent> filter,
                                         boolean exileInsteadOfDie) {
+        damageFilteredCreatures(gameData, entry, damage, permanents, filter, exileInsteadOfDie, false);
+    }
+
+    public void damageFilteredCreatures(GameData gameData, StackEntry entry, ToIntFunction<Permanent> damage,
+                                        Collection<Permanent> permanents, Predicate<Permanent> filter,
+                                        boolean exileInsteadOfDie, boolean cantRegenerate) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
@@ -706,7 +728,10 @@ public class DamageSupport {
             if (exileInsteadOfDie) {
                 p.setExileInsteadOfDieThisTurn(true);
             }
-            dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
+            int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
+            if (cantRegenerate && damageDealt > 0) {
+                p.setCantRegenerateThisTurn(true);
+            }
         }
     }
 
@@ -845,7 +870,8 @@ public class DamageSupport {
                     effectiveDamage,
                     gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent),
                     gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent),
-                    gameQueryService.getDamageSourceColors(gameData, sourceColors));
+                    gameQueryService.getDamageSourceColors(gameData, sourceColors),
+                    false);
             if (fixedPrevented > 0) {
                 effectiveDamage -= fixedPrevented;
                 gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,
@@ -970,7 +996,8 @@ public class DamageSupport {
                 // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
                 // Night Dealings: "whenever a source you control deals damage to another player".
-                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
+                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
+                        gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,

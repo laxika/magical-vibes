@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPer
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
@@ -614,6 +615,45 @@ class CastingCostServiceTest {
             // The service reports the raw signed delta of -5; the generic floor / colored-pip
             // protection is applied downstream by ManaCost.canPay, not here.
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isEqualTo(-5);
+        }
+
+        @Test
+        @DisplayName("Minimum spell cost is applied after cost reductions")
+        void minimumSpellCostIsAppliedAfterCostReductions() {
+            Card trinisphere = new Card();
+            trinisphere.setName("Trinisphere");
+            trinisphere.setType(CardType.ARTIFACT);
+            trinisphere.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(trinisphere));
+
+            Card spell = new Card();
+            spell.setName("Reduced Spell");
+            spell.setType(CardType.CREATURE);
+            spell.setManaCost("{1}{G}");
+            spell.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Fixed(5)));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Tapped minimum-cost source does not affect spells")
+        void tappedMinimumCostSourceDoesNotAffectSpells() {
+            Card trinisphere = new Card();
+            trinisphere.setName("Trinisphere");
+            trinisphere.setType(CardType.ARTIFACT);
+            trinisphere.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            Permanent permanent = new Permanent(trinisphere);
+            permanent.tap();
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            Card spell = new Card();
+            spell.setName("Lightning Bolt");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isZero();
         }
 
         @Test

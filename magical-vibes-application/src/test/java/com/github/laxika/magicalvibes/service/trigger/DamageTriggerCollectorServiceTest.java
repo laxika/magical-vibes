@@ -566,6 +566,41 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT source exclusion")
+    class AllySourceDealtDamageToOpponentSourceExclusion {
+
+        @Test
+        @DisplayName("does not trigger when the excluded watcher is the damage source")
+        void excludesTheDamageSource() {
+            Permanent talon = createPermanent("Talon of Pain");
+            var effect = new PutCountersOnSelfEffect(CounterType.CHARGE, true);
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, talon.getId());
+
+            boolean result = registry.dispatch(
+                    match(talon, player1Id, effect),
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("triggers when another source deals the damage")
+        void acceptsAnotherDamageSource() {
+            Permanent talon = createPermanent("Talon of Pain");
+            var effect = new PutCountersOnSelfEffect(CounterType.CHARGE, true);
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(talon, player1Id, effect),
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
     @DisplayName("ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT conditional may")
     class ControllerDealtDamageByOpponentConditionalMay {
 

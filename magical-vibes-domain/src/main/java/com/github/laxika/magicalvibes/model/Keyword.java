@@ -74,7 +74,8 @@ public enum Keyword {
     EVOLVE,
     FUSE,
     OFFERING,
-    DELVE;
+    DELVE,
+    MODULAR;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

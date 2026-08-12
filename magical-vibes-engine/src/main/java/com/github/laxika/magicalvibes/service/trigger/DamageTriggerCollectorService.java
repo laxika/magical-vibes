@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -567,6 +568,9 @@ public class DamageTriggerCollectorService {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
+        if (effect.excludeDamageSource() && perm.getId().equals(dc.sourcePermanentId())) {
+            return false;
+        }
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -851,6 +855,25 @@ public class DamageTriggerCollectorService {
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
 
         Permanent equipment = match.permanent();
+        if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    false, null, 0, equipment.getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
+            log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits any target",
+                    match.gameData().id, equipment.getCard().getName());
+            return true;
+        }
+
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(effect))));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
+            log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits graveyard target",
+                    match.gameData().id, equipment.getCard().getName());
+            return true;
+        }
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 equipment.getCard(),

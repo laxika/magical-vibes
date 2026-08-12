@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEff
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -518,7 +520,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -526,7 +528,11 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (put counter on self)", gameData.id, cardName);
@@ -989,6 +995,31 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_GAINS_LIFE (draw cards equal to life gained) ────
 
+    @CollectsTrigger(value = PayXManaDrawXCardsEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPayForDraw(TriggerMatchContext match,
+            PayXManaDrawXCardsEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
+        int lifeGained = lg.lifeGainedAmount();
+        if (lifeGained <= 0) return false;
+
+        String cardName = match.permanent().getCard().getName();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeGained);
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life gain ({} life), may pay X to draw X",
+                match.gameData().id, cardName, lifeGained);
+        return true;
+    }
+
     @CollectsTrigger(value = DrawCardsEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match,
             DrawCardsEqualToLifeGainedEffect effect, TriggerContext ctx) {
@@ -1011,6 +1042,33 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_CONTROLLER_LOSES_LIFE (sacrifice/discard for each life lost) ─
+
+    @CollectsTrigger(value = SacrificePermanentsEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleSacrificePermanentsOnLifeLoss(TriggerMatchContext match,
+            SacrificePermanentsEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (amountEvaluationService.referencesEventValue(effect.count())) {
+            entry.setEventValue(ll.lifeLostAmount());
+        }
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life loss ({} life) — sacrifice permanents",
+                gameData.id, cardName, ll.lifeLostAmount());
+        return true;
+    }
 
     @CollectsTrigger(value = SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect.class,
             slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)

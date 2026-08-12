@@ -27,10 +27,15 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
@@ -82,7 +87,8 @@ class EnterTriggerCollectorServiceTest {
         TriggerCollectorRegistry registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService), gameQueryService,
-                predicateEvaluationService), registry);
+                predicateEvaluationService,
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService)), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
@@ -382,5 +388,36 @@ class EnterTriggerCollectorServiceTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Any-permanent conditional can match an artifact entering under an opponent's control")
+    void anyPermanentConditionalCanMatchAnyController() {
+        UUID player2Id = UUID.randomUUID();
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        Card source = new Card();
+        source.setName("Arcbound Crusher");
+        source.addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentTruePredicate(),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card entering = new Card();
+        entering.setName("Opponent Artifact");
+        entering.setType(CardType.ARTIFACT);
+        gd.playerBattlefields.get(player2Id).add(new Permanent(entering));
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+        service.checkAnyPermanentEntersTriggers(gd, player2Id, entering);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                .isInstanceOf(PutCountersOnSelfEffect.class);
     }
 }

@@ -73,11 +73,12 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                     p -> gameQueryService.applyDamageMultiplier(gameData,
                             amountEvaluationService.evaluate(gameData, e.amount(),
                                     AmountContext.forStackEntry(entry, p)), entry),
-                    creatureFilter);
+                    creatureFilter, e.exileInsteadOfDie(), e.cantRegenerate());
             return;
         }
 
-        damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter, e.exileInsteadOfDie());
+        damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter,
+                e.exileInsteadOfDie(), e.cantRegenerate());
 
         if (e.damagesPlayers()) {
             for (UUID playerId : gameData.orderedPlayerIds) {

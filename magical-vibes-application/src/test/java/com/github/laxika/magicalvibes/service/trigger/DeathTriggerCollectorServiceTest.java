@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -50,6 +51,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -258,6 +262,35 @@ class DeathTriggerCollectorServiceTest {
             assertThat(svc.handleDistributeCountersAmongCreaturesOnDeath(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("handlePutCounterOnTargetForEachDyingSourceCounter")
+    class PutCounterOnTargetForEachDyingSourceCounter {
+
+        @Test
+        @DisplayName("Snapshots counters and preserves the target predicate")
+        void snapshotsCountersAndPreservesTargetPredicate() {
+            Card card = createCreature("Arcbound Bruiser", 0, 0);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            var targetPredicate = new PermanentAllOfPredicate(List.of(
+                    new PermanentIsArtifactPredicate(),
+                    new PermanentIsCreaturePredicate()
+            ));
+            var effect = new PutCounterOnTargetForEachDyingSourceCounterEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE, true, targetPredicate);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handlePutCounterOnTargetForEachDyingSourceCounter(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            MayEffect may = (MayEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)
+                    .effects().getFirst();
+            var baked = (PutCounterOnTargetForEachDyingSourceCounterEffect) may.wrapped();
+            assertThat(baked.count()).isEqualTo(3);
+            assertThat(baked.targetPredicate()).isEqualTo(targetPredicate);
         }
     }
 

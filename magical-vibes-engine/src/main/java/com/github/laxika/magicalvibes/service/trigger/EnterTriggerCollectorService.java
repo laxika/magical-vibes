@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureE
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -51,6 +52,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,15 +78,18 @@ public class EnterTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     public EnterTriggerCollectorService(GameLogService gameLogService,
                                         AmountEvaluationService amountEvaluationService,
                                         GameQueryService gameQueryService,
-                                        PredicateEvaluationService predicateEvaluationService) {
+                                        PredicateEvaluationService predicateEvaluationService,
+                                        ConditionEvaluationService conditionEvaluationService) {
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
@@ -113,7 +119,7 @@ public class EnterTriggerCollectorService {
                                                                   TriggeringPermanentConditionalEffect conditional,
                                                                   TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        if (!match.controllerId().equals(pe.enteringControllerId())) return false;
+        if (!conditional.anyController() && !match.controllerId().equals(pe.enteringControllerId())) return false;
         Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
         if (enteringPermanent == null) return false;
 
@@ -130,6 +136,13 @@ public class EnterTriggerCollectorService {
 
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {

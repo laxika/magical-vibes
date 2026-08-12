@@ -313,7 +313,7 @@ public class DeathTriggerCollectorService {
         // resolves, so bake the fixed amount into the effect carried to target selection.
         int counters = dyingPermanent.getCounterCount(effect.counterType());
         CardEffect baked = new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                effect.counterType(), counters, effect.optional());
+                effect.counterType(), counters, effect.optional(), effect.targetPredicate());
         // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
         // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
         CardEffect queued = effect.optional()

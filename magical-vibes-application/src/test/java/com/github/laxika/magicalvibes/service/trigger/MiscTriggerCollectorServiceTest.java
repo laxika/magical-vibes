@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
@@ -29,9 +31,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -113,6 +117,22 @@ class MiscTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Test
+    @DisplayName("life-gain pay-X draw trigger snapshots the life gained on the stack entry")
+    void lifeGainPayXDrawTriggerSnapshotsLifeGained() {
+        Permanent perm = createPermanent("Well of Lost Dreams");
+        var effect = new PayXManaDrawXCardsEffect();
+        var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
     }
 
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====
@@ -702,6 +722,37 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    // ===== ON_CONTROLLER_LOSES_LIFE — SacrificePermanentsEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_LOSES_LIFE — SacrificePermanentsEffect")
+    class ControllerLifeLossSacrifice {
+
+        @Test
+        @DisplayName("puts triggered ability on stack with the life-loss amount")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Lich's Tomb");
+            var effect = new SacrificePermanentsEffect(
+                    new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER);
+            var ctx = new TriggerContext.LifeLoss(player1Id, 3);
+
+            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var entry = gd.stack.getLast();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 

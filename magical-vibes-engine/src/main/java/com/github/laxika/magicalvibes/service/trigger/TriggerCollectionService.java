@@ -1119,12 +1119,17 @@ public class TriggerCollectionService {
      */
     public void checkAllySourceDealtDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
             UUID sourceControllerId, int amount) {
+        checkAllySourceDealtDamageToOpponentTriggers(gameData, damagedPlayerId, sourceControllerId, null, amount);
+    }
+
+    public void checkAllySourceDealtDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
+            UUID sourceControllerId, UUID sourcePermanentId, int amount) {
         if (amount <= 0 || sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) return;
 
         List<Permanent> sourceControllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (sourceControllerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId);
         for (Permanent perm : List.copyOf(sourceControllerBattlefield)) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)) {
                 var match = new TriggerMatchContext(gameData, perm, sourceControllerId, effect);

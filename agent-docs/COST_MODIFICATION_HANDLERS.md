@@ -26,6 +26,9 @@ Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` o
    - `int modifyCost(CostModificationContext, CardEffect, CostModificationSource)` — returns a
      **signed generic-mana delta**: positive means the spell costs more, negative means less,
      zero means this occurrence doesn't apply.
+   - `appliesAfterOtherCostModifiers()` / `modifyCostAfterOtherModifiers(...)` — use this for a
+     floor or other modifier whose result depends on the already-adjusted mana cost. The cast-cost
+     service evaluates these handlers after ordinary increases and reductions.
    - `int modifyBuybackCost(CostModificationContext, CardEffect, CostModificationSource)` —
      returns a signed generic-mana delta for an optional buyback cost. It defaults to zero so
      ordinary spell-cost modifiers do not affect buyback.
@@ -123,6 +126,9 @@ cost.
   Ban, Thorn of Amethyst, Irini Sengir); `SELF` = only the source controller's spells (Derelor:
   black spells you cast cost {B} more, modeled as +1 generic); `OPPONENT` = only their opponents'
   (Aura of Silence).
+- `cast/costmod/MinimumSpellCostEffectHandler.java` — battlefield handler for
+  `MinimumSpellCostEffect(int)`, evaluated after ordinary cost modifiers and active only while the
+  source permanent is untapped (Trinisphere uses a minimum of three mana).
 - `cast/costmod/IncreaseSpellCostExceptOnControllersTurnEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostExceptOnControllersTurnEffect(int amount)`; returns `+amount` for every spell unless
   it is being cast during its controller's own turn (`castingPlayerId == activePlayerId`). Defense Grid.

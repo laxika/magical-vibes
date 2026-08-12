@@ -14,9 +14,20 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * - Ice Cauldron: filter = CardNotPredicate(CardTypePredicate(LAND)), grantCastPermission = true
  */
 public record ExileFromHandToImprintEffect(CardPredicate filter, String description,
-                                           boolean grantCastPermission) implements CardEffect {
+                                           boolean grantCastPermission,
+                                           boolean manaValueEqualsX) implements CardEffect {
 
     public ExileFromHandToImprintEffect(CardPredicate filter, String description) {
-        this(filter, description, false);
+        this(filter, description, false, false);
+    }
+
+    public ExileFromHandToImprintEffect(CardPredicate filter, String description,
+                                        boolean grantCastPermission) {
+        this(filter, description, grantCastPermission, false);
+    }
+
+    /** Exiles a matching card whose mana value equals the activated ability's chosen X. */
+    public static ExileFromHandToImprintEffect withManaValueX(CardPredicate filter, String description) {
+        return new ExileFromHandToImprintEffect(filter, description, false, true);
     }
 }

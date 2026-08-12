@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
@@ -97,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEf
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
@@ -981,6 +983,11 @@ public class GameQueryService {
         return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsAnyColorEffect.class);
     }
 
+    /** Returns true when a global static effect lets the player spend mana as any color. */
+    public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
+        return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
+    }
+
     /**
      * Returns whether the source creature's activated abilities may use blue mana as mana of any
      * color, as granted by Quicksilver Elemental.
@@ -1454,6 +1461,46 @@ public class GameQueryService {
         colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
+    }
+
+    /**
+     * Returns the effective colors of a card that is not being represented by a battlefield
+     * permanent, including a spell on the stack. Global color-setting effects are applied here
+     * because the card's intrinsic color fields remain unchanged.
+     */
+    public Set<CardColor> getEffectiveCardColors(GameData gameData, Card card) {
+        if (card == null) {
+            return Set.of();
+        }
+        if (gameData != null) {
+            Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(card.getId());
+            if (temporary != null) {
+                return Set.copyOf(temporary);
+            }
+            Set<CardColor> indefinite = gameData.spellColorOverrides.get(card.getId());
+            if (indefinite != null) {
+                return Set.copyOf(indefinite);
+            }
+            if (anyBattlefieldHasStaticEffect(gameData, AllCardsAreColorlessEffect.class)) {
+                return Set.of();
+            }
+        }
+        List<CardColor> intrinsic = card.getColors();
+        if (intrinsic != null && !intrinsic.isEmpty()) {
+            return Set.copyOf(intrinsic);
+        }
+        CardColor single = card.getColor();
+        return single != null ? Set.of(single) : Set.of();
+    }
+
+    /** Returns the effective single color used by legacy color-specific APIs, or null if colorless. */
+    public CardColor getEffectiveCardColor(GameData gameData, Card card) {
+        Set<CardColor> colors = getEffectiveCardColors(gameData, card);
+        if (colors.isEmpty()) {
+            return null;
+        }
+        CardColor printed = card.getColor();
+        return printed != null && colors.contains(printed) ? printed : colors.iterator().next();
     }
 
     /**

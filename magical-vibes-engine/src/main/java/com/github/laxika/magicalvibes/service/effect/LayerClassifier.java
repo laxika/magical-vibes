@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
@@ -42,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
@@ -288,6 +290,8 @@ public final class LayerClassifier {
         // — additive, not replacing (CR 105.3 / 613.1e).
         map.put(AllPermanentsGainChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, false)));
+        map.put(AllCardsAreColorlessEffect.class, new Entry(Set.of(Layer.L5_COLOR),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "Nonland permanents you control are white" (Celestial Dawn) replaces colors (CR 105.3).
         map.put(ControlledNonlandPermanentsAreColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
@@ -326,6 +330,8 @@ public final class LayerClassifier {
         // Self ability-scans (Cairn Wanderer family) carry the CDA flag as a modeling decision
         // of the migration plan — see LAYER_SYSTEM.md "Classification notes".
         map.put(GainKeywordsOfCreatureCardsInAllGraveyardsEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainKeywordsOfCreatureCardsExiledWithSourceEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));

@@ -1232,11 +1232,12 @@ public class DamagePreventionService {
             boolean sourceIsArtifact
     ) {
         return applyControllerFixedPerSourceDamagePrevention(
-                gameData, playerId, damage, sourceIsCreature, sourceIsArtifact, null);
+                gameData, playerId, damage, sourceIsCreature, sourceIsArtifact, null, false);
     }
 
     public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage, boolean sourceIsCreature) {
-        return applyControllerFixedPerSourceDamagePrevention(gameData, playerId, damage, sourceIsCreature, false, null);
+        return applyControllerFixedPerSourceDamagePrevention(
+                gameData, playerId, damage, sourceIsCreature, false, null, false);
     }
 
     /**
@@ -1247,28 +1248,39 @@ public class DamagePreventionService {
     public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
                                                               boolean sourceIsCreature, Set<CardColor> sourceColors) {
         return applyControllerFixedPerSourceDamagePrevention(
-                gameData, playerId, damage, sourceIsCreature, false, sourceColors);
+                gameData, playerId, damage, sourceIsCreature, false, sourceColors, false);
     }
 
     public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
                                                               boolean sourceIsCreature, boolean sourceIsArtifact,
                                                               Set<CardColor> sourceColors) {
+        return applyControllerFixedPerSourceDamagePrevention(
+                gameData, playerId, damage, sourceIsCreature, sourceIsArtifact, sourceColors, false);
+    }
+
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
+                                                              boolean sourceIsCreature, boolean sourceIsArtifact,
+                                                              Set<CardColor> sourceColors, boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return 0;
         if (damage <= 0) return 0;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
-        int reduction = battlefield.stream()
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(e -> e instanceof PreventFixedDamagePerSourceToControllerEffect)
-                .map(e -> (PreventFixedDamagePerSourceToControllerEffect) e)
-                .filter(e -> (!e.creatureSourcesOnly() || sourceIsCreature)
-                        && (!e.artifactSourcesOnly() || sourceIsArtifact))
-                .filter(e -> e.sourceColors() == null
-                        || (sourceColors != null && e.sourceColors().stream().anyMatch(sourceColors::contains)))
-                .mapToInt(PreventFixedDamagePerSourceToControllerEffect::amount)
-                .sum();
+        int reduction = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof PreventFixedDamagePerSourceToControllerEffect prevention)) continue;
+                if (prevention.combatOnly() && !combatDamage) continue;
+                if (prevention.requiresUntappedSource() && permanent.isTapped()) continue;
+                if (prevention.creatureSourcesOnly() && !sourceIsCreature) continue;
+                if (prevention.artifactSourcesOnly() && !sourceIsArtifact) continue;
+                if (prevention.sourceColors() != null
+                        && (sourceColors == null
+                        || prevention.sourceColors().stream().noneMatch(sourceColors::contains))) continue;
+                reduction += prevention.amount();
+            }
+        }
         return Math.min(damage, reduction);
     }
 

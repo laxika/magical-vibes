@@ -172,7 +172,8 @@ public class CombatBlockService {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         return attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(predicateEvaluationService, gameData, attackerBattlefield.get(idx), defenderBattlefield))
+                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
+                        gameData, attackerBattlefield.get(idx), defenderBattlefield))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameData, attackerBattlefield.get(idx)))
                 .toList();

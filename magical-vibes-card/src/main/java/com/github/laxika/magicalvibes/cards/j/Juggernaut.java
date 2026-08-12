@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "209")
 @CardRegistration(set = "DOM", collectorNumber = "222")
 @CardRegistration(set = "M15", collectorNumber = "220")
+@CardRegistration(set = "DST", collectorNumber = "125")
 public class Juggernaut extends Card {
 
     public Juggernaut() {

@@ -435,6 +435,47 @@ public class ManaCost {
         }
     }
 
+    /** Converts only the mana needed for this cost's colored requirements. */
+    private void applyAllManaAsAnyColor(ManaPool pool) {
+        pool.setAllManaSpendableAsAnyColor(false);
+        pool.setWhiteSpendableAsRed(false);
+        pool.setWhiteSpendableAsAnyColor(false);
+        pool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            convertAnyManaTo(pool, entry.getKey(), entry.getValue());
+        }
+        for (HybridSymbol hybrid : hybridCosts) {
+            hybrid.colors().stream().findFirst().ifPresent(color -> convertAnyManaTo(pool, color, 1));
+        }
+    }
+
+    /** Converts only the mana needed for an X color restriction after the fixed cost is handled. */
+    private void applyAllManaAsAnyColor(ManaPool pool, Set<ManaColor> xColorRestrictions, int xDemand) {
+        applyAllManaAsAnyColor(pool);
+        ManaColor target = xColorRestrictions.stream().findFirst().orElse(null);
+        if (target != null) {
+            convertAnyManaTo(pool, target, xDemand);
+        }
+    }
+
+    private static void convertAnyManaTo(ManaPool pool, ManaColor target, int count) {
+        if (target == null || count <= 0) {
+            return;
+        }
+        int remaining = Math.max(0, count - pool.get(target));
+        for (ManaColor source : ManaColor.values()) {
+            if (remaining <= 0 || source == target) {
+                continue;
+            }
+            int amount = Math.min(remaining, pool.get(source));
+            for (int i = 0; i < amount; i++) {
+                pool.remove(source);
+                pool.add(target);
+            }
+            remaining -= amount;
+        }
+    }
+
     /**
      * Finds a conversion of blue mana that makes the ordinary payment check succeed. Blue mana is
      * a wildcard only for colored requirements; leaving it blue is always preferable because blue
@@ -525,6 +566,11 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPay(rewritten, xValue);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue));
         }
@@ -550,6 +596,11 @@ public class ManaCost {
 
     /** Checks payment with a chosen X value and an independent generic-cost modifier. */
     public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool,
                     p -> canPayWithAdditionalGenericCost(p, xValue, additionalGenericCost));
@@ -719,6 +770,12 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPay(rewritten, xValue, artifactContext, myrContext, restrictedRedContext,
+                    kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext));
         }
@@ -820,6 +877,13 @@ public class ManaCost {
                                                     boolean artifactContext, boolean myrContext,
                                                     boolean restrictedRedContext, boolean kickedOnlyGreenContext,
                                                     boolean instantSorceryOnlyColorlessContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -968,6 +1032,16 @@ public class ManaCost {
                                                     boolean legendarySpellOnlyContext,
                                                     boolean manaValueAtLeastFourContext,
                                                     Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                    subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                    artifactAbilityOnlyContext, legendarySpellOnlyContext,
+                    manaValueAtLeastFourContext, subtypeOrPlaneswalkerSpellContext);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             return canPayWithWhiteAsRed(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -1191,6 +1265,11 @@ public class ManaCost {
      * allowed colors (Soul Burn: black and/or red).
      */
     public boolean canPay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions, int additionalGenericCost) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten, xColorRestrictions, xValue * xSymbolCount);
+            return canPay(rewritten, xValue, xColorRestrictions, additionalGenericCost);
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return false;
@@ -1226,6 +1305,11 @@ public class ManaCost {
         if (xSymbolCount <= 0) {
             return 0;
         }
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten);
+            return calculateMaxX(rewritten);
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return 0;
@@ -1255,6 +1339,15 @@ public class ManaCost {
     public int calculateMaxX(ManaPool pool, Set<ManaColor> xColorRestrictions, int additionalGenericCost) {
         if (xSymbolCount <= 0) {
             return 0;
+        }
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            ManaPool rewritten = copyManaPool(pool);
+            applyAllManaAsAnyColor(rewritten, xColorRestrictions, 0);
+            ManaColor target = xColorRestrictions.stream().findFirst().orElse(null);
+            if (target != null) {
+                convertAnyManaTo(rewritten, target, rewritten.getTotal());
+            }
+            return calculateMaxX(rewritten, xColorRestrictions, additionalGenericCost);
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
@@ -1286,6 +1379,9 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue));
         }
@@ -1316,6 +1412,9 @@ public class ManaCost {
 
     /** Pays with a chosen X value and an independent generic-cost modifier. */
     public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool,
                     p -> canPayWithAdditionalGenericCost(p, xValue, additionalGenericCost));
@@ -1560,6 +1659,9 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext));
         }
@@ -1664,6 +1766,9 @@ public class ManaCost {
                                               boolean artifactContext, boolean myrContext,
                                               boolean restrictedRedContext, boolean kickedOnlyGreenContext,
                                               boolean instantSorceryOnlyColorlessContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -1790,6 +1895,9 @@ public class ManaCost {
                                              boolean legendarySpellOnlyContext,
                                              boolean manaValueAtLeastFourContext,
                                              Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool);
+        }
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPayWithAdditionalGenericCost(p, xValue,
                     additionalGenericCost, artifactContext, myrContext, restrictedRedContext,
@@ -2051,6 +2159,9 @@ public class ManaCost {
      */
     public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions,
                                            int additionalGenericCost) {
+        if (pool.isAllManaSpendableAsAnyColor()) {
+            applyAllManaAsAnyColor(pool, xColorRestrictions, xValue * xSymbolCount);
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 pool.remove(entry.getKey());
