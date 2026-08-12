@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -521,6 +522,7 @@ public class GameSimulator {
                     if (hasX) {
                         // X depends on the target (lethal X vs a creature, max X to the face)
                         xValue = calculateSmartX(gd, card, targetId, virtualPool);
+                        xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                         if (xValue <= 0) continue;
                     }
                     castable.add(new SimulationAction.PlayCard(i, targetId, xValue));
@@ -530,6 +532,7 @@ public class GameSimulator {
             int xValue = 0;
             if (hasX) {
                 xValue = calculateSmartX(gd, card, null, virtualPool);
+                xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                 if (xValue <= 0) continue;
             }
             castable.add(new SimulationAction.PlayCard(i, null, xValue));
@@ -715,11 +718,12 @@ public class GameSimulator {
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
         List<UUID> multiSacrificeIds = computeMultiSacrificeTargets(gd, playerId, card);
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
-        if (exileIndices != null || sacrificeId != null || discardIndex != null
+        List<Integer> discardIndices = computeDiscardXCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
+        if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
-                    false, discardIndex, null, null, multiSacrificeIds);
+                    false, discardIndex, discardIndices, null, multiSacrificeIds);
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
@@ -1145,6 +1149,53 @@ public class GameSimulator {
     private Integer computeDiscardCostIndex(GameData gd, UUID playerId, Card card) {
         List<Integer> valid = castingCostService.validDiscardCostIndices(gd, playerId, card);
         return valid == null || valid.isEmpty() ? null : valid.get(0);
+    }
+
+    /** Returns the number of cards available for a spell's X-discard additional cost. */
+    private int getMaxXForDiscardCost(GameData gd, UUID playerId, Card card) {
+        DiscardXCardsCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardXCardsCost.class::isInstance)
+                .map(DiscardXCardsCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return Integer.MAX_VALUE;
+        }
+        List<Card> hand = gd.playerHands.getOrDefault(playerId, List.of());
+        if (cost.predicate() == null) {
+            return Math.max(0, hand.size() - 1);
+        }
+        long matching = hand.stream()
+                .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
+                        candidate, cost.predicate(), candidate.getId()))
+                .count();
+        if (predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), card.getId())) {
+            matching--;
+        }
+        return (int) Math.max(0, matching);
+    }
+
+    /** Selects pre-removal hand indices for a spell's X-discard additional cost. */
+    private List<Integer> computeDiscardXCostIndices(GameData gd, UUID playerId, Card card,
+                                                     int spellIndex, int xValue) {
+        DiscardXCardsCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardXCardsCost.class::isInstance)
+                .map(DiscardXCardsCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return null;
+        }
+        List<Card> hand = gd.playerHands.getOrDefault(playerId, List.of());
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size() && indices.size() < xValue; i++) {
+            Card candidate = hand.get(i);
+            if (i != spellIndex && (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(candidate, cost.predicate(), candidate.getId()))) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 
     /**

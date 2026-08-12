@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AetherTide;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -1170,6 +1171,26 @@ class MediumAiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI pays an X-discard additional cost")
+    void castsXDiscardSpellWithRequiredDiscardCard() {
+        giveAiPriority();
+        giveAiIslands(3);
+        AetherTide aetherTide = new AetherTide();
+        GrizzlyBears discard = new GrizzlyBears();
+        harness.addToBattlefield(human, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of(aetherTide, discard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(aetherTide);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .containsExactly(discard);
     }
 
     // ===== X value cap handling =====

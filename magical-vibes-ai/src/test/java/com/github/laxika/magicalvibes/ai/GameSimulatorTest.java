@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
@@ -165,6 +166,40 @@ class GameSimulatorTest {
         List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
 
         assertThat(actions).noneMatch(SimulationAction.PlayCard.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("X-discard spell is capped by the cards available to discard")
+    void capsXDiscardSpellByAvailableDiscardCards() {
+        AbandonHope abandonHope = new AbandonHope();
+        GrizzlyBears discard = new GrizzlyBears();
+        harness.setHand(player1, List.of(abandonHope, discard));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+
+        assertThat(cast.targetId()).isEqualTo(player2.getId());
+        assertThat(cast.xValue()).isEqualTo(1);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.playerHands.get(player1.getId())).isEmpty();
+        assertThat(copy.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(copy.stack).hasSize(1);
+        assertThat(copy.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    private List<SimulationAction.PlayCard> actionsForHandCard(int handIndex) {
+        return simulator.getLegalActions(gd, player1.getId()).stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .filter(action -> action.handIndex() == handIndex)
+                .toList();
     }
 
     @Test

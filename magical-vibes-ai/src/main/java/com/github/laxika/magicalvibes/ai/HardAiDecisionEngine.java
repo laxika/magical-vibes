@@ -1059,6 +1059,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) return null;
                 List<Permanent> validTargets =
                         targetSelector.findValidPermanentTargetsForManaValueX(
@@ -1073,6 +1075,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 int smartX = manaManager.calculateSmartX(
                         gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return null;
                 xValue = smartX;
             }
@@ -1106,12 +1109,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
         final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
+        final List<Integer> fDiscardHandCardIndices =
+                chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, convokeCreatureIds, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null,
-                        fDiscardHandCardIndex, null, null, fMultiSacrificeIds)));
+                        fDiscardHandCardIndex, fDiscardHandCardIndices, null, fMultiSacrificeIds)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(plan.card)) {

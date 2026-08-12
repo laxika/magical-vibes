@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
@@ -217,6 +218,26 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI pays an X-discard additional cost")
+        void castsAbandonHopeWithRequiredDiscardCard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 3);
+            AbandonHope abandonHope = new AbandonHope();
+            GrizzlyBears discard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(abandonHope, discard));
+            testHarness.setHand(human, List.of(new GrizzlyBears()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(abandonHope);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).isEmpty();
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
+                    .containsExactly(discard);
         }
 
         @Test

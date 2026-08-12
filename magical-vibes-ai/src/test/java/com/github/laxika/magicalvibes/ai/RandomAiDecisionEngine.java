@@ -534,6 +534,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) {
                     telemetry.recordSkip("spell: X cost unaffordable", card.getName());
                     continue;
@@ -626,9 +627,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
+            final List<Integer> finalDiscardHandCardIndices =
+                    chooseDiscardXCostIndices(gameData, card, cardIndex, finalXValue != null ? finalXValue : 0);
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null, finalMultiSacrificeIds)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

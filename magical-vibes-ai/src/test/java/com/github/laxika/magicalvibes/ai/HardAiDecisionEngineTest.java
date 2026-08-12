@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
@@ -1662,6 +1663,34 @@ class HardAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI pays an X-discard additional cost")
+    void castsAbandonHopeWithRequiredDiscardCard() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        AbandonHope abandonHope = new AbandonHope();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        harness.setHand(player1, List.of(abandonHope, firstDiscard, secondDiscard));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, player2.getId(), 2));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(abandonHope);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
     }
 
     @Test

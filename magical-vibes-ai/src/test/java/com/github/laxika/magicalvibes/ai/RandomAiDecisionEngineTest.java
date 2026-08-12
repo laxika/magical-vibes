@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
+import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
@@ -42,6 +43,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsXSpellWithAllRequiredDiscardCards() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 3);
+        AbandonHope abandonHope = new AbandonHope();
+        GrizzlyBears discard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(abandonHope, discard));
+        harness.setHand(opponent, List.of(new GrizzlyBears()));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(abandonHope);
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+        assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
+                .containsExactly(discard);
+    }
 
     @Test
     void excludesCanOnlyAttackAloneCreatureAndIgnoresStaleRetry() {
