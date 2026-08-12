@@ -800,11 +800,44 @@ public class TargetLegalityService {
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId, int xValue) {
-        validateMultiTargetCount(targetIds, card.getEffectiveMinTargets(xValue),
-                getEffectiveMaxTargets(gameData, card, controllerId, xValue),
-                card.getSpellTargets(), card.isAllowSharedTargets());
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, 0);
+    }
 
-        List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
+    /**
+     * Validates the permanent target groups that follow a separately stored primary target.
+     */
+    public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                                       UUID controllerId, int xValue) {
+        if (card.getSpellTargets().size() <= 1) {
+            for (UUID targetId : targetIds) {
+                validateSpellTargeting(gameData, card, targetId, null, controllerId, true, xValue);
+            }
+            return;
+        }
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, 1);
+    }
+
+    private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                           UUID controllerId, int xValue, int firstGroupIndex) {
+        List<SpellTarget> targetGroups = card.getSpellTargets().stream()
+                .filter(group -> group.getIndex() >= firstGroupIndex)
+                .toList();
+        int minTargets = targetGroups.stream()
+                .mapToInt(group -> group.isXScaled() ? Math.min(xValue, group.getMinTargets()) : group.getMinTargets())
+                .sum();
+        int maxTargets = targetGroups.stream()
+                .mapToInt(group -> effectiveGroupMaxTargets(gameData, controllerId, null, group, xValue))
+                .sum();
+        validateMultiTargetCount(targetIds, minTargets, maxTargets, targetGroups, card.isAllowSharedTargets());
+
+        List<TargetFilter> perPositionFilters = targetGroups.stream()
+                .flatMap(group -> java.util.stream.IntStream.range(0, group.getMaxTargets())
+                        .mapToObj(ignored -> group.getFilter()))
+                .toList();
+        int positionOffset = card.getSpellTargets().stream()
+                .filter(group -> group.getIndex() < firstGroupIndex)
+                .mapToInt(SpellTarget::getMaxTargets)
+                .sum();
         // The restriction an unfiltered position inherits from the spell's own effects, read the
         // same way target enumeration reads it (ValidTargetService.isValidPermanentTarget).
         PermanentPredicate declaredRestriction = EffectResolution
@@ -814,7 +847,7 @@ public class TargetLegalityService {
 
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
-                if (!card.doesPositionAllowPlayerTargets(i)) {
+                if (!card.doesPositionAllowPlayerTargets(positionOffset + i)) {
                     throw new IllegalStateException("This spell cannot target players");
                 }
                 TargetFilter playerSlotFilter = getPositionFilter(perPositionFilters, i);

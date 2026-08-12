@@ -1308,6 +1308,8 @@ public class SpellCastingService {
         // which one this cast is using from the actual target id so the right validation/entry path runs.
         boolean mixedSpellOrPermanentTarget = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
                 && !multipleSpellTargets && targetIds.isEmpty();
+        boolean mixedSpellAndPermanentTargets = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
+                && !multipleSpellTargets && !targetIds.isEmpty();
         boolean targetingSpellOnStack = mixedSpellOrPermanentTarget
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : unwrappedNeedsSpellTarget;
@@ -1689,11 +1691,17 @@ public class SpellCastingService {
 
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
-            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
+            if (mixedSpellAndPermanentTargets) {
+                targetLegalityService.validateMixedSpellAndPermanentTargets(
+                        gameData, card, targetIds, playerId, effectiveXValue);
+            } else {
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
+            }
         }
 
         // Validate permanent targets for spells that also target a spell on the stack (e.g. Lost in the Mist)
-        if (unwrappedNeedsSpellTarget && unwrappedNeedsTarget && !targetIds.isEmpty()) {
+        if (unwrappedNeedsSpellTarget && unwrappedNeedsTarget && !targetIds.isEmpty()
+                && !mixedSpellAndPermanentTargets) {
             for (UUID permTargetId : targetIds) {
                 targetLegalityService.validateSpellTargeting(gameData, card, permTargetId, null, playerId, true);
             }
@@ -3400,7 +3408,7 @@ public class SpellCastingService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         int exiledPower = exiledCard.getPower() != null ? exiledCard.getPower() : 0;
         graveyard.remove((int) exileGraveyardCardIndex);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
         gameData.addToExile(playerId, exiledCard);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " exiles ")
@@ -3428,7 +3436,7 @@ public class SpellCastingService {
         try {
             for (int idx : sortedDescending) {
                 Card exiledCard = graveyard.remove(idx);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
         } finally {
@@ -3460,7 +3468,7 @@ public class SpellCastingService {
         try {
             for (int idx : sortedDescending) {
                 Card exiledCard = graveyard.remove(idx);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
         } finally {
@@ -3492,7 +3500,7 @@ public class SpellCastingService {
         try {
             for (int idx : sortedDescending) {
                 Card exiledCard = graveyard.remove(idx);
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiledCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
         } finally {
@@ -5243,8 +5251,9 @@ public class SpellCastingService {
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (int i = 0; i < count; i++) {
-                exiledCards.add(graveyard.remove(0));
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                Card exiledCard = graveyard.remove(0);
+                exiledCards.add(exiledCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);

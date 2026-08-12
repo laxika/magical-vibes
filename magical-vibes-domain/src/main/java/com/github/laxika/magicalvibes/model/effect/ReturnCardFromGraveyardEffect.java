@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
+
+import java.util.Set;
 
 /**
  * Unified effect for returning one or more cards from a graveyard to the controller's hand or
@@ -91,6 +94,8 @@ import lombok.Builder;
  *                             the source is gone or the Aura can't legally enchant it (Hakim, Loreweaver)
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
  *                             (e.g. Postmortem Lunge)
+ * @param grantKeywords        keywords granted indefinitely to the returned permanent (e.g. Kheru
+ *                             Lich Lord)
  * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
  *                             next end step (Unearth, Postmortem Lunge, Shallow Grave). Unearth's extra
  *                             "exile it instead if it would leave the battlefield" clause is the separate
@@ -204,6 +209,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
+        Set<Keyword> grantKeywords,
         boolean exileAtEndStep,
         boolean sacrificeAtEndStep,
         boolean returnToHandAtEndStep,
@@ -243,6 +249,7 @@ public record ReturnCardFromGraveyardEffect(
 
         private GraveyardSearchScope source = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         private int randomCount = 1;
+        private Set<Keyword> grantKeywords = Set.of();
     }
 
     @Override

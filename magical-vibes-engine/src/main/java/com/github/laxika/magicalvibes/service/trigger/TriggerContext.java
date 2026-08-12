@@ -272,6 +272,10 @@ public sealed interface TriggerContext {
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}
 
+    /** Context for ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers (Sidisi, Brood Tyrant). */
+    record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
+            implements TriggerContext {}
+
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
                                          UUID causeControllerId) implements TriggerContext {}
@@ -314,6 +318,9 @@ public sealed interface TriggerContext {
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
     record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+
+    /** Context for cards exiled from the controller's graveyard, including the event's card count. */
+    record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
 
     /**
      * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers (Justice). Carries the damage source object,

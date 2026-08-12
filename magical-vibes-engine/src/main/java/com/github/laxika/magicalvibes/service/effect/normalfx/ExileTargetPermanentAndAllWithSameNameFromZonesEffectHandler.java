@@ -58,13 +58,15 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             return;
         }
 
-        int fromGraveyard = exileMatching(gameData, controllerId, gameData.playerGraveyards.get(controllerId), name);
+        List<Card> exiledFromGraveyard = exileMatchingCards(gameData, controllerId,
+                gameData.playerGraveyards.get(controllerId), name);
+        int fromGraveyard = exiledFromGraveyard.size();
         int fromHand = exileMatching(gameData, controllerId, gameData.playerHands.get(controllerId), name);
         List<Card> library = gameData.playerDecks.get(controllerId);
         int fromLibrary = exileMatching(gameData, controllerId, library, name);
 
         if (fromGraveyard > 0) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, exiledFromGraveyard);
         }
         if (library != null) {
             Collections.shuffle(library);
@@ -80,8 +82,12 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
     }
 
     private int exileMatching(GameData gameData, UUID playerId, List<Card> zone, String name) {
+        return exileMatchingCards(gameData, playerId, zone, name).size();
+    }
+
+    private List<Card> exileMatchingCards(GameData gameData, UUID playerId, List<Card> zone, String name) {
         if (zone == null) {
-            return 0;
+            return List.of();
         }
         List<Card> matches = new ArrayList<>();
         for (Card card : zone) {
@@ -93,6 +99,6 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
         for (Card card : matches) {
             gameData.addToExile(playerId, card);
         }
-        return matches.size();
+        return matches;
     }
 }

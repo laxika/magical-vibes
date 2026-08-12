@@ -1056,7 +1056,7 @@ public class AbilityActivationService {
         // ability is put on the stack — prevents the same graveyard card from being activated twice.
         if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)) {
             graveyard.remove(card);
-            graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
             exileService.exileCard(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
@@ -3015,7 +3015,7 @@ public class AbilityActivationService {
                 Math.max(0, totalManaCost + additionalGenericCost - 1));
         additionalGenericCost -= battlefieldReduction;
         AmountContext activationCostContext = new AmountContext(
-                playerId, permanent, null, effectiveXValue, 0);
+                playerId, permanent, targetId, effectiveXValue, 0);
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof ActivationCostModifierEffect modifier) {
                 int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
@@ -4288,7 +4288,7 @@ public class AbilityActivationService {
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
         graveyard.removeAll(toExile);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
             exileService.exileCard(gameData, playerId, exiled);
         }
@@ -4317,7 +4317,7 @@ public class AbilityActivationService {
         }
         List<Card> toExile = new ArrayList<>(candidates.subList(0, count));
         graveyard.removeAll(toExile);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
             exileService.exileCard(gameData, playerId, exiled);
         }
@@ -4354,7 +4354,7 @@ public class AbilityActivationService {
         }
 
         graveyard.removeAll(toExile);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, toExile);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card exiled : toExile) {
             exileService.exileCard(gameData, playerId, exiled);
         }
@@ -4378,7 +4378,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("No card in graveyard to exile");
         }
         graveyard.remove(exiled);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
         exileService.exileCard(gameData, playerId, exiled);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", exiled, " from the top of their graveyard as an activation cost."));
@@ -4455,7 +4455,7 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId, exiled);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
         exileService.exileCard(gameData, playerId, exiled);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "250")
+@CardRegistration(set = "KTK", collectorNumber = "240")
 public class RuggedHighlands extends Card {
 
     public RuggedHighlands() {

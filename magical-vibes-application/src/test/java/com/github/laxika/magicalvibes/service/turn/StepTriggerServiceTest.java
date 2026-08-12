@@ -334,6 +334,34 @@ class StepTriggerServiceTest {
     class HandleUpkeepTriggers {
 
         @Test
+        @DisplayName("Opponent-upkeep emblem triggers for the active opponent")
+        void opponentUpkeepEmblemTriggersForActiveOpponent() {
+            Card source = createCardWithName("Sorin, Solemn Visitor");
+            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
+                    EmblemTriggerStep.OPPONENT_UPKEEP, List.of(new GainLifeEffect(1)), "Opponent-upkeep effect")), source));
+            gd.activePlayerId = player2Id;
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Opponent-upkeep emblem does not trigger during its controller's upkeep")
+        void opponentUpkeepEmblemDoesNotTriggerDuringControllerUpkeep() {
+            Card source = createCardWithName("Sorin, Solemn Visitor");
+            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
+                    EmblemTriggerStep.OPPONENT_UPKEEP, List.of(new GainLifeEffect(1)), "Opponent-upkeep effect")), source));
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Permanent with upkeep effect pushes trigger onto stack")
         void permanentWithUpkeepEffectPushesTrigger() {
             gd.turnNumber = 2;

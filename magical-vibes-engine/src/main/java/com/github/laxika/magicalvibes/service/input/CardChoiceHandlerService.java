@@ -830,11 +830,11 @@ public class CardChoiceHandlerService {
         int exiledCount = exileNamedCardsFromZone(gameData, targetPlayerId, gameData.playerHands.get(targetPlayerId), names);
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        int fromGraveyard = exileNamedCardsFromZone(gameData, targetPlayerId, graveyard, names);
-        if (fromGraveyard > 0) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        List<Card> exiledFromGraveyard = exileNamedCardsFromZoneCards(gameData, targetPlayerId, graveyard, names);
+        if (!exiledFromGraveyard.isEmpty()) {
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, exiledFromGraveyard);
         }
-        exiledCount += fromGraveyard;
+        exiledCount += exiledFromGraveyard.size();
 
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         exiledCount += exileNamedCardsFromZone(gameData, targetPlayerId, library, names);
@@ -850,13 +850,18 @@ public class CardChoiceHandlerService {
     }
 
     private int exileNamedCardsFromZone(GameData gameData, UUID ownerId, List<Card> zone, List<String> names) {
+        return exileNamedCardsFromZoneCards(gameData, ownerId, zone, names).size();
+    }
+
+    private List<Card> exileNamedCardsFromZoneCards(GameData gameData, UUID ownerId, List<Card> zone,
+                                                     List<String> names) {
         if (zone == null) {
-            return 0;
+            return List.of();
         }
         List<Card> toExile = zone.stream().filter(c -> names.contains(c.getName())).toList();
         zone.removeAll(toExile);
         toExile.forEach(card -> exileService.exileCard(gameData, ownerId, card));
-        return toExile.size();
+        return toExile;
     }
 
     /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */

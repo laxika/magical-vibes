@@ -220,6 +220,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land card is put into the controller's graveyard from their library.
      *  Fires on permanents the graveyard owner controls. */
     ON_ALLY_LAND_CARD_MILLED,
+    /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
+     *  controller's graveyard. */
+    ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
@@ -634,6 +637,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
+    ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.

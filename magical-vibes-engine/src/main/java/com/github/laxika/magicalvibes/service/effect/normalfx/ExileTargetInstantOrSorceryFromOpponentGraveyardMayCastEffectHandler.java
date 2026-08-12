@@ -49,7 +49,7 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
         UUID controllerId = entry.getControllerId();
         UUID ownerId = graveyardOwnerId != null ? graveyardOwnerId : controllerId;
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         exileService.exileCard(gameData, ownerId, targetCard);
 
         // Grant the controller permission to cast the exiled card this turn, spending mana of any

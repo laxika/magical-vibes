@@ -2,6 +2,10 @@
 
 All paths relative to `cards/`.
 
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Extra-turn skip + self-exile extra-turn replacement | `u/UginsNexus.java` | STATIC `UginNexusReplacementEffect` — skips an extra turn as it would begin while the Nexus remains on the battlefield; if the Nexus would go from the battlefield to a graveyard, exiles it and queues an extra turn for its last controller |
+
 | Aura with fading, a static boost, and destructive leave trigger | `p/ParallaxDementia.java` | target(creature) + ON_ENTER_BATTLEFIELD EnterWithCountersEffect(FADE, Fixed(1)) + UPKEEP_TRIGGERED RemoveCounterOrSacrificeSelfEffect(FADE) + STATIC StaticBoostEffect(3, 2, ENCHANTED_CREATURE) + ON_SELF_LEAVES_BATTLEFIELD DestroyEnchantedCreatureOnLeaveEffect() |
 
 ## Static permanents

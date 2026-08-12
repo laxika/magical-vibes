@@ -31,6 +31,7 @@ public enum CounterType {
     FLOOD,
     FUNGUS,
     FUSE,
+    GEM,
     GOLD,
     GROWTH,
     HEALING,

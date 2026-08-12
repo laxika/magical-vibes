@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "243")
+@CardRegistration(set = "KTK", collectorNumber = "231")
 public class BlossomingSands extends Card {
 
     public BlossomingSands() {

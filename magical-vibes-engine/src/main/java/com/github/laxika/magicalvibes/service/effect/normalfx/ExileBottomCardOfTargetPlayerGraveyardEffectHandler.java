@@ -42,7 +42,7 @@ public class ExileBottomCardOfTargetPlayerGraveyardEffectHandler implements Norm
         }
 
         Card bottomCard = graveyard.removeFirst();
-        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, bottomCard);
         exileService.exileCard(gameData, targetPlayerId, bottomCard);
 
         gameLogService.append(gameData,

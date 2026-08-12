@@ -59,7 +59,7 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
                 continue;
             }
 
-            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
             exileService.exileCard(gameData, graveyardOwnerId, targetCard);
             gameLogService.append(gameData, GameLog.isExiled(targetCard));
 

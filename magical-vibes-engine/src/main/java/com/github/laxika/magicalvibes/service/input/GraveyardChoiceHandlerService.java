@@ -183,12 +183,20 @@ public class GraveyardChoiceHandlerService {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
                 cardGraveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                if (destination == GraveyardChoiceDestination.EXILE) {
+                    permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
+                } else {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                }
             } else {
                 // Standard choice: indices into the player's own graveyard
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 card = graveyard.get(cardIndex);
-                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                if (destination == GraveyardChoiceDestination.EXILE) {
+                    permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
+                } else {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                }
                 cardGraveyardOwnerId = playerId;
             }
 
@@ -477,7 +485,7 @@ public class GraveyardChoiceHandlerService {
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
-                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+                    permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
                     exileService.exileCard(gameData, player.getId(), card, context.enteringPermanentId());
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " exiles ", card, " from their graveyard."));

@@ -615,6 +615,29 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    private boolean handleCreatureCardsPutIntoGraveyardFromLibraryDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on creature cards put into graveyard from library",
+                gameData.id, cardName);
+        return true;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
@@ -1102,7 +1125,7 @@ public class MiscTriggerCollectorService {
             try {
                 while (remaining > 0 && !graveyard.isEmpty()) {
                     Card card = graveyard.removeLast();
-                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
+                    graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, card);
                     exileService.exileCard(gameData, controllerId, card);
                     gameLogService.append(gameData, GameLog.textCardText(
                             gameData.playerIdToName.get(controllerId) + " exiles ", card, " from their graveyard."));
@@ -1181,6 +1204,29 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards left graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD)
+    boolean handleControllerCardsExiledFromGraveyard(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromGraveyard exiled)) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setEventValue(exiled.count());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (cards exiled from graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

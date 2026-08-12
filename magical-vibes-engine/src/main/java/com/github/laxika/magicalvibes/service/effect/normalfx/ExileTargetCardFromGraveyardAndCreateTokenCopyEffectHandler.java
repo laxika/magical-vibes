@@ -65,7 +65,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         if (graveyardOwnerId != null) {
             exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         }

@@ -614,6 +614,27 @@ public class PermanentRemovalService {
         }
     }
 
+    /** Removes a card from a graveyard and records that this departure was an exile. */
+    public void removeCardFromGraveyardByIdForExile(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            Card leaving = graveyard.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+            if (graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(playerId);
+                if (tracked != null) {
+                    tracked.remove(cardId);
+                }
+                Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.get(playerId);
+                if (allTracked != null) {
+                    allTracked.remove(cardId);
+                }
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, leaving);
+                return;
+            }
+        }
+    }
+
     /**
      * Checks if the player has an aura with {@link RedirectPlayerDamageToEnchantedCreatureEffect}
      * (e.g. Pariah) and redirects incoming damage to the enchanted creature. Destroys the creature
@@ -847,7 +868,8 @@ public class PermanentRemovalService {
                 exileService.exileCard(gameData, ownerId, leaving);
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
-            } else if (graveyardService.addCardToGraveyard(gameData, ownerId, leaving, Zone.BATTLEFIELD)) {
+            } else if (graveyardService.addCardToGraveyard(
+                    gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId)) {
                 wentToGraveyard = true;
             }
         }

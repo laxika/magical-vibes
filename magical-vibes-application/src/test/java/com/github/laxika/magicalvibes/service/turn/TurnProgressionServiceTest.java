@@ -12,10 +12,13 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.UginNexusReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -539,6 +542,22 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.activePlayerId).isEqualTo(player1Id);
             assertThat(gd.extraTurns).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips a queued extra turn while a Nexus replacement remains on the battlefield")
+        void skipsExtraTurnWithNexusReplacement() {
+            Card nexus = new Card();
+            nexus.addEffect(EffectSlot.STATIC, new UginNexusReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(nexus));
+            gd.extraTurns.addLast(player1Id);
+            int turnBefore = gd.turnNumber;
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         }
 
         @Test

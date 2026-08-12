@@ -3371,6 +3371,22 @@ public class TriggerCollectionService {
         });
     }
 
+    /** Fires once for a library-to-graveyard event containing one or more creature cards. */
+    public void checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
+            GameData gameData, UUID graveyardOwnerId, int creatureCardCount) {
+        if (creatureCardCount <= 0) return;
+
+        var ctx = new TriggerContext.CreatureCardsPutIntoGraveyardFromLibrary(
+                graveyardOwnerId, creatureCardCount);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, graveyardOwnerId,
+                    EffectSlot.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY, ctx);
+        }
+    }
+
     // ── Noncombat-damage-to-opponent triggers ──────────────────────────
 
     public void checkNoncombatDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId) {
@@ -4592,6 +4608,18 @@ public class TriggerCollectionService {
 
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, ctx);
+        }
+    }
+
+    public void checkControllerCardsExiledFromGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                 int count) {
+        if (count <= 0) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.ControllerCardsExiledFromGraveyard(graveyardOwnerId, count);
+        for (Permanent perm : battlefield) {
+            dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD, ctx);
         }
     }
 

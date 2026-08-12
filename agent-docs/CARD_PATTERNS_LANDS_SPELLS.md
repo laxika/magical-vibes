@@ -235,6 +235,7 @@ on what the mana may pay for.
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
 | Shuffle own GY into library, mill that many | `p/PsychicSpiral.java` | ShuffleControllerGraveyardIntoLibraryThenMillTargetEffect() — the count is captured between the shuffle and the mill, so it cannot be composed from ShuffleGraveyardIntoLibraryEffect + MillEffect(CardsInGraveyard) |
 | Mill half library (ON_ATTACK) | `f/FleetSwallower.java` | ON_ATTACK MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
+| Self-mill three + one Zombie for any creature card put into the graveyard from the library | `s/SidisiBroodTyrant.java` | ON_ENTER_BATTLEFIELD and ON_ATTACK `MillEffect(3, CONTROLLER)` + `ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY CreateTokenEffect.blackZombie(1)` |
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
 | X draw (controller) | `m/MindSpring.java` | DrawCardEffect(new XValue()) — non-targeting X draw for controller |
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealDamageToAnyTargetEffect(new XValue(), false, true) + ShuffleIntoLibraryEffect |

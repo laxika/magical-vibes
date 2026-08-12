@@ -49,7 +49,7 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, discarded.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, discarded.getId());
         gameData.addToExile(ownerId, discarded, entry.getSourcePermanentId());
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));

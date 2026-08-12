@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "245")
+@CardRegistration(set = "KTK", collectorNumber = "232")
 public class DismalBackwater extends Card {
 
     public DismalBackwater() {

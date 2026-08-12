@@ -674,6 +674,11 @@ public class StackResolutionService {
     }
 
     private void resolveArtifactSpell(GameData gameData, StackEntry entry) {
+        if (entry.isCastFaceDown()) {
+            resolveCreatureSpell(gameData, entry);
+            return;
+        }
+
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 

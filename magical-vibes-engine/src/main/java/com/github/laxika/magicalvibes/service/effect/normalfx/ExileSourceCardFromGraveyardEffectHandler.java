@@ -44,7 +44,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
         }
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-        permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
         if (ownerId != null) {
             exileService.exileCard(gameData, ownerId, sourceCard);
         }

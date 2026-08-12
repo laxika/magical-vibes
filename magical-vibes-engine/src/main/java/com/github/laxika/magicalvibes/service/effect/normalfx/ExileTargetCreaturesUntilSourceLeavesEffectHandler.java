@@ -87,7 +87,7 @@ public class ExileTargetCreaturesUntilSourceLeavesEffectHandler implements Norma
     private void exileFromGraveyard(GameData gameData, StackEntry entry,
             ExileTargetCreaturesUntilSourceLeavesEffect e, UUID sourcePermanentId, UUID cardId, Card card) {
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-        permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
         exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
         gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled from a graveyard by ",
                 entry.getCard(), "."));

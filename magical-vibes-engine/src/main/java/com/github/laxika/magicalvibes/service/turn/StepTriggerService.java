@@ -270,13 +270,14 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     /**
-     * Puts the triggered abilities of "At the beginning of your upkeep, …" emblems onto the stack for
-     * the active player (Chandra, Roaring Flame's emblem). Emblems are never removed from the game, so
-     * the only gate is that the emblem's controller is the player whose upkeep this is.
+     * Puts step-triggered emblem abilities onto the stack. Emblems are never removed from the game;
+     * the step determines whether the active player must be the emblem's controller or an opponent.
      */
     private void collectEmblemStepTriggers(GameData gameData, EmblemTriggerStep step) {
         for (Emblem emblem : gameData.emblems) {
-            if (!gameData.activePlayerId.equals(emblem.controllerId())) {
+            boolean isControllerUpkeep = gameData.activePlayerId.equals(emblem.controllerId());
+            if ((step == EmblemTriggerStep.OPPONENT_UPKEEP && isControllerUpkeep)
+                    || (step != EmblemTriggerStep.OPPONENT_UPKEEP && !isControllerUpkeep)) {
                 continue;
             }
             for (CardEffect effect : emblem.staticEffects()) {
@@ -287,7 +288,9 @@ public class StepTriggerService {
                 String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
-                        new ArrayList<>(upkeepTrigger.effects()));
+                        new ArrayList<>(upkeepTrigger.effects()),
+                        step == EmblemTriggerStep.OPPONENT_UPKEEP ? gameData.activePlayerId : null,
+                        (UUID) null);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.text(
@@ -308,6 +311,7 @@ public class StepTriggerService {
         expireCantPhaseOut(gameData);
 
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.UPKEEP);
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_UPKEEP);
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the

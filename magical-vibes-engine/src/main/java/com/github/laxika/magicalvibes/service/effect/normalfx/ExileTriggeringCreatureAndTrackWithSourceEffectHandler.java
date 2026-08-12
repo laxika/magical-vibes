@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,6 +51,7 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
                 if (card.getId().equals(dyingCardId)) {
                     UUID ownerId = gy.getKey();
                     graveyard.remove(card);
+                    graveyardService.notifyCardsExiledFromGraveyard(gameData, ownerId, card);
                     exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
                     
                     gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "260")
+@CardRegistration(set = "KTK", collectorNumber = "247")
 public class WindScarredCrag extends Card {
 
     public WindScarredCrag() {

@@ -70,7 +70,7 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         int exiledFromLibrary = exileMatching(gameData, targetPlayerId, library, spellName).size();
 
         if (exiledFromGraveyard > 0) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId, exiledGraveyardCards);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, exiledGraveyardCards);
         }
         if (library != null) {
             Collections.shuffle(library);

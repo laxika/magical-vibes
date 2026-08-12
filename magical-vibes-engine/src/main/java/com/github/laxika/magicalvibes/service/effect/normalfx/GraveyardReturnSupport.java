@@ -146,7 +146,7 @@ public class GraveyardReturnSupport {
             return;
         }
         graveyard.remove(sourceCard);
-        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, sourceCard);
         exileService.exileCard(gameData, controllerId, sourceCard);
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", sourceCard, " from graveyard."));
@@ -366,6 +366,7 @@ public class GraveyardReturnSupport {
                 && !enterWithCounter
                 && !effect.exileIfLeavesBattlefield()
                 && !plusOneCounters
+                && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
             return;
         }
@@ -386,6 +387,9 @@ public class GraveyardReturnSupport {
             }
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);
+            }
+            if (effect.grantKeywords() != null) {
+                p.getPersistentGrantedKeywords().addAll(effect.grantKeywords());
             }
             if (plusOneCounters) {
                 permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, p, effect.plusOneCounterCount());
@@ -554,7 +558,7 @@ public class GraveyardReturnSupport {
                     .orElse(null);
             if (sourceCard != null) {
                 graveyard.remove(sourceCard);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, sourceCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, sourceCard);
                 exileService.exileCard(gameData, controllerId, sourceCard);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles " , sourceCard, " from graveyard."));
@@ -589,13 +593,21 @@ public class GraveyardReturnSupport {
                 Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
                 matchingCards.remove(randomCard);
                 graveyard.remove(randomCard);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, randomCard);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, randomCard);
 
                 boolean toBattlefield = effect.battlefieldIfCreatureElseHand()
                         ? randomCard.hasType(CardType.CREATURE)
                         : effect.destination() != GraveyardChoiceDestination.HAND;
                 if (toBattlefield) {
-                    putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+                    if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
+                        putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, randomCard,
+                                effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
+                    } else {
+                        putCardOntoBattlefield(gameData, controllerId, randomCard,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking());
+                    }
+                    applyBattlefieldReturnRiders(gameData, controllerId, randomCard, effect);
                 } else {
                     gameData.addCardToHand(controllerId, randomCard);
                 }
@@ -1114,7 +1126,7 @@ public class GraveyardReturnSupport {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                graveyardService.notifyCardsLeftGraveyard(gameData, pid, card);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, pid, card);
                 exileService.exileCard(gameData, pid, card);
                 return true;
             }

@@ -53,7 +53,7 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         if (graveyardOwnerId != null) {
             exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         }

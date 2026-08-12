@@ -35,9 +35,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -277,6 +279,14 @@ public class TurnProgressionService {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
+                    .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
+                String skippedName = gameData.playerIdToName.get(nextActive);
+                gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
+                log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
+                advanceTurn(gameData);
+                return;
+            }
         } else {
             List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
             UUID currentActive = gameData.activePlayerId;

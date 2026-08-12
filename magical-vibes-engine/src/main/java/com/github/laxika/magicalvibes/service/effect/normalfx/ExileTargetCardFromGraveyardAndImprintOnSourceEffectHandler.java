@@ -50,7 +50,7 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
 
         // Add to graveyard owner's exiled cards, tracked with source permanent if available
         if (graveyardOwnerId != null) {

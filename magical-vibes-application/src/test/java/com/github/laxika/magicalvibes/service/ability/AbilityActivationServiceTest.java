@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -533,6 +535,29 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+        }
+
+        @Test
+        @DisplayName("Target-aware activation cost reduction uses the chosen target")
+        void targetAwareActivationCostReductionUsesChosenTarget() {
+            Card artifact = createGenericArtifact("Target Cost Reducer");
+            artifact.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}",
+                    List.of(new ReduceActivationCostEffect(new FixedIfTargetMatches(
+                                    new PermanentIsColorlessPredicate(), 2, 0)),
+                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    "Pay less mana to add a counter"
+            ));
+            Permanent perm = addReadyPermanent(player1Id, artifact);
+            UUID targetId = UUID.randomUUID();
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(amountEvaluationService.evaluate(eq(gameData), any(),
+                    argThat(context -> targetId.equals(context.targetPermanentId())))).thenReturn(2);
+
+            assertThat(service.getActivatedAbilityAdditionalGenericCost(
+                    gameData, player1Id, perm, 0, targetId, List.of())).isEqualTo(-2);
         }
 
         @Test

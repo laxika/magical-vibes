@@ -103,7 +103,7 @@ public class OpponentChoosesOneOfTopTwoGraveyardCardsEffectHandler implements No
 
     /** Exiles the chosen card and puts the other one — if there is one — into the owner's hand. */
     private void apply(GameData gameData, UUID controllerId, List<Card> topTwo, Card chosen, String sourceName) {
-        permanentRemovalService.removeCardFromGraveyardById(gameData, chosen.getId());
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosen.getId());
         exileService.exileCard(gameData, controllerId, chosen);
         gameLogService.append(gameData, GameLog.textCardText(
                 sourceName + " exiles ", chosen, " from the graveyard."));

@@ -662,7 +662,7 @@ public class StackEntry {
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if (targeting.isAura() && targetId != null) {
+        if (targetId != null && !targetIds.isEmpty()) {
             if (group == 0) {
                 return List.of(targetId);
             }

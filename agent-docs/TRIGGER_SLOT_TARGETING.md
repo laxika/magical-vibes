@@ -207,6 +207,10 @@ graveyard owner controls whenever a non-token land card enters their graveyard f
 `ON_ALLY_LAND_CARD_MILLED` (Pedantic Learning; fires on every permanent the graveyard owner controls
 whenever a non-token land card actually enters their graveyard from their library — checked in
 `GraveyardService.addCardToGraveyard` after replacement effects),
+`ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Sidisi, Brood Tyrant; fires once per
+library-to-graveyard event when one or more non-token creature cards actually enter the graveyard
+owner's graveyard — mill batches are checked in `GraveyardService.resolveMillPlayer` after replacement
+effects),
 `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),

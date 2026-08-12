@@ -54,7 +54,7 @@ public class GraveyardTopExileSupport {
             return false;
         }
         gameData.playerGraveyards.get(playerId).remove(card);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
         exileService.exileCard(gameData, playerId, card);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(
@@ -92,7 +92,7 @@ public class GraveyardTopExileSupport {
             return false;
         }
         Card card = gameData.playerGraveyards.get(playerId).remove((int) matchingIndices.getFirst());
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
         exileService.exileCard(gameData, playerId, card);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(

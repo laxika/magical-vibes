@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "248")
+@CardRegistration(set = "KTK", collectorNumber = "235")
 public class JungleHollow extends Card {
 
     public JungleHollow() {

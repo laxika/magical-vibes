@@ -65,7 +65,7 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         if (fromHand) {
             hand.remove(chosenCard);
         } else {
-            permanentRemovalService.removeCardFromGraveyardById(gameData, chosenCardId);
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosenCardId);
         }
         exileService.exileCard(gameData, targetPlayerId, chosenCard);
         gameData.exilePlayPermissions.put(chosenCardId, interaction.playerId());
