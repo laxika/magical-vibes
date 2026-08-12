@@ -923,7 +923,6 @@ public class LibraryChoiceHandlerService {
             graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
         } else if (destination == LibrarySearchDestination.REVEAL_ONLY) {
             deck.add(chosenCard);
-            graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
         } else if (destination == LibrarySearchDestination.HAND) {
             if (putChosenCardOnBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
