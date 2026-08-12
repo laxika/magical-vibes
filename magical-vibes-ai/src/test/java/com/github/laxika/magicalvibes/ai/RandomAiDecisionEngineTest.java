@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -216,6 +217,43 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void skipsXSpellWhenItsDynamicCapIsZero() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(aiPlayer, new Island());
+        }
+        harness.setHand(aiPlayer, List.of(new WintersChill()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Winter's Chill");
+        assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Island"))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test
