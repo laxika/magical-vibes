@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.MorningtidesLight;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -84,5 +86,31 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, clay)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returning from exile asks for a new shape")
+    void returningFromExileAsksForNewShape() {
+        Permanent clay = castAndReturn("TWO_TWO_FLYING");
+
+        harness.setHand(player1, List.of(new MorningtidesLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, List.of(clay.getId()));
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ONE_SIX_WALL");
+
+        Permanent returnedClay = findPermanent(player1, "Primal Clay");
+        assertThat(gqs.getEffectivePower(gd, returnedClay)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, returnedClay)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, returnedClay, Keyword.DEFENDER)).isTrue();
+        assertThat(GameQueryService.permanentHasSubtype(returnedClay, CardSubtype.WALL)).isTrue();
     }
 }
