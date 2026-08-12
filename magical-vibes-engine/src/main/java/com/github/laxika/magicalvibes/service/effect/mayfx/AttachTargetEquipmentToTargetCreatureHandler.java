@@ -35,7 +35,8 @@ public class AttachTargetEquipmentToTargetCreatureHandler implements MayEffectHa
 
         gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
-                ability.sourcePermanentId(), List.of(), 0, 0));
+                ability.sourcePermanentId(), List.of(), 0, 0, List.of(), 0,
+                gameData.pendingEffectResolutionEntry != null));
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
         if (!gameData.interaction.isAwaitingInput()) {

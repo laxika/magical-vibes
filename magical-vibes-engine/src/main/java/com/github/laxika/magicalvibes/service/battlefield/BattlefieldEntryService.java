@@ -1930,6 +1930,9 @@ public class BattlefieldEntryService {
         List<UUID> activeTargets = new ArrayList<>();
         int consumed = 0;
         for (SpellTarget group : card.getSpellTargets()) {
+            if (card.isAura() && group.getIndex() == 0) {
+                continue;
+            }
             int size = Math.min(group.getMaxTargets(), targetIds.size() - consumed);
             if (size <= 0) {
                 break;

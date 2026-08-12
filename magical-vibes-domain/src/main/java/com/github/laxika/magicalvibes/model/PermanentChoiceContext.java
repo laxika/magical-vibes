@@ -619,7 +619,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                       int currentGroupIndex, int chosenInCurrentGroup,
-                                      List<Integer> groupSizes, int xValue) implements PermanentChoiceContext {
+                                      List<Integer> groupSizes, int xValue,
+                                      boolean resumePendingMayResolution) implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
@@ -633,7 +634,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int currentGroupIndex, int chosenInCurrentGroup,
                                           List<Integer> groupSizes) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0);
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0, false);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, false);
         }
     }
 

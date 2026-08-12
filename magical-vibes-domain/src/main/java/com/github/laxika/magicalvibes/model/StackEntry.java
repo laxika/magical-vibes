@@ -559,6 +559,12 @@ public class StackEntry {
         return targetIds;
     }
 
+    public void setDeclaredTargetIds(List<UUID> targetIds) {
+        this.targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+        this.targetIdsFromAssignments = false;
+        this.illegalTargetIndices.clear();
+    }
+
     public void markTargetIllegal(int targetIndex) {
         if (targetIndex >= 0 && targetIndex < targetIds.size()) {
             illegalTargetIndices.add(targetIndex);

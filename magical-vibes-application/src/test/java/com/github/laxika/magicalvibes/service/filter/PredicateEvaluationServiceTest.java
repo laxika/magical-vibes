@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -296,6 +297,31 @@ class PredicateEvaluationServiceTest {
             Card card = createArtifactCreature("Myr Sire", 1, 1, List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR));
 
             assertThat(evaluator.matchesCardPredicate(card, new CardTypePredicate(CardType.ARTIFACT), null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardSharesCardTypeWithImprintedCardPredicate matches broadly before a cost is paid")
+        void cardTypeSharingPredicateMatchesBeforeCostImprintsCard() {
+            Card source = new Card();
+            Card target = createCreature("Bear", 2, 2, CardColor.GREEN);
+
+            assertThat(evaluator.matchesCardPredicate(target,
+                    new CardSharesCardTypeWithImprintedCardPredicate(), source.getId(), gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardSharesCardTypeWithImprintedCardPredicate compares types after a cost is paid")
+        void cardTypeSharingPredicateUsesImprintedCardWhenPresent() {
+            Card source = new Card();
+            Card imprinted = createCreature("Elf", 1, 1, CardColor.GREEN);
+            Card creature = createCreature("Bear", 2, 2, CardColor.GREEN);
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+            gd.imprintedCards.put(source.getId(), imprinted);
+
+            var predicate = new CardSharesCardTypeWithImprintedCardPredicate();
+            assertThat(evaluator.matchesCardPredicate(creature, predicate, source.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(instant, predicate, source.getId(), gd, player1Id)).isFalse();
         }
 
         @Test

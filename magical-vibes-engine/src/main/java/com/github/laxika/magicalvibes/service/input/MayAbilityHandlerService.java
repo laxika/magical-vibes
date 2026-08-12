@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -646,6 +647,13 @@ public class MayAbilityHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
+            if (innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect) {
+                var mayHandler = mayEffectHandlerRegistry.getHandler(innerEffect);
+                if (mayHandler != null) {
+                    mayHandler.handle(gameData, player, true, ability);
+                    return;
+                }
+            }
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
             boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);

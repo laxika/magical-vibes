@@ -335,7 +335,10 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 Card imprintedCard = gameData.imprintedCards.get(sourceCardId);
-                yield imprintedCard != null && java.util.Arrays.stream(CardType.values())
+                if (imprintedCard == null) {
+                    yield true;
+                }
+                yield java.util.Arrays.stream(CardType.values())
                         .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {

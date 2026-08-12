@@ -216,7 +216,8 @@ public class ETBTokenTargetService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.resumePendingMayResolution()));
                 continue;
             }
 
@@ -231,7 +232,8 @@ public class ETBTokenTargetService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.resumePendingMayResolution()));
                 continue;
             }
 
@@ -287,7 +289,8 @@ public class ETBTokenTargetService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue()));
+                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.resumePendingMayResolution()));
                 continue;
             }
 
@@ -335,6 +338,14 @@ public class ETBTokenTargetService {
 
     private void pushMultiTargetETBStackEntry(GameData gameData,
                                                PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        if (pending.resumePendingMayResolution()) {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry != null) {
+                pendingEntry.setDeclaredTargetIds(pending.chosenTargetsSoFar());
+                pendingEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+            }
+            return;
+        }
         Card card = pending.sourceCard();
         // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
         String abilityLabel = card.getName() + "'s ability";

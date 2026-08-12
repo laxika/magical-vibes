@@ -2401,8 +2401,9 @@ public class AbilityActivationService {
                     permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - removedMinus);
                     int remaining = count - removedMinus;
                     if (remaining > 0) {
-                        removedPlus = remaining;
-                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remaining);
+                        removedPlus = Math.min(remaining, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
+                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - removedPlus);
+                        removeOtherPermanentCounters(permanent, remaining - removedPlus);
                     }
                 }
                 case SILVER -> throw new IllegalStateException("Silver counters are not on permanents");
@@ -3327,7 +3328,7 @@ public class AbilityActivationService {
             CounterType ct = removeCounterCost.get().counterType();
             int available = switch (ct) {
                 case SILVER -> 0; // Silver counters are on exiled cards, not permanents
-                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                case ANY -> countPermanentCounters(permanent);
                 default -> permanent.getCounterCount(ct);
             };
             if (available < required) {
@@ -3466,6 +3467,32 @@ public class AbilityActivationService {
         }
         permanentRemovalService.removePermanentToHand(gameData, target);
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " returns " , target.getCard(), " to hand."));
+        }
+
+    private static int countPermanentCounters(Permanent permanent) {
+        int total = 0;
+        for (CounterType type : CounterType.values()) {
+            if (type != CounterType.ANY && type != CounterType.SILVER) {
+                total += permanent.getCounterCount(type);
+            }
+        }
+        return total;
+    }
+
+    private static void removeOtherPermanentCounters(Permanent permanent, int count) {
+        int remaining = count;
+        for (CounterType type : CounterType.values()) {
+            if (remaining == 0) {
+                return;
+            }
+            if (type == CounterType.ANY || type == CounterType.SILVER
+                    || type == CounterType.MINUS_ONE_MINUS_ONE || type == CounterType.PLUS_ONE_PLUS_ONE) {
+                continue;
+            }
+            int removed = Math.min(remaining, permanent.getCounterCount(type));
+            permanent.setCounterCount(type, permanent.getCounterCount(type) - removed);
+            remaining -= removed;
+        }
     }
 
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {

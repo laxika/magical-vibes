@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAn
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -82,7 +83,9 @@ public class GraveyardTargetValidators {
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
-        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+        if (effect.filter() != null
+                && !(effect.filter() instanceof CardSharesCardTypeWithImprintedCardPredicate)
+                && !predicateEvaluationService.matchesCardPredicate(
                 graveyardCard, effect.filter(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);

@@ -1341,11 +1341,24 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
-                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue()));
+                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
+                etbMtt.resumePendingMayResolution()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
         if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        if (etbMtt.resumePendingMayResolution()) {
+            gameData.resolvedMayAccepted = true;
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(
+                        gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

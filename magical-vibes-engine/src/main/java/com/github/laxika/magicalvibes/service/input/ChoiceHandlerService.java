@@ -591,6 +591,20 @@ public class ChoiceHandlerService {
             }
         }
 
+        if (ctx.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null) {
+                CardColor chosenColor = CardColor.valueOf(manaColor.name());
+                source.getTransientColors().clear();
+                source.getTransientColors().add(chosenColor);
+                source.setColorOverridden(true);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                        source.getCard().getName(), null, ctx.playerId(),
+                        new GrantColorUntilEndOfTurnEffect(chosenColor), source.getId(), null, null,
+                        EffectDuration.UNTIL_END_OF_TURN, 0));
+            }
+        }
+
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
                 && !ctx.creatureSpellOnly() && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);

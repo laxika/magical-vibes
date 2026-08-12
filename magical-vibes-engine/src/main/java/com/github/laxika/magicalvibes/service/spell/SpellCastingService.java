@@ -826,13 +826,7 @@ public class SpellCastingService {
                     List.of(), imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                     repeatedAdditionalCosts, buyback, false, List.of(), sharedColorDiscardHandCardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
-            // some validations run (e.g. target-based cost reduction) — if the failed cast left the
-            // card in no zone, return it to its place in hand instead of losing it forever.
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -861,10 +855,7 @@ public class SpellCastingService {
                     beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
                     beholdChosenSubtype);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -893,10 +884,7 @@ public class SpellCastingService {
                     spliceHandCardIndices != null ? spliceHandCardIndices : List.of(), null, null, List.of(), false, false,
                     spliceCostPermanentIds != null ? spliceCostPermanentIds : List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -916,10 +904,7 @@ public class SpellCastingService {
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false, false, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -945,10 +930,7 @@ public class SpellCastingService {
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, handCardIndex, null, true, List.of(), null, List.of(), null, null, List.of(), false, false, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -983,10 +965,7 @@ public class SpellCastingService {
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false, false, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -1005,10 +984,7 @@ public class SpellCastingService {
                     List.of(), List.of(), false, null, null, List.of(),
                     null, null, false, null, null, true, List.of(), null, List.of(), null, null, List.of(), false, true, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
     }
@@ -1030,12 +1006,24 @@ public class SpellCastingService {
                     null, null, false, null, null, false,
                     conspireCreatureIds != null ? conspireCreatureIds : List.of(), null, List.of(), null, null, List.of(), false, false, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            if (attempted != null && !hand.contains(attempted)
-                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
-                hand.add(Math.min(cardIndex, hand.size()), attempted);
-            }
+            restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
         }
+    }
+
+    private static void restoreAttemptedCardAfterFailedCast(GameData gameData, List<Card> hand,
+                                                             Card attempted, int cardIndex) {
+        if (attempted == null || hand == null || gameData.stack.stream()
+                .anyMatch(entry -> attempted.getId().equals(entry.getCard().getId()))) {
+            return;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            if (attempted.getId().equals(hand.get(i).getId())) {
+                hand.set(i, attempted);
+                return;
+            }
+        }
+        hand.add(Math.min(cardIndex, hand.size()), attempted);
     }
 
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
@@ -1234,6 +1222,12 @@ public class SpellCastingService {
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
         String printedManaCost = card.getManaCost();
+        int modeEncoding = effectiveXValue;
+        filteredSpellEffects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .forEach(modal -> validateOptionalCostModalSelection(
+                        modal, additionalCosts, costSelection, modeEncoding));
         effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
@@ -1510,7 +1504,8 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (flags.hasRestricted()) {
-                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost - selectedDelveReduction,
+                            if (!cost.canPayWithAdditionalGenericCost(pool, effectiveXValue,
+                                    totalAdditionalCost - selectedDelveReduction,
                                     flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
                                     flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
                                     flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
@@ -4763,7 +4758,7 @@ public class SpellCastingService {
             gameData.setSpellCastManaSpentOnX(card.getId(), spentOnX);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.pay(pool, effectiveXValue + additionalCost,
+                cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
                         flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
                         flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
                         flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
