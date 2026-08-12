@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "373")
+@CardRegistration(set = "CHR", collectorNumber = "99")
 public class GauntletsOfChaos extends Card {
 
     public GauntletsOfChaos() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
@@ -68,6 +69,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
@@ -80,6 +82,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -529,6 +536,12 @@ public class TargetLegalityService {
                 throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
             }
 
+            if (gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
+                    && sourceCanTargetOnlyWalls(sourceCard, ability.getEffects(), ability.getTargetFilter(), perPositionFilters)) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " can't be targeted by spells or abilities that can target only Walls");
+            }
+
             // Per-position filter
             if (positionFilter != null) {
                 predicateEvaluationService.validateTargetFilter(positionFilter, target,
@@ -607,6 +620,11 @@ public class TargetLegalityService {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null && gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
                 throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
+            }
+            if (target != null && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
+                    && sourceCanTargetOnlyWalls(sourceCard, abilityEffects, ability.getTargetFilter())) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " can't be targeted by spells or abilities that can target only Walls");
             }
         }
     }
@@ -696,7 +714,8 @@ public class TargetLegalityService {
         }
 
         if (target != null && needsTarget) {
-            Optional<String> structuralReason = checkSpellPermanentTargetableReason(gameData, target, card, controllerId);
+            Optional<String> structuralReason = checkSpellPermanentTargetableReason(
+                    gameData, target, card, controllerId, spellEffects, effectiveTargetFilter);
             if (structuralReason.isPresent()) return structuralReason;
         }
 
@@ -905,7 +924,8 @@ public class TargetLegalityService {
             }
 
             if (EffectResolution.needsTarget(card)) {
-                checkSpellPermanentTargetableReason(gameData, target, card, controllerId)
+                checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
+                        card.getEffects(EffectSlot.SPELL), positionFilter)
                         .ifPresent(reason -> { throw new IllegalStateException(reason); });
             }
         }
@@ -1005,6 +1025,10 @@ public class TargetLegalityService {
             validateAtMostOnePerController(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST) {
+            validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
+            return;
+        }
         List<Permanent> targets = targetIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
@@ -1037,6 +1061,31 @@ public class TargetLegalityService {
                     }
                 }
             }
+        }
+    }
+
+    private void validateSameCreatureOrLandTypeAsFirstAuraHost(GameData gameData, List<UUID> targetIds) {
+        if (targetIds.size() < 2) {
+            throw new IllegalStateException("Two targets are required");
+        }
+        Permanent aura = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
+        Permanent destination = gameQueryService.findPermanentById(gameData, targetIds.get(1));
+        if (aura == null || destination == null || !aura.isAttached()) {
+            throw new IllegalStateException("The Aura must still be attached to a permanent");
+        }
+        Permanent host = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (host == null) {
+            throw new IllegalStateException("The Aura's attached permanent no longer exists");
+        }
+        if (destination.getId().equals(host.getId())) {
+            throw new IllegalStateException("The destination must be another permanent");
+        }
+        boolean sameCreatureType = gameQueryService.isCreature(gameData, host)
+                && gameQueryService.isCreature(gameData, destination);
+        boolean sameLandType = gameQueryService.isLand(gameData, host)
+                && gameQueryService.isLand(gameData, destination);
+        if (!sameCreatureType && !sameLandType) {
+            throw new IllegalStateException("The destination must be another permanent of the Aura's host type");
         }
     }
 
@@ -1381,6 +1430,11 @@ public class TargetLegalityService {
                 || isNonColorSourceRestricted(gameData, target, entry)) {
             return false;
         }
+        if (entry.getCard() != null
+                && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
+                && sourceCanTargetOnlyWalls(entry.getCard(), entry.getEffectsToResolve(), targetFilter)) {
+            return false;
+        }
         if (targetFilter != null) {
             try {
                 predicateEvaluationService.validateTargetFilter(targetFilter, target,
@@ -1659,6 +1713,13 @@ public class TargetLegalityService {
      * (filters via list/position bookkeeping; validators as the shared type-narrowing mechanism).
      */
     public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
+        return checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
+                card.getEffects(EffectSlot.SPELL), card.getTargetFilter());
+    }
+
+    public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card,
+                                                                UUID controllerId, List<CardEffect> sourceEffects,
+                                                                TargetFilter targetFilter) {
         String peaceTalks = peaceTalksUntargetableReason(gameData);
         if (peaceTalks != null) {
             return Optional.of(peaceTalks);
@@ -1671,7 +1732,93 @@ public class TargetLegalityService {
         if (untargetable != null) {
             return Optional.of(untargetable);
         }
+        if (card != null && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
+                && sourceCanTargetOnlyWalls(card, sourceEffects, targetFilter)) {
+            return Optional.of(target.getCard().getName()
+                    + " can't be targeted by spells or abilities that can target only Walls");
+        }
         return Optional.empty();
+    }
+
+    public boolean sourceCanTargetOnlyWalls(Card sourceCard, List<CardEffect> sourceEffects,
+                                            TargetFilter targetFilter) {
+        return sourceCanTargetOnlyWalls(sourceCard, sourceEffects, targetFilter, List.of());
+    }
+
+    public boolean sourceCanTargetOnlyWalls(Card sourceCard, List<CardEffect> sourceEffects,
+                                            TargetFilter targetFilter, List<TargetFilter> targetFilters) {
+        ChooseOneEffect modal = sourceEffects == null ? null : sourceEffects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst().orElse(null);
+        if (modal == null && sourceCard != null) {
+            modal = sourceCard.getEffects(EffectSlot.SPELL).stream()
+                    .filter(ChooseOneEffect.class::isInstance)
+                    .map(ChooseOneEffect.class::cast)
+                    .findFirst().orElse(null);
+        }
+        if (modal != null) {
+            return modal.options().stream().allMatch(this::modeCanTargetOnlyWalls);
+        }
+
+        List<TargetFilter> allTargetFilters = targetFilters != null && !targetFilters.isEmpty()
+                ? targetFilters
+                : sourceCard == null ? List.of() : sourceCard.getMultiTargetFilters();
+        if (!allTargetFilters.isEmpty()) {
+            return allTargetFilters.stream().allMatch(this::targetFilterCanTargetOnlyWalls);
+        }
+        if (targetFilter != null) {
+            return targetFilterCanTargetOnlyWalls(targetFilter);
+        }
+        if (sourceEffects == null || EffectResolution.allowsPlayerTargets(sourceEffects)) {
+            return false;
+        }
+        return EffectResolution.declaredPermanentRestriction(sourceEffects)
+                .map(this::permanentPredicateAllowsOnlyWalls)
+                .orElse(false);
+    }
+
+    private boolean modeCanTargetOnlyWalls(ChooseOneEffect.ChooseOneOption mode) {
+        if (mode.targetFilters() != null && !mode.targetFilters().isEmpty()) {
+            return mode.targetFilters().stream().allMatch(this::targetFilterCanTargetOnlyWalls);
+        }
+        if (mode.targetFilter() != null) {
+            return targetFilterCanTargetOnlyWalls(mode.targetFilter());
+        }
+        if (EffectResolution.allowsPlayerTargets(mode.effects())) {
+            return false;
+        }
+        return EffectResolution.declaredPermanentRestriction(mode.effects())
+                .map(this::permanentPredicateAllowsOnlyWalls)
+                .orElse(false);
+    }
+
+    private boolean targetFilterCanTargetOnlyWalls(TargetFilter targetFilter) {
+        if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
+            return permanentPredicateAllowsOnlyWalls(filter.predicate());
+        }
+        if (targetFilter instanceof ControlledPermanentPredicateTargetFilter filter) {
+            return permanentPredicateAllowsOnlyWalls(filter.predicate());
+        }
+        return false;
+    }
+
+    private boolean permanentPredicateAllowsOnlyWalls(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentHasSubtypePredicate subtype) {
+            return subtype.subtype() == CardSubtype.WALL;
+        }
+        if (predicate instanceof PermanentHasAnySubtypePredicate subtypes) {
+            return subtypes.subtypes().size() == 1 && subtypes.subtypes().contains(CardSubtype.WALL);
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOf) {
+            return !allOf.predicates().isEmpty()
+                    && allOf.predicates().stream().anyMatch(this::permanentPredicateAllowsOnlyWalls);
+        }
+        if (predicate instanceof PermanentAnyOfPredicate anyOf) {
+            return !anyOf.predicates().isEmpty()
+                    && anyOf.predicates().stream().allMatch(this::permanentPredicateAllowsOnlyWalls);
+        }
+        return false;
     }
 
     /**
@@ -1989,6 +2136,27 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryControlledByPredicate) {
             return stackEntry.getControllerId().equals(controllerId);
+        }
+        if (predicate instanceof StackEntryNotTargetedByNamedCreatureAbilityPredicate notTargeted) {
+            if (source == null || stackEntry.getCard() == null) {
+                return false;
+            }
+            UUID candidateCardId = stackEntry.getCard().getId();
+            for (StackEntry ability : gameData.stack) {
+                if ((ability.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && ability.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                        || ability.getCard() == null
+                        || !ability.getCard().hasType(CardType.CREATURE)
+                        || !notTargeted.creatureName().equals(ability.getCard().getName())
+                        || source.getId().equals(ability.getSourcePermanentId())) {
+                    continue;
+                }
+                if (candidateCardId.equals(ability.getTargetId())
+                        || ability.getDeclaredTargetIds().contains(candidateCardId)) {
+                    return false;
+                }
+            }
+            return true;
         }
         if (predicate instanceof StackEntryCastFromZonePredicate castFrom) {
             return stackEntry.getSourceZone() == castFrom.sourceZone();

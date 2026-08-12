@@ -142,6 +142,11 @@ public class DamageSupport {
                     "'s damage is prevented."));
             return 0;
         }
+        if (damageSource == null
+                && gameQueryService.isDamageFromTargetingSpellPrevented(gameData, entry, target)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
         // Benevolent Unicorn: a spell dealing damage as itself deals that much damage minus N.
         if (damageSource == null) {
             rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
@@ -178,6 +183,10 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
+                gameData, target, sourcePermId, rawDamage);
+        processSourceRedirectDamage(gameData);
+        if (rawDamage <= 0) return 0;
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
         // a chosen source to the protected creature onto another permanent.
         rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
@@ -254,6 +263,7 @@ public class DamageSupport {
             gameData.recordDamageToPermanent(target.getId(), damage);
             gameData.recordDamageDealtBySource(
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage);
+            gameData.recordDamageRecipientBySource(sourcePermId, target.getId());
 
             UUID sourceControllerId = damageSource != null
                     ? gameQueryService.findPermanentController(gameData, damageSource.getId())
@@ -642,6 +652,7 @@ public class DamageSupport {
                             entry.getSourcePermanentId(), loyaltyDamage);
                     queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, loyaltyDamage);
                     gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), loyaltyDamage);
+                    gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), targetPermanent.getId());
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
                             targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
                     gameLogService.append(gameData, GameLog.cardTextCard(source,
@@ -831,7 +842,8 @@ public class DamageSupport {
                 gameData, entry.getSourcePermanentId(), null, rawDamage);
         processSourceRedirectDamage(gameData);
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
-        rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, playerId, null, rawDamage);
+        rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(
+                gameData, playerId, null, entry.getSourcePermanentId(), rawDamage, false);
         processSourceRedirectDamage(gameData);
         // Martyrdom: redirect the next N damage to the player onto the creature carrying the ability.
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, playerId, rawDamage);
@@ -984,6 +996,7 @@ public class DamageSupport {
                         gameData, sourceCreature, effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
+                gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
                 entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
@@ -1118,6 +1131,7 @@ public class DamageSupport {
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
                 gameData.recordDamageToPlayer(targetId, redirectEffective);
+                gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
             }
         }
@@ -1187,6 +1201,7 @@ public class DamageSupport {
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
                     gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }
             } else {
@@ -1210,6 +1225,7 @@ public class DamageSupport {
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
                         battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
                     }
+                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
                     boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
                     if (isCreature
                             || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)

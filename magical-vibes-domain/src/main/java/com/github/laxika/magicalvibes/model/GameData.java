@@ -278,6 +278,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    /** Card IDs currently represented as cards in the ante zone. Ante is modelled through exile. */
+    public final Set<UUID> antedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
@@ -574,6 +576,8 @@ public class GameData {
     public final Set<UUID> playersExilingUncastEnteringNontokenCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players with an active effect that redirects damage dealt to any creature to them. */
+    public final Set<UUID> playersRedirectingAllCreatureDamage = ConcurrentHashMap.newKeySet();
     /**
      * Predicates whose matching permanents have all damage to them prevented this turn
      * (Ethersworn Shieldmage). Re-evaluated per damage event, so it covers permanents that
@@ -1085,6 +1089,9 @@ public class GameData {
     /** Tracks source permanent objects that have dealt damage at least once. */
     public final Set<UUID> permanentsThatHaveDealtDamage = ConcurrentHashMap.newKeySet();
 
+    /** Tracks every player or permanent that each source permanent has dealt damage to this game. */
+    public final Map<UUID, Set<UUID>> damageRecipientsBySource = new ConcurrentHashMap<>();
+
     /** Records that {@code sourcePermanentId} dealt {@code amount} damage this turn. No-op when the
      *  source permanent is unknown or the amount is non-positive. */
     public void recordDamageDealtBySource(UUID sourcePermanentId, int amount) {
@@ -1093,6 +1100,16 @@ public class GameData {
         }
         damageDealtThisTurnBySource.merge(sourcePermanentId, amount, Integer::sum);
         permanentsThatHaveDealtDamage.add(sourcePermanentId);
+    }
+
+    /** Records a player or permanent that a source permanent actually dealt damage to. */
+    public void recordDamageRecipientBySource(UUID sourcePermanentId, UUID recipientId) {
+        if (sourcePermanentId == null || recipientId == null) {
+            return;
+        }
+        damageRecipientsBySource
+                .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(recipientId);
     }
 
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
@@ -1220,6 +1237,11 @@ public class GameData {
      *  the current combat, so it still answers "all creatures that blocked or were blocked by it this turn"
      *  across multiple combat phases. Used by Venomous Breath. */
     public final Map<UUID, Set<UUID>> combatBlockOpponentIdsThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks, per creature, the creatures it blocked or was blocked by in the current combat.
+     *  Unlike the turn-scoped map above, this is cleared when the next combat begins so last-known
+     *  combat relationships remain precise while end-of-combat triggers resolve. */
+    public final Map<UUID, Set<UUID>> combatBlockOpponentIdsThisCombat = new ConcurrentHashMap<>();
 
     /** Tracks, per blocker, the attacking creatures it blocked this turn. Used by Triton Tactics,
      * which affects creatures blocked by its chosen creatures rather than creatures that blocked them. */
@@ -1457,6 +1479,7 @@ public class GameData {
     /** Continuous effects created by resolved spells/abilities (CR 611.2), for the CR 613 layer
      *  engine (see {@code agent-docs/LAYER_SYSTEM.md}). Stamped via {@link #addFloatingEffect}
      *  and expired by duration: {@code UNTIL_END_OF_TURN} at the cleanup step,
+     *  {@code UNTIL_END_OF_COMBAT} when combat state is cleared,
      *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
      *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
      *  of the controller's next turn. */
@@ -1501,6 +1524,11 @@ public class GameData {
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_TURN} duration (cleanup step). */
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN);
+    }
+
+    /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
+    public List<FloatingContinuousEffect> expireEndOfCombatFloatingEffects() {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_COMBAT);
     }
 
     /**
@@ -2369,6 +2397,19 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
     }
 
+    /** Adds a card to the ante zone, represented by an untracked exile entry. */
+    public void addToAnte(UUID ownerId, Card card) {
+        addToExile(ownerId, card);
+        markCardAsAnted(card);
+    }
+
+    /** Marks an exiled card as being in the ante zone. */
+    public void markCardAsAnted(Card card) {
+        if (card != null) {
+            antedCardIds.add(card.getId());
+        }
+    }
+
     /** Adds a card to exile with source permanent tracking. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -2422,6 +2463,7 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
+            antedCardIds.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             exilePlayPermissions.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
@@ -2502,6 +2544,7 @@ public class GameData {
             exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
         }
         removedIds.forEach(exiledCardDreamCounters::remove);
+        removedIds.forEach(antedCardIds::remove);
     }
 
     /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
@@ -2756,6 +2799,7 @@ public class GameData {
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
+        copy.playersRedirectingAllCreatureDamage.addAll(this.playersRedirectingAllCreatureDamage);
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
                 .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
@@ -2875,6 +2919,11 @@ public class GameData {
                 copy.playersAttackedThisTurn.put(k, new HashSet<>(v)));
         copy.damageDealtThisTurnBySource.putAll(this.damageDealtThisTurnBySource);
         copy.permanentsThatHaveDealtDamage.addAll(this.permanentsThatHaveDealtDamage);
+        this.damageRecipientsBySource.forEach((k, v) -> {
+            Set<UUID> recipients = ConcurrentHashMap.newKeySet();
+            recipients.addAll(v);
+            copy.damageRecipientsBySource.put(k, recipients);
+        });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.lastRedSpellDamagerThisTurn.putAll(this.lastRedSpellDamagerThisTurn);
@@ -2903,6 +2952,8 @@ public class GameData {
         copy.creaturesBlockedThisTurn.addAll(this.creaturesBlockedThisTurn);
         this.combatBlockOpponentIdsThisTurn.forEach((k, v) ->
                 copy.combatBlockOpponentIdsThisTurn.put(k, new HashSet<>(v)));
+        this.combatBlockOpponentIdsThisCombat.forEach((k, v) ->
+                copy.combatBlockOpponentIdsThisCombat.put(k, new HashSet<>(v)));
         this.combatOpponentIdsBlockedByThisTurn.forEach((k, v) ->
                 copy.combatOpponentIdsBlockedByThisTurn.put(k, new HashSet<>(v)));
 
@@ -2916,6 +2967,7 @@ public class GameData {
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
+        copy.antedCardIds.addAll(this.antedCardIds);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);

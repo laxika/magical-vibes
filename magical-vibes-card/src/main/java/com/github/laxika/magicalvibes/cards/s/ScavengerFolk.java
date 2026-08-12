@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "267")
 @CardRegistration(set = "5ED", collectorNumber = "323")
+@CardRegistration(set = "CHR", collectorNumber = "69")
 public class ScavengerFolk extends Card {
 
     public ScavengerFolk() {

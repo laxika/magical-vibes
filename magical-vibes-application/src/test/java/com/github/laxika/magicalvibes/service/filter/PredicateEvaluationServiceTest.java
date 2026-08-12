@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
@@ -1783,6 +1784,34 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
                     .isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentInCombatWithSourcePredicate")
+    class InCombatWithSource {
+
+        @Test
+        @DisplayName("Matches a creature blocking a source that has left the battlefield")
+        void matchesAgainstSourceSnapshot() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 0, 1, CardColor.WHITE));
+            attacker.setAttacking(true);
+            Permanent blocker = addPermanent(player2Id, createCreature("Blocker", 2, 2, CardColor.GREEN));
+            blocker.setBlocking(true);
+            blocker.getBlockingTargetIds().add(attacker.getId());
+
+            Permanent sourceSnapshot = new Permanent(attacker);
+            gd.combatBlockOpponentIdsThisCombat.put(blocker.getId(), Set.of(attacker.getId()));
+            blocker.setBlocking(false);
+            blocker.getBlockingTargetIds().clear();
+            gd.playerBattlefields.get(player1Id).remove(attacker);
+
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(attacker.getOriginalCard().getId())
+                    .withSourcePermanentSnapshot(sourceSnapshot);
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    blocker, new PermanentInCombatWithSourcePredicate(), context)).isTrue();
         }
     }
 

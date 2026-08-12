@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "54")
+@CardRegistration(set = "CHR", collectorNumber = "11")
 public class RepentantBlacksmith extends Card {
 
     public RepentantBlacksmith() {

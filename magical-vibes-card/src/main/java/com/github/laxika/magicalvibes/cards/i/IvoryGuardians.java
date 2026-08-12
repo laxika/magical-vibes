@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "CHR", collectorNumber = "8")
 @CardRegistration(set = "5ED", collectorNumber = "40")
 public class IvoryGuardians extends Card {
 

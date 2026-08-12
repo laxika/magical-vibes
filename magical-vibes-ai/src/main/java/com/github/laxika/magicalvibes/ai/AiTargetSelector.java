@@ -564,12 +564,26 @@ class AiTargetSelector {
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_ONE_PER_CONTROLLER,
                      ONE_PER_CONTROLLER_IF_ABLE -> true; // handled above
+                case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
+                        isAnotherPermanentOfAuraHostType(gameData, other, candidate);
             };
             if (!compatible) {
                 return false;
             }
         }
         return true;
+    }
+
+    private boolean isAnotherPermanentOfAuraHostType(GameData gameData, Permanent aura, Permanent candidate) {
+        if (aura == null || candidate == null || !aura.isAttached()) {
+            return false;
+        }
+        Permanent host = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (host == null || host.getId().equals(candidate.getId())) {
+            return false;
+        }
+        return (gameQueryService.isCreature(gameData, host) && gameQueryService.isCreature(gameData, candidate))
+                || (gameQueryService.isLand(gameData, host) && gameQueryService.isLand(gameData, candidate));
     }
 
     boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {

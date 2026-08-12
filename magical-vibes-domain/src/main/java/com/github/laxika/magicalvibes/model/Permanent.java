@@ -181,6 +181,9 @@ public class Permanent {
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
     @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
+    /** When true, creatures dealt damage by this permanent this turn are exiled instead of dying.
+     *  Cleared at end of turn. */
+    @Setter private boolean exileDamagedCreaturesInsteadOfDyingThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
     /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
@@ -233,6 +236,11 @@ public class Permanent {
     /** Triggered effects granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting
      *  {@code UPKEEP_TRIGGERED} + {@code CumulativeUpkeepEffect}). Survives {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffects = new EnumMap<>(EffectSlot.class);
+    /** Triggered effects granted until the next upkeep of the player whose effect created them.
+     *  The expiry player is stored separately from the permanent's current controller because the
+     *  duration belongs to the resolving ability's controller. */
+    private final Map<EffectSlot, Map<UUID, List<CardEffect>>> untilNextUpkeepTriggeredEffects =
+            new EnumMap<>(EffectSlot.class);
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
@@ -610,6 +618,7 @@ public class Permanent {
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
+        this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
@@ -619,6 +628,12 @@ public class Permanent {
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.persistentTriggeredEffects.forEach((slot, effects) ->
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        source.untilNextUpkeepTriggeredEffects.forEach((slot, effectsByPlayer) -> {
+            Map<UUID, List<CardEffect>> copiedEffectsByPlayer = new HashMap<>();
+            effectsByPlayer.forEach((playerId, effects) ->
+                    copiedEffectsByPlayer.put(playerId, new ArrayList<>(effects)));
+            this.untilNextUpkeepTriggeredEffects.put(slot, copiedEffectsByPlayer);
+        });
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.returnToHandAtNextUntap = source.returnToHandAtNextUntap;
@@ -1139,7 +1154,18 @@ public class Permanent {
     }
 
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
-        return temporaryTriggeredEffects.getOrDefault(slot, List.of());
+        List<CardEffect> effects = temporaryTriggeredEffects.getOrDefault(slot, List.of());
+        List<CardEffect> untilNextUpkeep = getUntilNextUpkeepTriggeredEffects(slot);
+        if (untilNextUpkeep.isEmpty()) {
+            return effects;
+        }
+        if (effects.isEmpty()) {
+            return untilNextUpkeep;
+        }
+        List<CardEffect> combined = new ArrayList<>(effects.size() + untilNextUpkeep.size());
+        combined.addAll(effects);
+        combined.addAll(untilNextUpkeep);
+        return combined;
     }
 
     public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
@@ -1148,6 +1174,28 @@ public class Permanent {
 
     public List<CardEffect> getPersistentTriggeredEffects(EffectSlot slot) {
         return persistentTriggeredEffects.getOrDefault(slot, List.of());
+    }
+
+    public void addUntilNextUpkeepTriggeredEffect(UUID expiryPlayerId, EffectSlot slot, CardEffect effect) {
+        untilNextUpkeepTriggeredEffects
+                .computeIfAbsent(slot, ignored -> new HashMap<>())
+                .computeIfAbsent(expiryPlayerId, ignored -> new ArrayList<>())
+                .add(effect);
+    }
+
+    private List<CardEffect> getUntilNextUpkeepTriggeredEffects(EffectSlot slot) {
+        Map<UUID, List<CardEffect>> effectsByPlayer = untilNextUpkeepTriggeredEffects.get(slot);
+        if (effectsByPlayer == null || effectsByPlayer.isEmpty()) {
+            return List.of();
+        }
+        List<CardEffect> effects = new ArrayList<>();
+        effectsByPlayer.values().forEach(effects::addAll);
+        return effects;
+    }
+
+    public void clearUntilNextUpkeepTriggeredEffects(UUID expiryPlayerId) {
+        untilNextUpkeepTriggeredEffects.values().forEach(effectsByPlayer -> effectsByPlayer.remove(expiryPlayerId));
+        untilNextUpkeepTriggeredEffects.values().removeIf(Map::isEmpty);
     }
 
     /**
@@ -1192,6 +1240,7 @@ public class Permanent {
         this.auraEffectsIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
+        this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();

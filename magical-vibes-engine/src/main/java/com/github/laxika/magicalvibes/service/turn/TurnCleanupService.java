@@ -226,6 +226,7 @@ public class TurnCleanupService {
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();

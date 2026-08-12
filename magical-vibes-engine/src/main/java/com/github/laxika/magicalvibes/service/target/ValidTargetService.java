@@ -179,6 +179,15 @@ public class ValidTargetService {
                         !java.util.Objects.equals(requiredControllerId,
                                 gameQueryService.findPermanentController(gameData, id)));
             }
+            if (card.getMultiTargetConstraint()
+                    == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                Permanent aura = gameQueryService.findPermanentById(gameData, alreadySelectedIds.getFirst());
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return !isAnotherPermanentOfAuraHostType(gameData, aura, candidate);
+                });
+            }
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
@@ -312,7 +321,8 @@ public class ValidTargetService {
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex, List<UUID> alreadySelectedIds, Integer xValue) {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
-        Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty() ? Set.copyOf(alreadySelectedIds) : Set.of();
+        Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty()
+                && !ability.isAllowSharedTargets() ? Set.copyOf(alreadySelectedIds) : Set.of();
         // Source-relative player predicates ("dealt damage by this creature this turn") key their
         // per-turn records by permanent id, so resolve the ability's own permanent up front.
         UUID abilitySourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(gameData, sourceCard.getId());
@@ -656,6 +666,18 @@ public class ValidTargetService {
         return result;
     }
 
+    private boolean isAnotherPermanentOfAuraHostType(GameData gameData, Permanent aura, Permanent candidate) {
+        if (aura == null || candidate == null || !aura.isAttached()) {
+            return false;
+        }
+        Permanent host = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (host == null || host.getId().equals(candidate.getId())) {
+            return false;
+        }
+        return (gameQueryService.isCreature(gameData, host) && gameQueryService.isCreature(gameData, candidate))
+                || (gameQueryService.isLand(gameData, host) && gameQueryService.isLand(gameData, candidate));
+    }
+
     /**
      * The player a {@link MultiTargetConstraint#CONTROLLED_BY_FIRST_TARGET} group is anchored to:
      * the first target itself when it is a player, else that permanent's controller.
@@ -763,6 +785,12 @@ public class ValidTargetService {
 
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, sourceCard)) {
+            return false;
+        }
+
+        if (gameQueryService.cantBeTargetedByWallOnlySources(gameData, perm)
+                && targetLegalityService.sourceCanTargetOnlyWalls(
+                sourceCard, ability.getEffects(), ability.getTargetFilter(), ability.getMultiTargetFilters())) {
             return false;
         }
 

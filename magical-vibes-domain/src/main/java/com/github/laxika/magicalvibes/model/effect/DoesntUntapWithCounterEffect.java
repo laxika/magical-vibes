@@ -15,5 +15,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * @param counterType the counter whose presence keeps the permanent tapped
  */
-public record DoesntUntapWithCounterEffect(CounterType counterType) implements CardEffect {
+public record DoesntUntapWithCounterEffect(CounterType counterType, TapUntapScope scope) implements CardEffect {
+
+    public DoesntUntapWithCounterEffect(CounterType counterType) {
+        this(counterType, TapUntapScope.SELF);
+    }
+
+    public static DoesntUntapWithCounterEffect enchanted(CounterType counterType) {
+        return new DoesntUntapWithCounterEffect(counterType, TapUntapScope.ENCHANTED);
+    }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -44,27 +46,46 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
             return;
         }
 
-        Permanent creature = gameQueryService.findPermanentById(gameData, targets.get(1));
-        if (creature == null) {
-            fizzle(gameData, entry, "target creature no longer on the battlefield");
+        Permanent destination = gameQueryService.findPermanentById(gameData, targets.get(1));
+        if (destination == null) {
+            fizzle(gameData, entry, "destination no longer on the battlefield");
+            return;
+        }
+
+        if (!aura.getCard().isAura() || !aura.isAttached()) {
+            return;
+        }
+        Permanent host = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (host == null || host.getId().equals(destination.getId())) {
+            return;
+        }
+        boolean sameCreatureType = gameQueryService.isCreature(gameData, host)
+                && gameQueryService.isCreature(gameData, destination);
+        boolean sameLandType = gameQueryService.isLand(gameData, host)
+                && gameQueryService.isLand(gameData, destination);
+        UUID auraControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
+        if ((!sameCreatureType && !sameLandType)
+                || auraControllerId == null
+                || !auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, destination)
+                || gameQueryService.hasProtectionFromSource(gameData, destination, aura)) {
             return;
         }
 
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
-        aura.setAttachedTo(creature.getId());
+        aura.setAttachedTo(destination.getId());
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
 
         
-        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", creature.getCard(), "."));
-        log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
+        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", destination.getCard(), "."));
+        log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), destination.getCard().getName(), entry.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), creature.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), destination.getId());
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability fizzles (" + reason + ").").build());
-        log.info("Game {} - Crown of the Ages ability fizzles: {}", gameData.id, reason);
+        log.info("Game {} - {} ability fizzles: {}", gameData.id, entry.getCard().getName(), reason);
     }
 }

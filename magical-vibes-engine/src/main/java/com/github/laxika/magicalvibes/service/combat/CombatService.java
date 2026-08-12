@@ -171,6 +171,7 @@ public class CombatService {
      * Resets all combat-related state on permanents and game data.
      */
     public void clearCombatState(GameData gameData) {
+        gameData.expireEndOfCombatFloatingEffects();
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
         gameData.combatDamagePlayerAssignments.clear();

@@ -25,6 +25,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValueAtMostControlledCountPredicate,
         StackEntrySharesColorOrManaValueWithImprintedCardPredicate,
         StackEntryNotPredicate,
+        StackEntryNotTargetedByNamedCreatureAbilityPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,
         StackEntrySupertypeInPredicate,
         StackEntryTargetsAnyPlayerPredicate,

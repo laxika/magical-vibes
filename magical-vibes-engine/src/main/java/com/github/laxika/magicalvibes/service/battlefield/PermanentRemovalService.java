@@ -833,8 +833,9 @@ public class PermanentRemovalService {
     }
 
     private static boolean hasExileDamagedCreaturesInsteadOfDying(Permanent permanent) {
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance);
+        return permanent.isExileDamagedCreaturesInsteadOfDyingThisTurn()
+                || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance);
     }
 
     private boolean auraOnSourceExilesDamagedCreatures(GameData gameData, UUID sourceId) {

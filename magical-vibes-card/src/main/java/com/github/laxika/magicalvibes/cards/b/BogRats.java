@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "117")
 @CardRegistration(set = "5ED", collectorNumber = "146")
+@CardRegistration(set = "CHR", collectorNumber = "30")
 public class BogRats extends Card {
 
     public BogRats() {

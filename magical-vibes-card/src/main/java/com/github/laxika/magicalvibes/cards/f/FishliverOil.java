@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "9ED", collectorNumber = "77")
+@CardRegistration(set = "CHR", collectorNumber = "20")
 public class FishliverOil extends Card {
 
     public FishliverOil() {

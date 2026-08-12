@@ -967,10 +967,16 @@ public class GraveyardService {
 
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (source == null) {
+                source = gameData.simultaneousDyingCreatures.get(sourcePermanentId);
+            }
+            if (source == null) {
                 continue;
             }
 
             UUID controllerId = findPermanentController(gameData, sourcePermanentId);
+            if (controllerId == null) {
+                controllerId = gameData.simultaneousDyingControllers.get(sourcePermanentId);
+            }
             if (controllerId != null) {
                 // The damaging permanent's own ON_DAMAGED_CREATURE_DIES abilities (e.g. Seraph, Vein Drinker).
                 enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, source,
@@ -1022,12 +1028,21 @@ public class GraveyardService {
         }
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
         for (CardEffect effect : effects) {
+            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard);
+            if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        sourceCard, controllerId, List.of(materializedEffect),
+                        "damaged creature dies", sourcePermanentId));
+                continue;
+            }
             StackEntry triggerEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     controllerId,
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard))),
+                    new ArrayList<>(List.of(materializedEffect)),
                     null,
                     sourcePermanentId
             );
@@ -1037,7 +1052,7 @@ public class GraveyardService {
             // "its controller loses N life" reads the dying creature's last-known controller from
             // the entry's targetId; the ability itself chooses no target. Other abilities in this
             // slot use targetId for their own purposes, so it is only bound for that recipient.
-            if (effect instanceof LoseLifeEffect lose
+            if (materializedEffect instanceof LoseLifeEffect lose
                     && lose.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
                 triggerEntry.setTargetId(dyingControllerId);
             }

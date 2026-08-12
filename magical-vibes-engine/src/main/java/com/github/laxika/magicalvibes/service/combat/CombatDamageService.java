@@ -2226,6 +2226,11 @@ public class CombatDamageService {
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
             int damageDealt = state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer;
+            for (var sourceDamage : state.combatDamageDealtToPlayer.entrySet()) {
+                if (sourceDamage.getValue() > 0) {
+                    gameData.recordDamageRecipientBySource(sourceDamage.getKey().getId(), defenderId);
+                }
+            }
             gameData.recordDamageToPlayer(defenderId, damageDealt);
             triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, defenderId, damageDealt);
         }
@@ -2290,6 +2295,7 @@ public class CombatDamageService {
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
                     gameData.recordDamageToPlayer(targetId, redirectEffective);
+                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, redirectEffective);
                 }
             } else {
@@ -2304,6 +2310,7 @@ public class CombatDamageService {
                     // destruction once the current damage event finishes.
                     targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
                     gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage);
+                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
                 }
             }
         }
@@ -2392,6 +2399,9 @@ public class CombatDamageService {
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
             state.combatDamageDealtToPlaneswalker.merge(atk, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
+            if (damage > 0) {
+                gameData.recordDamageRecipientBySource(atk.getId(), attackTarget);
+            }
             return;
         }
 
@@ -2468,8 +2478,43 @@ public class CombatDamageService {
                         combatRedirectTarget, damage);
                 return;
             }
+            UUID sourceCombatRedirectTargetId = damagePreventionService.findCombatDamageRedirectTargetFromSource(
+                    gameData, defenderId, atk.getId());
+            Permanent sourceCombatRedirectTarget = sourceCombatRedirectTargetId == null
+                    ? null : gameQueryService.findPermanentById(gameData, sourceCombatRedirectTargetId);
+            if (damage > 0 && sourceCombatRedirectTarget != null) {
+                List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
+                boolean targetIsAttacker = attackingBattlefield != null
+                        && attackingBattlefield.contains(sourceCombatRedirectTarget);
+                List<Permanent> redirectBattlefield = targetIsAttacker ? attackingBattlefield : defendingBattlefield;
+                int redirectTargetIdx = redirectBattlefield == null
+                        ? -1 : redirectBattlefield.indexOf(sourceCombatRedirectTarget);
+                if (redirectTargetIdx >= 0) {
+                    if (gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.hasProtectionFromDamageSource(
+                            gameData, sourceCombatRedirectTarget, atk)) {
+                        return;
+                    }
+                    if (targetIsAttacker) {
+                        applyCombatCreatureDamage(gameData, atk, atkStats, sourceCombatRedirectTarget,
+                                redirectTargetIdx, damage, state.atkDamageTaken,
+                                state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices,
+                                state.atkDamageTakenBySource);
+                    } else {
+                        applyCombatCreatureDamage(gameData, atk, atkStats, sourceCombatRedirectTarget,
+                                redirectTargetIdx, damage, state.defDamageTaken,
+                                state.unpreventableDefDamageTaken, state.deathtouchDamagedDefenderIndices,
+                                state.defDamageTakenBySource);
+                    }
+                    state.combatDamageDealt.merge(atk, damage, Integer::sum);
+                    recordCombatDamageToCreature(gameData, state, atk, gameData.activePlayerId,
+                            sourceCombatRedirectTarget, damage);
+                    return;
+                }
+            }
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
-            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage, true);
+            damage = damagePreventionService.applyTurnDamageRedirectToCreature(
+                    gameData, defenderId, null, atk.getId(), damage, true);
             processSourceRedirectDamage(gameData);
             // Martyrdom: redirect the next N combat damage to the defending player onto the creature
             // carrying the ability.
@@ -2617,6 +2662,10 @@ public class CombatDamageService {
             damage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
+        damage = damagePreventionService.applyAllCreatureDamageRedirectToController(
+                gameData, target, source.getId(), damage);
+        processSourceRedirectDamage(gameData);
+        if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
@@ -2655,6 +2704,10 @@ public class CombatDamageService {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
+        if (damagePreventionService.isCombatDamageFromCreatureBlockedByTargetPrevented(gameData, target, source)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
@@ -2667,6 +2720,10 @@ public class CombatDamageService {
         // Gideon's Intervention: prevent all combat damage to a creature you control from a source with the chosen name.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, source.getCard().getName())) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

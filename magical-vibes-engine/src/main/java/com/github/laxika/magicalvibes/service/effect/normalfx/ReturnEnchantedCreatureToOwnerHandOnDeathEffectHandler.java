@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,5 +60,15 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
         gameLogService.append(gameData, GameLog.builder().card(creatureCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
+
+        if (e.followUpManaCost() != null) {
+            int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+            if (effectIndex >= 0) {
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(new MayPayManaEffect(
+                        e.followUpManaCost(),
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        e.followUpPrompt())));
+            }
+        }
     }
 }

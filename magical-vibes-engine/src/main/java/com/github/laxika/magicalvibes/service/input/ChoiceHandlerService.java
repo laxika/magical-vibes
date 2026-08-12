@@ -158,6 +158,10 @@ public class ChoiceHandlerService {
             handleKeywordGrantChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.LandwalkGrantChoice ctx) {
+            handleLandwalkGrantChoice(gameData, player, colorName, ctx);
+            return;
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
             handleExileByNameChoice(gameData, colorName, ctx);
@@ -353,6 +357,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
             handleChooseNameRevealRandomHandCardDamageChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
+            handleChooseNameRevealRandomHandCardsDiscardChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
@@ -833,6 +841,31 @@ public class ChoiceHandlerService {
             String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " until end of turn."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), keywordName, target.getCard().getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
+                                           ChoiceContext.LandwalkGrantChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+        Keyword keyword = Keyword.LANDWALK_MAP.entrySet().stream()
+                .filter(entry -> entry.getValue() == subtype)
+                .map(java.util.Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid landwalk type: " + subtypeName));
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            target.getGrantedKeywords().add(keyword);
+            String keywordName = keyword.name().charAt(0)
+                    + keyword.name().substring(1).toLowerCase().replace('_', ' ');
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " gains " + keywordName + " until end of turn."));
+            log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(),
+                    keywordName, target.getCard().getName());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2354,6 +2387,54 @@ public class ChoiceHandlerService {
         damageSupport.resolveAnyTargetDamage(gameData, damageEntry, ctx.targetId(), ctx.damage(), false);
         stateBasedActionService.performStateBasedActions(gameData);
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Nebuchadnezzar: the controller has named a card; the target player reveals up to X distinct
+     * cards at random from their hand, then discards the matching revealed cards.
+     */
+    private void handleChooseNameRevealRandomHandCardsDiscardChoice(
+            GameData gameData, Player player, String cardName,
+            ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
+
+        if (hand == null || hand.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        int revealCount = Math.min(Math.max(ctx.revealCount(), 0), hand.size());
+        List<Card> shuffledHand = new ArrayList<>(hand);
+        Collections.shuffle(shuffledHand);
+        List<Card> revealed = new ArrayList<>(shuffledHand.subList(0, revealCount));
+
+        gameLogService.append(gameData,
+                appendCards(GameLog.builder().text(targetName + " reveals "), revealed)
+                        .text(" at random.").build());
+        cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, revealed);
+
+        List<Card> toDiscard = revealed.stream()
+                .filter(card -> card.getName().equals(cardName))
+                .toList();
+        gameData.discardCausedByOpponent = true;
+        for (Card card : toDiscard) {
+            hand.remove(card);
+            graveyardService.discardCard(gameData, targetPlayerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Static effect: "Prevent all damage that would be dealt to this creature by creatures." (e.g. Uncle Istvan)
  * <p>
@@ -10,6 +12,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code DamageSupport.dealCreatureDamage} via
  * {@code GameQueryService.isCreatureSourceDamageToSelfPrevented}. Damage from noncreature sources
  * (spells like Shock, artifacts, etc.) is unaffected.
+ *
+ * @param sourcePredicate optional restriction on the creature source; {@code null} matches every
+ *                        creature source
  */
-public record PreventDamageToSelfFromCreaturesEffect() implements CardEffect {
+public record PreventDamageToSelfFromCreaturesEffect(PermanentPredicate sourcePredicate) implements CardEffect {
+
+    public PreventDamageToSelfFromCreaturesEffect() {
+        this(null);
+    }
 }

@@ -110,6 +110,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -182,6 +183,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
@@ -564,6 +566,13 @@ public class PredicateEvaluationService {
                 }
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
                 yield host != null && gameQueryService.isCreature(gameData, host);
+            }
+            case PermanentIsAuraAttachedToLandPredicate ignored -> {
+                if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                yield host != null && gameQueryService.isLand(gameData, host);
             }
             case PermanentIsEnchantmentPredicate ignored -> {
                 if (gameData == null) {
@@ -1033,6 +1042,10 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                boolean sourceLeftBattlefield = sourcePermanent == null;
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
                 if (sourcePermanent == null) {
                     yield false;
                 }
@@ -1041,7 +1054,17 @@ public class PredicateEvaluationService {
                     yield true;
                 }
                 // Source is blocking target
-                yield sourcePermanent.isBlocking() && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
+                if (sourcePermanent.isBlocking() && sourcePermanent.getBlockingTargetIds().contains(permanent.getId())) {
+                    yield true;
+                }
+                // A death trigger may resolve after combat cleanup removed the dead attacker's ID
+                // from surviving blockers. The current-combat block record preserves that relationship.
+                yield sourceLeftBattlefield
+                        && filterContext != null
+                        && filterContext.sourcePermanentSnapshot() != null
+                        && gameData.combatBlockOpponentIdsThisCombat
+                                .getOrDefault(permanent.getId(), java.util.Set.of())
+                                .contains(sourcePermanent.getId());
             }
             case PermanentHasSameNameAsSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -1859,6 +1882,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
+            case StackEntryNotTargetedByNamedCreatureAbilityPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;
             case StackEntryTargetsSourcePredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;

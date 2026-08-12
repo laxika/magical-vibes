@@ -7,6 +7,11 @@ package com.github.laxika.magicalvibes.model;
  */
 public enum SpellCastTimingRestriction {
     /**
+     * "Cast this spell only during the declare attackers step." Teleport.
+     */
+    DECLARE_ATTACKERS,
+
+    /**
      * "Cast this spell only during the declare attackers step and only if you've been attacked
      * this step." Defiant Stand.
      */

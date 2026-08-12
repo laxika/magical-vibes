@@ -11,12 +11,29 @@ import java.util.List;
  *
  * <p>With zero counters on the source the cost is empty and nothing happens (no prompt, no
  * fallback). The fallback effects are resolved through the {@link ForcedCostOrElseEffect} plumbing,
- * so each of them must be one of the shapes that path supports.</p>
+ * so each of them must be one of the shapes that path supports. When {@code paidEffects} is
+ * nonempty, the payment instead uses the resolution-time may-pay path and resolves those effects
+ * after a successful payment.</p>
  *
  * @param counterType    counter kind that scales the payment (e.g. {@link CounterType#WAGE})
  * @param costPerCounter mana cost paid once per counter (e.g. {@code "{2}"})
  * @param elseEffects    what happens when the controller doesn't pay
+ * @param paidEffects    what happens when the controller pays
  */
-public record PayPerCounterOrElseEffect(CounterType counterType, String costPerCounter, List<CardEffect> elseEffects)
+public record PayPerCounterOrElseEffect(
+        CounterType counterType,
+        String costPerCounter,
+        List<CardEffect> elseEffects,
+        List<CardEffect> paidEffects)
         implements CardEffect {
+
+    public PayPerCounterOrElseEffect(CounterType counterType, String costPerCounter,
+                                     List<CardEffect> elseEffects) {
+        this(counterType, costPerCounter, elseEffects, List.of());
+    }
+
+    public PayPerCounterOrElseEffect {
+        elseEffects = elseEffects == null ? List.of() : List.copyOf(elseEffects);
+        paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
+    }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCounterThenPayCountersOrTa
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "261")
+@CardRegistration(set = "CHR", collectorNumber = "54")
 public class PrimordialOoze extends Card {
 
     public PrimordialOoze() {

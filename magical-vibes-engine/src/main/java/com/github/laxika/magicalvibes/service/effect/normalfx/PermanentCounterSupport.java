@@ -285,6 +285,7 @@ public class PermanentCounterSupport {
             case POLYP -> { target.setCounterCount(CounterType.POLYP, target.getCounterCount(CounterType.POLYP) + count); yield "polyp"; }
             case PLAGUE -> { target.setCounterCount(CounterType.PLAGUE, target.getCounterCount(CounterType.PLAGUE) + count); yield "plague"; }
             case QUEST -> { target.setCounterCount(CounterType.QUEST, target.getCounterCount(CounterType.QUEST) + count); yield "quest"; }
+            case PUPA -> { target.setCounterCount(CounterType.PUPA, target.getCounterCount(CounterType.PUPA) + count); yield "pupa"; }
             case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
             case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             case TOWER -> { target.setCounterCount(CounterType.TOWER, target.getCounterCount(CounterType.TOWER) + count); yield "tower"; }
@@ -301,6 +302,7 @@ public class PermanentCounterSupport {
             case PAIN -> { target.setCounterCount(CounterType.PAIN, target.getCounterCount(CounterType.PAIN) + count); yield "pain"; }
             case PARALYZATION -> { target.setCounterCount(CounterType.PARALYZATION, target.getCounterCount(CounterType.PARALYZATION) + count); yield "paralyzation"; }
             case PETRIFICATION -> { target.setCounterCount(CounterType.PETRIFICATION, target.getCounterCount(CounterType.PETRIFICATION) + count); yield "petrification"; }
+            case PIN -> { target.setCounterCount(CounterType.PIN, target.getCounterCount(CounterType.PIN) + count); yield "pin"; }
             case FUNGUS -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);

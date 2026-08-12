@@ -46,7 +46,7 @@ public class TimmerianFiendsAnteExchangeHandler implements MayEffectHandlerBean 
 
         if (accepted && library != null && !library.isEmpty()) {
             Card anted = library.removeFirst();
-            gameData.addToExile(ownerId, anted);
+            gameData.addToAnte(ownerId, anted);
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
             log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
                     ability.sourceCard().getName());

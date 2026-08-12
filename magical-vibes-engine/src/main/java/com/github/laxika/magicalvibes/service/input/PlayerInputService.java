@@ -552,6 +552,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
+    public void beginLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
+        ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext,
+                List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST"),
+                "Choose a basic land type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a basic land type for landwalk", gameData.id, playerName);
+    }
+
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
         beginSubtypeChoice(gameData, playerId, permanentId, List.of());
     }

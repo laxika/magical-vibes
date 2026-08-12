@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "170")
+@CardRegistration(set = "CHR", collectorNumber = "42")
 public class YawgmothDemon extends Card {
 
     public YawgmothDemon() {

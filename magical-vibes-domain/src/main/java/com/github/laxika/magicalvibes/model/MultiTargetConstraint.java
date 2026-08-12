@@ -37,5 +37,7 @@ public enum MultiTargetConstraint {
     /** At most one chosen target may belong to each player. */
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */
-    ONE_PER_CONTROLLER_IF_ABLE
+    ONE_PER_CONTROLLER_IF_ABLE,
+    /** The second target must be another creature or land of the Aura's current host type. */
+    SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST
 }

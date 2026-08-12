@@ -20,11 +20,14 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUp
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -101,6 +104,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -304,6 +308,10 @@ public class StepTriggerService {
         // "… until your next upkeep" (Cycle of Life): the floating layer-7b effect ends as the
         // upkeep begins, before the delayed trigger below puts its counter on the creature.
         gameData.expireFloatingEffectsAtUpkeep(gameData.activePlayerId);
+        gameData.forEachPermanent((playerId, permanent) ->
+                permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId));
+        gameData.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(permanent ->
+                permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId)));
 
         // Spatial Binding: "Until your next upkeep, target permanent can't phase out." Phasing is a
         // turn-based action of the untap step (CR 502.1), which has already passed, so clearing here
@@ -516,6 +524,30 @@ public class StepTriggerService {
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers — transform."));
                 log.info("Game {} - {} delayed transform-at-next-upkeep trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(GrantChosenLandwalkAtNextUpkeep.class)) {
+            List<GrantChosenLandwalkAtNextUpkeep> pending = gameData.drainDelayedActions(
+                    GrantChosenLandwalkAtNextUpkeep.class,
+                    action -> action.controllerId().equals(gameData.activePlayerId));
+            for (GrantChosenLandwalkAtNextUpkeep action : pending) {
+                if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
+                    continue;
+                }
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new GrantChosenLandwalkEffect(GrantScope.SELF))),
+                        null,
+                        action.permanentId()));
+                gameData.stack.getLast().setNonTargeting(true);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed landwalk trigger pushed onto stack",
                         gameData.id, action.sourceCard().getName());
             }
         }
@@ -1044,10 +1076,17 @@ public class StepTriggerService {
 
         // Check all battlefields for EACH_UPKEEP_TRIGGERED effects
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> eachUpkeepEffects = perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED);
+            List<CardEffect> eachUpkeepEffects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
+            eachUpkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
+            eachUpkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
             if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
             for (CardEffect effect : eachUpkeepEffects) {
+                if (effect instanceof UpkeepPlayerDependentEffect playerDependent
+                        && !playerDependent.triggersFor(activePlayerId)) {
+                    continue;
+                }
                 // Intervening-if: werewolf transform conditions checked at trigger time
                 if (effect instanceof ConditionalEffect conditional
                         && (conditional.condition() instanceof NoSpellsCastLastTurn

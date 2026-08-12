@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "392")
+@CardRegistration(set = "CHR", collectorNumber = "104")
 public class ObeliskOfUndoing extends Card {
 
     public ObeliskOfUndoing() {

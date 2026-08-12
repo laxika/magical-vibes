@@ -60,6 +60,8 @@ public class ActivatedAbility {
     private int opponentChosenTargetIndex = -1;
     /** Filter used when presenting the opponent's target choice. */
     private TargetFilter opponentChosenTargetFilter;
+    /** Whether the ability's controller chooses which opponent makes the target choice. */
+    private boolean controllerChoosesOpponentForTarget;
     /** Whether the same permanent may be selected in more than one target group. */
     private boolean allowSharedTargets;
     /** Counter type the source permanent must carry at least {@link #requiredSourceCounterCount} of to activate (e.g. Edifice of Authority's "three or more brick counters on this artifact"). Null = no such restriction. Set via {@link #withRequiredSourceCounters}. */
@@ -239,6 +241,7 @@ public class ActivatedAbility {
         copy.multiTargetConstraint = this.multiTargetConstraint;
         copy.opponentChosenTargetIndex = this.opponentChosenTargetIndex;
         copy.opponentChosenTargetFilter = this.opponentChosenTargetFilter;
+        copy.controllerChoosesOpponentForTarget = this.controllerChoosesOpponentForTarget;
         copy.allowSharedTargets = this.allowSharedTargets;
         copy.requiredSourceCounterType = this.requiredSourceCounterType;
         copy.requiredSourceCounterCount = this.requiredSourceCounterCount;
@@ -332,6 +335,14 @@ public class ActivatedAbility {
     public ActivatedAbility withOpponentChosenTarget(int targetIndex, TargetFilter targetFilter) {
         this.opponentChosenTargetIndex = targetIndex;
         this.opponentChosenTargetFilter = targetFilter;
+        return this;
+    }
+
+    /** Marks one target position as chosen by an opponent selected by the ability's controller. */
+    public ActivatedAbility withOpponentChosenTargetByController(int targetIndex, TargetFilter targetFilter) {
+        this.opponentChosenTargetIndex = targetIndex;
+        this.opponentChosenTargetFilter = targetFilter;
+        this.controllerChoosesOpponentForTarget = true;
         return this;
     }
 

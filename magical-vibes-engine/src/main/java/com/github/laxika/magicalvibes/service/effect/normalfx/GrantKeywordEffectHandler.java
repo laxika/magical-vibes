@@ -58,7 +58,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 // Layer-6 floating effect as well as the legacy bucket, so a grant resolving after
                 // an "all creatures you control lose all abilities" on the same entry survives it
                 // (CR 613.7 timestamp order) — Dragonshift overloaded.
-                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                addLegacyBucket(permanent, grant);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(), grant,
                         permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
@@ -83,7 +83,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
-                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                addLegacyBucket(permanent, grant);
                 count++;
             }
 
@@ -112,7 +112,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                             && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                         continue;
                     }
-                    bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                    addLegacyBucket(permanent, grant);
                     count++;
                 }
             }
@@ -137,7 +137,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     return;
                 }
-                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                addLegacyBucket(permanent, grant);
                 count[0]++;
             });
 
@@ -229,10 +229,18 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     private EffectDuration floatingDurationFor(GrantDuration duration) {
         return switch (duration) {
             case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
+            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
             case INDEFINITE -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
         };
+    }
+
+    private void addLegacyBucket(Permanent permanent, GrantKeywordEffect grant) {
+        if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                && grant.duration() != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
+            bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+        }
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
@@ -246,6 +254,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     private String durationLabel(GrantDuration duration) {
         return switch (duration) {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
             case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";
             case INDEFINITE -> "indefinitely";
             case END_OF_TURN -> "until end of turn";

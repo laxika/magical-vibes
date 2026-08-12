@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static replacement effect: "If a creature dealt damage by this creature this turn would die, exile
- * it instead."
+ * Replacement effect: "If a creature dealt damage by this creature this turn would die, exile it
+ * instead." It may be a printed static effect or an effect granted to a targeted permanent until
+ * end of turn.
  *
  * <p>Only replaces a creature moving from the battlefield to a graveyard (dying), and only for
  * creatures recorded in {@code GameData.creatureCardsDamagedThisTurnBySourcePermanent} under this

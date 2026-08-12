@@ -982,6 +982,7 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (effectiveDamage > 0) {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                        gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                         if (gameQueryService.isCreature(gameData, permanent)) {
@@ -1110,6 +1111,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 if (gameQueryService.isCreature(gameData, permanent)) {

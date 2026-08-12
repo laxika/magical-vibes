@@ -2010,8 +2010,8 @@ public class TriggerCollectionService {
                 switch (counterEffect.ransomKind()) {
                     case PAY_MANA -> {
                         String paymentText = counterEffect instanceof CounterUnlessPaysEffect pays
-                                && pays.amount() == 0 && pays.lifeCost() > 0
-                                ? pays.lifeCost() + " life"
+                                ? (pays.manaCost() != null ? pays.manaCost() : "{" + pays.amount() + "}")
+                                        + (pays.lifeCost() > 0 ? " and " + pays.lifeCost() + " life" : "")
                                 : "{" + counterEffect.ransomMagnitude() + "}";
                         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                                 "'s triggered ability triggers — counter unless controller pays "

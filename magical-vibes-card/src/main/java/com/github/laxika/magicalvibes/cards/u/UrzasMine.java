@@ -12,6 +12,10 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "427")
 @CardRegistration(set = "9ED", collectorNumber = "327")
 @CardRegistration(set = "8ED", collectorNumber = "328")
+@CardRegistration(set = "CHR", collectorNumber = "114a")
+@CardRegistration(set = "CHR", collectorNumber = "114b")
+@CardRegistration(set = "CHR", collectorNumber = "114c")
+@CardRegistration(set = "CHR", collectorNumber = "114d")
 public class UrzasMine extends Card {
 
     public UrzasMine() {

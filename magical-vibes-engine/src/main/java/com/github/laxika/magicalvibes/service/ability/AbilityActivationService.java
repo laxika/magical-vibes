@@ -2103,33 +2103,48 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Invalid first target");
             }
 
-            TargetFilter firstTargetFilter = ability.getMultiTargetFilters().getFirst();
-            Permanent firstTarget = gameQueryService.findPermanentById(gameData, targetId);
-            if (firstTarget == null || !validTargetService.isValidAbilityPermanentTargetForPosition(
-                    gameData, permanent.getCard(), ability, firstTarget, playerId, permanentIndex, firstTargetFilter)) {
+            var validFirstTargets = validTargetService.computeValidTargetsForAbility(
+                    gameData, permanent.getCard(), ability, playerId, permanentIndex, List.of(), effectiveXValue);
+            if (!validFirstTargets.validPermanentIds().contains(targetId)
+                    && !validFirstTargets.validPlayerIds().contains(targetId)) {
                 throw new IllegalStateException("Invalid first target");
             }
 
-            UUID choosingPlayerId = gameQueryService.findPermanentController(gameData, targetId);
-            if (choosingPlayerId == null || choosingPlayerId.equals(playerId)) {
-                throw new IllegalStateException("The first target must be controlled by an opponent");
+            UUID choosingPlayerId;
+            if (ability.isControllerChoosesOpponentForTarget()) {
+                choosingPlayerId = gameData.orderedPlayerIds.stream()
+                        .filter(opponentId -> !opponentId.equals(playerId))
+                        .findFirst()
+                        .orElse(null);
+                if (choosingPlayerId == null) {
+                    throw new IllegalStateException("No opponent can choose the second target");
+                }
+            } else {
+                choosingPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+                if (choosingPlayerId == null || choosingPlayerId.equals(playerId)) {
+                    throw new IllegalStateException("The first target must be controlled by an opponent");
+                }
             }
-            TargetFilter opponentTargetFilter = ability.getOpponentChosenTargetFilter();
-            List<UUID> validOpponentTargetIds = gameData.playerBattlefields.values().stream()
-                    .flatMap(List::stream)
-                    .filter(candidate -> validTargetService.isValidAbilityPermanentTargetForPosition(
-                            gameData, permanent.getCard(), ability, candidate, playerId, permanentIndex,
-                            opponentTargetFilter))
-                    .map(Permanent::getId)
-                    .toList();
+
+            var validSecondTargets = validTargetService.computeValidTargetsForAbility(
+                    gameData, permanent.getCard(), ability, playerId, permanentIndex,
+                    List.of(targetId), effectiveXValue);
+            List<UUID> validOpponentTargetIds = new ArrayList<>(validSecondTargets.validPermanentIds());
+            validOpponentTargetIds.addAll(validSecondTargets.validPlayerIds());
             if (validOpponentTargetIds.isEmpty()) {
                 throw new IllegalStateException("No legal second target");
             }
 
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityOpponentTarget(
                     playerId, choosingPlayerId, permanent.getId(), effectiveIndex, effectiveXValue, targetId, targetZone));
-            playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validOpponentTargetIds,
-                    permanent.getCard().getName() + " — choose the second target.");
+            if (!validSecondTargets.validPlayerIds().isEmpty()) {
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
+                        validSecondTargets.validPermanentIds(), validSecondTargets.validPlayerIds(),
+                        permanent.getCard().getName() + " — choose the second target.");
+            } else {
+                playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validOpponentTargetIds,
+                        permanent.getCard().getName() + " — choose the second target.");
+            }
             mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }

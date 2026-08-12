@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ public class TriggerTargetCollector {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetLegalityService targetLegalityService;
 
     /**
      * Result of a target-collection pass.
@@ -225,6 +227,10 @@ public class TriggerTargetCollector {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
+                    if (gameQueryService.cantBeTargetedByWallOnlySources(gameData, p)
+                            && targetLegalityService.sourceCanTargetOnlyWalls(sourceCard, effects, targetFilter)) {
+                        continue;
+                    }
 
                     if (declaredTargetRestriction != null && !predicateEvaluationService.matchesPermanentPredicate(
                             p, declaredTargetRestriction, declaredTargetFilterCtx)) {

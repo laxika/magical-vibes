@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "10")
+@CardRegistration(set = "CHR", collectorNumber = "81")
 public class NicolBolas extends Card {
 
     public NicolBolas() {

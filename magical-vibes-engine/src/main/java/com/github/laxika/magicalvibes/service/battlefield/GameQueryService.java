@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -107,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -148,6 +150,8 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedSpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
@@ -3425,11 +3429,29 @@ public class GameQueryService {
      */
     public boolean isCreatureSourceDamageToSelfPrevented(GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource) {
         if (!isDamagePreventable(gameData)) return false;
-        if (target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .noneMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)) {
+        boolean preventsAllCreatureDamage = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance);
+        boolean preventsDamageFromBlockedCreature = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance);
+        if (!preventsAllCreatureDamage && !preventsDamageFromBlockedCreature) return false;
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        Permanent sourcePermanent = source;
+        if (preventsAllCreatureDamage && sourcePermanent != null && isCreature(gameData, sourcePermanent)
+                && target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
+                .map(PreventDamageToSelfFromCreaturesEffect.class::cast)
+                .anyMatch(effect -> effect.sourcePredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, sourcePermanent, effect.sourcePredicate()))) {
+            return true;
+        }
+        if (!preventsDamageFromBlockedCreature) {
             return false;
         }
-        return isDamageSourceCreature(gameData, entry, explicitSource);
+        return source != null && isCreature(gameData, source)
+                && target.isBlocking() && target.getBlockingTargetIds().contains(source.getId());
     }
 
     public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
@@ -3580,6 +3602,23 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent cannot be targeted by a source whose legal
+     * targets are restricted to Walls.
+     */
+    public boolean cantBeTargetedByWallOnlySources(GameData gameData, Permanent target) {
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (target.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities()) {
+            return false;
+        }
+        if (target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(WallOnlyTargetingRestrictionEffect.class::isInstance)) {
+            return true;
+        }
+        return bonus.grantedEffects().stream()
+                .anyMatch(WallOnlyTargetingRestrictionEffect.class::isInstance);
     }
 
     private static boolean isAnySpellRestriction(CardEffect effect) {
@@ -3909,6 +3948,23 @@ public class GameQueryService {
     /** Returns whether a targeted instant or sorcery spell has its damage prevented this turn. */
     public boolean isDamageFromTargetSpellPrevented(GameData gameData, StackEntry entry) {
         return getTargetSpellDamagePreventionShield(gameData, entry) != null;
+    }
+
+    /** Returns whether a spell that targets the given permanent has its damage prevented there. */
+    public boolean isDamageFromTargetingSpellPrevented(GameData gameData, StackEntry entry, Permanent target) {
+        if (!isDamagePreventable(gameData) || entry == null || target == null
+                || !isSpellStackEntry(entry.getEntryType())) {
+            return false;
+        }
+        UUID targetId = target.getId();
+        if (!targetId.equals(entry.getTargetId()) && !entry.getTargetIds().contains(targetId)) {
+            return false;
+        }
+        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(TargetedSpellDamagePreventionEffect.class::isInstance)
+                .map(TargetedSpellDamagePreventionEffect.class::cast)
+                .anyMatch(effect -> effect.condition() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.condition()));
     }
 
     /**
@@ -5277,6 +5333,28 @@ public class GameQueryService {
      *  permanent from being declared as an attacker. */
     public boolean isLockedFromAttacking(GameData gameData, UUID permanentId) {
         return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksAttacking);
+    }
+
+    /** Whether the given attacker skips tapping because of an active combat permission. */
+    public boolean attackingDoesNotCauseTapping(GameData gameData, Permanent attacker) {
+        UUID attackerControllerId = findPermanentController(gameData, attacker.getId());
+        if (attackerControllerId == null) {
+            return false;
+        }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
+                if (!attackerControllerId.equals(floatingEffect.controllerId())
+                        || !(floatingEffect.effect() instanceof AttackWithoutTappingPermissionEffect permission)
+                        || !permission.allowsAttackingWithoutTapping()) {
+                    continue;
+                }
+                Permanent source = findPermanentById(gameData, floatingEffect.sourcePermanentId());
+                if (source != null && !source.isTapped()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

@@ -617,6 +617,7 @@ public class CastingPermissionService {
         SpellCastTimingRestriction restriction = card.getSpellCastTimingRestriction();
         if (restriction == null) return true;
         return switch (restriction) {
+            case DECLARE_ATTACKERS -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS;
             case DECLARE_ATTACKERS_IF_ATTACKED ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                             && gameQueryService.isPlayerBeingAttacked(gameData, playerId);

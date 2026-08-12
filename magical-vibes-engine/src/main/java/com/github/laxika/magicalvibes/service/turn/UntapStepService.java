@@ -194,7 +194,7 @@ public class UntapStepService {
                 // long as it has such a counter — source-independent continuous rule.
                 boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
                 // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
-                boolean hasCounterLock = counterLockPreventsUntap(p);
+                boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
                 boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
@@ -402,7 +402,7 @@ public class UntapStepService {
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
-            boolean hasCounterLock = counterLockPreventsUntap(p);
+            boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
             boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
                     && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock
@@ -456,16 +456,21 @@ public class UntapStepService {
      * currently has at least one counter of that type on it (Land Cap and the other Ice Age
      * depletion lands).
      */
-    private boolean counterLockPreventsUntap(Permanent permanent) {
-        return hasActiveCounterLock(permanent, permanent.getCard().getEffects(EffectSlot.STATIC))
+    private boolean counterLockPreventsUntap(GameData gameData, Permanent permanent) {
+        return hasActiveCounterLock(permanent, permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
-                || hasActiveCounterLock(permanent, permanent.getPersistentTriggeredEffects(EffectSlot.STATIC));
+                || hasActiveCounterLock(permanent, permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF)
+                || gameData.anyPermanentMatches(source -> source.isAttached()
+                        && source.getAttachedTo().equals(permanent.getId())
+                        && (hasActiveCounterLock(source, source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)
+                        || hasActiveCounterLock(source, source.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)));
     }
 
-    private static boolean hasActiveCounterLock(Permanent permanent, List<CardEffect> effects) {
+    private static boolean hasActiveCounterLock(Permanent permanent, List<CardEffect> effects, TapUntapScope scope) {
         return effects.stream()
                 .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
+                        && lock.scope() == scope
                         && permanent.getCounterCount(lock.counterType()) > 0);
     }
 

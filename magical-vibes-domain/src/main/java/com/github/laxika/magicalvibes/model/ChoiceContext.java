@@ -140,6 +140,9 @@ public sealed interface ChoiceContext {
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
+    /** Choosing a basic land type for a plain landwalk grant until end of turn. */
+    record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
+
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
 
     /**
@@ -440,6 +443,14 @@ public sealed interface ChoiceContext {
      */
     record ChooseNameRevealRandomHandCardDamageChoice(UUID controllerId, UUID targetId, UUID sourcePermanentId,
                                                      Card sourceCard, int damage) implements ChoiceContext {}
+
+    /**
+     * Nebuchadnezzar: the controller names a card, then the target player reveals cards at random
+     * from their hand and discards the revealed cards with the chosen name.
+     */
+    record ChooseNameRevealRandomHandCardsDiscardChoice(UUID controllerId, UUID targetPlayerId,
+                                                        Card sourceCard, int revealCount)
+            implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

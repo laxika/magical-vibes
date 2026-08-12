@@ -194,6 +194,7 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                gameData.combatBlockOpponentIdsThisCombat.clear();
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 combatService.handleDeclareAttackersStep(gameData);

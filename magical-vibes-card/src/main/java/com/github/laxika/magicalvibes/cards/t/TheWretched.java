@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAtEndOfCombatEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "197")
+@CardRegistration(set = "CHR", collectorNumber = "39")
 public class TheWretched extends Card {
 
     public TheWretched() {

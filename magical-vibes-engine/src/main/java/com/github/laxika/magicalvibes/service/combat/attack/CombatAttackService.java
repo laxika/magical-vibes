@@ -427,7 +427,7 @@ public class CombatAttackService {
             }
         }
 
-        // Mark creatures as attacking and tap them (vigilance skips tapping)
+        // Mark creatures as attacking and tap them unless vigilance or a combat permission skips it.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
@@ -439,7 +439,8 @@ public class CombatAttackService {
             if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
             }
-            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)
+                    && !gameQueryService.attackingDoesNotCauseTapping(gameData, attacker)) {
                 attacker.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
             }

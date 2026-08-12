@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,8 +29,11 @@ public class PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffectHandler 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
+        UUID sourceId = entry.getTargetId() != null
+                ? entry.getTargetId()
+                : entry.getSourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        if (source == null || !gameQueryService.isCreature(gameData, source)) {
             return;
         }
 

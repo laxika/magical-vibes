@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "112")
+@CardRegistration(set = "CHR", collectorNumber = "28")
 public class WallOfWonder extends Card {
 
     public WallOfWonder() {

@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesCondi
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
@@ -80,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -475,7 +477,7 @@ public class DeathTriggerCollectorService {
             // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
             // permanent has already left the battlefield — turn-scoped trackers are keyed by id.
             UUID sourcePermanentId = triggerEffect instanceof ConditionalEffect ? match.permanent().getId() : null;
-            match.gameData().stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sd.dyingCard(),
                     sd.controllerId(),
@@ -483,7 +485,9 @@ public class DeathTriggerCollectorService {
                     new ArrayList<>(List.of(triggerEffect)),
                     null,
                     sourcePermanentId
-            ));
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            match.gameData().stack.add(entry);
         }
         return true;
     }
@@ -613,6 +617,18 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleReturnSourceAuraOrNonAura(TriggerMatchContext match,
+            ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        CardEffect effectForStack = epd.dyingPermanentControllerId() != null
+                ? new ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect(epd.dyingPermanentControllerId())
+                : effect;
+        addEnchantedPermanentDeathEntry(match, effectForStack);
+        return true;
+    }
+
     @CollectsTrigger(value = ReturnSourceAuraToSharedTypeCreatureOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnSourceAuraSharedType(TriggerMatchContext match,
             ReturnSourceAuraToSharedTypeCreatureOnDeathEffect effect, TriggerContext ctx) {
@@ -632,7 +648,8 @@ public class DeathTriggerCollectorService {
             ReturnEnchantedCreatureToOwnerHandOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
         CardEffect effectForStack = epd.dyingCreatureCardId() != null
-                ? new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(epd.dyingCreatureCardId())
+                ? new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(epd.dyingCreatureCardId(),
+                        effect.followUpManaCost(), effect.followUpPrompt())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
         return true;
@@ -1864,6 +1881,22 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DestroyTokensCreatedWithSourceEffect(
                         effect.cannotBeRegenerated(), match.permanent().getId())))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTokensCreatedWithSourceEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleExileTokensCreatedWithSourceOnLeave(TriggerMatchContext match,
+            ExileTokensCreatedWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(match.permanent().getId())))
         ));
         logSelfLeaves(match);
         return true;

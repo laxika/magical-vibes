@@ -153,9 +153,10 @@ public class MayPenaltyChoiceHandlerService {
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
         UUID targetCardId = ability.targetCardId();
-        String costText = amount == 0 && lifeCost > 0
+        String manaCost = effect.manaCost() != null ? effect.manaCost() : "{" + amount + "}";
+        String costText = manaCost.equals("{0}") && lifeCost > 0
                 ? lifeCost + " life"
-                : "{" + amount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
+                : manaCost + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
@@ -186,7 +187,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted) {
-            ManaCost cost = new ManaCost("{" + amount + "}");
+            ManaCost cost = new ManaCost(manaCost);
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             boolean canPayLife = lifeCost <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, player.getId())

@@ -21,6 +21,9 @@ public enum GrantDuration {
     /** Lasts until the start of the controller's next turn (via {@code Permanent.untilNextTurnKeywords}). */
     UNTIL_YOUR_NEXT_TURN,
 
+    /** Lasts until the beginning of the effect controller's next upkeep. */
+    UNTIL_YOUR_NEXT_UPKEEP,
+
     /**
      * "for as long as you control [source]" (Aegis Angel). Neither temporary bucket applies: the
      * grant is stamped as an {@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD} floating layer-6

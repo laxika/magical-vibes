@@ -1861,6 +1861,9 @@ public class CombatBlockService {
         gameData.combatBlockOpponentIdsThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());
+        gameData.combatBlockOpponentIdsThisCombat
+                .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(opponent.getId());
         if (gameQueryService.hasKeyword(gameData, opponent, Keyword.CHANGELING)) {
             gameData.creaturesInCombatWithChangelingThisTurn.add(creature.getId());
         }

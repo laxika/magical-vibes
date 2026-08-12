@@ -172,13 +172,14 @@ combat damage step is processed.
 | `ON_EXPLOIT` | `TriggerCollectionService.checkExploitTriggers` | Exploit |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
+| `ON_DAMAGED_CREATURE_DIES` (targeting effects) | `GraveyardService.enqueueDamagedCreatureDiesTriggers` → `SelfTriggeredAbilityTarget`; the target is chosen as the trigger is put on the stack. Non-targeting effects are pushed directly. | Damaged-creature death (reuses `Options.END_STEP`) |
 | Planeswalker ultimate emblems | `DrawService` / `TriggerCollectionService` | Emblem |
 | `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
 
 Slots that currently **only ever push non-targeting entries** (no pending queue):
 `ON_TAP`, `STATIC`, `ON_SACRIFICE`, `ON_BLOCK` (only the non-targeting "that creature" flavour; the targeting variant is routed through the Attack pipeline — see the mapping table above),
 `GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
-`ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
+`ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
 `ON_COMBAT_DAMAGE_TO_PLAYER`, `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`,

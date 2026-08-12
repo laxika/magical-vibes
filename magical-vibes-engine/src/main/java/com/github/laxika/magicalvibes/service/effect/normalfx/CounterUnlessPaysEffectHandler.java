@@ -46,7 +46,8 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         }
         UUID targetControllerId = targetEntry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
-        ManaCost cost = new ManaCost("{" + payAmount + "}");
+        String manaCost = e.manaCost() != null ? e.manaCost() : "{" + payAmount + "}";
+        ManaCost cost = new ManaCost(manaCost);
         int lifeCost = e.lifeCost();
         boolean canPayLife = lifeCost <= 0
                 || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
@@ -61,15 +62,15 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
             counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());
         } else {
-            String costText = payAmount == 0 && lifeCost > 0
+            String costText = manaCost.equals("{0}") && lifeCost > 0
                     ? lifeCost + " life"
-                    : "{" + payAmount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
+                    : manaCost + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
             String prompt = "Pay " + costText + " to prevent "
                     + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
                     List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
-                            null, e.onNotPaidEffects(), lifeCost)),
+                            null, e.onNotPaidEffects(), lifeCost, e.manaCost())),
                     prompt, targetCardId
             ));
         }

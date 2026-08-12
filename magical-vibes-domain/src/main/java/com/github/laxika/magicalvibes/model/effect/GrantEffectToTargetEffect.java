@@ -50,6 +50,12 @@ public record GrantEffectToTargetEffect(
         return new GrantEffectToTargetEffect(slot, grantedEffect, duration, false, GrantScope.ENCHANTED_PERMANENT);
     }
 
+    /** Grants a triggered ability to the resolving source permanent without targeting it. */
+    public static GrantEffectToTargetEffect toSource(EffectSlot slot, CardEffect grantedEffect,
+                                                     EffectDuration duration) {
+        return new GrantEffectToTargetEffect(slot, grantedEffect, duration, true, GrantScope.SELF);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;

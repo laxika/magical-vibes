@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "6ED", collectorNumber = "219")
 @CardRegistration(set = "5ED", collectorNumber = "282")
+@CardRegistration(set = "CHR", collectorNumber = "58")
 public class CatWarriors extends Card {
 
     public CatWarriors() {

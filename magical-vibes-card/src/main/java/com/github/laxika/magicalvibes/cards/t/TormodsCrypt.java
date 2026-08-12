@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "219")
 @CardRegistration(set = "M15", collectorNumber = "237")
+@CardRegistration(set = "CHR", collectorNumber = "109")
 public class TormodsCrypt extends Card {
 
     public TormodsCrypt() {

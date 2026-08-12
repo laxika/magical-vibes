@@ -18,11 +18,20 @@ import java.util.List;
  *                          lands with mana abilities they control and lose all unspent mana"
  * @param lifeCost          additional life that must be paid together with the mana (Mundungu:
  *                          "{1} and 1 life"); {@code 0} means mana only
+ * @param manaCost          exact mana cost to pay when non-null (e.g. Ayesha Tanaka's "{W}"); when
+ *                          null, the payment is the generic amount resolved from the other fields
  */
 public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
                                       DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects,
-                                      int lifeCost)
+                                      int lifeCost, String manaCost)
         implements CounterSpellingEffect, CounterUnlessEffect {
+
+    /** Backward-compatible fixed-amount counter-unless-pays constructor. */
+    public CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
+                                   DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects,
+                                   int lifeCost) {
+        this(amount, useXValue, exileIfCountered, dynamicAmount, onNotPaidEffects, lifeCost, null);
+    }
 
     /** Fixed-amount counter-unless-pays (e.g. Mana Leak). */
     public CounterUnlessPaysEffect(int amount) {
@@ -31,16 +40,21 @@ public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exi
 
     /** Counter unless pays {@code amount} mana and {@code lifeCost} life (Mundungu). */
     public CounterUnlessPaysEffect(int amount, int lifeCost) {
-        this(amount, false, false, null, List.of(), lifeCost);
+        this(amount, false, false, null, List.of(), lifeCost, null);
     }
 
     public CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered) {
-        this(amount, useXValue, exileIfCountered, null, List.of(), 0);
+        this(amount, useXValue, exileIfCountered, null, List.of(), 0, null);
     }
 
     /** Dynamic-amount counter-unless-pays ("{1} for each …", Spell Syphon). */
     public CounterUnlessPaysEffect(DynamicAmount dynamicAmount) {
-        this(0, false, false, dynamicAmount, List.of(), 0);
+        this(0, false, false, dynamicAmount, List.of(), 0, null);
+    }
+
+    /** Counter unless pays an exact mana cost, including colored symbols (e.g. Ayesha Tanaka). */
+    public CounterUnlessPaysEffect(String manaCost) {
+        this(0, false, false, null, List.of(), 0, manaCost);
     }
 
     /**
@@ -49,7 +63,7 @@ public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exi
      */
     public CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
                                    List<CardEffect> onNotPaidEffects) {
-        this(amount, useXValue, exileIfCountered, null, onNotPaidEffects, 0);
+        this(amount, useXValue, exileIfCountered, null, onNotPaidEffects, 0, null);
     }
 
     @Override

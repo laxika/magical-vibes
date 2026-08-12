@@ -46,6 +46,17 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourcePermanentId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            Permanent source = sourcePermanentId == null
+                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (source != null) {
+                grantTo(gameData, entry, e, source);
+            }
+            return;
+        }
+
         List<UUID> ids = entry.targetsForEffect(effect);
         if (ids.isEmpty() && entry.getTargetId() != null) {
             ids = List.of(entry.getTargetId());
@@ -72,12 +83,17 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
 
         if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
+        } else if (e.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP) {
+            target.addUntilNextUpkeepTriggeredEffect(entry.getControllerId(), e.slot(), e.grantedEffect());
         } else {
             target.addPersistentTriggeredEffect(e.slot(), e.grantedEffect());
         }
 
-        String durationText = e.duration() == EffectDuration.UNTIL_END_OF_TURN
-                ? " until end of turn" : "";
+        String durationText = switch (e.duration()) {
+            case UNTIL_END_OF_TURN -> " until end of turn";
+            case UNTIL_CONTROLLERS_NEXT_UPKEEP -> " until your next upkeep";
+            default -> "";
+        };
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" grants a " + e.slot().name() + " ability to ")

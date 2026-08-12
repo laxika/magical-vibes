@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayPerCounterOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,10 +43,26 @@ public class PayPerCounterOrElseEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        ForcedCostOrElseEffect payOrElse = new ForcedCostOrElseEffect(
-                new PayManaCost(e.costPerCounter().repeat(counters)),
-                e.elseEffects(),
-                true);
-        forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrElse);
+        String totalCost = e.costPerCounter().repeat(counters);
+        if (e.paidEffects().isEmpty()) {
+            ForcedCostOrElseEffect payOrElse = new ForcedCostOrElseEffect(
+                    new PayManaCost(totalCost),
+                    e.elseEffects(),
+                    true);
+            forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrElse);
+            return;
+        }
+
+        CardEffect paid = oneOrSequence(e.paidEffects());
+        CardEffect unpaid = e.elseEffects().isEmpty() ? null : oneOrSequence(e.elseEffects());
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (effectIndex >= 0) {
+            entry.insertEffectsToResolve(effectIndex + 1, List.of(new MayPayManaEffect(
+                    totalCost, paid, "Pay " + totalCost + "?", unpaid)));
+        }
+    }
+
+    private CardEffect oneOrSequence(List<CardEffect> effects) {
+        return effects.size() == 1 ? effects.getFirst() : new SequenceEffect(effects);
     }
 }
