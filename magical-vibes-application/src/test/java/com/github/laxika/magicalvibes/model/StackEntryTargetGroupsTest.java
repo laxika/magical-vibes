@@ -44,6 +44,56 @@ class StackEntryTargetGroupsTest {
     }
 
     @Test
+    @DisplayName("Updating the current target during resolution does not shift flat target groups")
+    void currentResolutionTargetDoesNotShiftFlatTargetGroups() {
+        Card card = new Card();
+        card.target(1, 1);
+        card.target(1, 1);
+        card.target(1, 1);
+
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+        StackEntry entry = spellEntry(card, List.of(first, second, third));
+
+        entry.setTargetId(first);
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(first);
+        assertThat(entry.targetsForGroup(1)).containsExactly(second);
+        assertThat(entry.targetsForGroup(2)).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("A separately stored primary target keeps later flat target groups aligned")
+    void separatelyStoredPrimaryTargetKeepsFlatTargetGroupsAligned() {
+        Card card = new Card();
+        card.target(1, 1);
+        card.target(1, 1);
+        card.target(1, 1);
+
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, CONTROLLER, "test",
+                List.of(), 0, first, null, java.util.Map.of(), null, List.of(), List.of(second, third));
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(first);
+        assertThat(entry.targetsForGroup(1)).containsExactly(second);
+        assertThat(entry.targetsForGroup(2)).containsExactly(third);
+
+        StackEntry copy = new StackEntry(entry);
+        assertThat(copy.targetsForGroup(0)).containsExactly(first);
+        assertThat(copy.targetsForGroup(1)).containsExactly(second);
+        assertThat(copy.targetsForGroup(2)).containsExactly(third);
+
+        entry.setTargetId(null);
+
+        assertThat(entry.targetsForGroup(0)).isEmpty();
+        assertThat(entry.targetsForGroup(1)).containsExactly(second);
+        assertThat(entry.targetsForGroup(2)).containsExactly(third);
+    }
+
+    @Test
     @DisplayName("A single 'up to N' group receives every chosen target")
     void singleUpToNGroup() {
         Card card = new Card();

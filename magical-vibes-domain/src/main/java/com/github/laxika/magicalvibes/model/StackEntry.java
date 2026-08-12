@@ -177,6 +177,13 @@ public class StackEntry {
      */
     private boolean targetIdsFromAssignments;
     /**
+     * Whether target group 0 was stored in {@link #targetId} when this entry was created while the
+     * remaining groups were stored in {@link #targetIds}. Resolution temporarily updates
+     * {@code targetId} to the target of the current effect, so the target-list layout cannot be
+     * inferred from its current value.
+     */
+    private boolean primaryTargetStoredSeparately;
+    /**
      * How many targets each declared target group actually contributed to the flat {@link #targetIds}
      * list, in group order. Only set by the slot-by-slot trigger walker, which lets a controller
      * decline an optional ("up to N") group — there the default assumption that every group consumed
@@ -380,6 +387,7 @@ public class StackEntry {
         boolean explicitTargetIds = targetIds != null && !targetIds.isEmpty();
         this.targetIds = explicitTargetIds ? targetIds : assignmentTargetIds(this.damageAssignments);
         this.targetIdsFromAssignments = !explicitTargetIds && !this.targetIds.isEmpty();
+        this.primaryTargetStoredSeparately = targetId != null && explicitTargetIds;
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
@@ -459,6 +467,7 @@ public class StackEntry {
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
+        this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;
@@ -644,10 +653,10 @@ public class StackEntry {
      * multi-target filter list), the flat list is treated as positional: group {@code g} is
      * {@code targetIds.get(g)}.</p>
      *
-     * <p>Aura entries are the exception: the enchant target (group 0) is stored separately in
-     * {@link #targetId} — both on the spell entry (see {@code SpellCastingService}'s aura split)
-     * and on the aura's ETB trigger entry, which inherits that shape — so the flat list holds
-     * only the later groups' targets and slicing starts at group 1.</p>
+     * <p>Some entries store the first target separately in {@link #targetId}: Auras keep their
+     * enchant target there, and spells that target different zones keep their primary target there.
+     * For those entries the flat list holds only the later groups' targets and slicing starts at
+     * group 1.</p>
      */
     public List<UUID> targetsForGroup(int group) {
         if (targetIdsFromAssignments) {
@@ -662,9 +671,9 @@ public class StackEntry {
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if (targetId != null && !targetIds.isEmpty()) {
+        if (targeting.isAura() || primaryTargetStoredSeparately) {
             if (group == 0) {
-                return List.of(targetId);
+                return targetId != null ? List.of(targetId) : List.of();
             }
             firstFlatGroup = 1;
         }
