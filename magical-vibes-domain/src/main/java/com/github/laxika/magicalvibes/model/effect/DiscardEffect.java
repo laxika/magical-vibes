@@ -22,18 +22,21 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                                {@code null} for an ordinary discard
  * @param onlyIfSacrificed       when {@code true}, an {@code ON_DEATH} effect only triggers when
  *                                its source was sacrificed
+ * @param onlyCardsDrawnThisResolution when {@code true}, choices are restricted to cards drawn
+ *                                earlier while resolving the same stack entry
  */
 public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
-                            CardType stopAfterDiscardingType, boolean onlyIfSacrificed)
+                            CardType stopAfterDiscardingType, boolean onlyIfSacrificed,
+                            boolean onlyCardsDrawnThisResolution)
         implements CombatDamageTriggerContextEffect {
 
     public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random) {
-        this(amount, recipient, random, null, false);
+        this(amount, recipient, random, null, false, false);
     }
 
     public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
                          CardType stopAfterDiscardingType) {
-        this(amount, recipient, random, stopAfterDiscardingType, false);
+        this(amount, recipient, random, stopAfterDiscardingType, false, false);
     }
 
     /** Fixed count, chosen or random per {@code random}. */
@@ -57,7 +60,12 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
     }
 
     public static DiscardEffect sacrificeOnly(int amount) {
-        return new DiscardEffect(new Fixed(amount), DiscardRecipient.TARGET_PLAYER, false, null, true);
+        return new DiscardEffect(new Fixed(amount), DiscardRecipient.TARGET_PLAYER,
+                false, null, true, false);
+    }
+
+    public static DiscardEffect cardsDrawnThisResolution(int amount, DiscardRecipient recipient) {
+        return new DiscardEffect(new Fixed(amount), recipient, false, null, false, true);
     }
 
     @Override

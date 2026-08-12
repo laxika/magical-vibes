@@ -264,10 +264,10 @@ public class DrawService {
         Card zursWeirdingSource = findZursWeirdingSourceCard(gameData);
         if (zursWeirdingSource != null) {
             List<Card> deck = gameData.playerDecks.get(playerId);
+            UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
+            String playerName = gameData.playerIdToName.get(playerId);
             if (deck != null && !deck.isEmpty()) {
-                UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
                 Card revealed = deck.getFirst();
-                String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.builder()
                         .text(playerName + " reveals ")
                         .card(revealed)
@@ -276,15 +276,19 @@ public class DrawService {
                         .text(".")
                         .build());
 
-                if (gameData.getLife(otherPlayerId) >= 2) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            zursWeirdingSource,
-                            otherPlayerId,
-                            List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
-                            "Pay 2 life to put " + playerName + "'s revealed " + revealed.getName() + " into their graveyard?"
-                    ));
-                    return;
-                }
+            }
+            if (gameData.getLife(otherPlayerId) >= 2) {
+                String prompt = deck != null && !deck.isEmpty()
+                        ? "Pay 2 life to put " + playerName + "'s revealed "
+                                + deck.getFirst().getName() + " into their graveyard?"
+                        : "Pay 2 life to replace " + playerName + "'s draw?";
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        zursWeirdingSource,
+                        otherPlayerId,
+                        List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
+                        prompt
+                ));
+                return;
             }
             performDrawCard(gameData, playerId);
             return;

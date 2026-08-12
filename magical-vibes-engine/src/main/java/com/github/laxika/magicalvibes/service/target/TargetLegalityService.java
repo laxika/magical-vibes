@@ -1711,9 +1711,11 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromOpponents(gameData, target, sourcePlayerId)) {
             return target.getCard().getName() + " has protection from the source's controller";
         }
-        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(gameData, card);
-        if (effectiveColor != null && gameQueryService.hasProtectionFrom(gameData, target, effectiveColor)) {
-            return target.getCard().getName() + " has protection from " + effectiveColor.name().toLowerCase();
+        Set<CardColor> effectiveColors = gameQueryService.getEffectiveCardColors(gameData, card);
+        for (CardColor color : effectiveColors) {
+            if (gameQueryService.hasProtectionFrom(gameData, target, color)) {
+                return target.getCard().getName() + " has protection from " + color.name().toLowerCase();
+            }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
@@ -1721,9 +1723,11 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
-        if (effectiveColor != null
-                && gameQueryService.cantBeTargetedBySpellColor(gameData, target, effectiveColor, sourcePlayerId)) {
-            return target.getCard().getName() + " can't be the target of " + effectiveColor.name().toLowerCase() + " spells";
+        for (CardColor color : effectiveColors) {
+            if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, color, sourcePlayerId)) {
+                return target.getCard().getName() + " can't be the target of "
+                        + color.name().toLowerCase() + " spells";
+            }
         }
         if (gameQueryService.cantBeTargetedByAnySpell(gameData, target)) {
             return target.getCard().getName() + " can't be the target of spells";

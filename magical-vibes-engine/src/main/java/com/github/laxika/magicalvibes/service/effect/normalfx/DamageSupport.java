@@ -655,10 +655,10 @@ public class DamageSupport {
             // shared pipeline has applied prevention shields, redirects, damage multipliers and
             // spell lifelink (CR 702.15b). The planeswalker arm above predates that pipeline and
             // still open-codes its own; the two must not diverge again.
-            if (cantRegenerate) {
+            int damageDealt = dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
+            if (cantRegenerate && damageDealt > 0) {
                 targetPermanent.setCantRegenerateThisTurn(true);
             }
-            dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
         }
     }
 

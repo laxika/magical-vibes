@@ -105,8 +105,16 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        if (eligible.isEmpty() || opponentId == null) {
+        if (opponentId == null) {
             finish(gameData, controllerId, sourceName);
+            return;
+        }
+        if (eligible.isEmpty()) {
+            if (state.lastChosenCardId == null) {
+                finish(gameData, controllerId, sourceName);
+            } else {
+                promptPayment(gameData, controllerId, sourceName);
+            }
             return;
         }
 

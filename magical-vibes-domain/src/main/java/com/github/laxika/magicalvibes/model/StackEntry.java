@@ -220,6 +220,15 @@ public class StackEntry {
      */
     private final List<UUID> createdPermanentIds = new ArrayList<>();
 
+    /** Cards actually drawn and still identifiable during this entry's resolution. */
+    private final List<UUID> drawnCardIdsThisResolution = new ArrayList<>();
+
+    public void recordCardDrawnThisResolution(UUID cardId) {
+        if (cardId != null && !drawnCardIdsThisResolution.contains(cardId)) {
+            drawnCardIdsThisResolution.add(cardId);
+        }
+    }
+
     /**
      * Players this entry has actually dealt damage to while resolving, in order. Written by the damage
      * handlers and read back by a later effect on the same entry that acts on "each player dealt damage
@@ -473,6 +482,7 @@ public class StackEntry {
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")

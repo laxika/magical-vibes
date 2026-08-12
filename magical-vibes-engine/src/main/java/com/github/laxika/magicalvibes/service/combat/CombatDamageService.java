@@ -705,11 +705,13 @@ public class CombatDamageService {
             Map<UUID, Integer> playerAssignment = gameData.combatDamagePlayerAssignments.get(atkIdx);
 
             boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
+            Permanent unblockedDamageRedirectTarget = blkIndices.isEmpty()
+                    && !atk.isBlockedWithoutBlockers() ? redirectTarget : null;
 
             if (playerAssignment != null) {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
                     applyPlayerAssignedDamage(gameData, state, atk, atkStats, defBf,
-                            playerAssignment, activeId, defenderId, redirectTarget,
+                            playerAssignment, activeId, defenderId, unblockedDamageRedirectTarget,
                             damagePreventableFrom(gameData, snap.damagePreventable(), atk));
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
@@ -718,12 +720,13 @@ public class CombatDamageService {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()
                         && !atk.isBlockedWithoutBlockers()) {
                     int power = gameQueryService.applyCombatDamageMultiplier(gameData, atkStats.combatDamage(), atk, null);
-                    accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId, redirectTarget, state);
+                    accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId,
+                            unblockedDamageRedirectTarget, state);
                 }
             } else {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
                     distributeAttackerDamageToBlockers(gameData, state, atk, atkIdx, atkStats, blkIndices, defBf,
-                            activeId, defenderId, redirectTarget, !isFirstStrikePhase, snap);
+                            activeId, defenderId, !isFirstStrikePhase, snap);
                 }
             }
 
@@ -859,7 +862,6 @@ public class CombatDamageService {
                                                      List<Integer> blkIndices,
                                                      List<Permanent> defBf,
                                                      UUID activeId, UUID defenderId,
-                                                     Permanent redirectTarget,
                                                      boolean skipDeadBlockers, DamagePhaseSnapshot snap) {
         boolean atkHasDeathtouch = atkStats.deathtouch();
         int remaining = atkStats.combatDamage();
@@ -873,7 +875,7 @@ public class CombatDamageService {
             int lethalNeeded = atkHasDeathtouch
                     ? Math.max(0, 1 - blockerDamageSoFar)
                     : snap.defenderStats().get(blkIdx).toughness() - blockerDamageSoFar;
-            int dmg = i == damageRecipients.size() - 1
+            int dmg = i == damageRecipients.size() - 1 && !atkStats.trample()
                     ? remaining
                     : Math.min(remaining, Math.max(0, lethalNeeded));
             if (!(damagePreventableFrom(gameData, snap.damagePreventable(), atk)
@@ -887,7 +889,7 @@ public class CombatDamageService {
         }
         if (remaining > 0 && atkStats.trample()) {
             int doubledRemaining = gameQueryService.applyCombatDamageMultiplier(gameData, remaining, atk, null);
-            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, redirectTarget, state);
+            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, null, state);
         }
     }
 

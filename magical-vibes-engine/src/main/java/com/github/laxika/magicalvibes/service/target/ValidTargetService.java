@@ -755,8 +755,9 @@ public class ValidTargetService {
         }
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
-        var effectiveSourceColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-        if (isBlockedByHexproofFromColor(gameData, perm, effectiveSourceColor, controllerId)) {
+        Set<CardColor> effectiveSourceColors = gameQueryService.getEffectiveCardColors(gameData, sourceCard);
+        if (effectiveSourceColors.stream()
+                .anyMatch(color -> isBlockedByHexproofFromColor(gameData, perm, color, controllerId))) {
             return false;
         }
 
@@ -777,7 +778,8 @@ public class ValidTargetService {
             if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
                 return false;
             }
-            if (effectiveSourceColor != null && gameQueryService.hasProtectionFrom(gameData, perm, effectiveSourceColor)) {
+            if (effectiveSourceColors.stream()
+                    .anyMatch(color -> gameQueryService.hasProtectionFrom(gameData, perm, color))) {
                 return false;
             }
             if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {

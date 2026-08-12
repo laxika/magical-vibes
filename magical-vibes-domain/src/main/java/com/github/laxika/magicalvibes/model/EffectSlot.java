@@ -66,6 +66,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DEATH,
     ON_ALLY_CREATURE_DIES,
     /**
+     * A permanent that was a creature on the battlefield is put into this permanent's
+     * controller's graveyard. This is keyed to the graveyard owner rather than the creature's
+     * last controller and uses the permanent's last-known battlefield type.
+     */
+    ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
+    /**
      * A creature <b>or planeswalker</b> you control dies (is put into a graveyard from the
      * battlefield). Superset of {@link #ON_ALLY_CREATURE_DIES}; a permanent that is both a
      * creature and a planeswalker still fires this slot only once. Ajani's Last Stand.

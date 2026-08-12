@@ -900,6 +900,8 @@ public class PermanentRemovalService {
                 for (CardSubtype subtype : creatureSubtypesAtDeath) {
                     subtypeCounts.merge(subtype, 1, Integer::sum);
                 }
+                triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
+                        gameData, target.getOriginalCard(), ownerId, controllerId);
                 triggerCollectionService.checkAllyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());

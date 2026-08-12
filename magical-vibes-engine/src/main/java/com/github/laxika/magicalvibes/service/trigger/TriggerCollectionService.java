@@ -4230,14 +4230,36 @@ public class TriggerCollectionService {
             }
 
             if (playerId.equals(graveyardOwnerId) && !dyingCard.isToken()) {
-                dispatchSlot(gameData, perm, playerId,
-                        EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+                for (CardEffect effect : perm.getCard().getEffects(
+                        EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(
+                            effect, dyingCard, gameData, playerId);
+                    if (resolved == null) continue;
+                    var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
+                    dispatch(match,
+                            EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+                            resolved, ctx);
+                }
             }
 
             if (playerId.equals(graveyardOwnerId)) return;
              dispatchSlot(gameData, perm, playerId,
                      EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
         });
+    }
+
+    public void checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
+            GameData gameData, Card dyingCard, UUID graveyardOwnerId, UUID dyingControllerId) {
+        var ctx = new TriggerContext.AnyPermanentGraveyard(
+                dyingCard, dyingControllerId, graveyardOwnerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent permanent : battlefield) {
+            dispatchSlot(gameData, permanent, graveyardOwnerId,
+                    EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+        }
     }
 
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {

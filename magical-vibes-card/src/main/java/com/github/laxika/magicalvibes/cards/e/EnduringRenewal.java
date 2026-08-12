@@ -17,6 +17,7 @@ public class EnduringRenewal extends Card {
         // card, put it into your graveyard. Otherwise, draw a card.
         addEffect(EffectSlot.STATIC, new EnduringRenewalDrawReplacementEffect());
         // Whenever a creature is put into your graveyard from the battlefield, return it to your hand.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ReturnTriggeringCardToOwnerHandEffect());
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
+                new ReturnTriggeringCardToOwnerHandEffect());
     }
 }

@@ -1189,14 +1189,14 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    /**
-     * Yomiji, Who Bars the Way. The legendary gate is applied upstream by
-     * {@code TriggeringCardConditionalEffect}; here we bake the dead card's id and its owner so the
-     * card returns to its owner's hand rather than Yomiji's controller's.
-     */
+    /** Bakes the dead card and its owner into graveyard-to-hand triggers. */
     @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
             slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAnyPermanentGraveyardReturnToHand(TriggerMatchContext match,
+    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handlePermanentGraveyardReturnToHand(TriggerMatchContext match,
             ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
         ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(

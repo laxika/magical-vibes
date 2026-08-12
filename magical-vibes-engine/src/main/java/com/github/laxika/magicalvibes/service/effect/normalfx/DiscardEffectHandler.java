@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -137,6 +138,15 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         if (e.random()) {
             playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId,
                     entry.getCard().getName(), amount);
+        } else if (e.onlyCardsDrawnThisResolution()) {
+            List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+            List<Integer> validIndices = new ArrayList<>();
+            for (int i = 0; i < hand.size(); i++) {
+                if (entry.getDrawnCardIdsThisResolution().contains(hand.get(i).getId())) {
+                    validIndices.add(i);
+                }
+            }
+            playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount, validIndices);
         } else {
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
                     DiscardFollowUp.NONE, e.stopAfterDiscardingType());

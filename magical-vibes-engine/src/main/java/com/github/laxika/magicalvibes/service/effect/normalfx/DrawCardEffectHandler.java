@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,6 +11,11 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,6 +45,14 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
+        List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
+        Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
+        hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
+
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
+
+        gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
+                .forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
     }
 }

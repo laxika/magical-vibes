@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
 
 /**
- * Reveals the target player's hand and lets the caster choose cards for the specified destination.
- * The optional fields cover fallback discards, up-to choices, and same-name exile searches.
+ * Lets the caster inspect the target player's hand and choose cards for the specified destination.
+ * The optional fields cover public reveals, fallback discards, up-to choices, and same-name exile
+ * searches.
  */
 public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
                                               List<CardType> includedTypes,
@@ -19,7 +20,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               int declineFallbackDiscardCount,
                                               boolean upTo,
                                               boolean exileAllCopiesOfChosenNames,
-                                              boolean imprintOnSource)
+                                              boolean imprintOnSource,
+                                              boolean revealHand)
         implements CombatDamageTriggerContextEffect {
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -28,7 +30,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, false, false, false);
+                0, false, false, false, true);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -37,7 +39,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter, int declineFallbackDiscardCount) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, false, false, false);
+                declineFallbackDiscardCount, false, false, false, true);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -47,7 +49,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter, boolean upTo,
                                            boolean exileAllCopiesOfChosenNames) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, upTo, exileAllCopiesOfChosenNames, false);
+                0, upTo, exileAllCopiesOfChosenNames, false, true);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
@@ -58,7 +60,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
                                            HandChoiceDestination destination, boolean imprintOnSource) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false, null,
-                0, false, false, imprintOnSource);
+                0, false, false, imprintOnSource, true);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */
@@ -92,6 +94,12 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
                                            HandChoiceDestination destination) {
         this(count, excludedTypes, List.of(), destination, false, null);
+    }
+
+    public static ChooseCardsFromTargetHandEffect lookAtTargetHand(
+            DynamicAmount count, HandChoiceDestination destination) {
+        return new ChooseCardsFromTargetHandEffect(count, List.of(), List.of(), destination,
+                false, null, 0, false, false, false, false);
     }
 
     @Override
