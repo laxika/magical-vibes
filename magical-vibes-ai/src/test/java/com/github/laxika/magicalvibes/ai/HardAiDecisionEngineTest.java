@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.k.KillerBees;
@@ -201,6 +202,37 @@ class HardAiDecisionEngineTest {
         assertThat(action).isNotNull();
         assertThat(action).isInstanceOf(SimulationAction.DeclareBlockers.class);
         assertThat(elapsed).isLessThan(3000);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not submit a creature barred by Island Sanctuary")
+    void doesNotSubmitCreatureBarredByIslandSanctuary() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        harness.addToBattlefield(player2, new IslandSanctuary());
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test

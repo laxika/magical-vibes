@@ -933,7 +933,11 @@ public abstract class AiDecisionEngine {
      * the all-in fallback never has a cost left to float.
      */
     protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
-        String rejection = attemptAttackerDeclaration(request);
+        GameData gameData = gameRegistry.get(gameId);
+        DeclareAttackersRequest targetLegalRequest = gameData == null
+                ? request
+                : removeAttackersThatCannotAttackDefaultTarget(gameData, request);
+        String rejection = attemptAttackerDeclaration(targetLegalRequest);
         if (rejection == null) {
             return;
         }
@@ -947,12 +951,16 @@ public abstract class AiDecisionEngine {
             }
         }
 
-        GameData gameData = gameRegistry.get(gameId);
         if (gameData == null) {
             return;
         }
-        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndices(
-                gameData, activeDecisionPlayerId(gameData));
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
+        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndicesForTarget(
+                gameData, attackingPlayerId, defaultTarget);
+        if (allAttackable == null) {
+            allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
+        }
         if (!allAttackable.isEmpty()) {
             rejection = attemptAttackerDeclaration(new DeclareAttackersRequest(allAttackable, null));
             if (rejection == null) {
@@ -960,6 +968,35 @@ public abstract class AiDecisionEngine {
             }
         }
         log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+    }
+
+    /**
+     * The combat service exposes target-independent attackers for the declaration prompt, while
+     * the AI's default request attacks the opponent. Remove creatures barred by a defender-scoped
+     * restriction before sending that request so a legal attack is never rejected by the engine.
+     */
+    private DeclareAttackersRequest removeAttackersThatCannotAttackDefaultTarget(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()
+                || (request.attackTargets() != null && !request.attackTargets().isEmpty())) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
+        List<Integer> targetLegal = combatAttackService.getAttackableCreatureIndicesForTarget(
+                gameData, attackingPlayerId, defaultTarget);
+        if (targetLegal == null) {
+            return request;
+        }
+        if (request.attackerIndices().stream().allMatch(targetLegal::contains)) {
+            return request;
+        }
+
+        List<Integer> filtered = request.attackerIndices().stream()
+                .filter(targetLegal::contains)
+                .toList();
+        return new DeclareAttackersRequest(filtered, request.attackTargets(), request.bands());
     }
 
     /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */

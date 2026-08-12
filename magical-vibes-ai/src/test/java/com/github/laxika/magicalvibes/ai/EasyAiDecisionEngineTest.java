@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -1045,6 +1046,36 @@ class EasyAiDecisionEngineTest {
             assertThat(combatGd.getLife(opponent.getId())).isEqualTo(lifeAfterDeclaration);
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
         }
+
+        @Test
+        @DisplayName("Easy AI does not submit a creature barred by Island Sanctuary")
+        void doesNotSubmitCreatureBarredByIslandSanctuary() {
+            combatHarness.addToBattlefield(opponent, new IslandSanctuary());
+            combatGd.turnNumber = 2;
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.UPKEEP);
+            combatHarness.clearPriorityPassed();
+            combatHarness.passBothPriorities();
+            combatHarness.handleMayAbilityChosen(opponent, true);
+
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+            assertThat(attacker.isAttacking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        }
     }
 
     // ===== Attack tax handling =====
@@ -1108,6 +1139,8 @@ class EasyAiDecisionEngineTest {
 
         when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
                 .thenReturn(List.of(0, 1));
+        when(combatAttackService.getAttackableCreatureIndicesForTarget(
+                eq(gd), eq(aiPlayer.getId()), any())).thenReturn(List.of(0, 1));
         when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
                 .thenReturn(List.of());
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);

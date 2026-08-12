@@ -140,6 +140,36 @@ public class CombatAttackService {
     }
 
     /**
+     * Returns the attackable creatures that can attack the specified player or planeswalker.
+     * The ordinary attackable-creature query is target-independent because a creature may be able
+     * to attack one defender but not another.
+     */
+    public List<Integer> getAttackableCreatureIndicesForTarget(GameData gameData, UUID playerId,
+                                                                UUID targetId) {
+        List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
+        if (attackable.isEmpty() || targetId == null) {
+            return attackable;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+
+        List<Integer> targetAttackable = attackable.stream()
+                .filter(index -> attackLegalityService.canAttackDefender(
+                        gameData, battlefield.get(index), targetId))
+                .toList();
+        if (targetAttackable.size() == 1) {
+            Permanent sole = battlefield.get(targetAttackable.getFirst());
+            if (hasCantAttackOrBlockAlone(sole)) {
+                return List.of();
+            }
+        }
+        return targetAttackable;
+    }
+
+    /**
      * Whether this creature may be declared only as the sole attacker, either from its own
      * static ability or from an attached Aura.
      */

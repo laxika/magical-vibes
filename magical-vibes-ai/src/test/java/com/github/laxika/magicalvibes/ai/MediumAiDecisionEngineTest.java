@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -191,6 +192,36 @@ class MediumAiDecisionEngineTest {
         // AI should not have attacked A?€�t bears would die without killing AE
         // The attack step resolves, check that bears is still alive and untapped
         assertThat(aiBears.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Medium AI does not submit a creature barred by Island Sanctuary")
+    void doesNotSubmitCreatureBarredByIslandSanctuary() {
+        harness.addToBattlefield(human, new IslandSanctuary());
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(human, true);
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test
