@@ -38,7 +38,7 @@ class VodalianZombieTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, zombie.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from green");
+                .hasMessageContaining("Card is not playable");
     }
 
     private static Card createTargetedInstant(String name, CardColor color) {

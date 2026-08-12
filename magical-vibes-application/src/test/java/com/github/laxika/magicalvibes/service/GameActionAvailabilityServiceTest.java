@@ -629,6 +629,8 @@ class GameActionAvailabilityServiceTest {
     private void evaluateCardTypePredicates() {
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
     }
 
     private static boolean matchesCardType(Card card, CardPredicate predicate) {

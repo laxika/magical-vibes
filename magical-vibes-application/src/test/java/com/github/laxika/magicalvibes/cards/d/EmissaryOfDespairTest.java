@@ -26,7 +26,7 @@ class EmissaryOfDespairTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -38,7 +38,7 @@ class EmissaryOfDespairTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test

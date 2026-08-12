@@ -16,7 +16,7 @@ public class DroolingOgre extends Card {
     public DroolingOgre() {
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.ARTIFACT),
-                List.of(new TargetPlayerGainsControlOfSourceCreatureEffect())
+                List.of(TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer())
         ));
     }
 }

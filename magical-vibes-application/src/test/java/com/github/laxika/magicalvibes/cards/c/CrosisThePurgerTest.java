@@ -36,8 +36,8 @@ class CrosisThePurgerTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerHands.get(player2.getId()))
-                .singleElement()
-                .matches(card -> card.getName().equals("Grizzly Bears"));
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Grizzly Bears", "Forest");
         harness.assertInGraveyard(player2, "Air Elemental");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Forest"));

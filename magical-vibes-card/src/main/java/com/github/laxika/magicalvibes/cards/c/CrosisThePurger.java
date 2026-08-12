@@ -11,6 +11,7 @@ public class CrosisThePurger extends Card {
 
     public CrosisThePurger() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new MayPayManaEffect("{2}{B}", new DiscardAllCardsOfChosenColorEffect(), "Pay {2}{B}?"));
+                new MayPayManaEffect("{2}{B}", DiscardAllCardsOfChosenColorEffect.damagedPlayer(),
+                        "Pay {2}{B}?"));
     }
 }

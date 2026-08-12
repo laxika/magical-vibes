@@ -30,6 +30,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
@@ -53,6 +54,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Millstone");
@@ -67,6 +69,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ConfusionInTheRanks()));
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Conjured Currency");

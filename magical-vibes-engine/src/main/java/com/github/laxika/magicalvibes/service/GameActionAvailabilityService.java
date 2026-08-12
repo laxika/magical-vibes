@@ -474,11 +474,12 @@ public class GameActionAvailabilityService {
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty();
         for (ManaCost cost : candidateCosts) {
             boolean canAfford = hasRestricted
-                    ? cost.canPay(pool, effectiveAdditionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
+                    ? cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost,
+                    isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                     instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                     creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                     subtypeOrPlaneswalkerSpellContext)
-                    : cost.canPay(pool, effectiveAdditionalCost);
+                    : cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }

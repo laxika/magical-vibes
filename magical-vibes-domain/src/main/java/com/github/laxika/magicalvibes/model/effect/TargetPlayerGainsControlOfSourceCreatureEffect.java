@@ -1,11 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record TargetPlayerGainsControlOfSourceCreatureEffect() implements CardEffect {
+/**
+ * Gives control of the source permanent to the player carried on the stack entry. The normal form
+ * targets that player; {@link #triggeringPlayer()} uses a non-targeting player supplied by the
+ * surrounding spell-cast trigger.
+ */
+public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer) implements CardEffect {
+
+    public TargetPlayerGainsControlOfSourceCreatureEffect() {
+        this(true);
+    }
+
+    public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer() {
+        return new TargetPlayerGainsControlOfSourceCreatureEffect(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        // The kept validator enforces requireTargetPlayer, which the no-op PLAYER category cannot
-        // reproduce; the spec only carries the derived canTargetPlayer boolean.
-        return TargetSpec.benign(TargetPredicates.player());
+        return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

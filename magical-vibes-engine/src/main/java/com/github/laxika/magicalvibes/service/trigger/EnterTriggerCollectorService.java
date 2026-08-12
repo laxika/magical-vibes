@@ -130,6 +130,23 @@ public class EnterTriggerCollectorService {
 
     private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext.PermanentEnters pe) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+            if (enteringPermanentId == null) {
+                return true;
+            }
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        match.permanent().getCard(), pe.enteringControllerId(),
+                        new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                        enteringPermanentId, enteringPermanentId));
+            }
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} any-permanent-enters trigger awaiting target selection",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

@@ -24,6 +24,7 @@ class WarrenTorchmasterTest extends BaseCardTest {
         torchmaster.setSummoningSick(false);
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -45,6 +46,7 @@ class WarrenTorchmasterTest extends BaseCardTest {
         Permanent torchmaster = harness.addToBattlefieldAndReturn(player1, new WarrenTorchmaster());
         torchmaster.setSummoningSick(false);
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
