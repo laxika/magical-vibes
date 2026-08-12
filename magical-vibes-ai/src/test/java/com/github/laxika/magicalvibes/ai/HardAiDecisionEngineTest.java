@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1146,6 +1148,24 @@ class HardAiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Unbury when neither mode has a legal graveyard target")
+    void doesNotCastUnburyWithoutCreatureInGraveyard() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerSwamps(player1, 2);
+        gd.playerGraveyards.get(player1.getId()).add(new HolyDay());
+        harness.setHand(player1, List.of(new Unbury()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(player1.getId())).singleElement()
+                .isInstanceOf(Unbury.class);
     }
 
     @Test

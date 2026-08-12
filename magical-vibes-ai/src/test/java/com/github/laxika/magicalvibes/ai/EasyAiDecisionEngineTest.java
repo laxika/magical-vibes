@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -211,6 +214,23 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Unbury when neither mode has a legal graveyard target")
+        void doesNotCastUnburyWithoutCreatureInGraveyard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            testGd.playerGraveyards.get(aiTestPlayer.getId()).add(new HolyDay());
+            testHarness.setHand(aiTestPlayer, List.of(new Unbury()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).singleElement()
+                    .isInstanceOf(Unbury.class);
         }
     }
 

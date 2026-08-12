@@ -11,16 +11,19 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.u.Unbury;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
@@ -129,6 +132,14 @@ class MediumAiDecisionEngineTest {
             Permanent mountain = new Permanent(new Mountain());
             mountain.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
+        }
+    }
+
+    private void giveAiSwamps(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
     }
 
@@ -849,6 +860,23 @@ class MediumAiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Unbury when neither mode has a legal graveyard target")
+    void doesNotCastUnburyWithoutCreatureInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        harness.setHand(aiPlayer, List.of(new Unbury()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).singleElement()
+                .isInstanceOf(Unbury.class);
     }
 
     @Test

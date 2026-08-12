@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1042,6 +1043,9 @@ public abstract class AiDecisionEngine {
         if (cost.hasX() && getMaxXForDiscardCost(gameData, card) <= 0) {
             return false;
         }
+        if (!hasValidRequiredGraveyardReturnTargets(gameData, card)) {
+            return false;
+        }
         // For modal spells, ensure at least one mode has valid targets
         if (!hasValidModalMode(gameData, card)) {
             return false;
@@ -1096,9 +1100,10 @@ public abstract class AiDecisionEngine {
      * For cards with {@link ExileCreaturesFromGraveyardAndCreateTokensEffect},
      * X cannot exceed the number of creature cards in the caster's graveyard; for cards with
      * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
-     * exceed the number of graveyard cards matching that effect's filter. Both mirror the engine's
-     * own cast-time validation in {@code SpellCastingService}, so the AI never proposes an X the
-     * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
+     * exceed the number of graveyard cards matching that effect's filter. The same cap applies to
+     * X-scaled return-to-hand effects. These mirror the engine's own cast-time validation in
+     * {@code SpellCastingService}, so the AI never proposes an X the server refuses. Returns
+     * {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
@@ -1108,7 +1113,12 @@ public abstract class AiDecisionEngine {
                 .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
                 .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
                 .findFirst().orElse(null);
-        if (!needsGraveyardCreatures && returnEffect == null) {
+        ReturnTargetCardsFromGraveyardToHandEffect xScaledToHandEffect = spellEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
+                .findFirst().orElse(null);
+        if (!needsGraveyardCreatures && returnEffect == null && xScaledToHandEffect == null) {
             return Integer.MAX_VALUE;
         }
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
@@ -1124,7 +1134,31 @@ public abstract class AiDecisionEngine {
                             c, returnEffect.filter(), card.getId()))
                     .count());
         }
+        if (xScaledToHandEffect != null) {
+            maxX = Math.min(maxX, (int) graveyard.stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, xScaledToHandEffect.filter(), card.getId()))
+                    .count());
+        }
         return maxX;
+    }
+
+    private boolean hasValidRequiredGraveyardReturnTargets(GameData gameData, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                    && !hasEnoughGraveyardReturnTargets(gameData, card, returnEffect)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasEnoughGraveyardReturnTargets(
+            GameData gameData, Card card, ReturnTargetCardsFromGraveyardToHandEffect effect) {
+        int validTargetCount = targetSelector.findValidGraveyardReturnTargets(
+                gameData, card, aiPlayer.getId(), effect).size();
+        return validTargetCount >= effect.minTargets()
+                && (!effect.requireSharedCreatureType() || validTargetCount >= 2);
     }
 
     /**
@@ -1423,6 +1457,7 @@ public abstract class AiDecisionEngine {
         // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
+            if (!isModalModeValid(gameData, card, option)) continue;
             CardEffect effect = option.effect();
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
@@ -1480,6 +1515,12 @@ public abstract class AiDecisionEngine {
     }
 
     private boolean isModalModeValid(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        for (CardEffect modeEffect : option.effects()) {
+            if (modeEffect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                    && !hasEnoughGraveyardReturnTargets(gameData, card, returnEffect)) {
+                return false;
+            }
+        }
         CardEffect effect = option.effect();
         if (EffectResolution.targetsSpellOnStack(effect)) return false;
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) return findModalPermanentTarget(gameData, card, option) != null;

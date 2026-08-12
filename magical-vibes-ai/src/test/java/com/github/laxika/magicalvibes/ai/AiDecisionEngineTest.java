@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.cards.u.UnburialRites;
+import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -1018,6 +1019,23 @@ class AiDecisionEngineTest {
 
         // AI should not cast A?€�t no target in graveyard
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not tap mana for Unbury when neither mode has a legal graveyard target")
+    void doesNotCastUnburyWithoutCreatureInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(2);
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        harness.setHand(aiPlayer, List.of(new Unbury()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(1);
     }
 
     // ===== Graveyard creature requirement (ExileCreaturesFromGraveyardAndCreateTokensEffect) =====

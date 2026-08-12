@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -783,6 +784,28 @@ class AiTargetSelector {
             }
         }
         return List.of();
+    }
+
+    /**
+     * Returns the controller's graveyard cards that can participate in a
+     * {@link ReturnTargetCardsFromGraveyardToHandEffect} choice. These effects use the engine's
+     * special cast-time graveyard choice flow and therefore do not expose an ordinary graveyard
+     * {@code TargetSpec}.
+     */
+    List<Card> findValidGraveyardReturnTargets(GameData gameData, Card card, UUID aiPlayerId,
+                                               ReturnTargetCardsFromGraveyardToHandEffect effect) {
+        List<Card> candidates = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of()).stream()
+                .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
+                        candidate, effect.filter(), card.getId()))
+                .toList();
+        if (!effect.requireSharedCreatureType()) {
+            return candidates;
+        }
+        return candidates.stream()
+                .filter(candidate -> candidates.stream().anyMatch(other ->
+                        !candidate.getId().equals(other.getId())
+                                && gameQueryService.shareCreatureType(candidate, other)))
+                .toList();
     }
 
     private List<Card> getGraveyardCandidates(GameData gameData, GraveyardSearchScope scope,
