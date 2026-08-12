@@ -11,6 +11,7 @@ public sealed interface PermanentPredicate permits
         PermanentAnyOfPredicate,
         PermanentAttachedToCreaturePredicate,
         PermanentAttachedToSourceControllerPredicate,
+        PermanentAttackedThisTurnPredicate,
         PermanentAttackedOrBlockedThisTurnPredicate,
         PermanentAttackedDuringControllersLastTurnPredicate,
         PermanentAttackedSourceControllerThisTurnPredicate,

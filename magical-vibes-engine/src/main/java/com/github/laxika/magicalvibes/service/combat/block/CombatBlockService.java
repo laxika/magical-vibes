@@ -727,6 +727,7 @@ public class CombatBlockService {
                 // of Pain (governs targeting via effect targetSpec → any creature).
                 gameData.queueMayAbility(delayed.sourceCard(), delayed.controllerId(), may,
                         null, attacker.getId());
+                gameData.stack.getLast().setSourcePermanentSnapshot(new Permanent(attacker));
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));

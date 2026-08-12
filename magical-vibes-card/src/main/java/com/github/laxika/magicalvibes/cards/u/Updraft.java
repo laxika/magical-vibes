@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "133")
 @CardRegistration(set = "ICE", collectorNumber = "105")
@@ -14,7 +15,8 @@ public class Updraft extends Card {
 
     public Updraft() {
         // "Target creature gains flying until end of turn."
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
         // "Draw a card at the beginning of the next turn's upkeep."
         addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -177,15 +178,27 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
     }
 
     private List<UUID> collectValidSourceIds(GameData gameData, PermanentPredicate sourceFilter) {
-        if (sourceFilter == null) {
-            return preventionSupport.collectAllBattlefieldPermanentIds(gameData);
-        }
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, perm) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sourceFilter)) {
+            if (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sourceFilter)) {
                 validIds.add(perm.getId());
             }
         });
+        for (StackEntry stackEntry : gameData.stack) {
+            if (!isSpell(stackEntry.getEntryType())) {
+                continue;
+            }
+            Permanent source = new Permanent(stackEntry.getCard());
+            if (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
+                validIds.add(stackEntry.getCard().getId());
+            }
+        }
         return validIds;
+    }
+
+    private static boolean isSpell(StackEntryType type) {
+        return type != StackEntryType.ACTIVATED_ABILITY && type != StackEntryType.TRIGGERED_ABILITY;
     }
 }

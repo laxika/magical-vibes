@@ -66,6 +66,7 @@ public class PermanentRemovalService {
     private final ExileService exileService;
     private final UntapLockReleaseService untapLockReleaseService;
     private final AuraCopyService auraCopyService;
+    private final CreatureControlService creatureControlService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -76,7 +77,8 @@ public class PermanentRemovalService {
                                    GameLogService gameLogService,
                                    ExileService exileService,
                                    UntapLockReleaseService untapLockReleaseService,
-                                   @Lazy AuraCopyService auraCopyService) {
+                                   @Lazy AuraCopyService auraCopyService,
+                                   @Lazy CreatureControlService creatureControlService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -87,6 +89,7 @@ public class PermanentRemovalService {
         this.exileService = exileService;
         this.untapLockReleaseService = untapLockReleaseService;
         this.auraCopyService = auraCopyService;
+        this.creatureControlService = creatureControlService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -738,6 +741,7 @@ public class PermanentRemovalService {
         auraCopyService.revertExpiredCopies(gameData,
                 gameData.expireFloatingEffectsForDepartedSource(target.getId()));
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
+        creatureControlService.reconcileControl(gameData);
         untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);
         handlePreparedSpellCleanup(gameData, target);

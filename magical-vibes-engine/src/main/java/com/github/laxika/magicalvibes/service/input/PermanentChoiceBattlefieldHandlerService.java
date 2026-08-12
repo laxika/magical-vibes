@@ -831,14 +831,14 @@ public class PermanentChoiceBattlefieldHandlerService {
     }
 
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID controllerId = preventSource.controllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
 
         if (preventSource.controllerOnly()) {
             gameData.playerSourceDamagePreventionIds
@@ -849,11 +849,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                         .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                         .add(permanentId);
             }
-            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
+            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
                     " would deal to " + playerName + " is prevented this turn."));
         } else {
             gameData.permanentsPreventedFromDealingDamage.add(permanentId);
-            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
+            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
                     " would deal this turn is prevented."));
         }
 
@@ -943,9 +943,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handlePreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
                                                         PermanentChoiceContext.PreventNextDamageFromSourceChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID controllerId = ctx.controllerId();
@@ -955,7 +955,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ctx.damageSourceControllerCard()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         String rider = gainLife
                 ? " and " + playerName + " gains that much life."
                 : ctx.exileFromLibrary()
@@ -975,9 +975,9 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handlePreventNextDamageFromSourceToYouAndYourCreaturesChoice(
             GameData gameData, UUID permanentId,
             PermanentChoiceContext.PreventNextDamageFromSourceToYouAndYourCreaturesChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID controllerId = ctx.controllerId();
@@ -985,7 +985,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 new PlayerSourceNextDamageShield(controllerId, permanentId, true, true, true, false));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage to "
                 + playerName + " and/or creatures they control this turn, it is prevented."));
         log.info("Game {} - {} chose {} as Shadowbane next-damage prevention source", gameData.id, playerName, sourceName);
@@ -1056,9 +1056,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handlePreventNextDamageFromSourceToPermanentChoice(GameData gameData, UUID permanentId,
                                                                     PermanentChoiceContext.PreventNextDamageFromSourceToPermanentChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(
@@ -1067,19 +1067,19 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         Permanent protectedPermanent = gameQueryService.findPermanentById(gameData, ctx.protectedPermanentId());
         String protectedName = protectedPermanent != null ? protectedPermanent.getCard().getName() : "the enchanted creature";
-        gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenPermanent.getCard(),
+        gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenSource,
                 " would deal damage to " + protectedName + " this turn, that damage is prevented."));
         log.info("Game {} - {} chose {} as next-damage-to-permanent prevention source", gameData.id,
-                gameData.playerIdToName.get(ctx.controllerId()), chosenPermanent.getCard().getName());
+                gameData.playerIdToName.get(ctx.controllerId()), chosenSource.getName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePreventNextDamageFromSourceToAnyTargetChoice(GameData gameData, UUID permanentId,
                                                                    PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(ctx.damageRedSourceController()
@@ -1087,7 +1087,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         permanentId, true, ctx.passageCard(), ctx.controllerId())
                 : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
 
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         String logEntry = ctx.damageRedSourceController()
                 ? "The next time " + sourceName + " would deal damage to any target this turn, it is prevented."
                         + " If it is red, Honorable Passage deals that much damage to its controller."
@@ -1097,6 +1097,20 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private Card findDamageSourceCard(GameData gameData, UUID sourceId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, sourceId);
+        if (permanent != null) {
+            return permanent.getCard();
+        }
+        return gameData.stack.stream()
+                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .map(StackEntry::getCard)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

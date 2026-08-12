@@ -37,6 +37,6 @@ public class Aggression extends Card {
                 // destroy that creature if it didn't attack this turn.
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
                         new ConditionalEffect(new EnchantedCreatureDidntAttack(),
-                                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED)));
+                                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING)));
     }
 }

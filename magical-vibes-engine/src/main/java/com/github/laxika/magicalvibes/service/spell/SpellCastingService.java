@@ -2721,13 +2721,16 @@ public class SpellCastingService {
                         null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
                 ));
             } else if (targetId != null && !targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
-                // Preserve a primary target alongside modal target groups (e.g. Grab the Reins
-                // entwined: the control mode's creature target plus the damage mode's any target).
-                gameData.stack.add(new StackEntry(
+                // Preserve a separately transported target alongside modal target groups (e.g.
+                // Grab the Reins entwined: targetIds contains group 0's control target, while
+                // targetId contains group 1's damage target).
+                StackEntry entry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), null, List.of(), targetIds
-                ));
+                );
+                entry.setPrimaryTargetStoredSeparately(false);
+                gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 gameData.stack.add(new StackEntry(

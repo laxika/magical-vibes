@@ -1357,7 +1357,9 @@ public class MayPenaltyChoiceHandlerService {
         // anyPlayerMayPay / payerIsEnchantedController, ability.controllerId is the payer being
         // asked and forcedCostOrElseSourceControllerId holds the real source controller.
         UUID decidingPlayerId = ability.controllerId();
-        UUID sourceControllerId = (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
+        UUID sourceControllerId = ability.sourceControllerId() != null
+                ? ability.sourceControllerId()
+                : (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
                 || effect.payerIsDefendingPlayer())
                 && gameData.forcedCostOrElseSourceControllerId != null
                 ? gameData.forcedCostOrElseSourceControllerId
@@ -1587,6 +1589,7 @@ public class MayPenaltyChoiceHandlerService {
                 StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
                 ability.targetCardId(), ability.sourcePermanentId());
+        syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

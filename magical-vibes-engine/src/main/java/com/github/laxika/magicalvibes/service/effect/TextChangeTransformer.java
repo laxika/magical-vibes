@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -183,6 +184,18 @@ public final class TextChangeTransformer {
                 yield colors == protection.colors() ? protection
                         : new ProtectionFromColorsEffect(colors, protection.scope());
             }
+            case PreventDamageFromChosenSourceEffect prevention -> {
+                PermanentPredicate filter = apply(prevention.sourceFilter(), substitution);
+                String label = replaceColorWord(prevention.sourceLabel(), substitution);
+                yield filter == prevention.sourceFilter() && label == prevention.sourceLabel() ? prevention
+                        : new PreventDamageFromChosenSourceEffect(
+                                prevention.scope(), prevention.gainLife(),
+                                prevention.gainLifeForBlackOrRedSource(), prevention.controllerOnly(),
+                                filter, label, prevention.sourceChosenColor(),
+                                prevention.sourceSharesColorWithImprintedCard(),
+                                prevention.sourceActivationManaColor(), prevention.exileFromLibrary(),
+                                prevention.damageRedSourceController(), prevention.damageSourceController());
+            }
             case GrantColorEffect grant ->
                     substitution.fromColor() != null && grant.color() == substitution.fromColor()
                             ? new GrantColorEffect(substitution.toColor(), grant.scope(), grant.overriding())
@@ -307,6 +320,14 @@ public final class TextChangeTransformer {
         result.remove(substitution.fromColor());
         result.add(substitution.toColor());
         return result;
+    }
+
+    private static String replaceColorWord(String word, Substitution substitution) {
+        if (word == null || substitution.fromColor() == null
+                || !word.equals(substitution.fromColor().name().toLowerCase(Locale.ROOT))) {
+            return word;
+        }
+        return substitution.toColor().name().toLowerCase(Locale.ROOT);
     }
 
     private static Set<Keyword> replaceLandwalk(Set<Keyword> keywords, Substitution substitution) {

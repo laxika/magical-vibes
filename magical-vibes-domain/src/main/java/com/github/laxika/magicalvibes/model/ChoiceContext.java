@@ -324,6 +324,9 @@ public sealed interface ChoiceContext {
     record SnowLandwalkGrantChoice(UUID targetId) implements ChoiceContext {
     }
 
+    record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {
+    }
+
     /**
      * The controller has chosen a basic land type; each land they control becomes that type
      * until end of turn, replacing its other land types/mana ability per rule 305.7

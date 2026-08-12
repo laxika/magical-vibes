@@ -702,6 +702,9 @@ public class DestructionSupport {
 
     private void tapEnchantedPermanent(GameData gameData, StackEntry entry) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || !aura.isAttached()) {
             return;
         }

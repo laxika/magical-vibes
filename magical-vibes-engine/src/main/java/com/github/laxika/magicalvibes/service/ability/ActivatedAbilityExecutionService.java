@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
@@ -383,7 +384,7 @@ public class ActivatedAbilityExecutionService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent, ability);
+        List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
         // and its cost and effect don't move cards to or from a library.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
@@ -499,9 +500,12 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
-    private List<CardEffect> snapshotEffects(List<CardEffect> abilityEffects, Permanent permanent, ActivatedAbility ability) {
+    private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
+                                             Permanent permanent, ActivatedAbility ability) {
         List<CardEffect> snapshotEffects = new ArrayList<>();
-        for (CardEffect effect : abilityEffects) {
+        for (CardEffect printedEffect : abilityEffects) {
+            CardEffect effect = TextChangeTransformer.transform(printedEffect,
+                    permanent.getTextReplacements(), TextChangeTransformer.globalColorWordReplacements(gameData));
             if (effect instanceof CostEffect) {
                 continue;
             }

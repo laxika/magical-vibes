@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * "… a source of your choice would deal damage …" prevention: on resolution the controller chooses
- * a damage source from the battlefield (optionally restricted by {@code sourceFilter}) and a
- * prevention shield keyed to that source is installed. {@code scope} selects the shield:
+ * a damage source from the battlefield or a spell on the stack (optionally restricted by
+ * {@code sourceFilter}) and a prevention shield keyed to that source is installed. {@code scope}
+ * selects the shield:
  *
  * <ul>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_CONTROLLER} — one-shot, protects the
@@ -27,7 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param gainLifeForBlackOrRedSource ALL_DAMAGE_THIS_TURN/controllerOnly only: gain life equal to each
  *                                    prevented damage event from a black or red source
  * @param controllerOnly              ALL_DAMAGE_THIS_TURN only: shield only the controller, not all recipients
- * @param sourceFilter                restricts which permanents are legal source choices; {@code null} = any
+ * @param sourceFilter                restricts which permanents or spells are legal source choices; {@code null} = any
  * @param sourceLabel                 human-readable label for the restriction, used in the choice prompt
  *                                    ("red", "artifact"); {@code null} = unrestricted wording
  * @param sourceChosenColor           restrict the choice to sources of the colour chosen for the ability's

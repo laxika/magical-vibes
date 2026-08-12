@@ -61,6 +61,7 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -77,6 +78,7 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -107,6 +109,7 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, ownLand.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownLand.isTapped()).isFalse();
     }
@@ -122,6 +125,7 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(targetArtifact.isTapped()).isTrue();
     }

@@ -17,7 +17,7 @@ public class AbyssalSpecter extends Card {
         // Flying comes from the Scryfall keyword data.
         // Whenever this creature deals damage to a player, that player (the damaged player)
         // discards a card. The engine routes TARGET_PLAYER discards on this slot to the damaged player.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
     }
 }

@@ -133,6 +133,10 @@ public class CreatureControlService {
         }
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
 
+        if (gameData.permanentsToTapWhenControlLost.remove(permanent.getId())) {
+            permanent.tap();
+        }
+
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.setSummoningSick(true);

@@ -1449,7 +1449,7 @@ public class TargetLegalityService {
 
         Card card = entry.getCard();
         if (card != null) {
-            int firstFlatGroup = card.isAura() && entry.getTargetId() != null ? 1 : 0;
+            int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
             int remaining = targetCount;
             for (SpellTarget group : card.getSpellTargets()) {
                 if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
@@ -1928,7 +1928,10 @@ public class TargetLegalityService {
             return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
-            return colorInPredicate.colors().contains(stackEntry.getCard().getColor());
+            var colors = stackEntry.getCard().getColors();
+            return colors != null && !colors.isEmpty()
+                    ? colors.stream().anyMatch(colorInPredicate.colors()::contains)
+                    : colorInPredicate.colors().contains(stackEntry.getCard().getColor());
         }
         if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);

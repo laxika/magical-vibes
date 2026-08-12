@@ -1158,7 +1158,7 @@ public class StepTriggerService {
                 // stack entry's targetId (set below); the sacrifice/life-loss effects find their host
                 // via the source aura, so baking the controller as targetId is safe for them.
 
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         auraOwnerId,
@@ -1166,7 +1166,9 @@ public class StepTriggerService {
                         new ArrayList<>(List.of(effectForStack)),
                         enchantedPermanentControllerId,
                         perm.getId()
-                ));
+                );
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.stack.add(entry);
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                 log.info("Game {} - {} enchanted-permanent-controller upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -3935,15 +3937,19 @@ public class StepTriggerService {
             if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
 
             for (CardEffect effect : enchantedControllerEndStepEffects) {
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         enchantedPermanentControllerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
-                        null,
+                        perm.getAttachedTo(),
                         perm.getId()
-                ));
+                );
+                entry.setNonTargeting(true);
+                entry.setTriggeringPermanentId(perm.getAttachedTo());
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.stack.add(entry);
 
                 gameLogService.append(gameData,
                         GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePr
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringControllersLastTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
@@ -604,6 +605,8 @@ public class PredicateEvaluationService {
                     permanent.isBlocking();
             case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
                     permanent.isAttackedDuringControllersLastTurn();
+            case PermanentAttackedThisTurnPredicate ignored ->
+                    permanent.isAttackedThisTurn();
             case PermanentAttackedOrBlockedThisTurnPredicate ignored ->
                     permanent.isAttackedThisTurn() || permanent.isBlockedThisTurn();
             case PermanentIsBlockedPredicate ignored ->

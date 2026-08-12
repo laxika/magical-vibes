@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,11 +55,13 @@ class AbyssalSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage to a player also makes that player discard a card")
     void noncombatDamageMakesDamagedPlayerDiscard() {
-        addCreatureReady(player1, new AbyssalSpecter());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        AbyssalSpecter card = new AbyssalSpecter();
+        card.addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
+        Permanent specter = addCreatureReady(player1, card);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer),
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
                 null, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

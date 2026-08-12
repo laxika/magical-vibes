@@ -27,7 +27,7 @@ public class Aurochs extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.AUROCHS)
                 )),
-                CountScope.CONTROLLER,
+                CountScope.ANY_PLAYER,
                 true);
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(otherAttackingAurochs, new Fixed(0)));
     }

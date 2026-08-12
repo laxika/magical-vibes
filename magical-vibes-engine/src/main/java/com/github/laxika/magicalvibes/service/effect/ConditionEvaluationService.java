@@ -1301,6 +1301,10 @@ public class ConditionEvaluationService {
      * Aggression's end-step trigger, which checks the enchanted creature rather than the source.
      */
     private boolean enchantedCreatureDidntAttackThisTurn(GameData gameData, ConditionContext ctx) {
+        if (ctx.targetId() != null) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, ctx.targetId());
+            return enchanted != null && !enchanted.isAttackedThisTurn();
+        }
         Permanent aura = sourcePermanent(gameData, ctx);
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());

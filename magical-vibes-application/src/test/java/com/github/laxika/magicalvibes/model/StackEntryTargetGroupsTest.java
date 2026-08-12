@@ -94,6 +94,28 @@ class StackEntryTargetGroupsTest {
     }
 
     @Test
+    @DisplayName("A separate graveyard target does not shift battlefield target groups")
+    void separateGraveyardTargetDoesNotShiftFlatTargetGroups() {
+        Card card = new Card();
+        CardEffect effect = new BoostTargetCreatureEffect(1, 1);
+        card.target(1, 1).addEffect(EffectSlot.SPELL, effect);
+
+        UUID graveyardTarget = UUID.randomUUID();
+        UUID battlefieldTarget = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card, CONTROLLER, "test",
+                List.of(effect), 0, graveyardTarget, null, java.util.Map.of(), Zone.GRAVEYARD,
+                List.of(), List.of(battlefieldTarget));
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(battlefieldTarget);
+        assertThat(entry.targetsForEffect(effect)).containsExactly(battlefieldTarget);
+
+        entry.setTargetId(null);
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(battlefieldTarget);
+        assertThat(entry.targetsForEffect(effect)).containsExactly(battlefieldTarget);
+    }
+
+    @Test
     @DisplayName("A single 'up to N' group receives every chosen target")
     void singleUpToNGroup() {
         Card card = new Card();

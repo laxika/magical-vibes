@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -35,7 +35,7 @@ public class TotalWar extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
-                        new PermanentNotPredicate(new PermanentIsAttackingPredicate()),
+                        new PermanentNotPredicate(new PermanentAttackedThisTurnPredicate()),
                         new PermanentControlledContinuouslySinceBeginningOfTurnPredicate())),
                 EachPermanentScope.TARGET_PLAYER,
                 null));

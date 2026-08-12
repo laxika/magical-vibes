@@ -182,7 +182,7 @@ public class StackEntry {
      * {@code targetId} to the target of the current effect, so the target-list layout cannot be
      * inferred from its current value.
      */
-    private boolean primaryTargetStoredSeparately;
+    @Setter private boolean primaryTargetStoredSeparately;
     /**
      * How many targets each declared target group actually contributed to the flat {@link #targetIds}
      * list, in group order. Only set by the slot-by-slot trigger walker, which lets a controller
@@ -387,7 +387,9 @@ public class StackEntry {
         boolean explicitTargetIds = targetIds != null && !targetIds.isEmpty();
         this.targetIds = explicitTargetIds ? targetIds : assignmentTargetIds(this.damageAssignments);
         this.targetIdsFromAssignments = !explicitTargetIds && !this.targetIds.isEmpty();
-        this.primaryTargetStoredSeparately = targetId != null && explicitTargetIds;
+        this.primaryTargetStoredSeparately = targetId != null
+                && explicitTargetIds
+                && targetZone != Zone.GRAVEYARD;
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
