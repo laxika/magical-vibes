@@ -66,4 +66,45 @@ class BrainstormTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(drawn0, drawn1, library.get(3), library.get(4));
     }
+
+    @Test
+    @DisplayName("Can put a card that was already in hand on top")
+    void choosesFromEntireHand() {
+        List<Card> library = fiveCards();
+        Card alreadyInHand = new Shock();
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        deck.addAll(library);
+
+        harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(alreadyInHand.getId(), library.get(0).getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(1), library.get(2));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(alreadyInHand, library.get(0), library.get(3), library.get(4));
+    }
+
+    @Test
+    @DisplayName("Puts all available cards back when the library has fewer than three cards")
+    void handlesShortLibrary() {
+        Card libraryCard = new GrizzlyBears();
+        Card alreadyInHand = new Shock();
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        deck.add(libraryCard);
+
+        harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(alreadyInHand.getId(), libraryCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(alreadyInHand, libraryCard);
+    }
 }

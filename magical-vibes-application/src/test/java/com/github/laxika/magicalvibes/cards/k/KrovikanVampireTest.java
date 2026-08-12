@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -139,5 +143,54 @@ class KrovikanVampireTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature that leaves and re-enters is not returned after dying")
+    void doesNotReturnCreatureAfterItLeavesAndReenters() {
+        harness.addToBattlefield(player1, new KrovikanVampire());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        Permanent vampire = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent spider = gd.playerBattlefields.get(player2.getId()).getFirst();
+        gd.creatureCardsDamagedThisTurnBySourcePermanent
+                .computeIfAbsent(vampire.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .add(spider.getCard().getId());
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0, spider.getId());
+        harness.passBothPriorities();
+
+        Card bouncedSpider = gd.playerHands.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Giant Spider"))
+                .findFirst()
+                .orElseThrow();
+        gd.playerHands.get(player2.getId()).remove(bouncedSpider);
+        harness.addToBattlefield(player2, bouncedSpider);
+        Permanent reenteredSpider = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Giant Spider"))
+                .findFirst()
+                .orElseThrow();
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, reenteredSpider.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Giant Spider");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 }

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
+import com.github.laxika.magicalvibes.cards.z.ZealousInquisitor;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,5 +80,25 @@ class LavaBurstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage dealt to a creature can't be redirected")
+    void creatureDamageCannotBeRedirected() {
+        Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
+        Permanent destination = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(inquisitor),
+                null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LavaBurst()));
+        harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
+        harness.castSorcery(player1, 0, 1, inquisitor.getId());
+        harness.passBothPriorities();
+
+        assertThat(inquisitor.getMarkedDamage()).isEqualTo(1);
+        assertThat(destination.getMarkedDamage()).isZero();
     }
 }

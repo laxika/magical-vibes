@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,6 +49,20 @@ class DarkBanishingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, blackCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreature() {
+        Permanent forest = new Permanent(new Forest());
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(forest);
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creature");
     }

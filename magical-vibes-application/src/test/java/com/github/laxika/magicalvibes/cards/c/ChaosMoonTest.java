@@ -50,6 +50,22 @@ class ChaosMoonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The upkeep ability uses the permanent count from its single resolution")
+    void parityIsEvaluatedOnceForUpkeepAbility() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new ChaosMoon());
+        harness.addToBattlefield(player1, new HillGiant());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mountain));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hill Giant").getEffectivePower()).isEqualTo(4);
+        assertThat(findPermanent(player1, "Hill Giant").getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Odd permanent count: tapping a Mountain for mana adds an additional {R}")
     void oddCountAddsExtraRedFromMountain() {
         harness.addToBattlefield(player1, new ChaosMoon());

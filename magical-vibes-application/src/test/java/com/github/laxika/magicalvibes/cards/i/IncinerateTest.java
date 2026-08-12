@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -159,6 +160,32 @@ class IncinerateTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
         harness.assertInGraveyard(player2, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Fully prevented Incinerate damage does not stop regeneration this turn")
+    void fullyPreventedDamageDoesNotStopRegeneration() {
+        Permanent skelePerm = new Permanent(new DrudgeSkeletons());
+        skelePerm.setSummoningSick(false);
+        skelePerm.setRegenerationShield(1);
+        skelePerm.setDamagePreventionShield(3);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(skelePerm);
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, skelePerm.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        assertThat(skelePerm.getRegenerationShield()).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, skelePerm.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
     }
 
     // ===== Incinerate goes to graveyard =====

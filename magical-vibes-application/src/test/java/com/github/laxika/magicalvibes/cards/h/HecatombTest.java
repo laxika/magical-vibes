@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -60,6 +62,21 @@ class HecatombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Tapping a Swamp deals 1 damage to a target planeswalker")
+    void dealsDamageToPlaneswalker() {
+        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+        harness.addToBattlefield(player1, new Hecatomb());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test

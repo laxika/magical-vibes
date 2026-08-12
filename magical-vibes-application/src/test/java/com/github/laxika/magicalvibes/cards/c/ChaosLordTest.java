@@ -40,6 +40,20 @@ class ChaosLordTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Parity is checked when the upkeep ability resolves")
+    void parityIsCheckedOnResolution() {
+        harness.addToBattlefield(player1, new ChaosLord());
+
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chaos Lord");
+        harness.assertOnBattlefield(player2, "Chaos Lord");
+    }
+
+    @Test
     @DisplayName("Control does not change when the number of permanents is odd")
     void controlStaysOnOddPermanentCount() {
         harness.addToBattlefield(player1, new ChaosLord());

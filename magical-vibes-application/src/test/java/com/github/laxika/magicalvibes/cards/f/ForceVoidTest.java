@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -65,5 +67,35 @@ class ForceVoidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Force Void's controller draws at the next upkeep")
+    void controllerDrawsAtNextUpkeep() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.setHand(player2, List.of(new ForceVoid()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        harness.passBothPriorities();
+
+        int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
+        int controllerDeckBefore = gd.playerDecks.get(player2.getId()).size();
+        int targetControllerHandBefore = gd.playerHands.get(player1.getId()).size();
+
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.activePlayerId = player1.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(targetControllerHandBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

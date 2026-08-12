@@ -45,6 +45,16 @@ class LostOrderOfJarkeldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts only creatures controlled by the opponent")
+    void ignoresOpponentNoncreatures() {
+        Permanent lostOrder = addLostOrder(player1);
+        harness.addToBattlefield(player2, new GloriousAnthem());
+
+        assertThat(gqs.getEffectivePower(gd, lostOrder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lostOrder)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Updates dynamically as opponent creatures enter and leave")
     void updatesDynamically() {
         Permanent lostOrder = addLostOrder(player1);

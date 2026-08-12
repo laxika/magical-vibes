@@ -43,6 +43,22 @@ class GravebindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fizzles without scheduling a draw when the target leaves before resolution")
+    void fizzlesWithoutSchedulingDrawWhenTargetLeavesBeforeResolution() {
+        Permanent skele = addRegeneratingSkeleton(player2);
+        harness.setHand(player1, List.of(new Gravebind()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        GameData gd = harness.getGameData();
+
+        harness.castInstant(player1, 0, skele.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(skele);
+        harness.passBothPriorities();
+
+        assertThat(skele.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
     @DisplayName("A marked creature dies in combat despite its regeneration shield")
     void markedCreatureDiesInCombatDespiteShield() {
         Permanent skele = addRegeneratingSkeleton(player2);

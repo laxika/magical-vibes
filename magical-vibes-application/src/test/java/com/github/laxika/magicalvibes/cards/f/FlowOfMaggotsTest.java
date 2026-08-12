@@ -37,6 +37,27 @@ class FlowOfMaggotsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second cumulative upkeep costs two generic mana")
+    void secondUpkeepCostsTwoMana() {
+        Permanent maggots = harness.addToBattlefieldAndReturn(player1, new FlowOfMaggots());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(maggots.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(maggots);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Flow of Maggots")
     void declineSacrifices() {
         Permanent maggots = harness.addToBattlefieldAndReturn(player1, new FlowOfMaggots());

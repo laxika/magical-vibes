@@ -129,6 +129,28 @@ class BlizzardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep doubles on the second upkeep")
+    void cumulativeUpkeepDoublesOnSecondUpkeep() {
+        Permanent blizzard = harness.addToBattlefieldAndReturn(player1, new Blizzard());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(blizzard.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blizzard);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Blizzard")
     void declineSacrifices() {
         Permanent blizzard = harness.addToBattlefieldAndReturn(player1, new Blizzard());

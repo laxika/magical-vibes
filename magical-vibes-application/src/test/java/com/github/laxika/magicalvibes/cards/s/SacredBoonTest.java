@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -157,6 +158,25 @@ class SacredBoonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacred Boon fizzles if its target is no longer a creature")
+    void fizzlesWhenTargetStopsBeingCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID targetId = bears.getId();
+
+        harness.setHand(player1, List.of(new SacredBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, targetId);
+
+        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        aura.setAttachedTo(targetId);
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, bears)).isFalse();
+        assertThat(bears.getDamageToCounterPreventionShield()).isZero();
     }
 
     // ===== Helpers =====

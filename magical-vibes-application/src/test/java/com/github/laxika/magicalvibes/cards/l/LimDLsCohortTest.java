@@ -43,6 +43,24 @@ class LimDLsCohortTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("When the Cohort becomes blocked by multiple creatures, each blocker can't be regenerated this turn")
+    void becomesBlockedMarksEachBlocker() {
+        Permanent cohort = addCreatureReady(player1, new LimDLsCohort());
+        cohort.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(secondBlocker.isCantRegenerateThisTurn()).isTrue();
+    }
+
+    @Test
     @DisplayName("The can't-be-regenerated mark clears during end-of-turn cleanup")
     void markClearsAtEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());

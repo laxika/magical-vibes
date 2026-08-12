@@ -106,6 +106,30 @@ class KjeldoranGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent guard = addGuardReady();
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        int basePower = gqs.getEffectivePower(gd, bears);
+        int baseToughness = gqs.getEffectiveToughness(gd, bears);
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(guard), 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent after = gqs.findPermanentById(gd, bears.getId());
+        assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(baseToughness + 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, after));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Guard");
+    }
+
+    @Test
     @DisplayName("Sacrifices itself when the pumped creature leaves the battlefield this turn")
     void sacrificesWhenTargetLeaves() {
         Permanent guard = addGuardReady();

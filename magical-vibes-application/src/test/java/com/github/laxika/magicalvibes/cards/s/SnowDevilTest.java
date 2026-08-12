@@ -56,6 +56,22 @@ class SnowDevilTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Snow land is checked for the Aura controller")
+    void snowLandIsCheckedForAuraController() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        Permanent aura = new Permanent(new SnowDevil());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        addSnowLand();
+        bears.setBlocking(true);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Blocking without snow land does not grant first strike")
     void blockingWithoutSnowLandNoFirstStrike() {
         Permanent bears = enchantedBears();

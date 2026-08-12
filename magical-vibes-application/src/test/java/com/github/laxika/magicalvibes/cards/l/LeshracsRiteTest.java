@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +72,67 @@ class LeshracsRiteTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(ritePerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enchanted creature cannot be blocked while defending player controls a Swamp")
+    void enchantedCreatureCannotBeBlockedWhenDefenderControlsSwamp() {
+        harness.addToBattlefield(player2, new Swamp());
+
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent rite = new Permanent(new LeshracsRite());
+        rite.setAttachedTo(attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).add(rite);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Enchanted creature can be blocked while defending player controls no Swamp")
+    void enchantedCreatureCanBeBlockedWithoutDefendingSwamp() {
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent rite = new Permanent(new LeshracsRite());
+        rite.setAttachedTo(attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).add(rite);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     // ===== Effects stop when removed =====

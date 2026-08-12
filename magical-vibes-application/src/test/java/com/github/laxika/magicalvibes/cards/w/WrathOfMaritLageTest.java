@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,6 +32,26 @@ class WrathOfMaritLageTest extends BaseCardTest {
 
         assertThat(redGiant.isTapped()).isTrue();
         assertThat(greenBears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Red noncreatures are unaffected by both abilities")
+    void redNoncreaturesAreUnaffected() {
+        Permanent bloodMoon = harness.addToBattlefieldAndReturn(player2, new BloodMoon());
+
+        harness.setHand(player1, List.of(new WrathOfMaritLage()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0);
+
+        harness.passBothPriorities(); // enchantment resolves -> ETB trigger on stack
+        harness.passBothPriorities(); // ETB trigger resolves
+
+        assertThat(bloodMoon.isTapped()).isFalse();
+
+        bloodMoon.tap();
+        advanceToNextTurn(player1); // player2's untap step
+
+        assertThat(bloodMoon.isTapped()).isFalse();
     }
 
     @Test

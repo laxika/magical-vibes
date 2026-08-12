@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FumeSpitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoldeviMachinist;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -45,6 +46,22 @@ class BrownOupheTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore);
         assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a mana ability")
+    void cannotCounterManaAbility() {
+        addReadyOuphe(player1);
+
+        SoldeviMachinist machinist = new SoldeviMachinist();
+        harness.addToBattlefieldAndReturn(player2, machinist).setSummoningSick(false);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, machinist.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RootMaze;
+import com.github.laxika.magicalvibes.cards.s.SterlingGrove;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -39,11 +40,13 @@ class EssenceFilterTest extends BaseCardTest {
     @DisplayName("Mode 1 destroys only nonwhite enchantments")
     void nonwhiteEnchantmentsMode() {
         harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new SterlingGrove());
         harness.addToBattlefield(player2, new RootMaze());
 
         castEssenceFilter(1);
 
         harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Sterling Grove");
         harness.assertNotOnBattlefield(player2, "Root Maze");
     }
 

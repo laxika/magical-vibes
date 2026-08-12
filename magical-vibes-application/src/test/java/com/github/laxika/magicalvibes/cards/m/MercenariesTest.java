@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,6 +113,32 @@ class MercenariesTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(mercs.getId()));
+    }
+
+    @Test
+    @DisplayName("Prevents noncombat damage from Mercenaries to the protected player")
+    void preventsNextNoncombatDamage() {
+        harness.setLife(player2, 20);
+        Card card = new Mercenaries().createRuntimeCopy();
+        card.addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(new DealDamageToAnyTargetEffect(1)),
+                "Mercenaries deals 1 damage to any target."
+        ));
+        Permanent mercs = new Permanent(card);
+        mercs.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mercs);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     @Test

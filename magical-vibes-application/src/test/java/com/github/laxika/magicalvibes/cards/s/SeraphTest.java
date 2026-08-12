@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -41,6 +42,28 @@ class SeraphTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    private void seraphAndAirElementalDieInCombat() {
+        harness.addToBattlefield(player1, new Seraph());
+        harness.addToBattlefield(player2, new AirElemental());
+
+        Permanent seraph = gd.playerBattlefields.get(player1.getId()).getFirst();
+        seraph.setSummoningSick(false);
+        seraph.setAttacking(true);
+
+        Permanent elemental = gd.playerBattlefields.get(player2.getId()).getFirst();
+        elemental.setSummoningSick(false);
+        elemental.setBlocking(true);
+        elemental.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
     @Test
     @DisplayName("A creature Seraph kills returns under Seraph's controller at the next end step")
     void returnsDamagedCreatureUnderControlAtEndStep() {
@@ -51,6 +74,16 @@ class SeraphTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Seraph returns a creature that dies at the same time as Seraph")
+    void returnsCreatureWhenSeraphDiesAtTheSameTime() {
+        seraphAndAirElementalDieInCombat();
+
+        harness.assertInGraveyard(player1, "Seraph");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Air Elemental");
     }
 
     @Test

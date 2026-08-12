@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -42,6 +45,24 @@ class FreyalisesCharmTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Opponent multicolored black spell also triggers")
+    void opponentMulticoloredBlackSpellTriggers() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(multicoloredSpell()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -102,5 +123,17 @@ class FreyalisesCharmTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Freyalise's Charm");
         harness.assertNotOnBattlefield(player1, "Freyalise's Charm");
+    }
+
+    private Card multicoloredSpell() {
+        Card card = new Card();
+        card.setName("Test Black-Green Spell");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{B}{G}");
+        card.setColor(CardColor.BLACK);
+        card.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 }

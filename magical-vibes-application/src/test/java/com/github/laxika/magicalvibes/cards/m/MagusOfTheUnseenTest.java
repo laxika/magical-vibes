@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.m.MetallicMastery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,6 +10,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -56,6 +59,28 @@ class MagusOfTheUnseenTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(artifact.getId()));
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Taps the artifact when another effect takes it before end of turn")
+    void artifactIsTappedWhenAnotherEffectTakesControl() {
+        harness.forceActivePlayer(player2);
+        addReadyMagus(player1);
+        Permanent artifact = addArtifact(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new MetallicMastery()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castSorcery(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(artifact.isTapped()).isTrue();
     }
 

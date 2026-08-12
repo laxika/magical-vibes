@@ -82,6 +82,24 @@ class OrcishSquattersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The stolen land returns when Orcish Squatters leaves the battlefield")
+    void controlEndsWhenSourceLeavesBattlefield() {
+        Permanent forest = addDefenderLand();
+        Permanent attacker = addAttacker();
+
+        advanceToMayChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+    }
+
+    @Test
     @DisplayName("Declining the may leaves the land with its controller and deals combat damage")
     void declineDoesNothing() {
         Permanent forest = addDefenderLand();

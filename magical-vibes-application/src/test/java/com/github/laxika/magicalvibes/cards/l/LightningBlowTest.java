@@ -40,6 +40,19 @@ class LightningBlowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightningBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOffAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

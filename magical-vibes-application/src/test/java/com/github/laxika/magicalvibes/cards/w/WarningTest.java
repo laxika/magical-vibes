@@ -30,6 +30,22 @@ class WarningTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents combat damage the target creature would deal to a blocker")
+    void preventsCombatDamageDealtToBlocker() {
+        Permanent attacker = addAttacker(player1, player2, 2, 5);
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        castWarning(attacker);
+        resolveCombat();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Only combat damage is prevented, not all damage")
     void combatDamageOnly() {
         Permanent attacker = addAttacker(player1, player2, 2, 2);

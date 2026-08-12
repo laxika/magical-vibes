@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.Zap;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -58,6 +59,31 @@ class OathOfLimDLTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Forest")).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Damage dealt to the controller triggers the life-loss ability")
+    void damageToControllerTriggersLifeLossAbility() {
+        harness.addToBattlefield(player1, new OathOfLimDL());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Zap()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.setLife(player1, 20);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        harness.handleListChoice(player1, ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

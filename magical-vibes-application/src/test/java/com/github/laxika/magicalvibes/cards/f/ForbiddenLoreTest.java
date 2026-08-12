@@ -34,6 +34,27 @@ class ForbiddenLoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Granted ability can target an opponent's creature")
+    void grantedAbilityBoostsOpponentsCreature() {
+        Permanent forest = attachAura(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> "Grizzly Bears".equals(p.getCard().getName()))
+                .findFirst()
+                .orElseThrow();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, bears.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         attachAura(player1);

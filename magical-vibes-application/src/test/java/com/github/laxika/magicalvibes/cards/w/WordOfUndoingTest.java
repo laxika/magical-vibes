@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.ArmorOfFaith;
 import com.github.laxika.magicalvibes.cards.e.EssenceFlare;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,6 +52,28 @@ class WordOfUndoingTest extends BaseCardTest {
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertInHand(player1, "Armor of Faith");
         harness.assertNotInGraveyard(player1, "Armor of Faith");
+    }
+
+    @Test
+    @DisplayName("Returns all owned white Auras attached to the target")
+    void returnsAllOwnedWhiteAurasAttached() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ArmorOfFaith());
+        Permanent strength = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        armor.setAttachedTo(bears.getId());
+        strength.setAttachedTo(bears.getId());
+
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Armor of Faith");
+        harness.assertInHand(player1, "Holy Strength");
+        harness.assertNotInGraveyard(player1, "Armor of Faith");
+        harness.assertNotInGraveyard(player1, "Holy Strength");
     }
 
     @Test

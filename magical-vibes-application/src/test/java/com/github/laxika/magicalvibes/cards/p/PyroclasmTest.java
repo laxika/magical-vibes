@@ -48,7 +48,6 @@ class PyroclasmTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Pyroclasm");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 

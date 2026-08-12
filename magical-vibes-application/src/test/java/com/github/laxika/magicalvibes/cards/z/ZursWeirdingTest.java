@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -75,6 +76,25 @@ class ZursWeirdingTest extends BaseCardTest {
         // No payment is possible — the drawing player simply draws, opponent's life is untouched.
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertLife(player2, 1);
+    }
+
+    @Test
+    @DisplayName("Opponent may pay 2 life to prevent an empty-library draw")
+    void opponentMayPreventEmptyLibraryDraw() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        gd.playerDecks.put(player1.getId(), new ArrayList<>());
+
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     // ===== Static: players play with their hands revealed =====

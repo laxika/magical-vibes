@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -63,6 +64,20 @@ class InfernalDarknessTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Preserves the amount when a land produces multiple mana")
+    void preservesAmountForMultiManaLand() {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new AncientTomb());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test

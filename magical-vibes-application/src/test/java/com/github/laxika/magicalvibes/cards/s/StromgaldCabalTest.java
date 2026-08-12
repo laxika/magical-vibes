@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BantSureblade;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -42,6 +43,30 @@ class StromgaldCabalTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Elite Vanguard");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Counters a multicolored spell that is white")
+    void countersMulticoloredWhiteSpell() {
+        StromgaldCabal cabal = new StromgaldCabal();
+        addCreatureReady(player1, cabal);
+        harness.setLife(player1, 20);
+
+        BantSureblade victim = new BantSureblade();
+        harness.setHand(player2, List.of(victim));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bant Sureblade");
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
     // ===== Cannot target a non-white spell =====

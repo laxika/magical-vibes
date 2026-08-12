@@ -82,6 +82,25 @@ class ArcticFoxesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With snow land, can't be blocked by a creature with exactly power 2")
+    void cannotBeBlockedByExactlyPowerTwoWhenDefenderHasSnowLand() {
+        snowLandOnDefender();
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(blocker).setPower(2);
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent fox = foxAttacking();
+
+        beginDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(fox);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Without snow land, can be blocked by power 2+")
     void canBeBlockedByHighPowerWithoutSnowLand() {
         Permanent blocker = new Permanent(new HillGiant());
@@ -103,6 +122,27 @@ class ArcticFoxesTest extends BaseCardTest {
     @DisplayName("Non-snow land does not enable the restriction")
     void nonSnowLandDoesNotEnableRestriction() {
         harness.addToBattlefield(player2, new Plains());
+        Permanent blocker = new Permanent(new HillGiant());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent fox = foxAttacking();
+
+        beginDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(fox);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A snow nonland does not enable the restriction")
+    void snowNonlandDoesNotEnableRestriction() {
+        Permanent snowNonland = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(snowNonland).setSupertypes(EnumSet.of(CardSupertype.SNOW));
+        gd.playerBattlefields.get(player2.getId()).add(snowNonland);
         Permanent blocker = new Permanent(new HillGiant());
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);

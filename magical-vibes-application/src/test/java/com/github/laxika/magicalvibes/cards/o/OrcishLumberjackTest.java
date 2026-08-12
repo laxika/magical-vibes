@@ -25,7 +25,7 @@ class OrcishLumberjackTest extends BaseCardTest {
             harness.skipMulligan();
             gd = harness.getGameData();
 
-            addReadyLumberjack(player1);
+            Permanent lumberjack = addReadyLumberjack(player1);
             harness.addToBattlefield(player1, new Forest());
 
             harness.activateAbility(player1, 0, 0, null, null);
@@ -37,8 +37,26 @@ class OrcishLumberjackTest extends BaseCardTest {
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo((int) expectedRed);
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3 - (int) expectedRed);
             assertThat(gd.stack).isEmpty();
+            assertThat(lumberjack.isTapped()).isTrue();
             harness.assertInGraveyard(player1, "Forest");
         }
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped Forest")
+    void canSacrificeTappedForest() {
+        addReadyLumberjack(player1);
+        Permanent forest = new Permanent(new Forest());
+        forest.tap();
+        gd.playerBattlefields.get(player1.getId()).add(forest);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test

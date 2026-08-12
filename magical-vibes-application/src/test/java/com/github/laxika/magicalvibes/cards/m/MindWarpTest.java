@@ -62,6 +62,20 @@ class MindWarpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Looking at the target hand does not publicly reveal its cards")
+    void lookingAtHandDoesNotPubliclyRevealCards() {
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new SerraAngel())));
+        harness.setHand(player1, List.of(new MindWarp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(log -> log.plainText()))
+                .noneMatch(log -> log.contains("Grizzly Bears") || log.contains("Serra Angel"));
+    }
+
+    @Test
     @DisplayName("Choosing X cards discards exactly those cards to the target's graveyard")
     void choosingCardsDiscardsThem() {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new SerraAngel(), new LightningBolt())));

@@ -116,6 +116,29 @@ class GeneralJarkeldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does nothing if a target is no longer blocked on resolution")
+    void noSwapWhenTargetBecomesUnblocked() {
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new SavannahLions());
+        Permanent attackerB = addCreatureReady(player1, new SavannahLions());
+        Permanent blockerA = addCreatureReady(player2, new SavannahLions());
+        Permanent blockerB = addCreatureReady(player2, new SavannahLions());
+
+        setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
+
+        harness.activateAbilityWithMultiTargets(
+                player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jarkeld),
+                0,
+                List.of(attackerA.getId(), attackerB.getId()));
+        blockerA.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blockerA.isBlocking()).isFalse();
+        assertThat(blockerB.getBlockingTargetIds()).containsExactly(attackerB.getId());
+    }
+
+    @Test
     @DisplayName("Cannot activate outside declare blockers step")
     void cannotActivateOutsideDeclareBlockers() {
         Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());

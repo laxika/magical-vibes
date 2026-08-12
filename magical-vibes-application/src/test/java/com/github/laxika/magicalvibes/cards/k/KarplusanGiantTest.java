@@ -99,4 +99,15 @@ class KarplusanGiantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's snow land")
+    void cannotActivateUsingOpponentsSnowLand() {
+        addCreatureReady(player1, new KarplusanGiant());
+        Permanent opponentSnow = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        TestCards.mutableCard(opponentSnow).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.q.QasaliPridemage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -37,6 +39,23 @@ class BattleFrenzyTest extends BaseCardTest {
         Permanent giant = findPermanent(player1, "Hill Giant");
         assertThat(giant.getEffectivePower()).isEqualTo(4);
         assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counts multicolored green creatures as green and colorless creatures as nongreen")
+    void handlesMulticoloredAndColorlessCreatures() {
+        harness.addToBattlefield(player1, new QasaliPridemage());
+        harness.addToBattlefield(player1, new Juggernaut());
+
+        castBattleFrenzy();
+
+        Permanent pridemage = findPermanent(player1, "Qasali Pridemage");
+        assertThat(pridemage.getEffectivePower()).isEqualTo(3);
+        assertThat(pridemage.getEffectiveToughness()).isEqualTo(3);
+
+        Permanent juggernaut = findPermanent(player1, "Juggernaut");
+        assertThat(juggernaut.getEffectivePower()).isEqualTo(6);
+        assertThat(juggernaut.getEffectiveToughness()).isEqualTo(3);
     }
 
     @Test

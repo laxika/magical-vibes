@@ -96,6 +96,20 @@ class AurochsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts an attacking Aurochs controlled by another player")
+    void countsAttackingAurochsControlledByAnotherPlayer() {
+        Permanent aurochs = addCreatureReady(player1, new Aurochs());
+        Permanent otherAurochs = addCreatureReady(player2, new Aurochs());
+        otherAurochs.setAttacking(true);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
+        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent aurochs = addCreatureReady(player1, new Aurochs());

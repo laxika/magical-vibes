@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -38,6 +39,31 @@ class MistfolkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mistfolk");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters a multi-target spell that targets Mistfolk")
+    void countersMultiTargetSpellTargetingSelf() {
+        Mistfolk mistfolk = new Mistfolk();
+        harness.addToBattlefield(player1, mistfolk);
+
+        ArcTrail arcTrail = new ArcTrail();
+        harness.setHand(player2, List.of(arcTrail));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0,
+                List.of(harness.getPermanentId(player1, "Mistfolk"), player2.getId()));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, arcTrail.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Arc Trail");
+        harness.assertOnBattlefield(player1, "Mistfolk");
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 
     @Test

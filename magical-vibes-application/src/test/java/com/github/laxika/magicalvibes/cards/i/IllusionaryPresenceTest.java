@@ -82,4 +82,16 @@ class IllusionaryPresenceTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, presence, Keyword.ISLANDWALK)).isFalse();
     }
+
+    @Test
+    @DisplayName("Landwalk choice includes nonbasic land types")
+    void offersNonbasicLandTypes() {
+        harness.addToBattlefield(player1, new IllusionaryPresence());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains("DESERT");
+    }
 }

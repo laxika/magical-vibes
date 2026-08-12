@@ -47,6 +47,35 @@ class TotalWarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spares a creature that attacked before being removed from combat")
+    void sparesCreatureThatWasRemovedFromCombat() {
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new TotalWar()));
+
+        ThaumaticCompass card = new ThaumaticCompass();
+        Permanent spires = new Permanent(card);
+        spires.setSummoningSick(false);
+        spires.setCard(card.getBackFaceCard());
+        spires.setTransformed(true);
+        gd.playerBattlefields.get(player1.getId()).add(spires);
+
+        Permanent attacker = addCreature(player2, new GrizzlyBears(), false);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(0));
+
+        int spiresIndex = gd.playerBattlefields.get(player1.getId()).indexOf(spires);
+        harness.activateAbility(player1, spiresIndex, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .contains(attacker.getId());
+    }
+
+    @Test
     @DisplayName("Spares Walls, tapped creatures and creatures that arrived this turn")
     void sparesExemptCreatures() {
         gd.playerBattlefields.get(player1.getId()).add(new Permanent(new TotalWar()));

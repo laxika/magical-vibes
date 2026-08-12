@@ -113,6 +113,25 @@ class MindWhipTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("The trigger still taps the last enchanted creature if Mind Whip leaves before resolution")
+    void triggerUsesLastEnchantedCreatureAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = new Permanent(new MindWhip());
+        aura.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
     private void attachMindWhip(Permanent creature) {
         Permanent aura = new Permanent(new MindWhip());
         aura.setAttachedTo(creature.getId());

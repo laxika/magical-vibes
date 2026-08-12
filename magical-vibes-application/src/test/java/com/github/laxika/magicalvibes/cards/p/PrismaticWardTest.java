@@ -110,6 +110,24 @@ class PrismaticWardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents noncombat damage from a multicolored source that includes the chosen color")
+    void preventsChosenColorDamageFromMulticoloredSource() {
+        Permanent warded = addWardedCreature(player2, 2, 2, CardColor.GREEN, CardColor.RED);
+        Card multicoloredBolt = createDamageInstant("Izzet Bolt", CardColor.RED, "{R}", 2);
+        multicoloredBolt.setColors(List.of(CardColor.BLUE, CardColor.RED));
+
+        harness.setHand(player1, List.of(multicoloredBolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, warded.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(warded.getId()));
+        assertThat(warded.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Allows noncombat damage from a source of a different color")
     void allowsOtherColorNoncombatDamage() {
         Permanent warded = addWardedCreature(player2, 2, 2, CardColor.GREEN, CardColor.RED);

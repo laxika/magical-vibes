@@ -79,6 +79,18 @@ class MeltingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Melting also removes snow from lands entering after it")
+    void meltingAppliesToLandsEnteringLater() {
+        harness.addToBattlefield(player1, new Melting());
+        snowPlainsOnDefender();
+        setUpCombat();
+
+        declareBlock();
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Melting is symmetric — it also strips snow from its controller's opponent's lands")
     void meltingAppliesUnderOpponentControl() {
         snowPlainsOnDefender();

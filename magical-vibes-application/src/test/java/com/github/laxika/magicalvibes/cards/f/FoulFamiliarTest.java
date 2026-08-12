@@ -55,6 +55,25 @@ class FoulFamiliarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("returns to its owner's hand when controlled by another player")
+    void activateAbilityReturnsToOwnersHand() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player2, new FoulFamiliar());
+        gd.stolenCreatures.put(familiar.getId(), player1.getId());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertInHand(player1, "Foul Familiar");
+        harness.assertNotInHand(player2, "Foul Familiar");
+        harness.assertNotOnBattlefield(player2, "Foul Familiar");
+    }
+
+    @Test
     @DisplayName("Cannot activate with insufficient life")
     void cannotActivateWithInsufficientLife() {
         harness.addToBattlefield(player1, new FoulFamiliar());

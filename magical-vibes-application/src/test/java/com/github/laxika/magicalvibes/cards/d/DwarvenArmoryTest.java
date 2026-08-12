@@ -108,4 +108,20 @@ class DwarvenArmoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        harness.addToBattlefield(player1, new DwarvenArmory());
+        harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

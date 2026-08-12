@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -297,6 +299,40 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard survives (only 2 redirected damage < 5 toughness)
         harness.assertOnBattlefield(player2, "Kjeldoran Royal Guard");
+    }
+
+    @Test
+    @DisplayName("Trample damage from a blocked creature is not redirected")
+    void trampleDamageFromBlockedCreatureIsNotRedirected() {
+        addGuardReady(player2);
+
+        GrizzlyBears attackerCard = new GrizzlyBears();
+        attackerCard.setKeywords(Set.of(Keyword.TRAMPLE));
+        Permanent attacker = new Permanent(attackerCard);
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Card blockerCard = new Card();
+        blockerCard.setName("Tiny Wall");
+        blockerCard.setType(CardType.CREATURE);
+        blockerCard.setPower(1);
+        blockerCard.setToughness(1);
+        Permanent blocker = new Permanent(blockerCard);
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test

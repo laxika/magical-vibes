@@ -72,6 +72,22 @@ class GangrenousZombiesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Checks for a snow Swamp when the ability resolves")
+    void checksSnowSwampAtResolution() {
+        addReadyZombies(player1);
+        Permanent snowSwamp = addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(snowSwamp);
+        harness.passBothPriorities();
+
+        Permanent oppBear = findPermanent(player2, "Grizzly Bears");
+        assertThat(oppBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
     @DisplayName("Activated ability requires tap — cannot activate when tapped")
     void activatedAbilityRequiresTap() {
         Permanent zombies = addReadyZombies(player1);

@@ -100,6 +100,28 @@ class ForgottenLoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying with no remaining cards still offers the next payment choice")
+    void payingWithNoRemainingCardsOffersPaymentAgain() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        castForgottenLore(2);
+
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.PAY);
+
+        PendingInteraction.ColorChoice payment = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(payment).isNotNull();
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        assertThat(payment.options()).containsExactly(
+                ChoiceContext.ForgottenLorePaymentChoice.PAY,
+                ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting("name").contains("Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("An empty graveyard resolves with no choice and no card returned")
     void emptyGraveyardDoesNothing() {
         harness.setGraveyard(player1, List.of());

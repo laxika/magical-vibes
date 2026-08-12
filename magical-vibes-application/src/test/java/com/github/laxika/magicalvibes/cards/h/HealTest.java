@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -45,6 +46,50 @@ class HealTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Heal prevents only the next 1 damage to a targeted player")
+    void preventsOnlyNextDamageToPlayer() {
+        harness.setLife(player2, 20);
+        addReadySpellcaster();
+        addReadySpellcaster();
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Heal prevents only the next 1 damage to a targeted creature")
+    void preventsOnlyNextDamageToCreature() {
+        addReadySpellcaster();
+        addReadySpellcaster();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, targetId);
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(bears.getDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -89,5 +134,12 @@ class HealTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    private Permanent addReadySpellcaster() {
+        Permanent spellcaster = new Permanent(new ZuranSpellcaster());
+        spellcaster.setSummoningSick(false);
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(spellcaster);
+        return spellcaster;
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -76,6 +77,22 @@ class ElderDruidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can decline tapping or untapping the target")
+    void canDeclineTapOrUntap() {
+        addReadyDruid(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addDruidMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isFalse();
     }

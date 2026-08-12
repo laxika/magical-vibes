@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,6 +46,21 @@ class OrcishCannoneersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Deals 2 damage to a planeswalker and 3 damage to controller")
+    void deals2ToPlaneswalkerAnd3ToController() {
+        harness.setLife(player1, 20);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        addReadyCannoneers(player1);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 

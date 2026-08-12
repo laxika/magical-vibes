@@ -67,6 +67,27 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep cost increases with age counters")
+    void cumulativeUpkeepCostIncreases() {
+        Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(illusions.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(illusions);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Illusions of Grandeur")
     void declineSacrifices() {
         Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());

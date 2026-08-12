@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -66,6 +67,21 @@ class FoxfireTest extends BaseCardTest {
 
         assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
         assertThat(gd.creaturesWithAllDamagePrevented).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to the target creature still applies")
+    void noncombatDamageStillAppliesToTargetCreature() {
+        Permanent attacker = addAttacker(player1, player2, 3, 3);
+
+        castFoxfire(attacker);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

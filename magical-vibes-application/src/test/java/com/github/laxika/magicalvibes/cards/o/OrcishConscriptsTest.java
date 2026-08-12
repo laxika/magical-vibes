@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -72,6 +73,22 @@ class OrcishConscriptsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at least 2 other creatures block");
+    }
+
+    @Test
+    @DisplayName("Orcish Conscripts counts other blocking creatures, not block assignments")
+    void cannotBlockWithSingleAllyThatBlocksMultipleAttackers() {
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+        addCreatureReady(player2, new OrcishConscripts());
+        addCreatureReady(player2, new WallOfGlare());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0),
+                        new BlockerAssignment(1, 1))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("at least 2 other creatures block");
     }

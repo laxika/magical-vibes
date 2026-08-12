@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KjeldoranSkyknightTest extends BaseCardTest {
 
@@ -25,6 +28,31 @@ class KjeldoranSkyknightTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
+    }
+
+    @Test
+    @DisplayName("Flying prevents a non-flying creature from blocking")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        Permanent skyknight = new Permanent(new KjeldoranSkyknight());
+        skyknight.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(skyknight);
+
+        Permanent blocker = new Permanent(creature("Ground Blocker", 2, 2));
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

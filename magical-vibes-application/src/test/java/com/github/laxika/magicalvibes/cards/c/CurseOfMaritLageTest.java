@@ -59,4 +59,26 @@ class CurseOfMaritLageTest extends BaseCardTest {
         assertThat(island.isTapped()).isTrue();
         assertThat(forest.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Affects an opponent's Island during that player's untap step")
+    void opponentIslandsDoNotUntap() {
+        harness.addToBattlefield(player1, new CurseOfMaritLage());
+        Permanent opponentIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        opponentIsland.tap();
+        opponentForest.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(opponentIsland.isTapped()).isTrue();
+        assertThat(opponentForest.isTapped()).isFalse();
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,6 +35,20 @@ class JokulhaupsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Jokulhaups does not destroy enchantments")
+    void doesNotDestroyEnchantments() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        harness.setHand(player1, List.of(new Jokulhaups()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
     }
 
     @Test

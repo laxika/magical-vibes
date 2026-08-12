@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,6 +40,31 @@ class BalduvianShamanTest extends BaseCardTest {
         assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
         assertThat(cop.hasCumulativeUpkeep()).isTrue();
         assertThat(shaman.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Changed text affects the target enchantment's activated ability")
+    void changedTextAffectsTargetActivatedAbility() {
+        Permanent shaman = addReady(player1, new BalduvianShaman());
+        Permanent cop = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionBlack());
+        Permanent blueSource = addReady(player2, new FugitiveWizard());
+
+        int shamanIdx = gd.playerBattlefields.get(player1.getId()).indexOf(shaman);
+        harness.activateAbility(player1, shamanIdx, null, cop.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "BLUE");
+
+        int copIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cop);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, copIdx, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, blueSource.getId());
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(shield -> shield.playerId().equals(player1.getId())
+                        && shield.sourceId().equals(blueSource.getId()));
     }
 
     @Test

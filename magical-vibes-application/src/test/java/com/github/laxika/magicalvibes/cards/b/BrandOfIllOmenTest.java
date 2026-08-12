@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -59,6 +62,22 @@ class BrandOfIllOmenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enchanted creature's controller can cast noncreature spells")
+    void enchantedControllerCanCastNoncreatureSpells() {
+        attachToOpponentCreature();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Restriction ends when the Aura leaves the battlefield")
     void restrictionEndsWhenAuraLeaves() {
         attachToOpponentCreature();
@@ -88,5 +107,40 @@ class BrandOfIllOmenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifactId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep adds an age counter and keeps the Aura when paid")
+    void cumulativeUpkeepPaid() {
+        Permanent creature = attachToOpponentCreature();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> "Brand of Ill Omen".equals(p.getCard().getName()))
+                .findFirst()
+                .orElseThrow();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(aura.getCounterCount(CounterType.AGE)).isEqualTo(1);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep sacrifices the Aura when unpaid")
+    void cumulativeUpkeepUnpaidSacrificesAura() {
+        attachToOpponentCreature();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Brand of Ill Omen");
+        harness.assertInGraveyard(player1, "Brand of Ill Omen");
     }
 }

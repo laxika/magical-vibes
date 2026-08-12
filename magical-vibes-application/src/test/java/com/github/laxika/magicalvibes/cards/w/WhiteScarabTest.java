@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -82,6 +83,21 @@ class WhiteScarabTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new SavannahLions());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gets +2/+2 when an opponent controls a white noncreature permanent")
+    void boostedWhenOpponentControlsWhiteNoncreaturePermanent() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent aura = new Permanent(new WhiteScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addToBattlefield(player2, new CircleOfProtectionWhite());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);

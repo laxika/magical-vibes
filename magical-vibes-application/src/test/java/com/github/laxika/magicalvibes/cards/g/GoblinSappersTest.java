@@ -73,6 +73,25 @@ class GoblinSappersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cheap mode can target Goblin Sappers itself")
+    void cheapModeCanTargetItself() {
+        Permanent sappers = addReady(player1, new GoblinSappers());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, indexOf(player1, sappers), 0, null, sappers.getId());
+        harness.passBothPriorities();
+
+        assertThat(sappers.isCantBeBlocked()).isTrue();
+
+        advanceThroughEndOfCombat();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Sappers");
+        harness.assertInGraveyard(player1, "Goblin Sappers");
+    }
+
+    @Test
     @DisplayName("Can't target a creature an opponent controls")
     void cannotTargetOpponentCreature() {
         Permanent sappers = addReady(player1, new GoblinSappers());

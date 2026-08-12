@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -40,6 +41,17 @@ class FreyalisesWindsTest extends BaseCardTest {
         tapAndResolve(spider);
 
         assertThat(spider.getCounterCount(CounterType.WIND)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapping a noncreature permanent also puts a wind counter on it")
+    void tappingLandAddsWindCounter() {
+        harness.addToBattlefield(player1, new FreyalisesWinds());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        tapAndResolve(forest);
+
+        assertThat(forest.getCounterCount(CounterType.WIND)).isEqualTo(1);
     }
 
     @Test

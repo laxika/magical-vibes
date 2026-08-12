@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -82,6 +83,18 @@ class GoblinMutantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't attack when the defending player controls an untapped creature with power greater than 3")
+    void cantAttackIntoUntappedCreatureWithPowerGreaterThanThree() {
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new CrawWurm())); // 6/4
+        mutant();
+
+        readyToAttack();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Can block an attacker with power below 3")
     void canBlockSmallAttacker() {
         Permanent mutant = mutant();
@@ -100,6 +113,17 @@ class GoblinMutantTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(giant);
 
         assertThat(bls.canBlockAttacker(gd, mutant, giant,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can't block an attacker with power greater than 3")
+    void cantBlockAttackerWithPowerGreaterThanThree() {
+        Permanent mutant = mutant();
+        Permanent wurm = new Permanent(new CrawWurm()); // 6/4
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        assertThat(bls.canBlockAttacker(gd, mutant, wurm,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 }

@@ -112,6 +112,38 @@ class EnduringRenewalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns a creature owned by the controller when an opponent controls it at death")
+    void creatureOwnedByControllerReturnsWhenOpponentControlsIt() {
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        gd.stolenCreatures.put(bears.getId(), player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for a creature put into an opponent's graveyard")
+    void creaturePutIntoOpponentsGraveyardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Return fizzles if the creature leaves the graveyard in response")
     void returnFizzlesIfRemovedFromGraveyard() {
         harness.addToBattlefield(player1, new EnduringRenewal());

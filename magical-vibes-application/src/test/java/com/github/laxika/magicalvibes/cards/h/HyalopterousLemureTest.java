@@ -25,6 +25,21 @@ class HyalopterousLemureTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple activations stack the power reduction")
+    void multipleActivationsStack() {
+        Permanent lemure = harness.addToBattlefieldAndReturn(player1, new HyalopterousLemure());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, lemure)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lemure)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, lemure, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
     @DisplayName("Boost and flying wear off at end of turn")
     void wearsOffAtEndOfTurn() {
         Permanent lemure = harness.addToBattlefieldAndReturn(player1, new HyalopterousLemure());

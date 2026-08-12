@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,6 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KnightOfStromgaldTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Knight of Stromgald has protection from white")
+    void hasProtectionFromWhite() {
+        Permanent knight = addKnightReady(player1);
+
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.BLACK)).isFalse();
+    }
 
     // ===== First strike ability =====
 

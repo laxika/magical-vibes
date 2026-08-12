@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -133,6 +135,39 @@ class SoulBurnTest extends BaseCardTest {
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Overkill on planeswalker: life gain capped by loyalty")
+    void lifeGainCappedByPlaneswalkerLoyalty() {
+        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 2);
+        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 7); // X=4
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 4, planeswalker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Prevention reduces damage dealt and life gained to zero")
+    void preventedDamageDoesNotGrantLife() {
+        harness.addToBattlefield(player2, new EnergyStorm());
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 6); // X=3
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test

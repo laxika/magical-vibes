@@ -73,6 +73,27 @@ class WitheringWispsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Re-evaluates the snow Swamp limit on each activation")
+    void reevaluatesSnowSwampLimitOnEachActivation() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new WitheringWisps());
+        addSnowSwamp(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        addSnowSwamp(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
     @DisplayName("Two snow Swamps allow two activations, killing a 2/2")
     void twoSnowSwampsAllowTwoActivations() {
         harness.setLife(player1, 20);
@@ -145,6 +166,24 @@ class WitheringWispsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not sacrifice itself if a creature appears before the trigger resolves")
+    void doesNotSacrificeIfCreatureAppearsBeforeResolution() {
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new WitheringWisps()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Withering Wisps");
+    }
+
+    @Test
     @DisplayName("Does not sacrifice itself while a creature is on the battlefield")
     void doesNotSacrificeWhenCreaturePresent() {
         gd.playerBattlefields.get(player1.getId()).add(new Permanent(new WitheringWisps()));
@@ -160,9 +199,10 @@ class WitheringWispsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Withering Wisps");
     }
 
-    private void addSnowSwamp(Player player) {
+    private Permanent addSnowSwamp(Player player) {
         Permanent snowSwamp = new Permanent(new Swamp());
         TestCards.mutableCard(snowSwamp).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
         gd.playerBattlefields.get(player.getId()).add(snowSwamp);
+        return snowSwamp;
     }
 }

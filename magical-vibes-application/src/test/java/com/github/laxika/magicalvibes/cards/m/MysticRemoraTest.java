@@ -38,6 +38,26 @@ class MysticRemoraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second cumulative upkeep requires two mana")
+    void secondUpkeepRequiresTwoMana() {
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(remora.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Mystic Remora")
     void declineSacrifices() {
         Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());

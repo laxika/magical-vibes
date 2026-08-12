@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -94,6 +95,36 @@ class MusicianTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining own cumulative upkeep sacrifices Musician")
+    void decliningOwnCumulativeUpkeepSacrificesMusician() {
+        Permanent musician = harness.addToBattlefieldAndReturn(player1, new Musician());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(musician);
+        harness.assertInGraveyard(player1, "Musician");
+    }
+
+    @Test
+    @DisplayName("Unpaid music upkeep cannot destroy an indestructible creature")
+    void unpaidMusicUpkeepCannotDestroyIndestructibleCreature() {
+        Permanent musician = addReadyMusician(player1);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new DarksteelSentinel());
+
+        int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
+        harness.activateAbility(player1, musicianIdx, null, sentinel.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sentinel);
     }
 
     @Test

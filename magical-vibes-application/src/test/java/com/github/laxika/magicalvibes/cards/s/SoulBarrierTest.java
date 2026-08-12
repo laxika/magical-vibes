@@ -131,6 +131,28 @@ class SoulBarrierTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
+    @Test
+    @DisplayName("Unpaid damage is prevented by a player's damage prevention shield")
+    void unpaidDamageCanBePrevented() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
     // ===== Damage can kill opponent =====
 
     @Test

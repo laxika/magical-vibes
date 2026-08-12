@@ -132,6 +132,39 @@ class PoxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each player chooses creatures to sacrifice in active-player order")
+    void eachPlayerChoosesCreaturesInActivePlayerOrder() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Pox()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice player1Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player1Choice).isNotNull();
+        assertThat(player1Choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1, 1));
+
+        PendingInteraction.MultiPermanentChoice player2Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player2Choice).isNotNull();
+        assertThat(player2Choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, creatureIds(player2, 1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creatureCount(player1)).isEqualTo(2);
+        assertThat(creatureCount(player2)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("A player sacrifices all their creatures with no choice when the third rounds to their whole board")
     void autoSacrificesWhenMatchesDoNotExceedCount() {
         harness.setLife(player1, 20);

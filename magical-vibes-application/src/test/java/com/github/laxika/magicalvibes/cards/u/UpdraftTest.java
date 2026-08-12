@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UpdraftTest extends BaseCardTest {
 
@@ -36,6 +38,19 @@ class UpdraftTest extends BaseCardTest {
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
         assertThat(scheduled.getFirst().count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Updraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test

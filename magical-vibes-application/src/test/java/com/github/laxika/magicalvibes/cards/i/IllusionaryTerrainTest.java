@@ -128,6 +128,28 @@ class IllusionaryTerrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep increases with each age counter")
+    void paysIncreasingCumulativeUpkeep() {
+        Permanent terrain = harness.addToBattlefieldAndReturn(player1, new IllusionaryTerrain());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(terrain.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(terrain);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Illusionary Terrain")
     void declineSacrifices() {
         Permanent terrain = harness.addToBattlefieldAndReturn(player1, new IllusionaryTerrain());

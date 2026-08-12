@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -71,6 +72,20 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Damage can be aimed at a planeswalker")
+    void dealsDamageToPlaneswalker() {
+        addCreatureReady(player1, new FreyaliseSupplicant());
+        addCreatureReady(player1, new SerraAngel()); // 4/4 -> 2 damage
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test

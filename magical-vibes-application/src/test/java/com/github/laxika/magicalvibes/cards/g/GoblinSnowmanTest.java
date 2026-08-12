@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -72,6 +74,24 @@ class GoblinSnowmanTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, otherAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to Goblin Snowman is not prevented after it blocks")
+    void nonCombatDamageToSnowmanIsNotPrevented() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent snowman = addCreatureReady(player2, new GoblinSnowman());
+
+        blockWithSnowman();
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, snowman.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Goblin Snowman");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     /** Declares player1's first creature as an attacker and blocks it with player2's Goblin Snowman. */

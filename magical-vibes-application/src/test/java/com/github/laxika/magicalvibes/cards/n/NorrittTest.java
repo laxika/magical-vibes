@@ -83,6 +83,24 @@ class NorrittTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys the target if it cannot legally attack")
+    void destroysIfCannotAttack() {
+        addReadyNorritt();
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        tapped.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, 1, null, tapped.getId());
+        harness.passBothPriorities();
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(tapped);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("At end step, spares the target if it attacked")
     void sparesIfAttacked() {
         addReadyNorritt();

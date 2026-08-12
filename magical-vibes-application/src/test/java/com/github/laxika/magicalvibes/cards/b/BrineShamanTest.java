@@ -58,6 +58,23 @@ class BrineShamanTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Can sacrifice another creature while tapping Brine Shaman")
+    void canSacrificeAnotherCreatureWhileTappingShaman() {
+        Permanent shaman = addCreatureReady(player1, new BrineShaman());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(shaman.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman).doesNotContain(fodder);
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
     // ===== {1}{U}{U}, Sacrifice a creature: Counter target creature spell =====
 
     @Test

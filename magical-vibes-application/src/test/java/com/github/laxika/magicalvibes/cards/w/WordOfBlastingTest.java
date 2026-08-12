@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,6 +46,22 @@ class WordOfBlastingTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Angelic Wall");
         harness.assertInGraveyard(player2, "Angelic Wall");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Deals damage even when the targeted Wall is indestructible")
+    void dealsDamageWhenWallIsIndestructible() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        wall.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new WordOfBlasting()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Angelic Wall");
+        harness.assertNotInGraveyard(player2, "Angelic Wall");
         harness.assertLife(player2, 18);
     }
 

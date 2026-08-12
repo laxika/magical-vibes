@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.z.ZofShade;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -86,6 +87,21 @@ class SoldeviMachinistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Restricted mana cannot pay a non-artifact's activated ability")
+    void cannotPayNonArtifactActivatedAbility() {
+        machinistOnBattlefield();
+        harness.addToBattlefieldAndReturn(player1, new ZofShade());
+
+        activateManaAbility();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyColorless()).isEqualTo(2);

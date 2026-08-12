@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DwarvenArmory;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -82,6 +83,21 @@ class RedScarabTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new HillGiant());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gets +2/+2 when an opponent controls a red noncreature permanent")
+    void boostedWhenOpponentControlsRedNonCreaturePermanent() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent aura = new Permanent(new RedScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addToBattlefield(player2, new DwarvenArmory());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);

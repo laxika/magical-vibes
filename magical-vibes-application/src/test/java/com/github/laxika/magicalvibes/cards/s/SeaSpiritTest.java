@@ -43,6 +43,20 @@ class SeaSpiritTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability can be activated while tapped")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent seaSpirit = addReadySeaSpirit(player1);
+        seaSpirit.tap();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(seaSpirit.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent seaSpirit = addReadySeaSpirit(player1);

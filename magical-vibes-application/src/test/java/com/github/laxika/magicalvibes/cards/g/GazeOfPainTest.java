@@ -67,6 +67,38 @@ class GazeOfPainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting: the attacker deals no damage in the following combat-damage step")
+    void acceptedAbilityPreventsFollowingCombatDamage() {
+        castGaze();
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Accepting after the attacker leaves uses its last known power")
+    void acceptedAbilityUsesLastKnownAttackerPower() {
+        castGaze();
+        Permanent attacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        advanceToUnblockedMay();
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Declining: no damage to creatures and combat damage is not prevented")
     void declineDoesNothing() {
         castGaze();

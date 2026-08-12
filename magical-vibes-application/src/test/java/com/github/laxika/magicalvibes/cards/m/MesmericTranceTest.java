@@ -62,6 +62,26 @@ class MesmericTranceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second cumulative upkeep requires two mana")
+    void secondUpkeepRequiresTwoMana() {
+        Permanent trance = harness.addToBattlefieldAndReturn(player1, new MesmericTrance());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(trance.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(trance);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Mesmeric Trance")
     void declineSacrifices() {
         Permanent trance = harness.addToBattlefieldAndReturn(player1, new MesmericTrance());

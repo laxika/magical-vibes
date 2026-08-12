@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.l.Lifeforce;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -81,6 +82,21 @@ class GreenScarabTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Gets +2/+2 when an opponent controls a green noncreature permanent")
+    void boostedWhenOpponentControlsGreenNoncreaturePermanent() {
+        Permanent bears = addCreatureReady(player1, new MerfolkOfThePearlTrident());
+
+        Permanent aura = new Permanent(new GreenScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addToBattlefield(player2, new Lifeforce());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);

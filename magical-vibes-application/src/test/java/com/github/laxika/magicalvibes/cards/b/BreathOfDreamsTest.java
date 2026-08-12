@@ -89,6 +89,29 @@ class BreathOfDreamsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second upkeep costs two mana for own and granted cumulative upkeep")
+    void secondUpkeepCostsTwoManaForBothAbilities() {
+        Permanent breath = harness.addToBattlefieldAndReturn(player1, new BreathOfDreams());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        breath.setCounterCount(CounterType.AGE, 1);
+        bears.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        assertThat(breath.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, breath);
+    }
+
+    @Test
     @DisplayName("Grant is global: opponent's Breath still taxes your green creatures")
     void opponentsBreathTaxesYourGreenCreatures() {
         harness.addToBattlefield(player2, new BreathOfDreams());

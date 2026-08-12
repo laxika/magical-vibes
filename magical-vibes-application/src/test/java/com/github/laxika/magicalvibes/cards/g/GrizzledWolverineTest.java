@@ -94,6 +94,31 @@ class GrizzledWolverineTest extends BaseCardTest {
         assertThat(wolverine.getPowerModifier()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Can activate again on a later turn")
+    void canActivateAgainOnLaterTurn() {
+        Permanent wolverine = addCreatureReady(player1, new GrizzledWolverine());
+        Permanent blocker = addCreatureReady(player2, new SavannahLions());
+        setupBlockedWolverine(wolverine, blocker);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        setupBlockedWolverine(wolverine, blocker);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }

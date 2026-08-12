@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Orcish Librarian")
 class OrcishLibrarianTest extends BaseCardTest {
 
-    private void addLibrarianReady() {
-        harness.addToBattlefieldAndReturn(player1, new OrcishLibrarian()).setSummoningSick(false);
+    private Permanent addLibrarianReady() {
+        Permanent librarian = harness.addToBattlefieldAndReturn(player1, new OrcishLibrarian());
+        librarian.setSummoningSick(false);
+        return librarian;
     }
 
     private List<Card> eightCards() {
@@ -30,6 +33,20 @@ class OrcishLibrarianTest extends BaseCardTest {
             cards.add(new Plains());
         }
         return cards;
+    }
+
+    @Test
+    @DisplayName("Pays red mana and taps when activated")
+    void paysManaAndTapsWhenActivated() {
+        Permanent librarian = addLibrarianReady();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(librarian.isTapped()).isTrue();
     }
 
     @Test

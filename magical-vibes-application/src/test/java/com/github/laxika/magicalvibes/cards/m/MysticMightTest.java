@@ -44,6 +44,22 @@ class MysticMightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Granted ability can target an opponent's creature")
+    void grantedAbilityBoostsOpponentsCreature() {
+        Permanent forest = setUpEnchantedForest();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Boost wears off at cleanup")
     void boostWearsOff() {
         setUpEnchantedForest();
@@ -75,6 +91,24 @@ class MysticMightTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep charges the cost for each age counter")
+    void paysCumulativeUpkeepForEachAgeCounter() {
+        Permanent aura = addAttachedMysticMight();
+        aura.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(aura.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);

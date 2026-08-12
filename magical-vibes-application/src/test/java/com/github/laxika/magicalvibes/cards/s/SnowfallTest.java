@@ -135,6 +135,27 @@ class SnowfallTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep increases with each age counter")
+    void paysIncreasingCumulativeUpkeep() {
+        Permanent snowfall = harness.addToBattlefieldAndReturn(player1, new Snowfall());
+
+        advanceToUpkeep();
+        harness.passBothPriorities();
+        gd.playerManaPools.get(player1.getId()).addCumulativeUpkeepOnlyColored(ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep();
+        harness.passBothPriorities();
+        assertThat(snowfall.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        gd.playerManaPools.get(player1.getId()).addCumulativeUpkeepOnlyColored(ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(snowfall);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE))
+                .isZero();
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Snowfall")
     void declineSacrifices() {
         Permanent snowfall = harness.addToBattlefieldAndReturn(player1, new Snowfall());

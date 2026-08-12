@@ -60,6 +60,34 @@ class JusticeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A red creature dealing damage to a blocker reflects that much to its controller")
+    void redCreatureDamageToBlockerReflectedToController() {
+        harness.addToBattlefield(player1, new HillGiant()); // red 3/3
+        harness.addToBattlefield(player2, new GrizzlyBears()); // green 2/2
+        harness.addToBattlefield(player2, new Justice());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities(); // combat damage: Hill Giant deals 3 to Grizzly Bears
+        harness.passBothPriorities(); // Justice resolves: 3 to Hill Giant's controller
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
     @DisplayName("A non-red source dealing damage does not trigger Justice")
     void nonRedSourceDoesNotTrigger() {
         harness.addToBattlefield(player1, new GrizzlyBears()); // green 2/2

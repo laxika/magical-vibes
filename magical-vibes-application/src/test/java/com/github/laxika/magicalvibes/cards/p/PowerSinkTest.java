@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -51,6 +52,26 @@ class PowerSinkTest extends BaseCardTest {
         // Rider: all of player1's lands are tapped and their mana pool is emptied.
         assertThat(p1Battlefield).allMatch(Permanent::isTapped);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not tap lands without mana abilities")
+    void doesNotTapLandsWithoutManaAbilities() {
+        GrizzlyBears bears = prepareCounterTarget();
+        Permanent nonManaLand = harness.addToBattlefieldAndReturn(player1, new EvolvingWilds());
+        Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(nonManaLand.isTapped()).isFalse();
+        assertThat(manaLand.isTapped()).isTrue();
     }
 
     // ===== Declines to pay X → countered, plus the not-paid rider fires =====

@@ -46,6 +46,18 @@ class HoarShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate the ability while tapped")
+    void canActivateWhileTapped() {
+        Permanent shade = addHoarShadeReady(player1);
+        shade.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         addHoarShadeReady(player1);

@@ -56,6 +56,22 @@ class StonehandsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activated ability boosts an opponent's enchanted creature")
+    void activatedAbilityBoostsOpponentsEnchantedCreature() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent auraPerm = new Permanent(new Stonehands());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Power boost wears off at end of turn but static boost remains")
     void abilityBoostWearsOffAtEndOfTurn() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());

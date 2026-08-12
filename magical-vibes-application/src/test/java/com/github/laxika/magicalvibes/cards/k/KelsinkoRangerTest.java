@@ -30,6 +30,19 @@ class KelsinkoRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{1}{W} ability can target an opponent's green creature")
+    void grantsFirstStrikeToOpponentsGreenCreature() {
+        addCreatureReady(player1, new KelsinkoRanger());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOff() {
         addCreatureReady(player1, new KelsinkoRanger());

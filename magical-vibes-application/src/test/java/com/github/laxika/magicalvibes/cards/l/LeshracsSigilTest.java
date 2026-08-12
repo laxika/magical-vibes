@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.y.YavimayaKavu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -70,6 +71,37 @@ class LeshracsSigilTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player2, "Lightning Bolt");
         harness.assertNotInGraveyard(player2, "Lightning Bolt");
+    }
+
+    @Test
+    @DisplayName("Opponent multicolored green spell triggers")
+    void opponentMulticoloredGreenSpellTriggers() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, new ArrayList<>(List.of(new YavimayaKavu(), new LightningBolt())));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Leshrac's Sigil"));
+    }
+
+    @Test
+    @DisplayName("Opponent green spell with an empty hand has no card choice")
+    void opponentGreenSpellEmptyHand() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

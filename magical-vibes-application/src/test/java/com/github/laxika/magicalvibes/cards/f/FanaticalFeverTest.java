@@ -35,6 +35,23 @@ class FanaticalFeverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FanaticalFever()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Boost and trample wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new GrizzlyBears());

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Hydroblast;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -79,6 +81,33 @@ class SleightOfMindTest extends BaseCardTest {
 
         assertThat(paladin(player1.getId()).getTextReplacements())
                 .containsExactly(new TextReplacement("red", "green"));
+    }
+
+    @Test
+    @DisplayName("Changes the text of an instant spell before it resolves")
+    void changesColorWordOnInstantSpell() {
+        HillGiant giant = new HillGiant();
+        Hydroblast hydroblast = new Hydroblast();
+        harness.setHand(player1, List.of(giant, new SleightOfMind()));
+        harness.setHand(player2, List.of(hydroblast));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, giant.getId());
+        harness.castInstant(player1, 0, hydroblast.getId());
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hydroblast");
     }
 
     @Test

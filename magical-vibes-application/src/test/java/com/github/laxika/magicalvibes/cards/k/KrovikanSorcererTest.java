@@ -97,6 +97,22 @@ class KrovikanSorcererTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Black ability only allows discarding one of the two cards it drew")
+    void blackAbilityRestrictsDiscardToDrawnCards() {
+        addReadySorcerer(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
+        setDeck(player1, List.of(new Forest(), new Island()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1, 2);
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadySorcerer(Player player) {

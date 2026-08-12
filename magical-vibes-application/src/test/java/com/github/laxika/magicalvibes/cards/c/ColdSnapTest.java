@@ -69,6 +69,19 @@ class ColdSnapTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts only snow lands controlled by the active player")
+    void countsActivePlayersSnowLandsOnly() {
+        harness.addToBattlefield(player1, new ColdSnap());
+        snowLand(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Paying cumulative upkeep keeps Cold Snap")
     void paysCumulativeUpkeep() {
         Permanent snap = harness.addToBattlefieldAndReturn(player1, new ColdSnap());

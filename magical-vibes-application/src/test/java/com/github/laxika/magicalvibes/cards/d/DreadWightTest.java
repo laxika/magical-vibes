@@ -38,6 +38,28 @@ class DreadWightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("When blocked by multiple creatures, each blocker is paralyzed at end of combat")
+    void eachBlockerIsParalyzed() {
+        Permanent wight = addCreatureReady(player1, new DreadWight());
+        wight.setAttacking(true);
+        Permanent firstSpider = addCreatureReady(player2, new GiantSpider());
+        Permanent secondSpider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        leaveEndOfCombat();
+
+        assertThat(firstSpider.getCounterCount(CounterType.PARALYZATION)).isEqualTo(1);
+        assertThat(secondSpider.getCounterCount(CounterType.PARALYZATION)).isEqualTo(1);
+        assertThat(firstSpider.isTapped()).isTrue();
+        assertThat(secondSpider.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("At end of combat the blocker gets a paralyzation counter, is tapped, and gains the remove ability")
     void blockerParalyzedAtEndOfCombat() {
         Permanent wight = addCreatureReady(player1, new DreadWight());

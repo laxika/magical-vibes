@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.NakedSingularity;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -89,6 +90,19 @@ class RealityTwistTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not add Islands as an extra choice alongside another twist")
+    void islandsDoNotGainAnExtraChoiceFromRealityTwist() {
+        harness.addToBattlefield(player1, new RealityTwist());
+        harness.addToBattlefield(player1, new NakedSingularity());
+        harness.addToBattlefield(player1, new Island());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
     }
 
     @Test

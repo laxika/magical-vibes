@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.o.OpenFire;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -53,6 +54,21 @@ class EnergyStormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents Hurricane damage to both players")
+    void preventsSorceryDamageToPlayers() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        harness.setHand(player2, List.of(new Hurricane()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, 2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Prevents Open Fire damage to a creature")
     void preventsInstantDamageToCreature() {
         harness.addToBattlefield(player1, new EnergyStorm());
@@ -96,6 +112,18 @@ class EnergyStormTest extends BaseCardTest {
 
         assertThat(flier.isTapped()).isTrue();
         assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying creatures controlled by an opponent also stay tapped")
+    void opponentFlyingCreaturesDontUntap() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent flier = addReady(player2, new AirElemental());
+        flier.tap();
+
+        advanceToNextTurn(player1);
+
+        assertThat(flier.isTapped()).isTrue();
     }
 
     @Test

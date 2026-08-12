@@ -53,6 +53,21 @@ class KarplusanYetiTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Source leaving before resolution still deals damage, but receives none back")
+    void sourceLeavingBeforeResolutionUsesLastKnownPower() {
+        Permanent yeti = addReadyYeti(player1);
+        Permanent target = new Permanent(new HillGiant());
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(yeti);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(target.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyYeti(player1);

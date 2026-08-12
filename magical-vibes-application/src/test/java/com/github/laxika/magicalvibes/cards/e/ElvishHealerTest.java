@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.n.NissaWorldwaker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +47,19 @@ class ElvishHealerTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prevents 1 damage to a green planeswalker")
+    void preventsOneOnGreenPlaneswalker() {
+        addHealerReady();
+        Permanent nissa = harness.addToBattlefieldAndReturn(player2, new NissaWorldwaker());
+        nissa.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 0, null, nissa.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Nissa, Worldwaker").getDamagePreventionShield()).isEqualTo(1);
     }
 
     @Test

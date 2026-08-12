@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,6 +52,21 @@ class FlareTest extends BaseCardTest {
 
         // 1 damage does not destroy a 2/2, which survives on the battlefield.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to a planeswalker")
+    void deals1DamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new Flare()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Garruk Wildspeaker");
     }
 
     @Test

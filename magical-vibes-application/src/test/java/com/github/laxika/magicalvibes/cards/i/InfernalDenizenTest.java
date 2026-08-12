@@ -41,6 +41,26 @@ class InfernalDenizenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With more than two Swamps, exactly two are sacrificed")
+    void sacrificesExactlyTwoOfMoreThanTwoSwamps() {
+        harness.addToBattlefield(player1, new InfernalDenizen());
+        Permanent firstSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent secondSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent thirdSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstSwamp.getId(), secondSwamp.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(thirdSwamp)
+                .doesNotContain(firstSwamp, secondSwamp);
+        assertThat(denizen(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("With fewer than two Swamps, Denizen taps and opponent may steal a creature")
     void cannotSacrificeTapsAndOffersOpponentSteal() {
         harness.addToBattlefield(player1, new InfernalDenizen());
@@ -131,6 +151,34 @@ class InfernalDenizenTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
+    }
+
+    @Test
+    @DisplayName("Creature stolen by the upkeep penalty returns when Denizen leaves")
+    void upkeepControlEndsWhenDenizenLeaves() {
+        harness.addToBattlefield(player1, new InfernalDenizen());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID denizenId = harness.getPermanentId(player1, "Infernal Denizen");
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, bearsId);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, denizenId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(bearsId));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(bearsId));
     }
 
     @Test

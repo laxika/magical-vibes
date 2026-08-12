@@ -34,6 +34,21 @@ class KrovikanFetishTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can enchant a creature an opponent controls")
+    void canEnchantOpponentCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new KrovikanFetish()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Entering the battlefield schedules a draw at the next upkeep")
     void schedulesDrawOnEnter() {
         Permanent bears = new Permanent(new GrizzlyBears());

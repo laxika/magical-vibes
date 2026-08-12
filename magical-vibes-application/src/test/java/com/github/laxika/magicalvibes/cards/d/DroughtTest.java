@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.FrozenShade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.s.SengirVampire;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,6 +57,25 @@ class DroughtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Scathe Zombies");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Casting a spell with two black symbols requires two Swamp sacrifices")
+    void blackSpellRequiresOneSwampPerBlackSymbol() {
+        harness.addToBattlefield(player2, new Drought());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        List<Permanent> swamps = gd.playerBattlefields.get(player1.getId());
+        harness.setHand(player1, List.of(new SengirVampire()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithImposedSacrifice(player1, 0,
+                List.of(swamps.get(0).getId(), swamps.get(1).getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sengir Vampire");
         harness.assertNotOnBattlefield(player1, "Swamp");
     }
 

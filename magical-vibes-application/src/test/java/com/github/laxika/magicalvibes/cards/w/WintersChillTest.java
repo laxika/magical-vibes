@@ -78,6 +78,28 @@ class WintersChillTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each targeted creature gets its own payment choice")
+    void resolvesEachTargetIndependently() {
+        Permanent firstAttacker = addAttacker(player2);
+        Permanent secondAttacker = addAttacker(player2);
+        addSnowLand(player1);
+        addSnowLand(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        castAtDeclareAttackers(2, List.of(firstAttacker.getId(), secondAttacker.getId()));
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
+
+        assertThat(gd.creaturesWithCombatDamagePrevented).contains(firstAttacker.getId())
+                .doesNotContain(secondAttacker.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(firstAttacker.getId())
+                .doesNotContain(secondAttacker.getId());
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot announce X greater than snow lands controlled")
     void cannotExceedSnowLandCap() {
         Permanent attacker = addAttacker(player2);

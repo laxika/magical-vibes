@@ -110,6 +110,25 @@ class MeleeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each unblocked attacker is untapped and removed from combat")
+    void eachUnblockedAttackerIsUntappedAndRemovedFromCombat() {
+        enterDeclareAttackers();
+        Permanent firstAttacker = addAttacker();
+        Permanent secondAttacker = addAttacker();
+        addDefenderCreature();
+        castMelee();
+
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(firstAttacker.isTapped()).isFalse();
+        assertThat(firstAttacker.isAttacking()).isFalse();
+        assertThat(secondAttacker.isTapped()).isFalse();
+        assertThat(secondAttacker.isAttacking()).isFalse();
+    }
+
+    @Test
     @DisplayName("A blocked attacker is neither untapped nor removed from combat")
     void blockedAttackerIsUnaffected() {
         enterDeclareAttackers();
@@ -171,6 +190,20 @@ class MeleeTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         addAttacker();
+        harness.setHand(player1, List.of(new Melee()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Melee can't be cast before combat begins")
+    void cannotBeCastBeforeCombatBegins() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Melee()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

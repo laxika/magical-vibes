@@ -29,6 +29,23 @@ class KjeldoranKnightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Power boost can be activated multiple times")
+    void powerBoostStacksFromMultipleActivations() {
+        addKnightReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent knight = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(knight.getEffectivePower()).isEqualTo(3);
+        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("{W}{W} ability gives +0/+2 until end of turn")
     void toughnessBoost() {
         addKnightReady(player1);

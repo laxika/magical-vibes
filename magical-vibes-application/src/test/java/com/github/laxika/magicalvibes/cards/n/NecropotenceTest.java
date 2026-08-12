@@ -13,6 +13,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NecropotenceTest extends BaseCardTest {
 
+    @Test
+    @DisplayName("Controller skips their draw step")
+    void controllerSkipsDrawStep() {
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.addToBattlefield(player1, new Necropotence());
+
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
     // ===== Pay 1 life: exile top card face down, return at your next end step =====
 
     @Test
@@ -150,5 +170,37 @@ class NecropotenceTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(toDiscard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(toDiscard.getId()));
+    }
+
+    @Test
+    @DisplayName("A discarded card remains in the graveyard until Necropotence's trigger resolves")
+    void discardedCardWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new Necropotence());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+
+        harness.setHand(player1, java.util.List.of(new Sift()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        Card toDiscard = gd.playerHands.get(player1.getId()).get(0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(toDiscard.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(toDiscard.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getId().equals(toDiscard.getId()));
     }
 }

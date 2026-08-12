@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,6 +78,30 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getMarkedDamage()).isEqualTo(0);
+        assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The shield prevents the next 1 combat damage dealt to it")
+    void shieldPreventsCombatDamage() {
+        Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 3);
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(hydra.getMarkedDamage()).isEqualTo(1);
         assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
     }
 

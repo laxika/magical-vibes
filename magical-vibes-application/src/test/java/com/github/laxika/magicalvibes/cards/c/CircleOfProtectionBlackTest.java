@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -59,6 +60,28 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
 
         zombie.setAttacking(true);
         resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevents the next noncombat damage from the chosen black source")
+    void preventsNextNoncombatDamageAndConsumesShield() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent horror = addReadyBlackDamageSource(player2);
+        Permanent fodder = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, horror.getId());
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.handlePermanentChosen(player2, fodder.getId());
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
@@ -131,6 +154,13 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private Permanent addReadyBlackCreature(Player player) {
         Permanent perm = new Permanent(new ScatheZombies());
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private Permanent addReadyBlackDamageSource(Player player) {
+        Permanent perm = new Permanent(new KrovikanHorror());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

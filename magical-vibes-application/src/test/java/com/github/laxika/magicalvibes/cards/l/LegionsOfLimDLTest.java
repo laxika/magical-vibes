@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -55,6 +56,23 @@ class LegionsOfLimDLTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be blocked when defending player controls only a snow Forest")
+    void canBeBlockedWithSnowForest() {
+        addSnowForest(player2);
+        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+        Permanent legions = readyAttacker(player1);
+        harness.setLife(player2, 20);
+
+        beginBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(legions))));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Unblocked Legions deals 2 damage")
     void dealsTwoWhenUnblocked() {
         readyAttacker(player1);
@@ -87,6 +105,12 @@ class LegionsOfLimDLTest extends BaseCardTest {
         Permanent snowSwamp = new Permanent(new Swamp());
         TestCards.mutableCard(snowSwamp).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
         gd.playerBattlefields.get(player.getId()).add(snowSwamp);
+    }
+
+    private void addSnowForest(Player player) {
+        Permanent snowForest = new Permanent(new Forest());
+        TestCards.mutableCard(snowForest).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+        gd.playerBattlefields.get(player.getId()).add(snowForest);
     }
 
     private void beginBlockers() {

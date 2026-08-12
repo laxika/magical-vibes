@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -40,6 +41,27 @@ class ChubToadTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+
+        assertThat(toad.getPowerModifier()).isEqualTo(2);
+        assertThat(toad.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("When Chub Toad blocks multiple creatures, it gets only one boost")
+    void blocksMultipleCreaturesGetsOneBoost() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent toad = addReadyToad(player2);
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
+        attacker1.setAttacking(true);
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
+        attacker2.setAttacking(true);
+
+        prepareDeclareBlockers();
+        int toadIndex = gd.playerBattlefields.get(player2.getId()).indexOf(toad);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(toadIndex, 0),
+                new BlockerAssignment(toadIndex, 1)));
+        resolveAllTriggers();
 
         assertThat(toad.getPowerModifier()).isEqualTo(2);
         assertThat(toad.getToughnessModifier()).isEqualTo(2);

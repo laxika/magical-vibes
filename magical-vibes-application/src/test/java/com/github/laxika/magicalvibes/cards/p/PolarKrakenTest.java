@@ -88,6 +88,20 @@ class PolarKrakenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep only considers lands controlled by Polar Kraken's controller")
+    void onlyConsidersControllerLands() {
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
+        Permanent opponentIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kraken);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentIsland);
+        harness.assertInGraveyard(player1, "Polar Kraken");
+    }
+
+    @Test
     @DisplayName("Second upkeep requires sacrificing two lands")
     void secondUpkeepSacrificesTwoLands() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -72,6 +73,47 @@ class BattleCryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         // Delayed trigger on the stack — resolve it.
+        harness.passBothPriorities();
+        resolveStack();
+
+        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(blocker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A blocker gets only one boost even when blocking multiple attackers")
+    void blockerBoostTriggersOncePerBlockingCreature() {
+        Permanent attackerOne = new Permanent(new GrizzlyBears());
+        attackerOne.setSummoningSick(false);
+        attackerOne.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attackerOne);
+
+        Permanent attackerTwo = new Permanent(new GrizzlyBears());
+        attackerTwo.setSummoningSick(false);
+        attackerTwo.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attackerTwo);
+
+        Permanent blocker = new Permanent(new WallOfGlare());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.setHand(player1, List.of(new BattleCry()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerOneIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerOne);
+        int attackerTwoIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerTwo);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, attackerOneIdx),
+                new BlockerAssignment(blockerIdx, attackerTwoIdx)));
+
         harness.passBothPriorities();
         resolveStack();
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,5 +50,20 @@ class EnervateTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can tap a noncreature artifact")
+    void tapsArtifact() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Enervate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        harness.castInstant(player1, 0, fountainId);
+        harness.passBothPriorities();
+
+        Permanent fountain = findPermanent(player2, "Fountain of Youth");
+        assertThat(fountain.isTapped()).isTrue();
     }
 }

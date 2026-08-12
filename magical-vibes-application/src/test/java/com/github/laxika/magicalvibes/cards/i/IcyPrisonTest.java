@@ -149,4 +149,31 @@ class IcyPrisonTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
+
+    @Test
+    @DisplayName("Exiled creature returns under its owner's control")
+    void exiledCreatureReturnsToItsOwner() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        gd.stolenCreatures.put(bearsId, player1.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new IcyPrison()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castEnchantment(player2, 0, bearsId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
 }

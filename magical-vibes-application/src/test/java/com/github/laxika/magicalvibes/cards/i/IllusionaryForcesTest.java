@@ -30,6 +30,28 @@ class IllusionaryForcesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep costs two blue mana on the second upkeep")
+    void cumulativeUpkeepCostIncreases() {
+        Permanent forces = harness.addToBattlefieldAndReturn(player1, new IllusionaryForces());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(forces.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forces);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Illusionary Forces")
     void declineSacrifices() {
         Permanent forces = harness.addToBattlefieldAndReturn(player1, new IllusionaryForces());

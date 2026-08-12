@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoollySpider;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -49,6 +50,22 @@ class SilverErneTest extends BaseCardTest {
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
         assertThat(flyingBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can be blocked by a creature with reach")
+    void canBeBlockedByCreatureWithReach() {
+        attackingErne();
+        Permanent reachBlocker = addCreatureReady(player2, new WoollySpider());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+        assertThat(reachBlocker.isBlocking()).isTrue();
     }
 
     @Test

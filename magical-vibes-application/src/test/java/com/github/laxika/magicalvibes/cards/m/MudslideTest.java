@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -86,6 +87,27 @@ class MudslideTest extends BaseCardTest {
 
         assertThat(hawk.isTapped()).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("During an opponent's upkeep, that opponent chooses only their own tapped non-fliers")
+    void opponentChoosesFromTheirOwnTappedNonFliers() {
+        harness.addToBattlefield(player1, new Mudslide());
+        Permanent ownBears = addTapped(player1, new GrizzlyBears());
+        Permanent opponentBears = addTapped(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(opponentBears.getId()).doesNotContain(ownBears.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentBears.getId()));
+
+        assertThat(opponentBears.isTapped()).isFalse();
+        assertThat(ownBears.isTapped()).isTrue();
     }
 
     @Test

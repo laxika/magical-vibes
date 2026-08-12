@@ -78,6 +78,29 @@ class AggressionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Moving Aggression after its trigger does not change the creature it destroys")
+    void triggerKeepsOriginalEnchantedCreatureWhenAuraMoves() {
+        Permanent originalCreature = addCreature(player1);
+        Permanent newCreature = addCreature(player1);
+        newCreature.setAttackedThisTurn(true);
+        Permanent aura = attach(player1, originalCreature);
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        aura.setAttachedTo(newCreature.getId());
+
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(newCreature);
+    }
+
+    @Test
     @DisplayName("Trigger only fires on the enchanted creature's controller's end step")
     void doesNotFireOnOtherPlayersEndStep() {
         Permanent bears = addCreature(player2);

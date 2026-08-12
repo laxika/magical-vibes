@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.w.WallOfEssence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -32,6 +34,28 @@ class BoneShamanTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
         harness.assertInGraveyard(player2, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Damage dealt earlier this turn is covered when the ability resolves later")
+    void earlierDamageIsCoveredWhenAbilityResolvesLater() {
+        Permanent shaman = addCreatureReady(player1, new BoneShaman());
+        shaman.setAttacking(true);
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent wall = addCreatureReady(player2, new WallOfEssence());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        wall.setRegenerationShield(1);
+        activateAbility();
+        harness.activateAbility(player1, 1, null, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Essence");
+        harness.assertInGraveyard(player2, "Wall of Essence");
+        assertThat(pyromancer.isTapped()).isTrue();
     }
 
     @Test

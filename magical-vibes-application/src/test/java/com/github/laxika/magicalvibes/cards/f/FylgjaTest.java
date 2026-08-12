@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,25 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(0);
+        assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Shield prevents the next 1 combat damage to the enchanted creature")
+    void shieldPreventsCombatDamage() {
+        Permanent aura = enchantBears();
+        Permanent bears = enchantedCreature(aura);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(bears), 0)));
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
         assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
     }
 

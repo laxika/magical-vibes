@@ -63,6 +63,25 @@ class KrovikanElementalistTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{U}{U} flying grant expires at end of turn")
+    void flyingGrantExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new KrovikanElementalist());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
     @DisplayName("{U}{U} sacrifices the target at the beginning of the next end step")
     void sacrificesTargetAtEndStep() {
         harness.forceActivePlayer(player1);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -48,6 +49,21 @@ class AbyssalSpecterTest extends BaseCardTest {
 
         // No combat damage reached the player, so no discard was prompted.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a player also makes that player discard a card")
+    void noncombatDamageMakesDamagedPlayerDiscard() {
+        addCreatureReady(player1, new AbyssalSpecter());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer),
+                null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
     }
 
     // ===== Helpers =====

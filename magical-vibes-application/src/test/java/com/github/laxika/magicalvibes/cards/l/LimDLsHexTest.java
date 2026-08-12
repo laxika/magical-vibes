@@ -96,4 +96,22 @@ class LimDLsHexTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2);
     }
+
+    @Test
+    @DisplayName("Triggers during the controller's upkeep when controlled by player two")
+    void triggersDuringControllerUpkeepForPlayerTwo() {
+        harness.addToBattlefield(player2, new LimDLsHex());
+        int life1 = gd.playerLifeTotals.get(player1.getId());
+        int life2 = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1 - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
+    }
 }

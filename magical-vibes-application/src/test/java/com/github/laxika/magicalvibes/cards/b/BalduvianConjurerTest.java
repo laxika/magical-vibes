@@ -51,6 +51,20 @@ class BalduvianConjurerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can animate an opponent's snow land")
+    void animatesOpponentsSnowLand() {
+        addReadyConjurer(player1);
+        Permanent snowLand = addSnowLand(player2);
+
+        harness.activateAbility(player1, 0, null, snowLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, snowLand)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, snowLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, snowLand)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Animation wears off at end of turn")
     void animationWearsOff() {
         addReadyConjurer(player1);

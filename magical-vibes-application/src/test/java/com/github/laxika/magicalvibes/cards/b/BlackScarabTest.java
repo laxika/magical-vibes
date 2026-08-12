@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.d.Dystopia;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -82,6 +83,21 @@ class BlackScarabTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new DrudgeSkeletons());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gets +2/+2 when an opponent controls a black noncreature permanent")
+    void boostedWhenOpponentControlsBlackNonCreaturePermanent() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent aura = new Permanent(new BlackScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addToBattlefield(player2, new Dystopia());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
