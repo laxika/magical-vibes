@@ -1081,6 +1081,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return null;
+        }
+
         return new SpellCastingPlan(handIndex, card, targetId, multiTargetIds, xValue,
                 damageAssignments, sacrificePermanentId, exileGraveyardCardIndices, targetingTax);
     }

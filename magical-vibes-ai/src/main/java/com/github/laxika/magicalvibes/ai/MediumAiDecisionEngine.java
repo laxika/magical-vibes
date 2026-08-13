@@ -224,6 +224,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return false;
+        }
+
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
@@ -396,6 +401,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 if (smartX <= 0) return false;
                 xValue = smartX;
             }
+        }
+
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return false;
         }
 
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),

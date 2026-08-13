@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -304,6 +305,28 @@ class EasyAiDecisionEngineTest {
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).singleElement()
                     .isInstanceOf(Unbury.class);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Ajani's Response at an unaffordable untapped target")
+        void doesNotCastTargetReducedSpellAtUnaffordableTarget() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 1);
+            giveManaSources(Island::new, 2);
+
+            Permanent ownTappedCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            ownTappedCreature.setSummoningSick(false);
+            ownTappedCreature.tap();
+            Permanent opponentCreature = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            opponentCreature.setSummoningSick(false);
+            testHarness.setHand(aiTestPlayer, List.of(new AjanisResponse()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AetherTide;
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -171,6 +172,34 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Ajani's Response at an unaffordable untapped target")
+    void doesNotCastTargetReducedSpellAtUnaffordableTarget() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(1);
+        giveAiIslands(2);
+
+        Permanent ownTappedCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ownTappedCreature.setSummoningSick(false);
+        ownTappedCreature.tap();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        opponentCreature.setSummoningSick(false);
+        harness.setHand(aiPlayer, List.of(new AjanisResponse()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test

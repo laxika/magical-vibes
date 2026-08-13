@@ -1155,6 +1155,34 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Checks the selected target against a target-dependent cost reduction after the AI has
+     * chosen its target. The general playability check can only establish that some legal target
+     * enables the reduction, so this closes the gap before mana is tapped for the actual target.
+     */
+    protected boolean canAffordSelectedSpellTarget(GameData gameData, Card card, ManaPool virtualPool,
+                                                    UUID targetId, List<UUID> targetIds,
+                                                    int targetingTax, Integer xValue) {
+        if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
+            return true;
+        }
+
+        List<UUID> costReductionTargetIds = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : targetId != null ? List.of(targetId) : List.of();
+        if (castingCostService.computeTargetBasedCostReduction(
+                gameData, aiPlayer.getId(), card, costReductionTargetIds) > 0) {
+            return true;
+        }
+
+        ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(card.getManaCost()));
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        return validationCost.canPay(virtualPool, costModifier + targetingTax);
+    }
+
+    /**
      * Computes the targeting tax for a spell based on the chosen target(s).
      * Effects like Kopala, Warden of Waves increase the cost of spells that
      * target permanents with certain subtypes; Kaervek's Torch taxes spells that

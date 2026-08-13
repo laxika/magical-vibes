@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
@@ -1207,6 +1208,39 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Ajani's Response at an unaffordable untapped target")
+    void doesNotCastTargetReducedSpellAtUnaffordableTarget() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        Permanent plains = new Permanent(new Plains());
+        plains.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(plains);
+        givePlayerIslands(player1, 2);
+
+        Permanent ownTappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ownTappedCreature.setSummoningSick(false);
+        ownTappedCreature.tap();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opponentCreature.setSummoningSick(false);
+        harness.setHand(player1, List.of(new AjanisResponse()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test

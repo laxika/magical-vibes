@@ -225,6 +225,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return false;
+        }
+
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
@@ -358,6 +363,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 if (smartX <= 0) return false;
                 xValue = smartX;
             }
+        }
+
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return false;
         }
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
