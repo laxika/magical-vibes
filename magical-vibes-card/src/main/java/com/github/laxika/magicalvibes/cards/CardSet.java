@@ -81,7 +81,10 @@ public enum CardSet {
     SET_DRB("DRB"),
     SET_UDS("UDS"),
     SET_ODY("ODY"),
-    SET_USG("USG");
+    SET_USG("USG"),
+    SET_ITP("ITP"),
+    SET_RQS("RQS"),
+    SET_MGB("MGB");
 
     @Getter
     private final String code;
