@@ -40,4 +40,6 @@ jobs:
           ./gradlew build -x test -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
 
       - name: Test
-        run: ./gradlew test -Doracle.data-provider=MTGJSON
+        run: |
+          ./gradlew test --max-workers=3 -Doracle.data-provider=MTGJSON \
+            -x :magical-vibes-application:copyFrontend

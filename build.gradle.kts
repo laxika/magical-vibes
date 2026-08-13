@@ -77,7 +77,7 @@ subprojects {
                 }
             }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
-            jvmArgs("-Xmx2g", "-XX:TieredStopAtLevel=1", "-XX:+UseParallelGC")
+            jvmArgs("-Xmx1g", "-XX:+UseParallelGC")
             forkEvery = 2000
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
