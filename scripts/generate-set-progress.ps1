@@ -233,14 +233,15 @@ function Get-MtgJsonSetList {
 function Get-UniqueCardCount {
     <#
         .SYNOPSIS
-            How many distinct cards exist in Magic, excluding un-cards. Best-effort.
+            How many distinct paper, MTGO, or Arena cards exist in Magic, excluding un-cards and Vanguard. Best-effort.
 
         Uses the search endpoint rather than the card-name catalog so that the un-set exclusion
         matches the one applied to the set list. The two endpoints are not interchangeable: the
         catalog counts card *names* including funny and extra cards, so subtracting one from the
         other does not reconcile.
     #>
-    $url = "https://api.scryfall.com/cards/search?q=-is%3Afunny&unique=cards"
+    $query = "-is:funny -t:vanguard (game:paper OR game:mtgo OR game:arena)"
+    $url = "https://api.scryfall.com/cards/search?q=$([uri]::EscapeDataString($query))&unique=cards"
     try {
         Write-Host "Fetching unique card count from Scryfall ..."
         $result = Invoke-RestMethod -Uri $url -UserAgent $userAgent -Headers @{ Accept = "application/json" }
@@ -437,8 +438,9 @@ if (-not $SkipCardNameCatalog) {
 
 # Set types holding nothing this engine would implement. "memorabilia" already covers the
 # art-card series and the oversized-card sets; "funny" covers the Un-sets and the other
-# silver-border/acorn products. Sets matching these are left out of the page entirely.
-$nonPlayableTypes = @("token", "memorabilia", "minigame", "promo", "treasure_chest", "funny")
+# silver-border/acorn products. Vanguard cards are also not regular deck cards. Sets matching
+# these are left out of the page entirely.
+$nonPlayableTypes = @("token", "memorabilia", "minigame", "promo", "treasure_chest", "funny", "vanguard")
 
 # The List is a rotating bucket of reprints inserted into other products rather than a set in
 # its own right, and at 5,075 cards it would dominate any total that counted it. ULST is the
@@ -448,10 +450,14 @@ $nonPlayableTypes = @("token", "memorabilia", "minigame", "promo", "treasure_che
 # Edition and Chronicles, and REN/RIN/PSAL/PS11 are the European reprint and partwork series
 # (Renaissance, Rinascimento, Salvat). Every card in them is already counted under the set it
 # reprints, so leaving them in would double-count those cards in the totals.
+#
+# PAST and PSDG contain cards created for standalone digital games. Arena- and MTGO-only sets
+# remain tracked.
 $nonPlayableCodes = @(
     "PLST", "ULST",
     "FBB", "FWB", "4BB", "BCHR",
-    "REN", "RIN", "PSAL", "PS11"
+    "REN", "RIN", "PSAL", "PS11",
+    "PAST", "PSDG"
 )
 
 $sets = [System.Collections.Generic.List[object]]::new()
@@ -466,14 +472,6 @@ foreach ($set in $setList) {
         $implementedCount = $implemented.SetCounts[$code]
     }
 
-    $baseSize = Get-EnglishPlayableBaseSize -SetCode $code -Fallback ([int] $set.baseSetSize) `
-        -RepoRoot $repoRoot -SetCacheDir $setCacheDir -MaxAgeHours $CacheMaxAgeHours `
-        -Refresh:$RefreshCache -AllowFetch:($supportedLookup.ContainsKey($code))
-    # XLN/DOM register printings numbered above the base set (planeswalker decks, buy-a-box), so
-    # the honest denominator is whichever is larger.
-    $total = [Math]::Max($baseSize, $implementedCount)
-    if ($total -le 0) { $total = 0 }
-
     # Excluded unless something is actually implemented there: dropping a set that holds
     # implemented printings would leave those printings in the numerator with no row and no
     # denominator to sit in, so keep it visible and say so instead.
@@ -481,8 +479,16 @@ foreach ($set in $setList) {
         if ($implementedCount -eq 0) {
             continue
         }
-        Write-Warning "Set '$code' is on the exclusion list but has $implementedCount implemented printings; keeping it."
+        Write-Warning "Set '$code' is excluded from progress totals but has $implementedCount implemented printings; keeping it."
     }
+
+    $baseSize = Get-EnglishPlayableBaseSize -SetCode $code -Fallback ([int] $set.baseSetSize) `
+        -RepoRoot $repoRoot -SetCacheDir $setCacheDir -MaxAgeHours $CacheMaxAgeHours `
+        -Refresh:$RefreshCache -AllowFetch:($supportedLookup.ContainsKey($code))
+    # XLN/DOM register printings numbered above the base set (planeswalker decks, buy-a-box), so
+    # the honest denominator is whichever is larger.
+    $total = [Math]::Max($baseSize, $implementedCount)
+    if ($total -le 0) { $total = 0 }
 
     $keyrune = ""
     if ($set.PSObject.Properties.Name -contains "keyruneCode" -and $set.keyruneCode) {
@@ -965,9 +971,10 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
       available, keep only English playable printings (so Portal&rsquo;s Simplified Chinese alt-arts
       do not inflate the denominator). A handful of sets ship printings numbered above the base set,
       so their denominator widens to the implemented count.
-      <strong>Promos, tokens, art cards, oversized cards, memorabilia, Un-sets, The List and the
-      foreign-border and European reprint series are left out entirely</strong> &mdash; each is
-      either not a real card or already counted under the set it reprints.
+      <strong>Promos, tokens, art cards, oversized cards, memorabilia, Un-sets, Vanguard sets,
+      standalone-game cards, The List and the foreign-border and European reprint series are left
+      out entirely</strong> &mdash; each is either not a regular deck card or already counted
+      under the set it reprints. Arena- and MTGO-only releases remain included.
     </div>
     <div id="generated"></div>
   </footer>
