@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 @CardRegistration(set = "6ED", collectorNumber = "197")
 @CardRegistration(set = "5ED", collectorNumber = "257")
 @CardRegistration(set = "4ED", collectorNumber = "215")
+@CardRegistration(set = "ITP", collectorNumber = "37")
 public class OrcishOriflamme extends Card {
 
     public OrcishOriflamme() {

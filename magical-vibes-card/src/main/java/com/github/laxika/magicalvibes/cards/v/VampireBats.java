@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "186")
 @CardRegistration(set = "5ED", collectorNumber = "202")
 @CardRegistration(set = "4ED", collectorNumber = "167")
+@CardRegistration(set = "ITP", collectorNumber = "26")
 public class VampireBats extends Card {
 
     public VampireBats() {

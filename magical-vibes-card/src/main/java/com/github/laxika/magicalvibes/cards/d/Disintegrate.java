@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "219")
 @CardRegistration(set = "4ED", collectorNumber = "185")
+@CardRegistration(set = "ITP", collectorNumber = "31")
 public class Disintegrate extends Card {
 
     public Disintegrate() {

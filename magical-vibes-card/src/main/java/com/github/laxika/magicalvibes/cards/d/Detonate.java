@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "218")
 @CardRegistration(set = "4ED", collectorNumber = "184")
 @CardRegistration(set = "MRD", collectorNumber = "88")
+@CardRegistration(set = "ITP", collectorNumber = "30")
 public class Detonate extends Card {
 
     public Detonate() {

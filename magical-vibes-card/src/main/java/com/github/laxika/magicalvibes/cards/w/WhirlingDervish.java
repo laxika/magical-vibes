@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "341")
 @CardRegistration(set = "4ED", collectorNumber = "288")
+@CardRegistration(set = "ITP", collectorNumber = "46")
 public class WhirlingDervish extends Card {
 
     public WhirlingDervish() {

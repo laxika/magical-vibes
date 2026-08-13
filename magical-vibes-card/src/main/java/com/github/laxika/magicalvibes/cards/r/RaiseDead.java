@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * this spell is created in exile while Cheerful Osteomancer is prepared and may be cast from there.
  */
 @CardRegistration(set = "6ED", collectorNumber = "152")
+@CardRegistration(set = "ITP", collectorNumber = "22")
 @CardRegistration(set = "7ED", collectorNumber = "157")
 @CardRegistration(set = "8ED", collectorNumber = "157")
 @CardRegistration(set = "9ED", collectorNumber = "156")

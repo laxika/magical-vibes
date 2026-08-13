@@ -11,5 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "169")
 @CardRegistration(set = "5ED", collectorNumber = "301")
 @CardRegistration(set = "4ED", collectorNumber = "250")
+@CardRegistration(set = "ITP", collectorNumber = "42")
 public class GrizzlyBears extends Card {
 }
