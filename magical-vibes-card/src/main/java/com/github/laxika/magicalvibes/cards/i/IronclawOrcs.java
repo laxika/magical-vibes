@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerAt
 @CardRegistration(set = "5ED", collectorNumber = "245")
 @CardRegistration(set = "4ED", collectorNumber = "206")
 @CardRegistration(set = "ITP", collectorNumber = "34")
+@CardRegistration(set = "RQS", collectorNumber = "33")
 public class IronclawOrcs extends Card {
 
     public IronclawOrcs() {

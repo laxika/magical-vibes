@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "152")
 @CardRegistration(set = "4ED", collectorNumber = "127")
 @CardRegistration(set = "ITP", collectorNumber = "18")
+@CardRegistration(set = "RQS", collectorNumber = "17")
 public class CursedLand extends Card {
 
     public CursedLand() {

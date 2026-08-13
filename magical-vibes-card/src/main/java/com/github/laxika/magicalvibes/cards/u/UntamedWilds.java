@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "5ED", collectorNumber = "335")
 @CardRegistration(set = "4ED", collectorNumber = "279")
 @CardRegistration(set = "ITP", collectorNumber = "44")
+@CardRegistration(set = "RQS", collectorNumber = "43")
 public class UntamedWilds extends Card {
 
     public UntamedWilds() {

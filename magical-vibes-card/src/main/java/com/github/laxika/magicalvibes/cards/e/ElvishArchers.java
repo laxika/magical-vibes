@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "239")
 @CardRegistration(set = "6ED", collectorNumber = "226")
 @CardRegistration(set = "ITP", collectorNumber = "41")
+@CardRegistration(set = "RQS", collectorNumber = "40")
 public class ElvishArchers extends Card {
 }

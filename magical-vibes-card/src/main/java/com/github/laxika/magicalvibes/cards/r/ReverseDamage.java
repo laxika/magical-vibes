@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSource
 @CardRegistration(set = "7ED", collectorNumber = "34")
 @CardRegistration(set = "6ED", collectorNumber = "39")
 @CardRegistration(set = "ITP", collectorNumber = "7")
+@CardRegistration(set = "RQS", collectorNumber = "7")
 public class ReverseDamage extends Card {
 
     public ReverseDamage() {
