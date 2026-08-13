@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
@@ -1153,6 +1154,35 @@ class EasyAiDecisionEngineTest {
 
             assertThat(cyclops.isAttacking()).isTrue();
             assertThat(bears.isAttacking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI does not declare Orcish Conscripts without enough other attackers")
+        void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
+            Permanent conscripts = combatHarness.addToBattlefieldAndReturn(combatAiPlayer,
+                    new OrcishConscripts());
+            conscripts.setSummoningSick(false);
+            Permanent ally = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            ally.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(conscripts.isAttackedThisTurn()).isFalse();
+            assertThat(ally.isAttackedThisTurn()).isTrue();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                     .isNull();
         }

@@ -119,6 +119,37 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void doesNotDeclareOrcishConscriptsWithoutTwoOtherAttackers() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent conscripts = harness.addToBattlefieldAndReturn(aiPlayer, new OrcishConscripts());
+        conscripts.setSummoningSick(false);
+        Permanent ally = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ally.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(conscripts.isAttackedThisTurn()).isFalse();
+        assertThat(ally.isAttackedThisTurn()).isTrue();
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
     void doesNotDeclareOkkWithoutGreaterPowerBlocker() {
         GameTestHarness harness = new GameTestHarness();
         GameData gameData = harness.getGameData();

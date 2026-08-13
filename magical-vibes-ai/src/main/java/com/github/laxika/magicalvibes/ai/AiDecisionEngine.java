@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
@@ -64,6 +67,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -594,6 +598,7 @@ public abstract class AiDecisionEngine {
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         attackerIndices = enforceCanOnlyAttackAlone(gameData, actingPlayerId, attackerIndices);
+        attackerIndices = removeUnmetAttackRestrictions(gameData, attackerIndices);
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
                 gameData, actingPlayerId);
@@ -632,6 +637,11 @@ public abstract class AiDecisionEngine {
                 totalGenericTax = candidateGenericTax;
             }
         }
+        capped = removeUnmetAttackRestrictions(gameData, capped);
+        totalGenericTax = capped.stream()
+                .mapToLong(index -> (long) taxPerCreature
+                        + gameQueryService.getCreatureAttackTax(gameData, battlefield.get(index)))
+                .sum();
         if (capped.isEmpty()) {
             return List.of();
         }
@@ -658,7 +668,7 @@ public abstract class AiDecisionEngine {
         capped = capped.stream()
                 .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
                 .toList();
-        return dropLoneCantAttackAlone(gameData, capped);
+        return removeUnmetAttackRestrictions(gameData, capped);
     }
 
     /**
@@ -956,7 +966,10 @@ public abstract class AiDecisionEngine {
         DeclareAttackersRequest targetLegalRequest = gameData == null
                 ? requirementLegalRequest
                 : removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
-        String rejection = attemptAttackerDeclaration(targetLegalRequest);
+        DeclareAttackersRequest restrictionLegalRequest = gameData == null
+                ? targetLegalRequest
+                : removeUnmetAttackRestrictions(gameData, targetLegalRequest);
+        String rejection = attemptAttackerDeclaration(restrictionLegalRequest);
         if (rejection == null) {
             return;
         }
@@ -1042,6 +1055,80 @@ public abstract class AiDecisionEngine {
                 .filter(targetLegal::contains)
                 .toList();
         return new DeclareAttackersRequest(filtered, request.attackTargets(), request.bands());
+    }
+
+    private List<Integer> removeUnmetAttackRestrictions(GameData gameData, List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty()) {
+            return attackerIndices;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (battlefield == null) {
+            return attackerIndices;
+        }
+
+        List<Integer> legalAttackers = new ArrayList<>(attackerIndices);
+        boolean changed;
+        do {
+            Set<Integer> invalid = new HashSet<>();
+            for (int attackerIndex : legalAttackers) {
+                if (attackerIndex < 0 || attackerIndex >= battlefield.size()
+                        || hasUnmetAttackRestriction(gameData, battlefield, legalAttackers, attackerIndex)) {
+                    invalid.add(attackerIndex);
+                }
+            }
+            changed = legalAttackers.removeIf(invalid::contains);
+        } while (changed);
+        return legalAttackers;
+    }
+
+    private DeclareAttackersRequest removeUnmetAttackRestrictions(
+            GameData gameData, DeclareAttackersRequest request) {
+        List<Integer> legalAttackers = removeUnmetAttackRestrictions(gameData, request.attackerIndices());
+        if (legalAttackers.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(legalAttackers, request.attackTargets(), request.bands());
+    }
+
+    private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,
+                                              List<Integer> attackerIndices, int attackerIndex) {
+        Permanent attacker = battlefield.get(attackerIndex);
+        if (attackerIndices.size() == 1 && hasCantAttackOrBlockAlone(attacker)) {
+            return true;
+        }
+        if (attackerIndices.size() > 1 && combatAttackService.canOnlyAttackAlone(gameData, attacker)) {
+            return true;
+        }
+
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && attackerIndices.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int power = gameQueryService.getEffectivePower(gameData, attacker);
+                boolean hasGreaterPowerAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
+                if (!hasGreaterPowerAttacker) {
+                    return true;
+                }
+            }
+            if (effect instanceof MatchingAttackerRestrictionEffect restriction) {
+                boolean hasMatchingAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, other, restriction.matchingAttackerPredicate()));
+                if (!hasMatchingAttacker) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */

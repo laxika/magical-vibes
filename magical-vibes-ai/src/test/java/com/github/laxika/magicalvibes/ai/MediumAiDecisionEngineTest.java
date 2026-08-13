@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
@@ -339,6 +340,34 @@ class MediumAiDecisionEngineTest {
 
         assertThat(cyclops.isAttacking()).isTrue();
         assertThat(bears.isAttacking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI does not declare Orcish Conscripts without enough other attackers")
+    void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
+        gd.playerLifeTotals.put(human.getId(), 4);
+        Permanent conscripts = harness.addToBattlefieldAndReturn(aiPlayer, new OrcishConscripts());
+        conscripts.setSummoningSick(false);
+        Permanent ally = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ally.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(conscripts.isAttackedThisTurn()).isFalse();
+        assertThat(ally.isAttackedThisTurn()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
