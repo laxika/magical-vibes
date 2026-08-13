@@ -914,6 +914,10 @@ per-derivation effect record.
 
 ## Damage
 
+`DealDamageToAnyTargetEffect(DynamicAmount, Condition, boolean)` adds a conditional
+no-redirection rider to the existing conditional unpreventable-damage form. Use the boolean only
+when the same condition forbids both prevention and dealing the damage to another recipient.
+
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `PreventDamageEffect.allCombatToPlayers()` | `()` | "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). Combat damage to creatures and planeswalkers is unaffected; the turn-scoped flag is consumed by the combat player-damage path and cleared at turn cleanup |

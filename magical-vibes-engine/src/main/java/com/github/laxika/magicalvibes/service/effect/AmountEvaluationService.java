@@ -488,6 +488,7 @@ public class AmountEvaluationService {
      */
     public boolean referencesEventValue(DynamicAmount amount) {
         return switch (amount) {
+            case null -> false;
             case EventValue ignored -> true;
             case Scaled s -> referencesEventValue(s.amount());
             case Divided d -> referencesEventValue(d.amount());

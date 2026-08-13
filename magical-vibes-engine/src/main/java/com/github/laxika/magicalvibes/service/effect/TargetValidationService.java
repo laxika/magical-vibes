@@ -257,9 +257,11 @@ public class TargetValidationService {
         if (hasProtectionFromSourceController(ctx, target)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
         }
-        CardColor effectiveColor = gameQueryService.getEffectiveCardColor(ctx.gameData(), ctx.sourceCard());
-        if (effectiveColor != null && gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + effectiveColor.name().toLowerCase());
+        for (CardColor effectiveColor : gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())) {
+            if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
+                throw new IllegalStateException(target.getCard().getName() + " has protection from "
+                        + effectiveColor.name().toLowerCase());
+            }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");

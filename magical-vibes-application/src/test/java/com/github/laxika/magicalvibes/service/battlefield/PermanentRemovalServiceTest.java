@@ -79,6 +79,9 @@ class PermanentRemovalServiceTest {
     @Mock
     private AuraCopyService auraCopyService;
 
+    @Mock
+    private CreatureControlService creatureControlService;
+
     @InjectMocks
     private PermanentRemovalService prs;
 

@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,6 +34,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -53,8 +64,8 @@ import java.util.UUID;
  *
  * <p>The visitor covers the closed set of effect record types with color/basic-land-type
  * parameters that have registered static handlers (plus the wrappers that can carry them);
- * the color/land-type parameters of one-shot spell effects are never re-read from a permanent's
- * text after resolution, so they need no rewriting here. Chosen-as-enters colors are stored on
+ * one-shot spell effects are rewritten on the stack when a text-changing spell resolves.
+ * Chosen-as-enters colors are stored on
  * the {@code Permanent} and updated directly by the text-change resolution
  * ({@code ChoiceHandlerService}), not rewritten per query. The effect types deliberately NOT
  * handled are listed in {@code agent-docs/LAYER_SYSTEM.md} §7.
@@ -249,9 +260,10 @@ public final class TextChangeTransformer {
                         : new GrantEffectEffect(wrapped, grant.scope(), filter);
             }
             case ConditionalEffect conditional -> {
+                Condition condition = apply(conditional.condition(), substitution);
                 CardEffect wrapped = apply(conditional.wrapped(), substitution);
-                yield wrapped == conditional.wrapped() ? conditional
-                        : new ConditionalEffect(conditional.condition(), wrapped);
+                yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
+                        : new ConditionalEffect(condition, wrapped);
             }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);
@@ -263,6 +275,77 @@ public final class TextChangeTransformer {
             }
             default -> effect;
         };
+    }
+
+    private static Condition apply(Condition condition, Substitution substitution) {
+        return switch (condition) {
+            case TargetPermanentMatches matches -> {
+                PermanentPredicate filter = apply(matches.filter(), substitution);
+                yield filter == matches.filter() ? matches : new TargetPermanentMatches(filter);
+            }
+            case TargetSpellMatches matches -> {
+                StackEntryPredicate filter = apply(matches.filter(), substitution);
+                yield filter == matches.filter() ? matches : new TargetSpellMatches(filter);
+            }
+            case AllOf allOf -> {
+                List<Condition> conditions = applyConditions(allOf.conditions(), substitution);
+                yield conditions == allOf.conditions() ? allOf : new AllOf(conditions);
+            }
+            case AnyOf anyOf -> {
+                List<Condition> conditions = applyConditions(anyOf.conditions(), substitution);
+                yield conditions == anyOf.conditions() ? anyOf : new AnyOf(conditions);
+            }
+            case NotCondition not -> {
+                Condition inner = apply(not.inner(), substitution);
+                yield inner == not.inner() ? not : new NotCondition(inner);
+            }
+            default -> condition;
+        };
+    }
+
+    private static List<Condition> applyConditions(List<Condition> conditions, Substitution substitution) {
+        List<Condition> result = new ArrayList<>(conditions.size());
+        boolean changed = false;
+        for (Condition condition : conditions) {
+            Condition transformed = apply(condition, substitution);
+            changed |= transformed != condition;
+            result.add(transformed);
+        }
+        return changed ? result : conditions;
+    }
+
+    private static StackEntryPredicate apply(StackEntryPredicate predicate, Substitution substitution) {
+        return switch (predicate) {
+            case StackEntryColorInPredicate colorIn -> {
+                Set<CardColor> colors = replaceColor(colorIn.colors(), substitution);
+                yield colors == colorIn.colors() ? colorIn : new StackEntryColorInPredicate(colors);
+            }
+            case StackEntryAllOfPredicate allOf -> {
+                List<StackEntryPredicate> children = applyStackPredicates(allOf.predicates(), substitution);
+                yield children == allOf.predicates() ? allOf : new StackEntryAllOfPredicate(children);
+            }
+            case StackEntryAnyOfPredicate anyOf -> {
+                List<StackEntryPredicate> children = applyStackPredicates(anyOf.predicates(), substitution);
+                yield children == anyOf.predicates() ? anyOf : new StackEntryAnyOfPredicate(children);
+            }
+            case StackEntryNotPredicate not -> {
+                StackEntryPredicate inner = apply(not.predicate(), substitution);
+                yield inner == not.predicate() ? not : new StackEntryNotPredicate(inner);
+            }
+            default -> predicate;
+        };
+    }
+
+    private static List<StackEntryPredicate> applyStackPredicates(List<StackEntryPredicate> predicates,
+                                                                   Substitution substitution) {
+        List<StackEntryPredicate> result = new ArrayList<>(predicates.size());
+        boolean changed = false;
+        for (StackEntryPredicate predicate : predicates) {
+            StackEntryPredicate transformed = apply(predicate, substitution);
+            changed |= transformed != predicate;
+            result.add(transformed);
+        }
+        return changed ? result : predicates;
     }
 
     private static PermanentPredicate apply(PermanentPredicate predicate, Substitution substitution) {

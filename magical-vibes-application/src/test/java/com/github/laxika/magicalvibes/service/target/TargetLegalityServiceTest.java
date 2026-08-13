@@ -67,6 +67,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -147,6 +148,16 @@ class TargetLegalityServiceTest {
         lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
                 .thenAnswer(invocation ->
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
+        lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
+                .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
+    }
+
+    private static Set<CardColor> effectiveColors(Card card) {
+        Set<CardColor> colors = new HashSet<>(card.getColors());
+        if (card.getColor() != null) {
+            colors.add(card.getColor());
+        }
+        return colors;
     }
 
     // ===== Helpers =====

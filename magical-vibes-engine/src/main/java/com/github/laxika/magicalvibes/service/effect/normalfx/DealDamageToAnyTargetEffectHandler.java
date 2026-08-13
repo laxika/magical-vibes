@@ -76,7 +76,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
             try {
-                damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+                damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage,
+                        e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
             } finally {
                 gameData.damageCantBePreventedThisTurn = previous;
             }

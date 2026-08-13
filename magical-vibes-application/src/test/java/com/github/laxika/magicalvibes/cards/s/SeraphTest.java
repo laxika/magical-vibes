@@ -82,7 +82,6 @@ class SeraphTest extends BaseCardTest {
         seraphAndAirElementalDieInCombat();
 
         harness.assertInGraveyard(player1, "Seraph");
-        harness.assertInGraveyard(player2, "Air Elemental");
         harness.assertOnBattlefield(player1, "Air Elemental");
     }
 

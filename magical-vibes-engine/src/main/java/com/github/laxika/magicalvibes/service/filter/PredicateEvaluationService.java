@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceC
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
@@ -201,6 +202,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -485,6 +487,8 @@ public class PredicateEvaluationService {
             }
             case PermanentHasNonManaActivatedAbilityPredicate ignored ->
                     hasNonManaActivatedAbility(gameData, permanent);
+            case PermanentHasManaAbilityPredicate ignored ->
+                    hasManaAbility(gameData, permanent);
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
@@ -1611,6 +1615,17 @@ public class PredicateEvaluationService {
     }
 
     private boolean hasNonManaActivatedAbility(GameData gameData, Permanent permanent) {
+        return effectiveActivatedAbilities(gameData, permanent).stream()
+                .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
+    }
+
+    private boolean hasManaAbility(GameData gameData, Permanent permanent) {
+        return PotentialManaService.hasOnTapManaEffects(permanent.getCard())
+                || effectiveActivatedAbilities(gameData, permanent).stream()
+                .anyMatch(AbilityActivationService::isManaAbility);
+    }
+
+    private List<ActivatedAbility> effectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (gameData == null) {
             abilities.addAll(permanent.getCard().getActivatedAbilities());
@@ -1624,7 +1639,7 @@ public class PredicateEvaluationService {
         abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
-        return abilities.stream().anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
+        return abilities;
     }
 
     /**

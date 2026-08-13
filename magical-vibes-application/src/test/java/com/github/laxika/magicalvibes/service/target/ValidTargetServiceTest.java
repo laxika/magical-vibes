@@ -65,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -131,8 +132,18 @@ class ValidTargetServiceTest {
         lenient().when(gameQueryService.isCreature(eq(gameData), any(Permanent.class)))
                 .thenAnswer(invocation ->
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.CREATURE));
+        lenient().when(gameQueryService.getEffectiveCardColors(eq(gameData), any(Card.class)))
+                .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
+    }
+
+    private static Set<CardColor> effectiveColors(Card card) {
+        Set<CardColor> colors = new HashSet<>(card.getColors());
+        if (card.getColor() != null) {
+            colors.add(card.getColor());
+        }
+        return colors;
     }
 
     // ===== Helpers =====

@@ -233,6 +233,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.addCardToHand(ownerId, leaving);
         }
+        forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
         return true;
@@ -268,6 +269,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             exileService.exileCard(gameData, ownerId, leaving);
         }
+        forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -320,6 +322,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.playerDecks.get(ownerId).add(0, leaving);
         }
+        forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         if (shuffle) {
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
@@ -359,6 +362,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.playerDecks.get(ownerId).add(leaving);
         }
+        forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         return true;
     }
@@ -726,6 +730,13 @@ public class PermanentRemovalService {
             if (attacker != null && attacker.isAttacking()) {
                 attacker.setBlockedWithoutBlockers(true);
             }
+        }
+    }
+
+    private void forgetDamageDealtToDepartedPermanent(GameData gameData, Permanent departed) {
+        UUID cardId = departed.getCard().getId();
+        for (Set<UUID> damagedCardIds : gameData.creatureCardsDamagedThisTurnBySourcePermanent.values()) {
+            damagedCardIds.remove(cardId);
         }
     }
 

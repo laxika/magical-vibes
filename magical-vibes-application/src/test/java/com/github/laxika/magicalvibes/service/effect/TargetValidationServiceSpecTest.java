@@ -20,10 +20,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -64,6 +69,16 @@ class TargetValidationServiceSpecTest {
         sourceCard.setName("Bolt Source");
         sourceCard.setType(CardType.INSTANT);
         sourceCard.setColor(CardColor.RED);
+        lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
+                .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
+    }
+
+    private static Set<CardColor> effectiveColors(Card card) {
+        Set<CardColor> colors = new HashSet<>(card.getColors());
+        if (card.getColor() != null) {
+            colors.add(card.getColor());
+        }
+        return colors;
     }
 
     // ===== stub effects declaring a spec =====

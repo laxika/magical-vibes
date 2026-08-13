@@ -31,8 +31,8 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileDiscardedCardFromGraveyardEffect exileEffect = (ExileDiscardedCardFromGraveyardEffect) effect;
-        if (!exileEffect.trackWithSource() || entry.getTriggeringCardId() == null
-                || entry.getSourcePermanentId() == null) {
+        if (entry.getTriggeringCardId() == null
+                || (exileEffect.trackWithSource() && entry.getSourcePermanentId() == null)) {
             return;
         }
 
@@ -50,10 +50,15 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
         }
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, discarded.getId());
-        gameData.addToExile(ownerId, discarded, entry.getSourcePermanentId());
+        if (exileEffect.trackWithSource()) {
+            gameData.addToExile(ownerId, discarded, entry.getSourcePermanentId());
+        } else {
+            gameData.addToExile(ownerId, discarded);
+        }
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
-        log.info("Game {} - {} exiles discarded card {} from graveyard with the source",
-                gameData.id, entry.getCard().getName(), discarded.getName());
+        log.info("Game {} - {} exiles discarded card {} from graveyard{}",
+                gameData.id, entry.getCard().getName(), discarded.getName(),
+                exileEffect.trackWithSource() ? " with the source" : "");
     }
 }

@@ -164,6 +164,7 @@ class NecropotenceTest extends BaseCardTest {
 
         Card toDiscard = gd.playerHands.get(player1.getId()).get(0);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         // The discarded card is exiled (Necropotence's trigger), not left in the graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -191,6 +192,7 @@ class NecropotenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card toDiscard = gd.playerHands.get(player1.getId()).get(0);
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))

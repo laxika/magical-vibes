@@ -25,12 +25,23 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  *                           entry), this damage can't be prevented — e.g. Banefire's "If X is
  *                           5 or more, … the damage can't be prevented" uses
  *                           {@code new SpellXAtLeast(5)}. {@code null} = normal prevention.
+ * @param onlyIfSacrificed   whether an on-death use triggers only when its source was sacrificed
+ * @param cantBeRedirectedWhenUnpreventable when true, an event made unpreventable by
+ *                           {@code unpreventableWhen} also can't be redirected
  */
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                           boolean exileInsteadOfDie, int targetGroup,
                                           Condition unpreventableWhen,
-                                          boolean onlyIfSacrificed)
+                                          boolean onlyIfSacrificed,
+                                          boolean cantBeRedirectedWhenUnpreventable)
         implements DamageDealingEffect {
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen, boolean onlyIfSacrificed) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
+                onlyIfSacrificed, false);
+    }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -65,6 +76,13 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     /** "Deals damage to any target; that damage can't be prevented while {@code unpreventableWhen} holds" (Banefire). */
     public DealDamageToAnyTargetEffect(DynamicAmount damage, Condition unpreventableWhen) {
         this(damage, false, false, -1, unpreventableWhen);
+    }
+
+    /** Damage that also can't be redirected while {@code unpreventableWhen} holds. */
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, Condition unpreventableWhen,
+                                       boolean cantBeRedirectedWhenUnpreventable) {
+        this(damage, false, false, -1, unpreventableWhen, false,
+                cantBeRedirectedWhenUnpreventable);
     }
 
     /** Damage aimed at the given target group's chosen target instead of the entry's single target. */

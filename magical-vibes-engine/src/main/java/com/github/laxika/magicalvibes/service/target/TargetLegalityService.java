@@ -1324,6 +1324,12 @@ public class TargetLegalityService {
                                 targetFizzled = true;
                             }
                         }
+                        if (!targetFizzled && targetValidationService.checkEffectTargets(
+                                entry.getEffectsToResolve(),
+                                new TargetValidationContext(gameData, entry.getTargetId(), null,
+                                        entry.getCard(), entry.getXValue())).isPresent()) {
+                            targetFizzled = true;
+                        }
                     }
                 }
             }
@@ -1444,6 +1450,12 @@ public class TargetLegalityService {
             } catch (IllegalStateException e) {
                 return false;
             }
+        }
+        if (entry.getTargetIds().isEmpty()
+                && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
+                new TargetValidationContext(gameData, targetId, null, entry.getCard(), entry.getXValue()))
+                .isPresent()) {
+            return false;
         }
         return true;
     }

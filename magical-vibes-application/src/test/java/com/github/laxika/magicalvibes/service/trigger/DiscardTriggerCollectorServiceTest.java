@@ -391,8 +391,8 @@ class DiscardTriggerCollectorServiceTest {
     class ControllerDiscardExile {
 
         @Test
-        @DisplayName("exiles the discarded card from the controller's graveyard and returns true")
-        void exilesDiscardedCard() {
+        @DisplayName("queues the trigger with the discarded card and returns true")
+        void queuesDiscardTrigger() {
             Permanent necro = createPermanent("Necropotence");
             var effect = new ExileDiscardedCardFromGraveyardEffect();
             Card discarded = createCard("Grizzly Bears");
@@ -404,8 +404,10 @@ class DiscardTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(permanentRemovalService).removeCardFromGraveyardById(gd, discarded.getId());
-            assertThat(gd.getPlayerExiledCards(player1Id)).anyMatch(c -> c.getId().equals(discarded.getId()));
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(necro.getId());
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(discarded.getId());
+            assertThat(gd.playerGraveyards.get(player1Id)).contains(discarded);
         }
 
         @Test

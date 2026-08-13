@@ -16,6 +16,6 @@ public class LavaBurst extends Card {
         // can't be prevented — the unpreventable gate is the target-dependent
         // TargetPermanentMatches(creature), so damage to a player stays preventable.
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(
-                new XValue(), new TargetPermanentMatches(new PermanentIsCreaturePredicate())));
+                new XValue(), new TargetPermanentMatches(new PermanentIsCreaturePredicate()), true));
     }
 }

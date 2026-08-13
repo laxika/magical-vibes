@@ -325,7 +325,8 @@ order — they compose, replacement N applies to the output of N�?�1), it re
 subtypes), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
 (via the reverse of `Keyword.LANDWALK_MAP`), land-type and color predicates inside filters
 (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`, `PermanentColorInPredicate`,
-recursing through AllOf/AnyOf/Not), and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
+recursing through AllOf/AnyOf/Not), stack-entry color predicates inside target-spell conditions,
+and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
 `EnchantedPermanentConditionalEffect` (recursing into what they wrap). An unchanged effect
 comes back as the SAME instance — the pass's managed/filter-verdict maps are identity-keyed.
 Wiring: (a) `LayerSystemService.collectInstances` transforms every STATIC-slot effect with its
@@ -351,8 +352,9 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `AwardAnyColorManaEffect`'s `subtype`, and color/land-type words inside trigger
 predicates and activated-ability definitions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
-parameters at resolution and are never re-read from a permanent's text, so they need no
-rewriting. A text-changed filter that is shared across an ability's parts (CR 613.6 memo) gets
+parameters at resolution and are never re-read from a permanent's text. Text changes applied to
+a spell on the stack instead rewrite that stack entry's frozen resolving effects immediately.
+A text-changed filter that is shared across an ability's parts (CR 613.6 memo) gets
 its layer-4 verdict recorded under the TRANSFORMED filter instance; the legacy funnel asks with
 the original, misses, and re-evaluates — acceptable drift, no current card hits it.
 

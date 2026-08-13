@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -718,13 +719,19 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
         } else {
-            // Glamerdye may target a spell still on the stack; record the change so it carries onto the
-            // permanent that spell resolves into (CR 613.7). For instants/sorceries it is a no-op.
+            // A text change affects the spell's resolving effects and carries onto a permanent
+            // that spell becomes.
             StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, ctx.targetId());
             if (targetSpell != null) {
+                TextReplacement replacement = new TextReplacement(fromText, toText, ctx.untilEndOfTurn());
                 gameData.spellTextReplacements
                         .computeIfAbsent(ctx.targetId(), k -> new ArrayList<>())
-                        .add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn()));
+                        .add(replacement);
+                List<CardEffect> effects = targetSpell.getEffectsToResolve();
+                for (int i = 0; i < effects.size(); i++) {
+                    targetSpell.replaceEffectToResolve(i,
+                            TextChangeTransformer.transform(effects.get(i), List.of(replacement)));
+                }
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , targetSpell.getCard(), "."));
                 log.info("Game {} - {} changes {} to {} on spell {}", gameData.id, player.getUsername(), fromText, toText, targetSpell.getCard().getName());
             }

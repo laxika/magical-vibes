@@ -151,30 +151,20 @@ public class DiscardTriggerCollectorService {
         }
 
         Card sourceCard = match.permanent().getCard();
-        if (trigger.trackWithSource()) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger)),
-                    null,
-                    match.permanent().getId());
-            entry.setTriggeringCardId(discarded.getId());
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers to exile discarded card {} with the source",
-                    gameData.id, sourceCard.getName(), discarded.getName());
-            return true;
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, discarded.getId());
-        gameData.addToExile(ownerId, discarded);
-
-        String cardName = sourceCard.getName();
-        gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " exiles ", discarded,
-                " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
-        log.info("Game {} - {} exiles discarded card {} from graveyard", gameData.id, cardName, discarded.getName());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(discarded.getId());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers to exile discarded card {}{}",
+                gameData.id, sourceCard.getName(), discarded.getName(),
+                trigger.trackWithSource() ? " with the source" : "");
         return true;
     }
 
