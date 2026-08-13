@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
+import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
@@ -368,6 +369,46 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void coSelectsStirTheGraveTargetAndX() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        GrizzlyBears target = new GrizzlyBears();
+
+        harness.addMana(aiPlayer, ManaColor.BLACK, 3);
+        harness.setGraveyard(aiPlayer, List.of(target));
+        harness.setHand(aiPlayer, List.of(new StirTheGrave()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
     void passesPriorityWhenNoGraveyardCreatureManaCostIsPayable() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();
@@ -587,6 +628,16 @@ class RandomAiDecisionEngineTest {
 
     private RandomAiDecisionEngine createAlwaysActivateEngine(
             GameTestHarness harness, Player aiPlayer) {
+        return createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+        });
+    }
+
+    private RandomAiDecisionEngine createEngine(
+            GameTestHarness harness, Player aiPlayer, Random random) {
         return new RandomAiDecisionEngine(
                 harness.getGameData().id,
                 aiPlayer,
@@ -600,12 +651,7 @@ class RandomAiDecisionEngineTest {
                 harness.getCastingPermissionService(),
                 harness.getTargetValidationService(),
                 harness.getTargetLegalityService(),
-                new Random() {
-                    @Override
-                    public boolean nextBoolean() {
-                        return true;
-                    }
-                },
+                random,
                 new FuzzTelemetry());
     }
 }

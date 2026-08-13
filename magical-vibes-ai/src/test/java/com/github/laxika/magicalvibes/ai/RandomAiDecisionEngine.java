@@ -459,7 +459,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     telemetry.recordSkip("spell: multi-target requirements unsatisfiable", card.getName());
                     continue; // Can't satisfy mandatory targets, try next spell
                 }
-            } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+            } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                    && (EffectResolution.needsTarget(card) || card.isAura())
+                    && !hasRequiresManaValueAtMostX(card)) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     telemetry.recordSkip("spell: no valid target", card.getName());
@@ -556,6 +558,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     Card chosen = validTargets.get(rng.nextInt(validTargets.size()));
                     targetId = chosen.getId();
                     xValue = chosen.getManaValue();
+                } else if (hasRequiresManaValueAtMostX(card)) {
+                    List<Card> validTargets = targetSelector.findValidGraveyardTargets(
+                            gameData, card, aiPlayer.getId(), maxX);
+                    if (validTargets.isEmpty()) {
+                        telemetry.recordSkip("spell: no affordable mana-value-at-most-X target", card.getName());
+                        continue;
+                    }
+                    Card chosen = validTargets.get(rng.nextInt(validTargets.size()));
+                    targetId = chosen.getId();
+                    int minimumX = Math.max(1, chosen.getManaValue());
+                    xValue = minimumX + (maxX == minimumX
+                            ? 0
+                            : rng.nextInt(maxX - minimumX + 1));
                 } else if (hasPermanentManaValueEqualsXTarget(card)) {
                     // For PermanentManaValueEqualsXPredicate spells (e.g. Entrancing Melody),
                     // X must match the target permanent's mana value — co-select target and X.
@@ -704,6 +719,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private boolean hasRequiresManaValueEqualsX(Card card) {
         return card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect rge && rge.requiresManaValueEqualsX());
+    }
+
+    /**
+     * Returns true if the card has a targeted graveyard return whose target mana value is capped
+     * by the spell's chosen X (e.g. Stir the Grave).
+     */
+    private boolean hasRequiresManaValueAtMostX(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect rge
+                        && rge.requiresManaValueAtMostX());
     }
 
     // ===== Random Sacrifice Target Selection =====
