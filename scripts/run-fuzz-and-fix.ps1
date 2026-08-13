@@ -64,6 +64,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+while ($true) {
 Write-Host "Running $Rounds Random AI fuzz games. Full output: $logPath"
 
 Push-Location $repositoryRoot
@@ -222,10 +223,17 @@ try {
         exit 1
     }
 
-    Write-Host "Codex repaired the fuzz failure, committed $committedHead, and pushed origin/main. The failing fuzz log remains at $logPath."
+    $startingHead = (& git -C $repositoryRoot rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Could not determine the repaired Git commit before starting another fuzz run."
+        exit 1
+    }
+
+    Write-Host "Codex repaired the fuzz failure, committed $committedHead, and pushed origin/main. Starting another fuzz run."
 }
 finally {
     Remove-Item -LiteralPath $commitOutputPath, $commitSchemaPath, $commitMessagePath -Force -ErrorAction SilentlyContinue
+}
 }
 
 exit 0
