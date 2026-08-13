@@ -552,7 +552,7 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
     }
 
-    public void beginLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
+    public void beginBasicLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext,

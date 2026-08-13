@@ -293,10 +293,6 @@ public class ChoiceHandlerService {
             handleSnowLandwalkGrantChoice(gameData, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.LandwalkGrantChoice ctx) {
-            handleLandwalkGrantChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
             handleOwnLandsBecomeBasicTypeChoice(gameData, colorName, ctx);
             return;
@@ -863,24 +859,34 @@ public class ChoiceHandlerService {
 
     private void handleLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
                                            ChoiceContext.LandwalkGrantChoice ctx) {
-        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
-        Keyword keyword = Keyword.LANDWALK_MAP.entrySet().stream()
-                .filter(entry -> entry.getValue() == subtype)
-                .map(java.util.Map.Entry::getKey)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid landwalk type: " + subtypeName));
-
         gameData.interaction.clearAwaitingInput();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            target.getGrantedKeywords().add(keyword);
-            String keywordName = keyword.name().charAt(0)
-                    + keyword.name().substring(1).toLowerCase().replace('_', ' ');
+            String landwalkName;
+            if (subtypeName.endsWith("WALK")) {
+                Keyword keyword = Keyword.valueOf(subtypeName);
+                target.getGrantedKeywords().add(keyword);
+                landwalkName = keyword.name().toLowerCase();
+            } else {
+                CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+                Keyword keyword = Keyword.LANDWALK_MAP.entrySet().stream()
+                        .filter(entry -> entry.getValue() == subtype)
+                        .map(java.util.Map.Entry::getKey)
+                        .findFirst()
+                        .orElse(null);
+                if (keyword != null) {
+                    target.getGrantedKeywords().add(keyword);
+                } else {
+                    target.getUnblockableIfDefenderControlsUntilEndOfTurn()
+                            .add(new PermanentHasSubtypePredicate(subtype));
+                }
+                landwalkName = subtype.getDisplayName().toLowerCase() + "walk";
+            }
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " gains " + keywordName + " until end of turn."));
+                    " gains " + landwalkName + " until end of turn."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(),
-                    keywordName, target.getCard().getName());
+                    landwalkName, target.getCard().getName());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2113,29 +2119,6 @@ public class ChoiceHandlerService {
                     " gains snow " + subtype.getDisplayName().toLowerCase() + "walk until end of turn."));
             log.info("Game {} - {} gains snow {}walk until end of turn",
                     gameData.id, target.getCard().getName(), subtype);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleLandwalkGrantChoice(GameData gameData, String subtypeName,
-                                           ChoiceContext.LandwalkGrantChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-        if (target != null) {
-            String landwalkName;
-            if (subtypeName.endsWith("WALK")) {
-                target.getGrantedKeywords().add(Keyword.valueOf(subtypeName));
-                landwalkName = subtypeName.toLowerCase();
-            } else {
-                CardSubtype subtype = CardSubtype.valueOf(subtypeName);
-                target.getUnblockableIfDefenderControlsUntilEndOfTurn()
-                        .add(new PermanentHasSubtypePredicate(subtype));
-                landwalkName = subtype.getDisplayName().toLowerCase() + "walk";
-            }
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " gains " + landwalkName + " until end of turn."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

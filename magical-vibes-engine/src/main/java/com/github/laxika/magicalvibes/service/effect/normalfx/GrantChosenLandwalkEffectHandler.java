@@ -36,6 +36,6 @@ public class GrantChosenLandwalkEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        playerInputService.beginLandwalkTypeChoice(gameData, entry.getControllerId(), recipient.getId());
+        playerInputService.beginBasicLandwalkTypeChoice(gameData, entry.getControllerId(), recipient.getId());
     }
 }
