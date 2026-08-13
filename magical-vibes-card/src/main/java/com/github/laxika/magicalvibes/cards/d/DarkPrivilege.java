@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "56")
+@CardRegistration(set = "MGB", collectorNumber = "3")
 public class DarkPrivilege extends Card {
 
     public DarkPrivilege() {

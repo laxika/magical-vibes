@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VIS", collectorNumber = "39")
+@CardRegistration(set = "MGB", collectorNumber = "2")
 public class Ovinomancer extends Card {
 
     private static final PermanentAllOfPredicate BASIC_LAND = new PermanentAllOfPredicate(List.of(
