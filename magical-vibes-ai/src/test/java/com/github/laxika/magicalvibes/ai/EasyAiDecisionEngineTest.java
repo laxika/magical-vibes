@@ -1624,8 +1624,6 @@ class EasyAiDecisionEngineTest {
         }
     }
 
-    // ===== Forced attack (Trove of Temptation) =====
-
     @Test
     @DisplayName("Easy AI attacks with at least one creature when forced by opponent effect")
     void attacksWithAtLeastOneWhenForcedByOpponentEffect() throws Exception {
@@ -1652,6 +1650,8 @@ class EasyAiDecisionEngineTest {
         gd.playerBattlefields.get(opponentId).add(blocker);
 
         when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0));
+        when(combatAttackService.getAttackableCreatureIndicesForTarget(gd, aiPlayer.getId(), opponentId))
                 .thenReturn(List.of(0));
         when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
                 .thenReturn(List.of());
