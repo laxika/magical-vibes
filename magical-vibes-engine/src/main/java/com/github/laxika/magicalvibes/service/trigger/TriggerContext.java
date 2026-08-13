@@ -69,10 +69,10 @@ public sealed interface TriggerContext {
     /**
      * Context for damage-dealt-to-controller triggers that only care about the amount
      * (ON_CONTROLLER_DEALT_DAMAGE, e.g. Living Artifact). Fired once per damage source.
+     * {@code sourcePermanentId} is populated for source-specific opponent-damage triggers.
      */
     record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId)
             implements TriggerContext {
-
         public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
             this(damagedPlayerId, amount, null);
         }
@@ -176,9 +176,24 @@ public sealed interface TriggerContext {
      * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
+     * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors
+     * that need last-known counters.
      */
     record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
-                         int dyingCreatureToughness) implements TriggerContext {}
+                         int dyingCreatureToughness, UUID dyingPermanentId,
+                         Permanent dyingPermanent) implements TriggerContext {
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness, null, null);
+        }
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness, UUID dyingPermanentId) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    dyingPermanentId, null);
+        }
+    }
 
     /**
      * Context for ON_EQUIPPED_CREATURE_DIES triggers. {@code dyingCard} is the card that died,

@@ -246,6 +246,14 @@ public class CombatDamageService {
             }
         }
 
+        for (var sourceEntry : state.combatDamageAmountsToCreatures.entrySet()) {
+            for (var targetEntry : sourceEntry.getValue().entrySet()) {
+                triggerCollectionService.collectEnchantedCreatureDealsDamageToCreatureTriggers(
+                        gameData, sourceEntry.getKey(), targetEntry.getKey(), targetEntry.getValue(),
+                        state.enchantedCreatureDealsDamageTriggers);
+            }
+        }
+
         for (Permanent source : state.combatDamageDealt.keySet()) {
             List<CardEffect> effects = new ArrayList<>(
                     source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
@@ -2801,10 +2809,21 @@ public class CombatDamageService {
     }
 
     private boolean assignsCombatDamageAsThoughUnblocked(Permanent attacker) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof AssignCombatDamageAsThoughUnblockedEffect) return true;
-        }
-        return false;
+        return combatDamageAssignmentEffects(attacker).stream()
+                .anyMatch(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance);
+    }
+
+    private boolean mustAssignCombatDamageAsThoughUnblocked(Permanent attacker) {
+        return combatDamageAssignmentEffects(attacker).stream()
+                .filter(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance)
+                .map(AssignCombatDamageAsThoughUnblockedEffect.class::cast)
+                .anyMatch(AssignCombatDamageAsThoughUnblockedEffect::mandatory);
+    }
+
+    private List<CardEffect> combatDamageAssignmentEffects(Permanent attacker) {
+        List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.STATIC));
+        effects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        return effects;
     }
 
     private boolean assignsUnblockedDamageToDefendingCreature(Permanent attacker) {
@@ -2906,6 +2925,7 @@ public class CombatDamageService {
             // (e.g. Cunning Giant). Prompt only when there is a defending creature to choose.
             return canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
         }
+        if (mustAssignCombatDamageAsThoughUnblocked(atk)) return false;
         if (livingBlockerIndices.size() >= 2) return true;
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) return true;
         if (assignsCombatDamageAsThoughUnblocked(atk)) return true;

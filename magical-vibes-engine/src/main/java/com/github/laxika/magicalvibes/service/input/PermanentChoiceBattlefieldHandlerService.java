@@ -46,7 +46,10 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,7 +102,10 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
+    private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
+    private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
+    private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
@@ -363,6 +369,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
         triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleAttachTargetAuraToAnotherPermanentOfSameType(GameData gameData, UUID permanentId,
+                                                                    PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType ctx) {
+        attachTargetAuraHandler.attachChosen(gameData, permanentId, ctx);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1273,6 +1285,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleAnyPlayerMaySacrificeLandPutSourceOnTop(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop context) {
+        anyPlayerMaySacrificeLandHandler.sacrificeLand(
+                gameData, context.sacrificingPlayerId(), permanentId);
+        anyPlayerMaySacrificeLandHandler.putSourceOnTop(
+                gameData, context.sourceCard(), context.effect());
+        anyPlayerMaySacrificeLandHandler.advance(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificePermanentThen(GameData gameData, UUID permanentId,
                                               PermanentChoiceContext.SacrificePermanentThen ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
@@ -1358,6 +1382,13 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificePermanentAndReturnTargetCards(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.SacrificePermanentAndReturnTargetCards ctx) {
+        sacrificePermanentAndReturnHandler.resolveAfterChoice(gameData, permanentId, ctx);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

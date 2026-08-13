@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
@@ -1806,6 +1807,11 @@ public class SpellCastingService {
                         .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
                         .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
                         .findFirst().orElse(null);
+        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect sacrificeAndReturnEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                        .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                        .findFirst().orElse(null);
         if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
             long creatureCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
@@ -1826,6 +1832,16 @@ public class SpellCastingService {
             if (effectiveXValue > matchingCount) {
                 throw new IllegalStateException("Not enough matching creature cards in graveyard (need "
                         + effectiveXValue + ", have " + matchingCount + ")");
+            }
+        }
+        if (sacrificeAndReturnEffect != null) {
+            long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, sacrificeAndReturnEffect.returnFilter(), card.getId()))
+                    .count();
+            if (sacrificeAndReturnEffect.targetCount() > matchingCount) {
+                throw new IllegalStateException("Not enough matching creature cards in graveyard (need "
+                        + sacrificeAndReturnEffect.targetCount() + ", have " + matchingCount + ")");
             }
         }
         ReturnTargetCardsFromGraveyardToHandEffect xScaledToHandEffect =
@@ -2461,6 +2477,11 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, null, null, List.of(), List.of()
                 ));
+            } else if (sacrificeAndReturnEffect != null) {
+                graveyardTargetingService.handleExactNGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, sacrificeAndReturnEffect.targetCount(),
+                        sacrificeAndReturnEffect.returnFilter(), "to the battlefield");
+                return;
             } else if (returnToBattlefieldEffect != null && resolvedXValue > 0) {
                 graveyardTargetingService.handleExactNGraveyardSpellTargeting(
                         gameData, playerId, card, entryType, resolvedXValue,
@@ -4494,15 +4515,15 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
 
-        // Verify the player can cast from top of library
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
             throw new IllegalStateException("Library is empty");
         }
 
         Card card = deck.getFirst();
+        boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, card);
         if (card.hasType(CardType.LAND)) {
-            if (!castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId)) {
+            if (!freeTopPlay && !castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId)) {
                 throw new IllegalStateException("No effect allowing play of lands from library top");
             }
             if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
@@ -4510,6 +4531,9 @@ public class SpellCastingService {
             }
 
             deck.removeFirst();
+            if (freeTopPlay) {
+                gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+            }
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
@@ -4533,11 +4557,11 @@ public class SpellCastingService {
 
         // Verify the player can cast from top of library
         Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
-        if (castableTypes.isEmpty()) {
+        if (!freeTopPlay && castableTypes.isEmpty()) {
             throw new IllegalStateException("No effect allowing cast from library top");
         }
 
-        effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
+        effectiveXValue = freeTopPlay ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
@@ -4563,9 +4587,13 @@ public class SpellCastingService {
 
         // Remove from library
         deck.removeFirst();
+        if (freeTopPlay) {
+            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+        }
 
-        // Pay mana cost
-        paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue);
+        if (!freeTopPlay) {
+            paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue);
+        }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 

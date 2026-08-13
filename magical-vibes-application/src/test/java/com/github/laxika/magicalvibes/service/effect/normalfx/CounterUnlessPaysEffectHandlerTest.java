@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -129,6 +132,51 @@ class CounterUnlessPaysEffectHandlerTest {
         // =========================================================================
 
     @Test
+            @DisplayName("Evaluates dynamic payment from the sacrificed source snapshot")
+            void evaluatesDynamicPaymentFromSourceSnapshot() {
+                Card elves = createCreatureCard("Llanowar Elves");
+                StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+                gd.stack.add(elvesEntry);
+
+                ManaPool pool = new ManaPool();
+                pool.add(ManaColor.GREEN, 2);
+                gd.playerManaPools.put(player1Id, pool);
+
+                Card refrain = createCard("Lilting Refrain");
+                Permanent source = new Permanent(refrain);
+                source.setCounterCount(CounterType.VERSE, 2);
+                StackEntry counterEntry = new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        refrain,
+                        player2Id,
+                        refrain.getName(),
+                        List.of(new CounterUnlessPaysEffect(new CountersOnSource(CounterType.VERSE))),
+                        0,
+                        elves.getId(),
+                        null
+                );
+                counterEntry.setSourcePermanentSnapshot(source);
+                when(amountEvaluationService.evaluate(
+                        eq(gd),
+                        eq(new CountersOnSource(CounterType.VERSE)),
+                        any()
+                )).thenReturn(2);
+
+                counterUnlessPaysHandler.resolve(
+                        gd,
+                        counterEntry,
+                        new CounterUnlessPaysEffect(new CountersOnSource(CounterType.VERSE))
+                );
+
+                assertThat(gd.pendingMayAbilities).hasSize(1);
+                verify(amountEvaluationService).evaluate(
+                        eq(gd),
+                        eq(new CountersOnSource(CounterType.VERSE)),
+                        argThat(context -> context.sourcePermanent() == source)
+                );
+            }
+
+            @Test
             @DisplayName("Counters spell immediately when opponent cannot pay")
             void countersImmediatelyWhenCannotPay() {
                 Card elves = createCreatureCard("Llanowar Elves");

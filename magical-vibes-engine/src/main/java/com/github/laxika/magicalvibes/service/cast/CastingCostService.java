@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingE
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -364,6 +365,24 @@ public class CastingCostService {
      */
     public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent) {
         return getActivatedAbilityActivationCostReduction(gameData, sourcePermanent, null);
+    }
+
+    /**
+     * Generic mana removed from cycling abilities activated by {@code activatingPlayerId}.
+     */
+    public int getCyclingAbilityCostReduction(GameData gameData, UUID activatingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) return 0;
+
+        int reduction = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CyclingCostReducingEffect reducer) {
+                    reduction += reducer.genericCostReduction();
+                }
+            }
+        }
+        return reduction;
     }
 
     public int getActivatedAbilityActivationCostReduction(GameData gameData, Permanent sourcePermanent,

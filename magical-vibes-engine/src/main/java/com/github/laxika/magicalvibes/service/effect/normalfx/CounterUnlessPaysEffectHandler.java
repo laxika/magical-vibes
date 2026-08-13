@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -39,8 +40,16 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
         int payAmount;
         if (e.dynamicAmount() != null) {
+            // Source-relative amounts use the live source permanent when it is still on the
+            // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
+            Permanent source = entry.getSourcePermanentId() != null
+                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                    : null;
+            if (source == null) {
+                source = entry.getSourcePermanentSnapshot();
+            }
             payAmount = amountEvaluationService.evaluate(gameData, e.dynamicAmount(),
-                    AmountContext.forStackEntry(entry, null));
+                    AmountContext.forStackEntry(entry, source));
         } else {
             payAmount = e.useXValue() ? entry.getXValue() : e.amount();
         }

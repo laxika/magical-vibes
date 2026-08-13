@@ -137,6 +137,7 @@ public class CreatureControlService {
             permanent.tap();
         }
 
+        removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.setSummoningSick(true);
@@ -181,6 +182,19 @@ public class CreatureControlService {
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
+    }
+
+    private void removeFromCombat(GameData gameData, Permanent permanent) {
+        List<UUID> blockedAttackerIds = new ArrayList<>(permanent.getBlockingTargetIds());
+        permanent.clearCombatState();
+
+        for (UUID attackerId : blockedAttackerIds) {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+            if (attacker != null && attacker.isAttacking()
+                    && !gameQueryService.isBlockedByAnyCreature(gameData, attacker)) {
+                attacker.setBlockedWithoutBlockers(true);
+            }
+        }
     }
 
     /**

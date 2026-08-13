@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEff
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,6 +48,9 @@ class TurnCleanupServiceTest {
 
     @Mock
     private CreatureControlService creatureControlService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
 
     @InjectMocks
     private TurnCleanupService sut;
@@ -95,6 +100,15 @@ class TurnCleanupServiceTest {
 
             assertThat(perm.getPowerModifier()).isZero();
             verify(creatureControlService).reconcileControl(gd);
+        }
+
+        @Test
+        @DisplayName("Processes permanents scheduled for exile at cleanup")
+        void processesExilesScheduledForCleanup() {
+            sut.applyCleanupResets(gd);
+
+            verify(permanentRemovalService).processDelayedPermanentActions(
+                    gd, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         }
 
         @Test

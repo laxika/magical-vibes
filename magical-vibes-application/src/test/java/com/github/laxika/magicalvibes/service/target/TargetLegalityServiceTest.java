@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -200,6 +201,23 @@ class TargetLegalityServiceTest {
                 new ChooseOneEffect.ChooseOneOption("Mode 2", mode2Effect)
         )));
         return card;
+    }
+
+    @Test
+    @DisplayName("rejects single-graveyard exile targets spanning multiple graveyards")
+    void rejectsSingleGraveyardExileTargetsSpanningMultipleGraveyards() {
+        Card ownCard = createCreature("Own card", CardColor.GREEN);
+        Card opponentCard = createCreature("Opponent card", CardColor.RED);
+        ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(3, 0, true);
+        when(gameQueryService.findCardInGraveyardById(gd, ownCard.getId())).thenReturn(ownCard);
+        when(gameQueryService.findCardInGraveyardById(gd, opponentCard.getId())).thenReturn(opponentCard);
+        when(gameQueryService.findGraveyardOwnerById(gd, ownCard.getId())).thenReturn(player1Id);
+        when(gameQueryService.findGraveyardOwnerById(gd, opponentCard.getId())).thenReturn(player2Id);
+
+        assertThatThrownBy(() -> sut.validateMultiTargetGraveyardAbility(
+                gd, player1Id, List.of(effect), List.of(ownCard.getId(), opponentCard.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("All targets must be in a single graveyard");
     }
 
     private Permanent addPermanent(UUID playerId, Card card) {

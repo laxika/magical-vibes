@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -38,6 +39,18 @@ public class PermanentControlTargetValidators {
                 || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
                 || !target.isAttached()) {
             throw new IllegalStateException("Target must be an Aura attached to a permanent");
+        }
+    }
+
+    @ValidatesTarget(AttachTargetAuraToAnotherPermanentOfSameTypeEffect.class)
+    public void validateAttachTargetAuraToAnotherPermanentOfSameType(TargetValidationContext ctx) {
+        tvs.requireTarget(ctx);
+        Permanent aura = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
+        Permanent host = aura == null ? null : gameQueryService.findPermanentById(ctx.gameData(), aura.getAttachedTo());
+        if (aura == null || !aura.getCard().isAura() || host == null
+                || (!gameQueryService.isCreature(ctx.gameData(), host)
+                && !gameQueryService.isLand(ctx.gameData(), host))) {
+            throw new IllegalStateException("Target must be an Aura attached to a creature or land");
         }
     }
 

@@ -82,6 +82,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to pay ability costs, not to cast spells (Thran Turbine). */
+    record Abilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "abilities only";
+        }
+    }
+
     /**
      * Colorless mana spendable only to cast legendary spells — any spell with the legendary supertype
      * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.

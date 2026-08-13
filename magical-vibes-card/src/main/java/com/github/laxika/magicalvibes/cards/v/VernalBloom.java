@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappe
 
 @CardRegistration(set = "8ED", collectorNumber = "286")
 @CardRegistration(set = "7ED", collectorNumber = "281")
+@CardRegistration(set = "USG", collectorNumber = "281")
 public class VernalBloom extends Card {
 
     public VernalBloom() {

@@ -360,6 +360,15 @@ public class GraveyardService {
             return false;
         }
 
+        if (!card.isToken() && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+            exileService.exileCard(gameData, ownerId, card);
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            log.info("Game {} - {} replacement effect: exiled instead of graveyard (turn effect)",
+                    gameData.id, card.getName());
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            return false;
+        }
+
         if (sourceZone == Zone.BATTLEFIELD && battlefieldHasExilePermanentsReplacement(gameData)) {
             exileService.exileCard(gameData, ownerId, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
@@ -1041,6 +1050,8 @@ public class GraveyardService {
         List<CardEffect> cardEffects = sourceCard.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
         List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);
         effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES));
+        effects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                gameData, sourcePermanent, EffectSlot.ON_DAMAGED_CREATURE_DIES));
         if (effects.isEmpty()) {
             return;
         }

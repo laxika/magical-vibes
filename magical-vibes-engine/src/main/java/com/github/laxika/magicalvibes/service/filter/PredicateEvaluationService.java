@@ -154,6 +154,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanActivePlayerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanXPredicate;
@@ -687,6 +688,14 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= creatureCount;
+            }
+            case PermanentPowerGreaterThanActivePlayerHandSizePredicate ignored -> {
+                if (gameData == null || gameData.activePlayerId == null) {
+                    yield false;
+                }
+                List<Card> activePlayerHand = gameData.playerHands.get(gameData.activePlayerId);
+                int handSize = activePlayerHand == null ? 0 : activePlayerHand.size();
+                yield gameQueryService.getEffectivePower(gameData, permanent) > handSize;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as

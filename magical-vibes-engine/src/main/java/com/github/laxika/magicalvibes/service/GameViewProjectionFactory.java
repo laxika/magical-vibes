@@ -370,6 +370,13 @@ public class GameViewProjectionFactory {
         //   only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
+            List<Card> deck = data.playerDecks.get(pid);
+            UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);
+            if (freePlayCardId != null && deck != null && !deck.isEmpty()
+                    && freePlayCardId.equals(deck.getFirst().getId())) {
+                revealedPlayerIds.add(pid);
+            }
+
             List<Permanent> bf = data.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
@@ -586,6 +593,25 @@ public class GameViewProjectionFactory {
         }
 
         Card topCard = deck.getFirst();
+        boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
+
+        if (topCard.hasType(CardType.LAND)) {
+            boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+            boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                    || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+            if (freeTopPlay
+                    && isActivePlayer
+                    && isMainPhase
+                    && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
+                    < gameData.getMaxLandsThisTurn(playerId)
+                    && gameData.stack.isEmpty()
+                    && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                    && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
+                    && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, topCard)) {
+                playable.add(cardViewFactory.create(topCard));
+            }
+            return playable;
+        }
 
         if (topCard.hasType(CardType.LAND)) {
             if (canPlayLandFromTop && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -595,7 +621,11 @@ public class GameViewProjectionFactory {
         }
 
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
-                || topCard.getManaCost() == null) {
+                || (!freeTopPlay && topCard.getManaCost() == null)) {
+            return playable;
+        }
+
+        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             return playable;
         }
 
@@ -629,7 +659,9 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard, false)) {
+        if (freeTopPlay) {
+            playable.add(cardViewFactory.create(topCard));
+        } else if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard, false)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(

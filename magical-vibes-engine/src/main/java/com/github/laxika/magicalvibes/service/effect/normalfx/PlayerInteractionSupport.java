@@ -463,8 +463,16 @@ public class PlayerInteractionSupport {
             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
             CardPredicate filter, boolean discardMode, boolean exileMode,
             UUID sourcePermanentId, int declineFallbackDiscardCount) {
+        resolveHandLookAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, false, declineFallbackDiscardCount);
+    }
+
+    public void resolveHandLookAndChoose(GameData gameData, StackEntry entry,
+            int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+            CardPredicate filter, boolean discardMode, boolean exileMode,
+            UUID sourcePermanentId, boolean optional, int declineFallbackDiscardCount) {
         resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
-                discardMode, exileMode, sourcePermanentId, false, false,
+                discardMode, exileMode, sourcePermanentId, optional, false,
                 declineFallbackDiscardCount, false, false);
     }
 

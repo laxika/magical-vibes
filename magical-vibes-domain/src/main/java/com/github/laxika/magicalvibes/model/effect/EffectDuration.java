@@ -8,6 +8,8 @@ public enum EffectDuration {
     CONTINUOUS,
     /** One-shot effect that wears off at end of turn (cleared by resetModifiers). */
     UNTIL_END_OF_TURN,
+    /** One-shot effect that wears off when any player casts a creature spell. */
+    UNTIL_CREATURE_SPELL_CAST,
     /** One-shot effect that wears off when the combat phase ends (e.g. Jade Statue's animation).
      *  Cleared by {@link com.github.laxika.magicalvibes.model.Permanent#clearCombatState()}. */
     UNTIL_END_OF_COMBAT,

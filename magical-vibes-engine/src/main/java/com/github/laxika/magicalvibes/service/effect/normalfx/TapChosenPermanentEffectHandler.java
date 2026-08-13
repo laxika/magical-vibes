@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link TapChosenPermanentEffect}: the controller chooses one permanent matching the
- * effect's predicate across every battlefield, and it is tapped (and optionally untap-locked while
- * the source stays tapped) when the choice is answered
+ * effect's predicate, and it is tapped (and optionally untap-locked for the source's lifetime) when
+ * the choice is answered
  * (see {@code MultiPermanentChoiceHandlerService.handleTapChosenPermanent}).
  */
 @Component
@@ -39,12 +39,25 @@ public class TapChosenPermanentEffectHandler implements NormalEffectHandlerBean 
         var e = (TapChosenPermanentEffect) effect;
 
         List<UUID> validIds = new ArrayList<>();
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (e.predicate() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
-                validIds.add(perm.getId());
+        if (e.chooseFromDamagedPlayer() && entry.getTargetId() != null) {
+            List<com.github.laxika.magicalvibes.model.Permanent> battlefield =
+                    gameData.playerBattlefields.get(entry.getTargetId());
+            if (battlefield != null) {
+                for (var perm : battlefield) {
+                    if (e.predicate() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
+                        validIds.add(perm.getId());
+                    }
+                }
             }
-        });
+        } else {
+            gameData.forEachPermanent((ownerId, perm) -> {
+                if (e.predicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
+                    validIds.add(perm.getId());
+                }
+            });
+        }
 
         if (validIds.isEmpty()) {
             gameLogService.append(gameData,
@@ -54,7 +67,8 @@ public class TapChosenPermanentEffectHandler implements NormalEffectHandlerBean 
 
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, 1,
                 new MultiPermanentChoiceContext.TapChosenPermanent(entry.getCard().getName(),
-                        entry.getSourcePermanentId(), e.preventUntapWhileSourceTapped()),
+                        entry.getSourcePermanentId(), e.preventUntapWhileSourceTapped(),
+                        e.preventUntapWhileSourceOnBattlefield()),
                 entry.getCard().getName() + "'s ability — Choose a permanent to tap.");
     }
 }

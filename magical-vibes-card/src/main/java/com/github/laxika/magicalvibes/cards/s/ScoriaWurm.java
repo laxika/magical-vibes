@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "227")
+@CardRegistration(set = "USG", collectorNumber = "212")
 public class ScoriaWurm extends Card {
 
     public ScoriaWurm() {

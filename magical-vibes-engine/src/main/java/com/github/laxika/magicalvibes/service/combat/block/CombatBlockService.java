@@ -457,9 +457,11 @@ public class CombatBlockService {
                 // referencing the blocked attacker. A card-level target filter is the discriminator;
                 // route these through the shared attack-trigger targeting pipeline, which honours the
                 // card's PermanentPredicateTargetFilter and drains via the pending-interaction queue.
-                boolean targetsChosenPermanent = blocker.getCard().getTargetFilter() != null
-                        && resolvedBlockEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                if (targetsChosenPermanent) {
+                boolean targetsChosenTarget = blocker.getCard().getTargetFilter() != null
+                        && resolvedBlockEffects.stream().anyMatch(e ->
+                        e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                if (targetsChosenTarget) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(resolvedBlockEffects), blocker.getId()));
                     gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
@@ -1271,6 +1273,19 @@ public class CombatBlockService {
                 .filter(e -> !targetingMayEffects.contains(e))
                 .toList();
         if (otherEffects.isEmpty()) {
+            return;
+        }
+        boolean targetsChosenTarget = attacker.getCard().getTargetFilter() != null
+                && otherEffects.stream().anyMatch(e ->
+                e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        if (targetsChosenTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    attacker.getCard(), controllerId, new ArrayList<>(otherEffects), attacker.getId()));
+            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                    "'s becomes-blocked ability triggers."));
+            log.info("Game {} - {} becomes-blocked trigger queued for target selection",
+                    gameData.id, attacker.getCard().getName());
             return;
         }
         StackEntry trigger = new StackEntry(

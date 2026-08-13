@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -38,6 +40,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +51,13 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ChooseCardsFromTargetHandEffect) effect;
 
-        int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, null));
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
 
         // An X of 0 (e.g. Mind Warp for X=0) chooses no cards: nothing to reveal-and-choose.
         if (count <= 0) {
@@ -61,11 +70,11 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                 if (e.revealHand()) {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
-                            e.declineFallbackDiscardCount());
+                            e.upTo(), false, e.declineFallbackDiscardCount());
                 } else {
                     playerInteractionSupport.resolveHandLookAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
-                            e.declineFallbackDiscardCount());
+                            e.upTo(), e.declineFallbackDiscardCount());
                 }
             }
             case EXILE -> {

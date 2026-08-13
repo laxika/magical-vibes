@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -732,6 +733,25 @@ class CastingCostServiceTest {
                     .isEqualTo(1);
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, otherAbility))
                     .isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("Cycling ability cost reductions")
+    class CyclingAbilityCostReductions {
+
+        @Test
+        @DisplayName("Uses only cycling reducers controlled by the activating player")
+        void usesOnlyControllerCyclingReducers() {
+            Card playerReducer = new Card();
+            playerReducer.addEffect(EffectSlot.STATIC, new ReduceCyclingCostEffect(2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
+
+            Card opponentReducer = new Card();
+            opponentReducer.addEffect(EffectSlot.STATIC, new ReduceCyclingCostEffect(3));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
+
+            assertThat(svc.getCyclingAbilityCostReduction(gd, player1Id)).isEqualTo(2);
         }
     }
 

@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
@@ -5015,7 +5016,8 @@ public class GameQueryService {
             bonus = getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
                     + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
                             entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
-                    + getControllerDamageBonus(gameData, entry);
+                    + getControllerDamageBonus(gameData, entry)
+                    + getSpellDamageBonus(gameData, entry);
         }
         UUID controllerId = entry != null ? entry.getControllerId() : null;
         Permanent source = entry != null && entry.getSourcePermanentId() != null
@@ -5024,6 +5026,45 @@ public class GameQueryService {
         return (damage + bonus) * getDamageMultiplier(gameData)
                 * getControllerDamageMultiplier(gameData, controllerId, entry, false)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
+    }
+
+    /**
+     * Returns the additive damage bonus from static effects that modify damage dealt by matching
+     * colored spells. These effects are global to the game and therefore do not depend on either
+     * the spell's controller or the effect's controller.
+     */
+    int getSpellDamageBonus(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getCard() == null || !isSpellEntry(entry.getEntryType())) {
+            return 0;
+        }
+
+        Set<CardColor> spellColors = EnumSet.noneOf(CardColor.class);
+        spellColors.addAll(entry.getCard().getColors());
+        if (entry.getCard().getColor() != null) {
+            spellColors.add(entry.getCard().getColor());
+        }
+        if (spellColors.isEmpty()) {
+            return 0;
+        }
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SpellDamageBonusEffect spellDamageBonus
+                        && spellDamageBonus.colors().stream().anyMatch(spellColors::contains)) {
+                    bonus[0] += spellDamageBonus.amount();
+                }
+            }
+        });
+        return bonus[0];
+    }
+
+    private static boolean isSpellEntry(StackEntryType entryType) {
+        return switch (entryType) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
+                    ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+        };
     }
 
     /**

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "106")
+@CardRegistration(set = "USG", collectorNumber = "200")
 public class JaggedLightning extends Card {
 
     public JaggedLightning() {

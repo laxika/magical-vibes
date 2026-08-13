@@ -19,37 +19,56 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       ManaSpendRestriction restriction,
                                       CardSubtype subtype,
-                                      boolean sourceBecomesProducedColorUntilEndOfTurn) implements ManaProducingEffect {
+                                      boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                      boolean targetsPlayer,
+                                      boolean markSourceAsHavingAddedManaThisTurn) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect() {
         this(1);
     }
 
     public AwardAnyColorManaEffect(int amount) {
-        this(new Fixed(amount), ManaSpendRestriction.NONE, null, false);
+        this(new Fixed(amount), ManaSpendRestriction.NONE, null, false, false, false);
     }
 
     /** "Add one mana of any color. This creature becomes that color until end of turn." */
     public AwardAnyColorManaEffect(boolean sourceBecomesProducedColorUntilEndOfTurn) {
-        this(new Fixed(1), ManaSpendRestriction.NONE, null, sourceBecomesProducedColorUntilEndOfTurn);
+        this(new Fixed(1), ManaSpendRestriction.NONE, null, sourceBecomesProducedColorUntilEndOfTurn, false, false);
     }
 
     /** "Add X mana of any one color", X coming from the ability's xValue (Springjack Pasture). */
     public AwardAnyColorManaEffect(DynamicAmount amount) {
-        this(amount, ManaSpendRestriction.NONE, null, false);
+        this(amount, ManaSpendRestriction.NONE, null, false, false, false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction) {
-        this(new Fixed(amount), restriction, null, false);
+        this(new Fixed(amount), restriction, null, false, false, false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype) {
-        this(new Fixed(amount), restriction, subtype, false);
+        this(new Fixed(amount), restriction, subtype, false, false, false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype,
                                    boolean sourceBecomesProducedColorUntilEndOfTurn) {
-        this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn);
+        this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn, false, false);
+    }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount, ManaSpendRestriction restriction, CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn, false, false);
+    }
+
+    /** "Add mana of any one color" using the effect's player target for a dynamic amount. */
+    public AwardAnyColorManaEffect(DynamicAmount amount, boolean targetsPlayer,
+                                   boolean markSourceAsHavingAddedManaThisTurn) {
+        this(amount, ManaSpendRestriction.NONE, null, false, targetsPlayer,
+                markSourceAsHavingAddedManaThisTurn);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     /**

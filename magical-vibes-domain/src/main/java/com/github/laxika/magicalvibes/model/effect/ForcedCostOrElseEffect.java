@@ -14,7 +14,7 @@ import java.util.List;
  * <p>When {@code anyPlayerMayPay} is true (Icy Prison: "sacrifice this unless any player pays
  * {3}"), players are prompted in APNAP order; the first to pay satisfies the cost and stops the
  * sequence, and only if every player declines (or can't pay) do the fallback effects resolve.
- * Currently only meaningful with an optional {@link PayManaCost}.
+ * Currently used with optional {@link PayManaCost} and {@link PayLifeCost} costs.
  *
  * <p>When {@code payerIsEnchantedController} is true, the prompt goes to the player on the stack
  * entry's {@code targetId} instead of the source's controller. That covers both the enchanted

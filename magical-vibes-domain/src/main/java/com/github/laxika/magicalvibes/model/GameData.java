@@ -399,6 +399,10 @@ public class GameData {
     public CardColor chosenSpellColor;
     /** Resolution-time "choose a number" answer for a spell with no permanent to store it on. */
     public Integer chosenSpellNumber;
+    /** Resolution-time Turnabout permanent type choice. */
+    public CardType chosenSpellPermanentType;
+    /** Resolution-time Turnabout action choice: true to tap, false to untap. */
+    public Boolean turnaboutTap;
     /**
      * Generic re-entry signal: when set, {@code EffectResolutionService} re-runs the current
      * effect (rather than advancing to the next) after the pending interaction completes.
@@ -958,6 +962,9 @@ public class GameData {
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
+    /** Player UUID to card UUID for a temporary free-play permission on the current library top card. */
+    public final Map<UUID, UUID> libraryTopCardFreePlayPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -992,6 +999,8 @@ public class GameData {
      *  Cleared at turn cleanup. */
     public final List<GraveyardCastFilterPermission> graveyardCastFilterPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
+    /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
+    public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
@@ -1185,6 +1194,9 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
      *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks permanents that have added mana with a source ability this turn. */
+    public final Set<UUID> permanentsThatAddedManaWithAbilityThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Crown permanent IDs that have replaced a token creation event this turn. */
     public final Set<UUID> tokenCreationReplacementUsedThisTurn = ConcurrentHashMap.newKeySet();
@@ -1542,6 +1554,11 @@ public class GameData {
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
     public List<FloatingContinuousEffect> expireEndOfCombatFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_COMBAT);
+    }
+
+    /** Removes floating effects that last until any player casts a creature spell. */
+    public List<FloatingContinuousEffect> expireFloatingEffectsOnCreatureSpellCast() {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_CREATURE_SPELL_CAST);
     }
 
     /**
@@ -2740,6 +2757,8 @@ public class GameData {
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
         copy.chosenSpellNumber = this.chosenSpellNumber;
+        copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
+        copy.turnaboutTap = this.turnaboutTap;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
         copy.effectResolutionDepth = this.effectResolutionDepth;
@@ -2959,6 +2978,7 @@ public class GameData {
         copy.damageDealtToPermanentsThisTurn.putAll(this.damageDealtToPermanentsThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.permanentsThatAddedManaWithAbilityThisTurn.addAll(this.permanentsThatAddedManaWithAbilityThisTurn);
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
@@ -3213,6 +3233,7 @@ public class GameData {
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
 
+        copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
@@ -3223,6 +3244,7 @@ public class GameData {
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardCastFilterPermissionsThisTurn.addAll(this.graveyardCastFilterPermissionsThisTurn);
+        copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);

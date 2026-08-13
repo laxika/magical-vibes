@@ -12,6 +12,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "315")
+@CardRegistration(set = "USG", collectorNumber = "289")
 public class CitanulFlute extends Card {
 
     public CitanulFlute() {

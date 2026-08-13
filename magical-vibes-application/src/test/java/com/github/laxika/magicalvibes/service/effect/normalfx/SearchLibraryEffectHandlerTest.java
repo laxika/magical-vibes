@@ -175,6 +175,23 @@ class SearchLibraryEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Deferred-shuffle search leaves the shuffle for a later effect")
+    void deferredShuffleSearchLeavesShuffleForLaterEffect() {
+        Card card = createCard("Any Card");
+        gd.playerDecks.get(player1Id).add(card);
+        stubCardViewFactory();
+
+        SearchLibraryEffect effect = SearchLibraryEffect.withDeferredShuffle();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gamble"),
+                player1Id, "Gamble", List.of(effect));
+
+        searchLibraryHandler.resolve(gd, entry, effect);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().shuffleAfterSelection()).isFalse();
+    }
+
+    @Test
     @DisplayName("No matching cards shuffles and logs")
     void noMatchingCardsShuffles() {
         Card bears1 = createCard("Grizzly Bears", CardType.CREATURE);

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -711,6 +712,42 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (card put into controller's graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
+                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
+            @CollectsTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
+                    slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    })
+    private boolean handleExileTriggeringCardFromGraveyard(TriggerMatchContext match,
+            ExileTriggeringCardFromGraveyardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
+            return false;
+        }
+
+        Card triggeringCard = cardPut.card();
+        var gameData = match.gameData();
+        List<Card> graveyard = gameData.playerGraveyards.get(cardPut.graveyardOwnerId());
+        if (graveyard == null || graveyard.stream().noneMatch(card -> card.getId().equals(triggeringCard.getId()))) {
+            return false;
+        }
+
+        String cardName = match.permanent().getCard().getName();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(triggeringCard.getId());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers to exile {} from a graveyard", gameData.id, cardName,
+                triggeringCard.getName());
         return true;
     }
 

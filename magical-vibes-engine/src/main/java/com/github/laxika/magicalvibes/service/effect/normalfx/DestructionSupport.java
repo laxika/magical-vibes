@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
@@ -93,6 +94,7 @@ public class DestructionSupport {
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
+    private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -627,6 +629,11 @@ public class DestructionSupport {
                 opponentMayGainControlHandler.offer(gameData, entry, steal);
                 // Interaction started — further else-effects would race the may-prompt.
                 return;
+            } else if (elseEffect instanceof BouncePermanentOnUpkeepEffect bounce) {
+                bouncePermanentOnUpkeepEffectHandler.resolve(gameData, entry, bounce);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());

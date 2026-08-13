@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "60")
+@CardRegistration(set = "USG", collectorNumber = "60")
 public class ArcaneLaboratory extends Card {
 
     public ArcaneLaboratory() {

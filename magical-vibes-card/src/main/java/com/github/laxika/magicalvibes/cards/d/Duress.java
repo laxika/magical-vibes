@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "131")
+@CardRegistration(set = "USG", collectorNumber = "132")
 @CardRegistration(set = "M10", collectorNumber = "96")
 @CardRegistration(set = "M11", collectorNumber = "96")
 @CardRegistration(set = "M13", collectorNumber = "90")

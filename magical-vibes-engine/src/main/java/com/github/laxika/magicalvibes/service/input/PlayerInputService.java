@@ -894,6 +894,19 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
     }
 
+    public void beginTurnaboutChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.TurnaboutChoice choiceContext = new ChoiceContext.TurnaboutChoice(playerId);
+        List<String> options = List.of(
+                "TAP_ARTIFACT", "TAP_CREATURE", "TAP_LAND",
+                "UNTAP_ARTIFACT", "UNTAP_CREATURE", "UNTAP_LAND");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose whether to tap or untap artifacts, creatures, or lands."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose Turnabout action and permanent type", gameData.id, playerName);
+    }
+
     /**
      * Teferi's Realm: {@code playerId} chooses artifact, creature, land, or non-Aura enchantment;
      * completing the choice phases out all nontoken permanents of that type.

@@ -127,6 +127,7 @@ public class ManaChoiceNarrowingService {
         if (!intent.isAbility()) {
             return null;
         }
+        pool.promoteAbilityOnlyMana();
         Permanent source = gameQueryService.findPermanentById(gameData, intent.abilityPermanentId());
         if (source == null) {
             return null;

@@ -364,6 +364,9 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        if (pending.sourcePermanentId() != null) {
+            etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+        }
         gameData.stack.add(etbEntry);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",

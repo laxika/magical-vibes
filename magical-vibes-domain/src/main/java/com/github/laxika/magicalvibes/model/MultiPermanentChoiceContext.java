@@ -44,7 +44,13 @@ public sealed interface MultiPermanentChoiceContext {
      * long as {@code sourcePermanentId} remains tapped.
      */
     record TapChosenPermanent(String sourceName, UUID sourcePermanentId,
-                              boolean preventUntapWhileSourceTapped) implements MultiPermanentChoiceContext {
+                              boolean preventUntapWhileSourceTapped,
+                              boolean preventUntapWhileSourceOnBattlefield) implements MultiPermanentChoiceContext {
+
+        public TapChosenPermanent(String sourceName, UUID sourcePermanentId,
+                                  boolean preventUntapWhileSourceTapped) {
+            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false);
+        }
     }
 
     /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
@@ -192,6 +198,16 @@ public sealed interface MultiPermanentChoiceContext {
      * their owner's hand"). Direct single-player flow — chosen permanents bounce immediately.
      */
     record ForcedReturnToHand(UUID returningPlayerId) implements MultiPermanentChoiceContext {
+    }
+
+    /** Each player chooses one creature to return to its owner's hand in active-player order. */
+    record EachPlayerReturnsCreature(List<UUID> remainingPlayerIds, List<UUID> chosenIds,
+                                     String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerReturnsCreature {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
     }
 
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */

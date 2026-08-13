@@ -926,8 +926,20 @@ public class CastingPermissionService {
         return castableTypes;
     }
 
+    /** Returns whether the current top card has a temporary free-play permission from the library. */
+    public boolean hasLibraryTopCardFreePlayPermission(GameData gameData, UUID playerId, Card card) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
+            return false;
+        }
+        return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
+    }
+
     /** Returns whether a specific card may be cast from the top of the player's library. */
     public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        if (!card.hasType(CardType.LAND) && hasLibraryTopCardFreePlayPermission(gameData, playerId, card)) {
+            return true;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

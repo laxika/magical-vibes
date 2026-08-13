@@ -22,6 +22,10 @@ public class ManaPool {
      * pay ability costs.
      */
     private final EnumMap<ManaColor, Integer> spellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Mana that may only be spent to pay ability costs, not to cast spells (e.g. Thran Turbine). */
+    private final EnumMap<ManaColor, Integer> abilityOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Ability-only mana temporarily promoted into the regular pool during ability payment. */
+    private final EnumMap<ManaColor, Integer> promotedAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
     /**
@@ -124,6 +128,8 @@ public class ManaPool {
             pool.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
+        abilityOnlyMana.put(color, 0);
+        promotedAbilityOnlyMana.put(color, 0);
             persistentMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
@@ -143,6 +149,8 @@ public class ManaPool {
         pool.putAll(source.pool);
         creatureMana.putAll(source.creatureMana);
         spellOnlyMana.putAll(source.spellOnlyMana);
+        abilityOnlyMana.putAll(source.abilityOnlyMana);
+        promotedAbilityOnlyMana.putAll(source.promotedAbilityOnlyMana);
         persistentMana.putAll(source.persistentMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
@@ -233,6 +241,8 @@ public class ManaPool {
             pool.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
+            abilityOnlyMana.put(color, 0);
+            promotedAbilityOnlyMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
@@ -302,6 +312,7 @@ public class ManaPool {
         // NOTE: creatureMana and persistentMana are tags on a subset of the regular pool, not
         // separate buckets, so they are already counted by getTotal() and must not be added again.
         int total = getTotal();
+        total += getAbilityOnlyManaTotal();
         total += artifactOnlyColorless;
         total += getArtifactOnlyManaTotal();
         total += artifactAbilityOnlyColorless;
@@ -406,6 +417,10 @@ public class ManaPool {
 
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
+        int promotedAbilityOnly = promotedAbilityOnlyMana.getOrDefault(color, 0);
+        if (promotedAbilityOnly > 0) {
+            promotedAbilityOnlyMana.put(color, promotedAbilityOnly - 1);
+        }
         // Haste-granting mana (Generator Servant) is spent before untagged mana of the same color.
         int hasteGranting = hasteGrantingMana.getOrDefault(color, 0);
         if (hasteGranting > 0) {
@@ -526,6 +541,56 @@ public class ManaPool {
         for (Map.Entry<ManaColor, Integer> entry : withdrawn.entrySet()) {
             pool.merge(entry.getKey(), entry.getValue(), Integer::sum);
             spellOnlyMana.merge(entry.getKey(), entry.getValue(), Integer::sum);
+        }
+    }
+
+    public int getAbilityOnlyMana(ManaColor color) {
+        return abilityOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getAbilityOnlyManaTotal() {
+        int total = 0;
+        for (int value : abilityOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** Adds mana that can only be spent to pay an ability cost. */
+    public void addAbilityOnlyMana(ManaColor color, int amount) {
+        abilityOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public void removeAbilityOnlyMana(ManaColor color, int amount) {
+        int current = abilityOnlyMana.getOrDefault(color, 0);
+        abilityOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Temporarily makes ability-only mana visible to the ordinary mana payment code. */
+    public int promoteAbilityOnlyMana() {
+        int promoted = 0;
+        for (ManaColor color : ManaColor.values()) {
+            int amount = abilityOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                abilityOnlyMana.put(color, 0);
+                promotedAbilityOnlyMana.merge(color, amount, Integer::sum);
+                promoted += amount;
+            }
+        }
+        return promoted;
+    }
+
+    /** Returns unused promoted ability-only mana to its restricted bucket. */
+    public void restorePromotedAbilityOnlyMana() {
+        for (ManaColor color : ManaColor.values()) {
+            int amount = promotedAbilityOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                int returned = Math.min(amount, pool.getOrDefault(color, 0));
+                pool.merge(color, -returned, Integer::sum);
+                abilityOnlyMana.merge(color, returned, Integer::sum);
+            }
+            promotedAbilityOnlyMana.put(color, 0);
         }
     }
 
@@ -1079,6 +1144,8 @@ public class ManaPool {
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             manaValueAtLeastFourOnlyMana.put(color, 0);
+            abilityOnlyMana.put(color, 0);
+            promotedAbilityOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
         uncounterableSubtypeCreatureMana.clear();
@@ -1122,6 +1189,7 @@ public class ManaPool {
             amount += instantSorceryOnlyColored.getOrDefault(color, 0);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
+            amount += abilityOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
@@ -1153,6 +1221,7 @@ public class ManaPool {
             amount += instantSorceryOnlyColored.getOrDefault(color, 0);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
+            amount += abilityOnlyMana.getOrDefault(color, 0);
             if (color == ManaColor.RED) {
                 amount += restrictedRed;
             }

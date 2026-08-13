@@ -842,7 +842,9 @@ public class StackResolutionService {
 
     private void resolveSpellOrAbility(GameData gameData, StackEntry entry) {
         // Check if targeted spell/ability fizzles due to illegal target
-        boolean targetFizzled = targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
+        boolean targetFizzled = entry.getEffectsToResolve().stream()
+                .noneMatch(CardEffect::resolvesWhenTargetIllegal)
+                && targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
             gameLogService.append(gameData, GameLog.builder()

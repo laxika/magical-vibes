@@ -64,7 +64,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) return;
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
@@ -82,14 +82,18 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
         }
 
         // "Up to X" with X=0 still searches and shuffles (Uncage the Menagerie ruling).
         if (count <= 0) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library. Library is shuffled."));
+            if (effect.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
         }
 
@@ -101,12 +105,15 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String baseDesc = describe(filter, boundValue, bound);
 
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            if (effect.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             // Pluralize the target description ("artifact card" -> "artifact cards", "card named X"
             // -> "cards named X") by promoting the first whole-word "card"; a mana-value-bound
             // description stays singular ("creature card with mana value N").
             String noMatchDesc = bound != null ? baseDesc : baseDesc.replaceFirst("\\bcard\\b", "cards");
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no " + noMatchDesc + "."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDesc);
             return;
         }
@@ -126,6 +133,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
                         .animateFound(effect.animateFound())
+                        .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
                                 ? entry.getBeholdChosenSubtype() : null)
                         .build(),

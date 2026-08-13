@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
@@ -1490,6 +1491,99 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathDelayedReturnUnderOwnersControl(TriggerMatchContext match,
+            RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        if (death.dyingCard() == null
+                || (effect.requireAnotherCreature() && !hasAnotherCreatureAtDeath(match, death))) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setTriggeringCardId(death.dyingCard().getId());
+        match.gameData().stack.add(entry);
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    private boolean hasAnotherCreatureAtDeath(TriggerMatchContext match, TriggerContext.CreatureDeath death) {
+        GameData gameData = match.gameData();
+        UUID sourcePermanentId = match.permanent().getId();
+        UUID dyingPermanentId = death.dyingPermanentId();
+        if (gameData.anyPermanentMatches(permanent ->
+                !permanent.getId().equals(sourcePermanentId)
+                        && !permanent.getId().equals(dyingPermanentId)
+                        && gameQueryService.isCreature(gameData, permanent))) {
+            return true;
+        }
+        return gameData.simultaneousDyingCreatures.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(sourcePermanentId)
+                        && !entry.getKey().equals(dyingPermanentId))
+                .anyMatch(entry -> gameQueryService.isCreature(gameData, entry.getValue()));
+    }
+
+    @CollectsTrigger(value = CreateTokensForEachDyingSourceCounterEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathCreateTokensForEachDyingSourceCounter(TriggerMatchContext match,
+            CreateTokensForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        Permanent dyingPermanent = death.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        int counters = effect.counterType() == null
+                ? countConcreteCounters(dyingPermanent)
+                : dyingPermanent.getCounterCount(effect.counterType());
+        if (counters < 1) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.tokenTemplate().withAmount(counters)))
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTriggeringCreatureAndReturnSourceToHandEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathExileLinkedCreature(TriggerMatchContext match,
+            ExileTriggeringCreatureAndReturnSourceToHandEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
+        UUID linkedPermanentId = match.permanent().getChosenPermanentId();
+        if (linkedPermanentId == null || !linkedPermanentId.equals(death.dyingPermanentId())
+                || death.dyingCard() == null) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new ExileTriggeringCreatureAndReturnSourceToHandEffect(
+                        death.dyingCard().getId()))),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDestroyEnchanted(TriggerMatchContext match,
             DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
@@ -1849,6 +1943,8 @@ public class DeathTriggerCollectorService {
         if (linkedId == null) {
             return false;
         }
+        Permanent linked = gameQueryService.findPermanentById(match.gameData(), linkedId);
+        UUID linkedCardId = linked == null ? null : linked.getCard().getId();
         // Bake the linked id into the effect (not the stack entry's targetId, which resolution would
         // validate against the source card's spell target filter and fizzle — Dance of Many's ETB filter
         // is "nontoken creature", which the token itself fails).
@@ -1857,7 +1953,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId)))
+                new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId, linkedCardId)))
         ));
         logSelfLeaves(match);
         return true;
@@ -2045,6 +2141,16 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (left the battlefield)."));
         log.info("Game {} - {} triggers (left the battlefield)", match.gameData().id, match.permanent().getCard().getName());
+    }
+
+    private int countConcreteCounters(Permanent permanent) {
+        int count = 0;
+        for (CounterType type : CounterType.values()) {
+            if (type != CounterType.ANY && type != CounterType.SILVER) {
+                count += permanent.getCounterCount(type);
+            }
+        }
+        return count;
     }
 
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──

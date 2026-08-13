@@ -204,6 +204,10 @@ public class TriggerCollectionService {
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone) {
         var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone);
 
+        if (spellCard.hasType(CardType.CREATURE)) {
+            gameData.expireFloatingEffectsOnCreatureSpellCast();
+        }
+
         // Opening hand reveal delayed triggers (Chancellor cycle)
         if (!gameData.openingHandRevealTriggers.isEmpty()
                 && !gameData.playersWhoCastFirstSpellInGame.contains(castingPlayerId)) {
@@ -1116,6 +1120,7 @@ public class TriggerCollectionService {
      * control deals damage to another player, ..." (Night Dealings). The outbound mirror of
      * {@link #checkControllerDealtDamageTriggers}: it scans the damage source's controller's own
      * battlefield, and only fires when the damaged player is someone else.
+     * The source permanent ID is carried for effects that are self-scoped within this slot.
      */
     public void checkAllySourceDealtDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
             UUID sourceControllerId, int amount) {
@@ -1293,6 +1298,53 @@ public class TriggerCollectionService {
             entry.setEventValue(damageDealt);
             entries.add(entry);
         });
+    }
+
+    /**
+     * Collects Aura triggers for a creature dealing damage to another creature. The damaged
+     * creature is captured before state-based actions run, so the trigger still exists when either
+     * combat creature dies from the same damage event.
+     */
+    public void collectEnchantedCreatureDealsDamageToCreatureTriggers(GameData gameData,
+                                                                        Permanent sourceCreature,
+                                                                        UUID damagedCreatureId,
+                                                                        int damageDealt,
+                                                                        List<StackEntry> entries) {
+        if (sourceCreature == null || damagedCreatureId == null || damageDealt <= 0
+                || sourceCreature.getId().equals(damagedCreatureId)
+                || !gameQueryService.isCreature(gameData, sourceCreature)
+                || entries == null) {
+            return;
+        }
+
+        gameData.forEachPermanent((auraControllerId, aura) -> {
+            if (!aura.isAttached() || !sourceCreature.getId().equals(aura.getAttachedTo())) return;
+
+            List<CardEffect> effects = aura.getCard().getEffects(
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE);
+            if (effects.isEmpty()) return;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    aura.getCard(),
+                    auraControllerId,
+                    aura.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    damagedCreatureId,
+                    aura.getId());
+            entry.setNonTargeting(true);
+            entries.add(entry);
+        });
+    }
+
+    public void queueEnchantedCreatureDealsDamageToCreatureTriggers(GameData gameData,
+                                                                      Permanent sourceCreature,
+                                                                      UUID damagedCreatureId,
+                                                                      int damageDealt) {
+        List<StackEntry> entries = new ArrayList<>();
+        collectEnchantedCreatureDealsDamageToCreatureTriggers(
+                gameData, sourceCreature, damagedCreatureId, damageDealt, entries);
+        entries.forEach(gameData::enqueueTrigger);
     }
 
     /** The battlefield permanent whose card has this id, or null once it has left the battlefield. */
@@ -3829,7 +3881,8 @@ public class TriggerCollectionService {
 
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
+                dyingPermanent);
 
         for (Permanent perm : battlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
@@ -3908,7 +3961,7 @@ public class TriggerCollectionService {
 
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId());
 
         for (Permanent perm : battlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES);
@@ -4297,7 +4350,8 @@ public class TriggerCollectionService {
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(),
+                dyingPermanent);
 
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchAnyCreatureDeathTriggersForWatcher(gameData, playerId, perm, dyingPermanent, dyingCreatureControllerId, ctx);
@@ -4442,7 +4496,7 @@ public class TriggerCollectionService {
     public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId());
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(dyingCreatureControllerId)) return;

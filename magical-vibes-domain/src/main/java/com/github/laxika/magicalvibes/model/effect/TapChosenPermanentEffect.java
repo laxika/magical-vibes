@@ -17,14 +17,27 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param predicate                     filter restricting the choosable permanents
  * @param preventUntapWhileSourceTapped whether the chosen permanent is also untap-locked while the
  *                                      source stays tapped
+ * @param preventUntapWhileSourceOnBattlefield whether the chosen permanent is also untap-locked
+ *                                              while the source stays on the battlefield
+ * @param chooseFromDamagedPlayer        whether the choice is restricted to the damaged player's
+ *                                      battlefield
  */
 public record TapChosenPermanentEffect(PermanentPredicate predicate,
-                                       boolean preventUntapWhileSourceTapped)
+                                       boolean preventUntapWhileSourceTapped,
+                                       boolean preventUntapWhileSourceOnBattlefield,
+                                       boolean chooseFromDamagedPlayer)
         implements CombatDamageTriggerContextEffect {
 
-    /** The untap lock is keyed to the damage-dealing permanent, so the trigger binds it as its source. */
+    public TapChosenPermanentEffect(PermanentPredicate predicate, boolean preventUntapWhileSourceTapped) {
+        this(predicate, preventUntapWhileSourceTapped, false, false);
+    }
+
+    public static TapChosenPermanentEffect damagedPlayerControls(PermanentPredicate predicate) {
+        return new TapChosenPermanentEffect(predicate, false, true, true);
+    }
+
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
+        return chooseFromDamagedPlayer ? TriggerContext.DAMAGED_PLAYER : TriggerContext.SOURCE_SELF;
     }
 }

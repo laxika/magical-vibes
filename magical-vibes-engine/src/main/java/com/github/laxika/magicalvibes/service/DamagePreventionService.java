@@ -1222,8 +1222,9 @@ public class DamagePreventionService {
 
     /**
      * Applies static damage reduction from permanents with {@link PreventDamageFromOpponentSourcesEffect}
-     * on the receiving player's battlefield (e.g. Guardian Seraph).
-     * Only reduces damage from opponent-controlled sources. Returns the damage after reduction (min 0).
+     * on the receiving player's battlefield (e.g. Guardian Seraph and Energy Field).
+     * Only reduces damage from sources not controlled by the receiving player. Returns the damage
+     * after reduction (min 0).
      */
     public int applyOpponentSourceDamageReduction(GameData gameData, UUID playerId, UUID sourceControllerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
@@ -1233,17 +1234,18 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return damage;
 
-        int totalReduction = 0;
+        long totalReduction = 0;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventDamageFromOpponentSourcesEffect e) {
                     totalReduction += e.amount();
+                    if (totalReduction >= damage) return 0;
                 }
             }
         }
 
         if (totalReduction <= 0) return damage;
-        return Math.max(0, damage - totalReduction);
+        return (int) (damage - totalReduction);
     }
 
     /**

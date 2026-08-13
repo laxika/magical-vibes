@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "8ED", collectorNumber = "281")
+@CardRegistration(set = "USG", collectorNumber = "274")
 public class SpreadingAlgae extends Card {
 
     public SpreadingAlgae() {

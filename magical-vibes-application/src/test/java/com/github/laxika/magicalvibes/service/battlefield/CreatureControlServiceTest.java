@@ -126,6 +126,22 @@ class CreatureControlServiceTest {
         }
 
         @Test
+        @DisplayName("Removes a controlled creature from combat")
+        void removesCreatureFromCombat() {
+            Permanent attacker = addCreature(player1Id, "Attacker");
+            attacker.setAttacking(true);
+            Permanent blocker = addCreature(player2Id, "Blocker");
+            blocker.setBlocking(true);
+            blocker.addBlockingTargetId(attacker.getId());
+
+            applySteal(player1Id, blocker, EffectDuration.PERMANENT, null);
+
+            assertThat(blocker.isBlocking()).isFalse();
+            assertThat(blocker.getBlockingTargetIds()).isEmpty();
+            assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+        }
+
+        @Test
         @DisplayName("Sets creature as summoning sick after stealing (CR 302.6)")
         void setsSummoningSick() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");

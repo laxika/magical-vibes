@@ -96,6 +96,8 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
             whimsOfTheFatesEffectHandler;
@@ -149,6 +151,10 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.CulturalExchange culturalExchange
                 && !culturalExchange.firstSelection()
@@ -260,6 +266,8 @@ public class MultiPermanentChoiceHandlerService {
             handleForcedDestroy(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedReturnToHand ctx) {
             handleForcedReturnToHand(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature ctx) {
+            handleEachPlayerReturnsCreature(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
@@ -528,6 +536,11 @@ public class MultiPermanentChoiceHandlerService {
                     target.getUntapPreventedByPermanentIds().add(context.sourcePermanentId());
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                             " won't untap as long as " + context.sourceName() + " remains tapped."));
+                }
+                if (context.preventUntapWhileSourceOnBattlefield() && context.sourcePermanentId() != null) {
+                    target.getUntapPreventedWhileSourceOnBattlefieldIds().add(context.sourcePermanentId());
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                            " won't untap as long as " + context.sourceName() + " remains on the battlefield."));
                 }
             }
         }
@@ -1703,6 +1716,18 @@ public class MultiPermanentChoiceHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerReturnsCreature(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerReturnsCreature context) {
+        eachPlayerReturnsCreatureToHandHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleEachPlayerSacrificeOneOfEachTypeChoice(

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -2911,6 +2912,41 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("getSpellDamageBonus")
+    class SpellDamageBonus {
+
+        @Test
+        @DisplayName("applies globally to matching spells regardless of controller")
+        void appliesGloballyToMatchingSpells() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Sulfuric Vapors",
+                    new AdditionalDamageFromColorSpellsEffect(Set.of(CardColor.RED), 1)));
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player2Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getSpellDamageBonus(gd, entry)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("does not apply to activated abilities")
+        void doesNotApplyToActivatedAbilities() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Sulfuric Vapors",
+                    new AdditionalDamageFromColorSpellsEffect(Set.of(CardColor.RED), 1)));
+
+            Card redSource = new Card();
+            redSource.setName("Prodigal Pyromancer");
+            redSource.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, redSource, player2Id,
+                    "Prodigal Pyromancer's ability", new ArrayList<>(), null);
+
+            assertThat(gqs.getSpellDamageBonus(gd, entry)).isZero();
         }
     }
 

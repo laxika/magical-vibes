@@ -74,7 +74,9 @@ public class GameActionAvailabilityService {
 
     /** Total mana the player could have available after tapping every untapped mana source. */
     public int getPotentialManaTotal(GameData gameData, UUID playerId) {
-        return potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
+        int potential = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
+        ManaPool current = gameData.playerManaPools.get(playerId);
+        return potential + (current == null ? 0 : current.getAbilityOnlyManaTotal());
     }
 
     /**
@@ -98,6 +100,7 @@ public class GameActionAvailabilityService {
             return Map.of();
         }
         VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        fullPool.promoteAbilityOnlyMana();
         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
             fullPool = new VirtualManaPool(fullPool);
             fullPool.setAllManaSpendableAsAnyColor(true);
@@ -120,6 +123,7 @@ public class GameActionAvailabilityService {
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
                         poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
+                        poolWithoutSource.promoteAbilityOnlyMana();
                         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
                             poolWithoutSource.setAllManaSpendableAsAnyColor(true);
                         }

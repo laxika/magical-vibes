@@ -71,9 +71,15 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             // OWN_CREATURES means "other creatures you control" — the source is excluded.
             // ALL_OWN_CREATURES includes the source.
             boolean excludeSource = e.scope() == GrantScope.OWN_CREATURES;
+            boolean grantsToLands = e.scope() == GrantScope.OWN_LANDS;
+            boolean grantsToAllPermanents = e.scope() == GrantScope.OWN_PERMANENTS;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, permanent)) {
+                    if (grantsToLands && !gameQueryService.isLand(gameData, permanent)) {
+                        continue;
+                    }
+                    if (!grantsToLands && !grantsToAllPermanents
+                            && !gameQueryService.isCreature(gameData, permanent)) {
                         continue;
                     }
                     if (excludeSource && permanent.getId().equals(entry.getSourcePermanentId())) {
@@ -91,10 +97,12 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
         String durationText = e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
                 ? "until your next turn" : "until end of turn";
+        String recipientText = e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
+                e.scope() == GrantScope.OWN_PERMANENTS ? "permanent(s)" : "creature(s)";
         
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " creature(s) " + durationText + ".").build());
-        log.info("Game {} - {} grants activated ability to {} creature(s) {}",
-                gameData.id, entry.getCard().getName(), count, durationText);
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " " + recipientText + " " + durationText + ".").build());
+        log.info("Game {} - {} grants activated ability to {} {} {}",
+                gameData.id, entry.getCard().getName(), count, recipientText, durationText);
     }
 
     private static void grantTo(Permanent permanent, com.github.laxika.magicalvibes.model.ActivatedAbility ability,

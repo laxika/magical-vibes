@@ -88,6 +88,7 @@ public class PotentialManaService {
             for (ManaColor color : ManaColor.values()) {
                 virtual.add(color, current.get(color));
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
+                virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
             }
         }
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -34,6 +35,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
+
+    /** Enchantment Alteration: move the targeted Aura to another permanent of the same type. */
+    record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId) implements PermanentChoiceContext {}
 
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
@@ -141,6 +145,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnyOpponentSacrificeCreatureForTapAndCounter(
             UUID sacrificingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Argothian Wurm: the accepting player is picking which land to sacrifice. */
+    record AnyPlayerMaySacrificeLandPutSourceOnTop(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeLandPutSourceOnTopEffect effect)
             implements PermanentChoiceContext {}
 
     record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
@@ -460,7 +470,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** A player-targeted trigger from a precombat or postcombat main phase. */
+    record MainPhasePlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId, TargetFilter targetFilter)
+            implements PermanentChoiceContext {}
+
     record PlayerWithLowestLifeChoice(Card sourceCard) implements PermanentChoiceContext {}
+
+    record LeastToughnessDamageChoice(Card sourceCard, int damage) implements PermanentChoiceContext {}
 
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
@@ -722,6 +739,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
     record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
+
+    /** Victimize: sacrifice a creature, then return the selected graveyard cards if the sacrifice happened. */
+    record SacrificePermanentAndReturnTargetCards(UUID controllerId, Card sourceCard,
+                                                  SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect)
+            implements PermanentChoiceContext {}
 
     /** "Sacrifice another permanent. If you do, this creature gets +X/+Y." */
     record SacrificePermanentAndBoostSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,

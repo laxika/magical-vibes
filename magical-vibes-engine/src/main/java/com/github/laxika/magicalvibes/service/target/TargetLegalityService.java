@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -321,9 +322,18 @@ public class TargetLegalityService {
                 if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
                     throw new IllegalStateException("Cannot target the same card twice");
                 }
+                UUID sharedGraveyardOwnerId = null;
                 for (UUID cardId : targetCardIds) {
                     if (gameQueryService.findCardInGraveyardById(gameData, cardId) == null) {
                         throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    if (exileEffect.singleGraveyard()) {
+                        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                        if (sharedGraveyardOwnerId == null) {
+                            sharedGraveyardOwnerId = graveyardOwnerId;
+                        } else if (!sharedGraveyardOwnerId.equals(graveyardOwnerId)) {
+                            throw new IllegalStateException("All targets must be in a single graveyard");
+                        }
                     }
                 }
                 break;
@@ -1428,10 +1438,31 @@ public class TargetLegalityService {
 
         if (!targetFizzled) {
             targetFizzled = allTargetsGone(entry.getTargetCardIds(),
-                    id -> gameQueryService.findCardInGraveyardById(gameData, id) != null);
+                    id -> isTargetCardLegalOnResolution(gameData, entry, id));
         }
 
         return targetFizzled;
+    }
+
+    private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
+        Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        if (card == null) {
+            return false;
+        }
+
+        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
+                .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null) {
+            return true;
+        }
+
+        return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
+                && predicateEvaluationService.matchesCardPredicate(
+                        card, effect.returnFilter(), entry.getCard().getId());
     }
 
     private boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {

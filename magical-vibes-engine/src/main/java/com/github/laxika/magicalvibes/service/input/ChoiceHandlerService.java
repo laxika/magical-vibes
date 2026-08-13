@@ -321,6 +321,10 @@ public class ChoiceHandlerService {
             handleStorageMatrixUntapChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TurnaboutChoice) {
+            handleTurnaboutChoice(gameData, player, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.TeferisRealmTypeChoice ctx) {
             handleTeferisRealmTypeChoice(gameData, colorName, ctx);
             return;
@@ -1853,6 +1857,50 @@ public class ChoiceHandlerService {
         String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses creature type {} for a spell", gameData.id, player.getUsername(), subtype);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleTurnaboutChoice(GameData gameData, Player player, String choice) {
+        CardType chosenType;
+        boolean tap;
+        switch (choice) {
+            case "TAP_ARTIFACT" -> {
+                chosenType = CardType.ARTIFACT;
+                tap = true;
+            }
+            case "TAP_CREATURE" -> {
+                chosenType = CardType.CREATURE;
+                tap = true;
+            }
+            case "TAP_LAND" -> {
+                chosenType = CardType.LAND;
+                tap = true;
+            }
+            case "UNTAP_ARTIFACT" -> {
+                chosenType = CardType.ARTIFACT;
+                tap = false;
+            }
+            case "UNTAP_CREATURE" -> {
+                chosenType = CardType.CREATURE;
+                tap = false;
+            }
+            case "UNTAP_LAND" -> {
+                chosenType = CardType.LAND;
+                tap = false;
+            }
+            default -> throw new IllegalArgumentException("Invalid Turnabout choice: " + choice);
+        }
+
+        gameData.chosenSpellPermanentType = chosenType;
+        gameData.turnaboutTap = tap;
+        gameData.interaction.clearAwaitingInput();
+
+        String action = tap ? "tap" : "untap";
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses to " + action + " "
+                + chosenType.getDisplayName().toLowerCase() + " permanents."));
+        log.info("Game {} - {} chooses to {} {} permanents for Turnabout",
+                gameData.id, player.getUsername(), action, chosenType.getDisplayName().toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

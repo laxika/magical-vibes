@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model.action;
  */
 public enum DelayedPermanentActionKind {
 
+    EXILE_TOKEN_AT_NEXT_CLEANUP(Op.EXILE, " token is exiled."),
     EXILE_TOKEN_AT_END_STEP(Op.EXILE, " token is exiled."),
     EXILE_AT_END_STEP(Op.EXILE, " is exiled."),
     SACRIFICE_AT_END_STEP(Op.SACRIFICE, " is sacrificed."),

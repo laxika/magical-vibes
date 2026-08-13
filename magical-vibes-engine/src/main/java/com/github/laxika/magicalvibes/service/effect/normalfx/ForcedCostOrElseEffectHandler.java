@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -42,6 +44,20 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
+
+        if (e.forcedCost() instanceof PayLifeCost payLifeCost) {
+            UUID payer = resolvePayer(gameData, entry, e);
+            if (payer == null) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            int lifeAmount = effectiveLifeAmount(gameData, payer, entry, payLifeCost);
+            String prompt = entry.getCard().getName() + " - Pay " + lifeAmount + " life?";
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), payer, List.of(e), prompt,
+                    entry.getTargetId(), null, entry.getSourcePermanentId()));
+            return;
+        }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // "You may pay {cost}; if you don't, [penalty]" — paying mana is always a choice, so
@@ -368,6 +384,15 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
         }
         return entry.getControllerId();
+    }
+
+    private int effectiveLifeAmount(GameData gameData, UUID payer, StackEntry entry,
+                                    PayLifeCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int sourceCounterCount = cost.perSourceCounter() == null || source == null
+                ? 0
+                : source.getCounterCount(cost.perSourceCounter());
+        return cost.effectiveAmount(gameData.getLife(payer), sourceCounterCount);
     }
 
     /**

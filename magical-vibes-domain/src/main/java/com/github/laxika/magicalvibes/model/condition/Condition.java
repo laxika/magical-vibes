@@ -7,6 +7,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * compile error rather than a silent runtime fallback.
  */
 public sealed interface Condition permits
+        ActivePlayerControlsMoreLandsThanEachOtherPlayer,
         ActivePlayerControlsPermanent,
         ActivePlayerHandAtLeast,
         ActivePlayerHandAtMost,
@@ -148,6 +149,7 @@ public sealed interface Condition permits
         SourceHasDealtDamage,
         SelfHasKeyword,
         SelfWasDealtDamageThisTurn,
+        SourceAddedManaThisTurn,
         SourceCardInCommandZone,
         SourceCardInGraveyard,
         SourceCanSoulbond,
@@ -160,6 +162,7 @@ public sealed interface Condition permits
         SourceBlockedOrWasBlockedByColorThisTurn,
         SourceIsAttacking,
         SourceIsAttackingOrBlocking,
+        SourceIsCreature,
         SourceIsEnchantment,
         SourceWasBlockedThisTurn,
         SourceIsPaired,

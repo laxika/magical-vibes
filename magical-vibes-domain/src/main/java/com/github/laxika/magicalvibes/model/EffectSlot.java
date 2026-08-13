@@ -355,6 +355,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
     /** Triggers whenever the creature this Aura is attached to deals damage to anything. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
+    /** Triggers whenever the creature this Aura is attached to deals damage to another creature.
+     *  The damaged creature is captured as the non-targeting {@code targetId} of the queued
+     *  ability. Checked from both combat and noncombat creature-damage paths. */
+    ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
     ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,

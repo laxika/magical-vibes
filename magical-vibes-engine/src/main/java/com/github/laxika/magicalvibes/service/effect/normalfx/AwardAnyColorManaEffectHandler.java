@@ -45,6 +45,9 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
 
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
+        if (e.markSourceAsHavingAddedManaThisTurn() && amount > 0 && entry.getSourcePermanentId() != null) {
+            gameData.permanentsThatAddedManaWithAbilityThisTurn.add(entry.getSourcePermanentId());
+        }
         boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                 entry.getControllerId(), e, amount, false, source == null ? null : source.getChosenSubtype(),
                 source == null ? null : source.getCard(), source == null ? null : source.getId());

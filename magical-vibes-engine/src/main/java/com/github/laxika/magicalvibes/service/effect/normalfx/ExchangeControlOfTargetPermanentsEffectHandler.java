@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -37,6 +39,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     private final CreatureControlService creatureControlService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,15 +76,19 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
             ownTarget = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
         }
         Permanent opponentTarget = gameQueryService.findPermanentById(gameData, opponentTargetId);
-        if (ownTarget == null || opponentTarget == null) {
-            logFizzle(gameData, entry);
+        if (ownTarget == null) {
+            logFizzle(gameData, entry, exchange, null);
+            return;
+        }
+        if (opponentTarget == null) {
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
         UUID ownController = gameQueryService.findPermanentController(gameData, ownTarget.getId());
         UUID opponentController = gameQueryService.findPermanentController(gameData, opponentTarget.getId());
         if (ownController == null || opponentController == null) {
-            logFizzle(gameData, entry);
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
@@ -112,7 +120,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && (!exchange.requireSharedArtifactOrCreatureType()
                         || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget));
         if (!stillLegal) {
-            logFizzle(gameData, entry);
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
@@ -156,8 +164,18 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         return null;
     }
 
-    private void logFizzle(GameData gameData, StackEntry entry) {
+    private void logFizzle(GameData gameData, StackEntry entry,
+                           ExchangeControlOfTargetPermanentsEffect exchange, Permanent source) {
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
+        if (!exchange.sacrificeSourceIfNoExchange() || source == null) {
+            return;
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, entry.getControllerId(), source.getCard());
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 }

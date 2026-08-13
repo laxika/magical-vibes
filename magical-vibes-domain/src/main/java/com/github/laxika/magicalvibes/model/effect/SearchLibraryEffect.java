@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Worldwaker's "those lands become 4/4 Elemental creatures with trample").
  * {@code searchPlayer} selects whose library is searched; it defaults to the stack entry's
  * controller and can use the active player for effects such as Oath of Lieges.
+ * {@code shuffleAfterSelection} controls whether the search interaction shuffles immediately after
+ * the selected card is moved. Set it to false when a later effect must resolve before the shuffle.
  *
  * @param onlyIfSacrificed when true, an {@code ON_DEATH} trigger only fires when its source was
  *                         sacrificed
@@ -48,7 +50,8 @@ public record SearchLibraryEffect(
         AnimatePermanentsEffect animateFound,
         LibrarySearchPlayer searchPlayer,
         boolean onlyIfSacrificed,
-        boolean battlefieldIfChosenBeholdType
+        boolean battlefieldIfChosenBeholdType,
+        boolean shuffleAfterSelection
 ) implements CardEffect {
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
@@ -56,7 +59,7 @@ public record SearchLibraryEffect(
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
                                AnimatePermanentsEffect animateFound) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
-                grantHaste, exileAtEndStep, animateFound, LibrarySearchPlayer.CONTROLLER, false, false);
+                grantHaste, exileAtEndStep, animateFound, LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
@@ -65,7 +68,7 @@ public record SearchLibraryEffect(
                                AnimatePermanentsEffect animateFound, LibrarySearchPlayer searchPlayer,
                                boolean onlyIfSacrificed) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
-                grantHaste, exileAtEndStep, animateFound, searchPlayer, onlyIfSacrificed, false);
+                grantHaste, exileAtEndStep, animateFound, searchPlayer, onlyIfSacrificed, false, true);
     }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
@@ -74,31 +77,31 @@ public record SearchLibraryEffect(
                                AnimatePermanentsEffect animateFound, boolean battlefieldIfChosenBeholdType) {
         this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
                 grantHaste, exileAtEndStep, animateFound, LibrarySearchPlayer.CONTROLLER, false,
-                battlefieldIfChosenBeholdType);
+                battlefieldIfChosenBeholdType, true);
     }
 
     /** Unrestricted single-card tutor to hand (e.g. Diabolic Tutor). */
     public SearchLibraryEffect() {
         this(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /** Single card matching {@code filter} to hand (basic land, artifact, creature, …). */
     public SearchLibraryEffect(CardPredicate filter) {
         this(new Fixed(1), filter, LibrarySearchDestination.HAND, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /** Single card matching {@code filter} to the given destination. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination) {
         this(new Fixed(1), filter, destination, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /** Up to {@code count} cards matching {@code filter} to the given destination. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination) {
         this(count, filter, destination, null, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /**
@@ -107,13 +110,13 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(CardPredicate filter, int count, int castFromGraveyardCount) {
         this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /** Single card matching {@code filter} to the given destination with a dynamic mana-value bound. */
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, ManaValueBound manaValueBound) {
         this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /**
@@ -123,7 +126,7 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, boolean requireDifferentNames) {
         this(count, filter, destination, manaValueBound, 1, requireDifferentNames, false, false, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /**
@@ -133,7 +136,7 @@ public record SearchLibraryEffect(
     public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
                                boolean grantHaste, boolean exileAtEndStep) {
         this(new Fixed(1), filter, destination, null, 1, false, grantHaste, exileAtEndStep, null,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /**
@@ -142,20 +145,26 @@ public record SearchLibraryEffect(
      */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, AnimatePermanentsEffect animateFound) {
         this(count, filter, LibrarySearchDestination.BATTLEFIELD, null, 1, false, false, false, animateFound,
-                LibrarySearchPlayer.CONTROLLER, false);
+                LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
     /** Single-card search using the specified player as the library owner. */
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                LibrarySearchPlayer searchPlayer) {
-        this(count, filter, destination, null, 1, false, false, false, null, searchPlayer, false);
+        this(count, filter, destination, null, 1, false, false, false, null, searchPlayer, false, false, true);
     }
 
     /** Up to {@code count} matching cards to the battlefield tapped, only after this source was sacrificed. */
     public static SearchLibraryEffect sacrificeOnly(DynamicAmount count, CardPredicate filter,
                                                     LibrarySearchDestination destination) {
         return new SearchLibraryEffect(count, filter, destination, null, 1, false,
-                false, false, null, LibrarySearchPlayer.CONTROLLER, true);
+                false, false, null, LibrarySearchPlayer.CONTROLLER, true, false, true);
+    }
+
+    /** Unrestricted single-card tutor that leaves the library shuffle to a later effect. */
+    public static SearchLibraryEffect withDeferredShuffle() {
+        return new SearchLibraryEffect(new Fixed(1), null, LibrarySearchDestination.HAND, null, 1,
+                false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false, false);
     }
 
     @Override

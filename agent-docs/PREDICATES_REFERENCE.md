@@ -123,6 +123,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X (from FilterContext.xValue) | `xValue` |
 | `PermanentPowerLessThanXPredicate` | `()` | creatures with power strictly < X (from FilterContext.xValue). Pair with `SacrificeSelfCost(true)`, which snapshots the source's effective power into the ability's X at payment, for "creatures you control with power less than this creature's power" (Lena, Selfless Champion) — works after the source has left the battlefield, unlike `PermanentPowerLessThanSourcePowerPredicate` | `xValue` |
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
+| `PermanentPowerGreaterThanActivePlayerHandSizePredicate` | `()` | permanents with effective power greater than the active player's current hand size | `gameData` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
 | `PermanentManaValueAtMostXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null) | `xValue` |

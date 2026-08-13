@@ -16,7 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExil
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +39,8 @@ import org.springframework.stereotype.Service;
 public class PlayedCardNameTriggerCollectorService {
 
     private final GameLogService gameLogService;
+    private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
@@ -73,6 +79,30 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
+    private boolean handleConditionalLandPlay(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), conditional.predicate(), null,
+                match.gameData(), match.controllerId())) {
+            return false;
+        }
+
+        CardEffect resolved = conditional.wrapped();
+        if (resolved instanceof ConditionalEffect gate && gate.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), gate.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        return enqueueLandPlayTrigger(match, resolved);
+    }
+
     /**
      * Default for {@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
      * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). Name-match triggers above take precedence
@@ -81,19 +111,7 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        Card sourceCard = match.permanent().getCard();
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on controller playing a land",
-                match.gameData().id, sourceCard.getName());
-        return true;
+        return enqueueLandPlayTrigger(match, effect);
     }
 
     /**
@@ -103,6 +121,10 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        return enqueueLandPlayTrigger(match, effect);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -113,7 +135,7 @@ public class PlayedCardNameTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on an opponent playing a land",
+        log.info("Game {} - {} triggers on playing a land",
                 match.gameData().id, sourceCard.getName());
         return true;
     }

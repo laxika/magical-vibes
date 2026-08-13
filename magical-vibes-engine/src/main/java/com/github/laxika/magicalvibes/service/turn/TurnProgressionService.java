@@ -458,6 +458,7 @@ public class TurnProgressionService {
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
@@ -691,6 +692,10 @@ public class TurnProgressionService {
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepPlayerTarget(gameData);
+    }
+
+    public void processNextMainPhasePlayerTarget(GameData gameData) {
+        stepTriggerService.processNextMainPhasePlayerTarget(gameData);
     }
 
     public void processNextUpkeepMultiPlayerTarget(GameData gameData) {

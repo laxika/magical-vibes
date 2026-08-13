@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
@@ -1115,7 +1116,8 @@ public class StepTriggerService {
                                 || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn
                                 || conditional.condition() instanceof ControllerLostLifeLastTurn
                                 || conditional.condition() instanceof OpponentLostLifeLastTurn
-                                || conditional.condition() instanceof ActivePlayerControlsPermanent)) {
+                                || conditional.condition() instanceof ActivePlayerControlsPermanent
+                                || conditional.condition() instanceof ActivePlayerControlsMoreLandsThanEachOtherPlayer)) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
                         continue;
@@ -2251,6 +2253,10 @@ public class StepTriggerService {
         }
 
         drainAddManaAtNextMainPhase(gameData, true);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+            processNextMainPhasePlayerTarget(gameData);
+        }
     }
 
     /**
@@ -2311,24 +2317,37 @@ public class StepTriggerService {
             // it" — Ventifact Bottle) is checked at trigger time as well as on resolution, so the
             // ability does not even go on the stack when the source has no counters.
             List<CardEffect> triggering = effects.stream()
-                    .filter(effect -> !(effect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof SourceCounterThreshold counterCheck)
-                            || conditionEvaluationService.isMet(gameData, counterCheck,
-                            ConditionContext.forPermanent(perm, activePlayerId)))
+                    .filter(effect -> conditionEvaluationService.isInterveningIfMet(
+                            gameData, effect, perm, activePlayerId))
                     .toList();
             if (triggering.isEmpty()) {
                 continue;
             }
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    activePlayerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(triggering),
-                    null,
-                    perm.getId()
-            ));
+            List<CardEffect> playerTargetEffects = triggering.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    .toList();
+            if (!playerTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.MainPhasePlayerTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId(),
+                        perm.getCard().getTargetFilter()));
+            }
+
+            List<CardEffect> nonPlayerTargetEffects = triggering.stream()
+                    .filter(effect -> !playerTargetEffects.contains(effect))
+                    .toList();
+            if (!nonPlayerTargetEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        activePlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(nonPlayerTargetEffects),
+                        null,
+                        perm.getId()
+                ));
+            }
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} precombat main trigger pushed onto stack",
@@ -2393,20 +2412,75 @@ public class StepTriggerService {
                 continue;
             }
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    activePlayerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
-                    null,
-                    perm.getId()
-            ));
+            List<CardEffect> triggering = effects.stream()
+                    .filter(effect -> conditionEvaluationService.isInterveningIfMet(
+                            gameData, effect, perm, activePlayerId))
+                    .toList();
+            if (triggering.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> playerTargetEffects = triggering.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    .toList();
+            if (!playerTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.MainPhasePlayerTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId(),
+                        perm.getCard().getTargetFilter()));
+            }
+
+            List<CardEffect> nonPlayerTargetEffects = triggering.stream()
+                    .filter(effect -> !playerTargetEffects.contains(effect))
+                    .toList();
+            if (!nonPlayerTargetEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        activePlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(nonPlayerTargetEffects),
+                        null,
+                        perm.getId()
+                ));
+            }
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} postcombat main trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
         }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+            processNextMainPhasePlayerTarget(gameData);
+        }
+    }
+
+    /** Presents mandatory player targets for a main-phase trigger as it is put on the stack. */
+    public void processNextMainPhasePlayerTarget(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+            return;
+        }
+
+        PermanentChoiceContext.MainPhasePlayerTargetTrigger trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+        TargetFilter targetFilter = trigger.targetFilter() != null
+                ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
+        List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
+                gameData, targetFilter, new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId());
+
+        if (validPlayerTargets.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(trigger.sourceCard(), "'s main-phase trigger has no valid targets."));
+            processNextMainPhasePlayerTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(), List.of(), validPlayerTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose target opponent.");
+        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s main-phase ability triggers."));
+        log.info("Game {} - {} main-phase trigger awaiting player target selection",
+                gameData.id, trigger.sourceCard().getName());
     }
 
     /**
@@ -3149,7 +3223,7 @@ public class StepTriggerService {
             }
         }
 
-        // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal)
+        // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal, Lifeline)
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {
             List<DelayedGraveyardToBattlefieldUnderControl> pendingReturns =
                     gameData.drainDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class);
@@ -3181,7 +3255,8 @@ public class StepTriggerService {
                     continue;
                 }
 
-                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+                Permanent sourcePermanent = pending.sourcePermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
                 String sourceName = sourcePermanent != null ? sourcePermanent.getCard().getName() : "Delayed return";
 
                 // Shirei: "if Shirei is still on the battlefield". The permanent id is matched, so a
@@ -3206,31 +3281,33 @@ public class StepTriggerService {
                 if (pending.grantSubtype() != null && !permanent.getGrantedSubtypes().contains(pending.grantSubtype())) {
                     permanent.getGrantedSubtypes().add(pending.grantSubtype());
                 }
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.controllerId(), permanent);
+                UUID returnControllerId = pending.returnUnderOwnersControl() ? ownerId : pending.controllerId();
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, permanent);
 
                 // When the returned card belongs to another player, the controller keeps it via a
                 // permanent control effect (CR 613 layer 2) — without one it would revert to its owner
                 // — and its ownership is recorded so it dies to its owner's graveyard.
-                if (!pending.controllerId().equals(ownerId)) {
+                if (!pending.returnUnderOwnersControl() && !returnControllerId.equals(ownerId)) {
                     gameData.stolenCreatures.put(permanent.getId(), ownerId);
-                    creatureControlService.applyControlEffect(gameData, pending.controllerId(), permanent,
+                    creatureControlService.applyControlEffect(gameData, returnControllerId, permanent,
                             new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                             ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
                 }
 
-                String playerName = gameData.playerIdToName.get(pending.controllerId());
+                String playerName = gameData.playerIdToName.get(returnControllerId);
                 gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
                         " returns to the battlefield under " + playerName + "'s control (" + sourceName + ")."));
                 log.info("Game {} - {} returns under {}'s control ({})", gameData.id, cardToReturn.getName(), playerName, sourceName);
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.controllerId(), cardToReturn, null, false);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, cardToReturn, null, false);
 
                 // Link to the Seraph for the control-loss sacrifice, but only if it is still on the
                 // battlefield — if it already left, you never have to sacrifice the returned creature.
-                if (pending.sacrificeOnSourceControlLoss() && sourcePermanent != null) {
+                if (!pending.returnUnderOwnersControl() && pending.sacrificeOnSourceControlLoss()
+                        && sourcePermanent != null) {
                     gameData.seraphReturnedCreatures
                             .computeIfAbsent(pending.sourcePermanentId(), k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                             .add(permanent.getId());
-                    gameData.seraphControlWatch.putIfAbsent(pending.sourcePermanentId(), pending.controllerId());
+                    gameData.seraphControlWatch.putIfAbsent(pending.sourcePermanentId(), returnControllerId);
                 }
             }
         }

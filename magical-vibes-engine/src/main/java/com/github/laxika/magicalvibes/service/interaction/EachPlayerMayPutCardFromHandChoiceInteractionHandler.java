@@ -1,0 +1,63 @@
+package com.github.laxika.magicalvibes.service.interaction;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCardFromHandToBattlefieldSupport;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class EachPlayerMayPutCardFromHandChoiceInteractionHandler
+        implements InteractionHandler<PendingInteraction.EachPlayerMayPutCardFromHandChoice> {
+
+    private final EachPlayerMayPutCardFromHandToBattlefieldSupport support;
+    private final InputCompletionService inputCompletionService;
+
+    @Override
+    public Class<PendingInteraction.EachPlayerMayPutCardFromHandChoice> handledType() {
+        return PendingInteraction.EachPlayerMayPutCardFromHandChoice.class;
+    }
+
+    @Override
+    public Class<? extends InteractionAnswer> answerType() {
+        return InteractionAnswer.CardsChosen.class;
+    }
+
+    @Override
+    public void handleAnswer(GameData gameData, Player player,
+                             PendingInteraction.EachPlayerMayPutCardFromHandChoice interaction,
+                             InteractionAnswer answer) {
+        if (!player.getId().equals(interaction.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        List<UUID> chosen = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (chosen == null) {
+            chosen = List.of();
+        }
+        if (chosen.size() > 1 || !interaction.validCardIds().containsAll(chosen)
+                || chosen.stream().distinct().count() != chosen.size()) {
+            throw new IllegalStateException("Choose zero or one valid card");
+        }
+
+        List<UUID> accumulated = new ArrayList<>(interaction.chosenCardIds());
+        accumulated.addAll(chosen);
+        gameData.interaction.clearAwaitingInput();
+
+        EachPlayerMayPutCardFromHandToBattlefieldEffect effect =
+                new EachPlayerMayPutCardFromHandToBattlefieldEffect(interaction.predicate(), interaction.label());
+        boolean begunNext = support.beginNextChoice(gameData, interaction.remainingPlayerIds(), accumulated,
+                effect, interaction.cardName());
+        inputCompletionService.publishStateAfterInput(gameData);
+        if (!begunNext) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+}

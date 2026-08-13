@@ -37,6 +37,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.PutLandsFromHandChoice,
+        PendingInteraction.EachPlayerMayPutCardFromHandChoice,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryToTopChoice,
@@ -507,6 +508,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+        }
+    }
+
+    /**
+     * One player may put one matching card from their hand onto the battlefield. The selected cards
+     * are held in {@code chosenCardIds} until every player has chosen, then enter simultaneously.
+     */
+    record EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                              java.util.List<UUID> remainingPlayerIds,
+                                              java.util.List<UUID> chosenCardIds,
+                                              com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
+                                              String label, String cardName) implements PendingInteraction {
+
+        public EachPlayerMayPutCardFromHandChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 

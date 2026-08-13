@@ -10,17 +10,23 @@ import java.util.UUID;
  * permanent's {@code chosenPermanentId} and bakes it into {@link #linkedPermanentId()}; the handler
  * then removes that linked permanent according to {@link Mode} (exile or sacrifice). The id is carried
  * on the effect (not the stack entry's {@code targetId}) so resolution does not validate it as an
- * on-battlefield spell target and fizzle it. On the becomes-untapped slot the id stays {@code null}
+ * on-battlefield spell target and fizzle it. For {@link Mode#EXILE}, the collector also captures
+ * the linked card ID so the handler can exile it from the graveyard if it dies before resolution.
+ * On the becomes-untapped slot the id stays {@code null}
  * and the handler reads the link off the still-present source. Either way the link is cleared, so a
  * second untap is a no-op. Used by Dance of Many for the mutual bond between the
  * enchantment and its token: when the enchantment leaves it exiles the token ({@code EXILE}); when the
  * token leaves it sacrifices the enchantment ({@code SACRIFICE}).
  */
-public record RemoveLinkedPermanentEffect(Mode mode, UUID linkedPermanentId) implements CardEffect {
+public record RemoveLinkedPermanentEffect(Mode mode, UUID linkedPermanentId, UUID linkedCardId) implements CardEffect {
 
     /** Card-authored form: the concrete linked id is baked in by the trigger collector at trigger time. */
     public RemoveLinkedPermanentEffect(Mode mode) {
-        this(mode, null);
+        this(mode, null, null);
+    }
+
+    public RemoveLinkedPermanentEffect(Mode mode, UUID linkedPermanentId) {
+        this(mode, linkedPermanentId, null);
     }
 
     public enum Mode {

@@ -19,11 +19,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                              rider of an unblocked-attack trigger (Rysorian Badger)
  */
 public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
-                                            CardPredicate filter, boolean assignNoCombatDamage)
+                                            CardPredicate filter, boolean assignNoCombatDamage,
+                                            boolean singleGraveyard)
         implements GraveyardCardChoosingEffect {
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
-        this(maxTargets, lifeGain, false, null, false);
+        this(maxTargets, lifeGain, false, null, false, false);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard) {
+        this(maxTargets, lifeGain, false, null, false, singleGraveyard);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
+                                         CardPredicate filter, boolean assignNoCombatDamage) {
+        this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage, false);
     }
 
     @Override

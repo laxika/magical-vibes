@@ -885,12 +885,16 @@ public class AbilityActivationService {
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
+        boolean promotedAbilityOnlyMana = pool != null && pool.promoteAbilityOnlyMana() > 0;
         try {
             activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex,
                     xValue != null ? xValue : 0, targetId, graveyardTargetIds);
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
+            }
+            if (pool != null && promotedAbilityOnlyMana) {
+                pool.restorePromotedAbilityOnlyMana();
             }
         }
     }
@@ -1352,7 +1356,12 @@ public class AbilityActivationService {
             abilityCost = null;
         }
         if (abilityCost != null) {
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false);
+            int cyclingReduction = ability.isCyclingAbility()
+                    ? Math.min(castingCostService.getCyclingAbilityCostReduction(gameData, playerId),
+                    new ManaCost(abilityCost).getGenericCost())
+                    : 0;
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false,
+                    null, -cyclingReduction);
         }
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability — or exile it
@@ -2037,6 +2046,7 @@ public class AbilityActivationService {
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
+        boolean promotedAbilityOnlyMana = pool != null && pool.promoteAbilityOnlyMana() > 0;
         try {
             activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
                     discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
@@ -2047,6 +2057,9 @@ public class AbilityActivationService {
             }
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
+            }
+            if (pool != null && promotedAbilityOnlyMana) {
+                pool.restorePromotedAbilityOnlyMana();
             }
         }
     }

@@ -302,6 +302,7 @@ public class PermanentCounterSupport {
             case HOURGLASS -> { target.setCounterCount(CounterType.HOURGLASS, target.getCounterCount(CounterType.HOURGLASS) + count); yield "hourglass"; }
             case PAIN -> { target.setCounterCount(CounterType.PAIN, target.getCounterCount(CounterType.PAIN) + count); yield "pain"; }
             case PARALYZATION -> { target.setCounterCount(CounterType.PARALYZATION, target.getCounterCount(CounterType.PARALYZATION) + count); yield "paralyzation"; }
+            case PETAL -> { target.setCounterCount(CounterType.PETAL, target.getCounterCount(CounterType.PETAL) + count); yield "petal"; }
             case PETRIFICATION -> { target.setCounterCount(CounterType.PETRIFICATION, target.getCounterCount(CounterType.PETRIFICATION) + count); yield "petrification"; }
             case PIN -> { target.setCounterCount(CounterType.PIN, target.getCounterCount(CounterType.PIN) + count); yield "pin"; }
             case FUNGUS -> {

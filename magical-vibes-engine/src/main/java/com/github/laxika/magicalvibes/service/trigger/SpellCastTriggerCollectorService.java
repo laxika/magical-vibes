@@ -77,6 +77,8 @@ import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTrigger
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCreatureByCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
@@ -913,6 +915,33 @@ public class SpellCastTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         log.info("Game {} - {} spell-cast mana-value self-boost trigger queued (+{}/+{})",
+                match.gameData().id, match.permanent().getCard().getName(), manaValue, manaValue);
+        return true;
+    }
+
+    @CollectsTrigger(value = BecomeCreatureByCastSpellManaValueEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleBecomeCreatureByCastSpellManaValue(TriggerMatchContext match,
+            BecomeCreatureByCastSpellManaValueEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!gameQueryService.isEnchantment(match.gameData(), match.permanent())) return false;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) return false;
+
+        int manaValue = sc.spellCard().getManaValue();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                List.of(new BecomeCreatureEffect(manaValue, manaValue, CardSubtype.ILLUSION)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        match.gameData().stack.add(entry);
+
+        log.info("Game {} - {} spell-cast mana-value animation trigger queued ({} / {})",
                 match.gameData().id, match.permanent().getCard().getName(), manaValue, manaValue);
         return true;
     }

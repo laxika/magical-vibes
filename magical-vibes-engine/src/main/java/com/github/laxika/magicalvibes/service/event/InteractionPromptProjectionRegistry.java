@@ -72,6 +72,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
         register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
+        register(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class,
+                this::projectEachPlayerMayPutCardFromHandChoice);
         register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
                 this::projectRevealAnyNumberOfCardsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
@@ -350,6 +352,18 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
                 "You may put any number of land cards from your hand onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectEachPlayerMayPutCardFromHandChoice(
+            GameData gameData, PendingInteraction.EachPlayerMayPutCardFromHandChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "You may put an " + interaction.label() + " card from your hand onto the battlefield.");
     }
 
     private InteractionPromptMessage projectRevealAnyNumberOfCardsFromHandChoice(

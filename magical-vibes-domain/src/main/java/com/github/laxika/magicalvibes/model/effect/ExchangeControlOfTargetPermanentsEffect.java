@@ -40,7 +40,16 @@ public record ExchangeControlOfTargetPermanentsEffect(
         boolean requireFirstTargetControlledByController,
         boolean sourceIsFirstTarget,
         boolean requireSharedArtifactOrCreatureType,
-        boolean triggeringPermanentIsFirstTarget) implements CardEffect {
+        boolean triggeringPermanentIsFirstTarget,
+        boolean sacrificeSourceIfNoExchange) implements CardEffect {
+
+    public ExchangeControlOfTargetPermanentsEffect(
+            PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
+            boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget,
+            boolean requireSharedArtifactOrCreatureType, boolean triggeringPermanentIsFirstTarget) {
+        this(targetPredicate, requireOpponentManaValueNotGreater, requireFirstTargetControlledByController,
+                sourceIsFirstTarget, requireSharedArtifactOrCreatureType, triggeringPermanentIsFirstTarget, false);
+    }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
@@ -74,6 +83,17 @@ public record ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(
                 targetPredicate, false, false, false, false, true);
+    }
+
+    public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanentAndSacrificeIfNoExchange(
+            PermanentPredicate targetPredicate) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                targetPredicate, false, false, false, false, true, true);
+    }
+
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return sacrificeSourceIfNoExchange;
     }
 
     @Override

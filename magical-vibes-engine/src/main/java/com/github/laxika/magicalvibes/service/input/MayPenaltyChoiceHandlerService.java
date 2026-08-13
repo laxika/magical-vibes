@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
@@ -1366,6 +1367,27 @@ public class MayPenaltyChoiceHandlerService {
                 ? gameData.forcedCostOrElseSourceControllerId
                 : decidingPlayerId;
 
+        if (accepted && effect.forcedCost() instanceof PayLifeCost payLifeCost) {
+            int lifeAmount = effectiveLifeAmount(gameData, decidingPlayerId, ability, payLifeCost);
+            boolean canPay = lifeAmount <= 0
+                    || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
+                            && gameData.getLife(decidingPlayerId) >= lifeAmount);
+            if (canPay) {
+                gameData.playerLifeTotals.put(decidingPlayerId,
+                        gameData.getLife(decidingPlayerId) - lifeAmount);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + lifeAmount + " life. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} life to avoid penalty ({})", gameData.id,
+                        player.getUsername(), lifeAmount, ability.sourceCard().getName());
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+                return;
+            }
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // Use the cost stored on the pending ability — it already reflects any dynamic
             // reduction (Draco's Domain) resolved when the prompt was created.
@@ -1593,6 +1615,15 @@ public class MayPenaltyChoiceHandlerService {
         syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private int effectiveLifeAmount(GameData gameData, UUID payerId, PendingMayAbility ability,
+                                    PayLifeCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        int sourceCounterCount = cost.perSourceCounter() == null || source == null
+                ? 0
+                : source.getCounterCount(cost.perSourceCounter());
+        return cost.effectiveAmount(gameData.getLife(payerId), sourceCounterCount);
     }
 
     /** Queues the next APNAP player for an anyPlayerMayPay ForcedCostOrElse, or returns false if none remain. */

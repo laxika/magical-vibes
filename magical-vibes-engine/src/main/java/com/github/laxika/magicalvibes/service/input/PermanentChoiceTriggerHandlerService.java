@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final CreatureControlService creatureControlService;
+    private final LeastToughnessDamageSupport leastToughnessDamageSupport;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         boolean declined = stt.optionalTarget()
@@ -731,6 +733,9 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleEntersTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EntersTriggerTarget ett) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
+        boolean declined = hasOptionalSingleTarget(ett.sourceCard(), ett.effects())
+                && isPlayerTarget
+                && permanentId.equals(ett.controllerId());
         if (target != null || isPlayerTarget) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -741,7 +746,9 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     ett.sourcePermanentId()
             );
-            entry.setTargetId(permanentId);
+            if (!declined) {
+                entry.setTargetId(permanentId);
+            }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
             boolean targetsRelativeToEnteringPermanent = ett.effects().stream()
                     .anyMatch(effect -> effect instanceof ExchangeControlOfTargetPermanentsEffect exchange
@@ -752,10 +759,14 @@ public class PermanentChoiceTriggerHandlerService {
             }
             pushTriggeredEntry(gameData, entry);
 
-            String targetName = getTargetDisplayName(gameData, permanentId);
-            
-            gameLogService.append(gameData, GameLog.builder().card(ett.sourceCard()).text("'s ability targets " + targetName + ".").build());
-            log.info("Game {} - {} enter trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
+            if (declined) {
+                gameLogService.append(gameData, GameLog.cardThen(ett.sourceCard(), "'s ability targets nothing."));
+                log.info("Game {} - {} enter trigger declined targeting", gameData.id, ett.sourceCard().getName());
+            } else {
+                String targetName = getTargetDisplayName(gameData, permanentId);
+                gameLogService.append(gameData, GameLog.builder().card(ett.sourceCard()).text("'s ability targets " + targetName + ".").build());
+                log.info("Game {} - {} enter trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
+            }
         } else {
             gameLogService.append(gameData, GameLog.cardThen(ett.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} enter trigger target no longer exists", gameData.id, ett.sourceCard().getName());
@@ -882,6 +893,34 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleMainPhasePlayerTargetTrigger(GameData gameData, UUID playerId,
+                                                    PermanentChoiceContext.MainPhasePlayerTargetTrigger trigger) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                trigger.sourceCard(),
+                trigger.controllerId(),
+                trigger.sourceCard().getName() + "'s main-phase ability",
+                new ArrayList<>(trigger.effects()),
+                playerId,
+                trigger.sourcePermanentId()
+        );
+        entry.setActivePlayerId(gameData.activePlayerId);
+        pushTriggeredEntry(gameData, entry);
+
+        gameLogService.append(gameData,
+                GameLog.builder().card(trigger.sourceCard()).text("'s ability targets "
+                        + gameData.playerIdToName.get(playerId) + ".").build());
+        log.info("Game {} - {} main-phase trigger targets {}",
+                gameData.id, trigger.sourceCard().getName(), gameData.playerIdToName.get(playerId));
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+            turnProgressionService.processNextMainPhasePlayerTarget(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handlePlayerWithLowestLifeChoice(GameData gameData, UUID playerId,
                                                   PermanentChoiceContext.PlayerWithLowestLifeChoice context) {
         Permanent source = findPermanentByCardId(gameData, context.sourceCard().getId());
@@ -891,6 +930,11 @@ public class PermanentChoiceTriggerHandlerService {
                     EffectDuration.PERMANENT, null, context.sourceCard().getName());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleLeastToughnessDamageChoice(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.LeastToughnessDamageChoice context) {
+        leastToughnessDamageSupport.handleChoice(gameData, permanentId, context);
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {

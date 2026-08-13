@@ -54,4 +54,10 @@ public interface CardEffect {
      * owner's hand." — Phantom Wings).
      */
     default boolean resolvesAgainstAttachedPermanent() { return false; }
+
+    /**
+     * Returns {@code true} when an effect must receive resolution even if all of its declared
+     * targets have become illegal, so its handler can apply a separate resolution clause.
+     */
+    default boolean resolvesWhenTargetIllegal() { return false; }
 }

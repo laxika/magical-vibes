@@ -653,9 +653,15 @@ public class LibrarySearchSupport {
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
+        return isSearchPrevented(gameData, searchingPlayerId, true);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId, boolean shuffleWhenPrevented) {
         if (checkSearchRestriction(gameData, searchingPlayerId)) return false;
         List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
-        if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, searchingPlayerId);
+        if (shuffleWhenPrevented && deck != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, searchingPlayerId);
+        }
         return true;
     }
 

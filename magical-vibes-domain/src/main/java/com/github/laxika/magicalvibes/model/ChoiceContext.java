@@ -548,6 +548,9 @@ public sealed interface ChoiceContext {
      */
     record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
 
+    /** Turnabout: choose whether to tap or untap artifacts, creatures, or lands. */
+    record TurnaboutChoice(UUID playerId) implements ChoiceContext {}
+
     /**
      * Teferi's Realm: {@code playerId} (the player whose upkeep it is) chooses artifact, creature,
      * land, or non-Aura enchantment; all nontoken permanents of that type then phase out.
