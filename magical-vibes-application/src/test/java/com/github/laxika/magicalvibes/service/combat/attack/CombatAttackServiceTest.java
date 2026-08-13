@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
@@ -97,6 +98,23 @@ class CombatAttackServiceTest extends BaseCardTest {
 
             assertThat(service().getAttackableCreatureIndices(gd, player1.getId()))
                     .containsExactly(index(ready));
+        }
+
+        @Test
+        @DisplayName("A must-attack creature with no legal attack target is not offered")
+        void mustAttackCreatureWithNoLegalTargetIsNotOffered() {
+            addCreatureReady(player1, new Juggernaut());
+            harness.addToBattlefield(player2, new FormOfTheDragon());
+
+            assertThat(service().getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.inMutationScope(() -> service().handleDeclareAttackersStep(gd));
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
 
         @Test
@@ -436,17 +454,19 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("A defender-scoped restriction is enforced when the declaration is submitted")
-        void defenderScopedRestrictionIsEnforcedAtDeclaration() {
+        @DisplayName("A defender-scoped restriction excludes the barred creature from declaration choices")
+        void defenderScopedRestrictionExcludesBarredCreature() {
             // Form of the Dragon: "Creatures without flying can't attack you."
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());
             Permanent drake = addCreatureReady(player1, new WindDrake());
             harness.addToBattlefield(player2, new FormOfTheDragon());
             enterDeclareAttackers();
 
+            assertThat(service().getAttackableCreatureIndices(gd, player1.getId()))
+                    .containsExactly(index(drake));
             assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(bears), index(drake))))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("can't attack that player");
+                    .hasMessageContaining("Invalid attacker index");
 
             assertThatCode(() -> declare(List.of(index(drake)))).doesNotThrowAnyException();
         }

@@ -118,16 +118,19 @@ public class CombatAttackService {
     private final ETBTokenTargetService etbTokenTargetService;
 
     /**
-     * Returns the battlefield indices of creatures the given player can legally declare as attackers.
+     * Returns the battlefield indices of creatures the given player can legally declare as
+     * attackers against at least one available attack target.
      */
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         if (attackLegalityService.isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
+        Set<UUID> validAttackTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (attackLegalityService.canAttack(gameData, p, playerId)) {
+            if (attackLegalityService.canAttack(gameData, p, playerId)
+                    && canAttackAnyTarget(gameData, p, validAttackTargetIds)) {
                 indices.add(i);
             }
         }
@@ -141,10 +144,15 @@ public class CombatAttackService {
         return indices;
     }
 
+    private boolean canAttackAnyTarget(GameData gameData, Permanent attacker, Set<UUID> validAttackTargetIds) {
+        return validAttackTargetIds.stream()
+                .anyMatch(targetId -> attackLegalityService.canAttackDefender(gameData, attacker, targetId));
+    }
+
     /**
      * Returns the attackable creatures that can attack the specified player or planeswalker.
-     * The ordinary attackable-creature query is target-independent because a creature may be able
-     * to attack one defender but not another.
+     * The ordinary attackable-creature query includes creatures with at least one legal attack
+     * target, and this method narrows that result to the specified defender.
      */
     public List<Integer> getAttackableCreatureIndicesForTarget(GameData gameData, UUID playerId,
                                                                 UUID targetId) {
