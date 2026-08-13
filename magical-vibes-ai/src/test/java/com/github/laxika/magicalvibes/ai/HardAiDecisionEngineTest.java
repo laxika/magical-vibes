@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
@@ -634,6 +635,35 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         assertThat(berserkers.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI includes an attack-if-another-attacks creature")
+    void includesConditionalAttackRequirement() {
+        gd.playerLifeTotals.put(player2.getId(), 5);
+        Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new EkunduCyclops());
+        cyclops.setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(cyclops.isAttacking()).isTrue();
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test

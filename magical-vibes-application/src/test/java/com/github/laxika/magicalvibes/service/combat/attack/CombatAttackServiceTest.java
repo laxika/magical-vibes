@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.Brainwash;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -161,6 +162,22 @@ class CombatAttackServiceTest extends BaseCardTest {
             List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
             assertThat(attackable).hasSize(1);
             assertThat(service().getMustAttackIndices(gd, player1.getId(), attackable)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Conditional attack requirements follow the selected attacker group")
+        void conditionalRequirementFollowsSelectedAttackerGroup() {
+            Permanent cyclops = addCreatureReady(player1, new EkunduCyclops());
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+            List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
+
+            assertThat(service().getMustAttackAlongsideIndices(
+                    gd, player1.getId(), attackable, List.of(index(bears))))
+                    .containsExactly(index(cyclops));
+            assertThat(service().getMustAttackAlongsideIndices(
+                    gd, player1.getId(), attackable, List.of(index(cyclops))))
+                    .isEmpty();
         }
 
         @Test

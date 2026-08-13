@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
@@ -1102,6 +1103,35 @@ class EasyAiDecisionEngineTest {
             List<Integer> result = combatAi.prepareAttackersForTax(combatGd, List.of(0, 2));
 
             assertThat(result).containsExactly(0);
+        }
+
+        @Test
+        @DisplayName("Easy AI includes an attack-if-another-attacks creature")
+        void includesConditionalAttackRequirement() {
+            combatGd.playerLifeTotals.put(opponent.getId(), 5);
+            Permanent cyclops = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new EkunduCyclops());
+            cyclops.setSummoningSick(false);
+            Permanent bears = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            bears.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(cyclops.isAttacking()).isTrue();
+            assertThat(bears.isAttacking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
 
         @Test

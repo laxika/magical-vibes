@@ -206,6 +206,42 @@ public class CombatAttackService {
     }
 
     /**
+     * Returns the conditional attack requirements that apply to a candidate declaration. Unlike
+     * ordinary "attacks each combat if able" requirements, these requirements only apply after
+     * another creature has been selected for the same combat.
+     */
+    public List<Integer> getMustAttackAlongsideIndices(GameData gameData, UUID playerId,
+                                                        List<Integer> attackableIndices,
+                                                        List<Integer> declaredAttackerIndices) {
+        if (declaredAttackerIndices.isEmpty()) {
+            return List.of();
+        }
+        if (castingCostService.getAttackPaymentPerCreature(gameData, playerId) > 0
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return List.of();
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+
+        List<Integer> mustAttack = new ArrayList<>();
+        for (int idx : attackableIndices) {
+            if (idx < 0 || idx >= battlefield.size() || declaredAttackerIndices.contains(idx)) {
+                continue;
+            }
+            Permanent creature = battlefield.get(idx);
+            boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
+            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
+                mustAttack.add(idx);
+            }
+        }
+        return mustAttack;
+    }
+
+    /**
      * Initiates the declare-attackers step. Sends available attackers to the active player.
      * If no creatures can attack, the step is skipped.
      */

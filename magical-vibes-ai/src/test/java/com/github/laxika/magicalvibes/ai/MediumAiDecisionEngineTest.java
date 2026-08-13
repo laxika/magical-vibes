@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -282,6 +283,34 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI includes an attack-if-another-attacks creature")
+    void includesConditionalAttackRequirement() {
+        gd.playerLifeTotals.put(human.getId(), 5);
+        Permanent cyclops = harness.addToBattlefieldAndReturn(aiPlayer, new EkunduCyclops());
+        cyclops.setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        bears.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(cyclops.isAttacking()).isTrue();
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test

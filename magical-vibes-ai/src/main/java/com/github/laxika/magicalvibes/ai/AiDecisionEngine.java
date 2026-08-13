@@ -950,9 +950,12 @@ public abstract class AiDecisionEngine {
      */
     protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
         GameData gameData = gameRegistry.get(gameId);
-        DeclareAttackersRequest targetLegalRequest = gameData == null
+        DeclareAttackersRequest requirementLegalRequest = gameData == null
                 ? request
-                : removeAttackersThatCannotAttackDefaultTarget(gameData, request);
+                : enforceConditionalAttackRequirements(gameData, request);
+        DeclareAttackersRequest targetLegalRequest = gameData == null
+                ? requirementLegalRequest
+                : removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
         String rejection = attemptAttackerDeclaration(targetLegalRequest);
         if (rejection == null) {
             return;
@@ -984,6 +987,32 @@ public abstract class AiDecisionEngine {
             }
         }
         log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+    }
+
+    /**
+     * Adds conditional "also attacks if able" requirements for the candidate declaration before
+     * the request reaches the engine. These requirements cannot be represented by the ordinary
+     * must-attack list because whether they apply depends on the other attackers selected.
+     */
+    private DeclareAttackersRequest enforceConditionalAttackRequirements(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Integer> attackableIndices = combatAttackService.getAttackableCreatureIndices(
+                gameData, attackingPlayerId);
+        List<Integer> requiredIndices = combatAttackService.getMustAttackAlongsideIndices(
+                gameData, attackingPlayerId, attackableIndices, request.attackerIndices());
+        if (requiredIndices.isEmpty()) {
+            return request;
+        }
+
+        LinkedHashSet<Integer> mergedIndices = new LinkedHashSet<>(request.attackerIndices());
+        mergedIndices.addAll(requiredIndices);
+        return new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
+                request.attackTargets(), request.bands());
     }
 
     /**
