@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -120,6 +121,9 @@ class StepTriggerServiceTest {
     private GameQueryService gameQueryService;
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
+
+    @Mock
+    private TargetLegalityService targetLegalityService;
 
     @Mock
     private GameLogService gameLogService;
@@ -174,7 +178,8 @@ class StepTriggerServiceTest {
         // Build the SUT manually so we can pass a REAL TriggerTargetCollector. The collector's
         // opponent-filter / valid-target logic is exercised by several tests in this class, so a
         // mock would silently return nulls and break them.
-        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
+        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(
+                gameQueryService, predicateEvaluationService, targetLegalityService);
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
         sut = new StepTriggerService(
                 drawService,

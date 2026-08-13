@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,9 @@ class TriggerTargetCollectorTest {
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
 
+    @Mock
+    private TargetLegalityService targetLegalityService;
+
     private TriggerTargetCollector collector;
 
     private GameData gd;
@@ -58,7 +62,7 @@ class TriggerTargetCollectorTest {
 
     @BeforeEach
     void setUp() {
-        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
+        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
