@@ -1596,6 +1596,9 @@ public class SpellCastingService {
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean needsImmediateGraveyardEffectTargeting = graveyardTargetingSource.stream()
+                .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect))
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
                 .collect(java.util.stream.Collectors.toSet());
@@ -1688,7 +1691,7 @@ public class SpellCastingService {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
             }
-        } else if (unwrappedNeedsTarget && needsGraveyardEffectTargeting) {
+        } else if (unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting) {
             // Non-ReturnCard graveyard targets with no permanent groups still require a target.
             if (card.getMaxTargets() == 0) {
                 throw new IllegalStateException("Must target a card in a graveyard");
