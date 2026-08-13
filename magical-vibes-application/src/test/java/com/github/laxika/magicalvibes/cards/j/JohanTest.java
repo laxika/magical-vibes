@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JohanTest extends BaseCardTest {
 
@@ -46,13 +45,13 @@ class JohanTest extends BaseCardTest {
 
     @Test
     void acceptingMayPreventsJohanFromAttacking() {
-        addCreatureReady(player1, new Johan());
+        Permanent johan = addCreatureReady(player1, new Johan());
 
         resolveCombatMay(true);
         beginAttackers();
+        gs.declareAttackers(gd, player1, List.of(0));
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(johan.isAttacking()).isFalse();
     }
 
     @Test

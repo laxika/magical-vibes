@@ -247,10 +247,16 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
                 eq(gameData), any(UUID.class), any(), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(
+                eq(gameData), any(UUID.class), any(), any(UUID.class), anyInt(), anyBoolean()))
+                .thenAnswer(inv -> (int) inv.getArgument(4));
         // Palisade Giant / RedirectPlayerDamageToSelfEffect (includeOtherPermanents): pass-through when no
         // absorbing permanent is set up. Called unconditionally for combat damage to creatures.
         lenient().when(damagePreventionService.applyStaticPermanentDamageRedirectToSelf(
                 eq(gameData), any(), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyAllCreatureDamageRedirectToController(
+                eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through here — no player redirect shields are set up.
         lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(

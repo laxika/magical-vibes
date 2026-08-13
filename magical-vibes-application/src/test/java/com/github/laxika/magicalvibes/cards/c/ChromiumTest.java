@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,7 +90,9 @@ class ChromiumTest extends BaseCardTest {
     }
 
     private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        GrizzlyBears card = new GrizzlyBears();
+        card.setKeywords(Set.of(Keyword.FLYING));
+        Permanent permanent = new Permanent(card);
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
     }

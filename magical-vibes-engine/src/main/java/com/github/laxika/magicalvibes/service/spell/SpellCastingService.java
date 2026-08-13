@@ -1667,8 +1667,10 @@ public class SpellCastingService {
                 }
             } else {
                 validateModalTargetKind(gameData, wasModal, filteredSpellEffects, targetId);
-                targetLegalityService.validateSpellTargeting(gameData, card, targetingSpellEffects,
-                        targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);
+                List<CardEffect> primaryTargetEffects = effectsForTargetPosition(
+                        card, targetingSpellEffects, targetIds.size());
+                targetLegalityService.validateSpellTargeting(gameData, card, primaryTargetEffects,
+                        targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue, kicked);
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
             String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
@@ -2793,6 +2795,15 @@ public class SpellCastingService {
             }
             finishSpellCast(gameData, playerId, player, hand, card);
         }
+    }
+
+    private static List<CardEffect> effectsForTargetPosition(Card card, List<CardEffect> effects,
+                                                             int targetPosition) {
+        List<CardEffect> positionEffects = effects.stream()
+                .filter(effect -> card.getEffectTargetIndex(effect) == targetPosition
+                        || card.getEffectTargetIndex(effect) < 0)
+                .toList();
+        return positionEffects.isEmpty() ? effects : positionEffects;
     }
 
     // --- Additional cast-cost payment (validated up front by AdditionalSpellCostService) ---

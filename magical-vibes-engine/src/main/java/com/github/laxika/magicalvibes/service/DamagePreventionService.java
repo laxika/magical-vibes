@@ -485,7 +485,12 @@ public class DamagePreventionService {
             int combatShield = gameData.playerCombatDamagePreventionShields.getOrDefault(playerId, 0);
             if (combatShield > 0) {
                 int prevented = Math.min(combatShield, damage);
-                gameData.playerCombatDamagePreventionShields.put(playerId, combatShield - prevented);
+                int remaining = combatShield - prevented;
+                if (remaining == 0) {
+                    gameData.playerCombatDamagePreventionShields.remove(playerId);
+                } else {
+                    gameData.playerCombatDamagePreventionShields.put(playerId, remaining);
+                }
                 damage -= prevented;
             }
         }
@@ -493,7 +498,12 @@ public class DamagePreventionService {
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
-        gameData.playerDamagePreventionShields.put(playerId, shield - prevented);
+        int remaining = shield - prevented;
+        if (remaining == 0) {
+            gameData.playerDamagePreventionShields.remove(playerId);
+        } else {
+            gameData.playerDamagePreventionShields.put(playerId, remaining);
+        }
         return damage - prevented;
     }
 

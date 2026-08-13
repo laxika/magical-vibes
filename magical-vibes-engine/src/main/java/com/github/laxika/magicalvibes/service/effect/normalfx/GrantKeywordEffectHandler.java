@@ -187,7 +187,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // and then replays this grant at its real timestamp.
             // WHILE_SOURCE_ON_BATTLEFIELD grants live only as floating effects: the legacy
             // buckets are both cleared by turn cleanup, which would silently end the grant.
-            if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+            if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                    && grant.duration() != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
                 bucketFor(target, grant.duration()).addAll(grant.keywords());
             }
             UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD

@@ -417,6 +417,7 @@ public class TargetPolarityClassifier {
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
@@ -439,6 +440,7 @@ public class TargetPolarityClassifier {
             // Quarry Hauler chooses add-or-remove per counter kind at resolution — no fixed direction.
             entry("AdjustEachCounterKindOnTargetEffect", TargetPolarity.NEUTRAL),
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("AttachTargetAuraToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsIndefinitelyEffect", TargetPolarity.NEUTRAL),
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),

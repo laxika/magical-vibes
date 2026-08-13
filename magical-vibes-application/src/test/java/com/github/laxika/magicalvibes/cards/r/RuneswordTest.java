@@ -54,7 +54,7 @@ class RuneswordTest extends BaseCardTest {
         activate(sword, attacker);
 
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Drudge Skeletons");

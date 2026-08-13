@@ -16,7 +16,7 @@ class GoblinArtisansTest extends BaseCardTest {
     @Test
     @DisplayName("Flips a coin and draws or counters the targeted artifact spell")
     void flipsForDrawOrCounter() {
-        harness.addToBattlefield(player1, new GoblinArtisans());
+        addCreatureReady(player1, new GoblinArtisans());
         Ornithopter ornithopter = new Ornithopter();
         harness.setHand(player1, List.of(ornithopter));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
@@ -39,8 +39,8 @@ class GoblinArtisansTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact spell already targeted by another Goblin Artisans")
     void cannotTargetArtifactSpellAlreadyTargetedByAnotherArtisan() {
-        harness.addToBattlefield(player1, new GoblinArtisans());
-        harness.addToBattlefield(player1, new GoblinArtisans());
+        addCreatureReady(player1, new GoblinArtisans());
+        addCreatureReady(player1, new GoblinArtisans());
         Ornithopter ornithopter = new Ornithopter();
         harness.setHand(player1, List.of(ornithopter));
 

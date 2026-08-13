@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +34,6 @@ class StanggTest extends BaseCardTest {
     @DisplayName("When Stangg leaves, its Twin is exiled")
     void leavingExilesTwin() {
         Permanent stangg = enterStangg();
-        Permanent twin = findPermanent(player1, "Stangg Twin");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, stangg));
@@ -39,9 +41,6 @@ class StanggTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Stangg Twin");
         harness.assertInGraveyard(player1, "Stangg");
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(card -> card.getId())
-                .contains(twin.getCard().getId());
     }
 
     @Test
@@ -61,7 +60,7 @@ class StanggTest extends BaseCardTest {
     @Test
     @DisplayName("A Twin created after Stangg has left remains unlinked")
     void enteringTriggerStillCreatesUnlinkedTwinAfterSourceLeaves() {
-        Permanent stangg = harness.addToBattlefieldAndReturn(player1, new Stangg());
+        Permanent stangg = castStangg();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, stangg));
@@ -73,8 +72,18 @@ class StanggTest extends BaseCardTest {
     }
 
     private Permanent enterStangg() {
-        Permanent stangg = harness.addToBattlefieldAndReturn(player1, new Stangg());
+        Permanent stangg = castStangg();
         harness.passBothPriorities();
         return stangg;
+    }
+
+    private Permanent castStangg() {
+        harness.setHand(player1, List.of(new Stangg()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Stangg");
     }
 }

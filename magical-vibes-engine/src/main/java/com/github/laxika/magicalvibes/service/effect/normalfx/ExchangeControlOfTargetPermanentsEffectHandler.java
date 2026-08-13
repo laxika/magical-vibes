@@ -90,15 +90,16 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         // controller ("target land you control and target land an opponent controls") additionally
         // require that split; source-mode exchanges (Conjured Currency) skip the first-target
         // predicate because the source permanent stands in for that half.
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        UUID exchangeControllerId = exchange.triggeringPermanentIsFirstTarget() ? ownController : controllerId;
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(exchangeControllerId);
         if (exchange.triggeringPermanentIsFirstTarget()) {
             filterContext = filterContext.withSourcePermanentSnapshot(ownTarget);
         }
         boolean controllersDiffer = !ownController.equals(opponentController);
         boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
-                || (ownController.equals(controllerId) && !opponentController.equals(controllerId));
+                || (ownController.equals(exchangeControllerId) && !opponentController.equals(exchangeControllerId));
         boolean triggeringPermanentTargetLegal = !exchange.triggeringPermanentIsFirstTarget()
-                || !opponentController.equals(controllerId);
+                || !opponentController.equals(exchangeControllerId);
         boolean stillLegal = controllersDiffer
                 && ownershipSplitOk
                 && triggeringPermanentTargetLegal

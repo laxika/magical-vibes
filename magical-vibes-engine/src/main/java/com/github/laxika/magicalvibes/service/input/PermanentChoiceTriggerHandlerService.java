@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -742,6 +743,13 @@ public class PermanentChoiceTriggerHandlerService {
             );
             entry.setTargetId(permanentId);
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            boolean targetsRelativeToEnteringPermanent = ett.effects().stream()
+                    .anyMatch(effect -> effect instanceof ExchangeControlOfTargetPermanentsEffect exchange
+                            && exchange.triggeringPermanentIsFirstTarget());
+            if (targetsRelativeToEnteringPermanent && ett.enteringPermanentId() != null) {
+                entry.setSourcePermanentSnapshot(
+                        gameQueryService.findPermanentById(gameData, ett.enteringPermanentId()));
+            }
             pushTriggeredEntry(gameData, entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);

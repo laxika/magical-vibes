@@ -71,6 +71,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -530,7 +531,8 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             // validateSpellTargeting is called with needsTarget=false (ETB-only),
             // so hexproof won't be enforced at cast time
-            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(creature), eq(player2Id), any(), eq(player1Id), eq(false), anyInt());
+            verify(targetLegalityService).validateSpellTargeting(
+                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false));
         }
 
         @Test
@@ -545,7 +547,8 @@ class SpellCastingServiceTest {
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
-            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(sorcery), eq(player2Id), any(), eq(player1Id), eq(true), anyInt());
+            verify(targetLegalityService).validateSpellTargeting(
+                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
         }
 
         @Test
@@ -638,7 +641,8 @@ class SpellCastingServiceTest {
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
-            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(instant), eq(player2Id), any(), eq(player1Id), eq(true), anyInt());
+            verify(targetLegalityService).validateSpellTargeting(
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
         }
     }
 
@@ -663,7 +667,8 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(instant), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt());
+            verify(targetLegalityService).validateSpellTargeting(
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false));
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }

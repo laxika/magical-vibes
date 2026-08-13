@@ -201,8 +201,8 @@ class SteadfastArmasaurTest extends BaseCardTest {
     // ===== Source removed before resolution =====
 
     @Test
-    @DisplayName("Deals no damage if Armasaur is removed before resolution")
-    void dealsNoDamageIfSourceRemoved() {
+    @DisplayName("Uses Armasaur's last known toughness if it is removed before resolution")
+    void usesLastKnownToughnessIfSourceRemoved() {
         Permanent armasaur = addReadyArmasaur(player1);
         GrizzlyBears bears = new GrizzlyBears();
         bears.setToughness(4);
@@ -219,9 +219,9 @@ class SteadfastArmasaurTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Ability resolves but source is gone, so no damage
+        // The source snapshot supplies its last known toughness.
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getMarkedDamage()).isEqualTo(0);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
     }
 
     // ===== Fizzle =====

@@ -651,6 +651,14 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public void validateSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                       UUID targetId, Zone targetZone, UUID controllerId,
+                                       boolean needsTarget, int xValue, boolean kicked) {
+        checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
+                needsTarget, xValue, kicked)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                        UUID controllerId, boolean needsTarget, int xValue, boolean kicked) {
         checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, xValue, kicked)
@@ -692,6 +700,10 @@ public class TargetLegalityService {
         }
 
         TargetFilter effectiveTargetFilter = targetFilterForKickedCast(card.getTargetFilter(), kicked);
+
+        if (target != null && effectiveTargetFilter instanceof PlayerPredicateTargetFilter) {
+            return Optional.of("This spell can only target players");
+        }
 
         if (needsTarget) {
             // Skip target-type validation for modal spells: their modes have already been
@@ -757,7 +769,7 @@ public class TargetLegalityService {
         }
 
         Optional<String> effectReason = targetValidationService.checkEffectTargets(spellEffects,
-                new TargetValidationContext(gameData, targetId, targetZone, card));
+                new TargetValidationContext(gameData, targetId, targetZone, card, xValue, controllerId, null));
         if (effectReason.isPresent()) return effectReason;
 
         return Optional.empty();
@@ -1327,7 +1339,8 @@ public class TargetLegalityService {
                         if (!targetFizzled && targetValidationService.checkEffectTargets(
                                 entry.getEffectsToResolve(),
                                 new TargetValidationContext(gameData, entry.getTargetId(), null,
-                                        entry.getCard(), entry.getXValue())).isPresent()) {
+                                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                        entry.getSourcePermanentSnapshot())).isPresent()) {
                             targetFizzled = true;
                         }
                     }
@@ -1453,7 +1466,8 @@ public class TargetLegalityService {
         }
         if (entry.getTargetIds().isEmpty()
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
-                new TargetValidationContext(gameData, targetId, null, entry.getCard(), entry.getXValue()))
+                new TargetValidationContext(gameData, targetId, null, entry.getCard(), entry.getXValue(),
+                        entry.getControllerId(), entry.getSourcePermanentSnapshot()))
                 .isPresent()) {
             return false;
         }

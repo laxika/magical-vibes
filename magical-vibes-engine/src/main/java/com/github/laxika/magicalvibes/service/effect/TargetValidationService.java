@@ -219,9 +219,13 @@ public class TargetValidationService {
         FilterContext filterContext = FilterContext.of(ctx.gameData());
         if (ctx.sourceCard() != null) {
             filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
-            UUID controllerId = findSourcePermanentController(ctx);
+            UUID controllerId = ctx.sourceControllerId() != null
+                    ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
             if (controllerId != null) {
                 filterContext = filterContext.withSourceControllerId(controllerId);
+            }
+            if (ctx.sourcePermanentSnapshot() != null) {
+                filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
         }
         return filterContext;
@@ -272,7 +276,9 @@ public class TargetValidationService {
     }
 
     private boolean hasProtectionFromSourceController(TargetValidationContext ctx, Permanent target) {
-        UUID sourceControllerId = findSourcePermanentController(ctx);
+        UUID sourceControllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId()
+                : findSourcePermanentController(ctx);
         return gameQueryService.hasProtectionFromOpponents(ctx.gameData(), target, sourceControllerId);
     }
 

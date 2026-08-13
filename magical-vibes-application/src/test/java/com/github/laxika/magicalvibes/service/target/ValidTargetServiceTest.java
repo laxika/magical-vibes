@@ -295,7 +295,8 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, perm, player1Id)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player2Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -313,7 +314,8 @@ class ValidTargetServiceTest {
 
             // Shared untargetable core checks controller before the granted-hexproof effect, so for an
             // own permanent it is never consulted; keep the stub lenient.
-            lenient().when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
+            lenient().when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, perm, player1Id)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player1Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -996,8 +998,8 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, creature)).thenReturn(true);
-            when(gameQueryService.findPermanentController(gameData, creature.getId())).thenReturn(player2Id);
+            when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, creature, player1Id)).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1699,7 +1701,8 @@ class ValidTargetServiceTest {
 
             // Shared untargetable core checks controller before the granted-hexproof effect, so for a
             // null controller it is never consulted; keep the stub lenient.
-            lenient().when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
+            lenient().when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
+                    gameData, perm, player1Id)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(null);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);

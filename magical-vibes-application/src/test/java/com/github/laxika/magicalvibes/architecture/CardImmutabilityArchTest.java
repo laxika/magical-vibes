@@ -37,6 +37,7 @@ class CardImmutabilityArchTest {
     private static final Set<String> WHITELISTED_CLASSES = Set.of(
             "Card",                    // its own builder API
             "SpellTarget",             // construction-time builder callback into Card
+            "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
@@ -51,6 +52,7 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
             "BecomeCreatureEffectHandler", // replaces an enchantment with the freshly created runtime creature copy
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
+            "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
             "GraveyardReturnSupport",
