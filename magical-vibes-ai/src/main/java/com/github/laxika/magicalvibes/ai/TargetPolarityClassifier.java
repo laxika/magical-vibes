@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -150,6 +151,9 @@ public class TargetPolarityClassifier {
                 best = higherPriority(best, classify(gameData, step, aiPlayerId));
             }
             return best;
+        }
+        if (effect instanceof TributeNotPaidEffect tributeNotPaid) {
+            return classify(gameData, tributeNotPaid.wrapped(), aiPlayerId);
         }
 
         // Removal: the target leaves the battlefield. removalKind() is non-null exactly for
@@ -417,6 +421,7 @@ public class TargetPolarityClassifier {
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromCardTypeUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),

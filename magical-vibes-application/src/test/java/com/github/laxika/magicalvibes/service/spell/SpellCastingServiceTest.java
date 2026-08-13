@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -178,6 +179,12 @@ class SpellCastingServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerManaPools.put(player1Id, new ManaPool());
+        lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class)))
+                .thenAnswer(invocation -> invocation.getArgument(3));
+        lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class), anyBoolean()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerLifeTotals.put(player1Id, 20);
         gd.playerLifeTotals.put(player2Id, 20);
