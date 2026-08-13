@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "155")
+@CardRegistration(set = "TPR", collectorNumber = "116")
 public class ScreechingHarpy extends Card {
 
     public ScreechingHarpy() {

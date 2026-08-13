@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "72")
+@CardRegistration(set = "TPR", collectorNumber = "113")
 public class RecurringNightmare extends Card {
 
     public RecurringNightmare() {

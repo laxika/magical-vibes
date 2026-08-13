@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "51")
+@CardRegistration(set = "TPR", collectorNumber = "78")
 public class WaywardSoul extends Card {
 
     public WaywardSoul() {

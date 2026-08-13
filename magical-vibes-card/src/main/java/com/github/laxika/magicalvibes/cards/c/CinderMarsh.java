@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "317")
+@CardRegistration(set = "TPR", collectorNumber = "236")
 public class CinderMarsh extends Card {
 
     public CinderMarsh() {

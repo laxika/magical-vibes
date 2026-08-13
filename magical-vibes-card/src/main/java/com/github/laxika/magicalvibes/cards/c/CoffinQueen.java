@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "114")
+@CardRegistration(set = "TPR", collectorNumber = "87")
 public class CoffinQueen extends Card {
 
     public CoffinQueen() {

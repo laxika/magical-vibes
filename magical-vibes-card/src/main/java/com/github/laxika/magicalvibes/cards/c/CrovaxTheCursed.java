@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "55")
+@CardRegistration(set = "TPR", collectorNumber = "90")
 public class CrovaxTheCursed extends Card {
 
     public CrovaxTheCursed() {

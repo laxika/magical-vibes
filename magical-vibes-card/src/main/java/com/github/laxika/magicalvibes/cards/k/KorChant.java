@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectTargetCreatureDamageF
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EXO", collectorNumber = "9")
+@CardRegistration(set = "TPR", collectorNumber = "17")
 public class KorChant extends Card {
 
     public KorChant() {

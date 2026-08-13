@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "EXO", collectorNumber = "6")
+@CardRegistration(set = "TPR", collectorNumber = "12")
 public class ExaltedDragon extends Card {
 
     public ExaltedDragon() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "157")
+@CardRegistration(set = "TPR", collectorNumber = "118")
 public class SkyshroudVampire extends Card {
 
     public SkyshroudVampire() {

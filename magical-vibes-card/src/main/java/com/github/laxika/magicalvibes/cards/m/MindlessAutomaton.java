@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "135")
+@CardRegistration(set = "TPR", collectorNumber = "227")
 public class MindlessAutomaton extends Card {
 
     public MindlessAutomaton() {

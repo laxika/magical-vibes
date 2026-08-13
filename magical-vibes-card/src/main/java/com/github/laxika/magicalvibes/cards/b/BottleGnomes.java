@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "290")
 @CardRegistration(set = "TMP", collectorNumber = "278")
 @CardRegistration(set = "MRD", collectorNumber = "148")
+@CardRegistration(set = "TPR", collectorNumber = "217")
 public class BottleGnomes extends Card {
 
     public BottleGnomes() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "320")
+@CardRegistration(set = "TPR", collectorNumber = "239")
 public class MoggHollows extends Card {
 
     public MoggHollows() {

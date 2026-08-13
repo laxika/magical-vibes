@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "9ED", collectorNumber = "173")
 @CardRegistration(set = "EXO", collectorNumber = "79")
 @CardRegistration(set = "ODY", collectorNumber = "173")
+@CardRegistration(set = "TPR", collectorNumber = "125")
 public class Anarchist extends Card {
 
     public Anarchist() {

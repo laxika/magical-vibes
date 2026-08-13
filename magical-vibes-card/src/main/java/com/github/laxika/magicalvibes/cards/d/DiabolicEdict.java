@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "128")
+@CardRegistration(set = "TPR", collectorNumber = "102")
 public class DiabolicEdict extends Card {
 
     public DiabolicEdict() {

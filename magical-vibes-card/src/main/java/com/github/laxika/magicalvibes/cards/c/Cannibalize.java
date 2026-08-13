@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOneOfTwoTargetCreaturesT
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STH", collectorNumber = "53")
+@CardRegistration(set = "TPR", collectorNumber = "83")
 public class Cannibalize extends Card {
 
     public Cannibalize() {

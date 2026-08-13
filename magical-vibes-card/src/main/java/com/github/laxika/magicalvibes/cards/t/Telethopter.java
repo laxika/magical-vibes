@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "311")
+@CardRegistration(set = "TPR", collectorNumber = "232")
 public class Telethopter extends Card {
 
     public Telethopter() {

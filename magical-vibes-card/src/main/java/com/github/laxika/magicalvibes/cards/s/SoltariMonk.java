@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "45")
+@CardRegistration(set = "TPR", collectorNumber = "31")
 public class SoltariMonk extends Card {
 
     public SoltariMonk() {

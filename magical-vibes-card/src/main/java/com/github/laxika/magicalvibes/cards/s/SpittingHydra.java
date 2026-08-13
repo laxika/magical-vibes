@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "99")
+@CardRegistration(set = "TPR", collectorNumber = "161")
 public class SpittingHydra extends Card {
 
     public SpittingHydra() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "9ED", collectorNumber = "182")
 @CardRegistration(set = "STH", collectorNumber = "81")
+@CardRegistration(set = "TPR", collectorNumber = "131")
 public class FlameWave extends Card {
 
     public FlameWave() {

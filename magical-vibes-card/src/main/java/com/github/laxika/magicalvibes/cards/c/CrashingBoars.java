@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerChoosesCreatureToBlockEffect;
 
 @CardRegistration(set = "EXO", collectorNumber = "108")
+@CardRegistration(set = "TPR", collectorNumber = "168")
 public class CrashingBoars extends Card {
 
     public CrashingBoars() {

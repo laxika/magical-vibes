@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "103")
+@CardRegistration(set = "TPR", collectorNumber = "159")
 @CardRegistration(set = "MRD", collectorNumber = "105")
 @CardRegistration(set = "KTK", collectorNumber = "120")
 @CardRegistration(set = "M10", collectorNumber = "155")

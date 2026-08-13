@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "235")
+@CardRegistration(set = "TPR", collectorNumber = "177")
 public class Krakilin extends Card {
 
     public Krakilin() {

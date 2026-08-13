@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "159")
+@CardRegistration(set = "TPR", collectorNumber = "119")
 public class SpinalGraft extends Card {
 
     public SpinalGraft() {

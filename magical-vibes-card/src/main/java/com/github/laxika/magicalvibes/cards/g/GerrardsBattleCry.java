@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "21")
+@CardRegistration(set = "TPR", collectorNumber = "15")
 public class GerrardsBattleCry extends Card {
 
     public GerrardsBattleCry() {

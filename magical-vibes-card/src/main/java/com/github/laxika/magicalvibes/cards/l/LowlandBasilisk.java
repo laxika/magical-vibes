@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "109")
+@CardRegistration(set = "TPR", collectorNumber = "178")
 public class LowlandBasilisk extends Card {
 
     public LowlandBasilisk() {

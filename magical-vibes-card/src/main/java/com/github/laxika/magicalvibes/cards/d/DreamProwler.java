@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "74")
 @CardRegistration(set = "STH", collectorNumber = "29")
+@CardRegistration(set = "TPR", collectorNumber = "47")
 public class DreamProwler extends Card {
 
     public DreamProwler() {

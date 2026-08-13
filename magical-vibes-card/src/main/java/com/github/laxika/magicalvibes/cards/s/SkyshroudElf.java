@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "255")
+@CardRegistration(set = "TPR", collectorNumber = "192")
 public class SkyshroudElf extends Card {
 
     public SkyshroudElf() {

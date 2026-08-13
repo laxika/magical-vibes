@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M12", collectorNumber = "63")
+@CardRegistration(set = "TPR", collectorNumber = "58")
 @CardRegistration(set = "M11", collectorNumber = "62")
 @CardRegistration(set = "9ED", collectorNumber = "86")
 @CardRegistration(set = "8ED", collectorNumber = "89")

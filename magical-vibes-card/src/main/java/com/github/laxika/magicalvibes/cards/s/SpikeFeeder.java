@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "118")
+@CardRegistration(set = "TPR", collectorNumber = "196")
 public class SpikeFeeder extends Card {
 
     public SpikeFeeder() {

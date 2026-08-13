@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "18")
+@CardRegistration(set = "TPR", collectorNumber = "29")
 public class SoltariChampion extends Card {
 
     public SoltariChampion() {

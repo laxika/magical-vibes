@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "246")
+@CardRegistration(set = "TPR", collectorNumber = "188")
 public class RealityAnchor extends Card {
 
     public RealityAnchor() {

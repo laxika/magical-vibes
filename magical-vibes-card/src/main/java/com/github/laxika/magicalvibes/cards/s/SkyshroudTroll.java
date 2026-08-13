@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "257")
+@CardRegistration(set = "TPR", collectorNumber = "193")
 public class SkyshroudTroll extends Card {
 
     public SkyshroudTroll() {

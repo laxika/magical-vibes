@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "326")
+@CardRegistration(set = "TPR", collectorNumber = "244")
 public class SkyshroudForest extends Card {
 
     public SkyshroudForest() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "179")
+@CardRegistration(set = "TPR", collectorNumber = "136")
 public class GoblinBombardment extends Card {
 
     public GoblinBombardment() {

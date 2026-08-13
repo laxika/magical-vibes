@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "104")
+@CardRegistration(set = "TPR", collectorNumber = "160")
 public class Spellshock extends Card {
 
     public Spellshock() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "9")
 @CardRegistration(set = "STH", collectorNumber = "1")
+@CardRegistration(set = "TPR", collectorNumber = "7")
 public class Bandage extends Card {
 
     public Bandage() {

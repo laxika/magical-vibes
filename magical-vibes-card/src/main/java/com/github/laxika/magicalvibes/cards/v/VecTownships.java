@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "329")
+@CardRegistration(set = "TPR", collectorNumber = "247")
 public class VecTownships extends Card {
 
     public VecTownships() {

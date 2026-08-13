@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "132")
+@CardRegistration(set = "TPR", collectorNumber = "222")
 public class ErraticPortal extends Card {
 
     public ErraticPortal() {

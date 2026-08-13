@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "123")
+@CardRegistration(set = "TPR", collectorNumber = "203")
 public class VerdantTouch extends Card {
 
     public VerdantTouch() {

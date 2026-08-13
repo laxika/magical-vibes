@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreatures
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "266")
+@CardRegistration(set = "TPR", collectorNumber = "208")
 public class Dracoplasm extends Card {
 
     public Dracoplasm() {

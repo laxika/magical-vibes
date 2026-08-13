@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 @CardRegistration(set = "9ED", collectorNumber = "162")
 @CardRegistration(set = "POR", collectorNumber = "109")
 @CardRegistration(set = "STH", collectorNumber = "69")
+@CardRegistration(set = "TPR", collectorNumber = "117")
 public class SerpentWarrior extends Card {
 
     public SerpentWarrior() {

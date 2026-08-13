@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STH", collectorNumber = "113")
+@CardRegistration(set = "TPR", collectorNumber = "186")
 public class Provoke extends Card {
 
     public Provoke() {

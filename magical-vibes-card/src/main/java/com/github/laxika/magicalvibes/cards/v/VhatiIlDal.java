@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "274")
+@CardRegistration(set = "TPR", collectorNumber = "214")
 public class VhatiIlDal extends Card {
 
     public VhatiIlDal() {

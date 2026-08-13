@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "143")
+@CardRegistration(set = "TPR", collectorNumber = "237")
 public class CityOfTraitors extends Card {
 
     public CityOfTraitors() {

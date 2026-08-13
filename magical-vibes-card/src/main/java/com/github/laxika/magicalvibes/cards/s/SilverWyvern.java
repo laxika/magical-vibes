@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "43")
+@CardRegistration(set = "TPR", collectorNumber = "68")
 public class SilverWyvern extends Card {
 
     public SilverWyvern() {

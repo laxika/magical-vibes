@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * recently placed creature card, so no prompt is needed.
  */
 @CardRegistration(set = "TMP", collectorNumber = "116")
+@CardRegistration(set = "TPR", collectorNumber = "89")
 public class CorpseDance extends Card {
 
     public CorpseDance() {

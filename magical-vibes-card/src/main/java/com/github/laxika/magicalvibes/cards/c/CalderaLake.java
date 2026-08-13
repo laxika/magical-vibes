@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "316")
+@CardRegistration(set = "TPR", collectorNumber = "235")
 public class CalderaLake extends Card {
 
     public CalderaLake() {

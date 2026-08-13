@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "202")
 @CardRegistration(set = "STH", collectorNumber = "108")
+@CardRegistration(set = "TPR", collectorNumber = "175")
 public class HermitDruid extends Card {
 
     public HermitDruid() {
