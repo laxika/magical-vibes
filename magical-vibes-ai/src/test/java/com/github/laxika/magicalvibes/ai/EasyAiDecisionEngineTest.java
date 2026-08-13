@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -201,6 +202,26 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies both targets for Blinding Beam's tap mode")
+        void castsBlindingBeamWithTwoTargetCreatures() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 3);
+            Permanent firstTarget = new Permanent(new GrizzlyBears());
+            Permanent secondTarget = new Permanent(new GrizzlyBears());
+            testGd.playerBattlefields.get(human.getId()).add(firstTarget);
+            testGd.playerBattlefields.get(human.getId()).add(secondTarget);
+            testHarness.setHand(aiTestPlayer, List.of(new BlindingBeam()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Blinding Beam");
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
         }
 
         @Test

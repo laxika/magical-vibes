@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -1487,12 +1488,12 @@ public abstract class AiDecisionEngine {
                 ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
                 if (isModalModeValid(gameData, card, option)) {
                     validModes.add(i);
-                    UUID modeTarget = findModalModeTarget(gameData, card, option);
-                    if (modeTarget != null) {
+                    List<UUID> modeTargets = findModalModeTargets(gameData, card, option);
+                    if (!modeTargets.isEmpty()) {
                         if (option.targetFilter() != null || option.targetFilters() != null) {
-                            targetIds.add(modeTarget);
+                            targetIds.addAll(modeTargets);
                         } else {
-                            targetId = modeTarget;
+                            targetId = modeTargets.getFirst();
                         }
                     }
                     if (validModes.size() == coe.choicesRequired()) {
@@ -1518,11 +1519,15 @@ public abstract class AiDecisionEngine {
             if (EffectResolution.targetsSpellOnStack(effect)) continue;
 
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                UUID target = findModalPermanentTarget(gameData, card, option);
-                if (target != null) {
-                    return coe.variableModeCount()
-                            ? new ModalCastPlan(encoded, null, List.of(target))
-                            : new ModalCastPlan(encoded, target);
+                List<UUID> targets = findModalModeTargets(gameData, card, option);
+                if (targets.size() < option.minTargets()) {
+                    continue;
+                }
+                if (usesModalTargetSlots(coe, option)) {
+                    return new ModalCastPlan(encoded, null, targets);
+                }
+                if (!targets.isEmpty()) {
+                    return new ModalCastPlan(encoded, targets.getFirst());
                 }
                 continue;
             }
@@ -1551,19 +1556,21 @@ public abstract class AiDecisionEngine {
         return null;
     }
 
-    private UUID findModalModeTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+    private List<UUID> findModalModeTargets(GameData gameData, Card card,
+                                             ChooseOneEffect.ChooseOneOption option) {
         CardEffect effect = option.effect();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            return findModalPermanentTarget(gameData, card, option);
+            return findModalPermanentTargets(gameData, card, option);
         }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            return AiUtils.getOpponentId(gameData, aiPlayer.getId());
+            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+            return opponentId == null ? List.of() : List.of(opponentId);
         }
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
-            return targets.isEmpty() ? null : targets.getFirst().getId();
+            return targets.isEmpty() ? List.of() : List.of(targets.getFirst().getId());
         }
-        return null;
+        return List.of();
     }
 
     private boolean isModalModeValid(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
@@ -1575,7 +1582,9 @@ public abstract class AiDecisionEngine {
         }
         CardEffect effect = option.effect();
         if (EffectResolution.targetsSpellOnStack(effect)) return false;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) return findModalPermanentTarget(gameData, card, option) != null;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            return findModalModeTargets(gameData, card, option).size() >= option.minTargets();
+        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) return true;
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
@@ -1583,22 +1592,66 @@ public abstract class AiDecisionEngine {
         return true;
     }
 
-    private UUID findModalPermanentTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+    private boolean usesModalTargetSlots(ChooseOneEffect coe, ChooseOneEffect.ChooseOneOption option) {
+        return coe.variableModeCount() || coe.choicesRequired() > 1
+                || option.targetFilters() != null
+                || option.minTargets() != 1 || option.maxTargets() != 1;
+    }
+
+    private List<UUID> findModalPermanentTargets(GameData gameData, Card card,
+                                                 ChooseOneEffect.ChooseOneOption option) {
+        if (option.targetFilters() != null) {
+            List<UUID> targets = new ArrayList<>();
+            for (TargetFilter filter : option.targetFilters()) {
+                UUID target = findModalPermanentTarget(gameData, card, filter, targets);
+                if (target == null) {
+                    return targets;
+                }
+                targets.add(target);
+            }
+            return targets;
+        }
+
+        int targetLimit = option.xScaledTargets()
+                ? Math.max(1, option.minTargets())
+                : option.maxTargets();
+        return findModalPermanentTargets(gameData, card, option.targetFilter(), targetLimit, List.of());
+    }
+
+    private List<UUID> findModalPermanentTargets(GameData gameData, Card card, TargetFilter filter,
+                                                 int targetLimit, List<UUID> alreadyChosen) {
+        if (targetLimit <= 0) {
+            return List.of();
+        }
+
+        List<UUID> targets = new ArrayList<>();
         // Evaluate the mode's targeting on an unfrozen runtime copy — the real card is frozen
         // (live cards are shared with simulation copies and must not be mutated, not even
         // temporarily with a restore).
         Card evalCard = card.createRuntimeCopy();
-        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        evalCard.setCastTimeTargetFilter(filter);
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
             if (playerId == null) continue;
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!card.isAllowSharedTargets() && alreadyChosen.contains(p.getId())) {
+                    continue;
+                }
                 if (targetSelector.isValidPermanentTarget(gameData, evalCard, p, aiPlayer.getId())) {
-                    return p.getId();
+                    targets.add(p.getId());
+                    if (targets.size() == targetLimit) {
+                        return targets;
+                    }
                 }
             }
         }
-        return null;
+        return targets;
+    }
+
+    private UUID findModalPermanentTarget(GameData gameData, Card card, TargetFilter filter,
+                                          List<UUID> alreadyChosen) {
+        List<UUID> targets = findModalPermanentTargets(gameData, card, filter, 1, alreadyChosen);
+        return targets.isEmpty() ? null : targets.getFirst();
     }
 
     /**

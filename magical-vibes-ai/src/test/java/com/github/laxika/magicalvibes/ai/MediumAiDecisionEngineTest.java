@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AetherTide;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -926,6 +927,27 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies both targets for Blinding Beam's tap mode")
+    void castsBlindingBeamWithTwoTargetCreatures() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        Permanent firstTarget = new Permanent(new AirElemental());
+        Permanent secondTarget = new Permanent(new AirElemental());
+        gd.playerBattlefields.get(human.getId()).add(firstTarget);
+        gd.playerBattlefields.get(human.getId()).add(secondTarget);
+        harness.setHand(aiPlayer, List.of(new BlindingBeam()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blinding Beam");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
     }
 
     @Test

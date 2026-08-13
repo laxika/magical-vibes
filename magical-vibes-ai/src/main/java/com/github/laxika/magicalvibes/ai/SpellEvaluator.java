@@ -219,16 +219,20 @@ public class SpellEvaluator {
         }
         // Tap target permanent
         if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
-            double bestTapValue = oppBattlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
-                    .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)
-                    .max()
-                    .orElse(0);
-            return bestTapValue;
+            return evaluateTargetTapValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         }
         // Fall through to the standard effect evaluation
         return evaluateSingleEffect(gameData, null, effect, aiPlayerId, opponentId,
                 aiBattlefield, oppBattlefield);
+    }
+
+    private double evaluateTargetTapValue(GameData gameData, List<Permanent> opponentBattlefield,
+                                          UUID opponentId, UUID aiPlayerId) {
+        return opponentBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
+                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)
+                .max()
+                .orElse(0);
     }
 
     /**
@@ -533,6 +537,10 @@ public class SpellEvaluator {
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
             return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
+        }
+
+        if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
+            return evaluateTargetTapValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         }
 
         // Steal (opponent loses creature + we gain it)

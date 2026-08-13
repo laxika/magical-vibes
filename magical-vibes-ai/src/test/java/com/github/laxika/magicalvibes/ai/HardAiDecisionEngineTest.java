@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
@@ -1202,6 +1203,40 @@ class HardAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies both targets for Blinding Beam's tap mode")
+    void castsBlindingBeamWithTwoTargetCreatures() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        for (int i = 0; i < 3; i++) {
+            Permanent plains = new Permanent(new Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+
+        Permanent firstTarget = new Permanent(new AirElemental());
+        Permanent secondTarget = new Permanent(new AirElemental());
+        gd.playerBattlefields.get(player2.getId()).add(firstTarget);
+        gd.playerBattlefields.get(player2.getId()).add(secondTarget);
+        harness.setHand(player1, List.of(new BlindingBeam()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blinding Beam");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
     }
 
     @Test
