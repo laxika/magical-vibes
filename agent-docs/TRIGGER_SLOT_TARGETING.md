@@ -225,9 +225,9 @@ an opponent of the graveyard owner whenever a black card enters that graveyard f
 `ON_ALLY_PERMANENT_BECOMES_TAPPED`,
 `ON_SELF_BECOMES_UNTAPPED` (Hollowsage; fires when the permanent transitions tapped→untapped, from
 the untap step or any untap effect, via `TriggerCollectionService.checkBecomesUntappedTriggers` — driven
-from `UntapStepService` and `TapUntapSupport.untapPermanent`. Non-targeting: a "you may have target player
-…" is expressed as a `MayEffect`-wrapped targeting effect whose "may" and target are resolved on the stack
-via the pending-may-ability flow, not a target-choice pipeline),
+from `UntapStepService` and `TapUntapSupport.untapPermanent`. Targeted effects choose targets as the ability
+is put on the stack; a "you may have target player …" is expressed as a `MayEffect`-wrapped targeting effect
+whose "may" and target are resolved on the stack via the pending-may-ability flow),
 `ON_ALLY_PERMANENT_BECOMES_UNTAPPED` (Wake Thrasher; the untapped-ally counterpart of
 `ON_ALLY_PERMANENT_BECOMES_TAPPED` — fires once per untapped permanent on every permanent with the slot on
 the untapped permanent's controller's battlefield, including the source untapping itself; same

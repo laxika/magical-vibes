@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecome
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
@@ -2174,6 +2175,9 @@ public class LayerSystemService {
             if (!harvested.getGrantedEffects().isEmpty()) {
                 harvested.getGrantedEffects().forEach(effect -> {
                     state.addStaticEffect(effect);
+                    if (effect instanceof CantHaveOrGainKeywordEffect restriction) {
+                        state.blockKeyword(restriction.keyword());
+                    }
                     board.recordGrantedEffect(target.permanent().getId(),
                             provenanceSourceName(instance), effect);
                 });

@@ -315,6 +315,7 @@ public class PermanentCounterSupport {
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
             case MAGNET -> { target.setCounterCount(CounterType.MAGNET, target.getCounterCount(CounterType.MAGNET) + count); yield "magnet"; }
+            case MANIFESTATION -> { target.setCounterCount(CounterType.MANIFESTATION, target.getCounterCount(CounterType.MANIFESTATION) + count); yield "manifestation"; }
             case MINE -> { target.setCounterCount(CounterType.MINE, target.getCounterCount(CounterType.MINE) + count); yield "mine"; }
             case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             case MUSTER -> { target.setCounterCount(CounterType.MUSTER, target.getCounterCount(CounterType.MUSTER) + count); yield "muster"; }

@@ -191,6 +191,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.clear();
+        gameData.permanentsProtectedFromDamageUntilNextTurn.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();

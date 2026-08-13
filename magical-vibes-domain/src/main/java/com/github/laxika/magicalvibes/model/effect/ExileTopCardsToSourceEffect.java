@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * One or more players exile the top {@code count} cards of their library, tracked as "exiled with"
  * the source permanent. Which players is set by {@code scope} — the controller alone (Colfenor's
- * Plans, Duplicity, Search the City), a single opponent (Grimoire Thief, Nightveil Specter), or
- * every player (Knowledge Pool). Pair with {@link AllowCastFromCardsExiledWithSourceEffect} to let
- * a player play those cards.
+ * Plans, Duplicity, Search the City), the chosen player (Mindreaver), a single opponent (Grimoire
+ * Thief, Nightveil Specter), or every player (Knowledge Pool). Pair with
+ * {@link AllowCastFromCardsExiledWithSourceEffect} to let a player play those cards.
  *
  * <p>The effect fizzles if the source permanent has left the battlefield by the time it resolves,
  * since there would be nothing to track the exiled cards with.
@@ -48,7 +48,8 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
 
     @Override
     public TargetSpec targetSpec() {
-        return targetedOpponent ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
+        return targetedOpponent || scope == LibraryScope.TARGET_PLAYER
+                ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     /**

@@ -20,7 +20,7 @@ public class StackEntry {
 
     private final StackEntryType entryType;
     private final Card card;
-    private final UUID controllerId;
+    @Setter private UUID controllerId;
     /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
     @Setter private UUID activePlayerId;
     private final String description;

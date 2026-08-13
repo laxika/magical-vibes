@@ -1458,7 +1458,8 @@ public class SpellCastingService {
             var manaCost = altCast.getCost(ManaCastingCost.class);
             if (manaCost.isPresent()) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
-                ManaCost cost = new ManaCost(manaCost.get().manaCost());
+                ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(manaCost.get().manaCost()));
                 if (cost.hasX() && effectiveXValue < 0) {
                     throw new IllegalStateException("X value cannot be negative");
                 }
@@ -1494,7 +1495,8 @@ public class SpellCastingService {
             String manaCostString = card.getManaCost() != null
                     ? card.getManaCost() + escalateManaSuffix : escalateManaSuffix;
             if (!manaCostString.isEmpty()) {
-                ManaCost normalCost = new ManaCost(manaCostString);
+                ManaCost normalCost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(manaCostString));
                 boolean normalCostPayable = normalCost.hasX()
                         ? normalCost.canPayWithAdditionalGenericCost(
                                 pool, effectiveXValue, additionalCost - selectedDelveReduction)
@@ -1508,7 +1510,8 @@ public class SpellCastingService {
             if (!usingBattlefieldAlternativeCost) {
                 // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
                 if (card.getManaCost() != null) {
-                    ManaCost cost = new ManaCost(card.getManaCost() + escalateManaSuffix);
+                    ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
                     if (cost.hasX()) {
                         if (effectiveXValue < 0) {
                             throw new IllegalStateException("X value cannot be negative");
@@ -1550,7 +1553,8 @@ public class SpellCastingService {
 
                 // Validate creature-only mana restriction (e.g. Myr Superion)
                 if (card.isRequiresCreatureMana()) {
-                    ManaCost creatureCost = new ManaCost(card.getManaCost() + escalateManaSuffix);
+                    ManaCost creatureCost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
                     int additionalCostForCreature = castingCostService.getCastCostModifier(
                             gameData, playerId, card, effectiveXValue);
                     if (!creatureCost.canPayCreatureOnly(pool, additionalCostForCreature)) {
@@ -2114,7 +2118,8 @@ public class SpellCastingService {
             // Validate mana when target-based cost reduction doesn't apply but playability
             // check passed optimistically (e.g. Savage Stomp targeting a non-Dinosaur)
             if (targetSubtypeCostReduction == 0 && !usingAlternateCost && castingCostService.hasTargetBasedCastCostReduction(card)) {
-                ManaCost validationCost = new ManaCost(card.getManaCost());
+                ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(card.getManaCost()));
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int costModifier = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue);
                 if (!validationCost.canPay(pool, costModifier)) {
@@ -4247,7 +4252,8 @@ public class SpellCastingService {
         if (playWithoutPaying) {
             // Cast without paying its mana cost — no payment.
         } else if (anyManaType && card.getManaCost() != null) {
-            ManaCost cost = new ManaCost(card.getManaCost());
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(card.getManaCost()));
             cost.payAsGeneric(gameData.playerManaPools.get(playerId));
         } else {
             // Mana reserved for this exact card (Ice Cauldron) is promoted into the regular pool for
@@ -4788,7 +4794,8 @@ public class SpellCastingService {
             return before - pool.getTotalAllMana();
         }
 
-        ManaCost cost = new ManaCost(totalMana);
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(totalMana));
 
         // Vizier of the Menagerie: eligible spells (e.g. creature spells) may be paid with mana of any
         // type — pay the whole cost as generic. Convoke handles its own colour selection, so defer to
@@ -4810,7 +4817,8 @@ public class SpellCastingService {
             String altCostStr = castingCostService.findAffordableAlternativeCostFromBattlefield(
                     gameData, playerId, card, pool, additionalCost);
             if (altCostStr != null) {
-                ManaCost altCost = new ManaCost(altCostStr);
+                ManaCost altCost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(altCostStr));
                 altCost.pay(pool, additionalCost);
                 return before - pool.getTotalAllMana();
             }
@@ -5553,7 +5561,8 @@ public class SpellCastingService {
         }
 
         if (graveyardAlternateManaCost != null) {
-            ManaCost cost = new ManaCost(graveyardAlternateManaCost);
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(graveyardAlternateManaCost));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
@@ -5574,7 +5583,8 @@ public class SpellCastingService {
             if (manaCostOpt.isEmpty()) {
                 throw new IllegalStateException("Disturb has no mana cost");
             }
-            ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
@@ -5587,9 +5597,10 @@ public class SpellCastingService {
         }
 
         if (usesNormalManaCost) {
-            ManaCost cost = new ManaCost(card.getManaCost());
-            ManaPool pool = gameData.playerManaPools.get(playerId);
             boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(card.getManaCost()), cardHasFlashback);
+            ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             if (cardHasFlashback) {
                 if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
@@ -5607,7 +5618,8 @@ public class SpellCastingService {
             FlashbackCast flashback = flashbackOpt.orElseThrow(() -> new IllegalStateException("Flashback has no cost"));
             var manaCostOpt = flashback.getCost(ManaCastingCost.class);
             if (manaCostOpt.isPresent()) {
-                ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+                ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()), true);
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int before = pool.getTotalAllMana();
                 if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
@@ -5665,7 +5677,8 @@ public class SpellCastingService {
                 .orElseThrow(() -> new IllegalStateException("Card does not have a bestow cost"));
         ManaCastingCost manaCost = bestowCast.getCost(ManaCastingCost.class)
                 .orElseThrow(() -> new IllegalStateException("Bestow cost has no mana component"));
-        ManaCost cost = new ManaCost(manaCost.manaCost());
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(manaCost.manaCost()));
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
         if (!cost.canPay(gameData.playerManaPools.get(playerId), additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay bestow cost");
@@ -5679,7 +5692,8 @@ public class SpellCastingService {
                 .orElseThrow(() -> new IllegalStateException("Bestow cost has no mana component"));
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         int before = pool.getTotalAllMana();
-        ManaCost cost = new ManaCost(manaCost.manaCost());
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, player.getId(), card, new ManaCost(manaCost.manaCost()));
         cost.pay(pool, castingCostService.getCastCostModifier(gameData, player.getId(), card) + targetingTax);
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
         gameLogService.append(gameData, GameLog.textCardText(
@@ -5892,7 +5906,8 @@ public class SpellCastingService {
         }
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
-        ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()));
         if (altCast.reduceManaBySacrificedManaCost()) {
             cost.payAfterReduction(pool, sacrificedManaCost);
         } else {

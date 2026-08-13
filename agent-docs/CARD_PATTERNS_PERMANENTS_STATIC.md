@@ -1,5 +1,7 @@
 ﻿# Card Patterns: Static Permanents & Auras
 
+| Attack cost paid by returning a permanent | `f/FloodtideSerpent.java` | STATIC `CantAttackUnlessEffect(new ControlsPermanentCount(1, filter), desc)` + `CantAttackUnlessReturnToHandEffect(1, filter, desc)` — the controller returns a matching permanent to its owner's hand as attackers are declared |
+
 All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
@@ -16,6 +18,7 @@ All paths relative to `cards/`.
 | Opponents' creatures can't get +1/+1 counters | `b/Blightbeetle.java` | STATIC GrantEffectEffect(CantHavePlusOnePlusOneCountersEffect, OPPONENT_CREATURES) — the narrow counter lock leaves other counter types unaffected |
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) â€” +1/+1 and indestructible to other Knights you control |
+| Legendary-creature count lord (own) | `h/HeroesPodium.java` | STATIC BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1) â€” each legendary creature you control gets +1/+1 for each other legendary creature you control; a legendary source creature also receives the bonus |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
 | Dynamic anthem from creatures entering this turn + combat token | `k/Kinbinding.java` | STATIC DynamicStaticBoostEffect(CreaturesEnteredBattlefieldThisTurn(CONTROLLER), same, OWN_CREATURES) + BEGINNING_OF_COMBAT_TRIGGERED green and white Kithkin token |
 | Multi-subtype lord + transform lock | `i/Immerwolf.java` | STATIC StaticBoostEffect(1, 1, OWN_CREATURES, PermanentHasAnySubtypePredicate({WOLF, WEREWOLF})) + STATIC PreventTransformEffect(PermanentAllOfPredicate(WEREWOLF, NOT HUMAN)) â€” +1/+1 to other Wolves/Werewolves you control and "Non-Human Werewolves you control can't transform" |
@@ -205,6 +208,7 @@ All paths relative to `cards/`.
 | Island-tap CU-restricted mana + snow bonus | `s/Snowfall.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{U}") + ON_ANY_PLAYER_TAPS_LAND `AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect(ISLAND, BLUE, 1, 2, CumulativeUpkeepCosts())` — Island → +{U} CU-only; snow Island → +{U}{U} instead; "may" auto-accepted |
 | Snow-land tap mana boost + symmetric untap lock | `w/WintersNight.java` | ON_ANY_PLAYER_TAPS_LAND `AddProducedManaWhenSnowLandTappedEffect()` + `TappedSnowLandDoesntUntapEffect()` — World enchantment; every snow land tapped for mana pays its controller an extra mana of the produced type and then skips its next untap step |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
+| Play lands from top of library + public reveal + landfall life gain | `c/CourserOfKruphix.java` | STATIC PlayWithTopCardRevealedEffect + PlayLandsFromTopOfLibraryEffect + ON_ALLY_LAND_ENTERS_BATTLEFIELD GainLifeEffect(1) |
 | Cast cycling spells from GY + exile non-cycled cycling cards | `a/AbandonedSarcophagus.java` | STATIC `CastSpellsWithCyclingFromGraveyardEffect` + `ExileOwnCyclingCardsUnlessCycledEffect` |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Optional draw replacement — skip a draw | `o/ObstinateFamiliar.java` | STATIC ObstinateFamiliarDrawReplacementEffect — the controller is offered a may-choice for each card they would draw; accepting leaves that card on top of the library |

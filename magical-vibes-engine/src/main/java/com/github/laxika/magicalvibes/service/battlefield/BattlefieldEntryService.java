@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -1184,6 +1185,38 @@ public class BattlefieldEntryService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEnteredPerm = bf.get(bf.size() - 1);
             justEnteredPerm.setKicked(true);
+        }
+
+        // Tribute is chosen by an opponent as the creature enters. The choice is presented after
+        // the permanent is placed so the shared may-ability interaction can carry it, but before
+        // any ETB trigger is collected.
+        TributeEffect tribute = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof TributeEffect)
+                .map(TributeEffect.class::cast)
+                .findFirst().orElse(null);
+        if (tribute != null) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+            if (opponentId != null) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        card,
+                        controllerId,
+                        List.of(tribute),
+                        card.getName() + " — Put " + tribute.counterCount()
+                                + " +1/+1 counter(s) on it to pay tribute?",
+                        null,
+                        null,
+                        justEntered.getId(),
+                        null,
+                        0,
+                        0,
+                        null,
+                        null,
+                        opponentId,
+                        null));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
         }
 
         // "As enters, choose another creature you control" — replacement effect (CR 614.1c),

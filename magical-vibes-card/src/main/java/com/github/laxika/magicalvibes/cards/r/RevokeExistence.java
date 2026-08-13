@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "18")
+@CardRegistration(set = "BNG", collectorNumber = "25")
 public class RevokeExistence extends Card {
 
     public RevokeExistence() {

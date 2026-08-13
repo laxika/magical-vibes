@@ -174,6 +174,48 @@ public class CastingCostService {
         return delta;
     }
 
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), false);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, boolean flashbackCost) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), flashbackCost);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, CostModifierSnapshot snapshot) {
+        return applyColoredManaCostReductions(gameData, playerId, card, cost, snapshot, false);
+    }
+
+    public ManaCost applyColoredManaCostReductions(GameData gameData, UUID playerId, Card card,
+                                                   ManaCost cost, CostModifierSnapshot snapshot,
+                                                   boolean flashbackCost) {
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
+        ManaCost effectiveCost = cost;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
+            if (handler != null) {
+                ManaCost reduction = handler.coloredManaCostReduction(
+                        context, effect, CostModificationSource.SPELL_ITSELF);
+                if (reduction != null) {
+                    effectiveCost = effectiveCost.reducedByColoredOnly(reduction);
+                }
+            }
+        }
+        for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            ManaCost reduction = modifier.handler().coloredManaCostReduction(
+                    context, modifier.effect(), modifier.source());
+            if (reduction != null) {
+                effectiveCost = effectiveCost.reducedByColoredOnly(reduction);
+            }
+        }
+        return effectiveCost;
+    }
+
     /**
      * Net generic-mana adjustment to an optional buyback cost paid while casting {@code card}.
      * Positive means more expensive, negative means cheaper.
@@ -654,7 +696,8 @@ public class CastingCostService {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     String alternativeCostString = altCost.manaCostFor(card.getManaValue());
-                    ManaCost alternativeManaCost = new ManaCost(alternativeCostString);
+                    ManaCost alternativeManaCost = applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(alternativeCostString));
                     if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
                         return alternativeCostString;
                     }
@@ -674,7 +717,8 @@ public class CastingCostService {
             var bestowCast = card.getCastingOption(BestowCast.class);
             if (bestowCast.isEmpty()) return false;
             return bestowCast.get().getCost(ManaCastingCost.class)
-                    .map(cost -> new ManaCost(cost.manaCost()).canPay(
+                    .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
+                            new ManaCost(cost.manaCost())).canPay(
                             gameData.playerManaPools.get(playerId), getCastCostModifier(gameData, playerId, card)))
                     .orElse(false);
         }
@@ -765,7 +809,8 @@ public class CastingCostService {
         var manaCost = altCast.getCost(ManaCastingCost.class);
         if (manaCost.isPresent()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost cost = new ManaCost(manaCost.get().manaCost());
+            ManaCost cost = applyColoredManaCostReductions(gameData, playerId, card,
+                    new ManaCost(manaCost.get().manaCost()));
             if (altCast.reduceManaBySacrificedManaCost() && sacCost.isPresent() && battlefield != null
                     && sacCost.get().count() == 1) {
                 return battlefield.stream()

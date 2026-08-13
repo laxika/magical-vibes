@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -96,6 +97,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
+            whimsOfTheFatesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
             tappedLandSacrificeDamageIfSubtypeHandler;
@@ -319,6 +322,9 @@ public class MultiPermanentChoiceHandlerService {
             handlePileSeparation(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingBendOrBreak.class)) {
             bendOrBreakEffectHandler.completeLandSeparation(gameData, permanentIds);
+        } else if (gameData.hasPendingInteraction(PendingWhimsOfTheFates.class)) {
+            whimsOfTheFatesEffectHandler.completePileSelection(gameData, permanentIds);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.UUID;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Accumulates the damage a single source deals during one non-combat damage event (a stack-entry
@@ -15,12 +17,19 @@ public final class PendingSourceDamage {
     private final UUID controllerId;
     private final UUID sourcePermanentId;
     private int amount;
+    private final Map<UUID, Integer> damageToPlayers = new LinkedHashMap<>();
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
+        this(sourceCard, controllerId, sourcePermanentId, amount, null);
+    }
+
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
+                               UUID damagedPlayerId) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
         this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
+        addToPlayer(damagedPlayerId, amount);
     }
 
     public Card getSourceCard() {
@@ -39,7 +48,28 @@ public final class PendingSourceDamage {
         return amount;
     }
 
+    public Map<UUID, Integer> getDamageToPlayers() {
+        return Map.copyOf(damageToPlayers);
+    }
+
     public void add(int extra) {
         this.amount += extra;
+    }
+
+    public void add(int extra, UUID damagedPlayerId) {
+        this.amount += extra;
+        addToPlayer(damagedPlayerId, extra);
+    }
+
+    private void addToPlayer(UUID damagedPlayerId, int amount) {
+        if (damagedPlayerId != null && amount > 0) {
+            damageToPlayers.merge(damagedPlayerId, amount, Integer::sum);
+        }
+    }
+
+    public PendingSourceDamage copy() {
+        PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount);
+        damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
+        return copy;
     }
 }

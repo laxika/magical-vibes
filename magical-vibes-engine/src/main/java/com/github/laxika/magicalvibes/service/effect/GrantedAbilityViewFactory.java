@@ -109,6 +109,11 @@ public class GrantedAbilityViewFactory {
             result.add(new GrantedAbilityView(
                     "Protection from non-" + formatSubtype(subtype) + " creatures", null));
         }
+        if (permanent.isProtectionFromOpponentCreaturesUntilEndOfTurn()
+                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !bonus.losesAllAbilities()) {
+            result.add(new GrantedAbilityView("Protection from creatures your opponents control", null));
+        }
         if (permanent.isProtectionFromOpponentsPermanently()
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 && !bonus.losesAllAbilities()) {

@@ -47,6 +47,7 @@ public enum CounterType {
     LOYALTY,
     LUCK,
     MAGNET,
+    MANIFESTATION,
     MINE,
     DEFENSE,
     DEPLETION,

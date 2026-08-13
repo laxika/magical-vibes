@@ -190,6 +190,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedC
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -1922,6 +1923,7 @@ public class PredicateEvaluationService {
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
+            case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;
         };
     }
 

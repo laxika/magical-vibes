@@ -49,6 +49,8 @@ public class CharacteristicState {
      *  layer can report additive color grants as the difference from this baseline. */
     private final Set<CardColor> seededColors = EnumSet.noneOf(CardColor.class);
     private final Set<Keyword> keywords = new HashSet<>();
+    /** Keywords this permanent is prohibited from having or gaining by a granted restriction. */
+    private final Set<Keyword> blockedKeywords = new HashSet<>();
     /** The keywords the state was seeded with (printed + persistent one-shot grants),
      *  snapshotted by {@link #snapshotSeededCharacteristics()} before layer 6 runs. */
     private final Set<Keyword> seededKeywords = new HashSet<>();
@@ -154,6 +156,7 @@ public class CharacteristicState {
         this.colorsOverridden = source.colorsOverridden;
         this.seededColors.addAll(source.seededColors);
         this.keywords.addAll(source.keywords);
+        this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
@@ -256,14 +259,24 @@ public class CharacteristicState {
     // --- Layer 6 (abilities) ---
 
     public void addKeyword(Keyword keyword) {
-        keywords.add(keyword);
+        if (!blockedKeywords.contains(keyword)) {
+            keywords.add(keyword);
+        }
     }
 
     public void addKeywords(Collection<Keyword> granted) {
-        keywords.addAll(granted);
+        granted.stream()
+                .filter(keyword -> !blockedKeywords.contains(keyword))
+                .forEach(keywords::add);
     }
 
     public void removeKeyword(Keyword keyword) {
+        keywords.remove(keyword);
+    }
+
+    /** Applies a keyword restriction and removes the keyword already present, if any. */
+    public void blockKeyword(Keyword keyword) {
+        blockedKeywords.add(keyword);
         keywords.remove(keyword);
     }
 
@@ -292,6 +305,7 @@ public class CharacteristicState {
      */
     public void loseAllAbilities(long timestamp) {
         keywords.clear();
+        blockedKeywords.clear();
         protectionColors.clear();
         grantedActivatedAbilities.clear();
         grantedStaticEffects.clear();

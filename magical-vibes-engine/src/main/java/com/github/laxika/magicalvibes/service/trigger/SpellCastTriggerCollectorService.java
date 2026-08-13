@@ -1266,14 +1266,14 @@ public class SpellCastTriggerCollectorService {
                 ? spellManaValue(match.gameData(), spellCard) : 0;
 
         if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
                     match.permanent().getCard(),
                     match.controllerId(),
                     resolved,
                     match.permanent().getCard().getName() + " — " + may.prompt(),
-                    null,
                     trigger.manaCost(),
-                    match.permanent().getId()));
+                    match.permanent().getId(),
+                    spellCard.getId()));
         } else if (needsGraveyardTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), resolved

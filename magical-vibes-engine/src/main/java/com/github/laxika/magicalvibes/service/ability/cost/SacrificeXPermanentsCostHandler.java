@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
@@ -20,14 +21,17 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
 
     private final SacrificeXPermanentsCost cost;
     private final int xValue;
+    private final UUID sourcePermanentId;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentSacrificeAction sacrificeAction;
 
     public SacrificeXPermanentsCostHandler(SacrificeXPermanentsCost cost, int xValue,
                                            PredicateEvaluationService predicateEvaluationService,
-                                           PermanentSacrificeAction sacrificeAction) {
+                                           PermanentSacrificeAction sacrificeAction,
+                                           UUID sourcePermanentId) {
         this.cost = cost;
         this.xValue = xValue;
+        this.sourcePermanentId = sourcePermanentId;
         this.predicateEvaluationService = predicateEvaluationService;
         this.sacrificeAction = sacrificeAction;
     }
@@ -49,17 +53,22 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         return battlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                .filter(p -> matchesFilter(gameData, p))
                 .map(Permanent::getId)
                 .toList();
     }
 
     @Override
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
+        if (!matchesFilter(gameData, chosen)) {
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);
+    }
+
+    private boolean matchesFilter(GameData gameData, Permanent permanent) {
+        FilterContext context = FilterContext.of(gameData).withSourcePermanentId(sourcePermanentId);
+        return predicateEvaluationService.matchesPermanentPredicate(permanent, cost.filter(), context);
     }
 
     @Override

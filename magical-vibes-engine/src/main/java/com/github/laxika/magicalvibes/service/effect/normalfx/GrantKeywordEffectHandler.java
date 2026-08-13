@@ -58,9 +58,14 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 // Layer-6 floating effect as well as the legacy bucket, so a grant resolving after
                 // an "all creatures you control lose all abilities" on the same entry survives it
                 // (CR 613.7 timestamp order) — Dragonshift overloaded.
-                addLegacyBucket(permanent, grant);
+                Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+                if (grantableKeywords.isEmpty()) {
+                    continue;
+                }
+                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                        entry.getCard().getName(), null, entry.getControllerId(), grant,
+                        entry.getCard().getName(), null, entry.getControllerId(),
+                        new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition()),
                         permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
                 count++;
             }
@@ -83,7 +88,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
-                addLegacyBucket(permanent, grant);
+                Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+                if (grantableKeywords.isEmpty()) {
+                    continue;
+                }
+                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 count++;
             }
 
@@ -112,7 +121,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                             && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                         continue;
                     }
-                    addLegacyBucket(permanent, grant);
+                    Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+                    if (grantableKeywords.isEmpty()) {
+                        continue;
+                    }
+                    addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                     count++;
                 }
             }
@@ -137,7 +150,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     return;
                 }
-                addLegacyBucket(permanent, grant);
+                Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+                if (grantableKeywords.isEmpty()) {
+                    return;
+                }
+                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 count[0]++;
             });
 
@@ -187,15 +204,17 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // and then replays this grant at its real timestamp.
             // WHILE_SOURCE_ON_BATTLEFIELD grants live only as floating effects: the legacy
             // buckets are both cleared by turn cleanup, which would silently end the grant.
-            if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                    && grant.duration() != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
-                bucketFor(target, grant.duration()).addAll(grant.keywords());
+            Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
+            if (grantableKeywords.isEmpty()) {
+                continue;
             }
+            addLegacyBucket(target, grant.duration(), grantableKeywords);
+            GrantKeywordEffect resolvedGrant = new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition());
             UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
                     ? entry.getSourcePermanentId()
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(), grant,
+                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(), resolvedGrant,
                     target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
             String keywordNames = formatKeywords(grant.keywords());
             
@@ -237,10 +256,10 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         };
     }
 
-    private void addLegacyBucket(Permanent permanent, GrantKeywordEffect grant) {
-        if (grant.duration() != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                && grant.duration() != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
-            bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+    private void addLegacyBucket(Permanent permanent, GrantDuration duration, Set<Keyword> keywords) {
+        if (duration != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
+            bucketFor(permanent, duration).addAll(keywords);
         }
     }
 
@@ -250,6 +269,12 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             case INDEFINITE -> permanent.getPersistentGrantedKeywords();
             default -> permanent.getGrantedKeywords();
         };
+    }
+
+    private Set<Keyword> grantableKeywords(GameData gameData, Permanent permanent, Set<Keyword> keywords) {
+        return keywords.stream()
+                .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private String durationLabel(GrantDuration duration) {

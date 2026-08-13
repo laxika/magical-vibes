@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -2200,7 +2201,12 @@ public class AbilityActivationService {
                 effectiveXValue, damageAssignments);
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
-        if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
+        boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && abilityEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (targetsGraveyard) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(
+                    gameData, playerId, abilityEffects, targetIds, permanent.getCard().getId(), effectiveXValue);
+        } else if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
                     targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
@@ -2692,7 +2698,8 @@ public class AbilityActivationService {
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
                 c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId);
-        if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
+        if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
+                c, xValue, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(c, gameLogService);

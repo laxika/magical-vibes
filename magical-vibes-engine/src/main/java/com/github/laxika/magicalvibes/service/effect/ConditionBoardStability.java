@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
+import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 
@@ -42,6 +43,7 @@ public final class ConditionBoardStability {
             // Devotion reads the mana costs of battlefield permanents, whose identities and
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;
+            case DevotionToColorsAtLeast ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());
             case AllConditions c -> allStable(c.conditions());
             case AllOf c -> allStable(c.conditions());

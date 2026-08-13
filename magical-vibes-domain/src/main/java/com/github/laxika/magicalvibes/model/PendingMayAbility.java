@@ -21,7 +21,8 @@ public record PendingMayAbility(
         UUID activePlayerId,
         UUID choicePlayerId,
         Permanent sourcePermanentSnapshot,
-        UUID sourceControllerId
+        UUID sourceControllerId,
+        UUID triggeringCardId
 ) {
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
@@ -31,13 +32,22 @@ public record PendingMayAbility(
                              Permanent sourcePermanentSnapshot) {
         this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
                 tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
-                choicePlayerId, sourcePermanentSnapshot, null);
+                choicePlayerId, sourcePermanentSnapshot, null, null);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
                              UUID targetCardId, UUID sourceControllerId) {
         this(sourceCard, controllerId, effects, description, targetCardId, null, null, null,
-                0, 0, null, null, null, null, sourceControllerId);
+                0, 0, null, null, null, null, sourceControllerId, null);
+    }
+
+    /** Creates a may ability that acts on the spell that caused its spell-cast trigger. */
+    public static PendingMayAbility forSpellCastTrigger(Card sourceCard, UUID controllerId,
+                                                        List<CardEffect> effects, String description,
+                                                        String manaCost, UUID sourcePermanentId,
+                                                        UUID triggeringCardId) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, null, manaCost,
+                sourcePermanentId, null, 0, 0, null, null, null, null, null, triggeringCardId);
     }
 
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,

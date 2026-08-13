@@ -136,6 +136,12 @@ final class RecordingCharacteristicState extends CharacteristicState {
     }
 
     @Override
+    public void blockKeyword(Keyword keyword) {
+        log("blockKeyword:" + keyword);
+        super.blockKeyword(keyword);
+    }
+
+    @Override
     public void addProtectionColors(Collection<CardColor> colors) {
         log("addProtectionColors:" + sorted(colors));
         super.addProtectionColors(colors);

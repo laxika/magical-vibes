@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.UUID;
+import java.util.Map;
 
 /**
  * Sealed hierarchy of trigger event contexts.
@@ -314,6 +315,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a permanent becoming untapped. */
+    record SelfBecomesUntapped(UUID controllerId) implements TriggerContext {}
+
     /**
      * Context for ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers.
      */
@@ -333,7 +337,12 @@ public sealed interface TriggerContext {
      * its controller (the reflection recipient), and the total damage the source dealt in this
      * event (already summed across every simultaneous target).
      */
-    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) implements TriggerContext {}
+    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
+                             Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
+            this(sourceCard, sourceControllerId, totalDamage, Map.of());
+        }
+    }
 
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,

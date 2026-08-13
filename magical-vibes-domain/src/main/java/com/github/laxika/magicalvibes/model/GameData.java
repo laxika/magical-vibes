@@ -83,6 +83,8 @@ public class GameData {
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
     public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Snapshot of permanents that entered under each player's control during the immediately preceding turn. */
+    public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
     /** Players whose creature spell was countered by an opponent this turn (Summoning Trap). */
@@ -564,6 +566,8 @@ public class GameData {
      *  {@link #permanentsPreventedFromDealingDamage} these entries survive the cleanup step and are
      *  removed at the start of that player's next turn. */
     public final Map<UUID, UUID> permanentsPreventedFromDealingDamageUntilNextTurn = new ConcurrentHashMap<>();
+    /** Permanents protected from all damage until a player's next turn, keyed by permanent id → expiring player id. */
+    public final Map<UUID, UUID> permanentsProtectedFromDamageUntilNextTurn = new ConcurrentHashMap<>();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
@@ -1523,6 +1527,11 @@ public class GameData {
     public boolean isPreventedFromDealingDamage(UUID permanentId) {
         return permanentsPreventedFromDealingDamage.contains(permanentId)
                 || permanentsPreventedFromDealingDamageUntilNextTurn.containsKey(permanentId);
+    }
+
+    /** Returns whether all damage to the permanent is prevented until a player's next turn. */
+    public boolean isProtectedFromDamageUntilNextTurn(UUID permanentId) {
+        return permanentsProtectedFromDamageUntilNextTurn.containsKey(permanentId);
     }
 
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_TURN} duration (cleanup step). */
@@ -2822,6 +2831,7 @@ public class GameData {
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
+        copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
         copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
@@ -2869,7 +2879,8 @@ public class GameData {
         copy.reflectDamageToSourceControllerShields.addAll(this.reflectDamageToSourceControllerShields);
         copy.sourceNextDamageRedirectToPermanentShields.addAll(this.sourceNextDamageRedirectToPermanentShields);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
-        copy.pendingSourceDamageForReflection.putAll(this.pendingSourceDamageForReflection);
+        this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
+                copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---
@@ -2892,6 +2903,8 @@ public class GameData {
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
+        this.permanentsEnteredBattlefieldLastTurn.forEach((k, v) ->
+                copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);

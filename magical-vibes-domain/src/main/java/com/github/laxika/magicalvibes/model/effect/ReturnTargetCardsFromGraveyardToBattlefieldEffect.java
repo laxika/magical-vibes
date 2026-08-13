@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -36,5 +37,10 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
 
     public boolean xScaled() {
         return maxTargets == 0;
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
     }
 }

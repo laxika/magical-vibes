@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
@@ -675,7 +676,13 @@ public class StepTriggerService {
             }
 
             for (CardEffect effect : upkeepEffects) {
-                if (effect instanceof MayEffect may) {
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && conditional.condition() instanceof AnotherPermanentEnteredLastTurn
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, activePlayerId))) {
+                    continue;
+                } else if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                 } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
                     List<Card> hand = gameData.playerHands.get(activePlayerId);
@@ -1098,6 +1105,12 @@ public class StepTriggerService {
                 }
                 // Intervening-if: werewolf transform conditions checked at trigger time
                 if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && conditional.condition() instanceof AnotherPermanentEnteredLastTurn
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, playerId))) {
+                    continue;
+                } else if (effect instanceof ConditionalEffect conditional
                         && (conditional.condition() instanceof NoSpellsCastLastTurn
                                 || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn
                                 || conditional.condition() instanceof ControllerLostLifeLastTurn

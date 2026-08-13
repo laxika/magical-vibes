@@ -384,6 +384,10 @@ public class GameViewProjectionFactory {
                         revealedPlayerIds.add(pid);
                     }
                 }
+                if (pid.equals(viewerId)
+                        && castingPermissionService.canPlayLandsFromTopOfLibrary(data, pid)) {
+                    revealedPlayerIds.add(pid);
+                }
                 if (revealedPlayerIds.contains(pid)) break;
             }
         }
@@ -522,7 +526,8 @@ public class GameViewProjectionFactory {
                     playable.add(exileCardView(gameData, playerId, card));
                 } else {
                     boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
-                    ManaCost cost = card.getParsedManaCost();
+                    ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, card.getParsedManaCost());
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
                         canAfford = cost.canPayAsGeneric(pool);
@@ -627,7 +632,8 @@ public class GameViewProjectionFactory {
         if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard, false)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
-            ManaCost cost = topCard.getParsedManaCost();
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, topCard, topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, topCard);
             boolean canAfford = cost.canPay(pool, additionalCost);

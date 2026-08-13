@@ -47,6 +47,16 @@ class ManaCostTest {
         }
     }
 
+    @Test
+    void coloredOnlyReductionDoesNotReduceUnmatchedGenericMana() {
+        ManaCost cost = new ManaCost("{2}{R}");
+
+        ManaCost reduced = cost.reducedByColoredOnly(new ManaCost("{B}{R}"));
+
+        assertThat(reduced.getGenericCost()).isEqualTo(2);
+        assertThat(reduced.getColoredCosts()).doesNotContainKey(ManaColor.RED);
+    }
+
     @Nested
     @DisplayName("payPhyrexianManaAuto")
     class PayPhyrexianManaAuto {

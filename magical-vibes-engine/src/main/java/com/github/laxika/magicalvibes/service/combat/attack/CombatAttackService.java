@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingServ
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
+import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -111,6 +112,7 @@ public class CombatAttackService {
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
+    private final AttackReturnToHandCostService attackReturnToHandCostService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
@@ -309,6 +311,7 @@ public class CombatAttackService {
         // Flooded Woodlands: the sacrifice cost is per matching attacker, so the whole declaration
         // must be affordable together, not just each attacker on its own.
         attackSacrificeCostService.validateGlobalSacrificeAttackCosts(gameData, playerId, attackerIndices);
+        attackReturnToHandCostService.validateReturnToHandAttackCosts(gameData, playerId, attackerIndices);
 
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
         Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
@@ -1192,6 +1195,7 @@ public class CombatAttackService {
         // Done last so removing sacrificed permanents from the battlefield can't shift the indices
         // used above; the paired CantAttackUnlessEffect gate guarantees the cost is payable.
         attackSacrificeCostService.paySacrificeAttackCosts(gameData, playerId, attackerIndices);
+        attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, attackerIndices);
 
         return CombatResult.AUTO_PASS_ONLY;
     }

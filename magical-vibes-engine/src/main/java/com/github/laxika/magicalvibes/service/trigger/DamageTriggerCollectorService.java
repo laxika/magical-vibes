@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -793,6 +794,45 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
                 gameData.id, sourceCard.getName(), sd.totalDamage());
         return true;
+    }
+
+    @CollectsTrigger(value = DealDamageToTargetCreatureDamagedPlayerControlsEffect.class,
+            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    private boolean handleAllyInstantOrSorceryDealsDamageToOpponent(TriggerMatchContext match,
+            DealDamageToTargetCreatureDamagedPlayerControlsEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.damageToPlayers().isEmpty() || match.permanent() == null) return false;
+
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+        boolean triggered = false;
+        for (Map.Entry<UUID, Integer> damageEntry : sd.damageToPlayers().entrySet()) {
+            UUID damagedPlayerId = damageEntry.getKey();
+            int damage = damageEntry.getValue();
+            if (damage <= 0 || damagedPlayerId.equals(match.controllerId())) continue;
+
+            boolean hasCreature = gameData.playerBattlefields.getOrDefault(damagedPlayerId, List.of()).stream()
+                    .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
+            if (!hasCreature) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.getCard(),
+                    match.controllerId(),
+                    watcher.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    damagedPlayerId,
+                    watcher.getId());
+            entry.setEventValue(damage);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+            log.info("Game {} - {} triggers for {} damage dealt to opponent {}",
+                    gameData.id, watcher.getCard().getName(), damage,
+                    gameData.playerIdToName.get(damagedPlayerId));
+            triggered = true;
+        }
+        return triggered;
     }
 
     /**

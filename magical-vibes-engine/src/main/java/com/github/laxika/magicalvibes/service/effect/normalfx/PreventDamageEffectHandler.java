@@ -71,6 +71,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case ALL_TO_TARGET_CREATURES -> allToTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_CREATURES -> allByTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> allByTargetPermanentUntilNextTurn(gameData, entry);
+            case ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN ->
+                    allToAndByTargetPermanentUntilNextTurn(gameData, entry);
             case ALL_TO_SELF -> allToSelf(gameData, entry, e.combatOnly());
             case ALL_BY_SELF -> allBySelf(gameData, entry, e.combatOnly());
             case ALL_TO_CONTROLLER_AND_CREATURES -> {
@@ -320,6 +322,23 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.textCardText(
                 "All damage ", target.getCard(), " would deal is prevented until its controller's next turn."));
         log.info("Game {} - {} prevented from dealing damage until next turn", gameData.id, target.getCard().getName());
+    }
+
+    private void allToAndByTargetPermanentUntilNextTurn(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        if (targetId == null || controllerId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) return;
+
+        gameData.permanentsPreventedFromDealingDamageUntilNextTurn.put(targetId, controllerId);
+        gameData.permanentsProtectedFromDamageUntilNextTurn.put(targetId, controllerId);
+        gameLogService.append(gameData, GameLog.textCardText(
+                "All damage that would be dealt to and dealt by ", target.getCard(),
+                " is prevented until your next turn."));
+        log.info("Game {} - {} damage to and by {} prevented until next turn",
+                gameData.id, target.getCard().getName(), target.getCard().getName());
     }
 
     private void allToSelf(GameData gameData, StackEntry entry, boolean combatOnly) {

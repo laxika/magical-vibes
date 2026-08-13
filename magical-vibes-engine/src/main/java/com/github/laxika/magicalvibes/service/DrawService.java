@@ -38,9 +38,9 @@ import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
-import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -108,10 +108,7 @@ public class DrawService {
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
-        if (isDrawPrevented(gameData)) {
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " can't draw a card."));
-            log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+        if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
 
@@ -351,10 +348,7 @@ public class DrawService {
     }
 
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
-        if (isDrawPrevented(gameData)) {
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " can't draw a card."));
-            log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+        if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
 
@@ -378,13 +372,27 @@ public class DrawService {
         performDrawCard(gameData, playerId);
     }
 
-    private boolean isDrawPrevented(GameData gameData) {
+    private boolean preventDrawIfNeeded(GameData gameData, UUID playerId) {
+        if (!isDrawPrevented(gameData, playerId)) {
+            return false;
+        }
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(playerName + " can't draw a card."));
+        log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+        return true;
+    }
+
+    private boolean isDrawPrevented(GameData gameData, UUID playerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 boolean prevents = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof PlayersCannotDrawCardsEffect);
+                        .filter(DrawRestrictionEffect.class::isInstance)
+                        .map(DrawRestrictionEffect.class::cast)
+                        .anyMatch(effect -> effect.preventsDraw(cardsDrawnThisTurn));
                 if (prevents) return true;
             }
         }
@@ -955,6 +963,10 @@ public class DrawService {
     }
 
     void performDrawCard(GameData gameData, UUID playerId) {
+        if (preventDrawIfNeeded(gameData, playerId)) {
+            return;
+        }
+
         List<Card> deck = gameData.playerDecks.get(playerId);
 
         if (deck == null || deck.isEmpty()) {

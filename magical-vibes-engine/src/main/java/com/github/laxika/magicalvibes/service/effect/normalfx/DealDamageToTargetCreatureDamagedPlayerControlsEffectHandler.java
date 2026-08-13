@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -23,6 +25,7 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,8 +56,11 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
             return;
         }
 
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, null));
+
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, 1,
-                new MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls(entry, e.damage()),
+                new MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls(entry, damage),
                 entry.getCard().getName() + "'s ability — Choose target creature "
                         + gameData.playerIdToName.get(defenderId) + " controls.");
     }

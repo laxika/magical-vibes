@@ -126,6 +126,62 @@ public class ManaCost {
                 cumulativeUpkeepPayment);
     }
 
+    /**
+     * Returns this cost after reducing only matching colored components of {@code reduction}.
+     * Unmatched colored reduction is discarded instead of reducing generic mana.
+     */
+    public ManaCost reducedByColoredOnly(ManaCost reduction) {
+        if (reduction == null) {
+            return this;
+        }
+        Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        Map<ManaColor, Integer> remainingPhyrexian = new EnumMap<>(phyrexianCosts);
+        List<HybridSymbol> remainingHybrid = new ArrayList<>(hybridCosts);
+        for (Map.Entry<ManaColor, Integer> entry : reduction.coloredCosts.entrySet()) {
+            int remaining = reduceColoredComponent(remainingColored, entry.getKey(), entry.getValue());
+            remaining = reduceColoredComponent(remainingPhyrexian, entry.getKey(), remaining);
+            removeMatchingHybridSymbols(remainingHybrid, entry.getKey(), remaining);
+        }
+        for (Map.Entry<ManaColor, Integer> entry : reduction.phyrexianCosts.entrySet()) {
+            int remaining = reduceColoredComponent(remainingColored, entry.getKey(), entry.getValue());
+            remaining = reduceColoredComponent(remainingPhyrexian, entry.getKey(), remaining);
+            removeMatchingHybridSymbols(remainingHybrid, entry.getKey(), remaining);
+        }
+        return new ManaCost(
+                genericCost, remainingColored, remainingPhyrexian, remainingHybrid, xSymbolCount,
+                cumulativeUpkeepPayment);
+    }
+
+    private static int reduceColoredComponent(Map<ManaColor, Integer> components,
+                                              ManaColor color, int reduction) {
+        if (reduction <= 0) {
+            return 0;
+        }
+        int matching = Math.min(components.getOrDefault(color, 0), reduction);
+        if (matching > 0) {
+            int remaining = components.get(color) - matching;
+            if (remaining == 0) {
+                components.remove(color);
+            } else {
+                components.put(color, remaining);
+            }
+        }
+        return reduction - matching;
+    }
+
+    private static void removeMatchingHybridSymbols(List<HybridSymbol> hybrids,
+                                                     ManaColor color, int reduction) {
+        if (reduction <= 0) {
+            return;
+        }
+        for (int i = hybrids.size() - 1; i >= 0 && reduction > 0; i--) {
+            if (hybrids.get(i).colors().contains(color)) {
+                hybrids.remove(i);
+                reduction--;
+            }
+        }
+    }
+
     /** Whether this cost can be paid after applying a mana-cost reduction. */
     public boolean canPayAfterReduction(ManaPool pool, ManaCost reduction) {
         return reducedBy(reduction).canPay(pool);
@@ -153,6 +209,25 @@ public class ManaCost {
                 count++;
             }
         }
+        return count;
+    }
+
+    /**
+     * Number of mana symbols that contain at least one of the given colors. A hybrid symbol counts
+     * once for the combined color set even when it contains two colors from that set.
+     */
+    public int countSymbolsOfAnyColor(Set<ManaColor> colors) {
+        int count = coloredCosts.entrySet().stream()
+                .filter(entry -> colors.contains(entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
+        count += phyrexianCosts.entrySet().stream()
+                .filter(entry -> colors.contains(entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
+        count += (int) hybridCosts.stream()
+                .filter(hybrid -> hybrid.colors().stream().anyMatch(colors::contains))
+                .count();
         return count;
     }
 

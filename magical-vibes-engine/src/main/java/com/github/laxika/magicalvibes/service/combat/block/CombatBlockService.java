@@ -170,12 +170,15 @@ public class CombatBlockService {
         List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
         return attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
                         gameData, attackerBattlefield.get(idx), defenderBattlefield))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameData, attackerBattlefield.get(idx)))
+                .filter(idx -> blockLegalityService.canBeBlockedByAllDefendingCreatures(
+                        blockContext, attackerBattlefield.get(idx)))
                 .toList();
     }
 
@@ -349,6 +352,8 @@ public class CombatBlockService {
 
         validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
+        validateAllDefendingCreaturesMustBlockRequirements(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockerAssignments);
         validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
@@ -1159,6 +1164,35 @@ public class CombatBlockService {
         return false;
     }
 
+    /** Records a token that entered the battlefield already blocking an attacking creature. */
+    public void markTokenAsBlocking(GameData gameData, Permanent token, Permanent attacker) {
+        if (token == null || attacker == null || !attacker.isAttacking()) {
+            return;
+        }
+
+        UUID defendingPlayerId = attacker.getAttackTarget() == null
+                ? null
+                : gameData.playerIds.contains(attacker.getAttackTarget())
+                        ? attacker.getAttackTarget()
+                        : gameQueryService.findPermanentController(gameData, attacker.getAttackTarget());
+        UUID tokenControllerId = gameData.findControllerOf(token);
+        if (defendingPlayerId == null || !defendingPlayerId.equals(tokenControllerId)) {
+            return;
+        }
+
+        token.setBlocking(true);
+        token.addBlockingTargetId(attacker.getId());
+        UUID attackerControllerId = gameData.findControllerOf(attacker);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerControllerId);
+        if (attackerBattlefield != null) {
+            int attackerIndex = attackerBattlefield.indexOf(attacker);
+            if (attackerIndex >= 0) {
+                token.addBlockingTarget(attackerIndex);
+            }
+        }
+        recordCombatBlockOpponentSubtypes(gameData, token, attacker);
+    }
+
     /** Makes an attacking creature blocked without adding a creature that blocks it. */
     public void makeAttackingCreatureBlockedWithoutBlockers(GameData gameData, Permanent attacker) {
         if (attacker == null || !attacker.isAttacking() || attacker.isBlockedWithoutBlockers()
@@ -1586,6 +1620,43 @@ public class CombatBlockService {
                     requiredAttackerIndices.size());
             if (currentLureBlocks < maxSatisfiable) {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
+            }
+        }
+    }
+
+    private void validateAllDefendingCreaturesMustBlockRequirements(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<BlockerAssignment> blockerAssignments) {
+        for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (!attacker.isAttacking()
+                    || !blockLegalityService.requiresAllDefendingCreaturesToBlock(blockContext, attacker)) {
+                continue;
+            }
+
+            int currentAttackerIdx = attackerIdx;
+            boolean isBlocked = blockerAssignments.stream()
+                    .anyMatch(assignment -> assignment.attackerIndex() == currentAttackerIdx);
+            if (!isBlocked) {
+                continue;
+            }
+
+            for (int blockerIdx = 0; blockerIdx < defenderBattlefield.size(); blockerIdx++) {
+                Permanent defender = defenderBattlefield.get(blockerIdx);
+                if (!gameQueryService.isCreature(gameData, defender)) {
+                    continue;
+                }
+                int currentBlockerIdx = blockerIdx;
+                boolean blocksAttacker = blockerAssignments.stream()
+                        .anyMatch(assignment -> assignment.blockerIndex() == currentBlockerIdx
+                                && assignment.attackerIndex() == currentAttackerIdx);
+                if (!blocksAttacker) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked unless all creatures defending player controls block it");
+                }
             }
         }
     }

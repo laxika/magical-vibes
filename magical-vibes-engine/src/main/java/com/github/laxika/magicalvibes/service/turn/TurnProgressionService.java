@@ -389,6 +389,9 @@ public class TurnProgressionService {
         gameData.landsPlayedThisTurn.clear();
         gameData.playersWhoTappedLandForManaThisTurn.clear();
         gameData.additionalLandsThisTurn.clear();
+        gameData.permanentsEnteredBattlefieldLastTurn.clear();
+        gameData.permanentsEnteredBattlefieldThisTurn.forEach((playerId, entered) ->
+                gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.playersWhoSearchedLibraryThisTurn.clear();
@@ -495,6 +498,7 @@ public class TurnProgressionService {
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
+        gameData.permanentsProtectedFromDamageUntilNextTurn.values().removeIf(nextActive::equals);
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);

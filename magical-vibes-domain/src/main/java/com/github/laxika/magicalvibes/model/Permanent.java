@@ -154,6 +154,7 @@ public class Permanent {
     @Setter private Card chosenCard;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
+    @Setter private boolean cantBlockThisCombat;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
      *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
      *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
@@ -352,6 +353,8 @@ public class Permanent {
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
     private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
+    /** Whether this permanent has protection from creatures controlled by its opponents until end of turn. */
+    @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
     /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
      *  "black creatures you control can't be blocked this turn except by black creatures").
      *  Each entry means this creature can be blocked only by blockers matching the restriction's
@@ -452,6 +455,8 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether the required tribute counters were placed on this permanent as it entered. */
+    @Setter private boolean tributePaid;
     /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
      *  and read by "if it's renowned" abilities. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean renowned;
@@ -609,6 +614,7 @@ public class Permanent {
         this.chosenCard = source.chosenCard;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
@@ -678,6 +684,7 @@ public class Permanent {
         this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
+        this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
@@ -707,6 +714,7 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
         this.monstrous = source.monstrous;
@@ -865,6 +873,7 @@ public class Permanent {
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
         this.bandId = null;
+        this.cantBlockThisCombat = false;
         clearUntilEndOfCombatAnimation();
     }
 
@@ -1261,6 +1270,7 @@ public class Permanent {
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
+        this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
         this.blockRestrictionsUntilEndOfTurn.clear();
         this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
         this.shroudIgnoredByPlayersUntilEndOfTurn.clear();

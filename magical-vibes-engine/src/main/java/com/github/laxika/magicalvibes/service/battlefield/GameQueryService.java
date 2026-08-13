@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionE
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -1551,6 +1552,13 @@ public class GameQueryService {
                 .anyMatch(effectType::isInstance);
     }
 
+    /** Returns whether a static effect prevents the permanent from having or gaining a keyword. */
+    public boolean cantHaveOrGainKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(effect -> effect instanceof CantHaveOrGainKeywordEffect restriction
+                        && restriction.keyword() == keyword);
+    }
+
     /**
      * Returns {@code true} if the permanent cannot have counters placed on it,
      * either from its own static effects or from effects granted by other permanents.
@@ -2853,6 +2861,12 @@ public class GameQueryService {
             List<CardEffect> mergedEffects = new ArrayList<>(state.getGrantedStaticEffects());
             mergedEffects.addAll(accumulator.getGrantedEffects());
             grantedEffects = mergedEffects;
+            Set<Keyword> blockedKeywords = mergedEffects.stream()
+                    .filter(CantHaveOrGainKeywordEffect.class::isInstance)
+                    .map(effect -> ((CantHaveOrGainKeywordEffect) effect).keyword())
+                    .collect(java.util.stream.Collectors.toSet());
+            mergedKeywords.removeAll(blockedKeywords);
+            keywords = mergedKeywords;
             losesAllAbilities = state.isLosesAllAbilities() || accumulator.isLosesAllAbilities();
         } else {
             // The target is not on a battlefield (AI hypothetical evaluation of an uncast
@@ -2900,6 +2914,38 @@ public class GameQueryService {
             return false;
         }
         return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId);
+    }
+
+    private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Permanent source) {
+        if (target == null || source == null || !target.isProtectionFromOpponentCreaturesUntilEndOfTurn()
+                || target.isLosesAllAbilitiesUntilEndOfTurn() || !isCreature(gameData, source)) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus.losesAllAbilities()) {
+            return false;
+        }
+        UUID targetControllerId = findPermanentController(gameData, target.getId());
+        UUID sourceControllerId = findPermanentController(gameData, source.getId());
+        return targetControllerId != null && sourceControllerId != null
+                && !targetControllerId.equals(sourceControllerId);
+    }
+
+    private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Card source,
+                                                       UUID sourceControllerId) {
+        if (target == null || source == null || sourceControllerId == null
+                || !target.isProtectionFromOpponentCreaturesUntilEndOfTurn()
+                || target.isLosesAllAbilitiesUntilEndOfTurn()
+                || (source.getType() != CardType.CREATURE
+                && !source.getAdditionalTypes().contains(CardType.CREATURE))) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus.losesAllAbilities()) {
+            return false;
+        }
+        UUID targetControllerId = findPermanentController(gameData, target.getId());
+        return targetControllerId != null && !targetControllerId.equals(sourceControllerId);
     }
 
     /**
@@ -3338,6 +3384,9 @@ public class GameQueryService {
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source,
                                            Set<CardColor> sourceColors) {
+        if (hasProtectionFromOpponentCreature(gameData, target, source)) {
+            return true;
+        }
         if (hasProtectionFromOpponents(gameData, target,
                 findPermanentController(gameData, source.getId()))) {
             return true;
@@ -3379,7 +3428,8 @@ public class GameQueryService {
         UUID protectionSourcePlayerId = sourceControllerId != null
                 ? sourceControllerId
                 : sourceCard.getOwnerId();
-        return hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
+        return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
+                || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
@@ -3396,7 +3446,8 @@ public class GameQueryService {
         UUID protectionSourcePlayerId = sourceControllerId != null
                 ? sourceControllerId
                 : sourceCard.getOwnerId();
-        return hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
+        return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
+                || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || hasProtectionFrom(gameData, target, sourceCard.getColor())
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)

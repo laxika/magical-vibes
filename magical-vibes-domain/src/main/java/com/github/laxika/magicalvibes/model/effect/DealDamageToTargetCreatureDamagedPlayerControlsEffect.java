@@ -4,16 +4,24 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * Deals damage to a creature chosen from the player dealt combat damage by the source.
- * The target is selected during resolution of a combat-damage may ability, so the damaged
- * player remains in the stack entry's {@code targetId} rather than in this effect's target spec.
+ * Deals a dynamic amount of damage to a creature chosen from the player damaged by the source.
+ * The target is selected during resolution, so the damaged player remains in the stack entry's
+ * {@code targetId} rather than in this effect's target spec.
  */
-public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(int damage)
+public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage)
         implements DamageDealingEffect {
+
+    public DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage) {
+        this.damage = damage;
+    }
+
+    public DealDamageToTargetCreatureDamagedPlayerControlsEffect(int damage) {
+        this(new Fixed(damage));
+    }
 
     @Override
     public DynamicAmount damageAmount() {
-        return new Fixed(damage);
+        return damage;
     }
 
     @Override

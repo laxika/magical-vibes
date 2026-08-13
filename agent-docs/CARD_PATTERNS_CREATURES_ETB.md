@@ -12,6 +12,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Tribute + conditional ETB | `o/Ornitharch.java` | STATIC `TributeEffect(N)` records the opponent's as-enters choice; wrap the conditional ETB in `TributeNotPaidEffect` so it is dropped when the full counter amount entered on the creature |
 | Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |
 | Infect + damage replacement | `p/PhyrexianHydra.java` | Infect from Scryfall + STATIC PreventDamageAndAddMinusCountersEffect. Prevents all damage to self and puts -1/-1 counters instead. |
 | Intimidate creature + activated ability | `g/GethLordOfTheVault.java` | Intimidate from Scryfall + X-cost graveyard-targeting activated ability. PutCardFromOpponentGraveyardOntoBattlefieldEffect(tapped=true) |

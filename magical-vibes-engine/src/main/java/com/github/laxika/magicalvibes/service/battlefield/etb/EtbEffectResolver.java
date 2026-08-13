@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -53,6 +54,14 @@ public class EtbEffectResolver {
         // otherwise materialise into the controller losing the game.
         register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) ->
                 ctx.wasCastFromHand() ? null : new TargetPlayerLosesGameEffect(ctx.controllerId()));
+
+        // Tribute's "if tribute wasn't paid" ability is an intervening-if trigger. The choice is
+        // recorded on the entering permanent before this resolver runs.
+        register(TributeNotPaidEffect.class, (ctx, effect) -> {
+            TributeNotPaidEffect tribute = (TributeNotPaidEffect) effect;
+            return ctx.sourcePermanent() != null && !ctx.sourcePermanent().isTributePaid()
+                    ? tribute.wrapped() : null;
+        });
 
         // Modal ETB (choose one / choose up to one): unwrap the option picked at cast time (etbMode).
         // Optional modals with etbMode < 0 chose no mode and drop the trigger.

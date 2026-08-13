@@ -457,7 +457,10 @@ public class GameActionAvailabilityService {
         int effectiveAdditionalCost = additionalCost - delveReduction;
         // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
         if (castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
-                && candidateCosts.stream().anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost))) {
+                && candidateCosts.stream()
+                .map(c -> castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, c, ctx.costSnapshot(), false))
+                .anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost))) {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
@@ -490,6 +493,8 @@ public class GameActionAvailabilityService {
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty();
         for (ManaCost cost : candidateCosts) {
+            cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, cost, ctx.costSnapshot(), false);
             boolean canAfford = hasRestricted
                     ? cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost,
                     isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
@@ -791,9 +796,10 @@ public class GameActionAvailabilityService {
                 }
                 continue;
             }
-            ManaCost cost = new ManaCost(manaCostStr);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             boolean cardHasFlashback = flashback.isPresent() || grantedFlashback || emblemFlashback;
+            ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                    gameData, playerId, card, new ManaCost(manaCostStr), cardHasFlashback);
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, cardHasFlashback);
             // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
             // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.

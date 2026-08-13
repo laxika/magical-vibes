@@ -119,6 +119,49 @@ public class MiscTriggerCollectorService {
         this.permanentControlSupport = permanentControlSupport;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_UNTAPPED)
+    private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
+        Card card = match.permanent().getCard();
+        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
+        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
+            return true;
+        }
+
+        boolean needsTarget = triggeredEffects.stream()
+                .filter(triggeredEffect -> !(triggeredEffect instanceof MayEffect))
+                .anyMatch(triggeredEffect ->
+                        triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsTarget) {
+            boolean multiTarget = card.getSpellTargets().stream()
+                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
+                    || card.getSpellTargets().size() > 1;
+            if (multiTarget) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, su.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
+                        List.of(), 0, 0, List.of(), 0));
+            } else {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, su.controllerId(), new ArrayList<>(triggeredEffects),
+                        "becomes untapped", match.permanent().getId()));
+            }
+        } else {
+            match.gameData().enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    su.controllerId(),
+                    card.getName() + "'s ability",
+                    new ArrayList<>(triggeredEffects),
+                    null,
+                    match.permanent().getId()));
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
+        log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_MONSTROUS)
     private boolean handleSelfBecomesMonstrous(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesMonstrous sm = (TriggerContext.SelfBecomesMonstrous) ctx;
@@ -519,6 +562,7 @@ public class MiscTriggerCollectorService {
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

@@ -193,6 +193,10 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
+        // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
+        // controller's next turn begins.
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameData.isProtectedFromDamageUntilNextTurn(permanent.getId())) return 0;
         // Blinding Fog: prevent all damage to all creatures
         if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
         // Wellgabber Apothecary: prevent all damage to specific target creatures this turn

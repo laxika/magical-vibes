@@ -1,5 +1,9 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
+`ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
+only matching colored components from a spell's mana cost. Unmatched colored reduction does not
+reduce generic mana; Ragemonger uses this for `{B}{R}`.
+
 Cast-cost modifiers (cost reductions and increases — "this spell costs {2} less", "creatures
 you cast cost {1} more", metalcraft/graveyard/opponent-count reductions, etc.) and optional
 buyback-cost modifiers are resolved by

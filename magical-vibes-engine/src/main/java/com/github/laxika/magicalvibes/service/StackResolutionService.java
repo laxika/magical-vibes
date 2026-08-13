@@ -283,12 +283,12 @@ public class StackResolutionService {
      * (CR 702.33a / back-face exile replacement for Disturb). Siege-defeat casts use normal GY.
      */
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
-        UUID controllerId = entry.getControllerId();
+        UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
         if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
-            exileService.exileCard(gameData, controllerId, physicalCard);
+            exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
-            graveyardService.addCardToGraveyard(gameData, controllerId, physicalCard);
+            graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
         }
     }
 
@@ -429,7 +429,7 @@ public class StackResolutionService {
                     .card(card)
                     .text(" fizzles (enchanted creature card no longer in a graveyard).")
                     .build());
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
             log.info("Game {} - {} fizzles, reanimation target {} not in graveyard", gameData.id, card.getName(), entry.getTargetId());
             return;
         }
@@ -443,7 +443,7 @@ public class StackResolutionService {
                 gameData, controllerId, graveyardCard, enterTapped);
         if (creature == null) {
             // Blocked from entering (e.g. Grafdigger's Cage): the Aura has nothing to enchant.
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
             log.info("Game {} - {} put into graveyard, reanimated creature could not enter", gameData.id, card.getName());
             return;
         }
@@ -856,10 +856,10 @@ public class StackResolutionService {
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
                 if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
-                    exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
+                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                     gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), entry.getCard());
                 }
             }
         } else {
@@ -878,7 +878,7 @@ public class StackResolutionService {
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
+                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getCard());
                 }
                 return;
             }
@@ -959,7 +959,7 @@ public class StackResolutionService {
         } else if (entry.getPutIntoLibraryPositionAfterResolving() != null) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
             // Approach of the Second Sun: the resolved spell goes into its owner's library N from the top.
-            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            List<Card> deck = gameData.playerDecks.get(ownerId);
             int position = Math.min(entry.getPutIntoLibraryPositionAfterResolving(), deck.size());
             deck.add(position, entry.getCard());
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

@@ -1194,9 +1194,17 @@ public class TriggerCollectionService {
      */
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage) {
+        queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                totalDamage, Map.of());
+    }
+
+    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                   UUID sourcePermanentId, int totalDamage,
+                                                   Map<UUID, Integer> damageToPlayers) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, totalDamage);
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, totalDamage,
+                damageToPlayers == null ? Map.of() : Map.copyOf(damageToPlayers));
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)) {
@@ -2845,8 +2853,8 @@ public class TriggerCollectionService {
     /**
      * "Whenever this permanent becomes untapped" triggers (e.g. Hollowsage). Called from the untap
      * call sites after a permanent transitions from tapped to untapped. Fires only on the permanent
-     * that became untapped, queueing a non-targeting triggered ability whose {@code sourcePermanentId}
-     * is that permanent; any player targeting for a wrapped {@code MayEffect} happens at resolution.
+     * that became untapped, queueing its triggered ability with the permanent as its source;
+     * targeted effects choose targets as the ability is put on the stack.
      */
     public void checkBecomesUntappedTriggers(GameData gameData, Permanent untappedPermanent) {
         UUID controllerId = null;
@@ -2860,17 +2868,9 @@ public class TriggerCollectionService {
         if (controllerId == null) return;
 
         for (CardEffect effect : untappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)) {
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    untappedPermanent.getCard(),
-                    controllerId,
-                    untappedPermanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    untappedPermanent.getId()
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(untappedPermanent.getCard()));
-            log.info("Game {} - {} triggers on becoming untapped", gameData.id, untappedPermanent.getCard().getName());
+            var match = new TriggerMatchContext(gameData, untappedPermanent, controllerId, effect);
+            dispatch(match, EffectSlot.ON_SELF_BECOMES_UNTAPPED, effect,
+                    new TriggerContext.SelfBecomesUntapped(controllerId));
         }
 
         // "Whenever a permanent you control becomes untapped" triggers (e.g. Wake Thrasher).
@@ -3321,10 +3321,7 @@ public class TriggerCollectionService {
             if (!playerId.equals(gainingPlayerId)) return;
 
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)) {
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
-                }
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_GAINS_LIFE, ctx);
             }
         });
 
@@ -3778,6 +3775,8 @@ public class TriggerCollectionService {
         // Include temporarily granted ON_DEATH effects (e.g. from Verdant Rebirth)
         List<CardEffect> temporaryDeathEffects = dyingPermanent != null
                 ? dyingPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH) : List.of();
+        List<CardEffect> persistentDeathEffects = dyingPermanent != null
+                ? dyingPermanent.getPersistentTriggeredEffects(EffectSlot.ON_DEATH) : List.of();
 
         // Include ON_DEATH abilities granted continuously by an attached Aura/Equipment
         // (Infernal Scarring). Read straight off the attachments, not through the layer system:
@@ -3788,7 +3787,8 @@ public class TriggerCollectionService {
                         gameData, dyingPermanent.getId(), EffectSlot.ON_DEATH)
                 : List.of();
 
-        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty() && grantedDeathEffects.isEmpty()) return;
+        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty()
+                && persistentDeathEffects.isEmpty() && grantedDeathEffects.isEmpty()) return;
 
         var ctx = new TriggerContext.SelfDeath(dyingCard, controllerId, wasCreature, dyingPermanent);
         Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
@@ -3801,6 +3801,13 @@ public class TriggerCollectionService {
             dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
         }
         for (CardEffect effect : temporaryDeathEffects) {
+            if (effect.onlyTriggersOnSacrifice()) continue;
+            CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
+            if (resolvedEffect == null) continue;
+            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
+            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
+        }
+        for (CardEffect effect : persistentDeathEffects) {
             if (effect.onlyTriggersOnSacrifice()) continue;
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
             if (resolvedEffect == null) continue;

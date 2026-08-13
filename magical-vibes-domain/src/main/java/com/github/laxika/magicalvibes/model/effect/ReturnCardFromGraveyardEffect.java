@@ -112,6 +112,8 @@ import java.util.Set;
  *                             "in addition to its other colors" (e.g. Rise from the Grave)
  * @param grantSubtype         when non-null, permanently grants this subtype to the returned creature
  *                             "in addition to its other types" (e.g. Rise from the Grave)
+ * @param grantIndestructible  {@code true} to permanently grant indestructible to the returned
+ *                             permanent (e.g. Fated Return)
  * @param enterTapped          {@code true} if the returned permanent enters the battlefield tapped
  *                             (e.g. Reassembling Skeleton)
  * @param underOwnersControl   {@code true} to put each returned card onto the battlefield under
@@ -217,6 +219,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresManaValueAtMostX,
         CardColor grantColor,
         CardSubtype grantSubtype,
+        boolean grantIndestructible,
         boolean enterTapped,
         boolean underOwnersControl,
         boolean returnAtRandom,

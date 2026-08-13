@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 /**
@@ -49,6 +50,15 @@ public interface CostModificationHandlerBean {
     default int modifyCostAfterOtherModifiers(CostModificationContext context, CardEffect effect,
                                               CostModificationSource source, int accumulatedModifier) {
         return modifyCost(context, effect, source);
+    }
+
+    /**
+     * Returns a colored-only mana-cost reduction for this occurrence, or {@code null} when the
+     * handler does not provide one. The default keeps ordinary generic cost handlers unchanged.
+     */
+    default ManaCost coloredManaCostReduction(CostModificationContext context, CardEffect effect,
+                                              CostModificationSource source) {
+        return null;
     }
 
     /**

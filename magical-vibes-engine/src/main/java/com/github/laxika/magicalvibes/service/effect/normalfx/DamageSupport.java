@@ -1011,7 +1011,7 @@ public class DamageSupport {
 
             if (effectiveDamage > 0) {
                 accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
-                        entry.getSourcePermanentId(), effectiveDamage);
+                        entry.getSourcePermanentId(), effectiveDamage, playerId);
                 Permanent sourceCreature = entry.getSourcePermanentId() == null
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -1338,13 +1338,20 @@ public class DamageSupport {
      */
     public void accumulateSourceDamageForReflection(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                     UUID sourcePermanentId, int damage) {
+        accumulateSourceDamageForReflection(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                damage, null);
+    }
+
+    public void accumulateSourceDamageForReflection(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                    UUID sourcePermanentId, int damage, UUID damagedPlayerId) {
         if (damage <= 0 || sourceCard == null || sourceControllerId == null) return;
         PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(sourceCard.getId());
         if (batch == null) {
             gameData.pendingSourceDamageForReflection.put(sourceCard.getId(),
-                    new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage));
+                    new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
+                            damagedPlayerId));
         } else {
-            batch.add(damage);
+            batch.add(damage, damagedPlayerId);
         }
     }
 
@@ -1359,7 +1366,8 @@ public class DamageSupport {
         gameData.pendingSourceDamageForReflection.clear();
         for (PendingSourceDamage batch : batches) {
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
-                    batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount());
+                    batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
+                    batch.getDamageToPlayers());
         }
     }
 
