@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.d.Divination;
@@ -124,6 +125,14 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             Permanent swamp = new Permanent(new Swamp());
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(player.getId()).add(swamp);
+        }
+    }
+
+    private void givePlayerMountains(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(mountain);
         }
     }
 
@@ -456,6 +465,27 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(convokeSpell);
         assertThat(firstCreature.isTapped()).isTrue();
         assertThat(secondCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies a matching permanent for a behold additional cost")
+    void castsBeholdSpellWithMatchingPermanent() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        givePlayerMountains(player1, 4);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        elemental.setSummoningSick(false);
+        ChampionOfThePath champion = new ChampionOfThePath();
+        harness.setHand(player1, List.of(champion));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(champion);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .contains(elemental.getCard().getId());
     }
 
     @Test

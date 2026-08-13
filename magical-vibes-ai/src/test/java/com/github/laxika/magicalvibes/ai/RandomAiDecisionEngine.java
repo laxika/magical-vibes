@@ -525,6 +525,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Select sacrifice target if the spell has a sacrifice cost
             UUID sacrificePermanentId = selectRandomSacrificeTarget(gameData, card);
+            BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
+            if (beholdSelection == null) {
+                telemetry.recordSkip("spell: behold cost unpayable", card.getName());
+                continue;
+            }
 
             // Calculate X value (for modal spells, xValue is the mode index)
             ManaCost castCost = new ManaCost(card.getManaCost());
@@ -630,8 +635,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<Integer> finalDiscardHandCardIndices =
                     chooseDiscardXCostIndices(gameData, card, cardIndex, finalXValue != null ? finalXValue : 0);
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
+            final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
+                    buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                            finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId,
+                            finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,
+                            finalDiscardHandCardIndex, finalDiscardHandCardIndices,
+                            finalMultiSacrificeIds, finalBeholdSelection)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

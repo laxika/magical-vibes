@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -40,7 +41,9 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -1289,6 +1292,72 @@ public abstract class AiDecisionEngine {
     protected Integer chooseDiscardCostIndex(GameData gameData, Card card) {
         List<Integer> valid = castingCostService.validDiscardCostIndices(gameData, aiPlayer.getId(), card);
         return valid == null || valid.isEmpty() ? null : valid.get(0);
+    }
+
+    /**
+     * Selects the object to exile for a single {@link BeholdAndExileCost}. Returns an empty
+     * selection when the card has no such cost, or null when the cost cannot be paid.
+     */
+    protected BeholdSelection selectBeholdCost(GameData gameData, Card card) {
+        BeholdAndExileCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(BeholdAndExileCost.class::isInstance)
+                .map(BeholdAndExileCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return new BeholdSelection(null, null);
+        }
+
+        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
+                return new BeholdSelection(permanent.getId(), null);
+            }
+        }
+
+        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (!candidate.getId().equals(card.getId())
+                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                return new BeholdSelection(null, i);
+            }
+        }
+        return null;
+    }
+
+    /** The single-object selection fields carried by a regular spell cast request. */
+    protected record BeholdSelection(UUID permanentId, Integer handCardIndex) {
+    }
+
+    /**
+     * Builds the common spell cast request, including the selected object for any behold cost.
+     * The other additional-cost fields mirror the request shape used by all AI spell paths.
+     */
+    protected PlayCardRequest buildSpellPlayCardRequest(
+            int cardIndex,
+            Integer xValue,
+            UUID targetId,
+            Map<UUID, Integer> damageAssignments,
+            List<UUID> targetIds,
+            List<UUID> convokeCreatureIds,
+            UUID sacrificePermanentId,
+            Integer exileGraveyardCardIndex,
+            List<Integer> exileGraveyardCardIndices,
+            Integer discardHandCardIndex,
+            List<Integer> discardHandCardIndices,
+            List<UUID> additionalCostSacrificePermanentIds,
+            BeholdSelection beholdSelection) {
+        BeholdSelection selection = beholdSelection != null
+                ? beholdSelection
+                : new BeholdSelection(null, null);
+        return new PlayCardRequest(
+                cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                null, sacrificePermanentId, null, null, null, null, exileGraveyardCardIndex,
+                exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
+                discardHandCardIndices, null, additionalCostSacrificePermanentIds, List.of(), null,
+                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null);
     }
 
 

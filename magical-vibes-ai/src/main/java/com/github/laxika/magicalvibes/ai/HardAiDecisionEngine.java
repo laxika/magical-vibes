@@ -977,6 +977,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Map<UUID, Integer> damageAssignments,
             UUID sacrificePermanentId,
             List<Integer> exileGraveyardCardIndices,
+            BeholdSelection beholdSelection,
             int targetingTax
     ) {}
 
@@ -1050,6 +1051,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     gameData, findExileNGraveyardCost(card));
         }
 
+        BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
+        if (beholdSelection == null) {
+            return null;
+        }
+
         // 7. X value
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
@@ -1087,7 +1093,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return new SpellCastingPlan(handIndex, card, targetId, multiTargetIds, xValue,
-                damageAssignments, sacrificePermanentId, exileGraveyardCardIndices, targetingTax);
+                damageAssignments, sacrificePermanentId, exileGraveyardCardIndices,
+                beholdSelection, targetingTax);
     }
 
     /**
@@ -1118,10 +1125,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
-                        fMultiTargets, convokeCreatureIds, null, fSacrifice,
-                        null, null, null, null, null, fExileIndices, null, null, null,
-                        fDiscardHandCardIndex, fDiscardHandCardIndices, null, fMultiSacrificeIds)));
+                buildSpellPlayCardRequest(idx, fXValue, fTargetId, fDamage,
+                        fMultiTargets, convokeCreatureIds, fSacrifice, null, fExileIndices,
+                        fDiscardHandCardIndex, fDiscardHandCardIndices, fMultiSacrificeIds,
+                        plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(plan.card)) {
@@ -2745,6 +2752,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             int cardIndex = hand.indexOf(burnCard);
             if (cardIndex < 0) continue;
 
+            BeholdSelection beholdSelection = selectBeholdCost(gameData, burnCard);
+            if (beholdSelection == null) {
+                continue;
+            }
+
             log.info("AI (Hard): Burn-to-face lethal! Casting {} for {} damage in game {}",
                     burnCard.getName(), raceEvaluator.getBurnToFaceDamage(burnCard), gameId);
 
@@ -2755,7 +2767,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                    buildSpellPlayCardRequest(idx, null, targetId, null, null, null, null, null,
+                            null, null, null, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {

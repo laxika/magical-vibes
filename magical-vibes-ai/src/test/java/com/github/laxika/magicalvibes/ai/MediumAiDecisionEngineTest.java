@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
@@ -173,6 +174,25 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies a matching permanent for a behold additional cost")
+    void castsBeholdSpellWithMatchingPermanent() {
+        giveAiPriority();
+        giveAiMountains(4);
+        Permanent elemental = harness.addToBattlefieldAndReturn(aiPlayer, new AirElemental());
+        elemental.setSummoningSick(false);
+        ChampionOfThePath champion = new ChampionOfThePath();
+        harness.setHand(aiPlayer, List.of(champion));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(champion);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId()))
+                .extracting(Card::getId)
+                .contains(elemental.getCard().getId());
     }
 
     @Test

@@ -228,6 +228,10 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
         }
+        BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
+        if (beholdSelection == null) {
+            return false;
+        }
 
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
@@ -250,8 +254,12 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
+        final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
+                buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                        finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
+                        finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
+                        finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -407,6 +415,10 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
         }
+        BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
+        if (beholdSelection == null) {
+            return false;
+        }
 
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
@@ -428,8 +440,12 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
+        final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, convokeCreatureIds, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, finalDiscardHandCardIndices, null, finalMultiSacrificeIds)));
+                buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                        finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
+                        finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
+                        finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -45,7 +46,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -114,6 +117,9 @@ public class GameSimulator {
     private static final int MAX_DOUBLE_BLOCK_PAIRS = 3;
     /** Caps list-pick enumeration so huge lists (e.g. card-name choices) don't blow up the tree. */
     private static final int MAX_LIST_OPTIONS = 8;
+
+    private record BeholdSelection(UUID permanentId, Integer handCardIndex) {
+    }
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
@@ -713,6 +719,10 @@ public class GameSimulator {
     private void executePlayCard(GameData gd, Player player, SimulationAction.PlayCard pc) {
         UUID playerId = player.getId();
         Card card = gd.playerHands.get(playerId).get(pc.handIndex());
+        BeholdSelection beholdSelection = computeBeholdSelection(gd, playerId, card);
+        if (beholdSelection == null) {
+            return;
+        }
         tapLandsForCard(gd, playerId, card, pc.xValue());
         List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
@@ -720,13 +730,44 @@ public class GameSimulator {
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
         List<Integer> discardIndices = computeDiscardXCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
-                || !multiSacrificeIds.isEmpty()) {
+                || !multiSacrificeIds.isEmpty()
+                || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
-                    false, discardIndex, discardIndices, null, multiSacrificeIds);
+                    false, discardIndex, discardIndices, null, multiSacrificeIds, List.of(), false,
+                    beholdSelection.permanentId(), beholdSelection.handCardIndex());
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
+    }
+
+    private BeholdSelection computeBeholdSelection(GameData gd, UUID playerId, Card card) {
+        BeholdAndExileCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(BeholdAndExileCost.class::isInstance)
+                .map(BeholdAndExileCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return new BeholdSelection(null, null);
+        }
+
+        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        for (Permanent permanent : gd.playerBattlefields.getOrDefault(playerId, List.of())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gd, permanent, permanentFilter)) {
+                return new BeholdSelection(permanent.getId(), null);
+            }
+        }
+
+        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        List<Card> hand = gd.playerHands.getOrDefault(playerId, List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (!candidate.getId().equals(card.getId())
+                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                return new BeholdSelection(null, i);
+            }
+        }
+        return null;
     }
 
     /**

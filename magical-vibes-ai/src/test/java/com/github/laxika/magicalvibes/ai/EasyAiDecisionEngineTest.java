@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -205,6 +207,25 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies a matching permanent for a behold additional cost")
+        void castsBeholdSpellWithMatchingPermanent() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Permanent elemental = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new AirElemental());
+            elemental.setSummoningSick(false);
+            ChampionOfThePath champion = new ChampionOfThePath();
+            testHarness.setHand(aiTestPlayer, List.of(champion));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(champion);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId()))
+                    .extracting(Card::getId)
+                    .contains(elemental.getCard().getId());
         }
 
         @Test
