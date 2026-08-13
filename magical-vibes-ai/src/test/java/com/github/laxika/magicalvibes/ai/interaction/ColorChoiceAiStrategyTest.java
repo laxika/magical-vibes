@@ -59,6 +59,25 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("Restricted subtype choice answers with an offered creature type")
+    void answersRestrictedSubtypeChoiceWithOfferedSubtype() throws Exception {
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.SubtypeChoice(UUID.randomUUID()),
+                List.of("ELEMENTAL", "ELF"),
+                "Choose a creature type.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("ELEMENTAL"));
+    }
+
+    @Test
     @DisplayName("Hullbreaker Horror mode choice answers with an offered mode")
     void answersHullbreakerHorrorModeChoiceWithOfferedMode() throws Exception {
         UUID opponentId = UUID.randomUUID();

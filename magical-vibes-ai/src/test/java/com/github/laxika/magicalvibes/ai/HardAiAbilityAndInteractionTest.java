@@ -1448,6 +1448,29 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
             // The choice should be processed
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
         }
+
+        @Test
+        @DisplayName("Hard AI falls back to an offered type when its preferred type is restricted")
+        void picksOfferedCreatureTypeWhenPreferredTypeIsRestricted() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            gd.status = GameStatus.RUNNING;
+
+            for (int i = 0; i < 3; i++) {
+                Permanent human = new Permanent(new EliteVanguard());
+                human.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(human);
+            }
+
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                    player1.getId(), null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null),
+                    List.of("ELEMENTAL", "ELF"), "Choose a creature type."));
+
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
     }
 
     @Nested

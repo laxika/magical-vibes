@@ -150,7 +150,11 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.SubtypeChoice) {
-            String chosenSubtype = "HUMAN";
+            List<String> options = interaction.options();
+            if (options.isEmpty()) {
+                return;
+            }
+            String chosenSubtype = options.contains("HUMAN") ? "HUMAN" : options.getFirst();
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenSubtype));
             return;

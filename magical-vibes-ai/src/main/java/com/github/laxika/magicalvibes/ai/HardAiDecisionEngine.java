@@ -3230,7 +3230,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice) {
+            if (colorChoice.options().isEmpty()) {
+                return;
+            }
             String bestSubtype = findMostCommonCreatureType(gameData);
+            if (!colorChoice.options().contains(bestSubtype)) {
+                bestSubtype = colorChoice.options().getFirst();
+            }
             log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
             final String subtype = bestSubtype;
             send(() -> gameActions.answerInteraction(
