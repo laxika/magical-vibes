@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
+import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -335,6 +336,48 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void doesNotSubmitBattlefieldPermanentAsGraveyardTarget() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        GrizzlyBears graveyardCreature = new GrizzlyBears();
+
+        harness.addToBattlefield(opponent, new GrizzlyBears());
+        harness.addMana(aiPlayer, ManaColor.WHITE, 3);
+        harness.setGraveyard(aiPlayer, List.of(graveyardCreature));
+        harness.setHand(aiPlayer, List.of(new ReturnToTheRanks()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
+                .isNotNull();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
     }
 
     @Test
