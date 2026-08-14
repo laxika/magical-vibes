@@ -1728,13 +1728,6 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             if (!landIds.isEmpty()) {
-                // The BounceCreature completion (handleBounceCreature) calls resolveAutoPass rather
-                // than sbaProcessMayAbilitiesThenAutoPass, so clear any paused effect-resolution
-                // state — the discard-unless effect is the last on the stack entry, so nothing
-                // remains to resume.
-                gameData.pendingEffectResolutionEntry = null;
-                gameData.pendingEffectResolutionIndex = 0;
-
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(controllerId));
                 playerInputService.beginPermanentChoice(gameData, controllerId, landIds,
                         "Choose a land to return to its owner's hand.");
