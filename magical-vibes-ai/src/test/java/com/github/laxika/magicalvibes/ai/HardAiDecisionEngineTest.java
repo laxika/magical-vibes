@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -70,6 +71,8 @@ import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -138,6 +141,18 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             mountain.setSummoningSick(false);
             gd.playerBattlefields.get(player.getId()).add(mountain);
         }
+    }
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 
     @Test
@@ -1430,6 +1445,32 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI allows one permanent for both Reign of Chaos targets")
+    void castsReignOfChaosWithSharedTarget() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        givePlayerMountains(player1, 4);
+
+        Permanent target = new Permanent(whitePlainsCreature());
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.setHand(player1, List.of(new ReignOfChaos()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reign of Chaos");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(target.getId(), target.getId());
     }
 
     @Test

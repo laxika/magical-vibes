@@ -24,9 +24,12 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -77,6 +80,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -151,6 +155,18 @@ class EasyAiDecisionEngineTest {
                         Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                         new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         return engine;
+    }
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 
     @Nested
@@ -251,6 +267,24 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds())
                     .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI allows one permanent for both Reign of Chaos targets")
+        void castsReignOfChaosWithSharedTarget() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Permanent target = new Permanent(whitePlainsCreature());
+            testGd.playerBattlefields.get(human.getId()).add(target);
+            testHarness.setHand(aiTestPlayer, List.of(new ReignOfChaos()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Reign of Chaos");
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactly(target.getId(), target.getId());
         }
 
         @Test

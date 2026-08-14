@@ -2045,7 +2045,7 @@ public abstract class AiDecisionEngine {
 
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 List<UUID> targets = findModalModeTargets(gameData, card, option);
-                if (targets.size() < option.minTargets()) {
+                if (targets.size() < requiredModalTargetCount(option)) {
                     continue;
                 }
                 if (usesModalTargetSlots(coe, option)) {
@@ -2108,13 +2108,17 @@ public abstract class AiDecisionEngine {
         CardEffect effect = option.effect();
         if (EffectResolution.targetsSpellOnStack(effect)) return false;
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            return findModalModeTargets(gameData, card, option).size() >= option.minTargets();
+            return findModalModeTargets(gameData, card, option).size() >= requiredModalTargetCount(option);
         }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) return true;
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;
+    }
+
+    private int requiredModalTargetCount(ChooseOneEffect.ChooseOneOption option) {
+        return option.targetFilters() != null ? option.targetFilters().size() : option.minTargets();
     }
 
     private boolean usesModalTargetSlots(ChooseOneEffect coe, ChooseOneEffect.ChooseOneOption option) {

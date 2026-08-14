@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -38,6 +39,8 @@ import com.github.laxika.magicalvibes.cards.u.Unbury;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -155,6 +158,18 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 
     @Test
@@ -1111,6 +1126,25 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI allows one permanent for both Reign of Chaos targets")
+    void castsReignOfChaosWithSharedTarget() {
+        giveAiPriority();
+        giveAiMountains(4);
+
+        Permanent target = new Permanent(whitePlainsCreature());
+        gd.playerBattlefields.get(human.getId()).add(target);
+        harness.setHand(aiPlayer, List.of(new ReignOfChaos()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reign of Chaos");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(target.getId(), target.getId());
     }
 
     @Test
