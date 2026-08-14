@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -117,6 +119,51 @@ class RandomAiDecisionEngineTest {
         assertThat(restricted.isAttacking()).isFalse();
         assertThat(gameData.getLife(opponent.getId())).isEqualTo(18);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    void declaresMagnetCounterCreaturesTogether() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        harness.setLife(opponent, 20);
+
+        harness.addToBattlefield(aiPlayer, new MagneticWeb());
+        Permanent first = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        first.setSummoningSick(false);
+        second.setSummoningSick(false);
+        first.setCounterCount(CounterType.MAGNET, 1);
+        second.setCounterCount(CounterType.MAGNET, 1);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            private int decisions;
+
+            @Override
+            public boolean nextBoolean() {
+                return decisions++ == 0;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(first.isAttacking()).isTrue();
+        assertThat(second.isAttacking()).isTrue();
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                .isNull();
     }
 
     @Test

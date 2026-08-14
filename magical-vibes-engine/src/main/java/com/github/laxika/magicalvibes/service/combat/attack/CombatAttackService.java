@@ -216,7 +216,8 @@ public class CombatAttackService {
     /**
      * Returns the conditional attack requirements that apply to a candidate declaration. Unlike
      * ordinary "attacks each combat if able" requirements, these requirements only apply after
-     * another creature has been selected for the same combat.
+     * another creature has been selected for the same combat, including board-wide counter-bearer
+     * requirements such as Magnetic Web.
      */
     public List<Integer> getMustAttackAlongsideIndices(GameData gameData, UUID playerId,
                                                         List<Integer> attackableIndices,
@@ -234,19 +235,60 @@ public class CombatAttackService {
             return List.of();
         }
 
-        List<Integer> mustAttack = new ArrayList<>();
+        Set<Integer> mustAttack = new LinkedHashSet<>();
+        Set<Integer> attackingIndices = new LinkedHashSet<>(declaredAttackerIndices);
         for (int idx : attackableIndices) {
-            if (idx < 0 || idx >= battlefield.size() || declaredAttackerIndices.contains(idx)) {
+            if (idx < 0 || idx >= battlefield.size() || attackingIndices.contains(idx)) {
                 continue;
             }
             Permanent creature = battlefield.get(idx);
             boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
-            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
+            if (conditional && attackingIndices.stream().anyMatch(other -> other != idx)) {
                 mustAttack.add(idx);
+                attackingIndices.add(idx);
             }
         }
-        return mustAttack;
+
+        Set<CounterType> attackTogetherCounterTypes = getAttackTogetherCounterTypes(gameData);
+        boolean addedCounterBearer;
+        do {
+            addedCounterBearer = false;
+            for (CounterType counterType : attackTogetherCounterTypes) {
+                boolean bearerAttacking = attackingIndices.stream()
+                        .filter(idx -> idx >= 0 && idx < battlefield.size())
+                        .anyMatch(idx -> battlefield.get(idx).getCounterCount(counterType) > 0);
+                if (!bearerAttacking) {
+                    continue;
+                }
+                for (int idx : attackableIndices) {
+                    if (attackingIndices.contains(idx)) {
+                        continue;
+                    }
+                    Permanent creature = battlefield.get(idx);
+                    if (creature.getCounterCount(counterType) > 0) {
+                        mustAttack.add(idx);
+                        attackingIndices.add(idx);
+                        addedCounterBearer = true;
+                    }
+                }
+            }
+        } while (addedCounterBearer);
+        return new ArrayList<>(mustAttack);
+    }
+
+    private Set<CounterType> getAttackTogetherCounterTypes(GameData gameData) {
+        Set<CounterType> counterTypes = EnumSet.noneOf(CounterType.class);
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CreaturesWithCounterAttackTogetherEffect together) {
+                        counterTypes.add(together.counterType());
+                    }
+                }
+            }
+        }
+        return counterTypes;
     }
 
     /**
@@ -1415,16 +1457,7 @@ public class CombatAttackService {
             return;
         }
 
-        Set<CounterType> activeCounterTypes = EnumSet.noneOf(CounterType.class);
-        for (List<Permanent> bf : gameData.playerBattlefields.values()) {
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CreaturesWithCounterAttackTogetherEffect together) {
-                        activeCounterTypes.add(together.counterType());
-                    }
-                }
-            }
-        }
+        Set<CounterType> activeCounterTypes = getAttackTogetherCounterTypes(gameData);
         if (activeCounterTypes.isEmpty()) {
             return;
         }

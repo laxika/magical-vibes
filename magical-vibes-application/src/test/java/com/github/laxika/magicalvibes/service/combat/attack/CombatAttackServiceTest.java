@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -195,6 +197,26 @@ class CombatAttackServiceTest extends BaseCardTest {
                     .containsExactly(index(cyclops));
             assertThat(service().getMustAttackAlongsideIndices(
                     gd, player1.getId(), attackable, List.of(index(cyclops))))
+                    .isEmpty();
+        }
+
+        @Test
+        @DisplayName("Counter-bearer requirements follow the selected attacker group")
+        void counterBearerRequirementFollowsSelectedAttackerGroup() {
+            harness.addToBattlefield(player1, new MagneticWeb());
+            Permanent first = addCreatureReady(player1, new GrizzlyBears());
+            Permanent second = addCreatureReady(player1, new GrizzlyBears());
+            Permanent unrelated = addCreatureReady(player1, new GrizzlyBears());
+            first.setCounterCount(CounterType.MAGNET, 1);
+            second.setCounterCount(CounterType.MAGNET, 1);
+
+            List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
+
+            assertThat(service().getMustAttackAlongsideIndices(
+                    gd, player1.getId(), attackable, List.of(index(first))))
+                    .containsExactly(index(second));
+            assertThat(service().getMustAttackAlongsideIndices(
+                    gd, player1.getId(), attackable, List.of(index(unrelated))))
                     .isEmpty();
         }
 
