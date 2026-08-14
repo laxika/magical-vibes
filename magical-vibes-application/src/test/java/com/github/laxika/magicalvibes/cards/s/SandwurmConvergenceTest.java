@@ -33,7 +33,7 @@ class SandwurmConvergenceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test
@@ -59,7 +59,7 @@ class SandwurmConvergenceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

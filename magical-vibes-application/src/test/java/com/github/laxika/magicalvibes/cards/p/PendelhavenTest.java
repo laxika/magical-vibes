@@ -34,7 +34,7 @@ class PendelhavenTest extends BaseCardTest {
         addPendelhavenReady(player1);
         Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
-        harness.activateAbility(player1, 1, null, elves.getId());
+        harness.activateAbility(player1, 0, 1, null, elves.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(2);
@@ -47,7 +47,7 @@ class PendelhavenTest extends BaseCardTest {
         addPendelhavenReady(player1);
         Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
-        harness.activateAbility(player1, 1, null, elves.getId());
+        harness.activateAbility(player1, 0, 1, null, elves.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -63,7 +63,7 @@ class PendelhavenTest extends BaseCardTest {
         addPendelhavenReady(player1);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a 1/1 creature");
     }
@@ -74,7 +74,7 @@ class PendelhavenTest extends BaseCardTest {
         addPendelhavenReady(player1);
         Permanent ghost = addCreatureReady(player2, new GhostWarden());
 
-        harness.activateAbility(player1, 1, null, ghost.getId());
+        harness.activateAbility(player1, 0, 1, null, ghost.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ghost)).isEqualTo(2);

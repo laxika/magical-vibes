@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -64,6 +65,9 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(
                 gd, new TapCombatOpponentsOfTargetAtEndOfCombatEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(
+                gd, new AttachTargetAuraToAnotherPermanentOfSameTypeEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
     }
 
     @Test

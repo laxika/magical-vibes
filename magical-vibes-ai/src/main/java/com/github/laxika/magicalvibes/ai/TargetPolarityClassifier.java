@@ -445,6 +445,7 @@ public class TargetPolarityClassifier {
             // Quarry Hauler chooses add-or-remove per counter kind at resolution — no fixed direction.
             entry("AdjustEachCounterKindOnTargetEffect", TargetPolarity.NEUTRAL),
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("AttachTargetAuraToAnotherPermanentOfSameTypeEffect", TargetPolarity.NEUTRAL),
             entry("AttachTargetAuraToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsIndefinitelyEffect", TargetPolarity.NEUTRAL),
