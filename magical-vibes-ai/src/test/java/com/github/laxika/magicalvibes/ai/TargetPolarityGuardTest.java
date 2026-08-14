@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
@@ -68,6 +70,9 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(
                 gd, new AttachTargetAuraToAnotherPermanentOfSameTypeEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new MayEffect(new EnteringCreatureFightsTargetCreatureEffect(), "Fight?"), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
     }
 
     @Test

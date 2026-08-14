@@ -62,13 +62,6 @@ class NineLivesFamiliarTest extends BaseCardTest {
         harness.runStateBasedActions();
     }
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow();
-    }
-
     private Permanent findPermanentOrNull(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals(name))

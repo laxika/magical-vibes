@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,7 +46,7 @@ class SeekersFollyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SeekersFolly()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 1, null);
+        harness.castSorcery(player1, 0, 1, (UUID) null);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(2);
@@ -54,6 +55,8 @@ class SeekersFollyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(2);
