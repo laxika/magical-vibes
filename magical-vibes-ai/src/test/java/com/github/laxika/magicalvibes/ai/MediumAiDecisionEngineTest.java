@@ -1386,6 +1386,35 @@ class MediumAiDecisionEngineTest {
                 .allMatch(c -> c.getName().equals("Holy Day"));
     }
 
+    @Test
+    @DisplayName("Medium AI exiles only cards matching an ExileX graveyard cost")
+    void castsExileXCostFromMixedGraveyard() {
+        giveAiPriority();
+
+        Card spell = new Card();
+        spell.setName("Mixed Graveyard Spell");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{B}");
+        spell.addEffect(EffectSlot.SPELL,
+                new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+        spell.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+
+        harness.setGraveyard(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.h.HolyDay(),
+                new GrizzlyBears(), new com.github.laxika.magicalvibes.cards.h.HolyDay()));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Holy Day", "Holy Day");
+    }
+
     // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
 
     @Test

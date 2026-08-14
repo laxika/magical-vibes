@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
@@ -187,8 +188,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         // Select graveyard cards to exile if the spell has a graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        ExileXCardsFromGraveyardCost exileXCost = findExileXGraveyardCost(card);
+        if (exileXCost != null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
@@ -226,6 +228,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                     return false;
                 }
                 xValue = smartX;
+            }
+        }
+
+        if (exileXCost != null && castCost.hasX() && modalPlan == null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
+            if (exileGraveyardCardIndices == null) {
+                return false;
             }
         }
 
@@ -386,8 +395,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
         List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        ExileXCardsFromGraveyardCost exileXCost = findExileXGraveyardCost(card);
+        if (exileXCost != null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
@@ -418,6 +428,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;
+            }
+        }
+
+        if (exileXCost != null && castCost.hasX() && modalPlan == null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
+            if (exileGraveyardCardIndices == null) {
+                return false;
             }
         }
 

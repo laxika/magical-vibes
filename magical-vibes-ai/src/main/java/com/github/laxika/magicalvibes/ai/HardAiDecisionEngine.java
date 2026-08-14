@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -1046,8 +1047,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // 6. Graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        ExileXCardsFromGraveyardCost exileXCost = findExileXGraveyardCost(card);
+        if (exileXCost != null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(
                     gameData, findExileNGraveyardCost(card));
@@ -1088,6 +1090,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return null;
                 xValue = smartX;
+            }
+        }
+
+        if (exileXCost != null && castCost.hasX() && modalPlan == null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
+            if (exileGraveyardCardIndices == null) {
+                return null;
             }
         }
 

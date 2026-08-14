@@ -1867,4 +1867,39 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 .allMatch(c -> c.getName().equals("Holy Day"));
     }
 
+    @Test
+    @DisplayName("Hard AI exiles only cards matching an ExileX graveyard cost")
+    void castsExileXCostFromMixedGraveyard() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        Card spell = new Card();
+        spell.setName("Mixed Graveyard Spell");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{B}");
+        spell.addEffect(EffectSlot.SPELL,
+                new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+        spell.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+
+        harness.setGraveyard(player1, List.of(new HolyDay(), new GrizzlyBears(), new HolyDay()));
+        harness.setHand(player1, List.of(spell));
+
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Holy Day", "Holy Day");
+    }
+
 }

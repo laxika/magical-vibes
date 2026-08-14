@@ -1748,6 +1748,34 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI exiles only cards matching an ExileX graveyard cost")
+        void exilesOnlyMatchingCardsForExileXCost() {
+            giveAiPriorityLocal();
+
+            Card spell = new Card();
+            spell.setName("Mixed Graveyard Spell");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{B}");
+            spell.addEffect(EffectSlot.SPELL,
+                    new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+
+            testHarness.setGraveyard(aiTestPlayer, List.of(
+                    new HolyDay(), new GrizzlyBears(), new HolyDay()));
+            testHarness.setHand(aiTestPlayer, List.of(spell));
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 1);
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId()))
+                    .extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
+                    .extracting(Card::getName)
+                    .containsExactly("Holy Day", "Holy Day");
+        }
+
+        @Test
         @DisplayName("Easy AI casts Entrancing Melody with X matching target's mana value")
         void castsEntrancingMelodyWithCorrectX() {
             giveAiPriorityLocal();

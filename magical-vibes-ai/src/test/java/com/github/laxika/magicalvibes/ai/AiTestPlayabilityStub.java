@@ -159,8 +159,9 @@ final class AiTestPlayabilityStub {
                             (cost.requiredType() == null || c.hasType(cost.requiredType()))
                                     && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
                 }
-                case ExileXCardsFromGraveyardCost ignored -> {
-                    if (graveyard.isEmpty()) return false;
+                case ExileXCardsFromGraveyardCost cost -> {
+                    if (graveyard.stream().noneMatch(c ->
+                            cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
                 }
                 case DiscardCardTypeCost ignored -> {
                     // Predicate treated as satisfiable (like permanent-predicate sacrifice costs);

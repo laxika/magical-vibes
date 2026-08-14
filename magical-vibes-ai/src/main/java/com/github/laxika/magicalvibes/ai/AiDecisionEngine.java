@@ -1688,6 +1688,7 @@ public abstract class AiDecisionEngine {
      * Returns the maximum X value allowed by graveyard card requirements.
      * For cards with {@link ExileCreaturesFromGraveyardAndCreateTokensEffect},
      * X cannot exceed the number of creature cards in the caster's graveyard; for cards with
+     * {@link ExileXCardsFromGraveyardCost}, it cannot exceed the number of matching cards; for cards with
      * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
      * exceed the number of graveyard cards matching that effect's filter. The same cap applies to
      * X-scaled return-to-hand effects. These mirror the engine's own cast-time validation in
@@ -1707,11 +1708,22 @@ public abstract class AiDecisionEngine {
                 .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
                 .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
                 .findFirst().orElse(null);
-        if (!needsGraveyardCreatures && returnEffect == null && xScaledToHandEffect == null) {
+        ExileXCardsFromGraveyardCost exileXCost = spellEffects.stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .map(ExileXCardsFromGraveyardCost.class::cast)
+                .findFirst().orElse(null);
+        if (!needsGraveyardCreatures && returnEffect == null
+                && xScaledToHandEffect == null && exileXCost == null) {
             return Integer.MAX_VALUE;
         }
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
         int maxX = Integer.MAX_VALUE;
+        if (exileXCost != null) {
+            maxX = (int) graveyard.stream()
+                    .filter(c -> exileXCost.requiredType() == null
+                            || c.hasType(exileXCost.requiredType()))
+                    .count();
+        }
         if (needsGraveyardCreatures) {
             maxX = (int) graveyard.stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
@@ -1949,16 +1961,33 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns indices for all cards in the player's graveyard, for use with
-     * {@link ExileXCardsFromGraveyardCost}. Returns an empty list if the graveyard is empty.
+     * Returns indices for cards in the player's graveyard that satisfy an
+     * {@link ExileXCardsFromGraveyardCost}. Returns an empty list when no card can pay the cost.
      */
-    protected List<Integer> selectAllGraveyardIndices(GameData gameData) {
+    protected List<Integer> selectExileXGraveyardIndices(
+            GameData gameData, ExileXCardsFromGraveyardCost cost) {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            indices.add(i);
+            Card card = graveyard.get(i);
+            if (cost.requiredType() == null || card.hasType(cost.requiredType())) {
+                indices.add(i);
+            }
         }
         return indices;
+    }
+
+    /**
+     * Selects exactly the requested number of cards matching an X-card graveyard exile cost.
+     * Returns null when the graveyard does not contain enough matching cards.
+     */
+    protected List<Integer> selectExileXGraveyardIndices(
+            GameData gameData, ExileXCardsFromGraveyardCost cost, int count) {
+        List<Integer> indices = selectExileXGraveyardIndices(gameData, cost);
+        if (count < 0 || indices.size() < count) {
+            return null;
+        }
+        return new ArrayList<>(indices.subList(0, count));
     }
 
     /**

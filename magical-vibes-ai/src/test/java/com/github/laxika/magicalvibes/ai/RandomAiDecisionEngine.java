@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
@@ -491,15 +492,18 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Determine exile graveyard card indices if needed (X cards exile, e.g. Harvest Pyre)
             List<Integer> exileGraveyardCardIndices = null;
-            if (findExileXGraveyardCost(card) != null) {
-                List<Integer> allIndices = selectAllGraveyardIndices(gameData);
+            ExileXCardsFromGraveyardCost exileXCost = findExileXGraveyardCost(card);
+            if (exileXCost != null) {
+                List<Integer> allIndices = selectExileXGraveyardIndices(gameData, exileXCost);
                 if (allIndices.isEmpty()) {
                     telemetry.recordSkip("spell: graveyard exile cost unpayable", card.getName());
                     continue; // No graveyard cards, try next spell
                 }
-                Collections.shuffle(allIndices, rng);
-                int count = rng.nextInt(allIndices.size()) + 1;
-                exileGraveyardCardIndices = new ArrayList<>(allIndices.subList(0, count));
+                if (!new ManaCost(card.getManaCost()).hasX()) {
+                    Collections.shuffle(allIndices, rng);
+                    int count = rng.nextInt(allIndices.size()) + 1;
+                    exileGraveyardCardIndices = new ArrayList<>(allIndices.subList(0, count));
+                }
             } else if (findExileNGraveyardCost(card) != null) {
                 exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
                 if (exileGraveyardCardIndices == null) {
@@ -589,6 +593,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 } else {
                     // Pick a random X between 1 and maxX
                     xValue = rng.nextInt(maxX) + 1;
+                }
+            }
+
+            if (exileXCost != null && castCost.hasX() && modalPlan == null) {
+                exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
+                if (exileGraveyardCardIndices == null) {
+                    telemetry.recordSkip("spell: graveyard exile cost unpayable", card.getName());
+                    continue;
                 }
             }
 
