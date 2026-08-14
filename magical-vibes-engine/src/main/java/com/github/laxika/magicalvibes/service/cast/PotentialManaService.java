@@ -548,7 +548,7 @@ public class PotentialManaService {
     public static boolean isFreeTapManaAbility(ActivatedAbility ability) {
         return ability.isRequiresTap()
                 && ability.getManaCost() == null
-                && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
+                && AbilityActivationService.isManaAbility(ability);
     }
 
     /**

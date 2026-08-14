@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -1087,6 +1088,18 @@ class AiManaManagerTest {
             ActivatedAbility ability = new ActivatedAbility(
                     true, null, List.of(new AwardAnyColorManaEffect()), "Add any");
             assertThat(AiManaManager.isFreeTapManaAbility(ability)).isTrue();
+        }
+
+        @Test
+        @DisplayName("targeted mana-producing ability is not a mana ability")
+        void targetedManaProducingAbility() {
+            ActivatedAbility ability = new ActivatedAbility(
+                    true, null,
+                    List.of(new AwardManaEffect(ManaColor.BLACK),
+                            new TargetPlayerGainsControlOfSourceCreatureEffect()),
+                    "Add B. Target opponent gains control of this creature.");
+
+            assertThat(AiManaManager.isFreeTapManaAbility(ability)).isFalse();
         }
     }
 
