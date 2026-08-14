@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -28,13 +29,16 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -1055,6 +1059,28 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI declines Pyrrhic Strike's optional blight for one mode")
+    void declinesOptionalBlightForSingleMode() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(3);
+        Permanent blightCreature = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        harness.setHand(aiPlayer, List.of(new PyrrhicStrike()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+        assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test

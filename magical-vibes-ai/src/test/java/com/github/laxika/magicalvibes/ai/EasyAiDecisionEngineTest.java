@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -19,7 +20,9 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.model.Card;
@@ -263,6 +266,22 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
             assertThat(testGd.stack.getFirst().getTargetId()).isNull();
             assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI declines Pyrrhic Strike's optional blight for one mode")
+        void declinesOptionalBlightForSingleMode() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 3);
+            Permanent blightCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new HillGiant());
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            testHarness.setHand(aiTestPlayer, List.of(new PyrrhicStrike()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+            assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         }
 
         @Test

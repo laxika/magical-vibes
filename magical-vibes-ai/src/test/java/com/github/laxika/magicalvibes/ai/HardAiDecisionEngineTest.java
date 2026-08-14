@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -56,7 +57,9 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -1268,6 +1271,35 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI declines Pyrrhic Strike's optional blight for one mode")
+    void declinesOptionalBlightForSingleMode() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        for (int i = 0; i < 3; i++) {
+            Permanent plains = new Permanent(new Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+        Permanent blightCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new PyrrhicStrike()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+        assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test

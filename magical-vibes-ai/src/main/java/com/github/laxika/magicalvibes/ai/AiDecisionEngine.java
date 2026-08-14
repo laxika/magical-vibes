@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1504,6 +1505,9 @@ public abstract class AiDecisionEngine {
             if (!(effect instanceof CostEffect cost)) {
                 continue;
             }
+            if (declinesOptionalCostForSingleModalMode(card, cost)) {
+                continue;
+            }
             // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
             // selectMultiPermanentCostIds.
             if (effect instanceof SacrificeMultiplePermanentsCost
@@ -1577,6 +1581,17 @@ public abstract class AiDecisionEngine {
             }
         }
         return List.of();
+    }
+
+    private boolean declinesOptionalCostForSingleModalMode(Card card, CostEffect cost) {
+        if (!(cost instanceof PutCounterOnControlledCreatureCost putCounterCost)
+                || !putCounterCost.optional()) {
+            return false;
+        }
+        ChooseOneEffect modal = findChooseOneEffect(card);
+        return modal != null
+                && modal.allModesWhenOptionalCostPaid()
+                && modal.choicesRequired() < modal.choicesMax();
     }
 
     /**
