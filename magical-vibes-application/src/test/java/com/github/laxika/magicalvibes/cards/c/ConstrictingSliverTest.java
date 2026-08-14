@@ -25,19 +25,17 @@ class ConstrictingSliverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(target.getId());
-
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

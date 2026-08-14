@@ -39,7 +39,11 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardWithConditionalBonusEffect) effect;
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;

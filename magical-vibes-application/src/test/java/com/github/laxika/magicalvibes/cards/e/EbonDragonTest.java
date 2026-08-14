@@ -26,8 +26,9 @@ class EbonDragonTest extends BaseCardTest {
     void resolvingPromptsMayAbility() {
         castEbonDragon();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -37,9 +38,7 @@ class EbonDragonTest extends BaseCardTest {
     void targetFilterExcludesController() {
         castEbonDragon();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -53,10 +52,10 @@ class EbonDragonTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         castEbonDragon();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
-        harness.handlePermanentChosen(player1, player2.getId()); // target opponent -> discard choice
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
@@ -73,9 +72,10 @@ class EbonDragonTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         castEbonDragon();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -89,10 +89,10 @@ class EbonDragonTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>());
         castEbonDragon();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
-        harness.handlePermanentChosen(player1, player2.getId()); // target opponent
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

@@ -10,12 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -153,6 +156,25 @@ class TriggerTargetCollectorTest {
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
         assertThat(withoutUnwrap.canTargetPlayers()).isTrue();
         assertThat(withoutUnwrap.validTargets()).containsExactly(player1Id, player2Id);
+    }
+
+    @Test
+    @DisplayName("MayEffect applies the wrapped effect's permanent target restriction")
+    void mayEffectAppliesWrappedPermanentTargetRestriction() {
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+        List<CardEffect> effects = List.of(new MayEffect(
+                new ExileTargetPermanentUntilSourceLeavesEffect(false,
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId())),
+                "Exile target permanent?"));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.validTargets()).containsExactly(opponentCreature.getId());
     }
 
     @Test

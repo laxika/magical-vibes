@@ -999,7 +999,17 @@ public class TriggeredAbilityQueueService {
             boolean lifeGainedCap = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             boolean targetDescribed = false;
+            GraveyardTargetingSupport.Target describedTarget =
+                    graveyardTargetingSupport.findTarget(pending.effects());
+            if (describedTarget != null) {
+                filter = describedTarget.filter();
+                scope = describedTarget.scope();
+                targetDescribed = true;
+            }
             for (CardEffect effect : pending.effects()) {
+                if (targetDescribed) {
+                    break;
+                }
                 CardEffect targetEffect = unwrapConditionalEffect(effect);
                 ReturnCardFromGraveyardEffect returnEffect = targetedReturnEffect(effect);
                 if (returnEffect != null) {
@@ -1025,15 +1035,6 @@ public class TriggeredAbilityQueueService {
                     break;
                 }
             }
-            if (!targetDescribed) {
-                GraveyardTargetingSupport.Target describedTarget =
-                        graveyardTargetingSupport.findTarget(pending.effects());
-                if (describedTarget != null) {
-                    filter = describedTarget.filter();
-                    scope = describedTarget.scope();
-                }
-            }
-
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
                     ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;

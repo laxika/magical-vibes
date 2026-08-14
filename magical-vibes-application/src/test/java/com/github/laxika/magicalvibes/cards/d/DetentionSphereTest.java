@@ -28,10 +28,10 @@ class DetentionSphereTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities(); // resolve enchantment spell -> ETB may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private void resetForFollowUpSpell() {
@@ -53,6 +53,7 @@ class DetentionSphereTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -104,6 +105,7 @@ class DetentionSphereTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -171,8 +173,6 @@ class DetentionSphereTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forestId))
                 .isInstanceOf(IllegalStateException.class);
@@ -194,8 +194,6 @@ class DetentionSphereTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, otherSphereId))
                 .isInstanceOf(IllegalStateException.class);

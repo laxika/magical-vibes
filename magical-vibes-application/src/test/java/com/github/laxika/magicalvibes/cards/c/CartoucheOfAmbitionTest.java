@@ -29,10 +29,10 @@ class CartoucheOfAmbitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, bears.getId());
-        harness.passBothPriorities(); // resolve aura → ETB trigger on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentBears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Cartouche of Ambition")
@@ -54,9 +54,10 @@ class CartoucheOfAmbitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, bears.getId());
-        harness.passBothPriorities(); // resolve aura → ETB trigger on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(opponentBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }

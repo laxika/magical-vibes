@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -124,6 +127,35 @@ class ETBTokenTargetServiceTest {
         service.processNextETBTokenTargetTrigger(gd);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Single ETB target applies a restriction carried by a wrapped effect")
+    void processNextETBTokenTargetTrigger_appliesWrappedEffectRestriction() {
+        UUID player2Id = UUID.randomUUID();
+        gd.playerIds.add(player2Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        MayEffect effect = new MayEffect(
+                new ExileTargetPermanentUntilSourceLeavesEffect(false,
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId())),
+                "Exile target permanent?");
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                sourceCard, player1Id, List.of(effect), ownCreature.getId(), null));
+
+        service.processNextETBTokenTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                gd, player1Id, List.of(opponentCreature.getId()), List.of(),
+                "Test Source's ability — Choose a target.");
     }
 
     @Test

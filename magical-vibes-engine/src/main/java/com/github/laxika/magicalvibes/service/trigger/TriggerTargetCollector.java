@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -173,7 +174,7 @@ public class TriggerTargetCollector {
             FilterContext effectFilterCtx = null;
             if (options.useEffectTargetPredicate()) {
                 effectPredicate = effects.stream()
-                        .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
+                        .map(e -> unwrap(e, options))
                         .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 && EffectResolution.targetPredicateOf(e) != null)
                         .map(EffectResolution::targetPredicateOf)
@@ -278,14 +279,17 @@ public class TriggerTargetCollector {
     /**
      * Looks through the wrappers that hide an effect's own targeting from this collector.
      *
-     * <p>A {@link MayPayManaEffect} keeps its wrapped effect's {@code targetSpec()} private (the
-     * payment is a resolution-time choice, CR 603.5), but the target of the ability as a whole is
-     * still chosen when the trigger is put on the stack (CR 603.3d) — Drainpipe Vermin's "you may
-     * pay {B}. If you do, target player discards a card". {@link ConditionalEffect} is unwrapped
-     * only for the slots whose {@link Options#unwrapConditional()} says so.
+     * <p>{@link MayEffect} and {@link MayPayManaEffect} carry the target restriction on their
+     * wrapped effects, while the target of the ability as a whole is still chosen when the trigger
+     * is put on the stack. {@link ConditionalEffect} is unwrapped only for the slots whose
+     * {@link Options#unwrapConditional()} says so.
      */
     private static CardEffect unwrap(CardEffect effect, Options options) {
-        CardEffect unwrapped = effect instanceof MayPayManaEffect mayPay ? mayPay.wrapped() : effect;
+        CardEffect unwrapped = switch (effect) {
+            case MayEffect may -> may.wrapped();
+            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            default -> effect;
+        };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;
     }
 }

@@ -23,10 +23,10 @@ class EnlightenedAsceticTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
 
         castAscetic();
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInGraveyard(player2, "Angelic Chorus");
@@ -37,9 +37,11 @@ class EnlightenedAsceticTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the enchantment on the battlefield")
     void decliningLeavesEnchantment() {
         harness.addToBattlefield(player2, new AngelicChorus());
+        UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
 
         castAscetic();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -54,11 +56,11 @@ class EnlightenedAsceticTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
 
         castAscetic();
-        harness.passBothPriorities(); // resolve creature → ETB + Angelic Chorus lifegain trigger
-        harness.passBothPriorities(); // resolve Angelic Chorus trigger
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Angelic Chorus");
         harness.assertInGraveyard(player1, "Angelic Chorus");
@@ -83,8 +85,6 @@ class EnlightenedAsceticTest extends BaseCardTest {
 
         castAscetic();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creatureId))
                 .isInstanceOf(IllegalStateException.class);

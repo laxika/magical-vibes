@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,6 +42,7 @@ public class ETBTokenTargetService {
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
     private final GraveyardTargetingService graveyardTargetingService;
+    private final TriggerTargetCollector triggerTargetCollector;
 
     @Autowired
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -49,7 +51,8 @@ public class ETBTokenTargetService {
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService,
                                  AmountEvaluationService amountEvaluationService,
-                                 GraveyardTargetingService graveyardTargetingService) {
+                                 GraveyardTargetingService graveyardTargetingService,
+                                 TriggerTargetCollector triggerTargetCollector) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
@@ -57,6 +60,7 @@ public class ETBTokenTargetService {
         this.targetLegalityService = targetLegalityService;
         this.amountEvaluationService = amountEvaluationService;
         this.graveyardTargetingService = graveyardTargetingService;
+        this.triggerTargetCollector = triggerTargetCollector;
     }
 
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -65,7 +69,8 @@ public class ETBTokenTargetService {
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService) {
         this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
-                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService), null);
+                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService), null,
+                new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService));
     }
 
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -76,7 +81,8 @@ public class ETBTokenTargetService {
                                  GraveyardTargetingService graveyardTargetingService) {
         this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
                 targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService),
-                graveyardTargetingService);
+                graveyardTargetingService,
+                new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService));
     }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {
@@ -124,31 +130,15 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
-            boolean canTargetPlayer = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean canTargetPermanent = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-
-            List<UUID> validPlayerTargets = new ArrayList<>();
-            if (canTargetPlayer) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, pending.targetFilter())) {
-                        validPlayerTargets.add(pid);
-                    }
-                }
-            }
-
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            if (canTargetPermanent) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(),
-                                pending.controllerId(), pending.sourceCard())) {
-                            validPermanentTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
+            TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
+                    gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
+                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK);
+            List<UUID> validPlayerTargets = targets.validTargets().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            List<UUID> validPermanentTargets = targets.validTargets().stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
 
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);

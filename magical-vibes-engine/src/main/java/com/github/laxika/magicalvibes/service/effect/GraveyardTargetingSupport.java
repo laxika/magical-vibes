@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
@@ -45,6 +46,9 @@ public class GraveyardTargetingSupport {
     }
 
     private Target targetOf(CardEffect effect) {
+        if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect) {
+            return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1);
+        }
         if (effect instanceof ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature) {
             return new Target(exileCreature.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1);
         }

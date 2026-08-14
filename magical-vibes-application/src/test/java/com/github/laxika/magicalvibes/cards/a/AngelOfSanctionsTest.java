@@ -88,10 +88,10 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> enters, ETB may on stack
-        harness.passBothPriorities(); // resolve ETB may -> prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         return harness.getPermanentId(player1, "Angel of Sanctions");
     }
 
