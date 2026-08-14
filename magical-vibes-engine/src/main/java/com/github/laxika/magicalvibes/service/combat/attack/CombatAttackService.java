@@ -478,6 +478,9 @@ public class CombatAttackService {
 
         // --- All validation passed — commit state changes ---
         gameData.interaction.clearAwaitingInput();
+        List<Permanent> declaredAttackers = attackerIndices.stream()
+                .map(battlefield::get)
+                .toList();
 
         // Pay attack tax (uniform per-attacker + per-creature aura taxes)
         if (totalTax > 0) {
@@ -1297,10 +1300,10 @@ public class CombatAttackService {
         }
 
         // Pay "can't attack unless you sacrifice N [permanents]" additional attack costs (Leviathan).
-        // Done last so removing sacrificed permanents from the battlefield can't shift the indices
-        // used above; the paired CantAttackUnlessEffect gate guarantees the cost is payable.
-        attackSacrificeCostService.paySacrificeAttackCosts(gameData, playerId, attackerIndices);
-        attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, attackerIndices);
+        // Done last so all index-based combat bookkeeping is complete; the cost services use the
+        // attacker snapshot because paying one cost can remove permanents from the battlefield.
+        attackSacrificeCostService.paySacrificeAttackCosts(gameData, playerId, declaredAttackers);
+        attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
 
         return CombatResult.AUTO_PASS_ONLY;
     }

@@ -37,19 +37,18 @@ public class AttackSacrificeCostService {
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
-     * required matching permanents the controller controls. Called after all index-based combat
-     * bookkeeping so removing the sacrificed permanents from the battlefield cannot shift indices.
+     * required matching permanents the controller controls. The attacker objects are captured before
+     * payment begins, so removing permanents from the battlefield cannot invalidate the declaration.
      */
-    public void paySacrificeAttackCosts(GameData gameData, UUID playerId, List<Integer> attackerIndices) {
+    public void paySacrificeAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return;
         }
 
-        // Collect the costs first (by index, before any battlefield mutation), then pay them.
+        // Collect the costs from the attacker snapshot before any battlefield mutation, then pay them.
         List<CantAttackUnlessSacrificeEffect> costs = new ArrayList<>();
-        for (int idx : attackerIndices) {
-            Permanent attacker = battlefield.get(idx);
+        for (Permanent attacker : attackers) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sac) {
                     costs.add(sac);
@@ -61,7 +60,7 @@ public class AttackSacrificeCostService {
             sacrificeMatching(gameData, playerId, cost.count(), cost.filter());
         }
 
-        collectGlobalCosts(gameData, playerId, attackerIndices)
+        collectGlobalCosts(gameData, playerId, attackers)
                 .forEach((filter, count) -> sacrificeMatching(gameData, playerId, count, filter));
     }
 
@@ -72,7 +71,12 @@ public class AttackSacrificeCostService {
      * a single matching attacker is payable.
      */
     public void validateGlobalSacrificeAttackCosts(GameData gameData, UUID playerId, List<Integer> attackerIndices) {
-        collectGlobalCosts(gameData, playerId, attackerIndices).forEach((filter, required) -> {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return;
+        }
+        List<Permanent> attackers = attackerIndices.stream().map(battlefield::get).toList();
+        collectGlobalCosts(gameData, playerId, attackers).forEach((filter, required) -> {
             if (countMatching(gameData, playerId, filter) < required) {
                 throw new IllegalStateException(
                         "Not enough permanents to sacrifice to attack (" + required + " required)");
@@ -86,10 +90,10 @@ public class AttackSacrificeCostService {
      * effect applies from any permanent to every matching creature.
      */
     private Map<PermanentPredicate, Integer> collectGlobalCosts(GameData gameData, UUID playerId,
-                                                                List<Integer> attackerIndices) {
+                                                                List<Permanent> attackers) {
         Map<PermanentPredicate, Integer> totals = new LinkedHashMap<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || attackerIndices.isEmpty()) {
+        if (battlefield == null || attackers.isEmpty()) {
             return totals;
         }
         gameData.forEachPermanent((ownerId, permanent) -> {
@@ -98,9 +102,9 @@ public class AttackSacrificeCostService {
                     continue;
                 }
                 int matching = 0;
-                for (int idx : attackerIndices) {
+                for (Permanent attacker : attackers) {
                     if (predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, battlefield.get(idx), restriction.attackerPredicate())) {
+                            gameData, attacker, restriction.attackerPredicate())) {
                         matching++;
                     }
                 }

@@ -43,15 +43,14 @@ public class AttackReturnToHandCostService {
     }
 
     public void payReturnToHandAttackCosts(GameData gameData, UUID playerId,
-                                           List<Integer> attackerIndices) {
+                                           List<Permanent> attackers) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return;
         }
 
         List<CantAttackUnlessReturnToHandEffect> costs = new ArrayList<>();
-        for (int idx : attackerIndices) {
-            Permanent attacker = battlefield.get(idx);
+        for (Permanent attacker : attackers) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessReturnToHandEffect returnCost) {
                     costs.add(returnCost);
