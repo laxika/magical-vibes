@@ -23,6 +23,7 @@ class WornPowerstoneTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Worn Powerstone").isTapped()).isTrue();
     }

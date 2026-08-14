@@ -20,6 +20,7 @@ class WirecatTest extends BaseCardTest {
     @DisplayName("Wirecat can attack when no enchantment is on the battlefield")
     void canAttackWithoutEnchantment() {
         Permanent wirecat = addReadyWirecat(player1);
+        addReadyCreature(player2);
         declareAttackers(player1, List.of(0));
 
         assertThat(wirecat.isAttacking()).isTrue();
@@ -69,6 +70,7 @@ class WirecatTest extends BaseCardTest {
     @DisplayName("Wirecat can attack again after the enchantment leaves the battlefield")
     void restrictionLiftsWhenEnchantmentLeavesBattlefield() {
         Permanent wirecat = addReadyWirecat(player1);
+        addReadyCreature(player2);
         Permanent enchantment = addEnchantment(player2);
         gd.playerBattlefields.get(player2.getId()).remove(enchantment);
 

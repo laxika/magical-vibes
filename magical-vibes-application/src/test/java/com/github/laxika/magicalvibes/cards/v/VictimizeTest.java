@@ -79,7 +79,7 @@ class VictimizeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(first.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(sacrifice.getCard().getId()));
+                .anyMatch(card -> card.getId().equals(sacrifice.getCard().getId()));
     }
 
     @Test

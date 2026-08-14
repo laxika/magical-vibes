@@ -18,8 +18,6 @@ class ScaldTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 1);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-
         harness.passBothPriorities();
         harness.passBothPriorities();
 

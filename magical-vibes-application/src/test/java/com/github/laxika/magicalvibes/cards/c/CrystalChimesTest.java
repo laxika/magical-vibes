@@ -45,13 +45,14 @@ class CrystalChimesTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.setGraveyard(player2, List.of(new AuraOfSilence()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Aura of Silence");
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
     }
 
     @Test

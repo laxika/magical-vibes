@@ -18,7 +18,7 @@ class GaeasCradleTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
     }
@@ -28,7 +28,7 @@ class GaeasCradleTest extends BaseCardTest {
     void addsNoManaWithNoControlledCreatures() {
         harness.addToBattlefield(player1, new GaeasCradle());
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }

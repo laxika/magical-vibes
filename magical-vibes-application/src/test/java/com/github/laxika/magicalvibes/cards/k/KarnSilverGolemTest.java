@@ -71,6 +71,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     void cannotTargetArtifactCreature() {
         addKarnReady(player1);
         Permanent target = addCreatureReady(player2, new IronMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

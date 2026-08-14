@@ -57,7 +57,7 @@ class RetaliationTest extends BaseCardTest {
         addReady(player1, new GrizzlyBears());
 
         prepareDeclareBlockers(player2);
-        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(attacker.getPowerModifier()).isZero();

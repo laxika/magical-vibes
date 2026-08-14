@@ -20,6 +20,7 @@ class AntagonismTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Antagonism());
 
         advanceToEndStep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -37,14 +38,15 @@ class AntagonismTest extends BaseCardTest {
         harness.passBothPriorities();
 
         advanceToEndStep(player2);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

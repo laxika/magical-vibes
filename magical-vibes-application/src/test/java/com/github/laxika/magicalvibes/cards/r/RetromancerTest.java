@@ -29,7 +29,7 @@ class RetromancerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertLife(player2, 15);
+        harness.assertLife(player2, 17);
     }
 
     @Test

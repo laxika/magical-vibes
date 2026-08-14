@@ -71,6 +71,7 @@ class HiddenSpiderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.setHand(player2, List.of(new SuntailHawk()));
         harness.addMana(player2, ManaColor.WHITE, 1);

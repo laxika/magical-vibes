@@ -74,6 +74,7 @@ class HiddenAncientsTest extends BaseCardTest {
 
         harness.castEnchantment(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
 
         harness.setHand(player2, List.of(createEnchantmentSpell()));

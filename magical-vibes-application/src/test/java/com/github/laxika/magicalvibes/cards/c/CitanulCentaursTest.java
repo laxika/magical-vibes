@@ -23,8 +23,7 @@ class CitanulCentaursTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, centaurs.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("shroud");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

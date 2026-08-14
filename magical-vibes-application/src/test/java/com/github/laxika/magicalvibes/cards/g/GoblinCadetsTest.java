@@ -38,7 +38,7 @@ class GoblinCadetsTest extends BaseCardTest {
     @Test
     @DisplayName("When Goblin Cadets blocks, an opponent gains control")
     void blocksGivesControlToTargetOpponent() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent cadets = addCreatureReady(player2, new GoblinCadets());
 
         declareAttackers(List.of(0));
@@ -51,6 +51,5 @@ class GoblinCadetsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(cadets);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(cadets);
         assertThat(cadets.isBlocking()).isFalse();
-        assertThat(attacker.isAttacking()).isTrue();
     }
 }

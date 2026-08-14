@@ -76,6 +76,7 @@ class HiddenGuerrillasTest extends BaseCardTest {
 
         harness.castArtifact(player2, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, hiddenGuerrillas)).isTrue();
 
         harness.setHand(player2, List.of(createArtifactSpell()));

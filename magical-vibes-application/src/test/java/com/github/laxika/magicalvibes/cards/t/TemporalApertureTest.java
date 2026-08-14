@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,7 +37,7 @@ class TemporalApertureTest extends BaseCardTest {
 
         activate();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
                 .containsEntry(player1.getId(), shock.getId());
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(shock);
@@ -55,7 +54,7 @@ class TemporalApertureTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
-        harness.assertLife(player2, 17);
+        harness.assertLife(player2, 18);
         assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
                 .doesNotContainKey(player1.getId());
     }

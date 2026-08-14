@@ -30,14 +30,15 @@ class SporogenesisTest extends BaseCardTest {
         Permanent token = harness.addToBattlefieldAndReturn(player1, createTokenCreature());
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(creature.getId()).doesNotContain(token.getId());
 
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(creature.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
     }

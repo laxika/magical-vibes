@@ -19,12 +19,12 @@ class ElectryteTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent electryte = addCreatureReady(player1, new Electryte());
         electryte.setPowerModifier(2);
+        electryte.setAttacking(true);
         addAttackingCreature(player1, creature("Harmless Attacker", 0, 5));
-        Permanent blocker = addBlockingCreature(player2, creature("Blocker", 6, 6), 1);
+        Permanent blocker = addBlockingCreature(player2, creature("Blocker", 2, 6), 1);
         Permanent bystander = addCreatureReady(player2, creature("Bystander", 2, 6));
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);
@@ -37,10 +37,10 @@ class ElectryteTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent electryte = addCreatureReady(player1, new Electryte());
         electryte.setPowerModifier(2);
-        Permanent blocker = addBlockingCreature(player2, creature("Blocker", 6, 8), 0);
+        electryte.setAttacking(true);
+        Permanent blocker = addBlockingCreature(player2, creature("Blocker", 2, 8), 0);
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);

@@ -15,10 +15,10 @@ class ChildOfGaeaTest extends BaseCardTest {
     @DisplayName("Child of Gaea survives its upkeep when its controller pays {G}{G}")
     void survivesUpkeepWhenPaymentIsMade() {
         Permanent child = addChild(player1);
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(child);

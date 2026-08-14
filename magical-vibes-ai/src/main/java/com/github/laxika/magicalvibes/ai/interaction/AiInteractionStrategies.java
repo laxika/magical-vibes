@@ -36,6 +36,7 @@ public final class AiInteractionStrategies {
         register(new MirrorOfFateChoiceAiStrategy());
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());
+        register(new EachPlayerMayPutCardFromHandChoiceAiStrategy());
         register(new RevealAnyNumberOfCardsFromHandChoiceAiStrategy());
         register(new DoomsdayChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());

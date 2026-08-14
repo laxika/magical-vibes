@@ -42,6 +42,9 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         // graveyard") refer to the effect's controller, so the amount evaluates against the
         // SOURCE permanent (the spell/ability's own permanent), not the target being pumped.
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);

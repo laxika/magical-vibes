@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,9 +54,11 @@ class GoblinLackeyTest extends BaseCardTest {
     }
 
     private void dealNoncombatDamage() {
-        addCreatureReady(player1, new GoblinLackey());
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pyromancer), null,
+        Permanent lackey = addCreatureReady(player1, new GoblinLackey());
+        Permanent study = new Permanent(new HermeticStudy());
+        study.setAttachedTo(lackey.getId());
+        gd.playerBattlefields.get(player1.getId()).add(study);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lackey), null,
                 player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

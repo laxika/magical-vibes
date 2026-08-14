@@ -19,6 +19,7 @@ class SmokestackTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(smokestack.getCounterCount(CounterType.SOOT)).isEqualTo(1);
@@ -30,6 +31,7 @@ class SmokestackTest extends BaseCardTest {
         Permanent smokestack = addSmokestack(player1);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -45,11 +47,13 @@ class SmokestackTest extends BaseCardTest {
         Permanent player1PermanentTwo = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent player2Permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent player2PermanentTwo = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent player2PermanentThree = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToUpkeep(player2);
         choosePermanents(player2, player2Permanent, player2PermanentTwo);
 
         assertThat(battlefield(player2)).doesNotContain(player2Permanent, player2PermanentTwo);
+        assertThat(battlefield(player2)).contains(player2PermanentThree);
         assertThat(battlefield(player1)).contains(player1Permanent, player1PermanentTwo);
     }
 
@@ -61,6 +65,7 @@ class SmokestackTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(battlefield(player2)).doesNotContain(permanent);
     }
