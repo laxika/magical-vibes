@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -1737,6 +1738,32 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI casts Dominate with a target within the announced X")
+        void castsDominateWithTargetWithinAnnouncedX() {
+            giveAiPriorityLocal();
+            giveAiIslandsLocal(6); // maxX = 3; the target determines X=2
+
+            Permanent tooExpensive = new Permanent(new HillGiant()); // MV=4
+            tooExpensive.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(tooExpensive);
+
+            Permanent target = new Permanent(new GrizzlyBears()); // MV=2
+            target.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(target);
+
+            Dominate dominate = new Dominate();
+            testHarness.setHand(aiTestPlayer, List.of(dominate));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(dominate);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
             assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
         }
 

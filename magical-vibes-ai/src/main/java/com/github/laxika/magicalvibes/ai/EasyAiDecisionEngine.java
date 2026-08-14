@@ -165,7 +165,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (multiTargetIds == null) {
                 return false;
             }
-        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                && (EffectResolution.needsTarget(card) || card.isAura())
+                && !hasPermanentManaValueEqualsXTarget(card)
+                && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -194,8 +197,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
-                // X must match the target permanent's mana value — use max affordable X
+            if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
+                // X is constrained by the target permanent's mana value; use max affordable X
                 // (not smartX which clamps to toughness) and co-select target + X.
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
@@ -213,7 +216,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                         .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
                         .orElse(validTargets.getFirst());
                 targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
+                xValue = hasPermanentManaValueEqualsXTarget(card)
+                        ? chosen.getCard().getManaValue()
+                        : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
@@ -326,7 +331,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return false;
-        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                && (EffectResolution.needsTarget(card) || card.isAura())
+                && !hasPermanentManaValueEqualsXTarget(card)
+                && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }
@@ -350,7 +358,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         int instantCostModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
+            if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
@@ -363,7 +371,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                         .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
                         .orElse(validTargets.getFirst());
                 targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
+                xValue = hasPermanentManaValueEqualsXTarget(card)
+                        ? chosen.getCard().getManaValue()
+                        : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, instantCostModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));

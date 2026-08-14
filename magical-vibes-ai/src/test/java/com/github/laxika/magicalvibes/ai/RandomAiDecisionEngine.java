@@ -461,7 +461,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                     && (EffectResolution.needsTarget(card) || card.isAura())
-                    && !hasRequiresManaValueAtMostX(card)) {
+                    && !hasRequiresManaValueAtMostX(card)
+                    && !hasPermanentManaValueEqualsXTarget(card)
+                    && !hasPermanentManaValueAtMostXTarget(card)) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     telemetry.recordSkip("spell: no valid target", card.getName());
@@ -571,9 +573,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     xValue = minimumX + (maxX == minimumX
                             ? 0
                             : rng.nextInt(maxX - minimumX + 1));
-                } else if (hasPermanentManaValueEqualsXTarget(card)) {
-                    // For PermanentManaValueEqualsXPredicate spells (e.g. Entrancing Melody),
-                    // X must match the target permanent's mana value — co-select target and X.
+                } else if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
+                    // For permanent mana-value-constrained spells, co-select the target and X.
                     List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
                             gameData, card, aiPlayer.getId(), maxX);
                     if (validTargets.isEmpty()) {
@@ -582,7 +583,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     }
                     Permanent chosen = validTargets.get(rng.nextInt(validTargets.size()));
                     targetId = chosen.getId();
-                    xValue = chosen.getCard().getManaValue();
+                    xValue = hasPermanentManaValueEqualsXTarget(card)
+                            ? chosen.getCard().getManaValue()
+                            : Math.max(1, chosen.getCard().getManaValue());
                 } else {
                     // Pick a random X between 1 and maxX
                     xValue = rng.nextInt(maxX) + 1;

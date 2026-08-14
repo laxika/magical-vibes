@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -49,6 +50,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsDominateWithTargetWithinAnnouncedX() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.BLUE, 6);
+        Permanent tooExpensive = harness.addToBattlefieldAndReturn(opponent, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        Dominate dominate = new Dominate();
+        harness.setHand(aiPlayer, List.of(dominate));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(dominate);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gameData.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(2);
+    }
 
     @Test
     void castsXSpellWithAllRequiredDiscardCards() {

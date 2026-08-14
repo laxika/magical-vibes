@@ -1391,6 +1391,10 @@ public class GameSimulator {
                 int manaValue = target.getCard().getManaValue();
                 return manaValue >= 1 && manaValue <= maxX ? manaValue : 0;
             }
+            if (AiUtils.hasManaValueAtMostXTarget(card)) {
+                int manaValue = target.getCard().getManaValue();
+                return manaValue <= maxX ? Math.max(1, manaValue) : 0;
+            }
             if (gameQueryService.isCreature(gd, target)) {
                 int toughness = gameQueryService.getEffectiveToughness(gd, target);
                 return Math.min(toughness, maxX);

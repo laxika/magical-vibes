@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -126,6 +127,33 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
+
+    @Test
+    @DisplayName("Hard AI co-selects a Dominate target within the announced X")
+    void castsDominateWithTargetWithinAnnouncedX() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 6); // maxX = 3; the target determines X=2
+
+        Permanent tooExpensive = harness.addToBattlefieldAndReturn(player2, new HillGiant()); // MV=4
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // MV=2
+        Dominate dominate = new Dominate();
+        harness.setHand(player1, List.of(dominate));
+
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, tooExpensive.getId(), 1));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(dominate);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
 
     private void givePlayerSwamps(Player player, int count) {
         for (int i = 0; i < count; i++) {

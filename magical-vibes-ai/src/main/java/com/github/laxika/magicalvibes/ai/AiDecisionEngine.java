@@ -1791,6 +1791,14 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Returns true when the target's mana value must be no greater than X (e.g. Dominate). See
+     * {@link AiUtils#hasManaValueAtMostXTarget}, which the MCTS simulator shares.
+     */
+    protected boolean hasPermanentManaValueAtMostXTarget(Card card) {
+        return AiUtils.hasManaValueAtMostXTarget(card);
+    }
+
+    /**
      * Selects a permanent to sacrifice for the card's sacrifice cost, if any.
      * Picks the weakest creature (lowest effective power + toughness) for creature
      * sacrifice costs, or the first matching permanent for other sacrifice types.

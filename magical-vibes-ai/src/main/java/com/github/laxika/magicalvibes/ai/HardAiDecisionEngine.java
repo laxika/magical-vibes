@@ -1024,7 +1024,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (targetId == null) return null;
         } else if (targetId == null && modalPlan == null
                 && !EffectResolution.needsDamageDistribution(card)
-                && (EffectResolution.needsTarget(card) || card.isAura())) {
+                && (EffectResolution.needsTarget(card) || card.isAura())
+                && !hasPermanentManaValueEqualsXTarget(card)
+                && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return null;
         }
@@ -1062,7 +1064,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int costModifier = castingCostService.getCastCostModifier(
                 gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
+            if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
@@ -1076,7 +1078,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
                         .orElse(validTargets.getFirst());
                 targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
+                xValue = hasPermanentManaValueEqualsXTarget(card)
+                        ? chosen.getCard().getManaValue()
+                        : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(
                         gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
@@ -1353,10 +1357,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.hasType(CardType.LAND) || isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
-            // For X spells targeting a creature with MV==X (e.g. Entrancing Melody),
-            // verify valid targets exist for the affordable maxX. Without this check,
+            // For X spells whose permanent target has a mana-value constraint (e.g. Entrancing
+            // Melody or Dominate), verify valid targets exist for the affordable maxX. Without this check,
             // MCTS would wastefully simulate the spell when no targets can be hit.
-            if (hasPermanentManaValueEqualsXTarget(card) && new ManaCost(card.getManaCost()).hasX()) {
+            if ((hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card))
+                    && new ManaCost(card.getManaCost()).hasX()) {
                 int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -1371,6 +1372,32 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Dominate with a target within the announced X")
+    void castsDominateWithTargetWithinAnnouncedX() {
+        giveAiPriority();
+        giveAiIslands(6); // maxX = 3; the target determines X=2
+
+        Permanent tooExpensive = new Permanent(new HillGiant()); // MV=4
+        tooExpensive.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(tooExpensive);
+
+        Permanent target = new Permanent(new GrizzlyBears()); // MV=2
+        target.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(target);
+
+        Dominate dominate = new Dominate();
+        harness.setHand(aiPlayer, List.of(dominate));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(dominate);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
