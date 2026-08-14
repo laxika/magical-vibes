@@ -672,6 +672,14 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record LibraryCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
+                                 StackEntryType spellType, List<Integer> modeIndices) implements ChoiceContext {
+
+        public LibraryCastModeChoice {
+            modeIndices = List.copyOf(modeIndices);
+        }
+    }
+
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId) implements ChoiceContext {}
 

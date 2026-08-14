@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -53,11 +55,15 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -99,6 +105,11 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+
+    @Autowired @Lazy
+    private SpellCastingService spellCastingService;
+    @Autowired @Lazy
+    private TargetLegalityService targetLegalityService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -625,7 +636,7 @@ public class LibraryChoiceHandlerService {
             // or sorcery card. You may cast that card without paying its mana cost. Then that player
             // shuffles." A card that can't be cast (CR 601.2c: no legal target) is therefore simply
             // left in the library it was found in, and is shuffled back in with the rest.
-            boolean castable = canCastWithoutPaying(gameData, chosenCard);
+            boolean castable = canCastWithoutPaying(gameData, playerId, chosenCard);
             if (!castable) {
                 deck.add(chosenCard);
             }
@@ -2153,7 +2164,7 @@ public class LibraryChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
             Card picked = searchCards.get(cardIndex);
-            if (canCastWithoutPaying(gameData, picked)) {
+            if (canCastWithoutPaying(gameData, player.getId(), picked)) {
                 chosenCard = picked;
                 // Remove chosen card from sourceCards
                 for (int i = 0; i < sourceCards.size(); i++) {
@@ -2259,6 +2270,131 @@ public class LibraryChoiceHandlerService {
         return validTargets;
     }
 
+    private List<UUID> computeCastWithoutPayingTargets(GameData gameData, Card card,
+                                                       List<CardEffect> spellEffects, UUID controllerId) {
+        List<UUID> validTargets = new ArrayList<>();
+
+        List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield != null) {
+                candidateTargets.addAll(battlefield.stream().map(Permanent::getId).toList());
+            }
+        }
+
+        for (UUID targetId : candidateTargets) {
+            try {
+                targetLegalityService.validateSpellTargeting(gameData, card, spellEffects, targetId, null,
+                        controllerId, true, 0);
+                validTargets.add(targetId);
+            } catch (IllegalStateException ignored) {
+                // The mode's target filter or effect restrictions reject this candidate.
+            }
+        }
+
+        return validTargets;
+    }
+
+    private ChooseOneEffect spellModal(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId) {
+        ChooseOneEffect modal = spellModal(card);
+        if (modal == null || modal.choicesRequired() != 1 || modal.choicesMax() != 1) {
+            return null;
+        }
+
+        List<ChooseOneEffect.ChooseOneOption> legalOptions = new ArrayList<>();
+        List<Integer> modeIndices = new ArrayList<>();
+        for (int modeIndex = 0; modeIndex < modal.options().size(); modeIndex++) {
+            ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
+            Card evaluationCard = card.createRuntimeCopy();
+            List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));
+            spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
+            boolean needsTarget = EffectResolution.needsSpellCastTarget(
+                    effects, evaluationCard.isAura(), evaluationCard.isEnchantPlayer());
+            if (!needsTarget || !computeCastWithoutPayingTargets(gameData, evaluationCard, effects, controllerId).isEmpty()) {
+                legalOptions.add(option);
+                modeIndices.add(modeIndex);
+            }
+        }
+
+        if (legalOptions.isEmpty()) {
+            return null;
+        }
+
+        return new LegalModalOptions(
+                new ChooseOneEffect(legalOptions, modal.optional(), modal.choicesRequired(), modal.choicesMax(),
+                        modal.allModesWhenOptionalCostPaid()),
+                modeIndices);
+    }
+
+    public void handleLibraryCastModeChoice(GameData gameData, Player player, String chosenLabel,
+                                            ChoiceContext.LibraryCastModeChoice ctx) {
+        int selectedOptionIndex = -1;
+        for (int i = 0; i < ctx.effect().options().size(); i++) {
+            if (ctx.effect().options().get(i).label().equals(chosenLabel)) {
+                selectedOptionIndex = i;
+                break;
+            }
+        }
+        if (selectedOptionIndex < 0) {
+            throw new IllegalArgumentException("Invalid mode: " + chosenLabel);
+        }
+
+        int modeIndex = ctx.modeIndices().get(selectedOptionIndex);
+        Card card = ctx.cardToCast();
+        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        int effectiveXValue = spellCastingService.prepareModalSpellCast(card, spellEffects, modeIndex);
+        gameData.interaction.clearAwaitingInput();
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosenLabel + "\" for ", card, "."));
+
+        boolean needsTarget = EffectResolution.needsSpellCastTarget(
+                spellEffects, card.isAura(), card.isEnchantPlayer());
+        if (needsTarget) {
+            List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, card, spellEffects,
+                    ctx.controllerId());
+            if (validTargets.isEmpty()) {
+                throw new IllegalStateException("No legal target remains for " + card.getName()
+                        + " after choosing a mode");
+            }
+
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LibraryCastSpellTarget(card, ctx.controllerId(), spellEffects,
+                            ctx.spellType()));
+            playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
+                    "Choose a target for " + card.getName() + ".");
+
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts ", card,
+                    " without paying its mana cost — choosing target."));
+            log.info("Game {} - {} casts {} without paying mana after choosing mode, choosing target",
+                    gameData.id, player.getUsername(), card.getName());
+            return;
+        }
+
+        gameData.stack.add(new StackEntry(
+                ctx.spellType(), card, ctx.controllerId(), card.getName(),
+                spellEffects, effectiveXValue, (UUID) null, null
+        ));
+        gameData.recordSpellCast(ctx.controllerId(), card);
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " casts ", card, " without paying its mana cost."));
+        log.info("Game {} - {} casts {} without paying mana after choosing mode",
+                gameData.id, player.getUsername(), card.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, ctx.controllerId(), false);
+        finishSearchAndResume(gameData);
+    }
+
     /**
      * Whether a "you may cast this without paying its mana cost" permission can actually be taken up
      * for {@code card}. A spell that needs a target but has no legal one can't be cast at all
@@ -2268,7 +2404,10 @@ public class LibraryChoiceHandlerService {
      * <p>Callers must consult this before moving the card, and only then call
      * {@link #castCardWithoutPaying}.
      */
-    private boolean canCastWithoutPaying(GameData gameData, Card card) {
+    private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        if (spellModal(card) != null) {
+            return legalModalOptions(gameData, card, controllerId) != null;
+        }
         return !EffectResolution.needsTarget(card)
                 || !computeCastWithoutPayingTargets(gameData, card).isEmpty();
     }
@@ -2288,6 +2427,19 @@ public class LibraryChoiceHandlerService {
 
         // Cast the chosen card without paying its mana cost
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
+
+        LegalModalOptions modalOptions = legalModalOptions(gameData, chosenCard, playerId);
+        if (modalOptions != null) {
+            Card runtimeCard = chosenCard.createRuntimeCopy();
+            playerInputService.beginLibraryCastModeChoice(gameData, playerId, runtimeCard,
+                    modalOptions.effect(), spellType, modalOptions.modeIndices());
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", runtimeCard,
+                    " without paying its mana cost — choosing mode."));
+            log.info("Game {} - {} casts {} without paying mana, choosing mode",
+                    gameData.id, playerName, runtimeCard.getName());
+            return;
+        }
+
         List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
 
         if (EffectResolution.needsTarget(chosenCard)) {
@@ -2355,5 +2507,7 @@ public class LibraryChoiceHandlerService {
             default -> StackEntryType.SORCERY_SPELL;
         };
     }
+
+    private record LegalModalOptions(ChooseOneEffect effect, List<Integer> modeIndices) {}
 
 }

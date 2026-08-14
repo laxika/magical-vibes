@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,5 +104,25 @@ class ColorChoiceAiStrategyTest {
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade(
                 ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT));
+    }
+
+    @Test
+    @DisplayName("Free-cast modal choice answers with an offered mode")
+    void answersFreeCastModalChoiceWithOfferedMode() throws Exception {
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.LibraryCastModeChoice(null, aiPlayerId,
+                        new ChooseOneEffect(List.of()), StackEntryType.SORCERY_SPELL, List.of()),
+                List.of("first mode"),
+                "Choose one.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("first mode"));
     }
 }

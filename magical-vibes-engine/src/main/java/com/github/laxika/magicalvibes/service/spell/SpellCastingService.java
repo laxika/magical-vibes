@@ -588,6 +588,10 @@ public class SpellCastingService {
         return effectiveXValue;
     }
 
+    public int prepareModalSpellCast(Card card, List<CardEffect> effects, int modeEncoding) {
+        return unwrapChooseOneEffect(card, effects, modeEncoding);
+    }
+
     private static void validateOptionalCostModalSelection(
             ChooseOneEffect modal,
             AdditionalSpellCostService.ExtractedCosts additionalCosts,

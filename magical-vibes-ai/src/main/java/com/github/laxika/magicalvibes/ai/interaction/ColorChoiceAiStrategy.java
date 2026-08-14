@@ -60,8 +60,9 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.ChooseModeChoice) {
-            // Modal triggered ability (e.g. Etherwrought Page): take the first mode (always a legal label).
+        if (context instanceof ChoiceContext.ChooseModeChoice
+                || context instanceof ChoiceContext.LibraryCastModeChoice) {
+            // Modal abilities and free-cast modal spells take the first offered mode.
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));
