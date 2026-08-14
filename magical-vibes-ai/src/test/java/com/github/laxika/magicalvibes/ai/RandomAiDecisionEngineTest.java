@@ -616,6 +616,34 @@ class RandomAiDecisionEngineTest {
         assertThat(controlled.getId()).isEqualTo(gameData.activePlayerId);
     }
 
+    @Test
+    void declaresBlockersAfterMindslaveredPlayerAttacks() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent berserkers = mindslavedAttackerDeclaration(harness);
+        Permanent blocker = gameData.playerBattlefields.get(aiPlayer.getId()).getLast();
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            assertThat(berserkers.isAttacking()).isTrue();
+            assertThat(gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNotNull();
+
+            engine.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     /**
      * Hands the AI seat control of player1's turn through a real Mindslaver activation and stops in
      * that turn's declare-attackers step, returning the controlled player's must-attack creature.

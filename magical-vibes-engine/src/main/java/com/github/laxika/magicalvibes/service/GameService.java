@@ -248,6 +248,7 @@ public class GameService {
             if (controlledId.equals(activeDecider)) {
                 return new Player(controlledId, gameData.playerIdToName.get(controlledId));
             }
+            return player;
         }
 
         // Check if the controlled player currently holds priority

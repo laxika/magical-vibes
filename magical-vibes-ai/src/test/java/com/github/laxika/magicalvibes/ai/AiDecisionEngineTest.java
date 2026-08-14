@@ -844,6 +844,28 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("AI controller can declare blockers during the controlled player's turn")
+    void controllerCanDeclareBlockersDuringControlledTurn() {
+        setupBlockerPhase();
+        gd.mindControlledPlayerId = human.getId();
+        gd.mindControllerPlayerId = aiPlayer.getId();
+
+        Permanent humanBears = new Permanent(new GrizzlyBears());
+        humanBears.setSummoningSick(false);
+        humanBears.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(humanBears);
+
+        Permanent aiElemental = new Permanent(new AirElemental());
+        aiElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiElemental);
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(aiElemental.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Easy AI assigns the minimum three blockers to Guile")
     void assignsMinimumThreeBlockersToGuile() {
         setupBlockerPhase();
