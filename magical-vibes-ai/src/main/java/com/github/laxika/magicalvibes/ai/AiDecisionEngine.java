@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -603,6 +604,7 @@ public abstract class AiDecisionEngine {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         attackerIndices = enforceCanOnlyAttackAlone(gameData, actingPlayerId, attackerIndices);
         attackerIndices = removeUnmetAttackRestrictions(gameData, attackerIndices);
+        attackerIndices = capAttackersToCombatMaximum(gameData, attackerIndices);
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
                 gameData, actingPlayerId);
@@ -973,7 +975,10 @@ public abstract class AiDecisionEngine {
         DeclareAttackersRequest restrictionLegalRequest = gameData == null
                 ? targetLegalRequest
                 : removeUnmetAttackRestrictions(gameData, targetLegalRequest);
-        String rejection = attemptAttackerDeclaration(restrictionLegalRequest);
+        DeclareAttackersRequest combatLimitLegalRequest = gameData == null
+                ? restrictionLegalRequest
+                : capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
+        String rejection = attemptAttackerDeclaration(combatLimitLegalRequest);
         if (rejection == null) {
             return;
         }
@@ -1094,6 +1099,49 @@ public abstract class AiDecisionEngine {
             return request;
         }
         return new DeclareAttackersRequest(legalAttackers, request.attackTargets(), request.bands());
+    }
+
+    /**
+     * Applies battlefield-wide limits on the number of attackers before an AI declaration is
+     * submitted. If the limit forces a choice, keep required attackers from the active combat
+     * prompt ahead of optional attackers.
+     */
+    private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices) {
+        int maximumAttackers = CombatHelper.getMaximumAttackers(gameData);
+        if (attackerIndices.size() <= maximumAttackers) {
+            return attackerIndices;
+        }
+
+        Set<Integer> requested = new HashSet<>(attackerIndices);
+        LinkedHashSet<Integer> ordered = new LinkedHashSet<>();
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            for (int requiredIndex : declaration.mustAttackIndices()) {
+                if (requested.contains(requiredIndex)) {
+                    ordered.add(requiredIndex);
+                }
+            }
+        }
+        ordered.addAll(attackerIndices);
+
+        List<Integer> capped = new ArrayList<>(maximumAttackers);
+        for (int attackerIndex : ordered) {
+            if (capped.size() == maximumAttackers) {
+                break;
+            }
+            capped.add(attackerIndex);
+        }
+        return capped;
+    }
+
+    private DeclareAttackersRequest capAttackersToCombatMaximum(
+            GameData gameData, DeclareAttackersRequest request) {
+        List<Integer> capped = capAttackersToCombatMaximum(gameData, request.attackerIndices());
+        if (capped.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(capped, request.attackTargets(), request.bands());
     }
 
     private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,

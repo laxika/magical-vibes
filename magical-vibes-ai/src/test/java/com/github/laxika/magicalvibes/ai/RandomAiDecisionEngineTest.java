@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -151,6 +152,40 @@ class RandomAiDecisionEngineTest {
         assertThat(restricted.isAttacking()).isFalse();
         assertThat(gameData.getLife(opponent.getId())).isEqualTo(18);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    void respectsBattlefieldWideAttackerLimit() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        harness.setLife(opponent, 2);
+
+        harness.addToBattlefield(opponent, new DuelingGrounds());
+        Permanent first = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        first.setSummoningSick(false);
+        Permanent second = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        second.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                .isNull();
     }
 
     @Test

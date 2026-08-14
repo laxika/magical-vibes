@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -1285,6 +1286,36 @@ class EasyAiDecisionEngineTest {
             }
             assertThat(attacker.isAttacking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI respects a battlefield-wide attacker limit")
+        void respectsBattlefieldWideAttackerLimit() {
+            combatGd.playerLifeTotals.put(opponent.getId(), 2);
+            Permanent limit = combatHarness.addToBattlefieldAndReturn(opponent, new DuelingGrounds());
+            limit.setSummoningSick(false);
+            Permanent first = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            first.setSummoningSick(false);
+            Permanent second = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            second.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
     }
 

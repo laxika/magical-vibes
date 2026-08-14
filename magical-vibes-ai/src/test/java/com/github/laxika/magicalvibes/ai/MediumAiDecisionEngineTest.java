@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -307,6 +308,35 @@ class MediumAiDecisionEngineTest {
             watcher.uninstall();
         }
         assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI respects a battlefield-wide attacker limit")
+    void respectsBattlefieldWideAttackerLimit() {
+        gd.playerLifeTotals.put(human.getId(), 2);
+        Permanent limit = harness.addToBattlefieldAndReturn(human, new DuelingGrounds());
+        limit.setSummoningSick(false);
+        Permanent first = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        first.setSummoningSick(false);
+        Permanent second = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        second.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 

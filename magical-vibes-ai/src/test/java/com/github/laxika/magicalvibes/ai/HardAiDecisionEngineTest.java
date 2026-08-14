@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -245,6 +246,37 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             watcher.uninstall();
         }
         assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI respects a battlefield-wide attacker limit")
+    void respectsBattlefieldWideAttackerLimit() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        gd.playerLifeTotals.put(player2.getId(), 2);
+        Permanent limit = harness.addToBattlefieldAndReturn(player2, new DuelingGrounds());
+        limit.setSummoningSick(false);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setSummoningSick(false);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        second.setSummoningSick(false);
+        pinLibrariesAndHands();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
