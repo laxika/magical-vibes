@@ -116,7 +116,7 @@ class ValidTargetServiceTest {
         // structural + "any target" enumeration behaviour under test is isolated from validator coverage.
         TargetLegalityService targetLegalityService = new TargetLegalityService(
                 gameQueryService, predicateEvaluationService, targetValidationService,
-                amountEvaluationService);
+                amountEvaluationService, new TargetGroupAssignmentService(gameQueryService));
         // The "any target" narrowing evaluates TargetPredicates.anyTarget() for real, so it gets a
         // real PredicateEvaluationService over the same mocked GameQueryService the rest of the
         // structural core uses — the mocked one would reject every candidate.

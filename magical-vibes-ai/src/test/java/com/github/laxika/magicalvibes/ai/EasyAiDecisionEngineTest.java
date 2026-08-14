@@ -147,7 +147,8 @@ class EasyAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
                         new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
                         targetValidationService,
-                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
+                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         return engine;
     }
 
@@ -885,7 +886,8 @@ class EasyAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
                         new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
                         targetValidationService,
-                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
+                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         engine.handleEvent(AiDecisionKind.GAME_STATE);
 
         // Should NOT attempt to cast A?€�t spell casting restricted
