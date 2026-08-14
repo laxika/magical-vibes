@@ -91,6 +91,8 @@ class TreasureMapTest extends BaseCardTest {
 
         assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(1);
         assertThat(map.isTransformed()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
