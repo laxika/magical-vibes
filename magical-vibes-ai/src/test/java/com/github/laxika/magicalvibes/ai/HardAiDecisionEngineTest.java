@@ -874,6 +874,35 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Hard AI declares a blocker required to block if able")
+    void honorsMustBlockIfAbleRequirement() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-must-block-test");
+        harness.getSessionManager().registerPlayer(aiConn, player2.getId(), "Bob");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player2, harness.getGameRegistry(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        blocker.setMustBlockThisTurnIfAble(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        harness.beginBlockerDeclarationInput();
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
     @Nested
     @ExtendWith(MockitoExtension.class)
     @DisplayName("tryCastSpell silent failure recovery")

@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
@@ -1198,43 +1200,290 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Sends a blocker declaration with automatic fallback to empty blockers
-     * if the original declaration fails server-side validation. Blocks the defending player
-     * can't pay the additional cost for are dropped, and their mana floated, before sending.
+     * Sends a blocker declaration with automatic fallback to a legal declaration if the original
+     * declaration fails server-side validation. Blocks the defending player can't pay the
+     * additional cost for are dropped, and their mana floated, before sending.
      */
     protected void sendBlockerDeclaration(DeclareBlockersRequest request) {
         GameData gameData = gameRegistry.get(gameId);
-        DeclareBlockersRequest affordable = gameData == null
+        DeclareBlockersRequest requirementLegal = gameData == null
                 ? request
-                : new DeclareBlockersRequest(prepareBlockersForTax(gameData, request.blockerAssignments()));
+                : new DeclareBlockersRequest(enforceBlockRequirements(gameData, request.blockerAssignments()));
+        DeclareBlockersRequest affordable = gameData == null
+                ? requirementLegal
+                : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
 
         String rejection;
         try {
             rejection = gameActions.handleDeclareBlockers(affordable);
         } catch (Exception e) {
-            log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
-            sendEmptyBlockerFallback();
+            log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to a legal declaration.",
+                    gameId, e.getMessage(), e);
+            sendBlockerFallback();
             return;
         }
 
         // The engine validates the whole declaration and rejects it as a unit, so a rejection
-        // leaves the game still awaiting blockers — fall back to empty so it doesn't get stuck.
+        // leaves the game still awaiting blockers — fall back to a repaired declaration.
         if (rejection != null && !affordable.blockerAssignments().isEmpty()) {
-            log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to no blockers.",
+            log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to a legal declaration.",
                     gameId, rejection);
-            sendEmptyBlockerFallback();
+            sendBlockerFallback();
         }
     }
 
-    private void sendEmptyBlockerFallback() {
+    private void sendBlockerFallback() {
+        GameData gameData = gameRegistry.get(gameId);
+        List<BlockerAssignment> fallbackAssignments = gameData == null
+                ? List.of()
+                : enforceBlockRequirements(gameData, List.of());
+        if (gameData != null) {
+            fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
+        }
         try {
-            String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of()));
+            String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(fallbackAssignments));
             if (rejection != null) {
-                log.error("AI: Empty blocker declaration rejected in game {}: {}", gameId, rejection);
+                log.error("AI: Fallback blocker declaration rejected in game {}: {}", gameId, rejection);
             }
         } catch (Exception e) {
-            log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
+            log.error("AI: Fallback blocker declaration also failed in game {}", gameId, e);
         }
+    }
+
+    /**
+     * Repairs a declaration that omitted a blocker-side requirement. The combat strategies choose
+     * among profitable blocks, but a declaration must also obey requirements attached to the
+     * defending creature itself, such as a one-shot "blocks if able" effect or a targeted
+     * "must block that creature" effect.
+     *
+     * <p>The repair is deliberately done at the shared send boundary so every AI strategy,
+     * including random and simulation-backed strategies, gets the same legality safeguard. A
+     * required blocker is assigned only to a pair the engine's block-legality service accepts,
+     * and menace/minimum-blocker requirements are completed before the repaired declaration is
+     * returned.
+     */
+    private List<BlockerAssignment> enforceBlockRequirements(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        if (pending == null || gameData.activePlayerId == null) {
+            return assignments;
+        }
+
+        UUID defenderId = pending.defenderId();
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null) {
+            return assignments;
+        }
+
+        List<Integer> attackerIndices = pending.attackerIndices().isEmpty()
+                ? attackingCreatureIndices(attackerBattlefield)
+                : pending.attackerIndices();
+        List<Integer> blockerIndices = pending.blockerIndices().isEmpty()
+                ? availableBlockerIndices(gameData, defenderBattlefield)
+                : pending.blockerIndices();
+        if (attackerIndices.isEmpty() || blockerIndices.isEmpty()) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> repaired = new ArrayList<>(assignments);
+        for (int blockerIdx : blockerIndices) {
+            if (!isIndexInRange(blockerIdx, defenderBattlefield)) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            List<Integer> targetedRequirements = requiredAttackerIndices(
+                    pending, blockerIdx, blocker, attackerIndices, attackerBattlefield, gameData, defenderBattlefield);
+            if (!targetedRequirements.isEmpty()
+                    && !hasAssignmentToAny(repaired, blockerIdx, targetedRequirements)) {
+                addRequiredBlock(gameData, repaired, blockerIdx, targetedRequirements,
+                        blockerIndices, defenderBattlefield, attackerBattlefield);
+            }
+
+            if (hasMustBlockIfAbleRequirement(gameData, blocker)
+                    && !hasAssignmentForBlocker(repaired, blockerIdx)) {
+                List<Integer> legalAttackers = attackerIndices.stream()
+                        .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                        .filter(attackerIdx -> canBlockPair(gameData, blocker,
+                                attackerBattlefield.get(attackerIdx), defenderBattlefield))
+                        .toList();
+                addRequiredBlock(gameData, repaired, blockerIdx, legalAttackers,
+                        blockerIndices, defenderBattlefield, attackerBattlefield);
+            }
+        }
+        return repaired;
+    }
+
+    private List<Integer> attackingCreatureIndices(List<Permanent> battlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (battlefield.get(i).isAttacking()) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private List<Integer> availableBlockerIndices(GameData gameData, List<Permanent> battlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (blockLegalityService.canBlock(gameData, battlefield.get(i))) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private List<Integer> requiredAttackerIndices(
+            PendingInteraction.BlockerDeclaration pending,
+            int blockerIdx,
+            Permanent blocker,
+            List<Integer> attackerIndices,
+            List<Permanent> attackerBattlefield,
+            GameData gameData,
+            List<Permanent> defenderBattlefield) {
+        Set<Integer> required = new LinkedHashSet<>();
+        List<Integer> promptedRequirements = pending.mustBlockRequirements().getOrDefault(
+                blockerIdx, List.of());
+        required.addAll(promptedRequirements);
+        for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            for (int attackerIdx : attackerIndices) {
+                if (isIndexInRange(attackerIdx, attackerBattlefield)
+                        && attackerBattlefield.get(attackerIdx).getId().equals(mustBlockId)
+                        && canBlockPair(gameData, blocker, attackerBattlefield.get(attackerIdx), defenderBattlefield)) {
+                    required.add(attackerIdx);
+                }
+            }
+        }
+        return required.stream()
+                .filter(attackerIndices::contains)
+                .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                .filter(attackerIdx -> canBlockPair(
+                        gameData, blocker, attackerBattlefield.get(attackerIdx), defenderBattlefield))
+                .toList();
+    }
+
+    private boolean hasMustBlockIfAbleRequirement(GameData gameData, Permanent blocker) {
+        if (blocker.isMustBlockThisTurnIfAble()) {
+            return true;
+        }
+        if (blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBlockEachCombatEffect.class::isInstance)
+                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)) {
+            return true;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield.stream()
+                    .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                    .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addRequiredBlock(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            int blockerIdx,
+            List<Integer> candidateAttackerIndices,
+            List<Integer> blockerIndices,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        if (candidateAttackerIndices.isEmpty()) {
+            return;
+        }
+
+        List<BlockerAssignment> original = new ArrayList<>(assignments);
+        assignments.removeIf(assignment -> assignment.blockerIndex() == blockerIdx);
+        for (int attackerIdx : candidateAttackerIndices) {
+            if (!isIndexInRange(attackerIdx, attackerBattlefield)) {
+                continue;
+            }
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (!canBlockPair(gameData, blocker, attacker, defenderBattlefield)
+                    || !hasBlockCapacity(gameData, assignments, attackerIdx, blockerIdx, attacker)) {
+                continue;
+            }
+
+            assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
+            if (completeMinimumBlockers(gameData, assignments, blockerIndices,
+                    attackerIdx, defenderBattlefield, attackerBattlefield)) {
+                return;
+            }
+            assignments.clear();
+            assignments.addAll(original);
+        }
+        assignments.clear();
+        assignments.addAll(original);
+    }
+
+    private boolean completeMinimumBlockers(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            List<Integer> blockerIndices,
+            int attackerIdx,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        Permanent attacker = attackerBattlefield.get(attackerIdx);
+        int minimum = AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attacker);
+        while (countBlocksForAttacker(assignments, attackerIdx) < minimum) {
+            int additionalBlockerIdx = blockerIndices.stream()
+                    .filter(candidate -> isIndexInRange(candidate, defenderBattlefield))
+                    .filter(candidate -> !hasAssignmentForBlocker(assignments, candidate))
+                    .filter(candidate -> blockLegalityService.canBlock(gameData, defenderBattlefield.get(candidate)))
+                    .filter(candidate -> canBlockPair(gameData, defenderBattlefield.get(candidate), attacker,
+                            defenderBattlefield))
+                    .filter(candidate -> hasBlockCapacity(gameData, assignments, attackerIdx, candidate, attacker))
+                    .findFirst()
+                    .orElse(-1);
+            if (additionalBlockerIdx < 0) {
+                return false;
+            }
+            assignments.add(new BlockerAssignment(additionalBlockerIdx, attackerIdx));
+        }
+        return true;
+    }
+
+    private boolean hasBlockCapacity(GameData gameData, List<BlockerAssignment> assignments,
+                                     int attackerIdx, int blockerIdx, Permanent attacker) {
+        int maxBlockers = gameQueryService.getMaxBlockersAllowed(gameData, attacker);
+        if (maxBlockers <= 0) {
+            return false;
+        }
+        long current = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx
+                        && assignment.blockerIndex() != blockerIdx)
+                .count();
+        return current < maxBlockers;
+    }
+
+    private boolean canBlockPair(GameData gameData, Permanent blocker, Permanent attacker,
+                                 List<Permanent> defenderBattlefield) {
+        return blockLegalityService.canBlock(gameData, blocker)
+                && blockLegalityService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
+    }
+
+    private boolean hasAssignmentForBlocker(List<BlockerAssignment> assignments, int blockerIdx) {
+        return assignments.stream().anyMatch(assignment -> assignment.blockerIndex() == blockerIdx);
+    }
+
+    private boolean hasAssignmentToAny(List<BlockerAssignment> assignments, int blockerIdx,
+                                       List<Integer> attackerIndices) {
+        return assignments.stream().anyMatch(assignment -> assignment.blockerIndex() == blockerIdx
+                && attackerIndices.contains(assignment.attackerIndex()));
+    }
+
+    private int countBlocksForAttacker(List<BlockerAssignment> assignments, int attackerIdx) {
+        return (int) assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .count();
+    }
+
+    private boolean isIndexInRange(int index, List<?> values) {
+        return index >= 0 && index < values.size();
     }
 
     /**

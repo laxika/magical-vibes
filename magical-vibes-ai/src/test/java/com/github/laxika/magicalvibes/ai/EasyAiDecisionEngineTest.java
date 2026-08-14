@@ -1141,6 +1141,28 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI declares a blocker required to block if able")
+        void honorsMustBlockIfAbleRequirement() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            blocker.setMustBlockThisTurnIfAble(true);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            combatAi.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
         @DisplayName("Easy AI removes a creature that can only attack alone from a larger group")
         void removesCanOnlyAttackAloneCreature() {
             Permanent restricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());

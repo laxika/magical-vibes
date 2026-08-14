@@ -504,6 +504,27 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("Medium AI declares a blocker required to block if able")
+    void honorsMustBlockIfAbleRequirement() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        blocker.setMustBlockThisTurnIfAble(true);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Medium AI casts higher-value spell when multiple available")
     void castsHigherValueSpell() {
         giveAiPriority();
