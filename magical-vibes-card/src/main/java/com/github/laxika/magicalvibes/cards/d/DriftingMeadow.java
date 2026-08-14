@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "320")
+@CardRegistration(set = "ATH", collectorNumber = "72")
 public class DriftingMeadow extends Card {
 
     public DriftingMeadow() {

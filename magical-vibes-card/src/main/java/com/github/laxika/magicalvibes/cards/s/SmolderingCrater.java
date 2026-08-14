@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "328")
+@CardRegistration(set = "ATH", collectorNumber = "76")
 public class SmolderingCrater extends Card {
 
     public SmolderingCrater() {

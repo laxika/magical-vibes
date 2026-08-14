@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeCardsT
 
 @CardRegistration(set = "6ED", collectorNumber = "186")
 @CardRegistration(set = "VIS", collectorNumber = "80")
+@CardRegistration(set = "ATH", collectorNumber = "38")
 public class GoblinRecruiter extends Card {
 
     public GoblinRecruiter() {

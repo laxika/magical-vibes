@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "219")
 @CardRegistration(set = "TMP", collectorNumber = "190")
 @CardRegistration(set = "TPR", collectorNumber = "144")
+@CardRegistration(set = "ATH", collectorNumber = "44")
 public class MoggFanatic extends Card {
 
     public MoggFanatic() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "268")
+@CardRegistration(set = "ATH", collectorNumber = "66")
 public class RangerEnVec extends Card {
 
     public RangerEnVec() {

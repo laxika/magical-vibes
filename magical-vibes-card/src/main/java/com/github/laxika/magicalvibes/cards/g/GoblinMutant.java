@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "188")
+@CardRegistration(set = "ATH", collectorNumber = "36")
 public class GoblinMutant extends Card {
 
     public GoblinMutant() {

@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "5")
 @CardRegistration(set = "TMP", collectorNumber = "5")
 @CardRegistration(set = "TPR", collectorNumber = "5")
+@CardRegistration(set = "ATH", collectorNumber = "2")
 public class ArmoredPegasus extends Card {
 }

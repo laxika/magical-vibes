@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "228")
+@CardRegistration(set = "ATH", collectorNumber = "50")
 public class UthdenTroll extends Card {
 
     public UthdenTroll() {

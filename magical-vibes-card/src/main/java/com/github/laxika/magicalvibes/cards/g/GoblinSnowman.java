@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "191")
+@CardRegistration(set = "ATH", collectorNumber = "39")
 public class GoblinSnowman extends Card {
 
     public GoblinSnowman() {

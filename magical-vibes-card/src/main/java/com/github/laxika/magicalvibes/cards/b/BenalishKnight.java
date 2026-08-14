@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "11")
 @CardRegistration(set = "WTH", collectorNumber = "9")
+@CardRegistration(set = "ATH", collectorNumber = "3")
 public class BenalishKnight extends Card {
 }

@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "ALL", collectorNumber = "94b")
 @CardRegistration(set = "6ED", collectorNumber = "235")
 @CardRegistration(set = "7ED", collectorNumber = "250")
+@CardRegistration(set = "ATH", collectorNumber = "57")
 public class GorillaChieftain extends Card {
 
     public GorillaChieftain() {
