@@ -23,6 +23,7 @@ class HighSocietyHunterTest extends BaseCardTest {
     void attackingOffersSacrifice() {
         Permanent hunter = addCreatureReady(player1, new HighSocietyHunter());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -32,7 +33,7 @@ class HighSocietyHunterTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(bears.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), secondBears.getId());
         assertThat(choice.validIds()).doesNotContain(hunter.getId());
     }
 
@@ -45,7 +46,6 @@ class HighSocietyHunterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
@@ -81,6 +81,7 @@ class HighSocietyHunterTest extends BaseCardTest {
     @DisplayName("Draws a card when another nontoken creature dies")
     void drawsOnNontokenCreatureDeath() {
         harness.addToBattlefield(player1, new HighSocietyHunter());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
@@ -91,13 +92,14 @@ class HighSocietyHunterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test
     @DisplayName("Does not draw when a token creature dies")
     void tokenDeathDoesNotDraw() {
         harness.addToBattlefield(player1, new HighSocietyHunter());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         Card tokenBear = new GrizzlyBears();
         tokenBear.setToken(true);
         harness.addToBattlefield(player2, tokenBear);
@@ -109,6 +111,6 @@ class HighSocietyHunterTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 }

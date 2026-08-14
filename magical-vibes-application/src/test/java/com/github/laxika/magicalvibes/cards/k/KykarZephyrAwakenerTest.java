@@ -27,6 +27,7 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
         castNoncreatureSpell();
 
         harness.handleListChoice(player1, TOKEN);
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
     }
@@ -48,10 +49,12 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
                 .doesNotContain(kykar.getId(), opponentCreature.getId());
 
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
@@ -62,7 +65,8 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
     void creatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new KykarZephyrAwakener());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
 

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -652,12 +653,32 @@ public class PermanentCounterSupport {
             return;
         }
 
+        List<CardEffect> effectsToResolve = new ArrayList<>();
+        boolean oncePerTurnQueued = false;
+        for (CardEffect effect : effects) {
+            if (effect instanceof OncePerTurnTriggerEffect once) {
+                if (gameData.oncePerTurnTriggersFiredThisTurn.contains(target.getId())) {
+                    continue;
+                }
+                effectsToResolve.add(once.wrapped());
+                oncePerTurnQueued = true;
+            } else {
+                effectsToResolve.add(effect);
+            }
+        }
+        if (effectsToResolve.isEmpty()) {
+            return;
+        }
+        if (oncePerTurnQueued) {
+            gameData.oncePerTurnTriggersFiredThisTurn.add(target.getId());
+        }
+
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 controllerId,
                 card.getName() + "'s triggered ability",
-                new ArrayList<>(effects),
+                effectsToResolve,
                 null,
                 target.getId()
         ));

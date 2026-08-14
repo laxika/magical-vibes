@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,11 +33,23 @@ public class MaySacrificeForCounterSupport {
 
     /** The permanents {@code controllerId} controls that may be sacrificed. */
     public List<UUID> matchingPermanentIds(GameData gameData, UUID controllerId, PermanentPredicate filter) {
+        return matchingPermanentIds(gameData, controllerId, null, filter);
+    }
+
+    /** The matching permanents, evaluated with the source identity available to relative predicates. */
+    public List<UUID> matchingPermanentIds(GameData gameData, UUID controllerId,
+                                           UUID sourcePermanentId, PermanentPredicate filter) {
         List<UUID> ids = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        Permanent source = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(sourcePermanentId)
+                .withSourceCardId(source == null ? null : source.getCard().getId());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
                     ids.add(permanent.getId());
                 }
             }

@@ -40,7 +40,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantKeywordEffect) effect;
-        if (grant.scope() == GrantScope.OWN_CREATURES) {
+        if (grant.scope() == GrantScope.OWN_CREATURES
+                || grant.scope() == GrantScope.ALL_OWN_CREATURES) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
@@ -49,6 +50,10 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (grant.scope() == GrantScope.OWN_CREATURES
+                        && permanent.getId().equals(entry.getSourcePermanentId())) {
                     continue;
                 }
                 if (grant.filter() != null

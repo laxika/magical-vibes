@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrindingStationTest extends BaseCardTest {
 
@@ -28,6 +27,7 @@ class GrindingStationTest extends BaseCardTest {
         int graveyardBefore = gd.playerGraveyards.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Spellbook"));
 
         assertThat(station.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Spellbook");
@@ -40,13 +40,18 @@ class GrindingStationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate without an artifact to sacrifice")
-    void cannotActivateWithoutArtifact() {
+    @DisplayName("Grinding Station can be sacrificed to pay its own activation cost")
+    void canSacrificeItself() {
         harness.addToBattlefield(player1, new GrindingStation());
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grinding Station");
+        harness.assertInGraveyard(player1, "Grinding Station");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 
     @Test

@@ -61,6 +61,7 @@ class LilianaDreadhordeGeneralTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BarterInBlood()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -84,6 +85,7 @@ class LilianaDreadhordeGeneralTest extends BaseCardTest {
         Permanent keptLand = harness.addToBattlefieldAndReturn(player2, new Plains());
         Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player2, new Plains());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 1);
         Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new Juggernaut());
 
         harness.activateAbility(player1, 0, 2, null, null);

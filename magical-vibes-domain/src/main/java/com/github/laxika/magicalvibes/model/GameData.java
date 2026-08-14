@@ -2810,6 +2810,10 @@ public class GameData {
         copy.forbiddenRitual.controllerSacrificed = this.forbiddenRitual.controllerSacrificed;
         copy.forbiddenRitual.lifeLoss = this.forbiddenRitual.lifeLoss;
         copy.forbiddenRitual.chosenMode = this.forbiddenRitual.chosenMode;
+        copy.eachPlayerSacrificeOrDiscard.active = this.eachPlayerSacrificeOrDiscard.active;
+        copy.eachPlayerSacrificeOrDiscard.remaining.addAll(this.eachPlayerSacrificeOrDiscard.remaining);
+        copy.eachPlayerSacrificeOrDiscard.currentPlayerId = this.eachPlayerSacrificeOrDiscard.currentPlayerId;
+        copy.eachPlayerSacrificeOrDiscard.chosenMode = this.eachPlayerSacrificeOrDiscard.chosenMode;
         copy.wintersChill.active = this.wintersChill.active;
         copy.wintersChill.remainingTargetIds.addAll(this.wintersChill.remainingTargetIds);
         copy.wintersChill.currentTargetId = this.wintersChill.currentTargetId;

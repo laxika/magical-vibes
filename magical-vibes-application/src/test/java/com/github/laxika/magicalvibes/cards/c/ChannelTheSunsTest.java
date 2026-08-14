@@ -15,7 +15,7 @@ class ChannelTheSunsTest extends BaseCardTest {
     @DisplayName("Resolving adds one mana of each color to its controller's pool")
     void resolvingAddsOneManaOfEachColor() {
         harness.setHand(player1, List.of(new ChannelTheSuns()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castSorcery(player1, 0, 0);

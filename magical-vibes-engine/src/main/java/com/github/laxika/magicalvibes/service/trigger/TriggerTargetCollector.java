@@ -75,7 +75,7 @@ public class TriggerTargetCollector {
      * @param supportControlledFilter  when {@code true}, a target filter of type
      *                                 {@link ControlledPermanentPredicateTargetFilter} is consulted
      *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death and attack
-     *                                 trigger pipelines support this; end-step does not.
+     *                                 trigger pipelines support this.
      * @param unwrapConditional        when {@code true}, {@link ConditionalEffect} wrappers are
      *                                 unwrapped before inspecting {@code canTarget*} /
      *                                 {@code targetPredicate}. End-step wraps effects in morbid /
@@ -97,7 +97,7 @@ public class TriggerTargetCollector {
 
         public static final Options DEATH = new Options(true, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
-        public static final Options END_STEP = new Options(false, false, true, true);
+        public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
     }
 

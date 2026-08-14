@@ -34,7 +34,7 @@ class GuardianIdolTest extends BaseCardTest {
     void tappingProducesColorlessMana() {
         Permanent idol = addIdolReady(player1);
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(idol.isTapped()).isTrue();

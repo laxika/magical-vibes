@@ -28,6 +28,7 @@ class FiendishPandaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Fiendish Panda").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);

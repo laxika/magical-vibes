@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -72,6 +73,7 @@ public class MayMiscHandlerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
+    private final AuraAttachmentService auraAttachmentService;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
     private final SearchLibraryEffectHandler searchLibraryEffectHandler;
@@ -99,8 +101,14 @@ public class MayMiscHandlerService {
         if (accepted) {
             Permanent equipPerm = gameQueryService.findPermanentById(gameData, equipId);
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (equipPerm != null && targetPerm != null
-                    && equipSupport.canAttachEquipment(gameData, equipPerm, targetPerm)) {
+            UUID attachmentControllerId = equipPerm == null
+                    ? null : gameQueryService.findPermanentController(gameData, equipPerm.getId());
+            boolean canAttach = equipPerm != null && targetPerm != null
+                    && (equipPerm.getCard().isAura()
+                    ? auraAttachmentService.canEnchant(
+                            gameData, equipPerm.getCard(), attachmentControllerId, targetPerm)
+                    : equipSupport.canAttachEquipment(gameData, equipPerm, targetPerm));
+            if (canAttach) {
                 gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
@@ -110,7 +118,7 @@ public class MayMiscHandlerService {
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());
             }
         } else {
-            String declineLog = player.getUsername() + " declines to attach the Equipment.";
+            String declineLog = player.getUsername() + " declines the attachment.";
             gameLogService.append(gameData, GameLog.text(declineLog));
             log.info("Game {} - {} declines equipment attachment", gameData.id, player.getUsername());
         }

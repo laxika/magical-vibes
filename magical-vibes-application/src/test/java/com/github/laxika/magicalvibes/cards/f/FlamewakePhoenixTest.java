@@ -47,11 +47,12 @@ class FlamewakePhoenixTest extends BaseCardTest {
         FlamewakePhoenix phoenix = new FlamewakePhoenix();
         addFerociousCreature();
         harness.setGraveyard(player1, List.of(phoenix));
-        harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(phoenix.getId()));

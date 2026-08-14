@@ -2137,10 +2137,9 @@ public class CombatDamageService {
 
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
-        // Curse of Bloodletting and similar: double combat damage dealt to the enchanted player (replacement effect)
-        // Gisela, Blade of Goldnight likewise doubles combat damage dealt to an opponent of her controller.
-        int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId)
-                * gameQueryService.getDamageToRecipientMultiplier(gameData, defenderId);
+        // Curse of Bloodletting and similar apply to the aggregate player-damage result. General
+        // recipient multipliers have already been applied to each attacking source.
+        int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
         state.damageToDefendingPlayer *= playerMultiplier;
         state.poisonDamageToDefendingPlayer *= playerMultiplier;
         // Malignus: the part of the damage dealt by sources whose damage can't be prevented is a floor

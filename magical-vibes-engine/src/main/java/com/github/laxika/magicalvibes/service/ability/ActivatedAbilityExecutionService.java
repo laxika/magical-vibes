@@ -1037,6 +1037,8 @@ public class ActivatedAbilityExecutionService {
                         ? amountEvaluationService.evaluate(gameData, counters.amount(),
                                 AmountContext.forManaAbility(permanent, playerId))
                         : counters.count();
+                count = gameQueryService.replaceCounters(
+                        gameData, permanent, counters.counterType(), count);
                 if (count > 0) {
                     permanent.setCounterCount(counters.counterType(),
                             permanent.getCounterCount(counters.counterType()) + count);

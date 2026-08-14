@@ -22,6 +22,7 @@ class AbyssalHarvesterTest extends BaseCardTest {
     @DisplayName("Exiles a creature put into a graveyard this turn and creates a Nightmare copy")
     void createsNightmareCopyAndExilesOtherNightmares() {
         Permanent harvester = harness.addToBattlefieldAndReturn(player1, new AbyssalHarvester());
+        harvester.setSummoningSick(false);
         Permanent dyingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card oldNightmare = token("Old Nightmare", CardSubtype.NIGHTMARE);
         Card zombieToken = token("Zombie", CardSubtype.ZOMBIE);
@@ -51,6 +52,7 @@ class AbyssalHarvesterTest extends BaseCardTest {
     @DisplayName("Rejects a creature card that was not put into a graveyard this turn")
     void rejectsCardNotPutIntoGraveyardThisTurn() {
         Permanent harvester = harness.addToBattlefieldAndReturn(player1, new AbyssalHarvester());
+        harvester.setSummoningSick(false);
         GrizzlyBears bears = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(bears));
 
@@ -65,6 +67,7 @@ class AbyssalHarvesterTest extends BaseCardTest {
     @DisplayName("Rejects a noncreature card even when it was put into a graveyard this turn")
     void rejectsNoncreatureCard() {
         Permanent harvester = harness.addToBattlefieldAndReturn(player1, new AbyssalHarvester());
+        harvester.setSummoningSick(false);
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, land));

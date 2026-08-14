@@ -27,7 +27,7 @@ public class MaySacrificePermanentForCounterSourceEffectHandler implements Norma
         var e = (MaySacrificePermanentForCounterSourceEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<UUID> matchingIds = maySacrificeForCounterSupport.matchingPermanentIds(
-                gameData, controllerId, e.filter());
+                gameData, controllerId, entry.getSourcePermanentId(), e.filter());
         if (matchingIds.isEmpty()) {
             return;
         }

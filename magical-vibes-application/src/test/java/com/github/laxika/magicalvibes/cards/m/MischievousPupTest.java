@@ -35,7 +35,6 @@ class MischievousPupTest extends BaseCardTest {
         castPup(List.of());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mischievous Pup");
