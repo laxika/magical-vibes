@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 
-/** Handles removing one counter of any kind from a permanent the activating player controls. */
+/** Handles removing one allowed counter from a permanent the activating player controls. */
 public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCostHandler {
 
     private final RemoveCounterFromControlledPermanentCost cost;
@@ -80,7 +80,7 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
 
     private CounterType firstCounterType(Permanent permanent) {
         return permanent.getCounters().entrySet().stream()
-                .filter(entry -> entry.getValue() > 0)
+                .filter(entry -> entry.getValue() > 0 && cost.allows(entry.getKey()))
                 .map(java.util.Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);

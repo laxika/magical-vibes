@@ -60,6 +60,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
+        register(PendingInteraction.TargetHandSpellCopyChoice.class,
+                this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
@@ -265,6 +267,15 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 "Choose an instant or sorcery card exiled this way to copy "
                         + interaction.copies() + " times.");
+    }
+
+    private InteractionPromptMessage projectTargetHandSpellCopyChoice(
+            GameData gameData, PendingInteraction.TargetHandSpellCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "You may choose an instant or sorcery card to copy.");
     }
 
     private InteractionPromptMessage projectExiledCardMayPlayChoice(

@@ -151,6 +151,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
@@ -707,6 +708,23 @@ public class PredicateEvaluationService {
                 List<Card> activePlayerHand = gameData.playerHands.get(gameData.activePlayerId);
                 int handSize = activePlayerHand == null ? 0 : activePlayerHand.size();
                 yield gameQueryService.getEffectivePower(gameData, permanent) > handSize;
+            }
+            case PermanentPowerAtMostControlledSubtypeCountPredicate subtypeCountPredicate -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                int subtypeCount = 0;
+                if (controllerBattlefield != null) {
+                    PermanentHasSubtypePredicate subtypePredicate =
+                            new PermanentHasSubtypePredicate(subtypeCountPredicate.subtype());
+                    for (Permanent p : controllerBattlefield) {
+                        if (matchesPermanentPredicate(gameData, p, subtypePredicate)) {
+                            subtypeCount++;
+                        }
+                    }
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent) <= subtypeCount;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as

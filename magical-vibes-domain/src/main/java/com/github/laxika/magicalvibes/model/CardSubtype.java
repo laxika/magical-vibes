@@ -196,6 +196,7 @@ public enum CardSubtype {
     PEGASUS("Pegasus"),
     PEASANT("Peasant"),
     PENTAVITE("Pentavite"),
+    PINCHER("Pincher"),
     PEST("Pest"),
     PIRATE("Pirate"),
     TEZZERET("Tezzeret"),

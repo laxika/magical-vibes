@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "202")
+@CardRegistration(set = "5DN", collectorNumber = "110")
 public class ClockOfOmens extends Card {
 
     public ClockOfOmens() {

@@ -259,6 +259,9 @@ public class AuraAttachmentService {
         }
 
         if (!isAura) {
+            if (gameQueryService.cantBeEquipped(gameData, host)) {
+                return "equipped permanent can't be equipped";
+            }
             // CR 301.5c — an Equipment that's also a creature can't equip a creature
             if (gameQueryService.isCreature(gameData, attachment)) {
                 return "it is a creature";

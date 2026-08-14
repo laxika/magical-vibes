@@ -127,6 +127,13 @@ public class TurnProgressionService {
 
         TurnStep next = gameData.currentStep.next();
 
+        if (gameData.currentStep == TurnStep.UNTAP
+                && next == TurnStep.UPKEEP
+                && stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
+            next = TurnStep.PRECOMBAT_MAIN;
+            logSkippedPhase(gameData, "upkeep");
+        }
+
         // CR 508.8: If no creatures are attacking, skip declare blockers and combat damage
         if (gameData.currentStep == TurnStep.DECLARE_ATTACKERS) {
             List<Integer> attackers = combatService.getAttackingCreatureIndices(gameData, gameData.activePlayerId);

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
@@ -129,6 +130,9 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        List<CardEffect> grantedDeathEffects = wasCreature
+                ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
+                : List.of();
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
@@ -152,7 +156,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId,
-                destroyedBySpellOrAbility);
+                destroyedBySpellOrAbility, grantedDeathEffects);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -179,6 +183,9 @@ public class PermanentRemovalService {
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        List<CardEffect> grantedDeathEffects = wasCreature
+                ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
+                : List.of();
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
@@ -196,7 +203,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, info.controllerId());
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
-                creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false);
+                creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false,
+                grantedDeathEffects);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
     }
@@ -871,7 +879,8 @@ public class PermanentRemovalService {
                                               Set<CardSubtype> creatureSubtypesAtDeath,
                                               boolean hadUndying, boolean hadPersist,
                                               UUID controllerId, UUID ownerId,
-                                              boolean destroyedBySpellOrAbility) {
+                                              boolean destroyedBySpellOrAbility,
+                                              List<CardEffect> grantedDeathEffects) {
         boolean wentToGraveyard = false;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
@@ -890,7 +899,8 @@ public class PermanentRemovalService {
             }
         }
         if (wentToGraveyard) {
-            triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
+            triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target,
+                    grantedDeathEffects);
             // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
             triggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers(
                     gameData, target.getOriginalCard(), controllerId, ownerId);

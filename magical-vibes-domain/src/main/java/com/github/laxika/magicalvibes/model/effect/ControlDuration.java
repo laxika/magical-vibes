@@ -21,6 +21,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@code WHILE_SOURCE_TAPPED} — like {@code WHILE_SOURCE_ON_BATTLEFIELD}, but the effect
  *       additionally ends the moment the source becomes untapped and does not resume if it is
  *       tapped again (Seasinger — {@code EffectDuration.WHILE_SOURCE_TAPPED}).</li>
+ *   <li>{@code WHILE_SOURCE_REMAINS_TAPPED} — the effect ends when the source leaves the
+ *       battlefield or becomes untapped, regardless of who controls the source (Vedalken
+ *       Shackles).</li>
  * </ul>
  */
 public enum ControlDuration {
@@ -28,15 +31,18 @@ public enum ControlDuration {
     END_OF_TURN,
     WHILE_SOURCE_ON_BATTLEFIELD,
     WHILE_SOURCE_REMAINS,
-    WHILE_SOURCE_TAPPED;
+    WHILE_SOURCE_TAPPED,
+    WHILE_SOURCE_REMAINS_TAPPED;
 
     /**
      * Whether control is tied to the source permanent, so the source must still be on the
-     * battlefield (and, for all but {@code WHILE_SOURCE_REMAINS}, still be controlled by the
-     * effect's controller) for control to be taken at all.
+     * battlefield (and, for source-linked durations other than {@code WHILE_SOURCE_REMAINS} and
+     * {@code WHILE_SOURCE_REMAINS_TAPPED}, still be controlled by the effect's controller) for
+     * control to be taken at all.
      */
     public boolean isSourceLinked() {
-        return this == WHILE_SOURCE_ON_BATTLEFIELD || this == WHILE_SOURCE_REMAINS || this == WHILE_SOURCE_TAPPED;
+        return this == WHILE_SOURCE_ON_BATTLEFIELD || this == WHILE_SOURCE_REMAINS
+                || this == WHILE_SOURCE_TAPPED || this == WHILE_SOURCE_REMAINS_TAPPED;
     }
 
     /** The {@link EffectDuration} of the floating control effect this duration creates. */
@@ -47,6 +53,7 @@ public enum ControlDuration {
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
             case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
             case WHILE_SOURCE_TAPPED -> EffectDuration.WHILE_SOURCE_TAPPED;
+            case WHILE_SOURCE_REMAINS_TAPPED -> EffectDuration.WHILE_SOURCE_REMAINS_TAPPED;
         };
     }
 }

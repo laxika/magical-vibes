@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "237")
+@CardRegistration(set = "5DN", collectorNumber = "79")
 public class SparkElemental extends Card {
 
     public SparkElemental() {

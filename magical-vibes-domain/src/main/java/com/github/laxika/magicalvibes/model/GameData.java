@@ -441,6 +441,9 @@ public class GameData {
     public final IndulgentTormentorState indulgentTormentor = new IndulgentTormentorState();
     /** Progress state for Forbidden Ritual's "sacrifice nontoken; opponent loses life unless…" loop. */
     public final ForbiddenRitualState forbiddenRitual = new ForbiddenRitualState();
+    /** Progress state for each-player discard-or-sacrifice effects such as Possessed Portal. */
+    public final EachPlayerSacrificeOrDiscardState eachPlayerSacrificeOrDiscard =
+            new EachPlayerSacrificeOrDiscardState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
     public final WintersChillState wintersChill = new WintersChillState();
     /** Progress state for Forgotten Lore's "opponent chooses a card; you may pay {G} to repeat" flow. */
@@ -1566,7 +1569,7 @@ public class GameData {
     /**
      * Removes and returns all floating effects that depended on the given source permanent still
      * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD}, {@code WHILE_SOURCE_TAPPED},
-     * and {@code WHILE_ATTACHED}).
+     * {@code WHILE_SOURCE_REMAINS_TAPPED}, and {@code WHILE_ATTACHED}).
      * Called whenever a permanent leaves any battlefield.
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
@@ -1574,6 +1577,7 @@ public class GameData {
                 (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                         || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS
                         || fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                        || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
                         || fe.duration() == EffectDuration.WHILE_ATTACHED)
                         && sourcePermanentId.equals(fe.sourcePermanentId()));
     }

@@ -366,10 +366,11 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if the card uses the Converge mechanic (keyword or converge-scaling spell effect).
+     * Returns true if the card uses Converge or Sunburst (keyword or converge-scaling spell effect).
      */
     public static boolean hasConvergeEffect(Card card) {
-        return card.getKeywords().contains(Keyword.CONVERGE)
+        return (card.getKeywords().contains(Keyword.CONVERGE)
+                || card.getKeywords().contains(Keyword.SUNBURST))
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
     }
 

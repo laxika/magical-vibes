@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 
 @CardRegistration(set = "10E", collectorNumber = "271")
+@CardRegistration(set = "5DN", collectorNumber = "89")
 public class JoinerAdept extends Card {
 
     public JoinerAdept() {

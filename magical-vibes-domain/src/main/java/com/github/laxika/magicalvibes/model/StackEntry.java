@@ -479,6 +479,8 @@ public class StackEntry {
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
+        this.targetGroupSizes = source.targetGroupSizes.isEmpty()
+                ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "128")
+@CardRegistration(set = "5DN", collectorNumber = "73")
 public class MagmaJet extends Card {
 
     public MagmaJet() {

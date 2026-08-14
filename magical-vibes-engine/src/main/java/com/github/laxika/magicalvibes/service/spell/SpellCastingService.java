@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -155,6 +156,7 @@ public class SpellCastingService {
     private final CastingPermissionService castingPermissionService;
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
+    private final com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService targetGroupAssignmentService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -1342,6 +1344,9 @@ public class SpellCastingService {
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer());
+        boolean allSpellTargetsAlsoAllowPermanents = targetingSpellEffects.stream()
+                .filter(EffectResolution::targetsSpellOnStack)
+                .allMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         // Targets multiple distinct spells on the stack. Two shapes qualify:
         //  - a modal mode that declares more than one spell target() slot (Choreographed Sparks' "both":
         //    one instant/sorcery spell + one creature spell);
@@ -1349,7 +1354,7 @@ public class SpellCastingService {
         //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
-                ? card.getSpellTargets().size() > 1
+                ? card.getSpellTargets().size() > 1 && !allSpellTargetsAlsoAllowPermanents
                 : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
@@ -1358,7 +1363,9 @@ public class SpellCastingService {
                 && !multipleSpellTargets && targetIds.isEmpty();
         boolean mixedSpellAndPermanentTargets = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
                 && !multipleSpellTargets && !targetIds.isEmpty();
-        boolean targetingSpellOnStack = mixedSpellOrPermanentTarget
+        boolean targetingSpellOnStack = allSpellTargetsAlsoAllowPermanents
+                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                : mixedSpellOrPermanentTarget
                 ? targetLegalityService.isSpellOnStack(gameData, targetId)
                 : unwrappedNeedsSpellTarget;
         if (mixedSpellOrPermanentTarget && targetId == null) {
@@ -2024,12 +2031,13 @@ public class SpellCastingService {
                     || (additionalCosts.putCountersOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
-            // Converge on a permanent (Rancorous Archaic): snapshot the pool before payment so the
-            // number of distinct colors spent can be counted after it, then carry that count as the
-            // stack entry's X — which is what an ON_ENTER_BATTLEFIELD EnterWithCountersEffect(XValue)
-            // reads. Same guard as the instant/sorcery branch: a real {X} cost owns X instead.
-            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(card)
-                    && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
+            // Converge or Sunburst on a permanent: snapshot the pool before payment so the number
+            // of distinct colors spent can be counted after it, then carry that count as the stack
+            // entry's X — which is what an ON_ENTER_BATTLEFIELD EnterWithCountersEffect(XValue)
+            // reads. Sunburst still needs this snapshot when the card also has a real {X} cost.
+            boolean needsConvergeValue = card.getKeywords().contains(Keyword.SUNBURST)
+                    || (EffectResolution.hasConvergeEffect(card)
+                            && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX()));
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                     : null;
@@ -2169,8 +2177,9 @@ public class SpellCastingService {
                 throw new IllegalStateException("Not enough life to pay the per-target life cost");
             }
             int targetSubtypeCostReduction = castingCostService.computeTargetBasedCostReduction(gameData, playerId, card, costReductionTargetIds);
-            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(card)
-                    && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
+            boolean needsConvergeValue = card.getKeywords().contains(Keyword.SUNBURST)
+                    || (EffectResolution.hasConvergeEffect(card)
+                            && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX()));
             boolean needsColorsSpent = EffectResolution.hasColorSpentCondition(card);
             java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = needsColorsSpent
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
@@ -2763,11 +2772,13 @@ public class SpellCastingService {
                     ));
                 } else if (unwrappedNeedsTarget && !targetIds.isEmpty()) {
                     // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             entryType, card, playerId, card.getName(),
                             filteredSpellEffects, resolvedXValue, targetId,
                             null, Map.of(), Zone.STACK, List.of(), targetIds
-                    ));
+                    );
+                    entry.setPrimaryTargetStoredSeparately(allSpellTargetsAlsoAllowPermanents);
+                    gameData.stack.add(entry);
                 } else {
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),
@@ -2791,6 +2802,16 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), null, List.of(), targetIds
                 ));
+            } else if (!targetIds.isEmpty()
+                    && card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR
+                    && needsGraveyardEffectTargeting && targetId == null) {
+                var assignment = targetGroupAssignmentService.assignDistinctColors(gameData, targetIds)
+                        .orElseThrow(() -> new IllegalStateException("Must choose at most one card for each color"));
+                StackEntry entry = new StackEntry(
+                        entryType, card, playerId, card.getName(), filteredSpellEffects, resolvedXValue,
+                        null, null, Map.of(), Zone.GRAVEYARD, List.of(), assignment.orderedTargetIds());
+                entry.setTargetGroupSizes(assignment.groupSizes());
+                gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) && targetId != null) {
                 // Combined graveyard + permanent targeting (e.g. Yawgmoth's Vile Offering)
                 gameData.stack.add(new StackEntry(
@@ -2807,7 +2828,7 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), null, List.of(), targetIds
                 );
-                entry.setPrimaryTargetStoredSeparately(false);
+                entry.setPrimaryTargetStoredSeparately(allSpellTargetsAlsoAllowPermanents);
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")

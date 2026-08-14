@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -76,6 +77,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final EquipSupport equipSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
     private final CipherSupport cipherSupport;
@@ -259,7 +261,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                                                 PermanentChoiceContext.AttachEquipmentToCreature context) {
         Permanent equipment = gameQueryService.findPermanentById(gameData, context.equipmentPermanentId());
         Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-        if (equipment != null && creature != null) {
+        if (equipment != null && creature != null
+                && equipSupport.canAttachEquipment(gameData, equipment, creature)) {
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.

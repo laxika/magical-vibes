@@ -40,6 +40,9 @@ public enum EffectDuration {
      *  the source leaves, changes controllers, or becomes untapped (CR 611.2b — it does not
      *  resume if the source is tapped again). */
     WHILE_SOURCE_TAPPED,
+    /** One-shot effect that lasts for as long as the source permanent remains tapped, regardless
+     *  of who controls it (e.g. Vedalken Shackles). */
+    WHILE_SOURCE_REMAINS_TAPPED,
     /** Continuous effect that applies only while the source (an Aura or Equipment) remains
      *  attached to the affected permanent. Used by the CR 613 layer engine for floating
      *  continuous effects backed by an attachment (see

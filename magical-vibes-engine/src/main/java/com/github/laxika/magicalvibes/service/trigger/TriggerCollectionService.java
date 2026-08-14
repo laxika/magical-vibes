@@ -2526,6 +2526,10 @@ public class TriggerCollectionService {
                 watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
         effects.addAll(watcher.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
+        if (watcher.getId().equals(damageSource.getId())) {
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, watcher, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
+        }
 
         TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
                 damageSource, damagedCreatureId, damage, combatDamage);
@@ -3886,6 +3890,11 @@ public class TriggerCollectionService {
     }
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {
+        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, dyingPermanent, null);
+    }
+
+    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature,
+                                    Permanent dyingPermanent, List<CardEffect> precomputedGrantedDeathEffects) {
         List<CardEffect> deathEffects = dyingPermanent != null && dyingPermanent.isFaceDown()
                 ? List.of() : dyingCard.getEffects(EffectSlot.ON_DEATH);
 
@@ -3899,9 +3908,11 @@ public class TriggerCollectionService {
         // (Infernal Scarring). Read straight off the attachments, not through the layer system:
         // the dying permanent has already left the battlefield, but its Aura is still attached
         // (orphaned Auras only fall off in a later state-based-action pass).
-        List<CardEffect> grantedDeathEffects = dyingPermanent != null
-                ? grantedTriggeredAbilitySupport.grantedTriggeredEffectsFromAttachments(
-                        gameData, dyingPermanent.getId(), EffectSlot.ON_DEATH)
+        List<CardEffect> grantedDeathEffects = precomputedGrantedDeathEffects != null
+                ? new ArrayList<>(precomputedGrantedDeathEffects)
+                : dyingPermanent != null
+                ? new ArrayList<>(grantedTriggeredAbilitySupport.grantedTriggeredEffectsFromAttachments(
+                        gameData, dyingPermanent.getId(), EffectSlot.ON_DEATH))
                 : List.of();
 
         if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty()

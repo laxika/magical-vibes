@@ -662,12 +662,13 @@ public sealed interface ChoiceContext {
      * ability goes on the stack: {@code triggerTime} is true, {@code sourcePermanentId} identifies the
      * permanent whose consumed modes are recorded, and the chosen mode's effects become their own
      * triggered ability (with that mode's targets) rather than being spliced into a resolution.
+     * A targeted modal trigger also sets {@code triggerTime} without setting {@code consumeMode}.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                            boolean triggerTime, UUID sourcePermanentId) implements ChoiceContext {
+                            boolean triggerTime, UUID sourcePermanentId, boolean consumeMode) implements ChoiceContext {
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
-            this(sourceCard, controllerId, effect, false, null);
+            this(sourceCard, controllerId, effect, false, null, false);
         }
     }
 
@@ -719,6 +720,17 @@ public sealed interface ChoiceContext {
     record OathOfLimDulPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a permanent other than this enchantment";
+        public static final String DISCARD = "Discard a card";
+    }
+
+    /**
+     * Each-player discard-or-sacrifice effect: the affected player chooses to sacrifice a permanent
+     * or discard a card. Offered options are pruned to what they can do.
+     */
+    record EachPlayerSacrificeOrDiscardChoice(UUID affectedPlayerId, String sourceCardName)
+            implements ChoiceContext {
+
+        public static final String SACRIFICE = "Sacrifice a permanent";
         public static final String DISCARD = "Discard a card";
     }
 

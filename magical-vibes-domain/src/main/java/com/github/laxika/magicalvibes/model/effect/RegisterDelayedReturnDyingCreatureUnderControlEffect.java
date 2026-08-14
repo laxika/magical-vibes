@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.UUID;
 
@@ -41,6 +42,8 @@ import java.util.UUID;
  * @param dyingCardId                  the dying creature's card id, bound by the trigger collector
  *                                     on the {@code MayEffect} path; null lets the handler fall back
  *                                     to the stack entry's triggering-card id
+ * @param targetOpponent               when true, the death trigger targets an opponent and that
+ *                                     player becomes the controller of the delayed return
  */
 public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
         boolean sacrificeOnSourceControlLoss,
@@ -51,19 +54,20 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
         boolean requireSourceOnBattlefield,
         boolean returnUnderOwnersControl,
         boolean requireAnotherCreature,
-        UUID dyingCardId
+        UUID dyingCardId,
+        boolean targetOpponent
 ) implements CardEffect, DyingCreatureCardAwareEffect {
 
     /** Seraph: plain return linked to the source permanent, no counters and no grants. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect() {
-        this(true, null, 0, null, null, false, false, false, null);
+        this(true, null, 0, null, null, false, false, false, null, false);
     }
 
     /** Grave Betrayal-style: counter and colour/subtype riders, no source-presence requirement. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect(boolean sacrificeOnSourceControlLoss,
             CounterType counterType, int counterAmount, CardColor grantColor, CardSubtype grantSubtype) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                false, false, false, null);
+                false, false, false, null, false);
     }
 
     /** Lifeline-style: return under the card's owner's control while another creature remains. */
@@ -72,18 +76,34 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
             boolean requireSourceOnBattlefield, boolean returnUnderOwnersControl,
             boolean requireAnotherCreature) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                requireSourceOnBattlefield, returnUnderOwnersControl, requireAnotherCreature, null);
+                requireSourceOnBattlefield, returnUnderOwnersControl, requireAnotherCreature, null, false);
     }
 
     /** Shirei: no riders, but the return only happens while that same Shirei is still around. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect(boolean requireSourceOnBattlefield) {
-        this(false, null, 0, null, null, requireSourceOnBattlefield, false, false, null);
+        this(false, null, 0, null, null, requireSourceOnBattlefield, false, false, null, false);
+    }
+
+    /** Endless Whispers: the creature's controller chooses an opponent to control the return. */
+    public static RegisterDelayedReturnDyingCreatureUnderControlEffect forOpponent() {
+        return new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                false, null, 0, null, null, false, false, false, null, true);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetOpponent ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public PlayerRelation targetPlayerRelation() {
+        return targetOpponent ? PlayerRelation.OPPONENT : PlayerRelation.ANY;
     }
 
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         return new RegisterDelayedReturnDyingCreatureUnderControlEffect(sacrificeOnSourceControlLoss,
                 counterType, counterAmount, grantColor, grantSubtype, requireSourceOnBattlefield,
-                returnUnderOwnersControl, requireAnotherCreature, dyingCardId);
+                returnUnderOwnersControl, requireAnotherCreature, dyingCardId, targetOpponent);
     }
 }

@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
@@ -3780,6 +3781,19 @@ public class GameQueryService {
             }
         }
         return hasGrantedEffect(gameData, target, CantBeEnchantedByOtherAurasEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the permanent can't have an Equipment attached to it, from its own
+     * static effects or from effects granted by other permanents.
+     */
+    public boolean cantBeEquipped(GameData gameData, Permanent target) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeEquippedEffect) {
+                return true;
+            }
+        }
+        return hasGrantedEffect(gameData, target, CantBeEquippedEffect.class);
     }
 
     /**

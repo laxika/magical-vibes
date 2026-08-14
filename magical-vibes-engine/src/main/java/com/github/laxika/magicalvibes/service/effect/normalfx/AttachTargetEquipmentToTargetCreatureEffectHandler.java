@@ -58,6 +58,10 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
+        if (!equipSupport.canAttachEquipment(gameData, equipment, creature)) {
+            return;
+        }
+
         UUID oldAttachedTo = equipment.getAttachedTo();
 
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());

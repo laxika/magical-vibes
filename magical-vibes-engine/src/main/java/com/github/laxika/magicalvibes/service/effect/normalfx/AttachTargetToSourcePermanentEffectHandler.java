@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
@@ -32,6 +33,11 @@ public class AttachTargetToSourcePermanentEffectHandler implements NormalEffectH
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) return;
+
+        if (GameQueryService.permanentHasSubtype(target, CardSubtype.EQUIPMENT)
+                && gameQueryService.cantBeEquipped(gameData, source)) {
+            return;
+        }
 
         gameData.expireFloatingEffectsForUnattachedSource(target.getId());
         target.setAttachedTo(source.getId());

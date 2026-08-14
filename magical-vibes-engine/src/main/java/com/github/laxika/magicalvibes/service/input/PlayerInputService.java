@@ -462,8 +462,15 @@ public class PlayerInputService {
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
             UUID sourcePermanentId) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId, false);
+    }
+
+    public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
+            UUID sourcePermanentId, boolean consumeMode) {
         ChoiceContext.ChooseModeChoice ctx =
-                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime, sourcePermanentId);
+                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime,
+                        sourcePermanentId, consumeMode);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -1254,8 +1261,14 @@ public class PlayerInputService {
 
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                            UUID sourcePermanentId, boolean grantCastPermission) {
+        beginImprintFromHandChoice(gameData, playerId, validIndices, prompt, sourcePermanentId,
+                grantCastPermission, false);
+    }
+
+    public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                           UUID sourcePermanentId, boolean grantCastPermission, boolean faceDown) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprintFromHandChoice(
-                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt, grantCastPermission));
+                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt, grantCastPermission, faceDown));
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {

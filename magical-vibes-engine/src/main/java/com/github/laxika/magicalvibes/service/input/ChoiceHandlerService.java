@@ -415,6 +415,10 @@ public class ChoiceHandlerService {
             handleOathOfLimDulPenaltyChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerSacrificeOrDiscardChoice ctx) {
+            handleEachPlayerSacrificeOrDiscardChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.WintersChillPaymentChoice ctx) {
             handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
             return;
@@ -1161,7 +1165,7 @@ public class ChoiceHandlerService {
     private void handleTriggerTimeModeChoice(GameData gameData, Player player,
             ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx) {
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        if (source != null) {
+        if (ctx.consumeMode() && source != null) {
             source.getChosenModeLabels().add(chosen.label());
         }
 
@@ -1776,6 +1780,26 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Records an each-player discard-or-sacrifice choice and resumes its parked effect. */
+    private void handleEachPlayerSacrificeOrDiscardChoice(GameData gameData, Player player,
+            String chosen, ChoiceContext.EachPlayerSacrificeOrDiscardChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid discard-or-sacrifice choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.eachPlayerSacrificeOrDiscard.chosenMode = chosen;
+
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen,
+                ctx.sourceCardName());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

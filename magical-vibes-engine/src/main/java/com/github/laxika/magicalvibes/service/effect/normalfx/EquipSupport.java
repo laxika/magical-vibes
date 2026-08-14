@@ -49,6 +49,7 @@ public class EquipSupport {
         if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
                 || gameQueryService.isCreature(gameData, equipment)
                 || !gameQueryService.isCreature(gameData, host)
+                || gameQueryService.cantBeEquipped(gameData, host)
                 || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {
             return false;
         }

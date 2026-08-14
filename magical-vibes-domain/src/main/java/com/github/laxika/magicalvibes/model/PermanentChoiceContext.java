@@ -498,14 +498,31 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     /**
-     * "At the beginning of your upkeep, choose one that hasn't been chosen —" (Demonic Pact). The
-     * mode is picked as the ability is put on the stack; the chosen mode's effects then go through
-     * the ordinary upkeep trigger routing (any-target / player-target / non-targeting).
+     * A modal upkeep trigger whose mode must be chosen before its ability is put on the stack. The
+     * chosen mode's effects then go through the ordinary upkeep trigger routing.
      */
-    record UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseModeNotYetChosenEffect effect,
-                              UUID sourcePermanentId) implements PermanentChoiceContext {}
+    record UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                              UUID sourcePermanentId, boolean consumeModes) implements PermanentChoiceContext {
 
-    record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+        public UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseModeNotYetChosenEffect effect,
+                                  UUID sourcePermanentId) {
+            this(sourceCard, controllerId, new ChooseOneEffect(effect.options()), sourcePermanentId, true);
+        }
+
+        public UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                  UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, false);
+        }
+    }
+
+    record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {
+
+        public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                            UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+        }
+    }
 
     /** "Whenever this permanent phases in, target …" — queued from {@code ON_SELF_PHASES_IN} during
      *  the untap-step phasing action; drained at the start of upkeep when the trigger is put on the

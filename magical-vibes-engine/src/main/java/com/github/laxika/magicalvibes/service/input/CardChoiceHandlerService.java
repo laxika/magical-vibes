@@ -1112,7 +1112,7 @@ public class CardChoiceHandlerService {
             log.warn("Game {} - {} sent invalid imprint card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginImprintFromHandChoice(gameData, player.getId(),
                     new ArrayList<>(validIndices), "Choose a card from your hand.", imprintChoice.sourcePermanentId(),
-                    imprintChoice.grantCastPermission());
+                    imprintChoice.grantCastPermission(), imprintChoice.faceDown());
             return;
         }
 
@@ -1124,8 +1124,11 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
-        // Add to controller's exile zone
-        exileService.exileCard(gameData, playerId, card);
+        if (imprintChoice.faceDown()) {
+            exileService.exileCardFaceDown(gameData, playerId, card, null);
+        } else {
+            exileService.exileCard(gameData, playerId, card);
+        }
 
         // "You may cast that card for as long as it remains exiled" (Ice Cauldron) — no expiry.
         if (imprintChoice.grantCastPermission()) {
@@ -1137,12 +1140,23 @@ public class CardChoiceHandlerService {
         if (sourcePermanent != null) {
             gameData.setImprintedCard(sourcePermanent.getCard(), card);
 
-            gameLogService.append(gameData, GameLog.cardTextCard(
-                    card, " is exiled and imprinted on ", sourcePermanent.getCard(), "."));
+            if (imprintChoice.faceDown()) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " exiles a card face down and imprints it on ",
+                        sourcePermanent.getCard(), "."));
+            } else {
+                gameLogService.append(gameData, GameLog.cardTextCard(
+                        card, " is exiled and imprinted on ", sourcePermanent.getCard(), "."));
+            }
             log.info("Game {} - {} imprinted {} from hand on {}", gameData.id, player.getUsername(), card.getName(), sourcePermanent.getCard().getName());
         } else {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, " is exiled (source permanent no longer on the battlefield)."));
+            if (imprintChoice.faceDown()) {
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " exiles a card face down (source permanent no longer on the battlefield)."));
+            } else {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, " is exiled (source permanent no longer on the battlefield)."));
+            }
             log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
         }
 
@@ -1266,6 +1280,9 @@ public class CardChoiceHandlerService {
     private void attachSourceEquipmentToPermanent(GameData gameData, UUID equipmentCardId, Permanent target) {
         Permanent equipment = equipSupport.findEquipmentByCardId(gameData, equipmentCardId);
         if (equipment == null) {
+            return;
+        }
+        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
             return;
         }
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());

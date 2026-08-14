@@ -99,6 +99,7 @@ public sealed interface PermanentPredicate permits
         PermanentOwnedBySourceControllerPredicate,
         PermanentPowerAtLeastPredicate,
         PermanentPowerAtMostControlledCreatureCountPredicate,
+        PermanentPowerAtMostControlledSubtypeCountPredicate,
         PermanentPowerAtMostPredicate,
         PermanentPowerGreaterThanActivePlayerHandSizePredicate,
         PermanentPowerAtMostSourceCountersPredicate,

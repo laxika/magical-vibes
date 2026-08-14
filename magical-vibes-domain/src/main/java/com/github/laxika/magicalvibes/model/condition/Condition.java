@@ -164,6 +164,7 @@ public sealed interface Condition permits
         SourceIsAttackingOrBlocking,
         SourceIsCreature,
         SourceIsEnchantment,
+        SourceIsOnBattlefield,
         SourceWasBlockedThisTurn,
         SourceIsPaired,
         SourceIsMonstrous,

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -109,6 +110,13 @@ public class DrawService {
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            return;
+        }
+
+        if (isDrawSkipped(gameData)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
+            log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
             return;
         }
 
@@ -352,6 +360,13 @@ public class DrawService {
             return;
         }
 
+        if (isDrawSkipped(gameData)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
+            log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
+            return;
+        }
+
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
         if (replacementController != null) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -394,6 +409,19 @@ public class DrawService {
                         .map(DrawRestrictionEffect.class::cast)
                         .anyMatch(effect -> effect.preventsDraw(cardsDrawnThisTurn));
                 if (prevents) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isDrawSkipped(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof SkipDrawReplacementEffect);
+                if (skips) return true;
             }
         }
         return false;

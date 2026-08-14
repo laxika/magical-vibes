@@ -106,7 +106,8 @@ public class CreatureControlService {
         synchronized (gameData.floatingEffects) {
             holdsTappedControl = gameData.floatingEffects.stream().anyMatch(fe ->
                     fe.isControlEffect()
-                            && fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                            && (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                            || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
                             && permanent.getId().equals(fe.sourcePermanentId()));
         }
         if (holdsTappedControl) {
@@ -300,6 +301,10 @@ public class CreatureControlService {
                 UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = source == null || !source.isTapped()
                         || sourceController == null || !sourceController.equals(fe.controllerId());
+            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED) {
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                stale = source == null || !source.isTapped();
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

@@ -803,10 +803,16 @@ public class GraveyardReturnSupport {
     public void processTargetedGraveyardCards(GameData gameData, StackEntry entry,
                                                 BiConsumer<List<Card>, Card> cardConsumer,
                                                 String logVerbPhrase, String logSuffix) {
-        UUID controllerId = entry.getControllerId();
-        List<UUID> targetCardIds = entry.getTargetCardIds();
+        processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(), cardConsumer,
+                logVerbPhrase, logSuffix);
+    }
 
-        if (targetCardIds == null || targetCardIds.isEmpty()) {
+    public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
+                                                BiConsumer<List<Card>, Card> cardConsumer,
+                                                String logVerbPhrase, String logSuffix) {
+        UUID controllerId = entry.getControllerId();
+
+        if (targetIds == null || targetIds.isEmpty()) {
             return;
         }
 
@@ -815,7 +821,7 @@ public class GraveyardReturnSupport {
 
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
-            for (UUID cardId : targetCardIds) {
+            for (UUID cardId : targetIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
                     cardConsumer.accept(graveyard, card);

@@ -564,7 +564,7 @@ class AiTargetSelector {
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_ONE_PER_CONTROLLER,
-                     ONE_PER_CONTROLLER_IF_ABLE -> true; // handled above
+                     ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
                         isAnotherPermanentOfAuraHostType(gameData, other, candidate);
             };

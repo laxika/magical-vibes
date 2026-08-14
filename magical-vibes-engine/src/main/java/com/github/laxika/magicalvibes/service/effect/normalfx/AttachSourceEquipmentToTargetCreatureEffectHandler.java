@@ -50,6 +50,10 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
+        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
+            return;
+        }
+
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.

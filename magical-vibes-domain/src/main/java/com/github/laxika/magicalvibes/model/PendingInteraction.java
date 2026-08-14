@@ -30,6 +30,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.ExiledSpellCopyChoice,
+        PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
@@ -311,6 +312,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
+    /** Choose an instant or sorcery card from a revealed hand to copy. */
+    record TargetHandSpellCopyChoice(UUID playerId, UUID targetPlayerId,
+                                     java.util.List<Card> cards,
+                                     java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public TargetHandSpellCopyChoice {
+            cards = java.util.List.copyOf(cards);
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 
@@ -1815,12 +1838,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Exile a card from hand and imprint it on {@code sourcePermanentId} (IMPRINT_FROM_HAND_CHOICE). */
     record ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                 UUID sourcePermanentId, String prompt, boolean grantCastPermission)
+                                 UUID sourcePermanentId, String prompt, boolean grantCastPermission,
+                                 boolean faceDown)
             implements PendingInteraction, HandChoice {
 
         public ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                      UUID sourcePermanentId, String prompt) {
-            this(playerId, validIndices, sourcePermanentId, prompt, false);
+            this(playerId, validIndices, sourcePermanentId, prompt, false, false);
+        }
+
+        public ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                     UUID sourcePermanentId, String prompt, boolean grantCastPermission) {
+            this(playerId, validIndices, sourcePermanentId, prompt, grantCastPermission, false);
         }
 
         @Override

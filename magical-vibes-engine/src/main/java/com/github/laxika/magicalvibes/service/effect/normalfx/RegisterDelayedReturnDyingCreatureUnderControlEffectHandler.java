@@ -35,8 +35,14 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
         // The MayEffect flow (Shirei) does not carry the entry's triggering-card id, so the
         // collector binds the dying card onto the effect itself.
         var dyingCardId = e.dyingCardId() != null ? e.dyingCardId() : entry.getTriggeringCardId();
+        if (dyingCardId == null && e.targetOpponent()) {
+            dyingCardId = entry.getCard().getId();
+        }
+        UUID returnControllerId = e.targetOpponent() ? entry.getTargetId() : entry.getControllerId();
         // An emblem has no source permanent unless the delayed action must watch its control loss.
         if (dyingCardId == null
+                || returnControllerId == null
+                || (e.targetOpponent() && !gameData.playerIds.contains(returnControllerId))
                 || (e.sacrificeOnSourceControlLoss() && entry.getSourcePermanentId() == null)) {
             return;
         }
@@ -46,7 +52,7 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
             return;
         }
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
-                dyingCardId, entry.getControllerId(), sourcePermanentId,
+                dyingCardId, returnControllerId, sourcePermanentId,
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
                 e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield()));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",

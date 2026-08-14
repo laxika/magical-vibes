@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappe
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -519,6 +521,26 @@ class LandTapTriggerCollectorServiceTest {
             verify(interactionHandlerRegistry).begin(eq(gd),
                     any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+
+        @Test
+        @DisplayName("begins one color choice per mana for any-combination mana")
+        void beginsColorChoiceForAnyCombinationMana() {
+            when(amountEvaluationService.evaluate(any(), any(), any())).thenReturn(2);
+            Permanent dawnsReflection = createPermanent("Dawn's Reflection");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            dawnsReflection.setAttachedTo(forest.getId());
+            var effect = new AddManaOnEnchantedLandTapEffect(
+                    new AwardManaOfColorsEffect(ManaColor.COLORS, 2));
+            var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
+
+            boolean result = registry.dispatch(
+                    match(dawnsReflection, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(interactionHandlerRegistry).begin(eq(gd),
+                    any(PendingInteraction.ColorChoice.class));
         }
     }
 

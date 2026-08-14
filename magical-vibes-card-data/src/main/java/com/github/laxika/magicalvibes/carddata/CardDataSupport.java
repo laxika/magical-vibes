@@ -106,6 +106,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Offering", Keyword.OFFERING);
         KEYWORD_MAP.put("Delve", Keyword.DELVE);
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);
+        KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

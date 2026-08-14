@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryEffectHandler;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -70,6 +71,7 @@ public class MayMiscHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final EquipSupport equipSupport;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
     private final SearchLibraryEffectHandler searchLibraryEffectHandler;
@@ -97,7 +99,8 @@ public class MayMiscHandlerService {
         if (accepted) {
             Permanent equipPerm = gameQueryService.findPermanentById(gameData, equipId);
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            if (equipPerm != null && targetPerm != null) {
+            if (equipPerm != null && targetPerm != null
+                    && equipSupport.canAttachEquipment(gameData, equipPerm, targetPerm)) {
                 gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.

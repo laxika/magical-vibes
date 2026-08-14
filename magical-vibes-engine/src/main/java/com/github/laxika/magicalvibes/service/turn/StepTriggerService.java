@@ -115,6 +115,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -597,6 +598,20 @@ public class StepTriggerService {
                 gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
                         perm.getCard(), activePlayerId, (ChooseModeNotYetChosenEffect) modal, perm.getId()));
                 upkeepEffects.remove(modal);
+                if (upkeepEffects.isEmpty()) continue;
+            }
+
+            CardEffect targetedModal = upkeepEffects.stream()
+                    .filter(ChooseOneEffect.class::isInstance)
+                    .filter(effect -> ChooseOneEffect.class.cast(effect).options().stream()
+                            .flatMap(option -> option.effects().stream())
+                            .anyMatch(optionEffect -> optionEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                    || optionEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)))
+                    .findFirst().orElse(null);
+            if (targetedModal != null) {
+                gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
+                        perm.getCard(), activePlayerId, ChooseOneEffect.class.cast(targetedModal), perm.getId()));
+                upkeepEffects.remove(targetedModal);
                 if (upkeepEffects.isEmpty()) continue;
             }
 
@@ -1494,9 +1509,11 @@ public class StepTriggerService {
 
         Permanent source = gameQueryService.findPermanentById(gameData, trigger.sourcePermanentId());
         Set<String> alreadyChosen = source == null ? Set.of() : source.getChosenModeLabels();
-        List<ChooseOneEffect.ChooseOneOption> remaining = trigger.effect().options().stream()
-                .filter(option -> !alreadyChosen.contains(option.label()))
-                .toList();
+        List<ChooseOneEffect.ChooseOneOption> remaining = trigger.consumeModes()
+                ? trigger.effect().options().stream()
+                        .filter(option -> !alreadyChosen.contains(option.label()))
+                        .toList()
+                : trigger.effect().options();
 
         if (remaining.isEmpty()) {
             gameLogService.append(gameData,
@@ -1507,7 +1524,7 @@ public class StepTriggerService {
 
         gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
         playerInputService.beginChooseModeChoice(gameData, trigger.controllerId(), trigger.sourceCard(),
-                new ChooseOneEffect(remaining), true, trigger.sourcePermanentId());
+                new ChooseOneEffect(remaining), true, trigger.sourcePermanentId(), trigger.consumeModes());
     }
 
     /**
@@ -1529,12 +1546,17 @@ public class StepTriggerService {
                 && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         boolean playerTarget = effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean permanentTarget = effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
 
         if (anyTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
                     sourceCard, controllerId, effects, permanentId, chosen.targetFilter()));
         } else if (playerTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                    sourceCard, controllerId, effects, permanentId, chosen.targetFilter()));
+        } else if (permanentTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                     sourceCard, controllerId, effects, permanentId, chosen.targetFilter()));
         } else {
             gameData.stack.add(new StackEntry(
@@ -1685,7 +1707,8 @@ public class StepTriggerService {
         PermanentChoiceContext.UpkeepPermanentTargetTrigger trigger =
                 gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class);
 
-        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TargetFilter targetFilter = trigger.targetFilter() != null
+                ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                 gameData,
                 trigger.effects(),
@@ -2085,6 +2108,12 @@ public class StepTriggerService {
             }
         }
         return false;
+    }
+
+    public boolean playersSkipUpkeepStepApplies(GameData gameData) {
+        return gameData.anyPermanentMatches(permanent ->
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PlayersSkipUpkeepStepEffect.class::isInstance));
     }
 
     private void handleDrawStepTriggers(GameData gameData) {

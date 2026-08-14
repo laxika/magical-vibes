@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffe
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
@@ -212,6 +215,34 @@ public class LandTapTriggerCollectorService {
 
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                     " triggers - " + playerName + " adds " + amount + " " + award.color().name().toLowerCase() + " mana."));
+            return true;
+        }
+
+        if (mana instanceof AwardManaOfColorsEffect ofColors) {
+            int amount = amountEvaluationService.evaluate(gameData, ofColors.amount(),
+                    new AmountContext(tappingPlayerId, null, null, 0, 0));
+            if (amount <= 0 || ofColors.colors().isEmpty()) {
+                return false;
+            }
+
+            if (ofColors.colors().size() == 1) {
+                ManaColor manaColor = ofColors.colors().get(0);
+                gameData.playerManaPools.get(tappingPlayerId).add(manaColor, amount);
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                        " triggers - " + playerName + " adds " + amount + " "
+                                + manaColor.name().toLowerCase() + " mana."));
+                return true;
+            }
+
+            ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
+                    .fixedColorCombination(tappingPlayerId, false, amount, ofColors.colors());
+            List<String> colors = ofColors.colors().stream().map(Enum::name).toList();
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    tappingPlayerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                    " triggers — " + playerName + " chooses colors of mana to add."));
+            log.info("Game {} - Awaiting {} to choose {} colors of mana from {}", gameData.id,
+                    playerName, amount, cardName, colors);
             return true;
         }
 

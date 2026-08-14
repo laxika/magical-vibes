@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "340")
+@CardRegistration(set = "5DN", collectorNumber = "146")
 public class RazormaneMasticore extends Card {
 
     public RazormaneMasticore() {

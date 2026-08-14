@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
@@ -113,6 +114,7 @@ public class TargetLegalityService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetValidationService targetValidationService;
     private final AmountEvaluationService amountEvaluationService;
+    private final TargetGroupAssignmentService targetGroupAssignmentService;
 
     public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
         return checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, null, null, null);
@@ -947,6 +949,19 @@ public class TargetLegalityService {
                 .sum();
         validateMultiTargetCount(targetIds, minTargets, maxTargets, targetGroups, card.isAllowSharedTargets());
 
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR) {
+            GraveyardCardPredicateTargetFilter ownGraveyardCards =
+                    new GraveyardCardPredicateTargetFilter(null,
+                            com.github.laxika.magicalvibes.model.GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+            for (UUID targetId : targetIds) {
+                validateGraveyardCardTarget(gameData, card, ownGraveyardCards, targetId, controllerId);
+            }
+            if (targetGroupAssignmentService.assignDistinctColors(gameData, targetIds).isEmpty()) {
+                throw new IllegalStateException("Must choose at most one card for each color");
+            }
+            return;
+        }
+
         List<TargetFilter> perPositionFilters = targetGroups.stream()
                 .flatMap(group -> java.util.stream.IntStream.range(0, group.getMaxTargets())
                         .mapToObj(ignored -> group.getFilter()))
@@ -994,6 +1009,10 @@ public class TargetLegalityService {
             }
 
             // Permanent-targeting position
+            if (isSpellOnStack(gameData, targetId)) {
+                validateSpellTargetOnStack(gameData, targetId, slotFilter, controllerId);
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 throw new IllegalStateException("Invalid target");
@@ -1327,10 +1346,26 @@ public class TargetLegalityService {
                 UUID targetId = declaredTargetIds.get(i);
                 TargetFilter targetFilter = targetFilters.get(i);
                 boolean legal;
-                if (targetFilter instanceof GraveyardCardPredicateTargetFilter) {
+                if (targetFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                     // A graveyard target group's positions live in a graveyard, not on the battlefield
                     // (Spelltwine). It stays legal as long as the card is still in a graveyard.
-                    legal = gameQueryService.findCardInGraveyardById(gameData, targetId) != null;
+                    Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
+                    UUID graveyardOwnerId = graveyardCard == null
+                            ? null : gameQueryService.findGraveyardOwnerById(gameData, targetId);
+                    legal = graveyardCard != null && switch (graveyardFilter.scope()) {
+                        case CONTROLLERS_GRAVEYARD -> entry.getControllerId().equals(graveyardOwnerId);
+                        case OPPONENT_GRAVEYARD -> !entry.getControllerId().equals(graveyardOwnerId);
+                        case ALL_GRAVEYARDS -> true;
+                    };
+                    if (legal && graveyardFilter.predicate() != null) {
+                        if (graveyardFilter.predicate() instanceof CardColorPredicate colorPredicate) {
+                            legal = gameQueryService.getEffectiveCardColors(gameData, graveyardCard)
+                                    .contains(colorPredicate.color());
+                        } else {
+                            legal = predicateEvaluationService.matchesCardPredicate(
+                                    graveyardCard, graveyardFilter.predicate(), entry.getCard().getId());
+                        }
+                    }
                 } else if (secondaryTargetsAreOnStack) {
                     legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
@@ -1691,7 +1726,9 @@ public class TargetLegalityService {
                 if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
                     continue;
                 }
-                int size = Math.min(Math.max(group.getMaxTargets(), 0), remaining);
+                int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
+                        ? entry.getTargetGroupSizes().get(group.getIndex()) : group.getMaxTargets();
+                int size = Math.min(Math.max(declaredSize, 0), remaining);
                 for (int i = 0; i < size; i++) {
                     filters.add(group.getFilter());
                 }
