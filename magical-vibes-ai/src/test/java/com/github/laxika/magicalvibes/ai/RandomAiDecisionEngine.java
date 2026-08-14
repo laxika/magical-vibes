@@ -749,7 +749,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     // ===== Random Sacrifice Target Selection =====
 
     /**
-     * Selects a random permanent to pay whichever additional cast cost consumes a payer-chosen
+     * Selects a random permanent to pay an additional cast cost that consumes a payer-chosen
      * permanent (sacrifice, return to hand, put a counter on a creature you control). Driven by
      * {@link CostEffect#consumedPermanentFilter()} so a new cost record is covered as soon as it
      * declares its filter — an unrecognized cost would send a null id and have the cast rejected.
@@ -761,6 +761,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (!(effect instanceof CostEffect cost) || effect instanceof SacrificeMultiplePermanentsCost) {
+                continue;
+            }
+            if (declinesOptionalCostForSingleModalMode(card, cost)) {
                 continue;
             }
             PermanentPredicate filter = cost.consumedPermanentFilter();

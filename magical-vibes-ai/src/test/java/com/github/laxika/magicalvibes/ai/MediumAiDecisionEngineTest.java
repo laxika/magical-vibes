@@ -1182,8 +1182,8 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
-    @DisplayName("Medium AI declines Pyrrhic Strike's optional blight for one mode")
-    void declinesOptionalBlightForSingleMode() {
+    @DisplayName("Medium AI casts Pyrrhic Strike's single mode without paying blight")
+    void castsSingleModeWithoutPayingOptionalBlight() {
         harness.forceActivePlayer(human);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();

@@ -1925,7 +1925,11 @@ public abstract class AiDecisionEngine {
         return List.of();
     }
 
-    private boolean declinesOptionalCostForSingleModalMode(Card card, CostEffect cost) {
+    /**
+     * Returns whether an optional permanent cost must be omitted because the modal cast plan uses
+     * only one mode and paying the cost would require every mode.
+     */
+    protected boolean declinesOptionalCostForSingleModalMode(Card card, CostEffect cost) {
         if (!(cost instanceof PutCounterOnControlledCreatureCost putCounterCost)
                 || !putCounterCost.optional()) {
             return false;

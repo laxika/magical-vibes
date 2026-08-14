@@ -1417,8 +1417,8 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
-    @DisplayName("Hard AI declines Pyrrhic Strike's optional blight for one mode")
-    void declinesOptionalBlightForSingleMode() {
+    @DisplayName("Hard AI casts Pyrrhic Strike's single mode without paying blight")
+    void castsSingleModeWithoutPayingOptionalBlight() {
         HardAiDecisionEngine ai = createHardAi(player1);
 
         harness.forceActivePlayer(player2);

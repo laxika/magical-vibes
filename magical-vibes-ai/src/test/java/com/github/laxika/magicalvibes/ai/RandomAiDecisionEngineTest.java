@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
@@ -118,6 +120,37 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactly(discard);
+    }
+
+    @Test
+    void castsPyrrhicStrikeWithoutOptionalBlightForSingleMode() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.WHITE, 3);
+        Permanent blightCreature = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(opponent, new Ornithopter());
+        harness.setHand(aiPlayer, List.of(new PyrrhicStrike()));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+        assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test

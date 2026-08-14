@@ -332,8 +332,8 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Easy AI declines Pyrrhic Strike's optional blight for one mode")
-        void declinesOptionalBlightForSingleMode() {
+        @DisplayName("Easy AI casts Pyrrhic Strike's single mode without paying blight")
+        void castsSingleModeWithoutPayingOptionalBlight() {
             giveAiPriority();
             giveManaSources(Plains::new, 3);
             Permanent blightCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new HillGiant());
