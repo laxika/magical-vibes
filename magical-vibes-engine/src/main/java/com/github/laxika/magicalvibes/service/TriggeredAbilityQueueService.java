@@ -998,6 +998,7 @@ public class TriggeredAbilityQueueService {
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+            boolean targetDescribed = false;
             for (CardEffect effect : pending.effects()) {
                 CardEffect targetEffect = unwrapConditionalEffect(effect);
                 ReturnCardFromGraveyardEffect returnEffect = targetedReturnEffect(effect);
@@ -1005,12 +1006,14 @@ public class TriggeredAbilityQueueService {
                     filter = returnEffect.filter();
                     lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                     scope = returnEffect.source();
+                    targetDescribed = true;
                     break;
                 }
                 if (targetEffect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
                     // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
                     filter = new CardTypePredicate(CardType.CREATURE);
                     scope = GraveyardSearchScope.ALL_GRAVEYARDS;
+                    targetDescribed = true;
                     break;
                 }
                 if (targetEffect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
@@ -1018,7 +1021,16 @@ public class TriggeredAbilityQueueService {
                     // to the damaged player by the pending trigger's graveyardOwnerId.
                     filter = steal.filter();
                     scope = GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                    targetDescribed = true;
                     break;
+                }
+            }
+            if (!targetDescribed) {
+                GraveyardTargetingSupport.Target describedTarget =
+                        graveyardTargetingSupport.findTarget(pending.effects());
+                if (describedTarget != null) {
+                    filter = describedTarget.filter();
+                    scope = describedTarget.scope();
                 }
             }
 

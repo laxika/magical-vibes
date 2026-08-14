@@ -18,9 +18,9 @@ class AffectionateIndrikTest extends BaseCardTest {
         Permanent target = addCreature(player2);
         castIndrikAndResolveSpell();
 
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertOnBattlefield(player1, "Affectionate Indrik");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -29,9 +29,10 @@ class AffectionateIndrikTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the ETB ability does not make Affectionate Indrik fight")
     void decliningFightLeavesBothCreaturesOnBattlefield() {
-        addCreature(player2);
+        Permanent target = addCreature(player2);
         castIndrikAndResolveSpell();
 
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

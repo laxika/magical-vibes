@@ -39,7 +39,11 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardCreateTokenIfCreatureEffect) effect;
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
