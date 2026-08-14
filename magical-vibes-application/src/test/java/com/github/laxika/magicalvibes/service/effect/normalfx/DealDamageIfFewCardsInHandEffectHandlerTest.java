@@ -44,7 +44,7 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 3);
             }
 
             @Test
@@ -65,7 +65,7 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 3);
             }
 
             @Test

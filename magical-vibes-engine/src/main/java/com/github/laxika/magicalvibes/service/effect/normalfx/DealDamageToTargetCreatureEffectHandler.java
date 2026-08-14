@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,9 +72,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         // Excess-damage tracking for companion effects (e.g. Archaic's Agony exiles cards equal to
         // the excess damage dealt to the target). The excess is stored on the entry's event value,
         // which a later EventValue amount reads back — so only snapshot it when such an effect asks.
-        boolean tracksExcess = entry.getEffectsToResolve().stream()
-                .anyMatch(ef -> ef instanceof ExileTopCardsMayPlayUntilNextTurnEffect ex
-                        && amountEvaluationService.referencesEventValue(ex.count()));
+        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         if (tracksExcess) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null || damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
@@ -95,5 +94,13 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
             damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
         }
 
+    }
+
+    private boolean referencesExcessDamage(CardEffect effect) {
+        if (effect instanceof ExileTopCardsMayPlayUntilNextTurnEffect exile) {
+            return amountEvaluationService.referencesEventValue(exile.count());
+        }
+        return effect instanceof CombatDamageAmountAwareEffect amountAware
+                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount());
     }
 }

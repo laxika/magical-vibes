@@ -159,8 +159,11 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
+            gameData.graveyardTargetOperation.singleGraveyard = exile.singleGraveyard();
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
+                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
+                            + (exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
+                            + " to exile.");
         }
     }
 

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
@@ -51,6 +53,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -961,6 +964,54 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Sacrifice target must be " + typeDescription);
         }
         return toSacrifice;
+    }
+
+    /** Validates a graveyard casting cost that removes counters from controlled creatures. */
+    public void validateRemoveCountersFromControlledCreaturesCost(
+            GameData gameData, Player player, Card card,
+            RemoveCountersFromControlledCreaturesCastingCost cost, List<UUID> permanentIds) {
+        if (cost == null) {
+            return;
+        }
+        if (cost.count() < 1) {
+            throw new IllegalStateException("The counter cost must remove at least one counter");
+        }
+        List<UUID> ids = permanentIds != null ? permanentIds : List.of();
+        if (ids.size() != cost.count()) {
+            throw new IllegalStateException("Must remove exactly " + cost.count()
+                    + " counters to cast " + card.getName());
+        }
+
+        HashMap<UUID, Integer> selectedCounts = new HashMap<>();
+        for (UUID id : ids) {
+            if (id == null) {
+                throw new IllegalStateException("Invalid creature selected for the counter cost");
+            }
+            selectedCounts.merge(id, 1, Integer::sum);
+        }
+        for (var selected : selectedCounts.entrySet()) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, selected.getKey());
+            if (permanent == null
+                    || !player.getId().equals(gameQueryService.findPermanentController(gameData, selected.getKey()))
+                    || !gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Counters must be removed from creatures you control");
+            }
+            if (counterCount(permanent, cost.counterType()) < selected.getValue()) {
+                throw new IllegalStateException("Creature does not have enough counters to pay "
+                        + card.getName() + "'s cost");
+            }
+        }
+    }
+
+    private int counterCount(Permanent permanent, CounterType counterType) {
+        return switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+            case CHARGE -> permanent.getCounterCount(CounterType.CHARGE);
+            case ANY -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                    + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            default -> 0;
+        };
     }
 
     /**

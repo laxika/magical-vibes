@@ -255,6 +255,17 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException("Target must be in your graveyard");
             }
         }
+        if (effect.targetPutIntoGraveyardFromAnywhereThisTurn()) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            boolean tracked = graveyardOwnerId != null
+                    && ctx.gameData().cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of())
+                            .contains(ctx.targetId());
+            if (!tracked) {
+                throw new IllegalStateException(
+                        "Target must be a creature card put into a graveyard this turn");
+            }
+        }
     }
 
     @ValidatesTarget(ExileGraveyardCardsEffect.class)

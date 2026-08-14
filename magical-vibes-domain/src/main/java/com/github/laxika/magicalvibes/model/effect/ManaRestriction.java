@@ -111,11 +111,7 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /**
-     * Colorless mana spendable only to cast spells / activate abilities of the given creature subtype.
-     * Only Myr exists in the pool today (routes to the myr-only bucket, e.g. Myr Reservoir); the
-     * subtype is retained as the routing/logging key.
-     */
+    /** Colorless mana spendable only to cast spells / activate abilities of Myr. */
     record SubtypeSpells(CardSubtype subtype) implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {

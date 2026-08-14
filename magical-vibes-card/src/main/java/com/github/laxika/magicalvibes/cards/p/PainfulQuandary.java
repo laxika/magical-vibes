@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "73")
+@CardRegistration(set = "FDN", collectorNumber = "179")
 public class PainfulQuandary extends Card {
 
     public PainfulQuandary() {

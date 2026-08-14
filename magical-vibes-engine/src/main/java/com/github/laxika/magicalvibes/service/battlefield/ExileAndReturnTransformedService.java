@@ -29,6 +29,7 @@ public class ExileAndReturnTransformedService {
 
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     /**
@@ -68,7 +69,9 @@ public class ExileAndReturnTransformedService {
         // A back face can be a planeswalker (Kytheon, Hero of Akros; Jace, Vryn's Prodigy): it
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.
         if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
-            newPerm.setCounterCount(CounterType.LOYALTY, backFace.getLoyalty());
+            int loyalty = gameQueryService.replaceCounters(gameData, newPerm, controllerId,
+                    CounterType.LOYALTY, backFace.getLoyalty());
+            newPerm.setCounterCount(CounterType.LOYALTY, loyalty);
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);

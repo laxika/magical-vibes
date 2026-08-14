@@ -25,6 +25,8 @@ public class SpellTarget {
     private final TargetFilter filter;
     private final int minTargets;
     private final int maxTargets;
+    private final int kickedMinTargets;
+    private final int kickedMaxTargets;
     private final int index;
     private final DynamicAmount dynamicMaxTargets;
     /**
@@ -35,19 +37,27 @@ public class SpellTarget {
      */
     private final boolean xScaled;
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
-        this(card, filter, minTargets, maxTargets, index, false, null);
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, false, null);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index, boolean xScaled) {
-        this(card, filter, minTargets, maxTargets, index, xScaled, null);
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, null);
     }
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index,
+                boolean xScaled, DynamicAmount dynamicMaxTargets) {
+        this(card, filter, minTargets, maxTargets, minTargets, maxTargets, index, xScaled, dynamicMaxTargets);
+    }
+
+    SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets,
+                int kickedMinTargets, int kickedMaxTargets, int index,
                 boolean xScaled, DynamicAmount dynamicMaxTargets) {
         this.card = card;
         this.filter = filter;
         this.minTargets = minTargets;
         this.maxTargets = maxTargets;
+        this.kickedMinTargets = kickedMinTargets;
+        this.kickedMaxTargets = kickedMaxTargets;
         this.index = index;
         this.xScaled = xScaled;
         this.dynamicMaxTargets = dynamicMaxTargets;

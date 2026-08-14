@@ -48,14 +48,17 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         int amount = e.amount();
         if (e.powerModifier() > 0) {
             if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) return;
-            amount = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, amount);
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
         } else if (plusZeroPlusOne) {
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE, amount);
+            if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + amount);
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
-            amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, source, amount);
+            amount = gameQueryService.replaceCounters(gameData, source, CounterType.MINUS_ONE_MINUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
         }

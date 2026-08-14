@@ -49,6 +49,10 @@ public enum ManaSpendRestriction {
      */
     CHOSEN_SUBTYPE_SPELL_OR_ABILITY,
 
+    /** Spendable only to cast creature spells of the source's chosen subtype or activate abilities
+     * of creature sources of that subtype (Secluded Courtyard). */
+    CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,
+
     /**
      * As {@link #CHOSEN_SUBTYPE_CREATURE}, and the spell it pays for can't be countered
      * (Cavern of Souls).

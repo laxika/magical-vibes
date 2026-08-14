@@ -43,6 +43,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
     GRAVEYARD_UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of the controller's combat while this card is in their graveyard. */
+    GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
@@ -119,6 +121,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (e.g. {@code EndStepPlayerDidntCastCreatureSpell}). Used by Predatory Advantage. */
     OPPONENT_END_STEP_TRIGGERED,
     ON_CONTROLLER_DRAWS,
+    /** Triggers when the controller draws their second card of the turn. */
+    ON_CONTROLLER_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     ON_OPPONENT_DISCARDS,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
@@ -606,6 +610,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
+     *  controller controls. Fired once per counter-placement event. */
+    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */

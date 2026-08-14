@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
  * piles. Put one pile into your hand and the other ..." — the tail depends on {@code disposition}:
  * {@link CardPileDisposition#HAND} sends the unchosen pile to the controller's graveyard (Fact or
  * Fiction; the enters trigger on Unesh, Criosphinx Sovereign) and
+ * {@link CardPileDisposition#HAND_WITH_FACE_DOWN_PILE} makes the controller separate a face-up and
+ * a face-down pile, with an opponent choosing which pile goes to hand (Curator of Destinies), and
  * {@link CardPileDisposition#HAND_AND_BOTTOM} sends it to the bottom of their library in any order
  * (Jace, Architect of Thought's −2).
  *

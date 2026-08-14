@@ -613,6 +613,14 @@ public class CombatAttackService {
                     gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
                 }
 
+                // Filter trigger-subject conditionals against this attacking creature, then
+                // unwrap them so their condition is not re-evaluated during resolution.
+                allEffects.removeIf(e -> e instanceof TriggeringPermanentConditionalEffect conditional
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, attacker, conditional.predicate()));
+                allEffects.replaceAll(e -> e instanceof TriggeringPermanentConditionalEffect conditional
+                        ? conditional.wrapped() : e);
+
                 // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksAlone
@@ -838,11 +846,22 @@ public class CombatAttackService {
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
-            // or if not every matching creature is attacking (Mob Mentality). AllMatching is
-            // unwrapped onto the stack: the trigger event already happened (not intervening-if).
+            // if the attacker count is below the threshold, or if not every matching creature is
+            // attacking (Mob Mentality). These event conditions are unwrapped onto the stack: the
+            // trigger event already happened, and targeted triggers are assembled after target
+            // selection without the combat's xValue.
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
-                if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
+                if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
+                    boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                    if (!minimumMet) {
+                        log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
+                                gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
                     boolean hasMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, playerId));
                     if (!hasMatch) {

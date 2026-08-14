@@ -68,6 +68,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyin
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
@@ -301,6 +303,32 @@ public class DeathTriggerCollectorService {
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(baked))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect.class,
+            slot = EffectSlot.ON_DEATH)
+    boolean handleDelayedSelfReturnWithOneFewerCounter(TriggerMatchContext match,
+            RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+
+        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        if (counters < 1) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new RegisterDelayedSelfReturnFromGraveyardEffect(
+                        effect.counterType(), counters - 1)))
         ));
         return true;
     }

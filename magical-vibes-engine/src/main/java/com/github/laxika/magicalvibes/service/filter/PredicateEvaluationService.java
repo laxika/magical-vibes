@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -349,6 +350,16 @@ public class PredicateEvaluationService {
                 }
                 yield java.util.Arrays.stream(CardType.values())
                         .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
+            }
+            case CardManaValueAtMostSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null) {
+                    yield false;
+                }
+                yield card.getManaValue() <= gameQueryService.getEffectivePower(gameData, source);
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
@@ -1107,19 +1118,19 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null) {
                     yield false;
                 }
-                yield permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
+                yield effectiveName(permanent, filterContext).equals(effectiveName(sourcePermanent, filterContext));
             }
             case PermanentSharesNameWithAnotherPermanentPredicate ignored -> {
                 if (gameData == null) {
                     yield false;
                 }
-                String name = permanent.getCard().getName();
+                String name = effectiveName(permanent, filterContext);
                 boolean[] foundOther = {false};
                 gameData.forEachBattlefield((playerId, battlefield) -> {
                     if (foundOther[0]) return;
                     for (Permanent other : battlefield) {
                         if (!other.getId().equals(permanent.getId())
-                                && name.equals(other.getCard().getName())) {
+                                && name.equals(effectiveName(other, filterContext))) {
                             foundOther[0] = true;
                             return;
                         }
@@ -1142,7 +1153,7 @@ public class PredicateEvaluationService {
                     sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
                 String chosenName = sourcePermanent == null ? null : sourcePermanent.getChosenName();
-                yield chosenName != null && chosenName.equals(permanent.getCard().getName());
+                yield chosenName != null && chosenName.equals(effectiveName(permanent, filterContext));
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -1155,9 +1166,9 @@ public class PredicateEvaluationService {
                                 new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);
             }
             case PermanentNamedPredicate namedPredicate ->
-                    permanent.getCard().getName().equals(namedPredicate.cardName());
+                    effectiveName(permanent, filterContext).equals(namedPredicate.cardName());
             case PermanentNameInPredicate nameInPredicate ->
-                    nameInPredicate.cardNames().contains(permanent.getCard().getName());
+                    nameInPredicate.cardNames().contains(effectiveName(permanent, filterContext));
             case PermanentHasCountersPredicate hasCountersPredicate -> {
                 if (hasCountersPredicate.counterType() == CounterType.ANY) {
                     boolean any = false;
@@ -1333,7 +1344,7 @@ public class PredicateEvaluationService {
             case PermanentHasSourceChosenNamePredicate ignored -> {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 String chosenName = source == null ? null : source.getChosenName();
-                yield chosenName != null && chosenName.equals(permanent.getCard().getName());
+                yield chosenName != null && chosenName.equals(effectiveName(permanent, context));
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
                 CardColor chosen = sourceChosenColor(context);
@@ -1401,6 +1412,7 @@ public class PredicateEvaluationService {
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentNameInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             // Recursion-safe: asking GameQueryService.hasProtectionFrom would re-enter the
             // static-bonus assembly that is currently running for another permanent.
             case PermanentHasProtectionFromColorPredicate p -> hasRecursionSafeProtectionFrom(permanent, p.color());
@@ -1500,6 +1512,17 @@ public class PredicateEvaluationService {
      * in-flight layer-5 state when a CR 613 pass is running, the permanent's own stored colours
      * otherwise. Mirrors the {@code PermanentColorInPredicate} leaf.
      */
+    private String effectiveName(Permanent permanent, FilterContext context) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.getName();
+        }
+        GameData gameData = context == null ? null : context.gameData();
+        return gameData == null
+                ? permanent.getCard().getName()
+                : gameQueryService.getEffectiveName(gameData, permanent);
+    }
+
     private Set<CardColor> recursionSafeColors(Permanent permanent) {
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
         if (layered != null) {
@@ -1708,6 +1731,10 @@ public class PredicateEvaluationService {
                     state.hasCardType(CardType.KINDRED);
             case PermanentHasKeywordPredicate p ->
                     state.hasKeyword(p.keyword());
+            case PermanentNamedPredicate p ->
+                    state.getName().equals(p.cardName());
+            case PermanentNameInPredicate p ->
+                    p.cardNames().contains(state.getName());
             case PermanentHasProtectionFromColorPredicate p ->
                     state.hasProtectionColor(p.color())
                             || permanent.getProtectionFromColorsUntilEndOfTurn().contains(p.color());

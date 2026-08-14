@@ -81,6 +81,26 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
+    @DisplayName("handleGraveyardExileETBTargeting preserves the single-graveyard restriction")
+    void handleGraveyardExileETBTargeting_preservesSingleGraveyardRestriction() {
+        UUID player2Id = UUID.randomUUID();
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        gd.playerGraveyards.get(player1Id).add(new Card());
+        gd.playerGraveyards.get(player2Id).add(new Card());
+
+        Card card = new Card();
+        card.setName("Soul-Shackled Zombie");
+        ExileCardsFromGraveyardEffect exile = new ExileCardsFromGraveyardEffect(
+                2, new CardTypePredicate(CardType.CREATURE), 2, 2, true);
+
+        service.handleGraveyardExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
+
+        assertThat(gd.graveyardTargetOperation.singleGraveyard).isTrue();
+        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), any(), eq(2), anyString());
+    }
+
+    @Test
     @DisplayName("handleReturnToHandETBTargeting pushes empty-target trigger when no matching land cards")
     void handleReturnToHandETBTargeting_pushesEmptyTriggerWhenNoLands() {
         Card card = new Card();

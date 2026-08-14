@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
@@ -121,6 +122,23 @@ class CastingPermissionServiceTest {
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, coloredInstant)).isFalse();
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, colorlessLand)).isFalse();
         }
+    }
+
+    @Test
+    @DisplayName("stash counters grant turn-limited any-mana exile casting without source tracking")
+    void stashCountersGrantExileCastingPermission() {
+        Card tinybones = new Card();
+        tinybones.addEffect(EffectSlot.STATIC,
+                AllowCastFromCardsExiledWithSourceEffect.forStashCounters(true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(tinybones));
+
+        Card stashed = new Card();
+        gd.addToExile(player2Id, stashed);
+        gd.stashCounterCardIds.add(stashed.getId());
+
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, stashed.getId())).isTrue();
+        assertThat(svc.hasAnyManaTypePermission(gd, player1Id, stashed.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, stashed.getId())).isFalse();
     }
 
     @Nested

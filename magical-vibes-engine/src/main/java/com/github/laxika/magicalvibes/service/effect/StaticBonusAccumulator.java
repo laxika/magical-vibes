@@ -19,6 +19,7 @@ import java.util.Set;
 
 public class StaticBonusAccumulator {
 
+    private String name;
     private int power;
     private int toughness;
     private final Set<Keyword> keywords = new HashSet<>();
@@ -77,6 +78,14 @@ public class StaticBonusAccumulator {
 
     public int getPower() {
         return power;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getToughness() {
@@ -249,7 +258,7 @@ public class StaticBonusAccumulator {
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities,
-                false);
+                false, name);
     }
 }
 

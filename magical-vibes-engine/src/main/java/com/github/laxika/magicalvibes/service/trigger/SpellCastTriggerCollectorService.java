@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -85,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -712,6 +715,36 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CopySpellForEachPriorInstantOrSorceryEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCopySpellForEachPriorInstantOrSorcery(TriggerMatchContext match,
+            CopySpellForEachPriorInstantOrSorceryEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        Card spellCard = sc.spellCard();
+        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) {
+            return false;
+        }
+
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), spellCard.getId());
+        if (spellEntry == null) {
+            return false;
+        }
+
+        int copies = (int) match.gameData().getSpellsCastThisTurn(sc.castingPlayerId()).stream()
+                .filter(card -> !card.getId().equals(spellCard.getId()))
+                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                .count();
+        StackEntry snapshot = new StackEntry(spellEntry);
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new StormCopyEffect(snapshot, sc.castingPlayerId(), copies)))
+        ));
+        return true;
+    }
+
     @CollectsTrigger(value = ChosenSubtypeSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleChosenSubtypeSpellCastTrigger(TriggerMatchContext match,
             ChosenSubtypeSpellCastTriggerEffect trigger, TriggerContext ctx) {
@@ -1303,6 +1336,10 @@ public class SpellCastTriggerCollectorService {
                     trigger.manaCost(),
                     match.permanent().getId(),
                     spellCard.getId()));
+        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    match.permanent().getCard(), match.controllerId(), chooseOneEffect, match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         } else if (needsGraveyardTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), resolved

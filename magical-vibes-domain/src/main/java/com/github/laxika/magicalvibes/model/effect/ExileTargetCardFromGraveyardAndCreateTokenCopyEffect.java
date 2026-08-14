@@ -28,6 +28,10 @@ import java.util.Set;
  * @param createZombieTokenWithExiledCardStats when {@code true}, a second token — a black Zombie creature token whose
  *                            power and toughness equal the exiled card's power and toughness — is created afterwards
  *                            (Soul Separator)
+ * @param targetPutIntoGraveyardFromAnywhereThisTurn when {@code true}, the target must have been put into a graveyard from
+ *                            any zone this turn
+ * @param exileOtherControlledTokensOfSubtype when non-null, exile all other matching tokens controlled by the ability's
+ *                            controller after the copy is created
  */
 public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         CardPredicate filter,
@@ -39,7 +43,9 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         Integer powerOverride,
         Integer toughnessOverride,
         Set<Keyword> additionalKeywords,
-        boolean createZombieTokenWithExiledCardStats
+        boolean createZombieTokenWithExiledCardStats,
+        boolean targetPutIntoGraveyardFromAnywhereThisTurn,
+        CardSubtype exileOtherControlledTokensOfSubtype
 ) implements CardEffect {
 
     /** Compact form without Eternalize-style P/T/color overrides (Séance). */
@@ -49,7 +55,8 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             List<CardSubtype> additionalSubtypes,
             boolean grantHaste,
             boolean exileAtEndStep) {
-        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep, null, null, null, Set.of(), false);
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                null, null, null, Set.of(), false, false, null);
     }
 
     /** Eternalize-style transform without extra keywords or the companion Zombie token (The Scarab God). */
@@ -63,7 +70,24 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             Integer powerOverride,
             Integer toughnessOverride) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                colorOverride, powerOverride, toughnessOverride, Set.of(), false);
+                colorOverride, powerOverride, toughnessOverride, Set.of(), false, false, null);
+    }
+
+    /** Full form retaining the original copy-creation options. */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            CardColor colorOverride,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Set<Keyword> additionalKeywords,
+            boolean createZombieTokenWithExiledCardStats) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, additionalKeywords,
+                createZombieTokenWithExiledCardStats, false, null);
     }
 
     @Override

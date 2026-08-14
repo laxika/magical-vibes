@@ -17,23 +17,38 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param assignNoCombatDamage  when {@code true} and at least one card was exiled, the ability's
  *                              source permanent assigns no combat damage this turn — the "if you do"
  *                              rider of an unblocked-attack trigger (Rysorian Badger)
+ * @param conditionalFilter optional filter for a conditional life rider
+ * @param conditionalLifeLossEachOpponent life lost by each opponent when the rider applies
+ * @param conditionalLifeGain life gained by the controller when the rider applies
+ * @param singleGraveyard whether all selected cards must come from one graveyard
  */
 public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                             CardPredicate filter, boolean assignNoCombatDamage,
+                                            CardPredicate conditionalFilter,
+                                            int conditionalLifeLossEachOpponent,
+                                            int conditionalLifeGain,
                                             boolean singleGraveyard)
         implements GraveyardCardChoosingEffect {
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain) {
-        this(maxTargets, lifeGain, false, null, false, false);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, false);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean singleGraveyard) {
-        this(maxTargets, lifeGain, false, null, false, singleGraveyard);
+        this(maxTargets, lifeGain, false, null, false, null, 0, 0, singleGraveyard);
     }
 
     public ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolean lifeGainPerExiledCard,
                                          CardPredicate filter, boolean assignNoCombatDamage) {
-        this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage, false);
+        this(maxTargets, lifeGain, lifeGainPerExiledCard, filter, assignNoCombatDamage,
+                null, 0, 0, false);
+    }
+
+    public ExileCardsFromGraveyardEffect(int maxTargets, CardPredicate conditionalFilter,
+                                         int conditionalLifeLossEachOpponent, int conditionalLifeGain,
+                                         boolean singleGraveyard) {
+        this(maxTargets, 0, false, null, false, conditionalFilter,
+                conditionalLifeLossEachOpponent, conditionalLifeGain, singleGraveyard);
     }
 
     @Override
@@ -44,5 +59,10 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
     @Override
     public CardPredicate graveyardChoiceFilter() {
         return filter;
+    }
+
+    @Override
+    public boolean singleGraveyard() {
+        return singleGraveyard;
     }
 }

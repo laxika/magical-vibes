@@ -134,6 +134,9 @@ public final class AnyColorManaChoiceSupport {
             case CHOSEN_SUBTYPE_SPELL_OR_ABILITY -> chosenSubtype == null
                     ? null
                     : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, chosenSubtype);
+            case CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY -> chosenSubtype == null
+                    ? null
+                    : ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
             case MANA_VALUE_AT_LEAST_FOUR ->

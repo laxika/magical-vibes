@@ -287,6 +287,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {
             bendOrBreakEffectHandler.completeOpponentChoice(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.CuratorOpponentChoice) {
+            battlefieldHandler.handleCuratorOpponentChoice(gameData, permanentId);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);
         } else {

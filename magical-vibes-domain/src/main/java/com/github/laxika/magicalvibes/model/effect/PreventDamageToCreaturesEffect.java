@@ -12,20 +12,34 @@ package com.github.laxika.magicalvibes.model.effect;
  *                      prevents all damage, combat included (Inner Sanctum)
  * @param allCreatures  {@code true} covers every creature on the battlefield regardless of controller
  *                      (Bubble Matrix); {@code false} only creatures the source's controller controls
+ * @param excludeSource {@code true} excludes the permanent carrying this effect from the protected
+ *                      creatures (Crystal Barricade)
  */
-public record PreventDamageToCreaturesEffect(boolean noncombatOnly, boolean allCreatures) implements CardEffect {
+public record PreventDamageToCreaturesEffect(boolean noncombatOnly, boolean allCreatures,
+                                             boolean excludeSource) implements CardEffect {
+
+    public PreventDamageToCreaturesEffect(boolean noncombatOnly, boolean allCreatures) {
+        this(noncombatOnly, allCreatures, false);
+    }
 
     /**
      * "Prevent all [noncombat] damage that would be dealt to creatures you control."
      */
     public static PreventDamageToCreaturesEffect youControl(boolean noncombatOnly) {
-        return new PreventDamageToCreaturesEffect(noncombatOnly, false);
+        return new PreventDamageToCreaturesEffect(noncombatOnly, false, false);
+    }
+
+    /**
+     * "Prevent all [noncombat] damage that would be dealt to other creatures you control."
+     */
+    public static PreventDamageToCreaturesEffect otherCreaturesYouControl(boolean noncombatOnly) {
+        return new PreventDamageToCreaturesEffect(noncombatOnly, false, true);
     }
 
     /**
      * "Prevent all damage that would be dealt to creatures" — every creature, both players.
      */
     public static PreventDamageToCreaturesEffect all() {
-        return new PreventDamageToCreaturesEffect(false, true);
+        return new PreventDamageToCreaturesEffect(false, true, false);
     }
 }

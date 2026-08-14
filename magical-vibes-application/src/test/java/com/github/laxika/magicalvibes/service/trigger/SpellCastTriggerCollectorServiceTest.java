@@ -27,9 +27,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEnd
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -56,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
@@ -1077,6 +1080,33 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("queues a modal triggered ability for mode selection")
+        void queuesModalTriggeredAbility() {
+            Permanent perm = createPermanent("Kykar, Zephyr Awakener");
+            var modal = new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", new CreateTokenEffect("Spirit", 1, 1,
+                            CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))
+            ));
+            var effect = new SpellCastTriggerEffect(null, List.of(modal));
+            Card spellCard = createInstant("Opt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions)
+                    .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                    .hasSize(1);
+        }
+
+        @Test
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Guttersnipe");
@@ -1595,6 +1625,53 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — CopySpellForEachPriorInstantOrSorceryEffect")
+    class ControllerCopySpellForEachPriorInstantOrSorcery {
+
+        @Test
+        @DisplayName("counts only prior matching spells cast by the controller")
+        void countsOnlyPriorControllerInstantsAndSorceries() {
+            Permanent perm = createPermanent("Thousand-Year Storm");
+            var effect = new CopySpellForEachPriorInstantOrSorceryEffect();
+            Card priorInstant = createInstant("Prior Instant");
+            Card currentSpell = createInstant("Current Spell");
+            gd.recordSpellCast(player1Id, priorInstant);
+            gd.recordSpellCast(player1Id, createCard("Creature Spell"));
+            gd.recordSpellCast(player2Id, createInstant("Opponent Instant"));
+            gd.recordSpellCast(player1Id, currentSpell);
+            gd.stack.add(new StackEntry(currentSpell, player1Id));
+            var ctx = new TriggerContext.SpellCast(currentSpell, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            var copyEffect = (StormCopyEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
+            assertThat(copyEffect.copies()).isEqualTo(1);
+            assertThat(copyEffect.spellSnapshot().getCard()).isSameAs(currentSpell);
+        }
+
+        @Test
+        @DisplayName("does not trigger for a creature spell")
+        void ignoresCreatureSpell() {
+            Permanent perm = createPermanent("Thousand-Year Storm");
+            var effect = new CopySpellForEachPriorInstantOrSorceryEffect();
+            Card creatureSpell = createCard("Creature Spell");
+            gd.stack.add(new StackEntry(creatureSpell, player1Id));
+            var ctx = new TriggerContext.SpellCast(creatureSpell, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
         }
     }
 }

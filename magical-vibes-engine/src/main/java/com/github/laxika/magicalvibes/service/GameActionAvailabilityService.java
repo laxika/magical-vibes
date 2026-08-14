@@ -136,7 +136,10 @@ public class GameActionAvailabilityService {
                 Set<CardSubtype> soaCtx = new HashSet<>(perm.getCard().getSubtypes());
                 soaCtx.addAll(perm.getTransientSubtypes());
                 soaCtx.addAll(perm.getGrantedSubtypes());
-                if (abilityManaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
+                Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
+                        ? soaCtx : Set.of();
+                if (abilityManaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null,
+                        soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx)) {
                     payable.add(i);
                 }
             }
@@ -278,7 +281,9 @@ public class GameActionAvailabilityService {
             boolean hasValidTarget = validTargetService.hasValidTargetsForSpell(
                     gameData, card, playerId, maxXValue);
             if (!hasValidTarget && canAffordKickerCost(gameData, playerId, card, pool, additionalGenericCost)) {
-                hasValidTarget = validTargetService.hasValidTargetsForSpell(
+                int kickerXValue = maxXValue != null ? maxXValue : 0;
+                hasValidTarget = card.getEffectiveMinTargets(kickerXValue, true) == 0
+                        || validTargetService.hasValidTargetsForSpell(
                         gameData, card, playerId, maxXValue, true);
             }
             if (!hasValidTarget) {
@@ -365,6 +370,7 @@ public class GameActionAvailabilityService {
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
                 ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
@@ -374,7 +380,8 @@ public class GameActionAvailabilityService {
         return hasRestricted
                 ? totalCost.canPay(pool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
-                creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour)
+                creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
+                Set.of(), subtypeCreatureSourceSpellOrAbilityContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
 
@@ -488,6 +495,7 @@ public class GameActionAvailabilityService {
                         ? Set.of(new ManaRestriction.SubtypeOrPlaneswalkerSpells(
                         CardSubtype.ELEMENTAL, CardSubtype.CHANDRA))
                         : Set.of();
+        Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = subtypeCreatureContext;
         // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
@@ -502,9 +510,9 @@ public class GameActionAvailabilityService {
             boolean canAfford = hasRestricted
                     ? cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost,
                     isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
-                    instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
-                    creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                    subtypeOrPlaneswalkerSpellContext)
+                instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
+                creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext)
                     : cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);

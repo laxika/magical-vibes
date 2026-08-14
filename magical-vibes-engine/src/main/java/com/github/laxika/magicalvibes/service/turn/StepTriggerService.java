@@ -3766,11 +3766,24 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                         continue;
                     }
-                    if (effect instanceof ConditionalEffect raidEffect
+                    if (effect instanceof ChooseOneEffect chooseOneEffect) {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), activePlayerId, chooseOneEffect, perm.getId()));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        log.info("Game {} - {} controller end-step trigger queued for mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect raidEffect
                             && raidEffect.condition() instanceof Raid) {
                         CardEffect wrapped = raidEffect.wrapped();
                         if (wrapped instanceof MayEffect may) {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                        } else if (wrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped))));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                            log.info("Game {} - {} controller end-step graveyard-target raid trigger queued",
+                                    gameData.id, perm.getCard().getName());
                         } else if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Raid condition met, targeting required — queue for target selection
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
@@ -4200,7 +4213,8 @@ public class StepTriggerService {
     }
 
     /**
-     * Scans battlefields for beginning-of-combat triggered abilities and pushes them onto the stack.
+     * Scans battlefields and the active player's graveyard for beginning-of-combat triggered
+     * abilities and pushes them onto the stack.
      * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
      * (CR 507.1: "At the beginning of combat on your turn").
      * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every permanent on every
@@ -4217,6 +4231,14 @@ public class StepTriggerService {
             for (Permanent perm : battlefield) {
                 queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
                         perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+            }
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                queueGraveyardBeginningOfCombatTriggers(gameData, activePlayerId, card,
+                        card.getEffects(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED));
             }
         }
 
@@ -4249,6 +4271,54 @@ public class StepTriggerService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void queueGraveyardBeginningOfCombatTriggers(GameData gameData, UUID controllerId,
+                                                          Card card, List<CardEffect> combatEffects) {
+        if (combatEffects == null || combatEffects.isEmpty()) {
+            return;
+        }
+
+        for (CardEffect effect : combatEffects) {
+            if (effect instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forCard(card, controllerId))) {
+                    log.info("Game {} - {} graveyard beginning-of-combat ability skipped ({})",
+                            gameData.id, card.getName(), conditional.conditionNotMetReason());
+                    continue;
+                }
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s combat ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s combat ability triggers."));
+                log.info("Game {} - {} graveyard beginning-of-combat trigger pushed onto stack",
+                        gameData.id, card.getName());
+                continue;
+            }
+
+            if (effect instanceof MayPayManaEffect mayPay) {
+                gameData.queueMayAbility(card, controllerId, mayPay, null);
+            } else if (effect instanceof MayEffect may) {
+                gameData.queueMayAbility(card, controllerId, may);
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s combat ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s combat ability triggers."));
+                log.info("Game {} - {} graveyard beginning-of-combat trigger pushed onto stack",
+                        gameData.id, card.getName());
+            }
+        }
     }
 
     private void queueBeginningOfCombatTriggers(GameData gameData, UUID controllerId, Permanent perm,

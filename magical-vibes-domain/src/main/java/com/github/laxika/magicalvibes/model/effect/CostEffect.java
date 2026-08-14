@@ -22,6 +22,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public interface CostEffect extends CardEffect {
 
     /**
+     * True when paying this cost taps the permanent that granted the activated ability rather
+     * than the permanent activating it.
+     */
+    default boolean tapsGrantingEquipment() {
+        return false;
+    }
+
+    /**
      * A predicate selecting which of the payer's battlefield permanents may be chosen to pay
      * this cost (sacrifice a creature / artifact / filtered permanent, return a creature to
      * hand, put a counter on a creature), or {@code null} when this cost does not consume a

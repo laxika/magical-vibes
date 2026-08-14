@@ -86,7 +86,8 @@ public enum CardSet {
     SET_RQS("RQS"),
     SET_MGB("MGB"),
     SET_TPR("TPR"),
-    SET_ATH("ATH");
+    SET_ATH("ATH"),
+    SET_FDN("FDN");
 
     @Getter
     private final String code;

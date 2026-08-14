@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
@@ -1014,8 +1017,32 @@ public class CastingCostService {
 
     /** Checks additional costs for a spell being cast from a graveyard zone. */
     public boolean canPayAdditionalSpellCostsFromGraveyard(GameData gameData, UUID playerId, Card card) {
-        return additionalSpellCostService.satisfiableForGraveyardCast(gameData, playerId, card)
-                && canPayImposedSacrificeTax(gameData, playerId, card);
+        if (!additionalSpellCostService.satisfiableForGraveyardCast(gameData, playerId, card)
+                || !canPayImposedSacrificeTax(gameData, playerId, card)) {
+            return false;
+        }
+        return card.getCastingOption(GraveyardCast.class)
+                .map(GraveyardCast::costs)
+                .orElse(List.of())
+                .stream()
+                .filter(RemoveCountersFromControlledCreaturesCastingCost.class::isInstance)
+                .map(RemoveCountersFromControlledCreaturesCastingCost.class::cast)
+                .allMatch(cost -> totalMatchingCounters(gameData, playerId, cost) >= cost.count());
+    }
+
+    private int totalMatchingCounters(GameData gameData, UUID playerId,
+                                      RemoveCountersFromControlledCreaturesCastingCost cost) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .mapToInt(p -> switch (cost.counterType()) {
+                    case PLUS_ONE_PLUS_ONE -> p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+                    case MINUS_ONE_MINUS_ONE -> p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                    case CHARGE -> p.getCounterCount(CounterType.CHARGE);
+                    case ANY -> p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                            + p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+                    default -> 0;
+                })
+                .sum();
     }
 
     /** Returns the maximum generic mana reduction currently available from delve, if present. */

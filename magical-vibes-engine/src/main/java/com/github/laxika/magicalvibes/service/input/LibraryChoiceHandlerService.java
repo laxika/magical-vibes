@@ -236,7 +236,9 @@ public class LibraryChoiceHandlerService {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                     }
                     if (chosenCard.hasType(CardType.PLANESWALKER) && chosenCard.getLoyalty() != null) {
-                        perm.setCounterCount(CounterType.LOYALTY, chosenCard.getLoyalty());
+                        int loyalty = gameQueryService.replaceCounters(gameData, perm,
+                                CounterType.LOYALTY, chosenCard.getLoyalty());
+                        perm.setCounterCount(CounterType.LOYALTY, loyalty);
                         perm.setSummoningSick(false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {

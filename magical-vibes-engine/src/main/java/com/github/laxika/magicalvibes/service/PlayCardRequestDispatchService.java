@@ -39,17 +39,34 @@ public class PlayCardRequestDispatchService {
                     ? CardType.valueOf(request.chosenGraveyardType()) : null;
             if (!listOrEmpty(request.beholdPermanentIds()).isEmpty()
                     || !listOrEmpty(request.beholdHandCardIndices()).isEmpty()) {
+                if (listOrEmpty(request.additionalCostSacrificePermanentIds()).isEmpty()) {
+                    gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                            listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
+                            listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
+                            request.sacrificePermanentId(), listOrEmpty(request.beholdPermanentIds()),
+                            listOrEmpty(request.beholdHandCardIndices()));
+                    return;
+                }
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
                         listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                        request.sacrificePermanentId(), listOrEmpty(request.beholdPermanentIds()),
+                        request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                        listOrEmpty(request.beholdPermanentIds()),
                         listOrEmpty(request.beholdHandCardIndices()));
                 return;
             }
-            gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                    listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                    listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                    request.sacrificePermanentId(), request.damageAssignments());
+            if (listOrEmpty(request.additionalCostSacrificePermanentIds()).isEmpty()) {
+                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
+                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
+                        request.sacrificePermanentId(), request.damageAssignments());
+            } else {
+                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
+                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
+                        request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                        request.damageAssignments());
+            }
             return;
         }
         if (request.fromExileCardId() != null) {

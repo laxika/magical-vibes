@@ -135,6 +135,7 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match,
             ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;

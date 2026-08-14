@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -1821,6 +1822,17 @@ class GameQueryServiceTest {
             addGisela(player1Id);
 
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("source-and-recipient multiplier requires both matching controllers")
+        void sourceAndRecipientMultiplierRequiresBothMatchingControllers() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Twinflame Tyrant", new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect()));
+
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player1Id)).isEqualTo(2);
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id, player1Id)).isEqualTo(1);
+            assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id, player2Id)).isEqualTo(1);
         }
 
         private void addGisela(UUID controllerId) {

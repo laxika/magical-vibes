@@ -20,4 +20,9 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
     default CardPredicate graveyardChoiceFilter() {
         return null;
     }
+
+    /** Whether all selected cards must come from one graveyard. */
+    default boolean singleGraveyard() {
+        return false;
+    }
 }

@@ -77,9 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
@@ -125,6 +123,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
@@ -262,8 +261,26 @@ public class GameQueryService {
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      * @param cardTypeOverriding        whether granted card types replace the permanent's natural card types
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean ptSwitched) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean ptSwitched, String name) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false, null);
+
+        public StaticBonus(int power, int toughness, Set<Keyword> keywords,
+                           Set<CardColor> protectionColors, boolean animatedCreature,
+                           List<ActivatedAbility> grantedActivatedAbilities,
+                           List<CardEffect> grantedEffects, Set<CardColor> grantedColors,
+                           List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes,
+                           Set<CardSupertype> grantedSupertypes, boolean colorOverriding,
+                           boolean subtypeOverriding, boolean landSubtypeOverriding,
+                           boolean cardTypeOverriding, Set<Keyword> removedKeywords,
+                           boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride,
+                           boolean losesAllAbilities, boolean ptSwitched) {
+            this(power, toughness, keywords, protectionColors, animatedCreature,
+                    grantedActivatedAbilities, grantedEffects, grantedColors, grantedSubtypes,
+                    grantedCardTypes, grantedSupertypes, colorOverriding, subtypeOverriding,
+                    landSubtypeOverriding, cardTypeOverriding, removedKeywords,
+                    basePTOverridden, basePowerOverride, baseToughnessOverride,
+                    losesAllAbilities, ptSwitched, null);
+        }
     }
 
     // --- Lookup helpers ---
@@ -1469,6 +1486,15 @@ public class GameQueryService {
         return colors;
     }
 
+    /** Returns the permanent's current name after continuous name-changing effects. */
+    public String getEffectiveName(GameData gameData, Permanent permanent) {
+        if (permanent.isFaceDown()) {
+            return null;
+        }
+        String name = computeStaticBonus(gameData, permanent).name();
+        return name != null ? name : permanent.getCard().getName();
+    }
+
     /**
      * Returns the effective colors of a card that is not being represented by a battlefield
      * permanent, including a spell on the stack. Global color-setting effects are applied here
@@ -1766,26 +1792,11 @@ public class GameQueryService {
 
     /**
      * Applies Vizier of Remedies-style replacement effects (CR 616) that reduce the number of -1/-1
-     * counters put on a creature its controller controls: "If one or more -1/-1 counters would be put
-     * on a creature you control, that many -1/-1 counters minus one are put on it instead." For each
-     * permanent carrying {@link ReduceMinusOneMinusOneCountersEffect} that {@code controllerId}
-     * controls, one fewer counter is placed (floored at zero), so multiple copies stack. A
-     * {@code count} of zero or fewer is returned unchanged — no counters "would be put", so the
-     * replacement never applies.
+     * counters put on a creature its controller controls. A {@code count} of zero or fewer is
+     * returned unchanged — no counters "would be put", so the replacement never applies.
      */
     public int reduceMinusOneMinusOneCounters(GameData gameData, UUID controllerId, int count) {
-        if (count <= 0 || controllerId == null) {
-            return count;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return count;
-        }
-        long reducers = battlefield.stream()
-                .filter(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ReduceMinusOneMinusOneCountersEffect.class::isInstance))
-                .count();
-        return Math.max(0, count - (int) reducers);
+        return replaceCounters(gameData, controllerId, CounterType.MINUS_ONE_MINUS_ONE, count, true);
     }
 
     /**
@@ -1805,6 +1816,16 @@ public class GameQueryService {
      * the permanent overload also rejects non-creatures.
      */
     public int replacePlusOnePlusOneCounters(GameData gameData, UUID controllerId, int count) {
+        return replaceCounters(gameData, controllerId, CounterType.PLUS_ONE_PLUS_ONE, count, true);
+    }
+
+    /**
+     * Applies all counter replacements for one counter-placement event. The replacements are
+     * applied in battlefield order, which gives multiple replacement effects a stable order while
+     * preserving the existing behavior of the +1/+1 and -1/-1 pipelines.
+     */
+    public int replaceCounters(GameData gameData, UUID controllerId, CounterType counterType,
+                               int count, boolean affectedPermanentIsCreature) {
         if (count <= 0 || controllerId == null) {
             return count;
         }
@@ -1812,16 +1833,30 @@ public class GameQueryService {
         if (battlefield == null) {
             return count;
         }
-        List<PlusOnePlusOneCountersReplacementEffect> replacements = battlefield.stream()
-                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(PlusOnePlusOneCountersReplacementEffect.class::isInstance)
-                .map(PlusOnePlusOneCountersReplacementEffect.class::cast)
-                .toList();
         int result = count;
-        for (PlusOnePlusOneCountersReplacementEffect replacement : replacements) {
-            result = replacement.replace(result);
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CounterReplacementEffect replacement
+                        && replacement.appliesTo(counterType, affectedPermanentIsCreature)) {
+                    result = replacement.replace(counterType, result);
+                }
+            }
         }
         return result;
+    }
+
+    /** Applies all counter replacements for a permanent already on the battlefield. */
+    public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType, int count) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
+        return replaceCounters(gameData, controllerId, counterType, count, creature);
+    }
+
+    /** Applies all counter replacements for a permanent entering under {@code controllerId}. */
+    public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
+                               CounterType counterType, int count) {
+        boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
+        return replaceCounters(gameData, controllerId, counterType, count, creature);
     }
 
     /**
@@ -2709,6 +2744,9 @@ public class GameQueryService {
             Set<CardSupertype> layeredGrantedSupertypes = new HashSet<>(state.getSupertypes());
             layeredGrantedSupertypes.removeAll(target.getCard().getSupertypes());
             accumulator.getGrantedSupertypes().addAll(layeredGrantedSupertypes);
+            if (!Objects.equals(state.getName(), target.getCard().getName())) {
+                accumulator.setName(state.getName());
+            }
             if (state.isCardTypesOverridden()) {
                 accumulator.getGrantedCardTypes().addAll(state.getCardTypes());
                 accumulator.setCardTypeOverriding(true);
@@ -2814,7 +2852,8 @@ public class GameQueryService {
                 && !accumulator.isSubtypeOverriding()
                 && !accumulator.isLandSubtypeOverriding()
                 && !accumulator.isCardTypeOverriding()
-                && accumulator.getGrantedSupertypes().isEmpty()) {
+                && accumulator.getGrantedSupertypes().isEmpty()
+                && accumulator.getName() == null) {
             return StaticBonus.NONE;
         }
 
@@ -2898,7 +2937,7 @@ public class GameQueryService {
                 accumulator.isCardTypeOverriding(),
                 removedKeywords, accumulator.isBasePTOverridden(),
                 accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
-                losesAllAbilities, ptSwitched);
+                losesAllAbilities, ptSwitched, accumulator.getName());
     }
 
     // --- Protection & evasion ---
@@ -3697,7 +3736,37 @@ public class GameQueryService {
     private static boolean isAnySpellRestriction(CardEffect effect) {
         return effect instanceof TargetingRestrictionEffect r
                 && r.kind() == TargetingSourceKind.SPELLS
+                && r.sourceCardTypes().isEmpty()
                 && r.mode() == TargetColorMode.ANY;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent has hexproof from the given spell card type
+     * against a spell controlled by the given player.
+     */
+    public boolean hasHexproofFromCardType(GameData gameData, Permanent target, CardType sourceCardType,
+                                           UUID spellControllerId) {
+        if (sourceCardType == null || !isOpponentControlledSpell(gameData, target, spellControllerId)) {
+            return false;
+        }
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (isHexproofFromCardTypeRestriction(effect, sourceCardType)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (isHexproofFromCardTypeRestriction(effect, sourceCardType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isHexproofFromCardTypeRestriction(CardEffect effect, CardType sourceCardType) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.kind() == TargetingSourceKind.SPELLS
+                && r.opponentOnly()
+                && r.sourceCardTypes().contains(sourceCardType);
     }
 
     /**
@@ -4875,14 +4944,28 @@ public class GameQueryService {
      * points and the two permanent damage entry points.
      */
     public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId) {
+        return getDamageToRecipientMultiplier(gameData, recipientPlayerId, null);
+    }
+
+    /**
+     * Returns the damage multiplier for a recipient when the controller of the damage source is
+     * known. This overload also evaluates source-and-recipient-scoped static effects.
+     */
+    public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
+                                              UUID sourceControllerId) {
         if (recipientPlayerId == null) return 1;
 
         int[] multiplier = {1};
         gameData.forEachPermanent((controllerId, p) -> {
-            if (recipientPlayerId.equals(controllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleDamageToOpponentsAndTheirPermanentsEffect) {
+                if (!recipientPlayerId.equals(controllerId)
+                        && effect instanceof DoubleDamageToOpponentsAndTheirPermanentsEffect) {
                     multiplier[0] *= 2;
+                } else if (!recipientPlayerId.equals(controllerId)
+                        && sourceControllerId != null
+                        && sourceControllerId.equals(controllerId)
+                        && effect instanceof ControllerRecipientDamageMultiplyingEffect multiplyingEffect) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplier();
                 }
             }
         });
@@ -5258,7 +5341,7 @@ public class GameQueryService {
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
             // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls.
-            result *= getDamageToRecipientMultiplier(gameData, findPermanentController(gameData, target.getId()));
+            result *= getDamageToRecipientMultiplier(gameData, findPermanentController(gameData, target.getId()), controllerId);
             for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
                 result *= 2;
             }

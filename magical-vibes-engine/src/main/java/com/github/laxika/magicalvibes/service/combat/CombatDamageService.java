@@ -2381,6 +2381,7 @@ public class CombatDamageService {
             // Attacking a planeswalker — damage removes loyalty counters (CR 306.8)
             // Gideon's Intervention: prevent damage to a planeswalker you control from a source with the chosen name.
             UUID pwControllerId = gameQueryService.findPermanentController(gameData, pw.getId());
+            damage *= gameQueryService.getDamageToRecipientMultiplier(gameData, pwControllerId, sourceControllerId);
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
@@ -2427,6 +2428,8 @@ public class CombatDamageService {
 
         boolean atkHasInfect = atkStats.infect();
         if (redirectTarget != null) {
+            damage *= gameQueryService.getDamageToRecipientMultiplier(
+                    gameData, gameQueryService.findPermanentController(gameData, redirectTarget.getId()), sourceControllerId);
             // The guard is a creature, so wither also routes here (damage becomes -1/-1 counters).
             if (gameQueryService.dealsCounterDamageToCreatures(gameData, atk)) {
                 state.infectDamageRedirectedToGuard += damage;
@@ -2477,6 +2480,8 @@ public class CombatDamageService {
                         && gameQueryService.hasProtectionFromDamageSource(gameData, combatRedirectTarget, atk)) {
                     return;
                 }
+                damage *= gameQueryService.getDamageToRecipientMultiplier(
+                        gameData, gameQueryService.findPermanentController(gameData, combatRedirectTarget.getId()), sourceControllerId);
                 applyCombatCreatureDamage(gameData, atk, atkStats, combatRedirectTarget,
                         combatRedirectTargetIdx, damage, state.atkDamageTaken,
                         state.unpreventableAtkDamageTaken, state.deathtouchDamagedAttackerIndices,
@@ -2520,6 +2525,7 @@ public class CombatDamageService {
                     return;
                 }
             }
+            damage *= gameQueryService.getDamageToRecipientMultiplier(gameData, defenderId, sourceControllerId);
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(
                     gameData, defenderId, null, atk.getId(), damage, true);

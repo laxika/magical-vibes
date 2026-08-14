@@ -87,7 +87,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 2);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 2);
             }
 
             @Test
@@ -143,7 +143,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 5);
             }
 
             @Test

@@ -15,19 +15,37 @@ import java.util.List;
  * @param alternateManaCost           optional mana cost paid <em>rather than</em> the card's normal
  *                                     mana cost when cast from the graveyard (e.g. Worldheart Phoenix's
  *                                     "by paying {W}{U}{B}{R}{G}"); {@code null} = pay the normal cost
+ * @param additionalCosts              additional costs that must be paid when using this permission
  */
-public record GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost) implements CastingOption {
+public record GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost,
+                            List<CastingCost> additionalCosts) implements CastingOption {
+
+    public GraveyardCast {
+        additionalCosts = additionalCosts == null ? List.of() : List.copyOf(additionalCosts);
+    }
 
     public GraveyardCast() {
-        this(null, null);
+        this(null, null, List.of());
     }
 
     public GraveyardCast(PermanentPredicate controllerControlsPredicate) {
-        this(controllerControlsPredicate, null);
+        this(controllerControlsPredicate, null, List.of());
     }
 
     public GraveyardCast(String alternateManaCost) {
-        this(null, alternateManaCost);
+        this(null, alternateManaCost, List.of());
+    }
+
+    public GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost) {
+        this(controllerControlsPredicate, alternateManaCost, List.of());
+    }
+
+    public GraveyardCast(List<CastingCost> additionalCosts) {
+        this(null, null, additionalCosts);
+    }
+
+    public GraveyardCast(PermanentPredicate controllerControlsPredicate, List<CastingCost> additionalCosts) {
+        this(controllerControlsPredicate, null, additionalCosts);
     }
 
     @Override
@@ -37,6 +55,12 @@ public record GraveyardCast(PermanentPredicate controllerControlsPredicate, Stri
 
     @Override
     public List<CastingCost> costs() {
-        return alternateManaCost == null ? List.of() : List.of(new ManaCastingCost(alternateManaCost));
+        if (alternateManaCost == null) {
+            return additionalCosts;
+        }
+        return java.util.stream.Stream.concat(
+                        java.util.stream.Stream.of(new ManaCastingCost(alternateManaCost)),
+                        additionalCosts.stream())
+                .toList();
     }
 }

@@ -234,9 +234,9 @@ the untapped permanent's controller's battlefield, including the source untappin
 `checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent),
 `ON_ANY_PERMANENT_BECOMES_UNTAPPED` (Mesmeric Orb; fires once for every permanent that transitions
-tapped→untapped on any battlefield. The untapped permanent and its controller are recorded on the
-non-targeting triggered entry so an effect can use that controller even if the permanent leaves before
-resolution),
+tapped→untapped on any battlefield. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
+untapped permanent. The untapped permanent and its controller are recorded on the non-targeting
+triggered entry so an effect can use that controller even if the permanent leaves before resolution),
 `ON_SELF_BECOMES_RENOWNED` / `ON_ALLY_CREATURE_BECOMES_RENOWNED` (Relic Seeker / Valeron Wardens; fired from
 `RenownEffectHandler` via `TriggerCollectionService.checkBecomesRenownedTriggers` on the flip to renowned
 only. The ally slot fires on every permanent with it on the renowned creature's controller's battlefield,
@@ -279,6 +279,8 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
+`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
+one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
 `ON_SELF_EVOLVES` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
 actually places the +1/+1 counter),
 `ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on
@@ -569,3 +571,7 @@ on the triggered entry for the normal return handler. An empty selection models 
 For `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY`, effects implementing `TriggeringSpellReferencingEffect`
 also carry the triggering spell or activated ability as an internal `STACK` reference. The source
 permanent id remains available so an Aura effect can re-derive its host at resolution.
+
+`ON_CONTROLLER_DRAWS_SECOND_CARD` is checked by `DrawService.checkControllerDrawTriggers` after
+the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
+handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same turn.

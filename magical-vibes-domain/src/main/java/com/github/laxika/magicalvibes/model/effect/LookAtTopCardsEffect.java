@@ -43,6 +43,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       random order (Nissa, Genesis Mage −10).</li>
  *   <li>{@link #putOneOnTopRestOnBottom(int)} — put one back on top, rest on the bottom (Cream of
  *       the Crop's materialised trigger).</li>
+ *   <li>{@link #mayPutOneOnTopRestToGraveyard(int)} — you may put one back on top, rest into the
+ *       graveyard (Gutless Plunderer).</li>
  * </ul>
  *
  * <p>Still separate records (genuinely different mechanics): the hand/top/bottom three-way split
@@ -65,6 +67,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                          and no auto-move-to-hand shortcut applies
  * @param gainLifeEqualToChosenCardManaValue when true, gain life equal to the mana value of the
  *                                           chosen card
+ * @param chooseManaValueAtMost when non-null, only cards with mana value at most this
+ *                              resolution-time amount are eligible for selection
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -74,14 +78,15 @@ public record LookAtTopCardsEffect(
         boolean reveal,
         LibrarySearchDestination chosenDestination,
         boolean optional,
-        boolean gainLifeEqualToChosenCardManaValue
+        boolean gainLifeEqualToChosenCardManaValue,
+        DynamicAmount chooseManaValueAtMost
 ) implements CardEffect {
 
     /** Mandatory choose-to-hand shape (the original 5-field form). */
     public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
-                LibrarySearchDestination.HAND, false, false);
+                LibrarySearchDestination.HAND, false, false, null);
     }
 
     /** Canonical form without the optional chosen-card life-gain rider. */
@@ -89,7 +94,16 @@ public record LookAtTopCardsEffect(
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
             LibrarySearchDestination chosenDestination, boolean optional) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
-                chosenDestination, optional, false);
+                chosenDestination, optional, false, null);
+    }
+
+    /** Canonical form without a mana-value cap. */
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
+                chosenDestination, optional, gainLifeEqualToChosenCardManaValue, null);
     }
 
     /** One card to hand, the rest on the bottom of the library. */
@@ -206,6 +220,14 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.BATTLEFIELD, true);
     }
 
+    /** You may put one matching card within a dynamic mana-value cap onto the battlefield. */
+    public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, DynamicAmount chooseManaValueAtMost) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost);
+    }
+
     /** You may put one matching card onto the battlefield tapped; the rest go to the bottom randomly. */
     public static LookAtTopCardsEffect mayPutOneMatchingOntoBattlefieldRestOnBottomRandom(
             int lookCount, CardPredicate choosePredicate) {
@@ -229,5 +251,11 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect putOneOnTopRestOnBottom(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.TOP_OF_LIBRARY, false);
+    }
+
+    /** You may put one of the looked-at cards on top of your library and the rest into your graveyard. */
+    public static LookAtTopCardsEffect mayPutOneOnTopRestToGraveyard(int lookCount) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.GRAVEYARD, false, LibrarySearchDestination.TOP_OF_LIBRARY, true);
     }
 }

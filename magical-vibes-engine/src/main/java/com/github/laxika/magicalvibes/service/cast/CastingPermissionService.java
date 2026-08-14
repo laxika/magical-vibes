@@ -983,6 +983,12 @@ public class CastingPermissionService {
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> castableIds = new HashSet<>();
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (gameData.stashCounterCardIds.contains(entry.card().getId())
+                    && hasStashCounterPermission(gameData, playerId, entry.card().getId(), false)) {
+                castableIds.add(entry.card().getId());
+            }
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -1004,6 +1010,12 @@ public class CastingPermissionService {
      */
     public Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> anyManaIds = new HashSet<>();
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (gameData.stashCounterCardIds.contains(entry.card().getId())
+                    && hasStashCounterPermission(gameData, playerId, entry.card().getId(), true)) {
+                anyManaIds.add(entry.card().getId());
+            }
+        }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             UUID permittedPlayer = gameData.exilePlayPermissions.get(entry.card().getId());
             if (gameData.exilePlayAnyManaTypeWhileExiled.contains(entry.card().getId())
@@ -1034,6 +1046,7 @@ public class CastingPermissionService {
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
+        if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -1089,6 +1102,9 @@ public class CastingPermissionService {
     public OptionalInt findAdditionalCounterCostFromSource(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return OptionalInt.empty();
+        if (hasStashCounterPermission(gameData, playerId, cardId, false)) {
+            return OptionalInt.of(0);
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return OptionalInt.empty();
         for (Permanent perm : battlefield) {
@@ -1135,6 +1151,7 @@ public class CastingPermissionService {
     private boolean applies(AllowCastFromCardsExiledWithSourceEffect permission,
                              GameData gameData, UUID playerId, Permanent source,
                              ExiledCardEntry entry) {
+        if (permission.stashCounterOnly() && playerId.equals(entry.ownerId())) return false;
         if (permission.controllerTurnOnly() && !playerId.equals(gameData.activePlayerId)) return false;
         if (permission.ownOnly() && !playerId.equals(entry.ownerId())) return false;
         if (permission.thisTurnOnly() && entry.exiledTurnNumber() != gameData.turnNumber) return false;
@@ -1153,6 +1170,7 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (hasStashCounterPermission(gameData, playerId, cardId, true)) return true;
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
         if (gameData.exilePlayAnyManaType.contains(cardId)
                 || (gameData.exilePlayAnyManaTypeWhileExiled.contains(cardId)
@@ -1176,6 +1194,22 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    private boolean hasStashCounterPermission(GameData gameData, UUID playerId, UUID cardId,
+                                              boolean anyManaTypeRequired) {
+        if (!gameData.stashCounterCardIds.contains(cardId)) return false;
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                        .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                        .anyMatch(permission -> permission.stashCounterOnly()
+                                && (!anyManaTypeRequired || permission.anyManaType())
+                                && applies(permission, gameData, playerId, source, entry)));
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

@@ -53,9 +53,16 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosenId, interaction.playerId());
+        gameData.exilePlayPermissions.put(chosenId, interaction.playerId());
+        if (interaction.expiresAtEndOfTurn()) {
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenId);
+        } else {
+            exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosenId, interaction.playerId());
+        }
         gameLogService.append(gameData, GameLog.cardThen(chosen.card(),
-                " may be played until the end of its controller's next turn."));
+                interaction.expiresAtEndOfTurn()
+                        ? " may be played until the end of this turn."
+                        : " may be played until the end of its controller's next turn."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

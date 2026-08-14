@@ -27,6 +27,7 @@ public class MidnightScavengers extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 

@@ -2358,10 +2358,13 @@ public class AbilityActivationService {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
+            Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
+                    ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
-                    subtypeSpellOrAbilityContext, additionalGenericCost, ability.getXColorRestrictions());
+                    subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    additionalGenericCost, ability.getXColorRestrictions());
             recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
         } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
@@ -2518,8 +2521,10 @@ public class AbilityActivationService {
                 }
             } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
                 // -0/-1 counters (Wall of Roots) are a different kind from -1/-1, so -1/-1 replacement effects do not apply.
+                placedCount = gameQueryService.replaceCounters(
+                        gameData, permanent, CounterType.MINUS_ZERO_MINUS_ONE, placedCount);
                 permanent.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + placedCount);
-                placed = true;
+                placed = placedCount > 0;
             } else if (!gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
                 // Vizier of Remedies reduces the -1/-1 counters put on as a cost (e.g. Devoted Druid).
                 placedCount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, placedCount);
@@ -2547,12 +2552,13 @@ public class AbilityActivationService {
                 .findFirst();
         if (typedCounterCost.isPresent() && !gameQueryService.cantHaveCounters(gameData, permanent)) {
             PutTypedCounterOnSourceCost c = typedCounterCost.get();
-            permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + c.count());
-            if (gameQueryService.isCreature(gameData, permanent) && c.count() > 0) {
+            int placedCount = gameQueryService.replaceCounters(gameData, permanent, c.counterType(), c.count());
+            permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + placedCount);
+            if (gameQueryService.isCreature(gameData, permanent) && placedCount > 0) {
                 gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
             }
             String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');
-            String counterWord = c.count() == 1 ? "a " + counterLabel + " counter" : c.count() + " " + counterLabel + " counters";
+            String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
         }
 
@@ -3191,6 +3197,19 @@ public class AbilityActivationService {
             PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(gameData, effect, sourceId, xValue);
             if (handler != null) {
                 handler.validateCanPay(gameData, playerId);
+            }
+        }
+
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.tapsGrantingEquipment())) {
+            Permanent equipment = ability.getGrantSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment == null) {
+                throw new IllegalStateException("The granting Equipment is not on the battlefield");
+            }
+            if (equipment.isTapped()) {
+                throw new IllegalStateException("The granting Equipment is already tapped");
             }
         }
 
@@ -3897,6 +3916,15 @@ public class AbilityActivationService {
                              boolean artifactContext, boolean myrContext,
                              Set<CardSubtype> subtypeSpellOrAbilityContext, int additionalCost,
                              Set<ManaColor> xColorRestrictions) {
+        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                subtypeSpellOrAbilityContext, Set.of(), additionalCost, xColorRestrictions);
+    }
+
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue,
+                             boolean artifactContext, boolean myrContext,
+                             Set<CardSubtype> subtypeSpellOrAbilityContext,
+                             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                             int additionalCost, Set<ManaColor> xColorRestrictions) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (cost.hasX() && xColorRestrictions != null) {
@@ -3907,7 +3935,9 @@ public class AbilityActivationService {
             return;
         }
         boolean hasSubtypeSoa = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
-        boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa;
+        boolean hasCreatureSourceSoa = subtypeCreatureSourceSpellOrAbilityContext != null
+                && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty();
+        boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa || hasCreatureSourceSoa;
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
         // generic costs consume it — but only where the rest of the cost stays payable,
@@ -3923,10 +3953,14 @@ public class AbilityActivationService {
                 throw new IllegalStateException("X value cannot be negative");
             }
             if (hasRestricted) {
-                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext)) {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
+                        subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
+                        subtypeCreatureSourceSpellOrAbilityContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext);
+                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
+                        subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
+                        subtypeCreatureSourceSpellOrAbilityContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -3935,10 +3969,14 @@ public class AbilityActivationService {
             }
         } else {
             if (hasRestricted) {
-                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext)) {
+                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
+                        subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
+                        subtypeCreatureSourceSpellOrAbilityContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext);
+                cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
+                        subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
+                        subtypeCreatureSourceSpellOrAbilityContext);
             } else {
                 if (additionalCost != 0) {
                     // additionalCost may be negative (a static generic-cost reduction, floored to the

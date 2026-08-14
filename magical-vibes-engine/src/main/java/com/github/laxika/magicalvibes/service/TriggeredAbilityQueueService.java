@@ -440,10 +440,13 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
 
+            TargetFilter targetFilter = pending.targetFilter() != null
+                    ? pending.targetFilter()
+                    : targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
+                    targetFilter,
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.ATTACK,
@@ -521,7 +524,7 @@ public class TriggeredAbilityQueueService {
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         if (needsTarget) {
             gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, controllerId, effects, sourcePermanentId));
+                    sourceCard, controllerId, effects, sourcePermanentId, null, null, chosen.targetFilter()));
             return;
         }
 
@@ -1037,7 +1040,8 @@ public class TriggeredAbilityQueueService {
                     if (graveyardCard.getManaValue() > maxManaValue) {
                         continue;
                     }
-                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId)) {
                         matchingCards.add(graveyardCard);
                     }
                 }
@@ -1073,6 +1077,7 @@ public class TriggeredAbilityQueueService {
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";
             };
             playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
+                    pending.minCount(),
                     pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel
                             + " from " + zoneLabel + ".");
 

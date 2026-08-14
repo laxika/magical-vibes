@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "195")
+@CardRegistration(set = "FDN", collectorNumber = "249")
 public class AdventuringGear extends Card {
 
     public AdventuringGear() {

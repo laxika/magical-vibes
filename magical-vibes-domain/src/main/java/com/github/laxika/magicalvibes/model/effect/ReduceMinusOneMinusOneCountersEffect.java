@@ -12,5 +12,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * zero). Counting the markers — rather than granting a per-creature flag — lets multiple copies stack
  * correctly (two Viziers reduce by two).
  */
-public record ReduceMinusOneMinusOneCountersEffect() implements CardEffect {
+public record ReduceMinusOneMinusOneCountersEffect() implements MinusOneMinusOneCountersReplacementEffect {
+
+    @Override
+    public int replace(int count) {
+        return Math.max(0, count - 1);
+    }
 }

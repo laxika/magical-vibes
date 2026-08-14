@@ -81,13 +81,11 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
             int placed = amount;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
-                placed = gameQueryService.reduceMinusOneMinusOneCounters(gameData, p, amount);
-                if (placed <= 0) continue;
             } else if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                 if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, p)) continue;
-                placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, p, amount);
-                if (placed <= 0) continue;
             }
+            placed = gameQueryService.replaceCounters(gameData, p, e.counterType(), amount);
+            if (placed <= 0) continue;
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
             count++;
@@ -105,7 +103,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 entry.getCard().getName(), amount, counterName, count);
 
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, placement.getKey(), placement.getValue());

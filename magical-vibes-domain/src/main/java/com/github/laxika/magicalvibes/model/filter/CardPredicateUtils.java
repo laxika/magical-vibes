@@ -76,6 +76,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardPowerAtMostPredicate p) {
             return "card with power " + p.maxPower() + " or less";
         }
+        if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
+            return "card with mana value less than or equal to this creature's power";
+        }
         if (predicate instanceof CardToughnessLessThanSourceToughnessPredicate) {
             return "card with toughness less than this creature's toughness";
         }

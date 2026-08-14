@@ -28,6 +28,8 @@ public enum MultiTargetConstraint {
      * planeswalker's controller controls").
      */
     CONTROLLED_BY_FIRST_TARGET,
+    /** Every permanent chosen after the first must be attached to the first target. */
+    ATTACHED_TO_FIRST_TARGET,
     /**
      * At most two of the chosen permanents may be creatures and at most two may be lands
      * ("Untap up to two target creatures and up to two target lands" — Nissa, Genesis Mage +2).

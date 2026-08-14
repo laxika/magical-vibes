@@ -18,6 +18,7 @@ public sealed interface ChoiceContext {
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
+                           boolean creatureSourceSpellOrAbility,
                            List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
                            boolean artifactSpellOrAbilityOnly,
                            boolean grantsUncounterable, boolean manaValueAtLeastFour,
@@ -26,21 +27,33 @@ public sealed interface ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
+                               List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
+                               boolean artifactSpellOrAbilityOnly, boolean grantsUncounterable,
+                               boolean manaValueAtLeastFour, UUID sourcePermanentId) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
+                    spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly,
+                    artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
+                    sourcePermanentId, null);
+        }
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
+                               boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                                List<ManaColor> fixedColorOptions, boolean creatureSpellOnly) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, fixedColorOptions, creatureSpellOnly,
+                    spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly,
                     false, false, false, null, null);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, null, false, false, false, false, null, null);
+                    spellOrAbilitySubtype, false, null, false, false, false, false, null, null);
         }
 
         public ManaColorChoice withSourcePermanentId(UUID sourcePermanentId) {
             return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
-                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, fixedColorOptions,
+                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility,
+                    fixedColorOptions,
                     creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
                     manaValueAtLeastFour, sourcePermanentId, restrictedToSpellOrAbilitySubtypes);
         }
@@ -82,8 +95,18 @@ public sealed interface ChoiceContext {
         /** "Add one mana of any color" restricted to the four party creature types. */
         public static ManaColorChoice partySpellOrAbility(UUID playerId, int amount) {
             return new ManaColorChoice(playerId, false, amount, null, false, false, true,
-                    null, false, false, false, false, null,
+                    false, null, false, false, false, false, null,
                     Set.of(CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD));
+        }
+
+        /**
+         * "Add N mana of any color, spendable only to cast creature spells of the chosen type or
+         * activate abilities of creature sources of the chosen type" (Secluded Courtyard).
+         */
+        public static ManaColorChoice creatureSourceSpellOrAbility(UUID playerId, int amount,
+                                                                     CardSubtype subtype) {
+            return new ManaColorChoice(playerId, false, amount, subtype, false, false, false,
+                    true, null, false, false, false, false, null, null);
         }
 
         /**
@@ -107,7 +130,7 @@ public sealed interface ChoiceContext {
         /** "Add N mana of any one color, spendable only to cast artifact spells or activate abilities of artifacts". */
         public static ManaColorChoice artifactSpellOrAbilityOnly(UUID playerId, int amount) {
             return new ManaColorChoice(
-                    playerId, false, amount, null, false, false, false, null,
+                    playerId, false, amount, null, false, false, false, false, null,
                     false, true, false, false, null, null);
         }
 
@@ -118,14 +141,14 @@ public sealed interface ChoiceContext {
          */
         public static ManaColorChoice chosenSubtypeCreatureUncounterable(UUID playerId, int amount, CardSubtype subtype) {
             return new ManaColorChoice(
-                    playerId, false, amount, subtype, false, false, false, null,
+                    playerId, false, amount, subtype, false, false, false, false, null,
                     false, false, true, false, null, null);
         }
 
         /** "Add N mana of any one color, spendable only to cast spells with mana value 4 or greater." */
         public static ManaColorChoice manaValueAtLeastFour(UUID playerId, int amount) {
             return new ManaColorChoice(
-                    playerId, false, amount, null, false, false, false, null,
+                    playerId, false, amount, null, false, false, false, false, null,
                     false, false, false, true, null, null);
         }
     }

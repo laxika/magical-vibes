@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -890,6 +891,7 @@ public class LayerSystemService {
             slotsById.put(permanent.getId(), slot);
         }
 
+        applyLayer3(gameData, slots, slotsById, board);
         applyLayer4(gameData, slots, slotsById, board);
 
         // Runtime one-shot type state not yet migrated to floating effects, applied with legacy
@@ -1259,6 +1261,23 @@ public class LayerSystemService {
     }
 
     // ===== layer 4 =====
+
+    private void applyLayer3(GameData gameData, List<PermanentSlot> slots,
+                             Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L3_TEXT),
+                slots, slotsById, board, this::applyL3Instance);
+    }
+
+    private void applyL3Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                                 Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        if (!(instance.effect() instanceof SetNameEffect setName)) {
+            return;
+        }
+        for (PermanentSlot target : scopeTargets(instance, setName.scope(), null,
+                slots, slotsById, board)) {
+            board.states().get(target.permanent().getId()).setName(setName.name());
+        }
+    }
 
     private void applyLayer4(GameData gameData, List<PermanentSlot> slots,
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {

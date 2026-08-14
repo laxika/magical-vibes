@@ -1258,29 +1258,37 @@ public class MultiPermanentChoiceHandlerService {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
                         if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm)) {
-                            int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, perm, 1);
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.PLUS_ONE_PLUS_ONE, 1);
                             if (placed > 0) {
                                 perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                             }
                         }
                         if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)
-                                && gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, 1) > 0) {
-                            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
+                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.MINUS_ONE_MINUS_ONE, 1);
+                            if (placed > 0) {
+                                perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + placed);
+                            }
                             // The proliferating player is the one putting the counter (Nest of Scarabs).
-                            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, 1, playerId);
+                            if (placed > 0) {
+                                permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, placed, playerId);
+                            }
                         }
                         if (perm.getCounterCount(CounterType.LOYALTY) > 0) {
-                            perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + 1);
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.LOYALTY, 1);
+                            perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + placed);
                         }
                         if (perm.getCounterCount(CounterType.SLIME) > 0) {
-                            perm.setCounterCount(CounterType.SLIME, perm.getCounterCount(CounterType.SLIME) + 1);
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.SLIME, 1);
+                            perm.setCounterCount(CounterType.SLIME, perm.getCounterCount(CounterType.SLIME) + placed);
                         }
                         if (perm.getCounterCount(CounterType.AWAKENING) > 0) {
-                            perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + 1);
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.AWAKENING, 1);
+                            perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + placed);
                         }
                         if (perm.getCounterCount(CounterType.AIM) > 0) {
-                            perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
+                            int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.AIM, 1);
+                            perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                         }
                     }
                     proliferatedCards.add(perm.getCard());

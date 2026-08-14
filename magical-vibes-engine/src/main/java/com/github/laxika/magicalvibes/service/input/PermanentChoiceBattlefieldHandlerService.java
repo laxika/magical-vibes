@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -495,6 +497,19 @@ public class PermanentChoiceBattlefieldHandlerService {
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCuratorOpponentChoice(GameData gameData, UUID opponentId) {
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        if (state == null || state.disposition() != CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
+            throw new IllegalStateException("No pending Curator of Destinies pile choice");
+        }
+
+        gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), opponentId,
+                state.allPermanentIds(), state.cards(), state.cardOwners(), state.pile1Ids(), state.pile2Ids(),
+                state.disposition(), state.controllerChoosesPile()));
+        playerInputService.beginMultiGraveyardChoice(gameData, state.controllerId(), state.cards(), state.cards().size(),
+                "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile).");
     }
 
     /** Echo Chamber: the opponent picked which of their creatures the controller gets a copy of. */

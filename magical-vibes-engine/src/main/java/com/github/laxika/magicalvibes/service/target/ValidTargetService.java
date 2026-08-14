@@ -189,6 +189,17 @@ public class ValidTargetService {
                     return !isAnotherPermanentOfAuraHostType(gameData, aura, candidate);
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()
+                    && !excludeIds.isEmpty()) {
+                Permanent firstTarget = gameQueryService.findPermanentById(
+                        gameData, alreadySelectedIds.getFirst());
+                validPermanentIds.removeIf(id -> {
+                    Permanent target = gameQueryService.findPermanentById(gameData, id);
+                    return firstTarget == null || target == null
+                            || !firstTarget.getId().equals(target.getAttachedTo());
+                });
+            }
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
@@ -240,14 +251,11 @@ public class ValidTargetService {
             prompt = "Select targets for " + card.getName();
         }
 
-        int responseMinTargets = card.getMinTargets();
+        boolean isKicked = Boolean.TRUE.equals(kicked);
+        int responseMinTargets = card.getEffectiveMinTargets(effectiveXValue, isKicked);
         int effectiveX = xValue != null ? xValue : 0;
         int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
-                gameData, card, controllerId, effectiveX);
-        if (card.hasXScaledTargets()) {
-            responseMinTargets = card.getEffectiveMinTargets(effectiveXValue);
-            responseMaxTargets = card.getEffectiveMaxTargets(effectiveXValue);
-        }
+                gameData, card, controllerId, effectiveX, isKicked);
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
     }
 
@@ -421,6 +429,16 @@ public class ValidTargetService {
                 validPermanentIds.removeIf(id ->
                         !java.util.Objects.equals(requiredControllerId,
                                 gameQueryService.findPermanentController(gameData, id)));
+            }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                Permanent firstTarget = gameQueryService.findPermanentById(gameData, alreadySelectedIds.getFirst());
+                validPlayerIds.clear();
+                validPermanentIds.removeIf(id -> {
+                    Permanent target = gameQueryService.findPermanentById(gameData, id);
+                    return firstTarget == null || target == null
+                            || !firstTarget.getId().equals(target.getAttachedTo());
+                });
             }
 
             // "Up to two creatures and up to two lands" (Nissa, Genesis Mage +2): drop candidates
@@ -1103,7 +1121,20 @@ public class ValidTargetService {
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            if (!predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId)) {
+                return false;
+            }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
+                    || (graveyardOwnerId != null
+                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
+        } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, c.getId());
+            return !e.targetPutIntoGraveyardFromAnywhereThisTurn()
+                    || (graveyardOwnerId != null
+                    && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {

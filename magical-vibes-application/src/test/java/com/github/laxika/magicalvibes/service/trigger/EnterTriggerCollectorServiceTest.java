@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -55,6 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,12 +82,13 @@ class EnterTriggerCollectorServiceTest {
     @Mock private ETBTokenTargetService etbTokenTargetService;
 
     private TriggerCollectionService service;
+    private TriggerCollectorRegistry registry;
     private GameData gd;
     private UUID player1Id;
 
     @BeforeEach
     void setUp() {
-        TriggerCollectorRegistry registry = new TriggerCollectorRegistry();
+        registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService), gameQueryService,
                 predicateEvaluationService,
@@ -116,6 +120,28 @@ class EnterTriggerCollectorServiceTest {
         entering.setPower(power);
         entering.setToughness(toughness);
         return entering;
+    }
+
+    @Test
+    @DisplayName("Life-gain once-per-turn triggers fire only for the first life-gain event")
+    void lifeGainOncePerTurnTriggerFiresOnlyOnce() {
+        CardEffect inner = new GainLifeEffect(1);
+        OncePerTurnTriggerEffect effect = new OncePerTurnTriggerEffect(inner);
+        addAllyCreatureTrigger(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+
+        AtomicInteger dispatchCount = new AtomicInteger();
+        registry.register(EffectSlot.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
+                (match, dispatchedEffect, context) -> {
+                    dispatchCount.incrementAndGet();
+                    return true;
+                });
+
+        service.checkLifeGainTriggers(gd, player1Id, 3);
+        service.checkLifeGainTriggers(gd, player1Id, 3);
+
+        assertThat(dispatchCount).hasValue(1);
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn)
+                .containsExactly(gd.playerBattlefields.get(player1Id).getFirst().getId());
     }
 
     @Test

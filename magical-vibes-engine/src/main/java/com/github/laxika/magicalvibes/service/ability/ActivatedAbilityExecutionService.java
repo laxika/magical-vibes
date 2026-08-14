@@ -345,6 +345,22 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        boolean shouldTapGrantingEquipment = abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.tapsGrantingEquipment());
+        if (shouldTapGrantingEquipment && ability.getGrantSourcePermanentId() != null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment == null) {
+                throw new IllegalStateException("The granting Equipment is not on the battlefield");
+            }
+            if (equipment.isTapped()) {
+                throw new IllegalStateException("The granting Equipment is already tapped");
+            }
+            equipment.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, equipment);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " taps ", equipment.getCard(), " as a cost."));
+        }
+
         Card unattachedEquipmentCard = null;
         boolean shouldUnattachEquipment = abilityEffects.stream().anyMatch(UnattachSourceEquipmentCost.class::isInstance);
         if (shouldUnattachEquipment) {

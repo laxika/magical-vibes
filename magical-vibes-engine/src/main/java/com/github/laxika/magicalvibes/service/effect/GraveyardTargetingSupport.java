@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -49,6 +52,13 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1);
+        }
+        if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect grantFlashback) {
+            CardPredicate filter = new CardAnyOfPredicate(grantFlashback.cardTypes().stream()
+                    .map(type -> (CardPredicate) new CardTypePredicate(type))
+                    .toList());
+            return new Target(filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to gain flashback", 1);
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

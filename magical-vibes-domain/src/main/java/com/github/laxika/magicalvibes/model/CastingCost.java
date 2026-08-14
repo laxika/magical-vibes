@@ -7,5 +7,5 @@ package com.github.laxika.magicalvibes.model;
 public sealed interface CastingCost permits ManaCastingCost, LifeCastingCost, SacrificePermanentsCost,
         TapUntappedPermanentsCost, ReturnPermanentsCost, ExileCardsFromHandCastingCost,
         ExileTopCardsFromGraveyardCastingCost, EachOpponentGainsLifeCastingCost,
-        RevealCardsFromHandCastingCost {
+        RevealCardsFromHandCastingCost, RemoveCountersFromControlledCreaturesCastingCost {
 }

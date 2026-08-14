@@ -18,6 +18,7 @@ public class Cartographer extends Card {
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.LAND))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

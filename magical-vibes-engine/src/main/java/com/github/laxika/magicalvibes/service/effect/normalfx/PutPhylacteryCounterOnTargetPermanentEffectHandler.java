@@ -37,7 +37,11 @@ public class PutPhylacteryCounterOnTargetPermanentEffectHandler implements Norma
             return;
         }
 
-        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
+        int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1);
+        if (placed <= 0) {
+            return;
+        }
+        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
 
         
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gets a phylactery counter (" + target.getCounterCount(CounterType.PHYLACTERY) + " total).").build());

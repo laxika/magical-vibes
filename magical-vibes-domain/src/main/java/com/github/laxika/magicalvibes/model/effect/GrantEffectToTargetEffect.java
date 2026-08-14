@@ -17,7 +17,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  * @param grantedEffect  the effect to fire when the trigger condition is met
  * @param duration       how long the grant lasts
  * @param scope          which permanent receives the ability: {@link GrantScope#TARGET} (the chosen
- *                       target) or {@link GrantScope#ENCHANTED_PERMANENT} (the permanent the source
+ *                       target), {@link GrantScope#SELF} (the source permanent), or
+ *                       {@link GrantScope#ENCHANTED_PERMANENT} (the permanent the source
  *                       Aura is attached to, re-derived at resolution and without targeting — the
  *                       Genju cycle's granted "whenever this creature deals damage" ability)
  */
@@ -42,6 +43,12 @@ public record GrantEffectToTargetEffect(
     public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration,
                                      boolean skipIfAlreadyPresent) {
         this(slot, grantedEffect, duration, skipIfAlreadyPresent, GrantScope.TARGET);
+    }
+
+    /** Indefinite grant to the source permanent (Kellan, Planar Trailblazer). */
+    public static GrantEffectToTargetEffect toSourcePermanent(EffectSlot slot, CardEffect grantedEffect) {
+        return new GrantEffectToTargetEffect(slot, grantedEffect, EffectDuration.PERMANENT, true,
+                GrantScope.SELF);
     }
 
     /** Grant to the permanent the source Aura enchants, for the given duration (Genju cycle). */

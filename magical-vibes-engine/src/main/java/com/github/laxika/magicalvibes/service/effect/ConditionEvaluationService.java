@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThi
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
@@ -407,6 +408,8 @@ public class ConditionEvaluationService {
                             && ctx.controllerId() != null
                             && countCardsInHand(gameData, ctx.targetId())
                             > countCardsInHand(gameData, ctx.controllerId());
+            case TargetPlayerLifeTotalEquals c ->
+                    ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "50")
+@CardRegistration(set = "FDN", collectorNumber = "152")
 public class BrinebornCutthroat extends Card {
 
     public BrinebornCutthroat() {

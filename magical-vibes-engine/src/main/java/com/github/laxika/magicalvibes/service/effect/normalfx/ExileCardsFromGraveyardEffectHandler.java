@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,12 +43,14 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
 
         // Exile targeted cards that are still in graveyards
         int exiledCount = 0;
+        List<Card> exiledCards = new ArrayList<>();
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     exiledNames.add(card.getName());
+                    exiledCards.add(card);
                     graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
                 }
             }
@@ -62,6 +66,23 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         int lifeGain = e.lifeGainPerExiledCard() ? e.lifeGain() * exiledCount : e.lifeGain();
         if (lifeGain > 0) {
             lifeSupport.applyGainLife(gameData, controllerId, lifeGain);
+        }
+
+        boolean conditionalRiderApplies = e.conditionalFilter() != null
+                && exiledCards.stream().anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, e.conditionalFilter(), entry.getCard().getId()));
+        if (conditionalRiderApplies) {
+            if (e.conditionalLifeGain() > 0) {
+                lifeSupport.applyGainLife(gameData, controllerId, e.conditionalLifeGain());
+            }
+            if (e.conditionalLifeLossEachOpponent() > 0) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (!playerId.equals(controllerId)) {
+                        lifeSupport.applyLifeLoss(gameData, playerId,
+                                e.conditionalLifeLossEachOpponent(), entry.getCard().getName());
+                    }
+                }
+            }
         }
 
         // "If you do, this creature assigns no combat damage this turn" — only when something was

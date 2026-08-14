@@ -149,7 +149,8 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
 
-        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum, Unesh)
+        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum,
+        // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
             if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {

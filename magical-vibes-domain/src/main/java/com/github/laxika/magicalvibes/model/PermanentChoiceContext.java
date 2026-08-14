@@ -343,15 +343,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
      *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                               UUID enteringPermanentId, UUID targetSourcePermanentId) implements PermanentChoiceContext {
+                               UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null, null);
+        }
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   UUID targetSourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, null);
         }
     }
 
@@ -730,10 +737,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code GraveyardSearchScope}.
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                       UUID graveyardOwnerId) implements PermanentChoiceContext {
+                                       UUID graveyardOwnerId, int minCount) implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null);
+            this(sourceCard, controllerId, effects, null, 0);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0);
         }
     }
 
@@ -811,6 +823,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
     record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}
+
+    /** Curator of Destinies: the controller chooses which opponent chooses between the two piles. */
+    record CuratorOpponentChoice() implements PermanentChoiceContext {}
 
     /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
      *  value is the one they must pay for or sacrifice. */

@@ -979,6 +979,8 @@ public class GameData {
     public final Set<UUID> exilePlayAnyManaType = ConcurrentHashMap.newKeySet();
     /** Exiled card UUIDs that may be cast spending mana of any type for as long as they remain exiled. */
     public final Set<UUID> exilePlayAnyManaTypeWhileExiled = ConcurrentHashMap.newKeySet();
+    /** Exiled card UUIDs that have stash counters. */
+    public final Set<UUID> stashCounterCardIds = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that may be played from exile without paying their mana cost (e.g. Oracle's Vault's
      *  second ability). Complements {@link #exilePlayPermissions} — the card must also hold a play
      *  permission. Temporary entries are listed in {@link #exilePlayPermissionsExpireEndOfTurn};
@@ -2453,6 +2455,12 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, false, turnNumber));
     }
 
+    /** Adds a card to exile with a stash counter. Stash counters are independent of any source permanent. */
+    public void addToExileWithStashCounter(UUID ownerId, Card card) {
+        addToExile(ownerId, card);
+        stashCounterCardIds.add(card.getId());
+    }
+
     /** Adds a card to exile with source permanent tracking and an explicit face-down status. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -2501,6 +2509,7 @@ public class GameData {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
             antedCardIds.remove(cardId);
+            stashCounterCardIds.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             exilePlayPermissions.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
@@ -3239,6 +3248,7 @@ public class GameData {
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
+        copy.stashCounterCardIds.addAll(this.stashCounterCardIds);
         copy.exilePlayWithoutPayingManaCost.addAll(this.exilePlayWithoutPayingManaCost);
         copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);

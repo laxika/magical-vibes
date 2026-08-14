@@ -422,10 +422,12 @@ public class DamagePreventionService {
         if (controllerId == null) return false;
         return gameData.playerBattlefields.entrySet().stream()
                 .anyMatch(entry -> entry.getValue().stream()
-                        .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
-                        .anyMatch(e -> e instanceof PreventDamageToCreaturesEffect prevent
-                                && !(isCombatDamage && prevent.noncombatOnly())
-                                && (prevent.allCreatures() || controllerId.equals(entry.getKey()))));
+                        .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(e -> e instanceof PreventDamageToCreaturesEffect prevent
+                                        && !(isCombatDamage && prevent.noncombatOnly())
+                                        && (prevent.allCreatures() || controllerId.equals(entry.getKey()))
+                                        && (!prevent.excludeSource()
+                                        || !source.getId().equals(creature.getId())))));
     }
 
     /**

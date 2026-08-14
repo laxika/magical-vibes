@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.Set;
 
@@ -19,6 +20,8 @@ import java.util.Set;
  *       (Knight of Grace/Malice — hexproof from color, CR 702.11).</li>
  *   <li>{@link #fromSourceColors(Set)} — spells/abilities of the given colors can't target, no matter
  *       who controls them (Suq'Ata Firewalker).</li>
+ *   <li>{@link #hexproofFromCardTypes(Set)} — opponents' spells of the given card types can't target
+ *       this permanent (Elenda, Saint of Dusk).</li>
  * </ul>
  *
  * @param kind         which source kinds the restriction covers
@@ -27,13 +30,37 @@ import java.util.Set;
  * @param colors       the colors relevant to {@code mode} (empty when {@code mode == ANY})
  * @param mode         how {@code colors} is interpreted
  * @param hexproofLike whether hexproof-ignoring effects may bypass this restriction
+ * @param sourceCardTypes card types relevant to a card-type restriction; empty for color-based restrictions
  */
 public record TargetingRestrictionEffect(
         TargetingSourceKind kind,
         boolean opponentOnly,
         Set<CardColor> colors,
         TargetColorMode mode,
-        boolean hexproofLike) implements CardEffect {
+        boolean hexproofLike,
+        Set<CardType> sourceCardTypes) implements CardEffect {
+
+    public TargetingRestrictionEffect(TargetingSourceKind kind, boolean opponentOnly,
+                                      Set<CardColor> colors, TargetColorMode mode) {
+        this(kind, opponentOnly, colors, mode, false, Set.of());
+    }
+
+    public TargetingRestrictionEffect(TargetingSourceKind kind, boolean opponentOnly,
+                                      Set<CardColor> colors, TargetColorMode mode,
+                                      boolean hexproofLike) {
+        this(kind, opponentOnly, colors, mode, hexproofLike, Set.of());
+    }
+
+    public TargetingRestrictionEffect(TargetingSourceKind kind, boolean opponentOnly,
+                                      Set<CardColor> colors, TargetColorMode mode,
+                                      Set<CardType> sourceCardTypes) {
+        this(kind, opponentOnly, colors, mode, true, sourceCardTypes);
+    }
+
+    public TargetingRestrictionEffect {
+        colors = Set.copyOf(colors);
+        sourceCardTypes = Set.copyOf(sourceCardTypes);
+    }
 
     /** Opponents' abilities can't target this permanent (spells still can). Shanna, Sisay's Legacy. */
     public static TargetingRestrictionEffect opponentAbilities() {
@@ -96,5 +123,11 @@ public record TargetingRestrictionEffect(
     public static TargetingRestrictionEffect fromSourceColors(Set<CardColor> colors) {
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, false, colors, TargetColorMode.BLOCKED_COLORS, false);
+    }
+
+    /** Hexproof from the given card types — opponents' spells of those types can't target. */
+    public static TargetingRestrictionEffect hexproofFromCardTypes(Set<CardType> cardTypes) {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS, true, Set.of(), TargetColorMode.ANY, cardTypes);
     }
 }

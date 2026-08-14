@@ -36,21 +36,28 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
             return;
         }
 
-        UUID ownerId = entry.getControllerId();
-        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
-        if (graveyard == null) {
-            return;
+        UUID ownerId = null;
+        Card discarded = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            discarded = graveyard.stream()
+                    .filter(card -> entry.getTriggeringCardId().equals(card.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (discarded != null) {
+                ownerId = playerId;
+                break;
+            }
         }
-        Card discarded = graveyard.stream()
-                .filter(card -> entry.getTriggeringCardId().equals(card.getId()))
-                .findFirst()
-                .orElse(null);
         if (discarded == null) {
             return;
         }
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, discarded.getId());
-        if (exileEffect.trackWithSource()) {
+        if (exileEffect.addStashCounter()) {
+            gameData.addToExileWithStashCounter(ownerId, discarded);
+        } else if (exileEffect.trackWithSource()) {
             gameData.addToExile(ownerId, discarded, entry.getSourcePermanentId());
         } else {
             gameData.addToExile(ownerId, discarded);

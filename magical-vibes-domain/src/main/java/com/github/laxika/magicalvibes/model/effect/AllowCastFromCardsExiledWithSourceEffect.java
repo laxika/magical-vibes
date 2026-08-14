@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param oncePerTurn whether this source can grant only one cast each turn
  * @param thisTurnOnly whether only cards exiled during the current turn qualify
  * @param withoutPayingManaCost whether qualifying spells are cast without paying their mana cost
+ * @param stashCounterOnly whether this permission applies to cards with stash counters rather
+ *                         than cards tracked with this source permanent
  */
 public record AllowCastFromCardsExiledWithSourceEffect(
         boolean anyManaType,
@@ -31,23 +33,24 @@ public record AllowCastFromCardsExiledWithSourceEffect(
         boolean oncePerTurn,
         boolean thisTurnOnly,
         boolean withoutPayingManaCost,
-        ExileAccessScope accessScope)
+        ExileAccessScope accessScope,
+        boolean stashCounterOnly)
         implements CardEffect {
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType) {
         this(anyManaType, null, false, false, 0, null, false, false, false,
-                ExileAccessScope.CONTROLLER);
+                ExileAccessScope.CONTROLLER, false);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, ExileAccessScope accessScope) {
-        this(anyManaType, null, false, false, 0, null, false, false, false, accessScope);
+        this(anyManaType, null, false, false, 0, null, false, false, false, accessScope, false);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
                                                      boolean ownOnly, boolean controllerTurnOnly,
                                                      int additionalCounterCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
-                null, false, false, false, ExileAccessScope.CONTROLLER);
+                null, false, false, false, ExileAccessScope.CONTROLLER, false);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
@@ -57,6 +60,12 @@ public record AllowCastFromCardsExiledWithSourceEffect(
                                                      boolean withoutPayingManaCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
                 manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
-                ExileAccessScope.CONTROLLER);
+                ExileAccessScope.CONTROLLER, false);
+    }
+
+    public static AllowCastFromCardsExiledWithSourceEffect forStashCounters(boolean anyManaType) {
+        return new AllowCastFromCardsExiledWithSourceEffect(
+                anyManaType, null, false, true, 0, null, false, false, false,
+                ExileAccessScope.CONTROLLER, true);
     }
 }

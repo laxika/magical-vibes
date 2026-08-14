@@ -14,13 +14,19 @@ import java.util.List;
  * Driven by {@code ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler}.
  */
 public record ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect(
-        List<CardType> types, boolean sacrificeAllPermanents, boolean eachPlayerChooses) implements CardEffect {
+        List<CardType> types, boolean sacrificeAllPermanents, boolean eachPlayerChooses,
+        SacrificeRecipient recipient) implements CardEffect {
 
     private static final List<CardType> TRAGIC_ARROGANCE_TYPES = List.of(
             CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.PLANESWALKER);
 
     public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect() {
-        this(TRAGIC_ARROGANCE_TYPES, false, false);
+        this(TRAGIC_ARROGANCE_TYPES, false, false, SacrificeRecipient.EACH_PLAYER);
+    }
+
+    public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect(
+            List<CardType> types, boolean sacrificeAllPermanents, boolean eachPlayerChooses) {
+        this(types, sacrificeAllPermanents, eachPlayerChooses, SacrificeRecipient.EACH_PLAYER);
     }
 
     public ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect {

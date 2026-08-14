@@ -568,7 +568,8 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        // Card pile separation (Boneyard Parley, Brilliant Ultimatum, Unesh): opponent assigns cards to piles
+        // Card pile separation (Boneyard Parley, Brilliant Ultimatum, Unesh, Curator of Destinies):
+        // the separating player assigns cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();

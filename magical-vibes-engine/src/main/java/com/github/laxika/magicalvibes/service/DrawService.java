@@ -1139,11 +1139,21 @@ public class DrawService {
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS);
+        if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
+            checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD);
+        }
+
+        // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
+        checkEmblemDrawTriggers(gameData, drawingPlayerId);
+    }
+
+    private void checkControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId, EffectSlot slot) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
         if (battlefield == null) return;
 
         for (Permanent perm : battlefield) {
-            List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DRAWS);
+            List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
             if (drawEffects == null || drawEffects.isEmpty()) continue;
 
             for (CardEffect effect : drawEffects) {
@@ -1187,8 +1197,6 @@ public class DrawService {
             }
         }
 
-        // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
-        checkEmblemDrawTriggers(gameData, drawingPlayerId);
     }
 
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {

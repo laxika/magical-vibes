@@ -506,27 +506,39 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
-        if (ctx.spellOrAbilitySubtype()) {
+        if (ctx.spellOrAbilitySubtype() || ctx.creatureSourceSpellOrAbility()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
-            Set<CardSubtype> restrictedSubtypes = ctx.restrictedToSpellOrAbilitySubtypes();
-            if (restrictedSubtypes == null) {
-                restrictedSubtypes = Set.of(ctx.restrictedToCreatureSubtype());
+            String subtypeLabel;
+            String restriction;
+            if (ctx.creatureSourceSpellOrAbility()) {
+                manaPool.addSubtypeCreatureSourceSpellOrAbilityMana(
+                        ctx.restrictedToCreatureSubtype(), manaColor, 1);
+                subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
+                restriction = "creature spells or creature-source abilities";
+            } else {
+                Set<CardSubtype> restrictedSubtypes = ctx.restrictedToSpellOrAbilitySubtypes();
+                if (restrictedSubtypes == null) {
+                    restrictedSubtypes = Set.of(ctx.restrictedToCreatureSubtype());
+                }
+                manaPool.addSubtypeSpellOrAbilityMana(restrictedSubtypes, manaColor, 1);
+                subtypeLabel = restrictedSubtypes.stream()
+                        .map(CardSubtype::getDisplayName)
+                        .toList()
+                        .toString();
+                restriction = "spells or abilities";
             }
-            manaPool.addSubtypeSpellOrAbilityMana(restrictedSubtypes, manaColor, 1);
-
-            String subtypeLabel = restrictedSubtypes.stream()
-                    .map(CardSubtype::getDisplayName)
-                    .toList()
-                    .toString();
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
-                    + " mana (" + subtypeLabel + " spells or abilities only).";
+                    + " mana (" + subtypeLabel + " " + restriction + " only).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds one {} {}-spell-or-ability mana", gameData.id, player.getUsername(), colorName.toLowerCase(), subtypeLabel);
 
             // If more mana to choose, prompt again for the next color
             int remaining = amount - 1;
             if (remaining > 0) {
-                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                ChoiceContext.ManaColorChoice nextCtx = ctx.creatureSourceSpellOrAbility()
+                        ? ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(
+                        ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
+                        : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1051,11 +1063,7 @@ public class ChoiceHandlerService {
             if (ChoiceContext.AdjustCounterKindChoice.ADD.equals(choice)) {
                 // The paused ETB trigger is the counter source (used for logging / saga chapters).
                 StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-                if (sourceEntry != null) {
-                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, target, kind, 1);
-                } else {
-                    target.setCounterCount(kind, target.getCounterCount(kind) + 1);
-                }
+                permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, target, kind, 1);
             } else {
                 int current = target.getCounterCount(kind);
                 if (current > 0) {
@@ -1832,6 +1840,7 @@ public class ChoiceHandlerService {
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
             perm.setChosenSubtype(subtype);
+            battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), perm);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());

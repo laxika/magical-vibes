@@ -82,6 +82,7 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             for (CounterType kind : kinds) {
                 int count = source.getCounterCount(kind);
                 source.setCounterCount(kind, 0);
+                count = gameQueryService.replaceCounters(gameData, destination, kind, count);
                 destination.setCounterCount(kind, destination.getCounterCount(kind) + count);
             }
             gameLogService.append(gameData, GameLog.builder().text("All counters are moved from ").card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
@@ -102,7 +103,8 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
         }
 
         source.setCounterCount(toMove, source.getCounterCount(toMove) - 1);
-        destination.setCounterCount(toMove, destination.getCounterCount(toMove) + 1);
+        int placed = gameQueryService.replaceCounters(gameData, destination, toMove, 1);
+        destination.setCounterCount(toMove, destination.getCounterCount(toMove) + placed);
 
         gameLogService.append(gameData, GameLog.builder().text("A counter is moved from ").card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
         log.info("Game {} - {} moves a {} counter from {} to {}", gameData.id, entry.getCard().getName(),

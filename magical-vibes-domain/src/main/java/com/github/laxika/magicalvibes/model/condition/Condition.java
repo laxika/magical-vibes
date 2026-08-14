@@ -176,6 +176,7 @@ public sealed interface Condition permits
         TargetPermanentManaValueEqualsControllerUnspentMana,
         TargetPermanentMatches,
         TargetToughnessAtMostControllerGraveyardCount,
+        TargetPlayerLifeTotalEquals,
         TargetPlayerHasMoreCardsInHandThanController,
         TargetPlayerHandEmpty,
         TargetSpellCanBeCountered,

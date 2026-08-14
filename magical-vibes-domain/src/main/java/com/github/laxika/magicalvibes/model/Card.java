@@ -452,6 +452,19 @@ public class Card {
     }
 
     /**
+     * Declares a target group whose bounds change when the spell is kicked.
+     * The ordinary bounds apply when the spell is not kicked; the kicker bounds apply when it is.
+     */
+    public SpellTarget targetWhenKicked(TargetFilter filter, int minTargets, int maxTargets,
+                                        int kickedMinTargets, int kickedMaxTargets) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets,
+                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Declares a target group whose target count scales with the spell's X value
      * ("Destroy X target nonblack creatures" — Dregs of Sorrow). The effective number of
      * targets is bounded by X at cast time; {@code cap} is only a sanity ceiling.
@@ -555,7 +568,7 @@ public class Card {
     public List<TargetFilter> getMultiTargetFilters() {
         List<TargetFilter> expanded = new ArrayList<>();
         for (SpellTarget st : spellTargets) {
-            for (int i = 0; i < st.getMaxTargets(); i++) {
+            for (int i = 0; i < Math.max(st.getMaxTargets(), st.getKickedMaxTargets()); i++) {
                 expanded.add(st.getFilter());
             }
         }
@@ -573,7 +586,9 @@ public class Card {
      * Returns the maximum total number of targets allowed.
      */
     public int getMaxTargets() {
-        return spellTargets.stream().mapToInt(SpellTarget::getMaxTargets).sum();
+        return spellTargets.stream()
+                .mapToInt(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets()))
+                .sum();
     }
 
     /**
@@ -592,8 +607,16 @@ public class Card {
      * X-scaled groups contribute {@code min(xValue, minTargets)}; others contribute their static minimum.
      */
     public int getEffectiveMinTargets(int xValue) {
+        return getEffectiveMinTargets(xValue, false);
+    }
+
+    /** Returns the minimum total number of targets for the given X value and kicker state. */
+    public int getEffectiveMinTargets(int xValue, boolean kicked) {
         return spellTargets.stream()
-                .mapToInt(st -> st.isXScaled() ? Math.min(xValue, st.getMinTargets()) : st.getMinTargets())
+                .mapToInt(st -> {
+                    int min = kicked ? st.getKickedMinTargets() : st.getMinTargets();
+                    return st.isXScaled() ? Math.min(xValue, min) : min;
+                })
                 .sum();
     }
 
@@ -602,8 +625,16 @@ public class Card {
      * X-scaled groups contribute {@code min(xValue, maxTargets)}; others contribute their static maximum.
      */
     public int getEffectiveMaxTargets(int xValue) {
+        return getEffectiveMaxTargets(xValue, false);
+    }
+
+    /** Returns the maximum total number of targets for the given X value and kicker state. */
+    public int getEffectiveMaxTargets(int xValue, boolean kicked) {
         return spellTargets.stream()
-                .mapToInt(st -> st.isXScaled() ? Math.min(xValue, st.getMaxTargets()) : st.getMaxTargets())
+                .mapToInt(st -> {
+                    int max = kicked ? st.getKickedMaxTargets() : st.getMaxTargets();
+                    return st.isXScaled() ? Math.min(xValue, max) : max;
+                })
                 .sum();
     }
 

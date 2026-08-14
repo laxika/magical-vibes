@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCr
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
@@ -209,6 +210,7 @@ public final class LayerClassifier {
 
         // Layer 3 — text-changing effects (CR 613.2c / CR 612).
         map.put(ChangeColorTextEffect.class, fixed(Layer.L3_TEXT));
+        map.put(SetNameEffect.class, fixed(Layer.L3_TEXT));
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -96,7 +98,7 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
-        counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, counters);
+        counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE, counters);
         if (counters <= 0) {
             return;
         }
@@ -107,7 +109,7 @@ public class PermanentCounterSupport {
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
 
-        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
+        firePlusOnePlusOneCounterTriggers(gameData, target);
     }
 
     public void placeCountersOnPermanents(GameData gameData, StackEntry entry, List<UUID> permanentIds, CounterType counterType) {
@@ -115,11 +117,15 @@ public class PermanentCounterSupport {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                int placed = gameQueryService.replaceCounters(gameData, perm, counterType, 1);
+                if (placed <= 0) {
+                    continue;
+                }
                 switch (counterType) {
-                    case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
-                    case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + 1);
+                    case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
+                    case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
                     case FLYING, FIRST_STRIKE, LIFELINK -> {
-                        perm.setCounterCount(counterType, perm.getCounterCount(counterType) + 1);
+                        perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
                     }
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
@@ -188,6 +194,8 @@ public class PermanentCounterSupport {
                                          CounterType counterType, int count) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
+        count = gameQueryService.replaceCounters(gameData, target, counterType, count);
+
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
             case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
@@ -197,12 +205,8 @@ public class PermanentCounterSupport {
                 if (count <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
                     yield null;
                 }
-                count = gameQueryService.doublePlusOnePlusOneCounters(gameData, target, count);
-                if (count <= 0) {
-                    yield null;
-                }
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
-                firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
+                firePlusOnePlusOneCounterTriggers(gameData, target);
                 yield "+1/+1";
             }
             case PLUS_ONE_PLUS_ZERO -> {
@@ -216,9 +220,7 @@ public class PermanentCounterSupport {
                 yield "+2/+2";
             }
             case MINUS_ONE_MINUS_ONE -> {
-                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
-                count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, count);
-                if (count <= 0) { yield null; }
+                if (count <= 0 || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
                 yield "-1/-1";
             }
@@ -626,6 +628,11 @@ public class PermanentCounterSupport {
         return merged;
     }
 
+    public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target) {
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
+        firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(gameData, target);
+    }
+
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
@@ -657,6 +664,53 @@ public class PermanentCounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
+    }
+
+    /**
+     * Fires the Wildwood Scourge-style watcher once for a +1/+1 counter-placement event on a
+     * controlled non-Hydra creature other than the watcher.
+     */
+    private void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+            GameData gameData, Permanent target) {
+        if (target == null || !gameQueryService.isCreature(gameData, target)
+                || predicateEvaluationService.matchesPermanentPredicate(target,
+                new PermanentHasSubtypePredicate(CardSubtype.HYDRA),
+                FilterContext.of(gameData))) {
+            return;
+        }
+
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent watcher : new ArrayList<>(battlefield)) {
+            if (watcher.getId().equals(target.getId())) {
+                continue;
+            }
+            Card card = watcher.getCard();
+            List<CardEffect> effects = card.getEffects(
+                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    targetControllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    watcher.getId()));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} triggers for a +1/+1 counter on another non-Hydra creature",
+                    gameData.id, card.getName());
+        }
     }
 
     public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {

@@ -77,6 +77,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int lookCount = Math.max(0, amountEvaluationService.evaluate(gameData, e.lookCount(), ctx));
         int chooseCount = Math.max(0, amountEvaluationService.evaluate(gameData, e.chooseCount(), ctx));
+        int chooseManaValueAtMost = e.chooseManaValueAtMost() == null
+                ? Integer.MAX_VALUE
+                : Math.max(0, amountEvaluationService.evaluate(gameData, e.chooseManaValueAtMost(), ctx));
 
         // Nothing to look at (e.g. Shrine of Piercing Vision with no charge counters).
         if (lookCount <= 0) {
@@ -85,9 +88,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD
                 || e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
-            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount);
+            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
-            resolvePutOneOnTop(gameData, entry, lookCount);
+            if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
+                resolveMayPutOneOnTopRestToGraveyard(gameData, entry, lookCount);
+            } else {
+                resolvePutOneOnTop(gameData, entry, lookCount);
+            }
         } else if (e.optional()) {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
@@ -108,7 +115,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     //  Nissa, Genesis Mage −10: any number via LibraryRevealChoice + random bottom)
 
     private void resolveMayPutOntoBattlefield(GameData gameData, StackEntry entry,
-            LookAtTopCardsEffect e, int lookCount, int chooseCount) {
+            LookAtTopCardsEffect e, int lookCount, int chooseCount, int chooseManaValueAtMost) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, !e.reveal());
         if (result == null) return;
@@ -125,6 +132,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Card> matchingCards = topCards.stream()
+                .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, e.choosePredicate(), sourceCardId, gameData, controllerId))
                 .toList();
@@ -231,6 +239,25 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .build(),
                 prompt,
                 false));
+    }
+
+    private void resolveMayPutOneOnTopRestToGraveyard(GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        String prompt = "You may put one card on top of your library. The rest go into your graveyard.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .canFailToFind(true)
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .restToGraveyard(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                        .build(),
+                prompt,
+                true));
     }
 
     /**

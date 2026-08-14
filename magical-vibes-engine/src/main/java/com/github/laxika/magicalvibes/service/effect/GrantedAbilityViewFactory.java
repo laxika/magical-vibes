@@ -201,6 +201,11 @@ public class GrantedAbilityViewFactory {
     }
 
     private String formatTargetingRestriction(TargetingRestrictionEffect restriction) {
+        if (!restriction.sourceCardTypes().isEmpty()) {
+            String types = enumPhrase(restriction.sourceCardTypes());
+            return (restriction.opponentOnly() ? "Hexproof from " : "Can't be the target of ")
+                    + types + (restriction.opponentOnly() ? "s" : " spells");
+        }
         if (restriction.mode() == TargetColorMode.ANY) {
             if (restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
                     && restriction.opponentOnly() && restriction.hexproofLike()) {

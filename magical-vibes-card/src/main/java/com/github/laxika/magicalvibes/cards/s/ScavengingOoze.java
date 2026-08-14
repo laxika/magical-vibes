@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditi
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "195")
+@CardRegistration(set = "FDN", collectorNumber = "232")
 public class ScavengingOoze extends Card {
 
     public ScavengingOoze() {

@@ -67,6 +67,14 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities,
+                staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
+                subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
+                losesAllAbilities, staticGrantedSupertypes, modifierLines, faceUpExiledWithCards,
+                faceDownExiledCount, null);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
@@ -81,6 +89,9 @@ public class PermanentViewFactory {
         allRemovedKeywords.removeAll(bonusKeywords);
         allKeywords.removeAll(allRemovedKeywords);
         CardView cardView = p.isFaceDown() ? createFaceDownCardView(p) : cardViewFactory.create(p.getCard());
+        if (staticName != null) {
+            cardView = cardView.toBuilder().name(staticName).build();
+        }
         cardView = applyTextReplacements(cardView, p);
         cardView = applyGrantedSubtypes(cardView, p);
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);

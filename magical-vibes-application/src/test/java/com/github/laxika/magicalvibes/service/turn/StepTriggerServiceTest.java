@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreatur
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
@@ -66,9 +67,11 @@ import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTur
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -1309,6 +1312,41 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isEmpty();
         }
+
+        @Test
+        @DisplayName("GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED fires when its condition is met")
+        void graveyardBeginningOfCombatFiresWhenConditionIsMet() {
+            Card card = createCardWithName("Graveyard Combat Card");
+            card.addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
+                    new ConditionalEffect(
+                            new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                            new GainLifeEffect(1)));
+            gd.playerGraveyards.get(player1Id).add(card);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(createCardWithName("Large Creature")));
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPowerAtLeastPredicate.class), any()))
+                    .thenReturn(true);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Graveyard Combat Card");
+        }
+
+        @Test
+        @DisplayName("GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED skips when its condition is unmet")
+        void graveyardBeginningOfCombatSkipsWhenConditionIsUnmet() {
+            Card card = createCardWithName("Graveyard Combat Card");
+            card.addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
+                    new ConditionalEffect(
+                            new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                            new GainLifeEffect(1)));
+            gd.playerGraveyards.get(player1Id).add(card);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     @Nested
@@ -1326,6 +1364,22 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Jin-Gitaxias, Core Augur");
+        }
+
+        @Test
+        @DisplayName("Controller end-step modal effect queues mode selection")
+        void controllerEndStepModalEffectQueuesModeSelection() {
+            Card card = createCardWithName("Sylvan Scavenging");
+            ChooseOneEffect chooseOne = new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Gain more life", new GainLifeEffect(2))));
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, chooseOne);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isTrue();
         }
 
         @Test

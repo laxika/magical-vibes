@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -598,6 +600,49 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — SurveilEffect")
+    class LifeGainSurveil {
+
+        @Test
+        @DisplayName("puts surveil trigger on the stack")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Vanguard Seraph");
+            var effect = new SurveilEffect(1);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — CreateTokenEffect")
+    class LifeGainCreateToken {
+
+        @Test
+        @DisplayName("puts token creation trigger on the stack")
+        void putsTokenCreationTriggerOnStack() {
+            Permanent perm = createPermanent("Cat Collector");
+            var effect = CreateTokenEffect.whiteSoldier(1);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+    }
+
     // ===== ON_CONTROLLER_GAINS_LIFE — PutCountersOnSelfEffect =====
 
     @Nested
@@ -832,6 +877,43 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — DrawCardEffect")
+    class NoncombatDamageDraw {
+
+        @Test
+        @DisplayName("snapshots damage from a source controlled by the watcher")
+        void snapshotsControlledSourceDamage() {
+            Permanent perm = createPermanent("Niv-Mizzet, Visionary");
+            var effect = new DrawCardEffect(new EventValue());
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 2);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("does not trigger for a source controlled by another player")
+        void ignoresOtherPlayersSource() {
+            Permanent perm = createPermanent("Niv-Mizzet, Visionary");
+            var effect = new DrawCardEffect(new EventValue());
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player2Id, 2);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 }

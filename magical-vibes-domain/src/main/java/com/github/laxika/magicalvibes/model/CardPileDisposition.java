@@ -11,6 +11,8 @@ public enum CardPileDisposition {
     PLAY_FROM_EXILE,
     /** Fact-or-Fiction style (Unesh, Criosphinx Sovereign): chosen pile → controller's hand; other pile → controller's graveyard. */
     HAND,
+    /** Curator of Destinies: an opponent chooses between a face-up and a face-down pile for hand; the other pile goes to the graveyard. */
+    HAND_WITH_FACE_DOWN_PILE,
     /**
      * Phyrexian Portal: the pile the controller picks is searched for one card to put into their
      * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The

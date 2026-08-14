@@ -197,7 +197,7 @@ public class GameViewProjectionFactory {
                             faceUpExiledWith.add(exiledWith.card());
                         }
                     }
-                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount);
+                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name());
                     views.add(view.withGrantedAbilities(grantedAbilityViewFactory.create(
                             p, bonus, explained.grantedEffectAttributions())));
                 }

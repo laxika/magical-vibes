@@ -24,6 +24,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -62,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
@@ -86,6 +91,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -237,6 +244,9 @@ public class BattlefieldEntryService {
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+        }
         // "Whenever a -1/-1 counter is put on a creature" (Flourishing Defenses) also sees a creature
         // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
@@ -837,28 +847,63 @@ public class BattlefieldEntryService {
                 continue;
             }
 
-            int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                    new AmountContext(controllerId, permanent, null, xValue, 0));
-            // Vizier of Remedies / Corpsejack Menace also replace "enters with N counters" (both are
-            // replacement effects). The permanent isn't on the battlefield yet, so use its entering
-            // controller.
-            if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE) {
-                count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, controllerId, count);
-            } else if (enterWith.type() == CounterType.PLUS_ONE_PLUS_ONE
-                    && permanent.getCard().hasType(CardType.CREATURE)) {
-                count = gameQueryService.doublePlusOnePlusOneCounters(
-                        gameData, permanent, controllerId, count);
-            }
-            if (count > 0) {
-                permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
-                log.info("Game {} - {} enters with {} {} counter(s)",
-                        gameData.id, card.getName(), count, enterWith.type());
-            }
+            if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
+            applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue);
         }
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, controllerId, permanent);
         applySpellGrantedHaste(gameData, permanent);
+    }
+
+    /**
+     * Applies entry counters whose amount depends on the subtype chosen for the entering permanent.
+     * The permanent is already on the battlefield when the choice is answered, but this runs before
+     * its ETB effects are collected, preserving the card's entry-time behavior.
+     */
+    public void applyDeferredEnterWithCounters(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.getChosenSubtype() == null
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
+
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof EnterWithCountersEffect enterWith && isChosenSubtypeDependent(enterWith)) {
+                applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, 0);
+            }
+        }
+    }
+
+    private void applyEnterWithCountersEffect(GameData gameData, UUID controllerId, Permanent permanent,
+                                              EnterWithCountersEffect enterWith, int xValue) {
+        int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
+                new AmountContext(controllerId, permanent, null, xValue, 0));
+        if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE
+                && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
+            count = 0;
+        } else if (enterWith.type() == CounterType.PLUS_ONE_PLUS_ONE
+                && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {
+            count = 0;
+        }
+        count = gameQueryService.replaceCounters(gameData, permanent, controllerId, enterWith.type(), count);
+        if (count > 0) {
+            permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
+            log.info("Game {} - {} enters with {} {} counter(s)",
+                    gameData.id, permanent.getCard().getName(), count, enterWith.type());
+        }
+    }
+
+    private boolean isChosenSubtypeDependent(EnterWithCountersEffect enterWith) {
+        return enterWith.count() instanceof PermanentCount count
+                && containsChosenSubtypePredicate(count.filter());
+    }
+
+    private boolean containsChosenSubtypePredicate(PermanentPredicate predicate) {
+        return switch (predicate) {
+            case PermanentHasSourceChosenSubtypePredicate ignored -> true;
+            case PermanentAllOfPredicate all -> all.predicates().stream().anyMatch(this::containsChosenSubtypePredicate);
+            case PermanentAnyOfPredicate any -> any.predicates().stream().anyMatch(this::containsChosenSubtypePredicate);
+            case PermanentNotPredicate not -> containsChosenSubtypePredicate(not.predicate());
+            default -> false;
+        };
     }
 
     /**
@@ -1069,12 +1114,13 @@ public class BattlefieldEntryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        record SourcedCounters(CardSubtype subtype, int count) {}
+        record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count) {}
         List<SourcedCounters> effects = battlefield.stream()
                 .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
                         .map(ControlledCreaturesEnterWithAdditionalCountersEffect.class::cast)
                         .map(effect -> new SourcedCounters(
+                                source,
                                 effect.subtype() != null ? effect.subtype() : source.getChosenSubtype(),
                                 effect.count())))
                 .filter(sourced -> sourced.subtype() != null)
@@ -1084,7 +1130,8 @@ public class BattlefieldEntryService {
         EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
         int additionalCounters = effects.stream()
                 .filter(sourced -> hasSubtype(resolved, sourced.subtype()))
-                .mapToInt(SourcedCounters::count)
+                .mapToInt(sourced -> amountEvaluationService.evaluate(gameData, sourced.count(),
+                        new AmountContext(controllerId, sourced.source(), null, 0, 0)))
                 .sum();
 
         if (additionalCounters > 0) {
@@ -1948,11 +1995,14 @@ public class BattlefieldEntryService {
 
         // Handle targeted graveyard-return effects (return target card from your graveyard to the
         // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
-        // shared SpellGraveyardTargetTrigger flow. "may return target" reads as up-to-one selection.
+        // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
+        int minimumGraveyardTargets = graveyardTargetReturnEffects.stream()
+                .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
+                        || !returnEffect.upTo()) ? 1 : 0;
         for (CardEffect effect : graveyardTargetReturnEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, List.of(effect)));
+                        card, controllerId, List.of(effect), null, minimumGraveyardTargets));
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)

@@ -58,7 +58,7 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
                 entry.getCard().getName(), doubled.size());
 
         for (Permanent permanent : doubled) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
         }
     }
 }

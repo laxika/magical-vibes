@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -61,7 +62,7 @@ public class ExileFreeCastQueueSupport {
         gameData.interaction.clearAwaitingInput();
 
         if (cardIds == null || cardIds.isEmpty()) {
-            String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
+            String logEntry = player.getUsername() + " casts no spells for free.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             finishFreeCastProcess(gameData);
             return;
@@ -171,6 +172,9 @@ public class ExileFreeCastQueueSupport {
                 spellEffects, 0, (UUID) null, null
         );
         entry.setCopy(asCopy);
+        if (!asCopy) {
+            entry.setSourceZone(Zone.EXILE);
+        }
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();

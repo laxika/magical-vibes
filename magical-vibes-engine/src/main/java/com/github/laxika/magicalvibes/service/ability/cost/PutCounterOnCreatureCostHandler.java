@@ -60,11 +60,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         }
         CounterType type = cost.counterType();
         int count = cost.count();
-        if (type == CounterType.PLUS_ONE_PLUS_ONE) {
-            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, chosen, count);
-        } else if (type == CounterType.MINUS_ONE_MINUS_ONE) {
-            count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, chosen, count);
-        }
+        count = gameQueryService.replaceCounters(gameData, chosen, type, count);
         if (count <= 0) {
             return;
         }

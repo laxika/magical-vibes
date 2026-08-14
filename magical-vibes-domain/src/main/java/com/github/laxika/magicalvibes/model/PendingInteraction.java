@@ -314,9 +314,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** End-Blaze Epiphany: choose one card among the cards exiled by its delayed trigger. */
-    record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds)
+    /** Choose one card among exiled cards and grant it a temporary play permission. */
+    record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                   boolean expiresAtEndOfTurn)
             implements PendingInteraction {
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
+            this(playerId, validCardIds, false);
+        }
 
         public ExiledCardMayPlayChoice {
             validCardIds = java.util.List.copyOf(validCardIds);

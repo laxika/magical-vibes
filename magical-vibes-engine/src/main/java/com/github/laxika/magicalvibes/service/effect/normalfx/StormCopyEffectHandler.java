@@ -64,7 +64,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        log.info("Game {} - Storm creates {} copies of {} for {}",
+        log.info("Game {} - spell-copy effect creates {} copies of {} for {}",
                 gameData.id, e.copies(), spellCard.getName(), castingPlayerId);
     }
 }

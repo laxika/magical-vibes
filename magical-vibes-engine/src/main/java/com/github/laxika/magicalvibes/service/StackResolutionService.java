@@ -603,7 +603,9 @@ public class StackResolutionService {
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
-                enchPerm.setCounterCount(CounterType.LORE, 1);
+                int loreCounters = gameQueryService.replaceCounters(gameData, enchPerm,
+                        CounterType.LORE, 1);
+                enchPerm.setCounterCount(CounterType.LORE, loreCounters);
                 gameLogService.append(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
                 log.info("Game {} - {} enters with lore counter 1", gameData.id, enteredCard.getName());
                 triggerSagaChapter(gameData, enchPerm, enteredCard, controllerId, 1);
@@ -800,6 +802,8 @@ public class StackResolutionService {
         if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
             startingLoyalty = entry.getXValue();
         }
+        startingLoyalty = gameQueryService.replaceCounters(gameData, perm, controllerId,
+                CounterType.LOYALTY, startingLoyalty);
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
@@ -818,6 +822,8 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
         int startingDefense = card.getDefense() != null ? card.getDefense() : 0;
+        startingDefense = gameQueryService.replaceCounters(gameData, perm, controllerId,
+                CounterType.DEFENSE, startingDefense);
         perm.setCounterCount(CounterType.DEFENSE, startingDefense);
         perm.setSummoningSick(false);
         // Siege: as this battle enters, choose an opponent to protect it (2p: the only opponent).
@@ -1029,7 +1035,9 @@ public class StackResolutionService {
         if (!gameQueryService.isArtifact(gameData, target)) return;
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
-        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
+        int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1);
+        if (placed <= 0) return;
+        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
