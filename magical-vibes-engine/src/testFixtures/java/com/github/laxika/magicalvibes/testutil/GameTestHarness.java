@@ -592,6 +592,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
+    public void castArtifact(Player player, int cardIndex, int xValue) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null);
+    }
+
     public void castArtifact(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);

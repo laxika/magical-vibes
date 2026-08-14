@@ -51,6 +51,7 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
             "BecomeCreatureEffectHandler", // replaces an enchantment with the freshly created runtime creature copy
+            "BecomeCreatureTypeWithBasePowerToughnessEffectHandler", // replaces subtypes on a fresh runtime copy
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)

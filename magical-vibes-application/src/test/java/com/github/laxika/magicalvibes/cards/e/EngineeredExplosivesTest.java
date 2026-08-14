@@ -21,9 +21,8 @@ class EngineeredExplosivesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castArtifact(player1, 0);
+        harness.castArtifact(player1, 0, 3);
         harness.passBothPriorities();
 
         Permanent explosives = findPermanent(player1, "Engineered Explosives");
@@ -52,7 +51,7 @@ class EngineeredExplosivesTest extends BaseCardTest {
     void colorlessSunburstDoesNotDestroyNonzeroManaValuePermanents() {
         harness.setHand(player1, List.of(new EngineeredExplosives()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castArtifact(player1, 0);
+        harness.castArtifact(player1, 0, 2);
         harness.passBothPriorities();
 
         Permanent explosives = findPermanent(player1, "Engineered Explosives");

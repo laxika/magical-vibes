@@ -26,7 +26,8 @@ class BiteDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BiteDown()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, source.getId(), harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castInstant(player1, 0,
+                List.of(source.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -43,7 +44,7 @@ class BiteDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BiteDown()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, source.getId(), planeswalker.getId());
+        harness.castInstant(player1, 0, List.of(source.getId(), planeswalker.getId()));
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
@@ -59,7 +60,7 @@ class BiteDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BiteDown()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, source.getId(), victim.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), victim.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -73,7 +74,7 @@ class BiteDownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BiteDown()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, source.getId(), victim.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), victim.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

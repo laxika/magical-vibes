@@ -37,6 +37,7 @@ class EternalWitnessTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Lightning Bolt");
         harness.assertNotInGraveyard(player1, "Lightning Bolt");
@@ -52,6 +53,7 @@ class EternalWitnessTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -64,8 +66,9 @@ class EternalWitnessTest extends BaseCardTest {
 
         castEternalWitness();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lightning Bolt");
         harness.assertNotInHand(player1, "Lightning Bolt");

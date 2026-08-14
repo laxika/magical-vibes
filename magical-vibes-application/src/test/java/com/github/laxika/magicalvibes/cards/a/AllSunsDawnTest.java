@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.e.EngineeredExplosives;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.n.NayaCharm;
 import com.github.laxika.magicalvibes.cards.n.NightsWhisper;
@@ -73,7 +73,7 @@ class AllSunsDawnTest extends BaseCardTest {
 
     @Test
     void colorlessCardsAreNotLegalTargets() {
-        Card colorlessCard = new GrizzlyBears();
+        Card colorlessCard = new EngineeredExplosives();
         harness.setGraveyard(player1, List.of(colorlessCard));
         harness.setHand(player1, List.of(new AllSunsDawn()));
         addMana();

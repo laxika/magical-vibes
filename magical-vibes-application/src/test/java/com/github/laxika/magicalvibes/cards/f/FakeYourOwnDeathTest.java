@@ -52,8 +52,8 @@ class FakeYourOwnDeathTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's creature returns under its owner's control while you create the Treasure")
-    void returnsUnderOwnerControlAndCreatesTreasureForSpellController() {
+    @DisplayName("An opponent's creature returns under its owner's control and its controller creates the Treasure")
+    void returnsUnderOwnerControlAndCreatesTreasureForCreatureController() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
         var creatureCard = creature.getCard();
@@ -64,8 +64,8 @@ class FakeYourOwnDeathTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
-        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
-        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
     }
 
     @Test

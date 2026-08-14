@@ -75,6 +75,9 @@ public class GraveyardTargetValidators {
             throw new IllegalStateException("Effect requires a graveyard target");
         }
         if (ctx.targetId() == null) {
+            if (effect.upTo()) {
+                return;
+            }
             throw new IllegalStateException("Effect requires a target card");
         }
         Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());

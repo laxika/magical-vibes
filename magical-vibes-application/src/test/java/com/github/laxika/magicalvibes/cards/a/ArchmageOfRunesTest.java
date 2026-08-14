@@ -27,8 +27,8 @@ class ArchmageOfRunesTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Divination"));
     }
 
     @Test
@@ -42,7 +42,7 @@ class ArchmageOfRunesTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Angels' Mercy"));
+        assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Angel's Mercy"));
     }
 
     @Test

@@ -1594,6 +1594,14 @@ public class BattlefieldEntryService {
                             gameData.id, card.getName());
                     continue;
                 }
+                TargetSpec mayTargetSpec = may.targetSpec();
+                if (mayTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                        || mayTargetSpec.admits(TargetPredicate.Kind.PLAYER)
+                        || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
+                            List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue);
+                    continue;
+                }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
                 gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);

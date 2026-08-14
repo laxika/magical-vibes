@@ -296,6 +296,7 @@ public class PermanentCounterSupport {
             case TIME -> { target.setCounterCount(CounterType.TIME, target.getCounterCount(CounterType.TIME) + count); yield "time"; }
             case TREASURE -> { target.setCounterCount(CounterType.TREASURE, target.getCounterCount(CounterType.TREASURE) + count); yield "treasure"; }
             case AGE -> { target.setCounterCount(CounterType.AGE, target.getCounterCount(CounterType.AGE) + count); yield "age"; }
+            case BAIT -> { target.setCounterCount(CounterType.BAIT, target.getCounterCount(CounterType.BAIT) + count); yield "bait"; }
             case VITALITY -> { target.setCounterCount(CounterType.VITALITY, target.getCounterCount(CounterType.VITALITY) + count); yield "vitality"; }
             case HEALING -> { target.setCounterCount(CounterType.HEALING, target.getCounterCount(CounterType.HEALING) + count); yield "healing"; }
             case FEATHER -> { target.setCounterCount(CounterType.FEATHER, target.getCounterCount(CounterType.FEATHER) + count); yield "feather"; }
@@ -318,6 +319,7 @@ public class PermanentCounterSupport {
             case VERSE -> { target.setCounterCount(CounterType.VERSE, target.getCounterCount(CounterType.VERSE) + count); yield "verse"; }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
+            case INCUBATION -> { target.setCounterCount(CounterType.INCUBATION, target.getCounterCount(CounterType.INCUBATION) + count); yield "incubation"; }
             case MAGNET -> { target.setCounterCount(CounterType.MAGNET, target.getCounterCount(CounterType.MAGNET) + count); yield "magnet"; }
             case MANIFESTATION -> { target.setCounterCount(CounterType.MANIFESTATION, target.getCounterCount(CounterType.MANIFESTATION) + count); yield "manifestation"; }
             case MINE -> { target.setCounterCount(CounterType.MINE, target.getCounterCount(CounterType.MINE) + count); yield "mine"; }

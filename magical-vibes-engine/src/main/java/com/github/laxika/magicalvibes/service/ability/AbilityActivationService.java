@@ -72,6 +72,8 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -2212,6 +2214,8 @@ public class AbilityActivationService {
 
         validatePreventDividedDamageAssignments(gameData, playerId, permanent, ability, abilityEffects,
                 effectiveXValue, damageAssignments);
+        validateDividedDamageAssignments(gameData, playerId, permanent, ability, abilityEffects,
+                effectiveXValue, damageAssignments);
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && abilityEffects.stream()
@@ -2696,6 +2700,40 @@ public class AbilityActivationService {
             }
             targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects,
                     assignment.getKey(), null, sourcePermanent.getCard(), xValue);
+        }
+    }
+
+    private void validateDividedDamageAssignments(GameData gameData, UUID playerId,
+                                                   Permanent sourcePermanent, ActivatedAbility ability,
+                                                   List<CardEffect> abilityEffects, int xValue,
+                                                   Map<UUID, Integer> damageAssignments) {
+        DealDividedDamageEffect dividedDamage = abilityEffects.stream()
+                .filter(DealDividedDamageEffect.class::isInstance)
+                .map(DealDividedDamageEffect.class::cast)
+                .filter(effect -> effect.mode() == DivisionMode.CHOSEN && !effect.etbAssignments())
+                .findFirst()
+                .orElse(null);
+        if (dividedDamage == null) {
+            return;
+        }
+
+        Map<UUID, Integer> assignments = damageAssignments == null ? Map.of() : damageAssignments;
+        int expectedAmount = amountEvaluationService.evaluate(gameData, dividedDamage.totalDamage(),
+                new AmountContext(playerId, sourcePermanent, null, xValue, 0));
+        int assignedAmount = assignments.values().stream().mapToInt(Integer::intValue).sum();
+        if (assignedAmount != expectedAmount) {
+            throw new IllegalStateException("Damage assignments must sum to " + expectedAmount);
+        }
+        if (dividedDamage.maxTargets() > 0 && assignments.size() > dividedDamage.maxTargets()) {
+            throw new IllegalStateException("Too many targets");
+        }
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            if (assignment.getValue() == null || assignment.getValue() <= 0) {
+                throw new IllegalStateException("Each damage assignment must be positive");
+            }
+            targetLegalityService.validateActivatedAbilityTargeting(
+                    gameData, playerId, ability, List.of(dividedDamage), assignment.getKey(), null,
+                    sourcePermanent.getCard(), xValue);
         }
     }
 

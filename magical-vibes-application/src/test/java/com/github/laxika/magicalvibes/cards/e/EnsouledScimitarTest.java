@@ -76,7 +76,7 @@ class EnsouledScimitarTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());

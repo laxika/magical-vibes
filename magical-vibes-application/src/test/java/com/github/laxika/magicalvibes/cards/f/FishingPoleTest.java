@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class FishingPoleTest extends BaseCardTest {
         pole.setCounterCount(CounterType.BAIT, 1);
         creature.tap();
 
-        advanceToUpkeep(player1);
+        runUntapStep(player1);
         harness.passBothPriorities();
 
         assertThat(pole.getCounterCount(CounterType.BAIT)).isZero();
@@ -54,7 +55,7 @@ class FishingPoleTest extends BaseCardTest {
         pole.setAttachedTo(creature.getId());
         creature.tap();
 
-        advanceToUpkeep(player1);
+        runUntapStep(player1);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Fish")).isZero();
@@ -69,7 +70,7 @@ class FishingPoleTest extends BaseCardTest {
         pole.setCounterCount(CounterType.BAIT, 1);
         creature.tap();
 
-        advanceToUpkeep(player1);
+        runUntapStep(player1);
         harness.passBothPriorities();
 
         assertThat(pole.getCounterCount(CounterType.BAIT)).isZero();
@@ -96,6 +97,16 @@ class FishingPoleTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    private void runUntapStep(Player untappingPlayer) {
+        Player opponent = untappingPlayer.equals(player1) ? player2 : player1;
+        harness.forceActivePlayer(opponent);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 
 }

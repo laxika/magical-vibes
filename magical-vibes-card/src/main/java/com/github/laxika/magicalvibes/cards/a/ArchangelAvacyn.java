@@ -21,7 +21,7 @@ public class ArchangelAvacyn extends Card {
 
         // When Archangel Avacyn enters, creatures you control gain indestructible until end of turn.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES));
 
         // When a non-Angel creature you control dies, transform Archangel Avacyn at the beginning
         // of the next upkeep.

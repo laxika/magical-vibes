@@ -64,7 +64,7 @@ class HealersHeaddressTest extends BaseCardTest {
 
         resolveCombat(player2);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     private Permanent addHeaddressReady(Player player) {

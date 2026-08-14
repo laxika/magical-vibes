@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WalkThePlank;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,9 @@ class ElendaSaintOfDuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElendaSaintOfDusk());
         harness.setHand(player2, List.of(new WalkThePlank()));
         harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castSorcery(player2, 0,
                 harness.getPermanentId(player1, "Elenda, Saint of Dusk"));

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,19 +42,19 @@ class FellingBlowTest extends BaseCardTest {
     @DisplayName("Does not deal damage back to the first target")
     void damageIsNotReciprocal() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player2, new AirElemental());
         harness.setHand(player1, List.of(new FellingBlow()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearsId, giantId));
+        UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
+        harness.castSorcery(player1, 0, List.of(bearsId, elementalId));
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent elemental = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(giant.getMarkedDamage()).isEqualTo(3);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test

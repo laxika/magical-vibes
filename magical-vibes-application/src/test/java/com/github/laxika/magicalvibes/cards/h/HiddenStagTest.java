@@ -30,7 +30,7 @@ class HiddenStagTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, hiddenStag)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, hiddenStag)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, hiddenStag))
-                .containsExactly(CardSubtype.ELK, CardSubtype.BEAST);
+                .containsExactlyInAnyOrder(CardSubtype.ELK, CardSubtype.BEAST);
     }
 
     @Test

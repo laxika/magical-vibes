@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -657,6 +658,11 @@ public class CombatAttackService {
                 // Filter out empty-hand conditionals when controller has cards in hand (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControllerHandEmpty
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof GraveyardCardThreshold
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
