@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AetherTide;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1083,6 +1085,37 @@ class MediumAiDecisionEngineTest {
     }
 
     // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("Medium AI chooses Wear // Tear's affordable mode")
+    void choosesAffordableWearTearMode() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(1);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(human, new AngelicChorus());
+        harness.setHand(aiPlayer, List.of(new WearTear()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(1);
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerBattlefields.get(human.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
 
     @Test
     @DisplayName("Medium AI casts Cryptic Command with its choose-two target")

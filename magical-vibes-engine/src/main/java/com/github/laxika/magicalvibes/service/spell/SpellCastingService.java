@@ -132,7 +132,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -668,6 +667,19 @@ public class SpellCastingService {
         if (modeCost != null) {
             card.setManaCost(modeCost);
         }
+    }
+
+    private static String selectedModalManaCost(List<CardEffect> effects, int modeEncoding) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof ChooseOneEffect modal) {
+                List<Integer> selectedModes = modal.decodeModeIndices(modeEncoding);
+                if (selectedModes.size() != 1) {
+                    return null;
+                }
+                return modal.options().get(selectedModes.getFirst()).manaCost();
+            }
+        }
+        return null;
     }
 
     /**
@@ -1301,8 +1313,8 @@ public class SpellCastingService {
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
-        String printedManaCost = card.getManaCost();
         int modeEncoding = effectiveXValue;
+        String selectedModeManaCost = selectedModalManaCost(filteredSpellEffects, modeEncoding);
         filteredSpellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
@@ -1312,7 +1324,7 @@ public class SpellCastingService {
         // A mode that brought its own total cost (a split card's half, or its fuse mode) was never
         // the cost the playability pre-check cleared — that check only needs *some* mode to be
         // affordable — so the mode actually chosen has to be paid for here.
-        if (!usingAlternateCost && !Objects.equals(printedManaCost, card.getManaCost())) {
+        if (!usingAlternateCost && selectedModeManaCost != null) {
             ManaPool modePool = gameData.playerManaPools.get(playerId);
             ManaCost modeCost = card.getParsedManaCost();
             int modeAdditionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue);

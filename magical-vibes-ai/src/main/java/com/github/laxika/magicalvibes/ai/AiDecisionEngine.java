@@ -1550,13 +1550,38 @@ public abstract class AiDecisionEngine {
     protected boolean canAffordSelectedSpellTarget(GameData gameData, Card card, ManaPool virtualPool,
                                                     UUID targetId, List<UUID> targetIds,
                                                     int targetingTax, Integer xValue) {
-        if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
+        String selectedModeManaCost = selectedModalManaCost(card, xValue);
+        if (card.getManaCost() == null && selectedModeManaCost == null) {
             return true;
         }
 
         List<UUID> costReductionTargetIds = targetIds != null && !targetIds.isEmpty()
                 ? targetIds
                 : targetId != null ? List.of(targetId) : List.of();
+
+        if (selectedModeManaCost != null) {
+            if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
+                return true;
+            }
+            int targetReduction = castingCostService.computeTargetBasedCostReduction(
+                    gameData, aiPlayer.getId(), card, costReductionTargetIds);
+            ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
+                    gameData, aiPlayer.getId(), card, new ManaCost(selectedModeManaCost));
+            int costModifier = xValue == null
+                    ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                    : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+            costModifier += targetingTax - targetReduction;
+            if (!validationCost.canPay(virtualPool, costModifier)) {
+                return false;
+            }
+            return !card.isRequiresCreatureMana()
+                    || validationCost.canPayCreatureOnly(virtualPool, costModifier);
+        }
+
+        if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
+            return true;
+        }
+
         if (castingCostService.computeTargetBasedCostReduction(
                 gameData, aiPlayer.getId(), card, costReductionTargetIds) > 0) {
             return true;
@@ -1987,6 +2012,42 @@ public abstract class AiDecisionEngine {
         return null;
     }
 
+    /** Returns a selected modal option's own total cost, or null for ordinary modals. */
+    protected String selectedModalManaCost(Card card, Integer modeEncoding) {
+        if (modeEncoding == null) {
+            return null;
+        }
+        ChooseOneEffect coe = findChooseOneEffect(card);
+        if (coe == null) {
+            return null;
+        }
+        List<Integer> selectedModes = coe.decodeModeIndices(modeEncoding);
+        if (selectedModes.size() != 1) {
+            return null;
+        }
+        return coe.options().get(selectedModes.getFirst()).manaCost();
+    }
+
+    /** Returns the mana cost that the selected modal mode will actually use, when applicable. */
+    protected String manaCostForSpell(Card card, Integer modeEncoding) {
+        String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
+        return selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+    }
+
+    private boolean isModalModeAffordable(GameData gameData, Card card,
+                                          ChooseOneEffect.ChooseOneOption option,
+                                          ManaPool virtualPool) {
+        if (option.manaCost() == null
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
+            return true;
+        }
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(option.manaCost()));
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        return cost.canPay(virtualPool, costModifier)
+                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
+    }
+
     /**
      * Returns true if the card is non-modal, or if at least one modal mode
      * has valid targets available (excluding spell-targeting modes the AI can't handle).
@@ -2011,6 +2072,7 @@ public abstract class AiDecisionEngine {
     protected ModalCastPlan prepareModalSpellCast(GameData gameData, Card card) {
         ChooseOneEffect coe = findChooseOneEffect(card);
         if (coe == null) return null;
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         // Fixed choose-N (e.g. choose two): pick the first N valid modes.
         if (coe.choicesRequired() > 1 && coe.choicesRequired() == coe.choicesMax()) {
@@ -2043,7 +2105,10 @@ public abstract class AiDecisionEngine {
         // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
-            if (!isModalModeValid(gameData, card, option)) continue;
+            if (!isModalModeValid(gameData, card, option)
+                    || !isModalModeAffordable(gameData, card, option, virtualPool)) {
+                continue;
+            }
             CardEffect effect = option.effect();
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
@@ -2268,20 +2333,21 @@ public abstract class AiDecisionEngine {
     }
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
-        if (card.getManaCost() == null) return false;
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) return false;
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
             return gameData.interaction.isAwaitingInput();
         }
 
-        ManaCost cost = new ManaCost(card.getManaCost());
+        ManaCost cost = new ManaCost(manaCost);
         if (cost.hasX() && xValue != null) {
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tap);
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, manaCost, xValue, costModifier, tap);
         } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
         }
         return gameData.interaction.isAwaitingInput();
     }
@@ -2296,7 +2362,8 @@ public abstract class AiDecisionEngine {
      */
     protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
                                                   int targetingTax) {
-        if (!hasConvokeAbility(gameData, card) || card.getManaCost() == null) {
+        String manaCost = manaCostForSpell(card, xValue);
+        if (!hasConvokeAbility(gameData, card) || manaCost == null) {
             return List.of();
         }
 
@@ -2307,7 +2374,7 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax;
-        ManaCost cost = new ManaCost(card.getManaCost());
+        ManaCost cost = new ManaCost(manaCost);
         int additionalGenericCost = costModifier
                 + (cost.hasX() && xValue != null ? xValue : 0);
         List<ManaColor> contributions = new ArrayList<>();

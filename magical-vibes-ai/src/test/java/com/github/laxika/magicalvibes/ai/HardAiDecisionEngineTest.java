@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
@@ -1351,6 +1353,41 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             Card castCard = List.of(bigCreature, mediumCreature, smallCreature).get(request.cardIndex());
             assertThat(castCard.getName()).isEqualTo("Medium Creature");
         }
+    }
+
+    @Test
+    @DisplayName("Hard AI chooses Wear // Tear's affordable mode")
+    void choosesAffordableWearTearMode() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+        Permanent plains = new Permanent(new Plains());
+        plains.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(plains);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+        harness.setHand(player1, List.of(new WearTear()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
     }
 
     @Test

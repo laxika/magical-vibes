@@ -274,7 +274,12 @@ public class AiManaManager {
     }
 
     void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, int xValue, int costModifier, ManaTapAction action) {
-        ManaCost cost = new ManaCost(card.getManaCost());
+        tapLandsForXSpell(gameData, aiPlayerId, card, card.getManaCost(), xValue, costModifier, action);
+    }
+
+    void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, String manaCostString,
+                           int xValue, int costModifier, ManaTapAction action) {
+        ManaCost cost = new ManaCost(manaCostString);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
         if (isXSpellPaid(cost, card, currentPool, xValue, costModifier)) {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -28,6 +29,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -229,6 +231,30 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses Wear // Tear's affordable mode")
+        void choosesAffordableWearTearMode() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 1);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            Permanent enchantment = testHarness.addToBattlefieldAndReturn(human, new AngelicChorus());
+            testHarness.setHand(aiTestPlayer, List.of(new WearTear()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(Permanent::isTapped)
+                    .hasSize(1);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.RED)).isZero();
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.WHITE)).isZero();
+            assertThat(testGd.playerBattlefields.get(human.getId()))
+                    .extracting(permanent -> permanent.getCard().getName())
+                    .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
         }
 
         @Test
