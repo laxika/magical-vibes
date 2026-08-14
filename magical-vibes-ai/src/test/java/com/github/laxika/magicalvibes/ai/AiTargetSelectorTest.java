@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
+import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
@@ -1231,6 +1232,17 @@ class AiTargetSelectorTest {
             List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FeelingOfDread(), aiPlayer.getId());
 
             assertThat(targets).containsExactly(oppBears.getId());
+        }
+
+        @Test
+        @DisplayName("Dynamic up-to target group honors a zero cast-time maximum")
+        void dynamicUpToTargetGroupHonorsZeroCastTimeMaximum() {
+            harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(
+                    gd, new MogissMarauder(), aiPlayer.getId());
+
+            assertThat(targets).isEmpty();
         }
 
         @Test

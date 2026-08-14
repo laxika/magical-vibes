@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
+import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
@@ -81,6 +82,36 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactly(discard);
+    }
+
+    @Test
+    void castsDynamicUpToSpellWithNoAvailableTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 3);
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        MogissMarauder marauder = new MogissMarauder();
+        harness.setHand(aiPlayer, List.of(marauder));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(marauder);
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
     }
 
     @Test

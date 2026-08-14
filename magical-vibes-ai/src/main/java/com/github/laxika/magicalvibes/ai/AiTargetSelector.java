@@ -386,6 +386,8 @@ class AiTargetSelector {
         Set<UUID> alreadyChosen = new HashSet<>();
 
         for (SpellTarget st : spellTargets) {
+            int effectiveMaxTargets = targetLegalityService.getEffectiveMaxTargetsForGroup(
+                    gameData, card, aiPlayerId, null, st);
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
             boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
@@ -393,6 +395,12 @@ class AiTargetSelector {
                     || st.getFilter() != null;
 
             if (wantsPlayer && !wantsPermanent) {
+                if (effectiveMaxTargets == 0) {
+                    if (st.getMinTargets() > 0) {
+                        return null;
+                    }
+                    continue;
+                }
                 UUID chosen = pickPlayerTargetForGroup(gameData, aiPlayerId, opponentId, groupEffects);
                 if (chosen != null) {
                     result.add(chosen);
@@ -402,7 +410,7 @@ class AiTargetSelector {
                 }
             } else if (wantsPermanent) {
                 List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
-                        st, alreadyChosen, groupEffects);
+                        st, effectiveMaxTargets, alreadyChosen, groupEffects);
                 if (chosen.size() < st.getMinTargets()) {
                     return null; // Mandatory targets cannot be satisfied
                 }
@@ -413,7 +421,7 @@ class AiTargetSelector {
             }
         }
 
-        return result.isEmpty() ? null : result;
+        return result;
     }
 
     /**
@@ -467,8 +475,8 @@ class AiTargetSelector {
      * candidate first, e.g. Pounce's own-fighter group choosing the AI's strongest creature).
      */
     private List<UUID> pickPermanentTargetsForGroup(GameData gameData, Card card, UUID aiPlayerId,
-                                                    UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen,
-                                                    List<CardEffect> groupEffects) {
+                                                    UUID opponentId, SpellTarget st, int maxTargets,
+                                                    Set<UUID> alreadyChosen, List<CardEffect> groupEffects) {
         TargetFilter groupFilter = st.getFilter();
         boolean beneficial = polarityClassifier.classifyGroup(gameData, groupEffects, aiPlayerId)
                 == TargetPolarity.BENEFICIAL;
@@ -477,10 +485,10 @@ class AiTargetSelector {
 
         List<UUID> chosen = new ArrayList<>();
         takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, preferredBoard,
-                st.getMaxTargets(), alreadyChosen, chosen);
+                maxTargets, alreadyChosen, chosen);
         if (chosen.size() < st.getMinTargets()) {
             takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, fallbackBoard,
-                    st.getMinTargets(), alreadyChosen, chosen);
+                    Math.min(st.getMinTargets(), maxTargets), alreadyChosen, chosen);
         }
         return chosen;
     }
