@@ -57,7 +57,6 @@ class TolarianTerrorTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Tolarian Terror"));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Shock");
     }

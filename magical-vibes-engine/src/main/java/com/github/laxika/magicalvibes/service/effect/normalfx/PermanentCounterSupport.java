@@ -329,6 +329,7 @@ public class PermanentCounterSupport {
             case WAGE -> { target.setCounterCount(CounterType.WAGE, target.getCounterCount(CounterType.WAGE) + count); yield "wage"; }
             case RUST -> { target.setCounterCount(CounterType.RUST, target.getCounterCount(CounterType.RUST) + count); yield "rust"; }
             case SOOT -> { target.setCounterCount(CounterType.SOOT, target.getCounterCount(CounterType.SOOT) + count); yield "soot"; }
+            case SOUL -> { target.setCounterCount(CounterType.SOUL, target.getCounterCount(CounterType.SOUL) + count); yield "soul"; }
             case VORTEX -> { target.setCounterCount(CounterType.VORTEX, target.getCounterCount(CounterType.VORTEX) + count); yield "vortex"; }
             case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }

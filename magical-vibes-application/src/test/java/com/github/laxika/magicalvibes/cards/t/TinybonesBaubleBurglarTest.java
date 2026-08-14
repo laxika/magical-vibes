@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,8 @@ class TinybonesBaubleBurglarTest extends BaseCardTest {
     @Test
     void exilesAnOpponentsDiscardWithAStashCounterAndLetsControllerCastIt() {
         Card discarded = new GrizzlyBears();
-        harness.addToBattlefield(player1, new TinybonesBaubleBurglar());
+        Permanent tinybones = harness.addToBattlefieldAndReturn(player1, new TinybonesBaubleBurglar());
+        tinybones.setSummoningSick(false);
         harness.setHand(player2, List.of(discarded));
         prepareMainPhase();
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -26,6 +28,7 @@ class TinybonesBaubleBurglarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(discarded);
 
@@ -40,7 +43,8 @@ class TinybonesBaubleBurglarTest extends BaseCardTest {
     void stashPermissionSurvivesTheTinybonesThatCreatedItLeavingTheBattlefield() {
         Card discarded = new GrizzlyBears();
         TinybonesBaubleBurglar tinybones = new TinybonesBaubleBurglar();
-        harness.addToBattlefield(player1, tinybones);
+        Permanent tinybonesPermanent = harness.addToBattlefieldAndReturn(player1, tinybones);
+        tinybonesPermanent.setSummoningSick(false);
         UUID tinybonesPermanentId = harness.getPermanentId(player1, "Tinybones, Bauble Burglar");
         harness.setHand(player2, List.of(discarded));
         prepareMainPhase();
@@ -49,8 +53,9 @@ class TinybonesBaubleBurglarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, tinybonesPermanentId);

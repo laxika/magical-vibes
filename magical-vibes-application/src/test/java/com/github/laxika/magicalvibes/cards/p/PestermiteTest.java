@@ -26,15 +26,14 @@ class PestermiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving Pestermite triggers the may ability prompt")
-    void resolvingTriggersMayPrompt() {
+    @DisplayName("Resolving Pestermite prompts for the triggered ability's target")
+    void resolvingPromptsForTarget() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> target choice
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -42,12 +41,12 @@ class PestermiteTest extends BaseCardTest {
     void acceptingMayPromptsForTarget() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -58,10 +57,10 @@ class PestermiteTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
 
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, target.getId()); // choose target -> resolves inline
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -75,10 +74,10 @@ class PestermiteTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
 
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, target.getId()); // choose target -> resolves inline
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -91,10 +90,10 @@ class PestermiteTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
 
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, land.getId()); // choose target -> resolves inline
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(land.isTapped()).isTrue();
     }
@@ -107,9 +106,10 @@ class PestermiteTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
 
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isFalse();
@@ -130,7 +130,8 @@ class PestermiteTest extends BaseCardTest {
     void etbTriggerType() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castPestermite();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

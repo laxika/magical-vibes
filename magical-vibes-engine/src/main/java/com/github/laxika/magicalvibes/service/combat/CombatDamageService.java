@@ -258,6 +258,8 @@ public class CombatDamageService {
             List<CardEffect> effects = new ArrayList<>(
                     source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
             effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
             state.selfDealsCombatDamageEffects.put(source, effects);
         }
 

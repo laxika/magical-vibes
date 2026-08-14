@@ -46,6 +46,7 @@ class VampireGourmandTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
@@ -66,7 +67,8 @@ class VampireGourmandTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(vampire.isCantBeBlocked()).isFalse();
+        Permanent currentVampire = findPermanent(player1, "Vampire Gourmand");
+        assertThat(currentVampire.isCantBeBlocked()).isFalse();
     }
 
     @Test
@@ -90,14 +92,17 @@ class VampireGourmandTest extends BaseCardTest {
     void unblockableExpiresAtEndOfTurn() {
         Permanent vampire = addCreatureReady(player1, new VampireGourmand());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
 
         assertThat(vampire.isCantBeBlocked()).isTrue();
 
+        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

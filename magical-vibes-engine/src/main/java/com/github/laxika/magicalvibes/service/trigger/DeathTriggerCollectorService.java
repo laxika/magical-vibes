@@ -968,7 +968,8 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                null, match.permanent().getId());
         logArtifactGraveyard(match);
         return true;
     }

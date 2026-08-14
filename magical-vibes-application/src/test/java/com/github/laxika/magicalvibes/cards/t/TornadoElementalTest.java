@@ -40,6 +40,7 @@ class TornadoElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castCreature(player1, 0, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Wind Drake");
     }

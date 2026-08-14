@@ -55,6 +55,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,6 +98,8 @@ class BattlefieldEntryServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(4));
     }
 
     @Test
