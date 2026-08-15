@@ -65,7 +65,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -73,6 +75,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -177,6 +180,42 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    private Card multiTargetRemovalWithPerTargetLifeCost() {
+        Card card = new Card();
+        card.setName("Multi-target removal with a life cost");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{2}{B}{R}");
+        card.setAdditionalLifeCostPerTarget(3);
+        for (int targetGroup = 0; targetGroup < 3; targetGroup++) {
+            PermanentPredicateTargetFilter creatureTarget = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature");
+            card.target(creatureTarget, 0, 1)
+                    .addEffect(EffectSlot.SPELL, DestroyTargetPermanentEffect.forTargetGroup(targetGroup));
+        }
+        return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI limits multi-target life costs to its available life")
+    void limitsPerTargetLifeCostTargets() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        giveAiMountains(2);
+        harness.setLife(aiPlayer, 7);
+        harness.addToBattlefield(human, new SerraAngel());
+        harness.addToBattlefield(human, new GrizzlyBears());
+        harness.addToBattlefield(human, new LlanowarElves());
+        Card spell = multiTargetRemovalWithPerTargetLifeCost();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
+        assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(1);
     }
 
     @Test

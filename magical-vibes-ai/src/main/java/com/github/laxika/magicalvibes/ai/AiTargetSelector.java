@@ -440,10 +440,14 @@ class AiTargetSelector {
         List<SpellTarget> spellTargets = card.getSpellTargets();
         List<UUID> result = new ArrayList<>();
         Set<UUID> alreadyChosen = new HashSet<>();
+        int maxTargetsAffordable = maxTargetsAffordableWithAdditionalLife(
+                gameData, card, aiPlayerId);
 
         for (SpellTarget st : spellTargets) {
             int effectiveMaxTargets = targetLegalityService.getEffectiveMaxTargetsForGroup(
                     gameData, card, aiPlayerId, null, st);
+            effectiveMaxTargets = Math.min(effectiveMaxTargets,
+                    Math.max(0, maxTargetsAffordable - result.size()));
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
             boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
@@ -500,6 +504,14 @@ class AiTargetSelector {
         }
 
         return result;
+    }
+
+    private int maxTargetsAffordableWithAdditionalLife(GameData gameData, Card card, UUID playerId) {
+        int lifeCostPerTarget = card.getAdditionalLifeCostPerTarget();
+        if (lifeCostPerTarget <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, gameData.getLife(playerId) / lifeCostPerTarget);
     }
 
     private static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {

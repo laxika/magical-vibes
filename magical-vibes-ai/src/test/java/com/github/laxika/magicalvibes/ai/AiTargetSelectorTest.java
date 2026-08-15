@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.r.RivalsDuel;
@@ -1253,6 +1254,21 @@ class AiTargetSelectorTest {
             List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FeelingOfDread(), aiPlayer.getId());
 
             assertThat(targets).containsExactly(oppBears.getId());
+        }
+
+        @Test
+        @DisplayName("Per-target life cost limits optional targets to the payable count")
+        void perTargetLifeCostLimitsOptionalTargetsToPayableCount() {
+            harness.setLife(aiPlayer, 7);
+            Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+            Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Permanent oppElves = harness.addToBattlefieldAndReturn(human, new LlanowarElves());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new PhyrexianPurge(), aiPlayer.getId());
+
+            assertThat(targets).hasSize(2);
+            assertThat(targets).containsExactlyInAnyOrder(oppAngel.getId(), oppBears.getId());
+            assertThat(targets).doesNotContain(oppElves.getId());
         }
 
         @Test

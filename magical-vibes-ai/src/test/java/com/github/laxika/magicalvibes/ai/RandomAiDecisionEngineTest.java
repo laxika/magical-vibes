@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
@@ -180,6 +181,41 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(culturalExchange);
         assertThat(gameData.stack.getFirst().getTargetIds())
                 .containsExactly(opponent.getId(), aiPlayer.getId());
+    }
+
+    @Test
+    void limitsPerTargetLifeCostTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(aiPlayer, 7);
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.addMana(aiPlayer, ManaColor.RED, 2);
+        harness.addToBattlefield(harness.getPlayer1(), new GrizzlyBears());
+        harness.addToBattlefield(harness.getPlayer1(), new GrizzlyBears());
+        harness.addToBattlefield(harness.getPlayer1(), new GrizzlyBears());
+        PhyrexianPurge purge = new PhyrexianPurge();
+        harness.setHand(aiPlayer, List.of(purge));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(purge);
+        assertThat(gameData.stack.getFirst().getTargetIds()).hasSize(2);
+        assertThat(gameData.getLife(aiPlayer.getId())).isEqualTo(1);
     }
 
     @Test

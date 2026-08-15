@@ -27,14 +27,17 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
@@ -275,6 +278,27 @@ class EasyAiDecisionEngineTest {
                 permanent.setSummoningSick(false);
                 testGd.playerBattlefields.get(aiTestPlayer.getId()).add(permanent);
             }
+        }
+
+        @Test
+        @DisplayName("Easy AI limits Phyrexian Purge targets to its available life")
+        void limitsPerTargetLifeCostTargets() {
+            giveAiPriority();
+            testHarness.setLife(aiTestPlayer, 7);
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 2);
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 2);
+            testHarness.addToBattlefield(human, new SerraAngel());
+            testHarness.addToBattlefield(human, new GrizzlyBears());
+            testHarness.addToBattlefield(human, new LlanowarElves());
+            PhyrexianPurge purge = new PhyrexianPurge();
+            testHarness.setHand(aiTestPlayer, List.of(purge));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(purge);
+            assertThat(testGd.stack.getFirst().getTargetIds()).hasSize(2);
+            assertThat(testGd.getLife(aiTestPlayer.getId())).isEqualTo(1);
         }
 
         @Test

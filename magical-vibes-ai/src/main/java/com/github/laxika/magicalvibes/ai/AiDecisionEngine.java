@@ -1705,21 +1705,26 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Checks the selected target against a target-dependent cost reduction after the AI has
-     * chosen its target. The general playability check can only establish that some legal target
-     * enables the reduction, so this closes the gap before mana is tapped for the actual target.
+     * Checks the selected target against target-dependent costs after the AI has chosen its
+     * target. The general playability check can only establish that some legal target enables a
+     * cost reduction, so this closes the gap before mana or life is paid for the actual target.
      */
     protected boolean canAffordSelectedSpellTarget(GameData gameData, Card card, ManaPool virtualPool,
                                                     UUID targetId, List<UUID> targetIds,
                                                     int targetingTax, Integer xValue) {
+        List<UUID> costReductionTargetIds = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : targetId != null ? List.of(targetId) : List.of();
+        long additionalLifeCost = (long) card.getAdditionalLifeCostPerTarget()
+                * costReductionTargetIds.size();
+        if (additionalLifeCost > gameData.getLife(aiPlayer.getId())) {
+            return false;
+        }
+
         String selectedModeManaCost = selectedModalManaCost(card, xValue);
         if (card.getManaCost() == null && selectedModeManaCost == null) {
             return true;
         }
-
-        List<UUID> costReductionTargetIds = targetIds != null && !targetIds.isEmpty()
-                ? targetIds
-                : targetId != null ? List.of(targetId) : List.of();
 
         if (selectedModeManaCost != null) {
             if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
