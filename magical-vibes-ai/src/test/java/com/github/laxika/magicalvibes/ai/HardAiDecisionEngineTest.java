@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1637,6 +1638,32 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(player1.getId())).singleElement()
                 .isInstanceOf(Unbury.class);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Victimize without two creature cards in its graveyard")
+    void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerSwamps(player1, 3);
+        gd.playerGraveyards.get(player1.getId()).add(new HolyDay());
+        Victimize victimize = new Victimize();
+        harness.setHand(player1, List.of(victimize));
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(victimize);
     }
 
     @Test

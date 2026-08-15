@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -317,6 +319,36 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
         assertThat(gameData.stack.getFirst().getTargetId()).isNull();
         assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(opponent.getId());
+    }
+
+    @Test
+    void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 3);
+        gameData.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        Victimize victimize = new Victimize();
+        harness.setHand(aiPlayer, List.of(victimize));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(victimize);
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(3);
     }
 
     @Test

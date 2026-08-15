@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -434,6 +435,23 @@ class EasyAiDecisionEngineTest {
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).singleElement()
                     .isInstanceOf(Unbury.class);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Victimize without two creature cards in its graveyard")
+        void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 3);
+            testGd.playerGraveyards.get(aiTestPlayer.getId()).add(new HolyDay());
+            Victimize victimize = new Victimize();
+            testHarness.setHand(aiTestPlayer, List.of(victimize));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(victimize);
         }
 
         @Test

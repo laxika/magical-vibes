@@ -307,6 +307,22 @@ public class GameActionAvailabilityService {
             }
         }
 
+        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect sacrificeAndReturnEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                        .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (sacrificeAndReturnEffect != null) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            long matchingCount = graveyard.stream()
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, sacrificeAndReturnEffect.returnFilter(), card.getId()))
+                    .count();
+            if (matchingCount < sacrificeAndReturnEffect.targetCount()) {
+                return false;
+            }
+        }
+
         // MTG rule 714.1: can't cast a legendary sorcery unless you control a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)

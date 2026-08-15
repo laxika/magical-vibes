@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
@@ -1273,6 +1274,23 @@ class MediumAiDecisionEngineTest {
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(aiPlayer.getId())).singleElement()
                 .isInstanceOf(Unbury.class);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Victimize without two creature cards in its graveyard")
+    void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(3);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        Victimize victimize = new Victimize();
+        harness.setHand(aiPlayer, List.of(victimize));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(victimize);
     }
 
     @Test
