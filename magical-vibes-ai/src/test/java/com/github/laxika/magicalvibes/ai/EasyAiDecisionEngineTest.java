@@ -156,6 +156,9 @@ class EasyAiDecisionEngineTest {
 
         gameRegistry = new GameRegistry();
         gameRegistry.register(gd);
+
+        Mockito.lenient().when(combatAttackService.getMaximumAttackers(
+                any(GameData.class), any(UUID.class))).thenReturn(Integer.MAX_VALUE);
     }
 
     private EasyAiDecisionEngine createEngine() {
