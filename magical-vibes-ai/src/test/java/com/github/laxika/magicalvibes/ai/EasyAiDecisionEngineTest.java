@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -1355,6 +1357,39 @@ class EasyAiDecisionEngineTest {
             combatAi.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
             assertThat(blocker.isBlocking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI does not submit an unaffordable block tax from an attacking Archangel")
+        void dropsUnaffordableGlobalBlockTax() {
+            Permanent archangel = combatHarness.addToBattlefieldAndReturn(opponent, new ArchangelOfTithes());
+            archangel.setSummoningSick(false);
+            archangel.setAttacking(true);
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            blocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(new BlockerAssignment(
+                        combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(blocker),
+                        combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker)))));
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(blocker.isBlocking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
                     .isNull();
         }

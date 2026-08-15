@@ -844,8 +844,9 @@ public abstract class AiDecisionEngine {
 
     /**
      * The additional cost of a set of declared blocks, computed the way
-     * {@code CombatBlockService.declareBlockers} computes it: mana summed per blocker-attacker
-     * pair, life charged once per blocker at its highest rate (CR 509.1d — one locked-in total).
+     * {@code CombatBlockService.declareBlockers} computes it: pair-specific mana is summed per
+     * blocker-attacker pair, while board-wide mana and life are charged once per blocker; life
+     * uses the highest applicable rate (CR 509.1d — one locked-in total).
      */
     private final class BlockTax {
 
@@ -861,11 +862,32 @@ public abstract class AiDecisionEngine {
         }
 
         private int mana(List<BlockerAssignment> assignments) {
-            return assignments.stream().mapToInt(this::mana).sum();
+            return mana(assignments, Map.of());
         }
 
-        private int mana(BlockerAssignment assignment) {
+        private int mana(List<BlockerAssignment> assignments, Map<UUID, Integer> alreadyCharged) {
+            int pairTax = assignments.stream().mapToInt(this::pairMana).sum();
+            Map<UUID, Integer> charged = globalManaByBlocker(assignments, alreadyCharged);
+            int globalTax = charged.entrySet().stream()
+                    .mapToInt(entry -> entry.getValue() - alreadyCharged.getOrDefault(entry.getKey(), 0))
+                    .sum();
+            return pairTax + globalTax;
+        }
+
+        private int pairMana(BlockerAssignment assignment) {
             return gameQueryService.getBlockManaTax(gameData, blocker(assignment), attacker(assignment));
+        }
+
+        private Map<UUID, Integer> globalManaByBlocker(List<BlockerAssignment> assignments,
+                                                        Map<UUID, Integer> alreadyCharged) {
+            Map<UUID, Integer> charged = new HashMap<>(alreadyCharged);
+            for (BlockerAssignment assignment : assignments) {
+                int manaTax = gameQueryService.getGlobalBlockManaTax(gameData, blocker(assignment));
+                if (manaTax > 0) {
+                    charged.merge(blocker(assignment).getId(), manaTax, Math::max);
+                }
+            }
+            return charged;
         }
 
         private int life(List<BlockerAssignment> assignments) {
@@ -903,15 +925,17 @@ public abstract class AiDecisionEngine {
 
             Set<BlockerAssignment> kept = new LinkedHashSet<>();
             Map<UUID, Integer> lifeCharged = new HashMap<>();
+            Map<UUID, Integer> manaCharged = new HashMap<>();
             int manaSpent = 0;
             for (List<BlockerAssignment> group : ranked) {
                 List<BlockerAssignment> fitted = fitToBudget(
-                        group, manaBudget - manaSpent, lifeBudget, lifeCharged);
+                        group, manaBudget - manaSpent, lifeBudget, lifeCharged, manaCharged);
                 if (fitted.isEmpty()) {
                     continue;
                 }
-                manaSpent += mana(fitted);
+                manaSpent += mana(fitted, manaCharged);
                 lifeCharged = lifeByBlocker(fitted, lifeCharged);
+                manaCharged = globalManaByBlocker(fitted, manaCharged);
                 kept.addAll(fitted);
             }
             return assignments.stream().filter(kept::contains).toList();
@@ -923,20 +947,23 @@ public abstract class AiDecisionEngine {
          * an underfilled block is an illegal declaration rather than a cheaper one.
          */
         private List<BlockerAssignment> fitToBudget(List<BlockerAssignment> group, int manaLeft,
-                                                    int lifeBudget, Map<UUID, Integer> lifeCharged) {
+                                                    int lifeBudget, Map<UUID, Integer> lifeCharged,
+                                                    Map<UUID, Integer> manaCharged) {
             List<BlockerAssignment> fitted = new ArrayList<>();
             Map<UUID, Integer> life = lifeCharged;
+            Map<UUID, Integer> globalMana = new HashMap<>(manaCharged);
             int manaSpent = 0;
             for (BlockerAssignment assignment : group.stream()
-                    .sorted(Comparator.comparingInt(this::mana))
+                    .sorted(Comparator.comparingInt(this::pairMana))
                     .toList()) {
-                int manaTax = mana(assignment);
+                int manaTax = mana(List.of(assignment), globalMana);
                 Map<UUID, Integer> withAssignment = lifeByBlocker(List.of(assignment), life);
                 int lifeSpent = withAssignment.values().stream().mapToInt(Integer::intValue).sum();
                 if (manaSpent + manaTax > manaLeft || lifeSpent > lifeBudget) {
                     continue;
                 }
                 manaSpent += manaTax;
+                globalMana = globalManaByBlocker(List.of(assignment), globalMana);
                 life = withAssignment;
                 fitted.add(assignment);
             }
