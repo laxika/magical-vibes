@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
 import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -1516,6 +1517,20 @@ class AiDecisionEngineTest {
         // Mode 0 is "counter artifact spell" (canTargetSpell A?†’ skipped), mode 1 is "bounce artifact"
         assertThat(plan.modeIndex()).isEqualTo(1);
         assertThat(plan.targetId()).isEqualTo(artifactPerm.getId());
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast chooses a player over an ordinary permanent for Energy Bolt")
+    void prepareModalSpellCastChoosesPlayerForPlayerOrPlaneswalkerMode() {
+        Permanent ordinaryPermanent = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(human.getId()).add(ordinaryPermanent);
+
+        var plan = ai.prepareModalSpellCast(gd, new EnergyBolt());
+
+        assertThat(plan).isNotNull();
+        assertThat(plan.modeIndex()).isZero();
+        assertThat(plan.targetId()).isEqualTo(human.getId());
+        assertThat(plan.targetId()).isNotEqualTo(ordinaryPermanent.getId());
     }
 
     @Test

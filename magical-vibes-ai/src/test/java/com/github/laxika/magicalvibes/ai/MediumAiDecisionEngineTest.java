@@ -70,6 +70,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -1238,6 +1241,30 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI validates modal player-or-planeswalker target candidates")
+    void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+        giveAiPriority();
+        giveAiMountains(1);
+        giveAiPlains(1);
+        Permanent ordinaryPermanent = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        Card modalSpell = new Card();
+        modalSpell.setName("Draw and Bolt");
+        modalSpell.setType(CardType.SORCERY);
+        modalSpell.setManaCost("{R}{W}");
+        modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
+                        new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
+        harness.setHand(aiPlayer, List.of(modalSpell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(ordinaryPermanent.getId());
     }
 
     @Test

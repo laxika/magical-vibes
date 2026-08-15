@@ -739,6 +739,17 @@ class AiTargetSelector {
         return targetLegalityService.checkSpellTargeting(gameData, card, playerTargetId, null, aiPlayerId).isEmpty();
     }
 
+    boolean isValidModalTarget(GameData gameData, Card card, List<CardEffect> modeEffects,
+                               UUID targetId, UUID aiPlayerId) {
+        try {
+            targetLegalityService.validateSpellTargeting(
+                    gameData, card, modeEffects, targetId, null, aiPlayerId, true, 0);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
     /**
      * Computes allowed target types using only the base (un-kicked) mode of effects.
      * AI never kicks spells, so this prevents including target types that are only

@@ -95,6 +95,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -1530,6 +1533,35 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI validates modal player-or-planeswalker target candidates")
+    void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        givePlayerMountains(player1, 1);
+        Permanent plains = new Permanent(new Plains());
+        plains.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(plains);
+        Permanent ordinaryPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card modalSpell = new Card();
+        modalSpell.setName("Draw and Bolt");
+        modalSpell.setType(CardType.SORCERY);
+        modalSpell.setManaCost("{R}{W}");
+        modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
+                        new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
+        harness.setHand(player1, List.of(modalSpell));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(ordinaryPermanent.getId());
     }
 
     @Test

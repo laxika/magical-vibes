@@ -2350,7 +2350,8 @@ public abstract class AiDecisionEngine {
 
             if (EffectResolution.targetsSpellOnStack(effect)) continue;
 
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                    || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
                 List<UUID> targets = findModalModeTargets(gameData, card, option);
                 if (targets.size() < requiredModalTargetCount(option)) {
                     continue;
@@ -2362,13 +2363,6 @@ public abstract class AiDecisionEngine {
                     return new ModalCastPlan(encoded, targets.getFirst());
                 }
                 continue;
-            }
-
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-                return coe.variableModeCount()
-                        ? new ModalCastPlan(encoded, null, List.of(opponentId))
-                        : new ModalCastPlan(encoded, opponentId);
             }
 
             if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -2391,12 +2385,13 @@ public abstract class AiDecisionEngine {
     private List<UUID> findModalModeTargets(GameData gameData, Card card,
                                              ChooseOneEffect.ChooseOneOption option) {
         CardEffect effect = option.effect();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+        if (option.targetFilters() != null
+                && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             return findModalPermanentTargets(gameData, card, option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-            return opponentId == null ? List.of() : List.of(opponentId);
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+            return findModalPlayerOrPermanentTargets(gameData, card, option);
         }
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
@@ -2414,14 +2409,18 @@ public abstract class AiDecisionEngine {
         }
         CardEffect effect = option.effect();
         if (EffectResolution.targetsSpellOnStack(effect)) return false;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
             return findModalModeTargets(gameData, card, option).size() >= requiredModalTargetCount(option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) return true;
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;
+    }
+
+    private boolean modeAdmitsTarget(ChooseOneEffect.ChooseOneOption option, TargetPredicate.Kind kind) {
+        return option.effects().stream().anyMatch(effect -> effect.targetSpec().admits(kind));
     }
 
     private int requiredModalTargetCount(ChooseOneEffect.ChooseOneOption option) {
@@ -2488,6 +2487,48 @@ public abstract class AiDecisionEngine {
                                           List<UUID> alreadyChosen) {
         List<UUID> targets = findModalPermanentTargets(gameData, card, filter, 1, alreadyChosen);
         return targets.isEmpty() ? null : targets.getFirst();
+    }
+
+    private List<UUID> findModalPlayerOrPermanentTargets(
+            GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        int targetLimit = option.xScaledTargets()
+                ? Math.max(1, option.minTargets())
+                : option.maxTargets();
+        if (targetLimit <= 0) {
+            return List.of();
+        }
+
+        Card evalCard = card.createRuntimeCopy();
+        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        List<UUID> targets = new ArrayList<>();
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+            if (playerId == null || !modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+                continue;
+            }
+            if (targetSelector.isValidModalTarget(gameData, evalCard, option.effects(), playerId, aiPlayer.getId())) {
+                targets.add(playerId);
+                if (targets.size() == targetLimit) {
+                    return targets;
+                }
+            }
+        }
+
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)) {
+            for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+                if (playerId == null) continue;
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                    if (targetSelector.isValidModalTarget(
+                            gameData, evalCard, option.effects(), permanent.getId(), aiPlayer.getId())) {
+                        targets.add(permanent.getId());
+                        if (targets.size() == targetLimit) {
+                            return targets;
+                        }
+                    }
+                }
+            }
+        }
+        return targets;
     }
 
     /**

@@ -60,6 +60,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
@@ -303,6 +306,30 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI validates modal player-or-planeswalker target candidates")
+        void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 1);
+            giveManaSources(Plains::new, 1);
+            Permanent ordinaryPermanent = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Card modalSpell = new Card();
+            modalSpell.setName("Draw and Bolt");
+            modalSpell.setType(CardType.SORCERY);
+            modalSpell.setManaCost("{R}{W}");
+            modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
+                            new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
+            testHarness.setHand(aiTestPlayer, List.of(modalSpell));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNotEqualTo(ordinaryPermanent.getId());
         }
 
         @Test
