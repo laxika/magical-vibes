@@ -473,6 +473,8 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         }
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("declares 2 attackers."));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 

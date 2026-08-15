@@ -506,6 +506,8 @@ class MediumAiDecisionEngineTest {
         }
 
         assertThat(gd.getLife(human.getId())).isEqualTo(16);
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("declares 2 attackers."));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 

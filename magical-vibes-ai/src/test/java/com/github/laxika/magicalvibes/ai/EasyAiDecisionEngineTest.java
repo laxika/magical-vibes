@@ -1615,6 +1615,8 @@ class EasyAiDecisionEngineTest {
             }
 
             assertThat(combatGd.getLife(opponent.getId())).isEqualTo(16);
+            assertThat(combatGd.gameLog.stream().map(entry -> entry.plainText()))
+                    .anyMatch(log -> log.contains("declares 2 attackers."));
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                     .isNull();
         }
