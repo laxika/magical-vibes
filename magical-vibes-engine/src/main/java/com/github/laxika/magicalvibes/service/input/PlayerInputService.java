@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.CardPrinting;
+import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -25,6 +28,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -37,6 +41,10 @@ import java.util.stream.IntStream;
 public class PlayerInputService {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @Autowired(required = false)
+    private CardCatalog cardCatalog;
+    private volatile List<String> catalogNonbasicLandCardNames;
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         beginCardChoice(gameData, playerId, validIndices, prompt, false);
@@ -989,7 +997,8 @@ public class PlayerInputService {
 
     public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
                                        boolean restrictToOpponentHands, boolean nonbasicLandOnly) {
-        ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
+        ChoiceContext.CardNameChoice choiceContext =
+                new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, nonbasicLandOnly);
 
         List<String> cardNames;
         String prompt;
@@ -1000,7 +1009,7 @@ public class PlayerInputService {
             }
             prompt = "Choose the name of a revealed card.";
         } else if (nonbasicLandOnly) {
-            cardNames = collectNonBasicLandCardNamesInGame(gameData);
+            cardNames = collectNonbasicLandCardNames(gameData);
             prompt = "Choose a nonbasic land card name.";
         } else if (excludedTypes.isEmpty()) {
             cardNames = collectAllCardNamesInGame(gameData);
@@ -1053,7 +1062,7 @@ public class PlayerInputService {
      * opponent with the first name carried in the context.
      */
     public void beginDualCardNameChoice(GameData gameData, ChoiceContext.DualCardNameChoice ctx) {
-        List<String> cardNames = collectNonBasicLandCardNamesInGame(gameData);
+        List<String> cardNames = collectNonbasicCardNamesInGame(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 ctx.choosingPlayerId(), null, null, ctx, cardNames,
                 "Choose a card name other than a basic land card name."));
@@ -1194,9 +1203,40 @@ public class PlayerInputService {
     }
 
     /** Names of every card in the game that isn't a basic land card (Null Chamber). */
-    private List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
+    private List<String> collectNonbasicCardNamesInGame(GameData gameData) {
         return collectCardNamesInGame(gameData,
                 card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)));
+    }
+
+    /** Names of nonbasic land cards known to the game and implemented card catalog (Alpine Moon). */
+    private List<String> collectNonbasicLandCardNames(GameData gameData) {
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> card.hasType(CardType.LAND) && !card.getSupertypes().contains(CardSupertype.BASIC)));
+        names.addAll(catalogNonbasicLandCardNames());
+        return new ArrayList<>(names);
+    }
+
+    private List<String> catalogNonbasicLandCardNames() {
+        if (cardCatalog == null) {
+            return List.of();
+        }
+        List<String> cached = catalogNonbasicLandCardNames;
+        if (cached != null) {
+            return cached;
+        }
+        Set<String> names = new TreeSet<>();
+        for (CardSet set : CardSet.values()) {
+            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
+                Card card = printing.createCard();
+                if (card.hasType(CardType.LAND)
+                        && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                    names.add(card.getName());
+                }
+            }
+        }
+        List<String> result = List.copyOf(names);
+        catalogNonbasicLandCardNames = result;
+        return result;
     }
 
     /** Every distinct card name across all zones (battlefield, hand, graveyard, library, exile, stack)

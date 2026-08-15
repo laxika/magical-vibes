@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.ai.AiGameActions;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -21,6 +24,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ColorChoiceAiStrategyTest {
@@ -31,6 +35,12 @@ class ColorChoiceAiStrategyTest {
     private GameQueryService gameQueryService;
     @Mock
     private AiGameActions gameActions;
+    @Mock
+    private Permanent opponentPermanent;
+    @Mock
+    private Card opponentCard;
+    @Mock
+    private ActivatedAbility opponentAbility;
 
     private GameData gameData;
     private UUID aiPlayerId;
@@ -124,5 +134,32 @@ class ColorChoiceAiStrategyTest {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("first mode"));
+    }
+
+    @Test
+    @DisplayName("Card name choice answers with an offered name")
+    void answersCardNameChoiceWithOfferedName() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        gameData.orderedPlayerIds.add(aiPlayerId);
+        gameData.orderedPlayerIds.add(opponentId);
+        gameData.playerBattlefields.put(opponentId, List.of(opponentPermanent));
+        when(opponentPermanent.getCard()).thenReturn(opponentCard);
+        when(opponentCard.getActivatedAbilities()).thenReturn(List.of(opponentAbility));
+        when(opponentCard.getName()).thenReturn("Plains");
+
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.CardNameChoice(null, aiPlayerId, List.of()),
+                List.of("Glimmerpost"),
+                "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Glimmerpost"));
     }
 }

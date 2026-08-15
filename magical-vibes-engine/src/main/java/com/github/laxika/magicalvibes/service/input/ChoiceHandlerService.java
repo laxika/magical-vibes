@@ -119,6 +119,12 @@ public class ChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
+                && ctx.nonbasicLandOnly()
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid nonbasic land card name: " + colorName);
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
             return;

@@ -75,8 +75,11 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             String chosenName = opponentField.stream()
                     .filter(p -> !p.getCard().getActivatedAbilities().isEmpty())
                     .map(p -> p.getCard().getName())
+                    .filter(interaction.options()::contains)
                     .findFirst()
-                    .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
+                    .orElse(interaction.options().isEmpty()
+                            ? (opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName())
+                            : interaction.options().getFirst());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;

@@ -160,7 +160,13 @@ public sealed interface ChoiceContext {
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
 
-    record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
+    record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
+                          boolean nonbasicLandOnly) implements ChoiceContext {
+
+        public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes) {
+            this(card, controllerId, excludedTypes, false);
+        }
+    }
 
     /**
      * "You and an opponent each choose a card name other than a basic land card name" as the source
