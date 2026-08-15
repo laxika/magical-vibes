@@ -1509,6 +1509,9 @@ public abstract class AiDecisionEngine {
         if (isUnsupportedAlternateHandOnlyRoute(gameData, card, virtualPool)) {
             return false;
         }
+        if (isUnsupportedSharedColorDiscardRoute(gameData, card, virtualPool)) {
+            return false;
+        }
         // Non-mana additional costs (sacrifice / graveyard-exile) — the engine's single
         // satisfiability query, shared with the MCTS simulator so the two can never disagree.
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, aiPlayer.getId(), card)) {
@@ -1567,6 +1570,26 @@ public abstract class AiDecisionEngine {
             return false;
         }
         return !isAlternateHandCastSupportedByAi(alternate);
+    }
+
+    /**
+     * The engine playability query includes Dream Halls' shared-color discard alternative, but
+     * the AI's regular spell request does not select the discarded card. Treat that route as
+     * unavailable unless the printed cost or another AI-supported route is payable.
+     */
+    private boolean isUnsupportedSharedColorDiscardRoute(GameData gameData, Card card,
+                                                          ManaPool virtualPool) {
+        if (!castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(
+                gameData, aiPlayer.getId(), card)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || canPayPrintedManaCost(gameData, card, virtualPool, null, 0)) {
+            return false;
+        }
+
+        AlternateHandCast alternateHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        return alternateHandCast == null
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)
+                || !isAlternateHandCastSupportedByAi(alternateHandCast);
     }
 
     /**

@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -164,6 +166,25 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    @Test
+    @DisplayName("Medium AI does not submit a Dream Halls-only alternate cast as a mana cast")
+    void skipsDreamHallsOnlyAlternateCast() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new DreamHalls());
+        giveAiIslands(3);
+        CurseOfEchoes curseOfEchoes = new CurseOfEchoes();
+        AirElemental airElemental = new AirElemental();
+        harness.setHand(aiPlayer, List.of(curseOfEchoes, airElemental));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId()))
+                .containsExactly(curseOfEchoes, airElemental);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     private Card whitePlainsCreature() {

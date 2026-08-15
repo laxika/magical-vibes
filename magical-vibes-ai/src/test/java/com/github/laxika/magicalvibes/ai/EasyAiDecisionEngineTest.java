@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -218,6 +220,26 @@ class EasyAiDecisionEngineTest {
                 permanent.setSummoningSick(false);
                 testGd.playerBattlefields.get(aiTestPlayer.getId()).add(permanent);
             }
+        }
+
+        @Test
+        @DisplayName("Easy AI does not submit a Dream Halls-only alternate cast as a mana cast")
+        void skipsDreamHallsOnlyAlternateCast() {
+            giveAiPriority();
+            testHarness.addToBattlefield(aiTestPlayer, new DreamHalls());
+            giveManaSources(Island::new, 3);
+            CurseOfEchoes curseOfEchoes = new CurseOfEchoes();
+            AirElemental airElemental = new AirElemental();
+            testHarness.setHand(aiTestPlayer, List.of(curseOfEchoes, airElemental));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId()))
+                    .containsExactly(curseOfEchoes, airElemental);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).getTotal()).isZero();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
 
         @Test

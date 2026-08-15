@@ -23,9 +23,11 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
@@ -198,6 +200,32 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             mountain.setSummoningSick(false);
             gd.playerBattlefields.get(player.getId()).add(mountain);
         }
+    }
+
+    @Test
+    @DisplayName("Hard AI does not submit a Dream Halls-only alternate cast as a mana cast")
+    void skipsDreamHallsOnlyAlternateCast() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addToBattlefield(player1, new DreamHalls());
+        givePlayerIslands(player1, 3);
+        CurseOfEchoes curseOfEchoes = new CurseOfEchoes();
+        AirElemental airElemental = new AirElemental();
+        harness.setHand(player1, List.of(curseOfEchoes, airElemental));
+
+        MCTSEngine mctsEngine = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mctsEngine.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        HardAiDecisionEngine ai = createHardAi(player1);
+        ai.setMctsEngine(mctsEngine);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(curseOfEchoes, airElemental);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     private Card whitePlainsCreature() {
