@@ -226,7 +226,8 @@ class AppealToEirduTest extends BaseCardTest {
         UUID convokeId2 = bf.get(2).getId();
 
         // This should not throw - card is castable with convoke
-        harness.castInstantWithConvoke(player1, 0, List.of(targetId), List.of(convokeId1, convokeId2));
+        harness.castInstantWithConvoke(player1, 0, List.of(targetId),
+                List.of(targetId, convokeId1, convokeId2));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();

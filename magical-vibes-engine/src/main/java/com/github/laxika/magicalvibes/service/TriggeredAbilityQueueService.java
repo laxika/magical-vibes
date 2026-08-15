@@ -1053,7 +1053,7 @@ public class TriggeredAbilityQueueService {
                     if (graveyardCard.getManaValue() > maxManaValue) {
                         continue;
                     }
-                    if (predicateEvaluationService.matchesCardPredicate(
+                    if (filter == null || predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId)) {
                         matchingCards.add(graveyardCard);
                     }

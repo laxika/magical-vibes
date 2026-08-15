@@ -30,6 +30,7 @@ class MnemonicWallTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Shock");
         harness.assertNotInGraveyard(player1, "Shock");
@@ -44,8 +45,10 @@ class MnemonicWallTest extends BaseCardTest {
 
         castMnemonicWall();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        Card shock = gd.playerGraveyards.get(player1.getId()).getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Shock");

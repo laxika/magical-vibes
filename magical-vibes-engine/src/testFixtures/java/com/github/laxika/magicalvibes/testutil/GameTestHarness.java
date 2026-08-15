@@ -486,7 +486,12 @@ public class GameTestHarness {
 
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
+        if (sacrificePermanentIds == null || sacrificePermanentIds.isEmpty()) {
+            gameService.playCardWithAlternateCost(gameData, player, cardIndex, 0, null, null, List.of());
+        } else {
+            gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                    null, null, sacrificePermanentIds);
+        }
     }
 
     public void castCreatureWithMorph(Player player, int cardIndex) {
@@ -512,7 +517,12 @@ public class GameTestHarness {
     /** Cast any spell (creature, artifact, etc.) using its alternate hand cost, paying the given permanent IDs. */
     public void castWithAlternateCost(Player player, int cardIndex, List<UUID> alternateCostPermanentIds) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, alternateCostPermanentIds);
+        if (alternateCostPermanentIds == null || alternateCostPermanentIds.isEmpty()) {
+            gameService.playCardWithAlternateCost(gameData, player, cardIndex, 0, null, null, List.of());
+        } else {
+            gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                    null, null, alternateCostPermanentIds);
+        }
     }
 
     public void castCreatureWithBeholdPermanent(Player player, int cardIndex, UUID permanentId) {
@@ -533,8 +543,12 @@ public class GameTestHarness {
     public void castInstantWithAlternateCost(Player player, int cardIndex, UUID targetId,
                                              List<UUID> alternateCostPermanentIds) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null,
-                alternateCostPermanentIds);
+        if (alternateCostPermanentIds == null || alternateCostPermanentIds.isEmpty()) {
+            gameService.playCardWithAlternateCost(gameData, player, cardIndex, 0, targetId, null, List.of());
+        } else {
+            gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                    null, null, alternateCostPermanentIds);
+        }
     }
 
     public void castCreatureWithEvoke(Player player, int cardIndex, UUID targetId) {

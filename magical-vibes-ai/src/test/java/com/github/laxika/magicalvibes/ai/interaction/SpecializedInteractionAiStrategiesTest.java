@@ -152,6 +152,23 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void targetHandSpellCopyChoosesHighestManaValueEligibleCard() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+        Card invalid = card("Invalid", "{9}");
+
+        new TargetHandSpellCopyChoiceAiStrategy().answer(
+                new PendingInteraction.TargetHandSpellCopyChoice(
+                        aiPlayerId, opponentId, List.of(cheap, expensive, invalid),
+                        List.of(cheap.getId(), expensive.getId())),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(expensive.getId())));
+    }
+
+    @Test
     void magesContestPassesTheBid() throws Exception {
         new MagesContestBidChoiceAiStrategy().answer(
                 new PendingInteraction.MagesContestBidChoice(
@@ -198,6 +215,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,
+                PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.MagesContestBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
                 PendingInteraction.VividCardChoice.class);

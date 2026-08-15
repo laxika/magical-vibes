@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -57,6 +58,9 @@ public class GraveyardTargetingSupport {
             if (scope != null) {
                 return new Target(exile.filter(), scope, "to exile", 1);
             }
+        }
+        if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
+            return new Target(imprint.filter(), imprint.scope(), "to exile", 1);
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1);

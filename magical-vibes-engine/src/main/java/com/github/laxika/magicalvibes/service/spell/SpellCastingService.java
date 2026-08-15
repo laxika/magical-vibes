@@ -4979,7 +4979,7 @@ public class SpellCastingService {
                     : cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
         } else {
             normallyPayable = flags.hasRestricted()
-                    ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                    ? cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost,
                             flags.isArtifact(), flags.isMyr(),
                             flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(),
                             flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(),
@@ -5042,7 +5042,7 @@ public class SpellCastingService {
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                cost.payWithAdditionalGenericCost(pool, 0, additionalCost,
                         flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
                         flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
                         flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),

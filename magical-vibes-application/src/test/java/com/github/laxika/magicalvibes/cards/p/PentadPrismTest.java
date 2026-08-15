@@ -21,14 +21,12 @@ class PentadPrismTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PentadPrism()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
         Permanent prism = findPermanent(player1, "Pentad Prism");
-        assertThat(prism.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(prism.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test

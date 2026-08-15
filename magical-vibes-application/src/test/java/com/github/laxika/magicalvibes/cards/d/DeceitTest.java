@@ -49,7 +49,11 @@ class DeceitTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        castDeceit(ManaColor.BLUE, 1, ManaColor.BLACK, 1, List.of(player2.getId()));
+        harness.setHand(player1, List.of(new Deceit()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, List.of(player2.getId()));
 
         harness.passBothPriorities();
 

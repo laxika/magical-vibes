@@ -124,7 +124,7 @@ class VictimizeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough matching creature cards");
+                .hasMessageContaining("Card is not playable");
     }
 
     private void castVictimize() {

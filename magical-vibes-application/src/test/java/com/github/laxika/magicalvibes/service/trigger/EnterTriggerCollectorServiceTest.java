@@ -56,6 +56,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,6 +74,10 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
  */
 @ExtendWith(MockitoExtension.class)
 class EnterTriggerCollectorServiceTest {
+
+    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(),
+            Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
 
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PlayerInputService playerInputService;
@@ -125,6 +131,7 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Life-gain once-per-turn triggers fire only for the first life-gain event")
     void lifeGainOncePerTurnTriggerFiresOnlyOnce() {
+        when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class))).thenReturn(EMPTY_BONUS);
         CardEffect inner = new GainLifeEffect(1);
         OncePerTurnTriggerEffect effect = new OncePerTurnTriggerEffect(inner);
         addAllyCreatureTrigger(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);

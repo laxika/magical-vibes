@@ -111,7 +111,9 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 4);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player1Id, any(), 4);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 4);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                        eq(gd), eq(player1Id), any(), eq(4));
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                        eq(gd), eq(player2Id), any(), eq(4));
             }
 }

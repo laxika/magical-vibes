@@ -1087,6 +1087,17 @@ class SpellCastingServiceTest {
         }
 
         @Test
+        @DisplayName("Does not add effective X to a fixed mana cost")
+        void ignoresEffectiveXForFixedManaCost() {
+            Card card = createInstant("Test Fixed Cost Spell", "{3}{U}");
+            addMana(player1Id, ManaColor.BLUE, 4);
+
+            svc.paySpellManaCost(gd, player1Id, card, 3, List.of());
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        }
+
+        @Test
         @DisplayName("Pays X kicker cost from pool")
         void paysXKickerCost() {
             Card card = createCreature("Test Kicker Creature", "{4}{G}{G}");
