@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mathemagics;
@@ -309,6 +310,39 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(pyrokinesis);
         assertThat(gameData.getPlayerExiledCards(aiPlayer.getId())).containsExactly(redCard);
         assertThat(gameData.playerManaPools.get(aiPlayer.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void skipsTargetDependentSpellWhenSelectedTargetCannotPayFullCost() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.addMana(aiPlayer, ManaColor.RED, 2);
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        untappedCreature.setSummoningSick(false);
+        LuminousRebuke luminousRebuke = new LuminousRebuke();
+        harness.setHand(aiPlayer, List.of(luminousRebuke));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(luminousRebuke);
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(3);
     }
 
     @Test

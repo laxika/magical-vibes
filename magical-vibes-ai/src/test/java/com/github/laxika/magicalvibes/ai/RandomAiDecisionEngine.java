@@ -624,6 +624,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
             int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
 
+            if (!canAffordSelectedSpellTarget(
+                    gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+                telemetry.recordSkip("spell: selected target unaffordable", card.getName());
+                continue;
+            }
+
             if (validDiscardIndices == null) {
                 discardHandCardIndex = chooseDiscardCostIndex(
                         gameData, card, cardIndex, xValue, targetingTax);
