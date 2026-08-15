@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1876,6 +1877,7 @@ public abstract class AiDecisionEngine {
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
      */
     protected PlayCardRequest buildSpellPlayCardRequest(
+            Card card,
             int cardIndex,
             Integer xValue,
             UUID targetId,
@@ -1892,8 +1894,14 @@ public abstract class AiDecisionEngine {
         BeholdSelection selection = beholdSelection != null
                 ? beholdSelection
                 : new BeholdSelection(null, null);
+        Integer effectiveXValue = xValue;
+        if (effectiveXValue == null && card.hasXScaledTargets()
+                && card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(RepeatableAdditionalManaCost.class::isInstance)) {
+            effectiveXValue = 1;
+        }
         return new PlayCardRequest(
-                cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
                 null, sacrificePermanentId, null, null, null, null, exileGraveyardCardIndex,
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
                 discardHandCardIndices, null, additionalCostSacrificePermanentIds, List.of(), null,

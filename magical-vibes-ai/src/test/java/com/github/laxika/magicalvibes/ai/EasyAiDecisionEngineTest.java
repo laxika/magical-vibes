@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
+import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
@@ -301,6 +302,24 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(purge);
             assertThat(testGd.stack.getFirst().getTargetIds()).hasSize(2);
             assertThat(testGd.getLife(aiTestPlayer.getId())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Easy AI announces one target when paying no repeatable additional cost")
+        void castsPrimitiveJusticeWithItsBaseTargetCount() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            PrimitiveJustice primitiveJustice = new PrimitiveJustice();
+            testHarness.setHand(aiTestPlayer, List.of(primitiveJustice));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(primitiveJustice);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+            assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
         }
 
         @Test

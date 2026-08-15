@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
+import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
@@ -149,6 +150,39 @@ class RandomAiDecisionEngineTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(spell.getXValue()).isEqualTo(3);
+    }
+
+    @Test
+    void castsPrimitiveJusticeWithItsBaseTargetCount() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent artifact = harness.addToBattlefieldAndReturn(opponent, new Ornithopter());
+        harness.addMana(aiPlayer, ManaColor.RED, 2);
+        PrimitiveJustice primitiveJustice = new PrimitiveJustice();
+        harness.setHand(aiPlayer, List.of(primitiveJustice));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(primitiveJustice);
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 
     @Test

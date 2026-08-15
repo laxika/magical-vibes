@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -77,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -197,6 +199,19 @@ class MediumAiDecisionEngineTest {
         return card;
     }
 
+    private Card repeatableArtifactRemoval() {
+        Card card = new Card();
+        card.setName("Repeatable artifact removal");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{1}{R}");
+        card.addEffect(EffectSlot.SPELL,
+                new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
+        card.targetX(new PermanentPredicateTargetFilter(
+                new PermanentIsArtifactPredicate(), "Targets must be artifacts"), 100)
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        return card;
+    }
+
     @Test
     @DisplayName("Medium AI limits multi-target life costs to its available life")
     void limitsPerTargetLifeCostTargets() {
@@ -216,6 +231,24 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
         assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
         assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Medium AI announces one target when paying no repeatable additional cost")
+    void castsRepeatableTargetSpellWithItsBaseTargetCount() {
+        giveAiPriority();
+        giveAiMountains(2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        Card spell = repeatableArtifactRemoval();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 
     @Test

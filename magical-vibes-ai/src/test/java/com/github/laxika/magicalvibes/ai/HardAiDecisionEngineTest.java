@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
+import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
@@ -170,6 +171,31 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(purge);
         assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Hard AI announces one target when paying no repeatable additional cost")
+    void castsPrimitiveJusticeWithItsBaseTargetCount() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerMountains(player1, 2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        PrimitiveJustice primitiveJustice = new PrimitiveJustice();
+        harness.setHand(player1, List.of(primitiveJustice));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, artifact.getId(), 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(primitiveJustice);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 
     @Test

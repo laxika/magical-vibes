@@ -288,7 +288,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
                         finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));
@@ -466,7 +466,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
                         finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));

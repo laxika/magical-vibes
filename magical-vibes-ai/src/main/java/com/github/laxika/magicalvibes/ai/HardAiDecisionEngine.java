@@ -1155,7 +1155,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(idx, fXValue, fTargetId, fDamage,
+                buildSpellPlayCardRequest(plan.card, idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, convokeCreatureIds, fSacrifice, null, fExileIndices,
                         fDiscardHandCardIndex, fDiscardHandCardIndices, fMultiSacrificeIds,
                         plan.beholdSelection)));
@@ -2805,7 +2805,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
-                    buildSpellPlayCardRequest(idx, null, targetId, null, null, null, null, null,
+                    buildSpellPlayCardRequest(burnCard, idx, null, targetId, null, null, null, null, null,
                             delveIndices, null, null, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.

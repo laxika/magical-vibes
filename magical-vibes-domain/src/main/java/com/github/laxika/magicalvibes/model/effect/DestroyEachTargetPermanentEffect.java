@@ -22,6 +22,6 @@ public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated) impl
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.playerOrPermanent());
+        return TargetSpec.harmful(TargetPredicates.permanent());
     }
 }

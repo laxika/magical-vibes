@@ -705,7 +705,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
-                    buildSpellPlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
+                    buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                             finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId,
                             finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,
                             finalDiscardHandCardIndex, finalDiscardHandCardIndices,
