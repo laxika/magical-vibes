@@ -338,11 +338,13 @@ public class EnterTriggerCollectorService {
         if (gainLifeEqualToEnteringPower) {
             may = new MayEffect(new GainLifeEffect(new TargetPower()), may.prompt());
         }
-        // Bind the source permanent so a "may put a counter on this creature" wrapper (e.g.
-        // Godtracker of Jund) resolves against the source. The power marker uses the target-id
-        // context for the entering permanent; other ally scans leave the target player unset.
-        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        // Always bind the source permanent so a "may put a counter on this creature" wrapper
+        // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
+        // player unset (null), which is harmless for player-directed wrapped effects.
+        boolean needsTargetChoice = may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || (may.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && pe.defaultTargetPlayerId() == null);
+        if (needsTargetChoice) {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), match.permanent().getId(),

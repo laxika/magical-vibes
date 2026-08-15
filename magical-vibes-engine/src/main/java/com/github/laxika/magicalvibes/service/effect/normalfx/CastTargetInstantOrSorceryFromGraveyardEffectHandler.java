@@ -36,8 +36,11 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
         UUID controllerId = entry.getControllerId();
 
+        List<UUID> boundTargets = entry.targetsForEffect(effect);
         List<UUID> targetCardIds = !entry.getTargetCardIds().isEmpty()
                 ? entry.getTargetCardIds()
+                : !boundTargets.isEmpty()
+                ? boundTargets
                 : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         if (targetCardIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));

@@ -1143,10 +1143,13 @@ public abstract class AiDecisionEngine {
      * prompt ahead of optional attackers.
      */
     private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices) {
-        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
-        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
-        int maximumAttackers = combatAttackService.getMaximumAttackers(gameData, defaultTarget);
-        if (attackerIndices.size() <= maximumAttackers) {
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, activeDecisionPlayerId(gameData));
+        return capAttackersToCombatMaximum(gameData, attackerIndices, Map.of(), defaultTarget);
+    }
+
+    private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices,
+                                                       Map<Integer, UUID> attackTargets, UUID defaultTarget) {
+        if (attackerIndices.isEmpty()) {
             return attackerIndices;
         }
 
@@ -1163,19 +1166,34 @@ public abstract class AiDecisionEngine {
         }
         ordered.addAll(attackerIndices);
 
-        List<Integer> capped = new ArrayList<>(maximumAttackers);
+        List<Integer> capped = new ArrayList<>(attackerIndices.size());
         for (int attackerIndex : ordered) {
-            if (capped.size() == maximumAttackers) {
-                break;
+            List<Integer> candidate = new ArrayList<>(capped);
+            candidate.add(attackerIndex);
+            Map<Integer, UUID> candidateTargets = new HashMap<>();
+            for (int index : candidate) {
+                candidateTargets.put(index, attackTargets.getOrDefault(index, defaultTarget));
             }
-            capped.add(attackerIndex);
+            try {
+                CombatHelper.validateMaximumAttackers(gameData, candidate, candidateTargets);
+                capped.add(attackerIndex);
+            } catch (IllegalStateException ignored) {
+                // Keep the largest declaration found so far that satisfies every combat limit.
+            }
         }
         return capped;
     }
 
     private DeclareAttackersRequest capAttackersToCombatMaximum(
             GameData gameData, DeclareAttackersRequest request) {
-        List<Integer> capped = capAttackersToCombatMaximum(gameData, request.attackerIndices());
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, activeDecisionPlayerId(gameData));
+        Map<Integer, UUID> attackTargets = new HashMap<>();
+        if (request.attackTargets() != null) {
+            request.attackTargets().forEach((index, targetId) ->
+                    attackTargets.put(index, UUID.fromString(targetId)));
+        }
+        List<Integer> capped = capAttackersToCombatMaximum(
+                gameData, request.attackerIndices(), attackTargets, defaultTarget);
         if (capped.equals(request.attackerIndices())) {
             return request;
         }

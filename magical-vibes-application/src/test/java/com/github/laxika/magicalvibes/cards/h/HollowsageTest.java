@@ -25,12 +25,11 @@ class HollowsageTest extends BaseCardTest {
         runUntapStep(player1);
         assertThat(hollowsage.isTapped()).isFalse();
 
-        // Trigger resolves into the "may" prompt.
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         // Target opponent chooses the card to discard.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -47,6 +46,7 @@ class HollowsageTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
         runUntapStep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -64,10 +64,10 @@ class HollowsageTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
 
         runUntapStep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
