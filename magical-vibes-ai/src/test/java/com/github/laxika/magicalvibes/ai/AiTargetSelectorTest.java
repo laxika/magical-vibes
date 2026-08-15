@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.r.RivalsDuel;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.s.SlaveOfBolas;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
@@ -1343,6 +1344,7 @@ class AiTargetSelectorTest {
             // Fireball charges {1} per extra target — priced by neither the AI's affordability
             // check nor its mana tapping, so it stays on the single-target line.
             assertThat(targetSelector.needsMultiTargetSelection(new Fireball())).isFalse();
+            assertThat(targetSelector.needsMultiTargetSelection(new SetessanTactics())).isFalse();
         }
 
         @Test

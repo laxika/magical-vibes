@@ -367,10 +367,11 @@ class AiTargetSelector {
      * (damage-assignment path), and stack-targeting spells keep their existing paths.
      *
      * <p>So does a spell that charges mana per extra target (Fireball's {@code
-     * additionalCostPerExtraTarget}): the AI's affordability check prices a cast by its mana cost
-     * and X alone, so every target past the first would be mana it never taps and the engine would
-     * reject the cast. Those spells take the single-target line — one target, no extra cost, and
-     * for an evenly divided burn spell the hardest hit available.
+     * additionalCostPerExtraTarget} or Setessan Tactics's {@code additionalManaCostPerExtraTarget}):
+     * the AI's affordability check prices a cast by its mana cost and X alone, so every target past
+     * the first would be mana it never taps and the engine would reject the cast. Those spells take
+     * the single-target line — one target, no extra cost, and for an evenly divided burn spell the
+     * hardest hit available.
      */
     boolean needsMultiTargetSelection(Card card) {
         List<SpellTarget> groups = card.getSpellTargets();
@@ -380,6 +381,8 @@ class AiTargetSelector {
         return groups.size() == 1
                 && card.getMaxTargets() > 1
                 && card.getAdditionalCostPerExtraTarget() <= 0
+                && (card.getAdditionalManaCostPerExtraTarget() == null
+                        || card.getAdditionalManaCostPerExtraTarget().isEmpty())
                 && !card.hasXScaledTargets()
                 && !EffectResolution.needsDamageDistribution(card)
                 && !EffectResolution.needsSpellTarget(card);

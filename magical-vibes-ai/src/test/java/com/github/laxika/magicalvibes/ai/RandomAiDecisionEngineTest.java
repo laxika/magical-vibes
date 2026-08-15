@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
+import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
@@ -179,6 +180,39 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(culturalExchange);
         assertThat(gameData.stack.getFirst().getTargetIds())
                 .containsExactly(opponent.getId(), aiPlayer.getId());
+    }
+
+    @Test
+    void castsStriveSpellWithOnlyTheTargetsItsManaCovers() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        SetessanTactics tactics = new SetessanTactics();
+        harness.setHand(aiPlayer, List.of(tactics));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(tactics);
+        assertThat(gameData.stack.getFirst().getTargetId()).isNotNull();
+        assertThat(gameData.stack.getFirst().getTargetIds()).isEmpty();
     }
 
     @Test
