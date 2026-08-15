@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -175,6 +177,22 @@ class TriggerTargetCollectorTest {
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
 
         assertThat(result.validTargets()).containsExactly(opponentCreature.getId());
+    }
+
+    @Test
+    @DisplayName("May-pay effects use a targeted else effect when the payment branch is empty")
+    void mayPayEffectUsesTargetedElseEffectWhenWrappedEffectIsNull() {
+        Permanent opponentPermanent = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).add(opponentPermanent);
+
+        List<CardEffect> effects = List.of(new MayPayManaEffect(
+                "{U}", null, "Pay {U}?", new DestroyTargetPermanentEffect(true)));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.canTargetPermanents()).isTrue();
+        assertThat(result.validTargets()).containsExactly(opponentPermanent.getId());
     }
 
     @Test

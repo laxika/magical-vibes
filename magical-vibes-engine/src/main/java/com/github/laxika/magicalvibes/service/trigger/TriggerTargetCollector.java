@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -279,17 +280,33 @@ public class TriggerTargetCollector {
     /**
      * Looks through the wrappers that hide an effect's own targeting from this collector.
      *
-     * <p>{@link MayEffect} and {@link MayPayManaEffect} carry the target restriction on their
-     * wrapped effects, while the target of the ability as a whole is still chosen when the trigger
-     * is put on the stack. {@link ConditionalEffect} is unwrapped only for the slots whose
+     * <p>{@link MayEffect} and {@link MayPayManaEffect} carry the target restriction on the
+     * effective wrapped or else effect, while the target of the ability as a whole is still chosen
+     * when the trigger is put on the stack. {@link ConditionalEffect} is unwrapped only for the slots whose
      * {@link Options#unwrapConditional()} says so.
      */
     private static CardEffect unwrap(CardEffect effect, Options options) {
         CardEffect unwrapped = switch (effect) {
-            case MayEffect may -> may.wrapped();
-            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            case MayEffect may -> effectiveTargetEffect(may.wrapped(), may.elseEffect(), effect);
+            case MayPayManaEffect mayPay -> effectiveTargetEffect(
+                    mayPay.wrapped(), mayPay.elseEffect(), effect);
             default -> effect;
         };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;
+    }
+
+    private static CardEffect effectiveTargetEffect(CardEffect wrapped, CardEffect elseEffect,
+                                                    CardEffect fallback) {
+        if (hasTargetingSpec(wrapped)) {
+            return wrapped;
+        }
+        if (hasTargetingSpec(elseEffect)) {
+            return elseEffect;
+        }
+        return fallback;
+    }
+
+    private static boolean hasTargetingSpec(CardEffect effect) {
+        return effect != null && !TargetSpec.NONE.equals(effect.targetSpec());
     }
 }
