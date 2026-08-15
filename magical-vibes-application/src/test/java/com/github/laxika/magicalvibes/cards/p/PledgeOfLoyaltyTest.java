@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DarkestHour;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -50,6 +51,23 @@ class PledgeOfLoyaltyTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent ->
                 permanent.getCard().getName().equals("Red Permanent"));
         assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses layer-5 colors without recursing through the granted protection")
+    void handlesEnchantedPermanentAmongAuraControllersPermanents() {
+        Permanent enchanted = addCreatureReady(player1, coloredPermanent("Enchanted Creature", CardColor.WHITE));
+        harness.addToBattlefield(player1, new DarkestHour());
+        harness.setHand(player1, List.of(new PledgeOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, enchanted)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.WHITE)).isTrue();
     }
 
     @Test
