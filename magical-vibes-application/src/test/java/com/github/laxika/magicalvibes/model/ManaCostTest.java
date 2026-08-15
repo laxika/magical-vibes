@@ -244,6 +244,16 @@ class ManaCostTest {
         }
 
         @Test
+        void hybridSymbolsReduceMaxX() {
+            ManaCost cost = new ManaCost("{X}{G/U}{G/U}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 2);
+            pool.add(ManaColor.GREEN, 1);
+
+            assertThat(cost.calculateMaxX(pool)).isEqualTo(1);
+        }
+
+        @Test
         void tripleXWithSevenColorlessMaxXIsTwo() {
             // {X}{X}{X}{1} with 7 colorless: 1 generic + 6 for X, 6/3 = 2.
             ManaCost cost = new ManaCost("{X}{X}{X}{1}");

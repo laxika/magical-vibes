@@ -2275,6 +2275,21 @@ class AiManaManagerTest {
             int maxX = manager.calculateMaxAffordableX(card, pool, 0);
             assertThat(maxX).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("accounts for hybrid symbols")
+        void accountsForHybridSymbols() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 2);
+            pool.add(ManaColor.GREEN, 1);
+
+            Card card = new Card();
+            card.setManaCost("{X}{G/U}{G/U}");
+
+            int maxX = manager.calculateMaxAffordableX(card, pool, 0);
+
+            assertThat(maxX).isEqualTo(1);
+        }
     }
 
     // ── calculateSmartX ─────────────────────────────────────────────

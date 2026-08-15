@@ -1424,23 +1424,17 @@ public class ManaCost {
         if (xSymbolCount <= 0) {
             return 0;
         }
-        if (pool.isAllManaSpendableAsAnyColor()) {
-            ManaPool rewritten = copyManaPool(pool);
-            applyAllManaAsAnyColor(rewritten);
-            return calculateMaxX(rewritten);
-        }
-        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
-                return 0;
+        int low = 0;
+        int high = Math.max(0, pool.getTotal() + pool.getXCostOnlyColorless());
+        while (low < high) {
+            int candidate = low + (high - low + 1) / 2;
+            if (canPay(pool, candidate)) {
+                low = candidate;
+            } else {
+                high = candidate - 1;
             }
         }
-
-        int remaining = pool.getTotal() + pool.getXCostOnlyColorless();
-        for (int count : coloredCosts.values()) {
-            remaining -= count;
-        }
-
-        return Math.max(0, (remaining - genericCost) / xSymbolCount);
+        return low;
     }
 
     /**
