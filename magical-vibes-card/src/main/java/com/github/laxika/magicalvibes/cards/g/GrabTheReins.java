@@ -11,16 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-
-import static com.github.laxika.magicalvibes.model.filter.PlayerRelation.ANY;
 
 @CardRegistration(set = "MRD", collectorNumber = "95")
 public class GrabTheReins extends Card {
@@ -38,13 +31,8 @@ public class GrabTheReins extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",
-                        new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(),
-                        new AnyTargetPredicateTargetFilter(
-                                new PermanentAnyOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentIsPlaneswalkerPredicate())),
-                                new PlayerRelationPredicate(ANY),
-                                "Target must be any target"))
+                        List.of(new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
+                        null, null, 0, 0, false, null)
         )));
     }
 }

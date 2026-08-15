@@ -200,6 +200,9 @@ class CombatDamageServiceTest {
                 .thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gameData), any(UUID.class), any()))
+                .thenReturn(1);
         // Lenient: only consulted for creatures that actually took damage this step.
         lenient().when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))

@@ -122,6 +122,10 @@ class StackResolutionServiceTest {
         // never reach battlefield entry (countered, fizzled) don't call it.
         lenient().when(battlefieldEntryService.resolveEnteringController(any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(gameQueryService.replaceCounters(any(), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(gameQueryService.replaceCounters(any(), any(), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(4));
     }
 
     private Card createCreature(String name) {

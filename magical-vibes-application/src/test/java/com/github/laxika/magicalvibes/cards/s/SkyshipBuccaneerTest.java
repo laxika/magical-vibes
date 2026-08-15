@@ -17,13 +17,11 @@ class SkyshipBuccaneerTest extends BaseCardTest {
     void raidDrawsCard() {
         setDeck(player1, List.of(new Forest()));
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-
         castSkyshipBuccaneer();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Forest");
     }
 
@@ -31,12 +29,10 @@ class SkyshipBuccaneerTest extends BaseCardTest {
     @DisplayName("Raid does not draw a card when no attack occurred")
     void noRaidDoesNotDrawCard() {
         setDeck(player1, List.of(new Forest()));
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-
         castSkyshipBuccaneer();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertNotInHand(player1, "Forest");
     }
 

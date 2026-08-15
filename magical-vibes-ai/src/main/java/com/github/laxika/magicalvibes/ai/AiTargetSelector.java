@@ -617,7 +617,8 @@ class AiTargetSelector {
         }
         UUID boardOpponent = boardOwner.equals(aiPlayerId) ? opponentId : aiPlayerId;
         List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(boardOwner, List.of()).stream()
-                .filter(p -> !alreadyChosen.contains(p.getId()) && !chosen.contains(p.getId()))
+                .filter(p -> (card.isAllowSharedTargets() || !alreadyChosen.contains(p.getId()))
+                        && !chosen.contains(p.getId()))
                 .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
                 .sorted(Comparator.comparingDouble(
                         (Permanent p) -> generalTargetPriority(gameData, p, boardOwner, boardOpponent)).reversed())

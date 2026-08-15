@@ -98,6 +98,7 @@ class VedalkenShacklesTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.castCreature(player2, 0, 0, shackles.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(shackles);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);

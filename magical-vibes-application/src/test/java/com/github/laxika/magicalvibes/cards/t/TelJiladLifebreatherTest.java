@@ -20,7 +20,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.getRegenerationShield()).isEqualTo(1);
@@ -35,7 +35,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -46,7 +46,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

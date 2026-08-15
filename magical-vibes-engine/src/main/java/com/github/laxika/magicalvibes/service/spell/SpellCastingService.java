@@ -2793,7 +2793,6 @@ public class SpellCastingService {
                             filteredSpellEffects, resolvedXValue, targetId,
                             null, Map.of(), Zone.STACK, List.of(), targetIds
                     );
-                    entry.setPrimaryTargetStoredSeparately(allSpellTargetsAlsoAllowPermanents);
                     gameData.stack.add(entry);
                 } else {
                     gameData.stack.add(new StackEntry(

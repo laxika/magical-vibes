@@ -18,6 +18,6 @@ public class WaterspoutWeavers extends Card {
         // If it shares a creature type with this creature, you may reveal it. If you do, each
         // creature you control gains flying until end of turn.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new KinshipEffect(List.of(
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES))));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES))));
     }
 }

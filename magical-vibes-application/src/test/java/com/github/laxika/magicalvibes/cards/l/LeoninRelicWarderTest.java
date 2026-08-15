@@ -29,10 +29,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, targetId); // choose target -> effect resolves inline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     /**
@@ -54,8 +54,9 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -95,9 +96,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Leonin Relic-Warder");
@@ -216,15 +218,17 @@ class LeoninRelicWarderTest extends BaseCardTest {
     @DisplayName("Nothing returns if may was declined")
     void nothingReturnsIfMayDeclined() {
         harness.addToBattlefield(player2, new LeoninScimitar());
+        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LeoninRelicWarder()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifactId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         // Reset for follow-up spell
         resetForFollowUpSpell();
@@ -255,15 +259,12 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-
-        // Remove target before choosing it
-        gd.playerBattlefields.get(player2.getId()).clear();
-
-        // Choose removed target -> effect does nothing during inline resolution
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artifactId);
+
+        // Remove target before the triggered ability resolves
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         // No exile-return tracking should exist since target was gone

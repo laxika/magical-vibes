@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -95,6 +96,12 @@ public class TargetValidationService {
 
         boolean graveyardTarget = predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && ctx.targetZone() == Zone.GRAVEYARD;
+        boolean omittedOptionalGraveyardTarget = ctx.targetId() == null
+                && effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                && returnEffect.upTo();
+        if (omittedOptionalGraveyardTarget) {
+            return;
+        }
         if (graveyardTarget
                 && !gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");

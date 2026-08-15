@@ -33,6 +33,7 @@ class WardensOfTheCycleTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         advanceToEndStep(player1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
         harness.handleListChoice(player1, "You gain 2 life.");
@@ -51,6 +52,7 @@ class WardensOfTheCycleTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         advanceToEndStep(player1);
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "You draw a card and you lose 1 life.");
         harness.passBothPriorities();
 

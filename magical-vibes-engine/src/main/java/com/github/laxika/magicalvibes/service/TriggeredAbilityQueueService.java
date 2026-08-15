@@ -998,41 +998,36 @@ public class TriggeredAbilityQueueService {
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
-            boolean targetDescribed = false;
             GraveyardTargetingSupport.Target describedTarget =
                     graveyardTargetingSupport.findTarget(pending.effects());
-            if (describedTarget != null) {
+            ReturnCardFromGraveyardEffect returnEffect = pending.effects().stream()
+                    .map(this::targetedReturnEffect)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            if (returnEffect != null) {
+                filter = returnEffect.filter();
+                lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
+                scope = returnEffect.source();
+            } else if (describedTarget != null) {
                 filter = describedTarget.filter();
                 scope = describedTarget.scope();
-                targetDescribed = true;
-            }
-            for (CardEffect effect : pending.effects()) {
-                if (targetDescribed) {
-                    break;
-                }
-                CardEffect targetEffect = unwrapConditionalEffect(effect);
-                ReturnCardFromGraveyardEffect returnEffect = targetedReturnEffect(effect);
-                if (returnEffect != null) {
-                    filter = returnEffect.filter();
-                    lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
-                    scope = returnEffect.source();
-                    targetDescribed = true;
-                    break;
-                }
-                if (targetEffect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
-                    // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
-                    filter = new CardTypePredicate(CardType.CREATURE);
-                    scope = GraveyardSearchScope.ALL_GRAVEYARDS;
-                    targetDescribed = true;
-                    break;
-                }
-                if (targetEffect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
-                    // Ink-Eyes, Servant of Oni: creature card from an opponent's graveyard, narrowed
-                    // to the damaged player by the pending trigger's graveyardOwnerId.
-                    filter = steal.filter();
-                    scope = GraveyardSearchScope.OPPONENT_GRAVEYARD;
-                    targetDescribed = true;
-                    break;
+            } else {
+                for (CardEffect effect : pending.effects()) {
+                    CardEffect targetEffect = unwrapConditionalEffect(effect);
+                    if (targetEffect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
+                        // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
+                        filter = new CardTypePredicate(CardType.CREATURE);
+                        scope = GraveyardSearchScope.ALL_GRAVEYARDS;
+                        break;
+                    }
+                    if (targetEffect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect steal) {
+                        // Ink-Eyes, Servant of Oni: creature card from an opponent's graveyard, narrowed
+                        // to the damaged player by the pending trigger's graveyardOwnerId.
+                        filter = steal.filter();
+                        scope = GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                        break;
+                    }
                 }
             }
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
@@ -1062,7 +1057,9 @@ public class TriggeredAbilityQueueService {
 
             gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
-            if (matchingCards.isEmpty()) {
+            int describedMinTargets = describedTarget == null ? 0 : describedTarget.minTargets();
+            int minTargets = Math.max(pending.minCount(), describedMinTargets);
+            if (matchingCards.isEmpty() || matchingCards.size() < minTargets) {
                 log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
@@ -1089,10 +1086,15 @@ public class TriggeredAbilityQueueService {
                 case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";
             };
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
-                    pending.minCount(),
-                    pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel
-                            + " from " + zoneLabel + ".");
+            int maxTargets = describedTarget == null
+                    ? Math.min(1, matchingCards.size())
+                    : Math.min(describedTarget.maxTargets(), matchingCards.size());
+            String countLabel = maxTargets == 1 ? "target " : minTargets == maxTargets
+                    ? maxTargets + " target " : "up to " + maxTargets + " target ";
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, maxTargets,
+                    minTargets,
+                    pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
+                            + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".");
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability triggers — choose a graveyard target."));

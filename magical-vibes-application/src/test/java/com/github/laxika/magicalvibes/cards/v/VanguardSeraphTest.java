@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -56,18 +58,19 @@ class VanguardSeraphTest extends BaseCardTest {
     @DisplayName("Surveils again on the first life gain of a new turn")
     void surveilsAgainOnNewTurn() {
         Card firstTopCard = new GrizzlyBears();
+        Card drawCard = new HillGiant();
         Card secondTopCard = new GrizzlyBears();
-        prepareLibrary(firstTopCard, secondTopCard);
+        prepareLibrary(firstTopCard, drawCard, secondTopCard);
         harness.addToBattlefield(player1, new VanguardSeraph());
 
         castAngelAndResolveLifeGain();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+        advanceToNextTurn(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         castAngelAndResolveLifeGain();
         harness.passBothPriorities();
@@ -87,5 +90,16 @@ class VanguardSeraphTest extends BaseCardTest {
     private void prepareLibrary(Card... cards) {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer) {
+        harness.forceActivePlayer(currentActivePlayer);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 }

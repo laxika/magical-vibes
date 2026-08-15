@@ -3302,17 +3302,22 @@ public class AbilityActivationService {
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
+            Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
+                    ? soaCtx : Set.of();
             if (preCheck.hasX() && ability.getXColorRestrictions() != null) {
                 if (!preCheck.canPay(manaPool, xValue, ability.getXColorRestrictions(), additionalGenericCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else if (preCheck.hasX()) {
                 if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx,
-                        false, false, false, null, soaCtx, false, artifactCtx)) {
+                        false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
+                        creatureSourceSoaCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
-                if (!preCheck.canPay(affordabilityPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
+                if (!preCheck.canPay(affordabilityPool, additionalGenericCost, artifactCtx, myrCtx,
+                        false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
+                        creatureSourceSoaCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }

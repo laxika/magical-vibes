@@ -42,8 +42,9 @@ class PossessedPortalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Mountain()));
         harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handleListChoice(player1,
@@ -65,8 +66,9 @@ class PossessedPortalTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, forest.getId());

@@ -1634,7 +1634,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         HardAiDecisionEngine ai = createHardAi(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
         gd.interaction.clearAwaitingInput();
