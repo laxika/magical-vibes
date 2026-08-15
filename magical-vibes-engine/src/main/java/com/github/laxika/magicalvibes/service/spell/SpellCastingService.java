@@ -4979,7 +4979,8 @@ public class SpellCastingService {
                     : cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
         } else {
             normallyPayable = flags.hasRestricted()
-                    ? cost.canPay(pool, effectiveXValue, flags.isArtifact(), flags.isMyr(),
+                    ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                            flags.isArtifact(), flags.isMyr(),
                             flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(),
                             flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(),
                             flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly(), false,
@@ -5041,7 +5042,13 @@ public class SpellCastingService {
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly(), false, flags.legendarySpellOnly(), flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(), flags.subtypeCreatureSourceSpellOrAbilityContext());
+                cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                        flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                        flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                        flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                        flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                        flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                        flags.subtypeCreatureSourceSpellOrAbilityContext());
             } else {
                 cost.pay(pool, additionalCost);
             }

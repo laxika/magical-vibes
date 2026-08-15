@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
+import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -55,6 +57,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsColoredCreatureWithHeartlessSummoningReduction() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(aiPlayer, new HeartlessSummoning());
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        SoldeviAdnate adnate = new SoldeviAdnate();
+        harness.setHand(aiPlayer, List.of(adnate));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(adnate);
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+    }
 
     @Test
     void castsPyrokinesisWithItsHandExileAlternateCost() {
