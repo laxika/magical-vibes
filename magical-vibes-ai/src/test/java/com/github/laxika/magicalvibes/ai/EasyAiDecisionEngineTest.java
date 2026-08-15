@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
-import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -1505,15 +1505,17 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Easy AI respects a battlefield-wide attacker limit")
-        void respectsBattlefieldWideAttackerLimit() {
-            combatGd.playerLifeTotals.put(opponent.getId(), 2);
-            Permanent limit = combatHarness.addToBattlefieldAndReturn(opponent, new DuelingGrounds());
+        @DisplayName("Easy AI respects a controller-scoped attacker limit")
+        void respectsControllerScopedAttackerLimit() {
+            combatGd.playerLifeTotals.put(opponent.getId(), 20);
+            Permanent limit = combatHarness.addToBattlefieldAndReturn(opponent, new Crawlspace());
             limit.setSummoningSick(false);
             Permanent first = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
             first.setSummoningSick(false);
             Permanent second = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
             second.setSummoningSick(false);
+            Permanent third = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            third.setSummoningSick(false);
 
             combatHarness.forceActivePlayer(combatAiPlayer);
             combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -1522,14 +1524,14 @@ class EasyAiDecisionEngineTest {
 
             FuzzLogWatcher watcher = FuzzLogWatcher.install();
             try {
-                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+                combatAi.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1, 2), null));
 
                 assertThat(watcher.drainFailures()).isEmpty();
             } finally {
                 watcher.uninstall();
             }
 
-            assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
+            assertThat(combatGd.getLife(opponent.getId())).isEqualTo(16);
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                     .isNull();
         }

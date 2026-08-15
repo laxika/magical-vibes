@@ -1116,7 +1116,9 @@ public abstract class AiDecisionEngine {
      * prompt ahead of optional attackers.
      */
     private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices) {
-        int maximumAttackers = combatAttackService.getMaximumAttackers(gameData);
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
+        int maximumAttackers = combatAttackService.getMaximumAttackers(gameData, defaultTarget);
         if (attackerIndices.size() <= maximumAttackers) {
             return attackerIndices;
         }

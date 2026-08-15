@@ -197,10 +197,24 @@ public class CombatAttackService {
      * Returns the maximum number of creatures that may be declared as attackers this combat.
      */
     public int getMaximumAttackers(GameData gameData) {
+        return getMaximumAttackers(gameData, null, false);
+    }
+
+    /**
+     * Returns the maximum number of creatures that may attack the given target this combat.
+     */
+    public int getMaximumAttackers(GameData gameData, UUID attackTargetId) {
+        return getMaximumAttackers(gameData, attackTargetId, true);
+    }
+
+    private int getMaximumAttackers(GameData gameData, UUID attackTargetId,
+                                    boolean filterByAttackTarget) {
         int[] maximum = {Integer.MAX_VALUE};
-        gameData.forEachPermanent((ignored, permanent) -> {
+        gameData.forEachPermanent((sourceControllerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CombatCreatureLimitEffect limit) {
+                if (effect instanceof CombatCreatureLimitEffect limit
+                        && (!filterByAttackTarget
+                        || limit.appliesToAttackTarget(sourceControllerId, attackTargetId))) {
                     maximum[0] = Math.min(maximum[0], limit.maxAttackers());
                 }
             }

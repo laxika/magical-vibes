@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
-import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -385,16 +386,18 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
-    @DisplayName("Hard AI respects a battlefield-wide attacker limit")
-    void respectsBattlefieldWideAttackerLimit() {
+    @DisplayName("Hard AI respects a controller-scoped attacker limit")
+    void respectsControllerScopedAttackerLimit() {
         HardAiDecisionEngine ai = createHardAi(player1);
-        gd.playerLifeTotals.put(player2.getId(), 2);
-        Permanent limit = harness.addToBattlefieldAndReturn(player2, new DuelingGrounds());
+        gd.playerLifeTotals.put(player2.getId(), 20);
+        Permanent limit = harness.addToBattlefieldAndReturn(player2, new Crawlspace());
         limit.setSummoningSick(false);
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         first.setSummoningSick(false);
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         second.setSummoningSick(false);
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        third.setSummoningSick(false);
         pinLibrariesAndHands();
 
         harness.forceActivePlayer(player1);
@@ -404,14 +407,14 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {
-            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+            ai.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1, 2), null));
 
             assertThat(watcher.drainFailures()).isEmpty();
         } finally {
             watcher.uninstall();
         }
 
-        assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
