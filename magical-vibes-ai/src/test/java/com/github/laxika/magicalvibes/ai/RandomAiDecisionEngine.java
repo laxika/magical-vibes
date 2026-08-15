@@ -454,7 +454,17 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Strike) also belongs on the multi-target path — routing it to the single-target one
             // submits one target and can offer a player the spell can't legally target.
             boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-            if (isMultiTarget && modalPlan == null) {
+            if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                    && targetSelector.hasSeparateGraveyardTarget(card)) {
+                AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
+                        gameData, card, aiPlayer.getId());
+                if (selection == null) {
+                    telemetry.recordSkip("spell: mixed graveyard targets unsatisfiable", card.getName());
+                    continue;
+                }
+                targetId = selection.targetId();
+                multiTargetIds = selection.targetIds();
+            } else if (isMultiTarget && modalPlan == null) {
                 multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
                 if (multiTargetIds == null) {
                     telemetry.recordSkip("spell: multi-target requirements unsatisfiable", card.getName());
@@ -612,6 +622,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (targetId != null
                     && modalPlan == null
                     && !isMultiTarget
+                    && !targetSelector.hasSeparateGraveyardTarget(card)
                     && !EffectResolution.needsDamageDistribution(card)
                     && !castCost.hasX()) {
                 List<UUID> currentTargets = findRandomTargets(gameData, card);

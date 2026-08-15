@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -1231,6 +1232,20 @@ class MediumAiDecisionEngineTest {
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(aiPlayer.getId())).singleElement()
                 .isInstanceOf(Unbury.class);
+    }
+
+    @Test
+    @DisplayName("Medium AI selects Torrent of Souls' optional graveyard and player targets separately")
+    void selectsTorrentOfSoulsTargetsSeparately() {
+        giveAiPriority();
+        TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+
+        AiTargetSelector.SpellTargetSelection selection = ai.targetSelector
+                .chooseSeparateGraveyardTargets(gd, torrentOfSouls, aiPlayer.getId());
+
+        assertThat(selection).isNotNull();
+        assertThat(selection.targetId()).isNull();
+        assertThat(selection.targetIds()).containsExactly(human.getId());
     }
 
     @Test

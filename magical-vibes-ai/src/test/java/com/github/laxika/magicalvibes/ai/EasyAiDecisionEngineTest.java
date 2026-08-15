@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -409,6 +410,23 @@ class EasyAiDecisionEngineTest {
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).singleElement()
                     .isInstanceOf(Unbury.class);
+        }
+
+        @Test
+        @DisplayName("Easy AI keeps Torrent of Souls' optional graveyard target separate from its player target")
+        void castsTorrentOfSoulsWithoutOptionalGraveyardTarget() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            giveManaSources(Mountain::new, 3);
+            TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+            testHarness.setHand(aiTestPlayer, List.of(torrentOfSouls));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(human.getId());
         }
 
         @Test

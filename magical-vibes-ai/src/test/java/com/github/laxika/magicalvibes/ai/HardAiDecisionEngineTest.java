@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -1582,6 +1583,30 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(player1.getId())).singleElement()
                 .isInstanceOf(Unbury.class);
+    }
+
+    @Test
+    @DisplayName("Hard AI keeps Torrent of Souls' optional graveyard target separate from its player target")
+    void castsTorrentOfSoulsWithoutOptionalGraveyardTarget() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        givePlayerSwamps(player1, 2);
+        givePlayerMountains(player1, 3);
+        TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+        harness.setHand(player1, List.of(torrentOfSouls));
+
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(player2.getId());
     }
 
     @Test

@@ -1015,7 +1015,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : initialTargetId;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (isMultiTarget && modalPlan == null) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                && targetSelector.hasSeparateGraveyardTarget(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
+                    gameData, card, aiPlayer.getId());
+            if (selection == null) return null;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;
             targetId = null;

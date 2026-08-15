@@ -161,7 +161,16 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (isMultiTarget && modalPlan == null) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                && targetSelector.hasSeparateGraveyardTarget(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
+                    gameData, card, aiPlayer.getId());
+            if (selection == null) {
+                return false;
+            }
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) {
                 return false;
@@ -337,7 +346,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (isMultiTarget && modalPlan == null) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
+                && targetSelector.hasSeparateGraveyardTarget(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
+                    gameData, card, aiPlayer.getId());
+            if (selection == null) return false;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return false;
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -151,6 +152,38 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
         assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void castsTorrentOfSoulsWithoutOptionalGraveyardTarget() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.addMana(aiPlayer, ManaColor.RED, 3);
+        TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+        harness.setHand(aiPlayer, List.of(torrentOfSouls));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
+        assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+        assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(opponent.getId());
     }
 
     @Test
