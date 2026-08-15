@@ -41,11 +41,7 @@ class NessianGameWardenTest extends BaseCardTest {
         chooseCard(0);
 
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-
-        PendingInteraction.LibraryReorder reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(reorder.cards()).containsExactly(shock);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Hill Giant", "Shock");

@@ -24,7 +24,7 @@ class CruelFeedingTest extends BaseCardTest {
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new CruelFeeding()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castInstant(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class CruelFeedingTest extends BaseCardTest {
         Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new CruelFeeding()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castInstant(

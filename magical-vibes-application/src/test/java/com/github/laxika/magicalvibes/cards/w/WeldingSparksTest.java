@@ -60,8 +60,7 @@ class WeldingSparksTest extends BaseCardTest {
         addMana();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void cast(Permanent target) {

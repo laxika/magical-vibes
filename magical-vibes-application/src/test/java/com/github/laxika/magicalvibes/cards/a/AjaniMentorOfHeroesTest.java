@@ -68,13 +68,14 @@ class AjaniMentorOfHeroesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(choice.params().cards()).extracting(Card::getId).containsExactlyInAnyOrder(
                 aura.getId(), creature.getId(), planeswalker.getId());
-        assertThat(choice.validCardIds()).doesNotContain(enchantment.getId());
+        assertThat(choice.params().cards()).extracting(Card::getId).doesNotContain(enchantment.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.LibraryCardChosen(choice.params().cards().indexOf(creature)));
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 

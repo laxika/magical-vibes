@@ -32,6 +32,9 @@ public class ExileTargetCreatureCardCreateTokenForOwnerEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetCreatureCardCreateTokenForOwnerEffect) effect;
         UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
         Card targetCard = targetCardId == null
                 ? null : gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {

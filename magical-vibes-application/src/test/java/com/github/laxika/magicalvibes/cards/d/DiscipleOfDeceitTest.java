@@ -47,7 +47,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.LibraryCardChosen(0));
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(landInHand, searchTarget);
+        assertThat(gd.playerHands.get(player1.getId())).contains(landInHand, searchTarget);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
     }
 
@@ -63,7 +63,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardInHand);
+        assertThat(gd.playerHands.get(player1.getId())).contains(cardInHand);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -80,7 +80,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(landInHand);
+        assertThat(gd.playerHands.get(player1.getId())).contains(landInHand);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

@@ -1197,9 +1197,7 @@ public class CombatDamageService {
                     }
                     // Wire the combat damage dealt as the event value for dynamic combat-damage
                     // amounts, such as "draw that many cards" or "deal that much damage".
-                    int mayEventValue = may.wrapped() instanceof CombatDamageAmountAwareEffect amountAware
-                            && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount())
-                            ? damageDealt : 0;
+                    int mayEventValue = readsCombatDamage(may.wrapped()) ? damageDealt : 0;
                     // A "target creature" (any) may-ability — e.g. Hapatra's "you may put a -1/-1 counter
                     // on target creature" — is queued with a null target so its target is chosen at
                     // resolution. Effects that instead act on a creature the damaged player controls have
@@ -1392,8 +1390,7 @@ public class CombatDamageService {
                     }
 
                     boolean needsTarget = effects.stream()
-                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                     if (needsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), ownerId, effects, perm.getId()));
@@ -1422,14 +1419,24 @@ public class CombatDamageService {
     }
 
     private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
-        boolean readsCombatDamage = effect instanceof DiscardEffect
+        if (effect instanceof MayEffect may) {
+            setCombatDamageEventValue(entry, may.wrapped(), damageDealt);
+            if (may.elseEffect() != null) {
+                setCombatDamageEventValue(entry, may.elseEffect(), damageDealt);
+            }
+            return;
+        }
+        if (readsCombatDamage(effect)) {
+            entry.setEventValue(damageDealt);
+        }
+    }
+
+    private boolean readsCombatDamage(CardEffect effect) {
+        return effect instanceof DiscardEffect
                 || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
                 || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
                 || (effect instanceof CombatDamageAmountAwareEffect amountAware
                 && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount()));
-        if (readsCombatDamage) {
-            entry.setEventValue(damageDealt);
-        }
     }
 
     /**

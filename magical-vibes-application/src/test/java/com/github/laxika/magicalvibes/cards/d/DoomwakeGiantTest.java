@@ -77,8 +77,8 @@ class DoomwakeGiantTest extends BaseCardTest {
         harness.castEnchantment(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

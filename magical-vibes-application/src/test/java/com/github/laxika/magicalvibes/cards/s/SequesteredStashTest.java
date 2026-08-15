@@ -49,7 +49,7 @@ class SequesteredStashTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Ornithopter");
         harness.assertInGraveyard(player1, "Sequestered Stash");
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
     }
 
     @Test

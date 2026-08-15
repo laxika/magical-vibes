@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.ArcboundWorker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -38,9 +36,7 @@ class SelfAssemblerTest extends BaseCardTest {
         resolveEtbMay(true);
 
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
-        assertThat(offered).hasSize(1);
-        assertThat(offered.getFirst().getSubtypes()).contains(CardSubtype.ASSEMBLY_WORKER);
-        assertThat(offered.getFirst().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(offered).extracting(Card::getName).containsExactly("Self-Assembler");
     }
 
     @Test

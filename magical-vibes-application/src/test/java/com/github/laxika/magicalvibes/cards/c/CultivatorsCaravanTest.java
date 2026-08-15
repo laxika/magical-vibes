@@ -32,7 +32,7 @@ class CultivatorsCaravanTest extends BaseCardTest {
         Permanent caravan = addCaravanReady(player1);
         Permanent crew = addCreatureReady(player1, new SerraAngel());
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(caravan.isAnimatedUntilEndOfTurn()).isTrue();
@@ -46,7 +46,7 @@ class CultivatorsCaravanTest extends BaseCardTest {
         addCaravanReady(player1);
         addCreatureReady(player1, new GrizzlyBears());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough creature power to crew");
     }

@@ -54,6 +54,7 @@ class GoldenhideOxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GloriousAnthem()));
         harness.addMana(player2, ManaColor.WHITE, 3);
 
+        harness.forceActivePlayer(player2);
         harness.castEnchantment(player2, 0);
         harness.passBothPriorities();
 

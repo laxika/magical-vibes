@@ -23,7 +23,7 @@ class MadcapExperimentTest extends BaseCardTest {
         Card bottom = new GrizzlyBears();
         harness.setLibrary(player1, List.of(top, artifact, bottom));
         harness.setHand(player1, List.of(new MadcapExperiment()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -32,7 +32,7 @@ class MadcapExperimentTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Grizzly Bears", "Forest");
     }
 
     @Test
@@ -42,7 +42,7 @@ class MadcapExperimentTest extends BaseCardTest {
         Card second = new GrizzlyBears();
         harness.setLibrary(player1, List.of(first, second));
         harness.setHand(player1, List.of(new MadcapExperiment()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
@@ -59,7 +59,7 @@ class MadcapExperimentTest extends BaseCardTest {
     void emptyLibraryDealsNoDamage() {
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new MadcapExperiment()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

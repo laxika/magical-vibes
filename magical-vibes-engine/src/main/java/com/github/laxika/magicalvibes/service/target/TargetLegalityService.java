@@ -248,6 +248,30 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Must select graveyard targets");
             }
         }
+        List<CardEffect> declarativeGraveyardEffects = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .toList();
+        if (!declarativeGraveyardEffects.isEmpty()) {
+            Permanent sourcePermanent = sourceCardId == null ? null : gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> sourceCardId.equals(permanent.getCard().getId())
+                            || sourceCardId.equals(permanent.getOriginalCard().getId()))
+                    .findFirst()
+                    .orElse(null);
+            Card sourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
+            int effectiveXValue = xValue == null ? 0 : xValue;
+            for (UUID targetCardId : targetCardIds) {
+                boolean legalForAnEffect = declarativeGraveyardEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, targetCardId, Zone.GRAVEYARD,
+                                        sourceCard, effectiveXValue, playerId, sourcePermanent))
+                                .isEmpty());
+                if (!legalForAnEffect) {
+                    throw new IllegalStateException("Invalid graveyard target");
+                }
+            }
+        }
         for (CardEffect effect : effects) {
             if (effect instanceof TargetedGraveyardCardsEffect libraryEffect) {
                 validateTargetedGraveyardCardLibraryEffect(gameData, playerId, libraryEffect, targetCardIds);
@@ -1351,6 +1375,12 @@ public class TargetLegalityService {
             return !anyLegalTarget;
         }
 
+        if (entry.getTargetId() == null && entry.getTargetIds().isEmpty()
+                && !entry.getTargetCardIds().isEmpty()) {
+            return entry.getTargetCardIds().stream()
+                    .noneMatch(id -> isTargetCardLegalOnResolution(gameData, entry, id));
+        }
+
         // CR 608.2b requires every target occurrence to be checked again. Keep illegal flat-list
         // positions masked on the entry so a spell with at least one legal target can resolve
         // without its handlers affecting the illegal targets or shifting later target groups.
@@ -1457,8 +1487,11 @@ public class TargetLegalityService {
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
                 if (!targetFizzled) {
+                    List<CardEffect> graveyardTargetEffects = entry.getEffectsToResolve().stream()
+                            .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                            .toList();
                     targetFizzled = targetValidationService.checkEffectTargets(
-                            entry.getEffectsToResolve(),
+                            graveyardTargetEffects,
                             new TargetValidationContext(gameData, entry.getTargetId(), Zone.GRAVEYARD,
                                     entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                     entry.getSourcePermanentSnapshot())).isPresent();
@@ -1517,14 +1550,7 @@ public class TargetLegalityService {
                         // ETB "target creature you control") and must not fizzle this trigger, whose
                         // own effect targets any creature. Cast spells / activated abilities are
                         // unaffected — their effects are always bound to their target group.
-                        TargetFilter cardFilter = entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
-                        if (cardFilter != null && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                                && entry.getEffectsToResolve().stream()
-                                        .noneMatch(e -> entry.getCard().getEffectTargetIndex(e) >= 0)) {
-                            cardFilter = null;
-                        }
-                        TargetFilter effectiveTargetFilter =
-                                entry.getTargetFilter() != null ? entry.getTargetFilter() : cardFilter;
+                        TargetFilter effectiveTargetFilter = primaryTargetFilter(entry);
                         effectiveTargetFilter = targetFilterForKickedCast(effectiveTargetFilter, entry.isKicked());
                         if (effectiveTargetFilter != null) {
                             try {
@@ -1591,6 +1617,19 @@ public class TargetLegalityService {
             return false;
         }
 
+        List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .toList();
+        if (!declarativeGraveyardEffects.isEmpty()) {
+            return declarativeGraveyardEffects.stream().anyMatch(effect ->
+                    targetValidationService.checkEffectTargets(
+                            List.of(effect),
+                            new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
+                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                    entry.getSourcePermanentSnapshot()))
+                            .isEmpty());
+        }
+
         SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
                 .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
                 .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
@@ -1614,8 +1653,11 @@ public class TargetLegalityService {
             if (gameQueryService.findCardInGraveyardById(gameData, targetId) == null) {
                 return false;
             }
+            List<CardEffect> graveyardTargetEffects = entry.getEffectsToResolve().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
             return targetValidationService.checkEffectTargets(
-                    entry.getEffectsToResolve(),
+                    graveyardTargetEffects,
                     new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD,
                             entry.getCard(), entry.getXValue(), entry.getControllerId(),
                             entry.getSourcePermanentSnapshot())).isEmpty();
@@ -1729,13 +1771,16 @@ public class TargetLegalityService {
         if (entry.getCard() == null) {
             return null;
         }
-        TargetFilter cardFilter = entry.getCard().getTargetFilter();
-        if (cardFilter != null && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getEffectsToResolve().stream()
-                        .noneMatch(e -> entry.getCard().getEffectTargetIndex(e) >= 0)) {
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            for (CardEffect effect : entry.getEffectsToResolve()) {
+                int groupIndex = entry.getCard().getEffectTargetIndex(effect);
+                if (groupIndex >= 0 && groupIndex < entry.getCard().getSpellTargets().size()) {
+                    return entry.getCard().getSpellTargets().get(groupIndex).getFilter();
+                }
+            }
             return null;
         }
-        return cardFilter;
+        return entry.getCard().getTargetFilter();
     }
 
     private List<TargetFilter> targetFiltersForDeclaredPositions(StackEntry entry, int targetCount) {

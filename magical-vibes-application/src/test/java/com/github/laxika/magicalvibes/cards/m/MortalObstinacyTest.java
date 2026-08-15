@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AjanisMantra;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,8 +48,8 @@ class MortalObstinacyTest extends BaseCardTest {
     void combatDamageSacrificesAuraAndDestroysTargetEnchantment() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachMortalObstinacy(player1, creature);
-        Permanent enchantment = addPermanent(player2, enchantmentCard());
-        Permanent artifact = addPermanent(player2, artifactCard());
+        Permanent enchantment = addPermanent(player2, new AjanisMantra());
+        Permanent artifact = addPermanent(player2, new FountainOfYouth());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -72,7 +73,7 @@ class MortalObstinacyTest extends BaseCardTest {
     void decliningTriggerKeepsPermanents() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachMortalObstinacy(player1, creature);
-        Permanent enchantment = addPermanent(player2, enchantmentCard());
+        Permanent enchantment = addPermanent(player2, new AjanisMantra());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -85,15 +86,18 @@ class MortalObstinacyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No combat damage trigger is put on the stack without an enchantment target")
-    void noTriggerWithoutEnchantmentTarget() {
+    @DisplayName("Mortal Obstinacy itself is a legal target for its combat damage trigger")
+    void auraItselfIsLegalTarget() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachMortalObstinacy(player1, creature);
         creature.setAttacking(true);
 
         resolveCombat();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(aura.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
     }
 
@@ -126,17 +130,4 @@ class MortalObstinacyTest extends BaseCardTest {
         return permanent;
     }
 
-    private Card enchantmentCard() {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        return card;
-    }
-
-    private Card artifactCard() {
-        Card card = new Card();
-        card.setName("Test Artifact");
-        card.setType(CardType.ARTIFACT);
-        return card;
-    }
 }

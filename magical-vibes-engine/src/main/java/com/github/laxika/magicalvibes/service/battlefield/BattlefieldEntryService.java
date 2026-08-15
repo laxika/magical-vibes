@@ -1810,6 +1810,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !graveyardMayPlayEffects.contains(e))
                 .filter(e -> !graveyardStealEffects.contains(e))
                 .filter(e -> !graveyardReturnToHandEffects.contains(e))
+                .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
                 .filter(e -> !graveyardShuffleIntoLibraryEffects.contains(e))
                 .toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()

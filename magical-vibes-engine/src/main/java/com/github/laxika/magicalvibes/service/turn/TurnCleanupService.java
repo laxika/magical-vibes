@@ -376,7 +376,6 @@ public class TurnCleanupService {
             }
         }
 
-        boolean manaDrained = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
@@ -391,14 +390,14 @@ public class TurnCleanupService {
                 if (replaceManaDrain) {
                     protectedColors.add(ManaColor.COLORLESS);
                 }
-                manaDrained |= manaPool.drainNonPersistent(protectedColors);
+                manaPool.drainNonPersistent(protectedColors);
+                boolean copyGrantManaPersists = protectedColors.stream()
+                        .anyMatch(color -> manaPool.get(color) > 0);
+                if (!copyGrantManaPersists) {
+                    gameData.pendingNextInstantSorceryCopyCount.remove(playerId);
+                    gameData.pendingNextRedInstantSorceryCopyCount.remove(playerId);
+                }
             }
-        }
-
-        if (manaDrained) {
-            // Clear pending one-shot spell copy triggers (Primal Wellspring) since their mana drained
-            gameData.pendingNextInstantSorceryCopyCount.clear();
-            gameData.pendingNextRedInstantSorceryCopyCount.clear();
         }
     }
 

@@ -35,7 +35,7 @@ class InventorsGogglesTest extends BaseCardTest {
 
         GearsmithProdigy artificer = new GearsmithProdigy();
         harness.setHand(player1, List.of(artificer));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
 
         harness.passBothPriorities();
@@ -78,7 +78,7 @@ class InventorsGogglesTest extends BaseCardTest {
 
         GearsmithProdigy artificer = new GearsmithProdigy();
         harness.setHand(player2, List.of(artificer));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castCreature(player2, 0);
 
         harness.passBothPriorities();

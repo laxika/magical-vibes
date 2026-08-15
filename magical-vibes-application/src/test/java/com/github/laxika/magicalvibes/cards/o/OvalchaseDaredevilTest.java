@@ -36,6 +36,7 @@ class OvalchaseDaredevilTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -56,6 +57,7 @@ class OvalchaseDaredevilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -85,6 +87,7 @@ class OvalchaseDaredevilTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GoldMyr()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
     }

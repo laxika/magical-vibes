@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.t.TreeOfTales;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ class DaringThiefTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         thief.tap();
 
-        advanceToUpkeep(player1);
+        advanceToInspiredTrigger();
         harness.handlePermanentChosen(player1, own.getId());
         harness.handlePermanentChosen(player1, opponent.getId());
         harness.passBothPriorities();
@@ -40,7 +41,7 @@ class DaringThiefTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         thief.tap();
 
-        advanceToUpkeep(player1);
+        advanceToInspiredTrigger();
         harness.handlePermanentChosen(player1, own.getId());
         harness.handlePermanentChosen(player1, opponent.getId());
         harness.passBothPriorities();
@@ -58,7 +59,7 @@ class DaringThiefTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player2, new Millstone());
         thief.tap();
 
-        advanceToUpkeep(player1);
+        advanceToInspiredTrigger();
         harness.handlePermanentChosen(player1, own.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -74,7 +75,7 @@ class DaringThiefTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new TreeOfTales());
         thief.tap();
 
-        advanceToUpkeep(player1);
+        advanceToInspiredTrigger();
         harness.handlePermanentChosen(player1, own.getId());
         harness.handlePermanentChosen(player1, opponent.getId());
         harness.passBothPriorities();
@@ -82,5 +83,15 @@ class DaringThiefTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(own);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponent);
+    }
+
+    private void advanceToInspiredTrigger() {
+        harness.forceActivePlayer(player2);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 }

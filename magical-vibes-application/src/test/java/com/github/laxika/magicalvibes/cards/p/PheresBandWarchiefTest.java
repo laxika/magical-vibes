@@ -20,7 +20,7 @@ class PheresBandWarchiefTest extends BaseCardTest {
         Permanent thunderhoof = findPermanent(player1, "Pheres-Band Thunderhoof");
 
         assertThat(gqs.getEffectivePower(gd, thunderhoof)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, thunderhoof)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, thunderhoof)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, thunderhoof, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, thunderhoof, Keyword.TRAMPLE)).isTrue();
     }
@@ -59,7 +59,7 @@ class PheresBandWarchiefTest extends BaseCardTest {
         Permanent thunderhoof = findPermanent(player2, "Pheres-Band Thunderhoof");
 
         assertThat(gqs.getEffectivePower(gd, thunderhoof)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, thunderhoof)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, thunderhoof)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, thunderhoof, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, thunderhoof, Keyword.TRAMPLE)).isFalse();
     }

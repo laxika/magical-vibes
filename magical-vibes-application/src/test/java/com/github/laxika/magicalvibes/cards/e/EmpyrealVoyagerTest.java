@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,7 +17,7 @@ class EmpyrealVoyagerTest extends BaseCardTest {
     @Test
     void getsEnergyEqualToCombatDamageDealtToPlayer() {
         Permanent voyager = addCreatureReady(player1, new EmpyrealVoyager());
-        Permanent blocker = addCreatureReady(player2, new LlanowarElves());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
         voyager.setAttacking(true);
 
         harness.forceActivePlayer(player1);

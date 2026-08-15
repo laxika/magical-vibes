@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +40,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -89,16 +93,25 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             case TARGET_OWNER_AS_TARGET -> targetOwnerId;
             default -> entry.getTargetId();
         };
+        CardEffect thenEffect = e.thenEffect();
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
-                entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
+                entry.getDescription(), List.of(thenEffect), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
+        if (thenEffect instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(
+                    gameData, conditional.condition(), ConditionContext.forStackEntry(thenEntry))) {
+                return;
+            }
+            thenEffect = conditional.wrapped();
+        }
+
+        EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
         if (handler != null) {
-            handler.resolve(gameData, thenEntry, e.thenEffect());
+            handler.resolve(gameData, thenEntry, thenEffect);
         } else {
-            log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
+            log.warn("Game {} - No handler for then-effect: {}", gameData.id, thenEffect.getClass().getSimpleName());
         }
 
         gameOutcomeService.checkWinCondition(gameData);

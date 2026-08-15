@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AltarOfTheBrood;
+import com.github.laxika.magicalvibes.cards.a.AuthorityOfTheConsuls;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
@@ -45,7 +45,7 @@ class PanharmoniconTest extends BaseCardTest {
     @DisplayName("Panharmonicon doubles a controlled trigger caused by an opponent's creature entering")
     void doublesTriggerFromOpponentCreatureEntering() {
         harness.addToBattlefield(player1, new Panharmonicon());
-        harness.addToBattlefield(player1, new AltarOfTheBrood());
+        harness.addToBattlefield(player1, new AuthorityOfTheConsuls());
         harness.forceActivePlayer(player2);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new FugitiveWizard()));

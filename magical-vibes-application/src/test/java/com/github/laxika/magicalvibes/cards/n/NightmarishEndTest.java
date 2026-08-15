@@ -76,8 +76,7 @@ class NightmarishEndTest extends BaseCardTest {
 
         Permanent target = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void addMana() {

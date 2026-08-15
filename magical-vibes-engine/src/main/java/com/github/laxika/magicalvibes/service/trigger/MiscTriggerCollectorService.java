@@ -132,11 +132,11 @@ public class MiscTriggerCollectorService {
         }
 
         boolean needsTarget = triggeredEffects.stream()
-                .filter(triggeredEffect -> !(triggeredEffect instanceof MayEffect))
                 .anyMatch(triggeredEffect ->
                         triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                                || card.getEffectTargetIndex(triggeredEffect) >= 0);
         if (needsTarget) {
             boolean multiTarget = card.getSpellTargets().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
@@ -652,14 +652,24 @@ public class MiscTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
+        List<CardEffect> effects = new ArrayList<>(List.of(effect));
+        boolean needsTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), effects,
+                    "energy gain", match.permanent().getId()));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    effects,
+                    null,
+                    match.permanent().getId()));
+        }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on energy gain", gameData.id, sourceCard.getName());
         return true;

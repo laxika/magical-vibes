@@ -884,6 +884,11 @@ class CastingCostServiceTest {
             thaumaturge.setType(CardType.CREATURE);
             thaumaturge.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerTargetEffect(
                     new PermanentIsCreaturePredicate(), 1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(thaumaturge));
+
+            Card spell = new Card();
+            spell.setName("Target Spell");
+            spell.setType(CardType.INSTANT);
 
             Card bearCard = new Card();
             bearCard.setName("Bear");
@@ -895,7 +900,7 @@ class CastingCostServiceTest {
                     gd, bear, new PermanentIsCreaturePredicate())).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(
-                    gd, player1Id, thaumaturge, List.of(bear.getId(), bear.getId())))
+                    gd, player1Id, spell, List.of(bear.getId(), bear.getId())))
                     .isEqualTo(2);
         }
     }

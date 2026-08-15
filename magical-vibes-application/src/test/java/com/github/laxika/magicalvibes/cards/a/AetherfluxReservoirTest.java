@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,11 +14,12 @@ class AetherfluxReservoirTest extends BaseCardTest {
     @DisplayName("The spell-cast triggers count spells when they resolve")
     void spellCastTriggersCountSpellsAtResolution() {
         harness.addToBattlefield(player1, new AetherfluxReservoir());
-        harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.setLife(player1, 20);
 
-        harness.castArtifact(player1, 0);
-        harness.castArtifact(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();

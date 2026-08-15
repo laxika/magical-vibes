@@ -302,9 +302,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  became untapped. Driven from the untap call sites via
      *  {@code TriggerCollectionService.checkBecomesUntappedTriggers}
      *  ({@code UntapStepService} and {@code TapUntapSupport.untapPermanent}). The trigger is queued
-     *  as a non-targeting triggered ability whose {@code sourcePermanentId} is the untapped
-     *  permanent; targeted "may" effects (e.g. Hollowsage's "you may have target player discard a
-     *  card") pick their target at resolution via the {@code MayEffect} pending-may-ability flow. */
+     *  with the untapped permanent as its {@code sourcePermanentId}; targeted abilities choose
+     *  their targets before being put on the stack, including abilities whose effect is optional. */
     ON_SELF_BECOMES_UNTAPPED,
     /** Triggers whenever a permanent the controller controls becomes untapped (transitions from
      *  tapped to untapped), from any source — the untap step or an untap effect. Fires on every

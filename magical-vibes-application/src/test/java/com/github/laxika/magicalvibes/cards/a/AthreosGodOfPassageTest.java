@@ -70,7 +70,7 @@ class AthreosGodOfPassageTest extends BaseCardTest {
 
         destroy(bears);
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -84,6 +84,7 @@ class AthreosGodOfPassageTest extends BaseCardTest {
 
     private void destroy(Permanent permanent) {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
+        harness.passBothPriorities();
     }
 
     private void addBlackPermanents(int count) {

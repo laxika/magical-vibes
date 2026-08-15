@@ -40,6 +40,7 @@ class HumblerOfMortalsTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, humbler, Keyword.TRAMPLE)).isTrue();
@@ -70,6 +71,7 @@ class HumblerOfMortalsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GloriousAnthem()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 

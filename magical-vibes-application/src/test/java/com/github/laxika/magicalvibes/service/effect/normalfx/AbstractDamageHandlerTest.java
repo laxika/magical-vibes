@@ -104,6 +104,19 @@ abstract class AbstractDamageHandlerTest {
         // source permanent, so it must pass through when no redirect shield is set up.
         lenient().when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
+                        eq(gd), any(), anyInt(), any()))
+                .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         setUpHandler();
     }
 
@@ -154,7 +167,8 @@ abstract class AbstractDamageHandlerTest {
         // resolution (CR 608.2b), so the guard must see the target as a creature.
         lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
-        when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(2));
         // Lenient: record-only damage no longer reads toughness — destruction happens at the
         // SBA check, outside these handler unit tests. Excess-damage paths still read it.
         lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);

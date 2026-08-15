@@ -19,7 +19,7 @@ class TerritorialGorgerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new LiveFast(), new LiveFast(), new LiveFast()));
         harness.setHand(player1, List.of(new LiveFast()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, List.of());
         resolveAllTriggers();
@@ -35,7 +35,7 @@ class TerritorialGorgerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new LiveFast(), new LiveFast(), new LiveFast()));
         harness.setHand(player1, List.of(new LiveFast()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, List.of());
         resolveAllTriggers();

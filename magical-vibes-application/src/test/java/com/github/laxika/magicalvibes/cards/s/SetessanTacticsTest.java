@@ -20,7 +20,7 @@ class SetessanTacticsTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts a target creature and grants it a tap-to-fight ability")
     void boostsAndGrantsFightAbility() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         castTactics(target.getId(), 1, 1);
 

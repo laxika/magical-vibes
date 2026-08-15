@@ -27,6 +27,7 @@ class KnowledgeAndPowerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -43,6 +44,7 @@ class KnowledgeAndPowerTest extends BaseCardTest {
         triggerKnowledgeAndPower();
         chooseScryTopCard();
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -58,6 +60,7 @@ class KnowledgeAndPowerTest extends BaseCardTest {
         triggerKnowledgeAndPower();
         chooseScryTopCard();
         harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))

@@ -58,8 +58,8 @@ class StrengthFromTheFallenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower + 2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness + 3);
     }
 
     @Test

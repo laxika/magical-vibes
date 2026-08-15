@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
 import com.github.laxika.magicalvibes.cards.k.KalonianTusker;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +21,7 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
 
     @Test
     void etbGivesOtherCreaturesMinusTwoMinusTwo() {
-        harness.addToBattlefield(player1, new KalonianTusker());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new KalonianTusker());
         harness.setHand(player1, List.of(new DemonOfDarkSchemes()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -30,8 +32,7 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Demon of Dark Schemes").getEffectivePower()).isEqualTo(5);
         assertThat(findPermanent(player1, "Demon of Dark Schemes").getEffectiveToughness()).isEqualTo(5);
-        assertThat(findPermanent(player1, "Kalonian Tusker").getEffectivePower()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Kalonian Tusker").getEffectiveToughness()).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(findPermanent(player2, "Kalonian Tusker").getEffectivePower()).isEqualTo(1);
         assertThat(findPermanent(player2, "Kalonian Tusker").getEffectiveToughness()).isEqualTo(1);
     }
@@ -39,11 +40,11 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
     @Test
     void gainsEnergyWhenAnotherCreatureDies() {
         addReadyDemon();
-        harness.addToBattlefield(player1, new KalonianTusker());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Kalonian Tusker"));
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -53,8 +54,8 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
     @Test
     void ownDeathDoesNotGrantEnergy() {
         addReadyDemon();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new InfernalGrasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -62,7 +63,7 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Demon of Dark Schemes"));
         harness.passBothPriorities();
 
-        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

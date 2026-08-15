@@ -38,8 +38,12 @@ class SilenceTheBelieversTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(card -> card.getName())
                 .contains("Grizzly Bears");
-        harness.assertInGraveyard(player1, "Pacifism");
-        harness.assertInGraveyard(player2, "Pacifism");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName())
+                .contains("Pacifism");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName())
+                .contains("Pacifism");
     }
 
     @Test

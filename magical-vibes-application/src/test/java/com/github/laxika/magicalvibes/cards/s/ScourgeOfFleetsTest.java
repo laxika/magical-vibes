@@ -18,6 +18,7 @@ class ScourgeOfFleetsTest extends BaseCardTest {
     @DisplayName("Returns opposing creatures with toughness at most the number of Islands you control")
     void returnsOpposingCreaturesWithinIslandThreshold() {
         harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player1, List.of(new ScourgeOfFleets()));
@@ -41,6 +42,7 @@ class ScourgeOfFleetsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 

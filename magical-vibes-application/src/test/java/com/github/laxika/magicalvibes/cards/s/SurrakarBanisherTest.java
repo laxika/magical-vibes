@@ -30,7 +30,6 @@ class SurrakarBanisherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     @Test
@@ -39,9 +38,9 @@ class SurrakarBanisherTest extends BaseCardTest {
         UUID bearsId = tappedBears(player2).getId();
         castAndResolve();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -55,9 +54,9 @@ class SurrakarBanisherTest extends BaseCardTest {
         UUID bearsId = tappedBears(player1).getId();
         castAndResolve();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -67,9 +66,11 @@ class SurrakarBanisherTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may leaves the tapped creature on the battlefield")
     void decliningMayLeavesCreature() {
-        tappedBears(player2);
+        UUID bearsId = tappedBears(player2).getId();
         castAndResolve();
 
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();

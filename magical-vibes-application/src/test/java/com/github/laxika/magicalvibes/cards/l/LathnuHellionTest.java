@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,15 +60,21 @@ class LathnuHellionTest extends BaseCardTest {
     }
 
     private Permanent addHellion() {
-        Permanent hellion = harness.addToBattlefieldAndReturn(player1, new LathnuHellion());
+        harness.setHand(player1, List.of(new LathnuHellion()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
         resolveAllTriggers();
-        return hellion;
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Lathnu Hellion"))
+                .findFirst()
+                .orElseThrow();
     }
 
     private void beginEndStep() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

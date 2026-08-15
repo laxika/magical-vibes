@@ -1797,6 +1797,16 @@ public class SpellCastingService {
             }
         }
 
+        if (wasModal && card.getCastTimeTargetFilter() != null
+                && targetId == null && !targetIds.isEmpty()) {
+            if (targetIds.size() != 1) {
+                throw new IllegalStateException("The chosen mode requires exactly one target");
+            }
+            targetLegalityService.validateSpellTargeting(
+                    gameData, card, targetingSpellEffects, targetIds.getFirst(), null,
+                    playerId, true, effectiveXValue, kicked);
+        }
+
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
             if (mixedSpellAndPermanentTargets) {

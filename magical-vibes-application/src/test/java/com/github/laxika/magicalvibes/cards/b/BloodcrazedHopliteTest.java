@@ -27,6 +27,7 @@ class BloodcrazedHopliteTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, hoplite.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

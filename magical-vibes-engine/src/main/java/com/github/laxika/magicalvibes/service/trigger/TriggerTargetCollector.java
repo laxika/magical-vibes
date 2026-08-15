@@ -217,6 +217,9 @@ public class TriggerTargetCollector {
                     }
                 }
             }
+            if (declaredPermanentTarget != null) {
+                creaturesOnly = false;
+            }
             PermanentPredicate declaredTargetRestriction = declaredPermanentTarget != null
                     ? declaredPermanentTarget.permanentRestriction().orElseThrow()
                     : null;

@@ -20,8 +20,8 @@ class SatyrHopliteTest extends BaseCardTest {
     @DisplayName("Casting a spell that targets Satyr Hoplite puts a +1/+1 counter on it")
     void castingSpellThatTargetsHoplitePutsCounterOnIt() {
         harness.addToBattlefield(player1, new SatyrHoplite());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Satyr Hoplite");
         harness.castInstant(player1, 0, hopliteId);
@@ -51,14 +51,14 @@ class SatyrHopliteTest extends BaseCardTest {
     void opponentsSpellDoesNotTriggerHeroic() {
         harness.addToBattlefield(player1, new SatyrHoplite());
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new GiantGrowth()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Satyr Hoplite");
         harness.castInstant(player2, 0, hopliteId);
         harness.passBothPriorities();
 
-        Permanent hoplite = findPermanent(player1, "Satyr Hoplite");
-        assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Satyr Hoplite");
+        harness.assertInGraveyard(player1, "Satyr Hoplite");
     }
 }

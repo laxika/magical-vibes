@@ -42,6 +42,7 @@ class SolidarityOfHeroesTest extends BaseCardTest {
     void castsWithNoTargets() {
         harness.setHand(player1, List.of(new SolidarityOfHeroes()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, List.of());
         harness.passBothPriorities();

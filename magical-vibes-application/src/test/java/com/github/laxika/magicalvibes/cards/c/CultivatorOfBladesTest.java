@@ -59,7 +59,6 @@ class CultivatorOfBladesTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, cultivator)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
@@ -90,7 +89,6 @@ class CultivatorOfBladesTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 

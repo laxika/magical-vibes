@@ -42,6 +42,7 @@ class NoxiousGearhulkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player2.getId()).getFirst().getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -77,11 +78,12 @@ class NoxiousGearhulkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
 
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.passBothPriorities();
+
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -94,10 +96,10 @@ class NoxiousGearhulkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
     }
 }

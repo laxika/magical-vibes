@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AjanisMantra;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,8 +47,8 @@ class FlamespeakersWillTest extends BaseCardTest {
     void combatDamageSacrificesAuraAndDestroysTargetArtifact() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachFlamespeakersWill(player1, creature);
-        Permanent artifact = addPermanent(player2, artifactCard());
-        Permanent enchantment = addPermanent(player2, enchantmentCard());
+        Permanent artifact = addPermanent(player2, new FountainOfYouth());
+        Permanent enchantment = addPermanent(player2, new AjanisMantra());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -72,7 +72,7 @@ class FlamespeakersWillTest extends BaseCardTest {
     void decliningTriggerKeepsPermanents() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachFlamespeakersWill(player1, creature);
-        Permanent artifact = addPermanent(player2, artifactCard());
+        Permanent artifact = addPermanent(player2, new FountainOfYouth());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -126,17 +126,4 @@ class FlamespeakersWillTest extends BaseCardTest {
         return permanent;
     }
 
-    private Card artifactCard() {
-        Card card = new Card();
-        card.setName("Test Artifact");
-        card.setType(CardType.ARTIFACT);
-        return card;
-    }
-
-    private Card enchantmentCard() {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        return card;
-    }
 }

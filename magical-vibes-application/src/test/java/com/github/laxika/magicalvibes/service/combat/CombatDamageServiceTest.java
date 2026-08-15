@@ -261,6 +261,9 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyAllCreatureDamageRedirectToController(
                 eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through here — no player redirect shields are set up.
         lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(
                 eq(gameData), any(UUID.class), anyInt()))

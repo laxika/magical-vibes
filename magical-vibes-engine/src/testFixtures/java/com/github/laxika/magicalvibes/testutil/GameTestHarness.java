@@ -798,6 +798,14 @@ public class GameTestHarness {
         castInstantWithDiscard(player, cardIndex, targetId, exileHandCardIndex);
     }
 
+    /** Cast a multi-target instant using an exile-from-hand alternate casting cost. */
+    public void castInstantWithAlternateExileFromHand(Player player, int cardIndex, List<UUID> targetIds,
+                                                      int exileHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false,
+                null, null, List.of(), null, List.of(), false, exileHandCardIndex);
+    }
+
     /**
      * Cast a targeted {X} instant using an exile-from-hand alternate casting cost (Shining Shoal —
      * the exiled card's mana value must equal {@code xValue}).

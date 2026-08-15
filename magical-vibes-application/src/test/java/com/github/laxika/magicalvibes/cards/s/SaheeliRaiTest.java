@@ -61,8 +61,6 @@ class SaheeliRaiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
     @Test

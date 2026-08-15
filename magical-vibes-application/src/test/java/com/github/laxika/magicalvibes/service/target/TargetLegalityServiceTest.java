@@ -1751,6 +1751,34 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("uses the bound target group's filter for a triggered ability's primary target")
+        void usesBoundTargetGroupFilterForTriggeredPrimaryTarget() {
+            Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
+            PermanentPredicateTargetFilter enchantFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Enchant creature");
+            PermanentPredicateTargetFilter triggerFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsArtifactPredicate(), "Triggered ability target");
+            CardEffect triggerEffect = new DestroyTargetPermanentEffect();
+            Card aura = new Card();
+            aura.setName("Aura");
+            aura.setType(CardType.ENCHANTMENT);
+            aura.setSubtypes(List.of(CardSubtype.AURA));
+            aura.target(enchantFilter);
+            aura.target(triggerFilter).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, triggerEffect);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    aura,
+                    player1Id,
+                    "Aura trigger",
+                    List.of(triggerEffect),
+                    target.getId(),
+                    UUID.randomUUID());
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+            verify(predicateEvaluationService).validateTargetFilter(eq(triggerFilter), eq(target), any());
+        }
+
+        @Test
         @DisplayName("skips a gated-out target group when validating later trigger targets")
         void skipsGatedOutTargetGroupFilter() {
             Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));

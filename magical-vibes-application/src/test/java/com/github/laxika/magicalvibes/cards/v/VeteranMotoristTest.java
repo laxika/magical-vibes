@@ -46,8 +46,8 @@ class VeteranMotoristTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
         harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, vehicle)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, vehicle)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, vehicle)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vehicle)).isEqualTo(7);
 
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, vehicle)).isEqualTo(5);

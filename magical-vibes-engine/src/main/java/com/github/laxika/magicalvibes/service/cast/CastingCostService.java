@@ -884,9 +884,18 @@ public class CastingCostService {
             return 0;
         }
 
-        int perTargetReduction = card.getEffects(EffectSlot.STATIC).stream()
+        List<PerTargetCastCostReductionEffect> perTargetEffects = new ArrayList<>();
+        card.getEffects(EffectSlot.STATIC).stream()
                 .filter(PerTargetCastCostReductionEffect.class::isInstance)
                 .map(PerTargetCastCostReductionEffect.class::cast)
+                .forEach(perTargetEffects::add);
+        gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(PerTargetCastCostReductionEffect.class::isInstance)
+                .map(PerTargetCastCostReductionEffect.class::cast)
+                .forEach(perTargetEffects::add);
+
+        int perTargetReduction = perTargetEffects.stream()
                 .mapToInt(effect -> (int) targetIds.stream()
                         .map(targetId -> targetId == null
                                 ? null : gameQueryService.findPermanentById(gameData, targetId))
@@ -940,6 +949,14 @@ public class CastingCostService {
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
                         || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect
                         || e instanceof PerTargetCastCostReductionEffect);
+    }
+
+    public boolean hasPerTargetCastCostReduction(GameData gameData, UUID playerId, Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PerTargetCastCostReductionEffect.class::isInstance)
+                || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(PerTargetCastCostReductionEffect.class::isInstance);
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {

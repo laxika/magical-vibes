@@ -27,6 +27,7 @@ class ServantOfTheConduitTest extends BaseCardTest {
     @Test
     void paysEnergyAndTapsToAddAnyColorMana() {
         Permanent servant = addCreatureReady(player1, new ServantOfTheConduit());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
 
         harness.activateAbility(player1, 0, null, null);
 

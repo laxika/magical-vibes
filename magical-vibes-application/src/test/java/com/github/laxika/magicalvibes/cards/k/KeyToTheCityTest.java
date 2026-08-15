@@ -72,14 +72,16 @@ class KeyToTheCityTest extends BaseCardTest {
     @Test
     void decliningUntapTriggerDoesNotDraw() {
         addTappedKey(player1);
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
 
         runUntapStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
     private Permanent addReadyKey(Player player) {

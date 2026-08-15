@@ -19,6 +19,7 @@ class DictateOfTheTwinGodsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Blaze()));
         harness.addMana(player2, ManaColor.RED, 4);
         harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
 
         harness.castSorcery(player2, 0, 3, player1.getId());
         harness.passBothPriorities();

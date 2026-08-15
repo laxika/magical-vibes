@@ -681,17 +681,26 @@ public class PermanentCounterSupport {
             gameData.oncePerTurnTriggersFiredThisTurn.add(target.getId());
         }
 
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                controllerId,
-                card.getName() + "'s triggered ability",
-                effectsToResolve,
-                null,
-                target.getId()
-        ));
-
-        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        boolean needsTarget = effectsToResolve.stream()
+                .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    card, controllerId, effectsToResolve,
+                    "+1/+1 counter placement", target.getId()));
+            gameLogService.append(gameData,
+                    GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s triggered ability",
+                    effectsToResolve,
+                    null,
+                    target.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        }
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 

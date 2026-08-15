@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
@@ -597,6 +598,21 @@ public class GameActionAvailabilityService {
                 && castingCostService.stackHasMatchingSpell(gameData, stackTargetReduce.predicate())) {
             if (cost.canPay(pool, additionalCost - stackTargetReduce.amount())) {
                 return true;
+            }
+        }
+
+        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && castingCostService.hasPerTargetCastCostReduction(gameData, playerId, card)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            int maximumTargetCount = Math.min(validTargets.maxTargets(), validTargets.validPermanentIds().size());
+            if (maximumTargetCount > 0) {
+                List<UUID> qualifyingTargets = validTargets.validPermanentIds().subList(0, maximumTargetCount);
+                int perTargetReduction = castingCostService.computeTargetBasedCostReduction(
+                        gameData, playerId, card, qualifyingTargets);
+                if (perTargetReduction > 0 && cost.canPay(pool, additionalCost - perTargetReduction)) {
+                    return true;
+                }
             }
         }
 

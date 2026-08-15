@@ -278,6 +278,41 @@ public class StackResolutionService {
         return perm;
     }
 
+    private void putResolvedPermanentOntoBattlefield(GameData gameData, UUID controllerId,
+                                                     Permanent permanent, StackEntry entry) {
+        if (entry.getRepeatedAdditionalCosts().isEmpty()) {
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
+                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+        }
+    }
+
+    private void handleResolvedPermanentEtb(GameData gameData, UUID controllerId, Card card,
+                                            UUID targetId, int etbMode, StackEntry entry) {
+        if (entry.getRepeatedAdditionalCosts().isEmpty()) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
+                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        } else {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
+                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    entry.getRepeatedAdditionalCosts());
+        }
+    }
+
+    private void processResolvedPermanentEtb(GameData gameData, UUID controllerId, Card card,
+                                             UUID targetId, StackEntry entry) {
+        if (entry.getRepeatedAdditionalCosts().isEmpty()) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
+                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        } else {
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
+                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    entry.getRepeatedAdditionalCosts());
+        }
+    }
+
     /**
      * Flashback/Disturb spells that leave the stack without resolving are exiled
      * (CR 702.33a / back-face exile replacement for Disturb). Siege-defeat casts use normal GY.
@@ -351,8 +386,7 @@ public class StackResolutionService {
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
-                entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+        putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
@@ -382,9 +416,7 @@ public class StackResolutionService {
         if (!perm.isFaceDown()) {
             handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
             int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard,
-                    entry.getTargetId(), true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts());
+            handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
         } else {
             battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
         }
@@ -498,8 +530,7 @@ public class StackResolutionService {
             } else {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
-                        entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+                putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
@@ -524,8 +555,7 @@ public class StackResolutionService {
                 Permanent perm = createEnteringPermanent(
                         entry, card, characteristics, entry.getBestowOriginalCard() != null);
                 perm.setAttachedTo(entry.getTargetId());
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
-                        entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+                putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.builder()
@@ -573,9 +603,7 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, characteristics,
-                            entry.getTargetId(), true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                            entry.getRepeatedAdditionalCosts());
+                    processResolvedPermanentEtb(gameData, controllerId, characteristics, entry.getTargetId(), entry);
                 }
             }
         } else {
@@ -598,8 +626,7 @@ public class StackResolutionService {
             Permanent enchPerm = createEnteringPermanent(entry, card, characteristics);
             // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
             // read XValue (e.g. The Meathook Massacre) see the paid X.
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, enchPerm,
-                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+            putResolvedPermanentOntoBattlefield(gameData, controllerId, enchPerm, entry);
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
@@ -653,9 +680,7 @@ public class StackResolutionService {
             // Process general ETB effects (e.g., token creation, exile-until-leaves).
             // Pass cast X as etbMode so the ETB stack entry snapshots it for XValue amounts.
             if (!gameData.interaction.isAwaitingInput()) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, enteredCard,
-                        entry.getTargetId(), true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                        entry.getRepeatedAdditionalCosts());
+                processResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), entry);
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);
@@ -670,13 +695,10 @@ public class StackResolutionService {
 
         Permanent perm = createEnteringPermanent(entry, card, card);
         controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
-                entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+        putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         Card enteredCard = perm.getCard();
         logEnterBattlefield(gameData, enteredCard, controllerId);
-        battlefieldEntryService.handleCreatureEnteredBattlefield(
-                gameData, controllerId, enteredCard, null, true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                entry.getRepeatedAdditionalCosts());
+        handleResolvedPermanentEtb(gameData, controllerId, enteredCard, null, entry.getXValue(), entry);
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -709,8 +731,7 @@ public class StackResolutionService {
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
-                entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+        putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
@@ -787,9 +808,7 @@ public class StackResolutionService {
         // Process ETB effects for all artifacts (creature and non-creature)
         if (!gameData.interaction.isAwaitingInput()) {
             int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard,
-                    entry.getTargetId(), true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts());
+            handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
         }
 
         checkLegendRuleIfIdle(gameData, controllerId);

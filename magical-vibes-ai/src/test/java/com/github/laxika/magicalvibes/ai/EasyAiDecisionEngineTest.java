@@ -158,6 +158,8 @@ class EasyAiDecisionEngineTest {
         gd.playerDecks.put(opponent.getId(), Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(aiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(opponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+        Mockito.lenient().when(combatAttackService.getMaximumAttackers(gd))
+                .thenReturn(Integer.MAX_VALUE);
 
         gameRegistry = new GameRegistry();
         gameRegistry.register(gd);

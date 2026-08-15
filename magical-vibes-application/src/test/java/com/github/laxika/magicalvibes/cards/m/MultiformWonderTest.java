@@ -79,8 +79,8 @@ class MultiformWonderTest extends BaseCardTest {
         harness.handleListChoice(player1, "Gets -2/+2");
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(gqs.getEffectivePower(gd, wonder)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, wonder)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wonder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wonder)).isEqualTo(3);
     }
 
     @Test

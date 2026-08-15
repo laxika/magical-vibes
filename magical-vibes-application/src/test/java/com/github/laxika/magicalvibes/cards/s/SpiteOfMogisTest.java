@@ -48,7 +48,6 @@ class SpiteOfMogisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

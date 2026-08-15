@@ -24,6 +24,7 @@ class DeadlockTrapTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent trap = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(trap.isTapped()).isTrue();

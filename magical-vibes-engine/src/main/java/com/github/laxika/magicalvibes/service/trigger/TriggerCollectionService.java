@@ -2883,11 +2883,10 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
-                // Leave targetId null for may-target tap triggers (Surgespanner). Bake the tapped
-                // permanent's controller only when damage needs TRIGGERING_PERMANENT_CONTROLLER
-                // (Royal Decree). triggeringPermanentId always carries "it" (Freyalise's Winds).
+                // Bake the tapped permanent's controller only when damage needs
+                // TRIGGERING_PERMANENT_CONTROLLER (Royal Decree). triggeringPermanentId always
+                // carries "it" (Freyalise's Winds).
                 if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && !(resolved instanceof MayEffect)
                         && !(resolved instanceof MayPayManaEffect)) {
                     gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
@@ -5593,10 +5592,9 @@ public class TriggerCollectionService {
                 int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                         gameData, controllerId, controllerId, enteringCard);
 
-                // A permanent-targeting effect (Oath of the Ancient Wood's "+1/+1 counter on target
-                // creature") can't go on the stack without a target — queue the choice instead
-                // (CR 603.3d: targets are chosen as the ability is put on the stack).
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                // A targeted effect can't go on the stack without its target, so queue the choice first.
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                     for (int i = 0; i < triggerCount; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                                 perm.getCard(), controllerId, new ArrayList<>(List.of(resolved)), perm.getId()));

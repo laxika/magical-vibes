@@ -57,13 +57,13 @@ class PolymorphousRushTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosenCreature.getId());
-        harness.passBothPriorities();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(target.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -73,7 +73,7 @@ class PolymorphousRushTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new PolymorphousRush()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -82,8 +82,8 @@ class PolymorphousRushTest extends BaseCardTest {
 
     private void castWithMana() {
         harness.setHand(player1, List.of(new PolymorphousRush()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setLife(player2, 20);
     }
 }

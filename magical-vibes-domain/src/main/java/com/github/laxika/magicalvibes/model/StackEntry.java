@@ -771,7 +771,7 @@ public class StackEntry {
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
             // group's target — an effect bound to a later group simply has no target chosen.
-            if (targeting.isAura() && group != 0) {
+            if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {
                 return List.of();
             }
             return targetId != null ? List.of(targetId) : List.of();

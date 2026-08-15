@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PadeemConsulOfInnovationTest extends BaseCardTest {
@@ -31,6 +33,7 @@ class PadeemConsulOfInnovationTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card when your artifact is tied for the highest mana value")
     void drawsWhenArtifactIsTiedForHighestManaValue() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new PadeemConsulOfInnovation());
         harness.addToBattlefield(player1, new ObeliskOfBant());
         harness.addToBattlefield(player2, new ObeliskOfBant());
@@ -43,6 +46,7 @@ class PadeemConsulOfInnovationTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw when an opponent controls a higher-mana-value artifact")
     void doesNotDrawWhenOpponentControlsHigherManaValueArtifact() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new PadeemConsulOfInnovation());
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addToBattlefield(player2, new ObeliskOfBant());

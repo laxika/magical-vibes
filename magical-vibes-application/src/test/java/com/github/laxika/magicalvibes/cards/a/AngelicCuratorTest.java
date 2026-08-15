@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -26,6 +27,7 @@ class AngelicCuratorTest extends BaseCardTest {
 
         Permanent ironMyr = new Permanent(new IronMyr());
         ironMyr.setSummoningSick(false);
+        ironMyr.getGrantedKeywords().add(Keyword.FLYING);
         gd.playerBattlefields.get(player2.getId()).add(ironMyr);
 
         harness.forceActivePlayer(player1);
@@ -48,6 +50,7 @@ class AngelicCuratorTest extends BaseCardTest {
 
         Permanent bears = new Permanent(new GrizzlyBears());
         bears.setSummoningSick(false);
+        bears.getGrantedKeywords().add(Keyword.FLYING);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);

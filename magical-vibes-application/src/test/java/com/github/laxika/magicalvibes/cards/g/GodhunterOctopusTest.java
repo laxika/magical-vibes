@@ -42,6 +42,7 @@ class GodhunterOctopusTest extends BaseCardTest {
     void canAttackWhenDefenderControlsEnchantedPermanent() {
         Permanent defenderCreature = new Permanent(new GrizzlyBears());
         defenderCreature.setSummoningSick(false);
+        defenderCreature.tap();
         gd.playerBattlefields.get(player2.getId()).add(defenderCreature);
 
         addGodhunterOctopus();

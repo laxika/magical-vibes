@@ -108,8 +108,7 @@ public class AnimationSupport {
                 return;
             }
             targetIds = List.of(enchantedId);
-        } else if (effect.scope() == GrantScope.SELF && entry.isNonTargeting()
-                && entry.getSourcePermanentId() != null) {
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
             targetIds = List.of(entry.getSourcePermanentId());
         } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
