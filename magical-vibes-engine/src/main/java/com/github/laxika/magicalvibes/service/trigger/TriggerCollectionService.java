@@ -4051,11 +4051,8 @@ public class TriggerCollectionService {
                         effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
 
-                if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
-                    var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
-                    dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
-                    anyEffectFired = true;
-                } else if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER) || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // Targeted "another creature you control dies" trigger (e.g. Diregraf Captain):
                     // route through the death target pipeline so the controller picks a target as the
                     // ability is put on the stack (CR 603.3d). The source card here is the watching
@@ -4068,6 +4065,10 @@ public class TriggerCollectionService {
                             perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect)),
                             Math.max(0, dyingPermanent.getEffectivePower())
                     ));
+                    anyEffectFired = true;
+                } else if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
+                    var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
+                    dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
                 } else {
                     // Enduring Renewal / similar: bind the dying card id onto effects that need it

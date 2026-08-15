@@ -101,6 +101,7 @@ public sealed interface DynamicAmount permits
         TotalPowerOfControlledCreatures,
         TotalToughnessOfCardsExiledWithSource,
         TotalToughnessOfControlledCreatures,
+        UnspentMana,
         UntappedLandsAtTurnStart,
         XValue {
 }

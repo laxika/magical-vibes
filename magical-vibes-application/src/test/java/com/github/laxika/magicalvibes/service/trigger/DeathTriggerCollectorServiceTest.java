@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
@@ -1403,6 +1404,21 @@ class DeathTriggerCollectorServiceTest {
             var captured = (DestroyEnchantedCreatureOnLeaveEffect) gd.stack.get(0).getEffectsToResolve().get(0);
             assertThat(captured.enchantedPermanentId()).isEqualTo(creature.getId());
             assertThat(captured.cannotBeRegenerated()).isTrue();
+        }
+
+        @Test
+        @DisplayName("ReturnAllCardsExiledWithSourceEffect preserves the leaving permanent ID")
+        void returnAllCardsExiledWithSourcePreservesSourceId() {
+            Permanent perm = new Permanent(createCreature("Leaving Angel", 6, 6));
+            var effect = new ReturnAllCardsExiledWithSourceEffect();
+            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
+
+            svc.handleReturnAllCardsExiledWithSourceOnLeave(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test

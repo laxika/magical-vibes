@@ -60,6 +60,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry, e);
+            case GRANTING_EQUIPMENT -> resolveGrantingEquipment(gameData, entry, e);
         }
     }
 
@@ -95,6 +96,16 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         bounceAll(gameData, entry, List.of(enchanted));
+    }
+
+    private void resolveGrantingEquipment(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (e.grantingEquipmentId() == null) {
+            return;
+        }
+        Permanent equipment = gameQueryService.findPermanentById(gameData, e.grantingEquipmentId());
+        if (equipment != null) {
+            bounceAll(gameData, entry, List.of(equipment));
+        }
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e) {

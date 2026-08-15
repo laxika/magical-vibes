@@ -24,8 +24,8 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

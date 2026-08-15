@@ -1456,6 +1456,13 @@ public class TargetLegalityService {
                 targetFizzled = gameQueryService.findCardInExileById(gameData, entry.getTargetId()) == null;
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
+                if (!targetFizzled) {
+                    targetFizzled = targetValidationService.checkEffectTargets(
+                            entry.getEffectsToResolve(),
+                            new TargetValidationContext(gameData, entry.getTargetId(), Zone.GRAVEYARD,
+                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                    entry.getSourcePermanentSnapshot())).isPresent();
+                }
             } else if (entry.getTargetZone() == Zone.STACK) {
                 targetFizzled = gameData.stack.stream().noneMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
             } else {
@@ -1604,7 +1611,14 @@ public class TargetLegalityService {
             return gameQueryService.findCardInExileById(gameData, targetId) != null;
         }
         if (entry.getTargetZone() == Zone.GRAVEYARD) {
-            return gameQueryService.findCardInGraveyardById(gameData, targetId) != null;
+            if (gameQueryService.findCardInGraveyardById(gameData, targetId) == null) {
+                return false;
+            }
+            return targetValidationService.checkEffectTargets(
+                    entry.getEffectsToResolve(),
+                    new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD,
+                            entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                            entry.getSourcePermanentSnapshot())).isEmpty();
         }
         if (entry.getTargetZone() == Zone.STACK) {
             return checkSpellTargetOnStack(gameData, targetId, primaryTargetFilter(entry), entry.getControllerId(),

@@ -564,6 +564,12 @@ public class ActivatedAbilityExecutionService {
                 // Bind the enchanted permanent now: the Aura may be gone by resolution (Phantom Wings
                 // sacrifices itself as a cost), and the ability still uses last known information.
                 snapshotEffects.add(ReturnToHandEffect.enchantedSnapshot(permanent.getAttachedTo()));
+            } else if (effect instanceof ReturnToHandEffect bounce
+                    && bounce.scope() == BounceScope.GRANTING_EQUIPMENT) {
+                // Bind the granting Equipment before the ability resolves: the equipped creature is
+                // the ability's source, but the Equipment is the permanent that returns to hand.
+                snapshotEffects.add(ReturnToHandEffect.grantingEquipmentSnapshot(
+                        ability.getGrantSourcePermanentId()));
             } else if (effect instanceof ExileEnchantedCreatureEffect && permanent.getAttachedTo() != null) {
                 snapshotEffects.add(new ExileEnchantedCreatureEffect(permanent.getAttachedTo()));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {

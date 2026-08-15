@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThe
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
@@ -43,10 +44,14 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -93,6 +98,49 @@ public class EnterTriggerCollectorService {
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
+
+    /**
+     * "Whenever a permanent you control enters tapped, untap it" (Amulet of Vigor). The entering
+     * permanent is fixed by the event and therefore is not chosen as a target.
+     */
+    @CollectsTrigger(value = UntapEnteringPermanentEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleAnyPermanentEnterUntapEntering(TriggerMatchContext match,
+                                                           UntapEnteringPermanentEffect effect,
+                                                           TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (!match.controllerId().equals(pe.enteringControllerId())) {
+            return false;
+        }
+        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+        if (enteringPermanent == null || !enteringPermanent.isTapped()) {
+            return false;
+        }
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(new UntapPermanentsEffect(TapUntapScope.TARGET))),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers to untap {} entering tapped",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterDefault(TriggerMatchContext match, CardEffect effect,
@@ -271,6 +319,7 @@ public class EnterTriggerCollectorService {
     // ── "May" wrappers (queued as a may-ability, not unwrapped onto the stack) ──────────
 
     @CollectsTriggers({
+            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
@@ -280,14 +329,18 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): read the
         // entering creature's toughness now, since the wrapped effect loses that context once queued.
         if (may.wrapped() instanceof GainLifeEqualToToughnessEffect) {
             may = new MayEffect(new GainLifeEffect(pe.enteringCard().getToughness()), may.prompt());
         }
-        // Always bind the source permanent so a "may put a counter on this creature" wrapper
-        // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
-        // player unset (null), which is harmless for player-directed wrapped effects.
+        if (gainLifeEqualToEnteringPower) {
+            may = new MayEffect(new GainLifeEffect(new TargetPower()), may.prompt());
+        }
+        // Bind the source permanent so a "may put a counter on this creature" wrapper (e.g.
+        // Godtracker of Jund) resolves against the source. The power marker uses the target-id
+        // context for the entering permanent; other ally scans leave the target player unset.
         if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
@@ -297,9 +350,13 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
+        UUID enteringPermanentId = gainLifeEqualToEnteringPower
+                ? findEnteringPermanentId(match, pe.enteringCard())
+                : null;
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    pe.defaultTargetPlayerId(), match.permanent().getId());
+                    enteringPermanentId != null ? enteringPermanentId : pe.defaultTargetPlayerId(),
+                    match.permanent().getId());
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",

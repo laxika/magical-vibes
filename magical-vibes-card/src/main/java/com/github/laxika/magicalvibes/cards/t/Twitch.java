@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "121")
 @CardRegistration(set = "TMP", collectorNumber = "99")
 @CardRegistration(set = "TPR", collectorNumber = "76")
+@CardRegistration(set = "WWK", collectorNumber = "43")
 public class Twitch extends Card {
 
     public Twitch() {

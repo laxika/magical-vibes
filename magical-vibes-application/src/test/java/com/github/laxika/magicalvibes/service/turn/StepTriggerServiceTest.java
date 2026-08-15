@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -1769,6 +1770,32 @@ class StepTriggerServiceTest {
                     DelayedPermanentActionKind.DESTROY_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+        }
+
+        @Test
+        @DisplayName("Exiles controller-scoped delayed permanents only on that player's end step")
+        void controllerScopedDelayedExileWaitsForControllerEndStep() {
+            Card card = createCardWithName("Delayed token");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            ExilePermanentAtControllerEndStep action =
+                    new ExilePermanentAtControllerEndStep(permanent.getId(), player1Id);
+            gd.queueDelayedAction(action);
+
+            gd.activePlayerId = player2Id;
+            sut.handleEndStepTriggers(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToExile(gd, permanent);
+            assertThat(gd.getDelayedActions(ExilePermanentAtControllerEndStep.class)).containsExactly(action);
+
+            gd.activePlayerId = player1Id;
+            when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
+            when(permanentRemovalService.removePermanentToExile(gd, permanent)).thenReturn(true);
+
+            sut.handleEndStepTriggers(gd);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, permanent);
+            assertThat(gd.getDelayedActions(ExilePermanentAtControllerEndStep.class)).isEmpty();
         }
 
         @Test

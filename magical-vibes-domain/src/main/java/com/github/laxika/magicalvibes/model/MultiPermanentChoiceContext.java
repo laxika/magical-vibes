@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,8 +22,12 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Deal damage to a creature the damaged player controls (combat damage trigger). */
-    record DealDamageToDamagedPlayerControls(StackEntry damageEntry, int damage)
+    record DealDamageToDamagedPlayerControls(StackEntry damageEntry, DynamicAmount damage)
             implements MultiPermanentChoiceContext {
+
+        public DealDamageToDamagedPlayerControls(StackEntry damageEntry, int damage) {
+            this(damageEntry, new com.github.laxika.magicalvibes.model.amount.Fixed(damage));
+        }
     }
 
     /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */
@@ -294,6 +299,10 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapCreaturesCreateTokens(com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                     String sourceSetCode) implements MultiPermanentChoiceContext {
+    }
+
+    /** Tap each chosen permanent and put one counter of the specified type on it. */
+    record TapPermanentsAndPutCounters(CounterType counterType) implements MultiPermanentChoiceContext {
     }
 
     /**

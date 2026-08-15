@@ -1029,6 +1029,11 @@ public class TriggeredAbilityQueueService {
                         scope = GraveyardSearchScope.OPPONENT_GRAVEYARD;
                         break;
                     }
+                    if (targetEffect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards graveyardCards) {
+                        filter = graveyardCards.inner();
+                        scope = graveyardCards.scope();
+                        break;
+                    }
                 }
             }
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)

@@ -1195,10 +1195,11 @@ public class CombatDamageService {
                             continue;
                         }
                     }
-                    // Wire the combat damage dealt as the event value so a wrapped "draw that many
-                    // cards" (DrawCardEffect with an EventValue amount, e.g. Cold-Eyed Selkie) reads it.
-                    int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
-                            && draw.amount() instanceof EventValue ? damageDealt : 0;
+                    // Wire the combat damage dealt as the event value for dynamic combat-damage
+                    // amounts, such as "draw that many cards" or "deal that much damage".
+                    int mayEventValue = may.wrapped() instanceof CombatDamageAmountAwareEffect amountAware
+                            && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount())
+                            ? damageDealt : 0;
                     // A "target creature" (any) may-ability — e.g. Hapatra's "you may put a -1/-1 counter
                     // on target creature" — is queued with a null target so its target is chosen at
                     // resolution. Effects that instead act on a creature the damaged player controls have

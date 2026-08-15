@@ -428,7 +428,7 @@ public class MayCastHandlerService {
                             gameData.interaction.setPermanentChoiceContext(
                                     new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
                                             spellEffects, spellType, castEffect.exileInsteadOfGraveyard(),
-                                            castEffect.withoutPayingManaCost()));
+                                            castEffect.withoutPayingManaCost(), graveyardOwnerId));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
 
@@ -455,6 +455,8 @@ public class MayCastHandlerService {
                                 spellEffects, 0, (UUID) null, null
                         );
                         freeCast.setExileInsteadOfGraveyard(castEffect.exileInsteadOfGraveyard());
+                        freeCast.setOwnerIdOverride(graveyardOwnerId);
+                        freeCast.setSourceZone(Zone.GRAVEYARD);
                         gameData.stack.add(freeCast);
 
                         gameData.recordSpellCast(player.getId(), cardToCast);

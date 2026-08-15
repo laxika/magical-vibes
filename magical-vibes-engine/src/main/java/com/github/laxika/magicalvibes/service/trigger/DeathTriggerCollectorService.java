@@ -2181,6 +2181,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ReturnAllCardsExiledWithSourceEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleReturnAllCardsExiledWithSourceOnLeave(TriggerMatchContext match,
+            ReturnAllCardsExiledWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                match.permanent().getId(),
+                List.of()
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
     /**
      * "When this permanent leaves the battlefield, target player creates an X/X token, where X is
      * [something about this permanent]." The source is already gone by the time the trigger resolves,

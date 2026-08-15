@@ -1,5 +1,6 @@
 # Card Patterns: Lands & Spells
 
+| Graveyard creature to top plus power damage | `d/DeadReckoning.java` | `PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect()` with `GraveyardCardPredicateTargetFilter(CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD)` and `TargetFilters.creature()` — both target groups are required; capture the card's power before moving it and resolve the two targets independently |
 All paths relative to `cards/`.
 
 ## Lands

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
@@ -25,6 +26,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +55,7 @@ public class UntapStepService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
     private final PhasingService phasingService;
@@ -508,14 +512,31 @@ public class UntapStepService {
         List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> result = new ArrayList<>();
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
-                        && configuredEffect.step() == step
-                        && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
-                    result.add(configuredEffect);
-                }
+                collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
             }
         }
         return result;
+    }
+
+    private void collectActiveCrossPlayerUntapEffects(
+            GameData gameData,
+            Permanent source,
+            UUID controllerId,
+            TurnStep step,
+            CardEffect effect,
+            List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> result) {
+        if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                && configuredEffect.step() == step
+                && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
+            result.add(configuredEffect);
+            return;
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))) {
+            collectActiveCrossPlayerUntapEffects(
+                    gameData, source, controllerId, step, conditional.wrapped(), result);
+        }
     }
 
     /**

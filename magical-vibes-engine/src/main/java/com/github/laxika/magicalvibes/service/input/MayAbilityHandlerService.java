@@ -281,6 +281,7 @@ public class MayAbilityHandlerService {
                 entry.setAttackedTargetId(ability.attackedTargetId());
                 entry.setActivePlayerId(ability.activePlayerId());
                 entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                entry.setEventValue(ability.eventValue());
                 gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -343,6 +344,7 @@ public class MayAbilityHandlerService {
             }
             entry.setActivePlayerId(ability.activePlayerId());
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+            entry.setEventValue(ability.eventValue());
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
@@ -419,7 +421,7 @@ public class MayAbilityHandlerService {
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
-                ability.sourcePermanentId(), ability.sourcePermanentSnapshot()
+                ability.sourcePermanentId(), ability.sourcePermanentSnapshot(), ability.eventValue()
         ));
         String targetDescription;
         if (!canTargetPermanent && canTargetPlayer) {

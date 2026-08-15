@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -13,10 +14,12 @@ import java.util.List;
  * control (tapped when {@code tapped=true}). The target must match {@link #filter}; when
  * {@link #requireManaValueEqualsX} is {@code true} its mana value must also equal the spell/ability's
  * X value, and after resolution that opponent mills X cards (Geth, Lord of the Vault). Ashen Powder
- * uses a plain creature filter with no mana-value constraint and no mill.
+ * uses a plain creature filter with no mana-value constraint and no mill. A non-null
+ * {@link #maxManaValue} adds an evaluated maximum mana-value restriction.
  */
 public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
-        boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX) implements CardEffect {
+        boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX,
+        DynamicAmount maxManaValue) implements CardEffect {
 
     public PutCardFromOpponentGraveyardOntoBattlefieldEffect() {
         this(false);
@@ -27,7 +30,12 @@ public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE))),
-                true);
+                true, null);
+    }
+
+    public PutCardFromOpponentGraveyardOntoBattlefieldEffect(
+            boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX) {
+        this(tapped, filter, requireManaValueEqualsX, null);
     }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }

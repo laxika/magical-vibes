@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -234,6 +235,15 @@ public class GraveyardTargetingService {
                 " from your graveyard to return to your hand.");
     }
 
+    /** ETB targeting for returning up to a computed number of cards to the battlefield. */
+    public void handleReturnToBattlefieldETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
+            int maxTargets) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
+                returnEffect.filter(), maxTargets,
+                " from your graveyard to return to the battlefield.");
+    }
+
     /**
      * ETB targeting for "you may shuffle up to N target cards from your graveyard into your library"
      * (Ghostly Castigator). Same multi-select flow as return-to-hand; "up to N" covers the "you may".
@@ -308,7 +318,7 @@ public class GraveyardTargetingService {
             }
         }
 
-        if (matchingCards.isEmpty()) {
+        if (matchingCards.isEmpty() || requestedMaxTargets <= 0) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,

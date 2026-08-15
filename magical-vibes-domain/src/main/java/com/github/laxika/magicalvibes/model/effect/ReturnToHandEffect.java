@@ -25,6 +25,8 @@ import java.util.UUID;
  *   <li>{@link #permanentsTargetPlayerOwns(PermanentPredicate)} — bounce every permanent the target
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
+ *   <li>{@link #grantingEquipment()} — bounce the Equipment that granted the resolving ability,
+ *       captured at activation time.</li>
  * </ul>
  */
 public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect {
@@ -34,32 +36,35 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     private final int lifeLoss;
     private final int drawCount;
     private final UUID enchantedPermanentId;
+    private final UUID grantingEquipmentId;
     private final DynamicAmount castTimeXValue;
     private final CardEffect thenEffect;
     private final int minimumControlledNontokenCount;
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
-        this(scope, filter, lifeLoss, drawCount, null, null, null, 0);
+        this(scope, filter, lifeLoss, drawCount, null, null, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0);
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId, DynamicAmount castTimeXValue) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0);
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId, DynamicAmount castTimeXValue,
-                               CardEffect thenEffect, int minimumControlledNontokenCount) {
+                               CardEffect thenEffect, int minimumControlledNontokenCount,
+                               UUID grantingEquipmentId) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
         this.enchantedPermanentId = enchantedPermanentId;
+        this.grantingEquipmentId = grantingEquipmentId;
         this.castTimeXValue = castTimeXValue;
         this.thenEffect = thenEffect;
         this.minimumControlledNontokenCount = minimumControlledNontokenCount;
@@ -105,7 +110,7 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
                                                                 int minimumControlledNontokenCount,
                                                                 CardEffect thenEffect) {
         return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0, null, null, thenEffect,
-                minimumControlledNontokenCount);
+                minimumControlledNontokenCount, null);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerControls(PermanentPredicate filter) {
@@ -141,8 +146,27 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0, enchantedPermanentId);
     }
 
+    /** Returns the Equipment that granted the resolving ability to its owner's hand. */
+    public static ReturnToHandEffect grantingEquipment() {
+        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
+                null, null, null, 0, null);
+    }
+
+    /**
+     * Returns the granting Equipment using the permanent captured when the ability was activated.
+     * If the Equipment has left the battlefield, this effect does nothing.
+     */
+    public static ReturnToHandEffect grantingEquipmentSnapshot(UUID grantingEquipmentId) {
+        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
+                null, null, null, 0, grantingEquipmentId);
+    }
+
     public UUID enchantedPermanentId() {
         return enchantedPermanentId;
+    }
+
+    public UUID grantingEquipmentId() {
+        return grantingEquipmentId;
     }
 
     public BounceScope scope() {

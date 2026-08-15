@@ -207,6 +207,7 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution()));
                 continue;
             }
@@ -223,6 +224,7 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution()));
                 continue;
             }
@@ -293,6 +295,7 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
+                        pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution()));
                 continue;
             }
@@ -335,7 +338,8 @@ public class ETBTokenTargetService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0));
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                        null, pending.repeatedAdditionalCosts(), null));
         return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
     }
 
@@ -369,6 +373,9 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+        }
+        if (!pending.repeatedAdditionalCosts().isEmpty()) {
+            etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));
         }
         gameData.stack.add(etbEntry);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));

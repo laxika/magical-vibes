@@ -705,6 +705,23 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Preserves only the controller's protected color")
+        void preservesControllerScopedColor() {
+            gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 3);
+            gd.playerManaPools.get(player1Id).add(ManaColor.RED, 2);
+            gd.playerManaPools.get(player2Id).add(ManaColor.GREEN, 4);
+            Card card = createCardWithName("Omnath, Locus of Mana");
+            card.addEffect(EffectSlot.STATIC, new PreventManaDrainEffect(ManaColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.drainManaPools(gd);
+
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(3);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
+        }
+
+        @Test
         @DisplayName("Does nothing when mana pools are already empty")
         void doesNothingWhenAlreadyEmpty() {
             sut.drainManaPools(gd);

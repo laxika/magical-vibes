@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
@@ -2997,6 +2998,26 @@ public class StepTriggerService {
                 DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.DESTROY_AT_END_STEP);
+
+        // Stone Idol Trap: exile permanents created by the spell at the beginning of its
+        // controller's next end step, not at the next end step of any player.
+        if (gameData.hasDelayedAction(ExilePermanentAtControllerEndStep.class,
+                action -> action.controllerId().equals(gameData.activePlayerId))) {
+            List<ExilePermanentAtControllerEndStep> pending =
+                    gameData.drainDelayedActions(ExilePermanentAtControllerEndStep.class,
+                            action -> action.controllerId().equals(gameData.activePlayerId));
+            for (ExilePermanentAtControllerEndStep action : pending) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (permanent == null || !permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+                    continue;
+                }
+                gameLogService.append(gameData,
+                        GameLog.builder().card(permanent.getCard()).text(" token is exiled.").build());
+                log.info("Game {} - {} token is exiled at its controller's end step",
+                        gameData.id, permanent.getCard().getName());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
 
         // Process Siren's Call: destroy all non-Wall creatures the player controls that didn't attack
         // this turn, ignoring creatures they didn't control continuously since the beginning of the

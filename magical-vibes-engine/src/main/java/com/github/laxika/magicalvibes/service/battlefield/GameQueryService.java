@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
@@ -1048,29 +1049,52 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player is able to lose the game (i.e. no
-     * {@link CantLoseGameEffect} is present on their battlefield).
+     * {@link CantLoseGameEffect} is controlled by them and no opponent controls a
+     * {@link CantWinGameEffect}).
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
         if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
             return false;
         }
-        // Emblem-sourced "you can't lose the game" effects (Gideon of the Trials' emblem applies only
-        // while its controller controls a Gideon planeswalker, so it's a ConditionalEffect).
-        for (Emblem emblem : gameData.emblems) {
-            if (!playerId.equals(emblem.controllerId())) continue;
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof CantLoseGameEffect) {
-                    return false;
-                }
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.wrapped() instanceof CantLoseGameEffect
-                        && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forCasting(playerId))) {
-                    return false;
-                }
+        if (playerEmblemHasActiveStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
+            return false;
+        }
+        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
+            if (!playerId.equals(opponentId) && playerHasCantWinGameEffect(gameData, opponentId)) {
+                return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Returns {@code true} if the player controls an active static effect that prevents them from
+     * winning the game.
+     */
+    public boolean playerHasCantWinGameEffect(GameData gameData, UUID playerId) {
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)) {
+            return true;
+        }
+        return playerEmblemHasActiveStaticEffect(gameData, playerId, CantWinGameEffect.class);
+    }
+
+    private boolean playerEmblemHasActiveStaticEffect(GameData gameData, UUID playerId,
+                                                       Class<? extends CardEffect> effectType) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effectType.isInstance(effect)) {
+                    return true;
+                }
+                if (effect instanceof ConditionalEffect conditional
+                        && effectType.isInstance(conditional.wrapped())
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forCasting(playerId))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

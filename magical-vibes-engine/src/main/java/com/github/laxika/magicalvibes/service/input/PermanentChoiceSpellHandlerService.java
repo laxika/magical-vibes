@@ -337,6 +337,8 @@ public class PermanentChoiceSpellHandlerService {
                     null
             );
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
+            entry.setOwnerIdOverride(gct.ownerId());
+            entry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());
@@ -352,7 +354,8 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkSpellCastTriggers(gameData, gct.cardToCast(), gct.controllerId(), false);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
-            graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
+            UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
+            graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
             gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }

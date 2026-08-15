@@ -21,6 +21,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       regardless of who controls those Auras (Scarab of the Unseen).</li>
  *   <li>{@link #ENCHANTED} — the permanent the source Aura is attached to (Sun Clasp —
  *       "return enchanted creature to its owner's hand").</li>
+ *   <li>{@link #GRANTING_EQUIPMENT} — the Equipment that granted the resolving ability,
+ *       captured when the ability was activated.</li>
  * </ul>
  */
 public enum BounceScope {
@@ -31,5 +33,6 @@ public enum BounceScope {
     TARGET_PLAYERS_PERMANENTS,
     TARGET_PLAYERS_OWNED,
     AURAS_ATTACHED_TO_TARGET,
-    ENCHANTED
+    ENCHANTED,
+    GRANTING_EQUIPMENT
 }

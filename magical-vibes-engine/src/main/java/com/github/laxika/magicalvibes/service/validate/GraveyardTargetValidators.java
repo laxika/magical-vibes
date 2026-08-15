@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAndSacrificedCardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -43,6 +45,7 @@ public class GraveyardTargetValidators {
 
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @ValidatesTarget(RegisterDelayedReturnTargetAndSacrificedCardsEffect.class)
@@ -475,6 +478,16 @@ public class GraveyardTargetValidators {
         }
         if (effect.requireManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
+        }
+        if (effect.maxManaValue() != null) {
+            UUID controllerId = ctx.sourceControllerId() != null
+                    ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
+            int maxManaValue = amountEvaluationService.evaluate(
+                    ctx.gameData(), effect.maxManaValue(), AmountContext.forCasting(controllerId));
+            if (graveyardCard.getManaValue() > maxManaValue) {
+                throw new IllegalStateException(
+                        "Target card's mana value must be " + maxManaValue + " or less");
+            }
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
         UUID controllerId = tvs.findSourcePermanentController(ctx);

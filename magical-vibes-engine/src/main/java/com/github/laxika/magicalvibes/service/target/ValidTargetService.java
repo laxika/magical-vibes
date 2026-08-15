@@ -1069,7 +1069,7 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (!matchesGraveyardEffectTypeFilter(gameData, effect, c, card.getId())) continue;
+                        if (!matchesGraveyardEffectTypeFilter(gameData, effect, c, card.getId(), controllerId)) continue;
                         validIds.add(c.getId());
                     }
                 }
@@ -1109,7 +1109,7 @@ public class ValidTargetService {
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                         if (!excludeIds.contains(c.getId())
-                                && matchesGraveyardEffectTypeFilter(gameData, effect, c, sourceCardId)) {
+                                && matchesGraveyardEffectTypeFilter(gameData, effect, c, sourceCardId, controllerId)) {
                             validIds.add(c.getId());
                         }
                     }
@@ -1124,7 +1124,8 @@ public class ValidTargetService {
      * Checks whether a graveyard card matches the type restriction imposed by the given effect.
      * Mirrors the validation in {@link com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators}.
      */
-    private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c, UUID sourceCardId) {
+    private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c,
+                                                     UUID sourceCardId, UUID controllerId) {
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {
@@ -1160,7 +1161,10 @@ public class ValidTargetService {
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
-            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return (e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId))
+                    && (e.maxManaValue() == null
+                    || c.getManaValue() <= amountEvaluationService.evaluate(
+                    gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {
             return matchesReturnCardFilter(gameData, e, c, sourceCardId);
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {

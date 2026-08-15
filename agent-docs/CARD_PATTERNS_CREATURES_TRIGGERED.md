@@ -9,6 +9,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Continuous creature-type and self-counter trigger grant | `m/MephidrossVampire.java` | STATIC `GrantSubtypeEffect(VAMPIRE, ALL_OWN_CREATURES)` + `GrantTriggeredAbilityEffect(ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, PutCountersOnSourceEffect(1,1,1), ALL_OWN_CREATURES)`; the damage collector adds the continuously granted trigger only for the creature that dealt the damage |
+| This or another creature you control with flying enters (may gain life = its power) | `a/ArchonOfRedemption.java` | `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` + `TriggeringPermanentConditionalEffect(PermanentHasKeywordPredicate(FLYING), MayEffect(GainLifeEqualToPowerEffect()))` — the collector preserves the entering permanent as resolution context so the optional life gain uses its effective power |
 | Turns up with self or another controlled creature | `p/PineWalker.java` | `ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP` + `UntapPermanentsEffect(TapUntapScope.SELF)`; the turn-face-up collector binds the turned creature as the non-targeting effect subject |
 | On death | `b/BogardanFirefiend.java` | ON_DEATH DealDamageToTargetCreatureEffect |
 | Becomes the target of a spell or ability — damage its controller | `r/Retromancer.java` | `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY DealDamageToTriggeringSpellControllerEffect(3)` — a `TriggeringSpellReferencingEffect` queues the triggering spell or ability as an internal STACK reference, then deals damage (not life loss) to its controller |

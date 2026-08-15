@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -25,7 +26,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -352,28 +355,28 @@ public class TurnCleanupService {
     }
 
     /**
-     * Empties every player's mana pool, unless a permanent with
-     * {@link PreventManaDrainEffect} (e.g. Upwelling) is on any battlefield.
-     * A controller's mana is converted to colorless instead when that controller has a permanent
-     * with {@link ReplaceManaDrainWithColorlessEffect} (e.g. Kruphix, God of Horizons).
-     * Mana marked as persistent (e.g. from Grand Warlord Radha) survives
-     * the drain; only non-persistent mana is removed.
+     * Drains each player's mana pool, applying global and controller-scoped prevention effects.
+     * A controller's mana is converted to colorless instead when that controller has a
+     * {@link ReplaceManaDrainWithColorlessEffect}. Mana marked as persistent survives the drain;
+     * only non-persistent mana is removed.
      *
      * @param gameData the current game state to modify
      */
     public void drainManaPools(GameData gameData) {
-        // Check if any permanent on the battlefield prevents mana drain globally (e.g. Upwelling)
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PreventManaDrainEffect.class::isInstance)) {
+                        .filter(PreventManaDrainEffect.class::isInstance)
+                        .map(PreventManaDrainEffect.class::cast)
+                        .anyMatch(effect -> effect.color() == null)) {
                     return;
                 }
             }
         }
 
+        boolean manaDrained = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
@@ -384,13 +387,36 @@ public class TurnCleanupService {
                 if (replaceManaDrain) {
                     manaPool.convertNonPersistentManaToColorless();
                 }
-                manaPool.drainNonPersistent(replaceManaDrain);
+                Set<ManaColor> protectedColors = protectedManaColors(gameData, playerId);
+                if (replaceManaDrain) {
+                    protectedColors.add(ManaColor.COLORLESS);
+                }
+                manaDrained |= manaPool.drainNonPersistent(protectedColors);
             }
         }
 
-        // Clear pending one-shot spell copy triggers (Primal Wellspring) since their mana drained
-        gameData.pendingNextInstantSorceryCopyCount.clear();
-        gameData.pendingNextRedInstantSorceryCopyCount.clear();
+        if (manaDrained) {
+            // Clear pending one-shot spell copy triggers (Primal Wellspring) since their mana drained
+            gameData.pendingNextInstantSorceryCopyCount.clear();
+            gameData.pendingNextRedInstantSorceryCopyCount.clear();
+        }
+    }
+
+    private Set<ManaColor> protectedManaColors(GameData gameData, UUID playerId) {
+        EnumSet<ManaColor> protectedColors = EnumSet.noneOf(ManaColor.class);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return protectedColors;
+        }
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PreventManaDrainEffect prevent
+                        && prevent.color() != null) {
+                    protectedColors.add(prevent.color());
+                }
+            }
+        }
+        return protectedColors;
     }
 
     /**

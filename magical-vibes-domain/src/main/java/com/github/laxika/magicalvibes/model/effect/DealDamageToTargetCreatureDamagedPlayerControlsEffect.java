@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * {@code targetId} rather than in this effect's target spec.
  */
 public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage)
-        implements DamageDealingEffect {
+        implements DamageDealingEffect, CombatDamageAmountAwareEffect {
 
     public DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage) {
         this.damage = damage;
@@ -21,6 +21,11 @@ public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmoun
 
     @Override
     public DynamicAmount damageAmount() {
+        return damage;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
         return damage;
     }
 

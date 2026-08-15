@@ -660,6 +660,7 @@ public class PermanentChoiceTriggerHandlerService {
                 );
                 entry.setTargetId(permanentId);
             }
+            entry.setEventValue(mat.eventValue());
             pushTriggeredEntry(gameData, entry);
 
             if (isPlayerTarget) {
@@ -1396,6 +1397,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
                 updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
+                etbMtt.repeatedAdditionalCosts(),
                 etbMtt.resumePendingMayResolution()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);

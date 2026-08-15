@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsCon
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -265,6 +267,30 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
         MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
         assertThat(may.wrapped()).isInstanceOf(TransformTargetPermanentEffect.class);
+    }
+
+    @Test
+    @DisplayName("Self-or-ally flying trigger materializes entering power for a may life gain")
+    void selfOrAllyFlyingGainLifeUsesEnteringPower() {
+        var predicate = new PermanentTruePredicate();
+        addAllyCreatureTrigger(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(predicate,
+                        new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life?")));
+
+        Card entering = enteringCreature(4, 1);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), eq(predicate), any(FilterContext.class)))
+                .thenReturn(true);
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+        assertThat(may.wrapped()).isEqualTo(new GainLifeEffect(new TargetPower()));
     }
 
     @Test

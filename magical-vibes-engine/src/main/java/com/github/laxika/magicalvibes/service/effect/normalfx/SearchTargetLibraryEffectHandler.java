@@ -122,7 +122,9 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
         String subject = "Search " + targetName + "'s library for a " + CardPredicateUtils.describeFilter(filter);
         return switch (destination) {
             case EXILE -> subject + " to exile (" + count + " remaining).";
-            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> subject + " to exile face down.";
+            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> filter == null
+                    ? subject + " to exile face down."
+                    : subject + " to exile.";
             case GRAVEYARD -> subject + " to put into their graveyard (" + count + " remaining).";
             case BATTLEFIELD_UNDER_SEARCHER -> subject + " to put onto the battlefield under your control.";
             default -> throw new IllegalStateException("Unsupported destination " + destination);

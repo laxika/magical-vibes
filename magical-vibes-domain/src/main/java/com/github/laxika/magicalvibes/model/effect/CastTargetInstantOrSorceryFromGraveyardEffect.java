@@ -1,7 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
 
 /**
  * "You may cast target instant or sorcery card from [scope] graveyard[ without paying its mana cost]."
@@ -29,5 +35,15 @@ public record CastTargetInstantOrSorceryFromGraveyardEffect(
         this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(scope)); }
+    @Override
+    public TargetSpec targetSpec() {
+        CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
+                new CardTypePredicate(CardType.INSTANT),
+                new CardTypePredicate(CardType.SORCERY)));
+        CardPredicate targetFilter = filter == null
+                ? instantOrSorcery
+                : new CardAllOfPredicate(List.of(instantOrSorcery, filter));
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                targetFilter, scope));
+    }
 }

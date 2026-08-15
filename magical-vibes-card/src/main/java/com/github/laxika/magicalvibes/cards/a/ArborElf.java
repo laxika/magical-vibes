@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "160")
+@CardRegistration(set = "WWK", collectorNumber = "95")
 public class ArborElf extends Card {
 
     public ArborElf() {

@@ -51,6 +51,8 @@ class UntapStepServiceTest {
     private GameQueryService gameQueryService;
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @Mock
     private GameLogService gameLogService;

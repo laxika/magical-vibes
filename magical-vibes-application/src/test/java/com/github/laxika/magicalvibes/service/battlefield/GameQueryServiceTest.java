@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
+import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
@@ -520,6 +521,16 @@ class GameQueryServiceTest {
             addPermanent(player1Id, createCreatureWithStaticEffect("Platinum Angel", 4, 4, null, new CantLoseGameEffect()));
 
             assertThat(gqs.canPlayerLoseGame(gd, player2Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false for an opponent when that opponent controls CantWinGameEffect")
+        void returnsFalseForOpponentOfCantWinEffectController() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Abyssal Persecutor", 6, 6, CardColor.BLACK,
+                    new CantWinGameEffect()));
+
+            assertThat(gqs.canPlayerLoseGame(gd, player2Id)).isFalse();
+            assertThat(gqs.canPlayerLoseGame(gd, player1Id)).isTrue();
         }
     }
 

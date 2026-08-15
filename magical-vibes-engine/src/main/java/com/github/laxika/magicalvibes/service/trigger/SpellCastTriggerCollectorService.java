@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
@@ -818,27 +819,56 @@ public class SpellCastTriggerCollectorService {
             KickedSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
 
-        // Check if the spell on the stack was kicked
-        boolean isKicked = false;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
-                isKicked = se.isKicked();
-                break;
-            }
-        }
-        if (!isKicked) return false;
+        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (spellEntry == null) return false;
+        int kickCount = kickedCount(spellEntry);
+        if (kickCount == 0) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+
+        if (match.rawEffect() instanceof MayEffect may) {
+            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    resolved,
+                    match.permanent().getCard().getName() + " â€” " + may.prompt(),
+                    null,
+                    null,
+                    match.permanent().getId(),
+                    null,
+                    0,
+                    0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    kickCount));
+            return true;
+        }
 
         // The trigger's source permanent is always carried on the entry — source-relative
         // effects (put counters on source, damage equal to counters on source) need it.
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId());
+        entry.setEventValue(kickCount);
         match.gameData().stack.add(entry);
 
         log.info("Game {} - {} kicked-spell-cast trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
+    }
+
+    private int kickedCount(StackEntry spellEntry) {
+        int count = spellEntry.isKicked() ? 1 : 0;
+        boolean isMultikicker = spellEntry.getCard().getEffects(EffectSlot.SPELL).stream()
+                .filter(RepeatableAdditionalManaCost.class::isInstance)
+                .map(RepeatableAdditionalManaCost.class::cast)
+                .anyMatch(RepeatableAdditionalManaCost::multikicker);
+        if (isMultikicker) {
+            count += spellEntry.getRepeatedAdditionalCosts().size();
+        }
+        return count;
     }
 
     @CollectsTrigger(value = CastFromGraveyardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)

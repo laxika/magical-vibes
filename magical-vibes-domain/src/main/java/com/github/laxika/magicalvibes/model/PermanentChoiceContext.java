@@ -231,9 +231,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
+                                   UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
+                                   int eventValue) implements PermanentChoiceContext {
+        public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       UUID sourcePermanentId, Permanent sourcePermanentSnapshot) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, sourcePermanentSnapshot, 0);
+        }
+
         public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, null);
+            this(sourceCard, controllerId, effects, null, null, 0);
         }
     }
 
@@ -597,10 +603,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean exileInsteadOfGraveyard,
-                                    boolean withoutPayingManaCost) implements PermanentChoiceContext {
+                                    boolean withoutPayingManaCost, UUID ownerId) implements PermanentChoiceContext {
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, null);
+        }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, true);
+            this(cardToCast, controllerId, spellEffects, spellType, false, true, null);
         }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
@@ -704,13 +717,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                       int currentGroupIndex, int chosenInCurrentGroup,
                                       List<Integer> groupSizes, int xValue,
+                                      List<String> repeatedAdditionalCosts,
                                       boolean resumePendingMayResolution) implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                           int currentGroupIndex, int chosenInCurrentGroup) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, List.of());
+                    currentGroupIndex, chosenInCurrentGroup, List.of(), 0, List.of(), false);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -718,7 +732,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int currentGroupIndex, int chosenInCurrentGroup,
                                           List<Integer> groupSizes) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0, false);
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0, List.of(), false);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -726,7 +740,27 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int currentGroupIndex, int chosenInCurrentGroup,
                                           List<Integer> groupSizes, int xValue) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, false);
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, List.of(), false);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          boolean resumePendingMayResolution) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, List.of(),
+                    resumePendingMayResolution);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, false);
         }
     }
 

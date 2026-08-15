@@ -14,6 +14,17 @@ import java.util.List;
  * {@link com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount} can read how
  * many times a particular option was paid (Primitive Justice's "you gain 1 life for each
  * additional {1}{G} you paid").
+ *
+ * @param multikicker whether the repeated payments are multikicker payments and therefore count
+ *                    as kicks for kicked-spell triggers
  */
-public record RepeatableAdditionalManaCost(List<String> manaCosts) implements CostEffect {
+public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker) implements CostEffect {
+
+    public RepeatableAdditionalManaCost(List<String> manaCosts) {
+        this(manaCosts, false);
+    }
+
+    public static RepeatableAdditionalManaCost multikicker(List<String> manaCosts) {
+        return new RepeatableAdditionalManaCost(manaCosts, true);
+    }
 }

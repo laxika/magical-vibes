@@ -852,7 +852,11 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
-            exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
+            if (filterPredicate != null) {
+                exileService.exileCard(gameData, playerId, chosenCard);
+            } else {
+                exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
+            }
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
@@ -866,9 +870,9 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
 
-            String logMsg = shuffleAfterSelection
-                    ? player.getUsername() + " exiles a card face down. Library is shuffled."
-                    : player.getUsername() + " exiles a card face down.";
+            String logMsg = player.getUsername()
+                    + (filterPredicate != null ? " exiles a card." : " exiles a card face down.")
+                    + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search (with play permission)", gameData.id, player.getUsername(), chosenCard.getName());
 

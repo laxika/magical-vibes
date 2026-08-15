@@ -2199,6 +2199,9 @@ public class SpellCastingService {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
             }
             entry.setPutCounterCostPaid(isPutCounterCostPaid(additionalCosts, paymentCostSelection));
+            if (!repeatedAdditionalCosts.isEmpty()) {
+                entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
+            }
             if (hasModalEtb) {
                 entry.setEtbMode(xValue != null ? xValue : 0);
             }

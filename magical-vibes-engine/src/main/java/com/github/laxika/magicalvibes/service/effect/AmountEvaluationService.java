@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSo
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
+import com.github.laxika.magicalvibes.model.amount.UnspentMana;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
@@ -321,6 +322,11 @@ public class AmountEvaluationService {
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
             case TotalToughnessOfControlledCreatures ignored ->
                     totalToughnessOfControlledCreatures(gameData, ctx);
+            case UnspentMana a ->
+                    ctx.controllerId() == null || gameData.playerManaPools.get(ctx.controllerId()) == null
+                            ? 0
+                            : gameData.playerManaPools.get(ctx.controllerId())
+                                    .getColoredManaTotals().getOrDefault(a.color(), 0);
             case LastDiscardedCardManaValue ignored ->
                     gameData.lastDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
