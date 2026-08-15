@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BelligerentSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -37,6 +38,35 @@ class RazorgrassScreenTest extends BaseCardTest {
         beginCombat(attacker);
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A lone Screen is not able to block a menace attacker")
+    void menaceMakesBlockingRequirementImpossible() {
+        addCreatureReady(player2, new RazorgrassScreen());
+        Permanent attacker = addCreatureReady(player1, new BelligerentSliver());
+
+        beginCombat(attacker);
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Enough blockers still have to block a menace attacker")
+    void enoughBlockersMustBlockMenaceAttacker() {
+        addCreatureReady(player2, new RazorgrassScreen());
+        addCreatureReady(player2, new RazorgrassScreen());
+        Permanent attacker = addCreatureReady(player1, new BelligerentSliver());
+
+        beginCombat(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
                 .doesNotThrowAnyException();
     }
 

@@ -303,16 +303,7 @@ public class CombatBlockService {
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
-        // Team-wide "each creature you control can't be blocked by more than N creatures" (Yuan Shao).
-        // All attackers belong to the active player, so scan that player's battlefield once.
-        int teamMaxBlockers = Integer.MAX_VALUE;
-        for (Permanent p : attackerBattlefield) {
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
-                    teamMaxBlockers = Math.min(teamMaxBlockers, restriction.maxBlockers());
-                }
-            }
-        }
+        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
 
         for (var entry : blockersPerAttacker.entrySet()) {
             int attackerIdx = entry.getKey();
@@ -1623,7 +1614,8 @@ public class CombatBlockService {
                 if (!gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)) {
                     continue;
                 }
-                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                if (canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                        defenderBattlefield, blockable, blockerIdx, i)) {
                     requiredAttackerIndices.add(i);
                 }
             }
@@ -1702,7 +1694,8 @@ public class CombatBlockService {
                 for (int i = 0; i < attackerBattlefield.size(); i++) {
                     Permanent attacker = attackerBattlefield.get(i);
                     if (attacker.isAttacking() && attacker.getId().equals(mustBlockId)
-                            && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                            && canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                            defenderBattlefield, blockable, blockerIdx, i)) {
                         requiredAttackerIndices.add(i);
                     }
                 }
@@ -1766,8 +1759,8 @@ public class CombatBlockService {
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             for (int blockerIdx : blockable) {
                 if (assignedBlockerIndices.contains(blockerIdx)) continue;
-                Permanent blocker = defenderBattlefield.get(blockerIdx);
-                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                if (canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                        defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " must be blocked if able");
                 }
@@ -1810,7 +1803,8 @@ public class CombatBlockService {
                     }
                     int usage = blockerUsage.getOrDefault(blockerIdx, 0);
                     if (usage >= getMaxBlocksForCreature(gameData, blocker, defenderBattlefield)
-                            || !blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                            || !canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                            defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                         continue;
                     }
                     throw new IllegalStateException(attacker.getCard().getName()
@@ -1844,12 +1838,61 @@ public class CombatBlockService {
             if (assignedBlockerIndices.contains(blockerIdx) || !mustBlockIfAble(gameData, blocker)) {
                 continue;
             }
-            for (Permanent attacker : attackerBattlefield) {
-                if (attacker.isAttacking() && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+            for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (attacker.isAttacking() && canBlockAsPartOfLegalDeclaration(gameData, blockContext,
+                        attackerBattlefield, defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                     throw new IllegalStateException(blocker.getCard().getName() + " must block this turn if able");
                 }
             }
         }
+    }
+
+    private boolean canBlockAsPartOfLegalDeclaration(GameData gameData,
+                                                      BlockLegalityContext blockContext,
+                                                      List<Permanent> attackerBattlefield,
+                                                      List<Permanent> defenderBattlefield,
+                                                      List<Integer> blockable,
+                                                      int blockerIdx,
+                                                      int attackerIdx) {
+        Permanent blocker = defenderBattlefield.get(blockerIdx);
+        Permanent attacker = attackerBattlefield.get(attackerIdx);
+        if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+            return false;
+        }
+
+        int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
+                minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
+            }
+        }
+
+        int maximumBlockers = Math.min(
+                Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                        maximumBlockersForTeam(attackerBattlefield)),
+                CombatHelper.getMaximumBlockers(gameData));
+        if (minimumBlockers > maximumBlockers) {
+            return false;
+        }
+
+        long availableBlockers = blockable.stream()
+                .filter(candidateIdx -> blockLegalityService.canBlockAttacker(
+                        blockContext, defenderBattlefield.get(candidateIdx), attacker))
+                .count();
+        return availableBlockers >= minimumBlockers;
+    }
+
+    private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
+        int maximumBlockers = Integer.MAX_VALUE;
+        for (Permanent permanent : attackerBattlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                    maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
+                }
+            }
+        }
+        return maximumBlockers;
     }
 
     /**
