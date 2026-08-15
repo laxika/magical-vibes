@@ -455,15 +455,25 @@ class AiTargetSelector {
                     }
                     continue;
                 }
-                UUID chosen = pickPlayerTargetForGroup(
-                        gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
-                        alreadyChosen, card.isAllowSharedTargets());
-                if (chosen != null) {
-                    result.add(chosen);
-                    alreadyChosen.add(chosen);
-                } else if (st.getMinTargets() > 0) {
-                    return null; // Mandatory target cannot be satisfied
+                List<UUID> chosen = new ArrayList<>();
+                Set<UUID> unavailable = card.isAllowSharedTargets()
+                        ? new HashSet<>()
+                        : new HashSet<>(alreadyChosen);
+                while (chosen.size() < effectiveMaxTargets) {
+                    unavailable.addAll(chosen);
+                    UUID player = pickPlayerTargetForGroup(
+                            gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
+                            unavailable, false);
+                    if (player == null) {
+                        break;
+                    }
+                    chosen.add(player);
                 }
+                if (chosen.size() < st.getMinTargets()) {
+                    return null; // Mandatory targets cannot be satisfied
+                }
+                result.addAll(chosen);
+                alreadyChosen.addAll(chosen);
             } else if (wantsPermanent) {
                 List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
                         st, effectiveMaxTargets, alreadyChosen, groupEffects);

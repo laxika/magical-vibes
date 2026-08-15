@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.p.PathToExile;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.r.RivalsDuel;
+import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.s.SlaveOfBolas;
@@ -1173,6 +1174,15 @@ class AiTargetSelectorTest {
         void culturalExchangeChoosesDifferentPlayers() {
             List<UUID> targets = targetSelector.chooseMultiTargets(
                     gd, new CulturalExchange(), aiPlayer.getId());
+
+            assertThat(targets).containsExactly(human.getId(), aiPlayer.getId());
+        }
+
+        @Test
+        @DisplayName("Scheming Symmetry chooses both required player targets from one group")
+        void schemingSymmetryChoosesBothPlayers() {
+            List<UUID> targets = targetSelector.chooseMultiTargets(
+                    gd, new SchemingSymmetry(), aiPlayer.getId());
 
             assertThat(targets).containsExactly(human.getId(), aiPlayer.getId());
         }
