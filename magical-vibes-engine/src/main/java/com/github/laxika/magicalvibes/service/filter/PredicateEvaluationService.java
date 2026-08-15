@@ -1549,9 +1549,9 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * Colours of a permanent without consulting {@code GameQueryService.computeStaticBonus}: the
-     * in-flight layer-5 state when a CR 613 pass is running, the permanent's own stored colours
-     * otherwise. Mirrors the {@code PermanentColorInPredicate} leaf.
+     * Resolves a permanent's effective name from the in-flight layered state when available. An
+     * entering permanent has no layered state yet, so its intrinsic name is used while its
+     * game's pass is being built instead of recursively starting another static-bonus assembly.
      */
     private String effectiveName(Permanent permanent, FilterContext context) {
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
@@ -1559,6 +1559,12 @@ public class PredicateEvaluationService {
             return layered.getName();
         }
         GameData gameData = context == null ? null : context.gameData();
+        LayerSystemService.Pass activePass = LayerSystemService.activePass();
+        if (gameData != null && activePass != null && activePass.gameData() == gameData) {
+            // An entering permanent is not in the layered board yet. Falling back to the
+            // fully layered query here would re-enter the same static-bonus assembly.
+            return permanent.getCard().getName();
+        }
         return gameData == null
                 ? permanent.getCard().getName()
                 : gameQueryService.getEffectiveName(gameData, permanent);
