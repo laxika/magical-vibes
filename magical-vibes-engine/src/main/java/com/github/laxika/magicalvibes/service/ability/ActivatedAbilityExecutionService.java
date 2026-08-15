@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -1434,12 +1435,37 @@ public class ActivatedAbilityExecutionService {
             effectiveTargetZone = null;
         }
         List<UUID> effectiveTargetIds = targetIds != null ? targetIds : List.of();
+        boolean mixedBattlefieldAndGraveyardTargets = effectiveTargetZone == null
+                && effectiveTargetId == null
+                && !effectiveTargetIds.isEmpty()
+                && ability.getMultiTargetFilters().stream()
+                        .anyMatch(GraveyardCardPredicateTargetFilter.class::isInstance);
         // When targeting graveyard cards with multiple targets, use targetCardIds
         // (for proper fizzle checking and resolution by graveyard handlers)
-        List<UUID> effectiveTargetCardIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
-                ? effectiveTargetIds : List.of();
-        List<UUID> effectivePermanentTargetIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
-                ? List.of() : effectiveTargetIds;
+        List<UUID> effectiveTargetCardIds;
+        List<UUID> effectivePermanentTargetIds;
+        if (mixedBattlefieldAndGraveyardTargets) {
+            List<UUID> graveyardTargetIds = new ArrayList<>();
+            List<UUID> permanentTargetIds = new ArrayList<>();
+            for (int i = 0; i < effectiveTargetIds.size(); i++) {
+                if (i < ability.getMultiTargetFilters().size()
+                        && ability.getMultiTargetFilters().get(i) instanceof GraveyardCardPredicateTargetFilter) {
+                    graveyardTargetIds.add(effectiveTargetIds.get(i));
+                } else {
+                    permanentTargetIds.add(effectiveTargetIds.get(i));
+                }
+            }
+            if (!permanentTargetIds.isEmpty()) {
+                effectiveTargetId = permanentTargetIds.removeFirst();
+            }
+            effectiveTargetCardIds = graveyardTargetIds;
+            effectivePermanentTargetIds = permanentTargetIds;
+        } else {
+            effectiveTargetCardIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
+                    ? effectiveTargetIds : List.of();
+            effectivePermanentTargetIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
+                    ? List.of() : effectiveTargetIds;
+        }
         StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),

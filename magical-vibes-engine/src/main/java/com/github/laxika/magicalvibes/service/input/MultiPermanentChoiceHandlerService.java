@@ -76,6 +76,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
     private final LifeSupport lifeSupport;
     private final DamagePreventionService damagePreventionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
@@ -205,6 +206,10 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Must select exactly " + fadeAway.requiredCount()
                     + " permanents to sacrifice");
         }
+        if (context instanceof MultiPermanentChoiceContext.PutPermanentsOnTopOfOwnersLibraries
+                && !new HashSet<>(permanentIds).equals(new HashSet<>(validIds))) {
+            throw new IllegalStateException("All matching permanents must be ordered");
+        }
 
         gameData.interaction.clearAwaitingInput();
 
@@ -234,6 +239,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary ctx) {
             handlePutAttackingCreaturesOnLibrary(gameData, permanentIds, multiPermanentChoice.validIds(), ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.PutPermanentsOnTopOfOwnersLibraries ctx) {
+            putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyCreaturesOpponentControls ctx) {
             handleDestroyCreaturesOpponentControls(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapChosenPermanents ctx) {

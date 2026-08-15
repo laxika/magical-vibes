@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,10 @@ public class BecomeColorlessEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var becomes = (BecomeColorlessEffect) effect;
-        if (support.matchesCreatureScope(context, becomes.scope(), null)) {
+        boolean matches = becomes.scope() == GrantScope.ALL_PERMANENTS
+                ? support.matchesStaticFilter(context, context.target(), null)
+                : support.matchesCreatureScope(context, becomes.scope(), null);
+        if (matches) {
             accumulator.setColorOverriding(true);
         }
     }

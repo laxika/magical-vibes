@@ -2680,6 +2680,9 @@ public class CombatDamageService {
         damage = damagePreventionService.applyAllCreatureDamageRedirectToController(
                 gameData, target, source.getId(), damage);
         processSourceRedirectDamage(gameData);
+        damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                gameData, target, source.getId(), damage);
+        processSourceRedirectDamage(gameData);
         if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
+import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -66,6 +68,7 @@ import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreatur
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
@@ -153,6 +156,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveDelayCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -264,6 +268,9 @@ public class StepTriggerService {
         this.grantedUpkeepEffectSupport = grantedUpkeepEffectSupport;
         this.etbTokenTargetService = etbTokenTargetService;
     }
+
+    private record GrantedUpkeepSacrifice(AllPermanentsUpkeepSacrificeUnlessPayEffect effect,
+                                          UUID sourcePermanentId) {}
 
     /**
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
@@ -578,13 +585,13 @@ public class StepTriggerService {
             grantedUpkeepEffectSupport.appendGrantedUpkeepEffects(gameData, perm, upkeepEffects);
             if (upkeepEffects.isEmpty()) continue;
 
-            // Intervening-if on an any-target upkeep ability (Scalding Tongs): the condition is
-            // checked at trigger time (CR 603.4), so a failed check must not even ask for a target.
-            // Scoped to any-target conditional effects; the other intervening-if forms are handled
-            // per-condition further below.
+            // Intervening-if on a targeted upkeep ability: the condition is checked at trigger
+            // time, so a failed check must not even ask for a target. This also covers player-only
+            // targets such as Brink of Madness; the later target-routing code cannot safely queue
+            // a target before this check.
             upkeepEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                    && ce.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    && ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    && ce.interveningIf()
+                    && ce.targetSpec() != TargetSpec.NONE
                     && !conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, activePlayerId)));
             if (upkeepEffects.isEmpty()) continue;
@@ -852,6 +859,25 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
                                 gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof AnyPlayerControlsPermanentCount anyCountCheck) {
+                    // Intervening-if: only trigger if enough matching permanents exist across all battlefields
+                    if (conditionEvaluationService.isMet(gameData, anyCountCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or more matching permanents on the battlefield)",
+                                gameData.id, perm.getCard().getName(), anyCountCheck.minCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControlsPermanentsWithDifferentNames namesCheck) {
@@ -1443,14 +1469,14 @@ public class StepTriggerService {
      */
     private void handleGrantedArtifactSacrificeTriggers(GameData gameData, UUID activePlayerId,
                                                         List<Permanent> battlefield) {
-        List<AllPermanentsUpkeepSacrificeUnlessPayEffect> grants = new ArrayList<>();
+        List<GrantedUpkeepSacrifice> grants = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AllPermanentsUpkeepSacrificeUnlessPayEffect grant) {
-                        grants.add(grant);
+                        grants.add(new GrantedUpkeepSacrifice(grant, perm.getId()));
                     }
                 }
             }
@@ -1458,7 +1484,11 @@ public class StepTriggerService {
         if (grants.isEmpty()) return;
 
         for (Permanent perm : new ArrayList<>(battlefield)) {
-            for (AllPermanentsUpkeepSacrificeUnlessPayEffect grant : grants) {
+            for (GrantedUpkeepSacrifice granted : grants) {
+                AllPermanentsUpkeepSacrificeUnlessPayEffect grant = granted.effect();
+                if (grant.excludeSource() && granted.sourcePermanentId().equals(perm.getId())) {
+                    continue;
+                }
                 if (!predicateEvaluationService.matchesPermanentPredicate(gameData, perm, grant.filter())) {
                     continue;
                 }
@@ -2886,6 +2916,25 @@ public class StepTriggerService {
 
     public void handleEndStepTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
+
+        // Memory Jar: each player discards their hand and returns the cards exiled by its ability.
+        if (gameData.hasDelayedAction(EachPlayerHandExileReturnAtNextEndStep.class)) {
+            List<EachPlayerHandExileReturnAtNextEndStep> pending = gameData.drainDelayedActions(
+                    EachPlayerHandExileReturnAtNextEndStep.class);
+            for (EachPlayerHandExileReturnAtNextEndStep action : pending) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(new DiscardEachPlayerHandAndReturnExiledCardsEffect(
+                                action.players()))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger returns the exiled hands at the next end step."));
+            }
+        }
 
         // Elkin Lair: "At the beginning of the next end step, if the player hasn't played the card,
         // they put it into their graveyard." Chronological next end step — no active-player filter.

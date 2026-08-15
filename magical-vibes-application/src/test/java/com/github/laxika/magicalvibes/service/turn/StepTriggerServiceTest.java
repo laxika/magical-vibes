@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
@@ -55,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -401,6 +405,30 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Global permanent-count intervening-if upkeep ability triggers at its threshold")
+        void globalPermanentCountTriggersAtThreshold() {
+            Card card = createCardWithName("Planar Collapse");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+                    new AnyPlayerControlsPermanentCount(4, new PermanentIsCreaturePredicate()),
+                    new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            for (int i = 0; i < 4; i++) {
+                Card creatureCard = creatureCard();
+                gd.playerBattlefields.get(i % 2 == 0 ? player1Id : player2Id).add(new Permanent(creatureCard));
+            }
+
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(), any()))
+                    .thenAnswer(invocation -> invocation.getArgument(1) instanceof PermanentIsCreaturePredicate
+                            && ((Permanent) invocation.getArgument(0)).getCard().hasType(CardType.CREATURE));
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Planar Collapse");
+        }
+
+        @Test
         @DisplayName("Tied creature counts suppress an intervening-if upkeep ability")
         void tiedCreatureCountsDoNotTrigger() {
             Card card = createCardWithName("Wild Mammoth");
@@ -494,6 +522,22 @@ class StepTriggerServiceTest {
 
             // processNextUpkeepPlayerTarget consumes the pending trigger and asks for target selection
             verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Player-targeting intervening-if upkeep effect skips target selection when its condition fails")
+        void playerTargetingInterveningIfSkipsWhenConditionFails() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Brink of Madness");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+                    new ActivePlayerHandEmpty(), new DrawCardForTargetPlayerEffect(1, false, true)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerHands.get(player1Id).add(createCardWithName("Card in hand"));
+
+            sut.handleUpkeepTriggers(gd);
+
+            verify(playerInputService, never()).beginAnyTargetChoice(any(), any(), any(), any(), any());
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test
@@ -1790,6 +1834,24 @@ class StepTriggerServiceTest {
                     eq(gd), eq(player1Id), argThat(permanent -> permanent.isTapped()
                             && permanent.isAttacking()
                             && player2Id.equals(permanent.getAttackTarget())), any(), any());
+        }
+
+        @Test
+        @DisplayName("Memory Jar delayed hand exchange is pushed onto the stack at the next end step")
+        void memoryJarDelayedHandExchangeIsPushed() {
+            Card source = createCardWithName("Memory Jar");
+            gd.queueDelayedAction(new EachPlayerHandExileReturnAtNextEndStep(
+                    source, player1Id, List.of(
+                            new EachPlayerHandExileReturnAtNextEndStep.PlayerCards(player1Id, List.of()),
+                            new EachPlayerHandExileReturnAtNextEndStep.PlayerCards(player2Id, List.of()))));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.getDelayedActions(EachPlayerHandExileReturnAtNextEndStep.class)).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                    .isInstanceOf(DiscardEachPlayerHandAndReturnExiledCardsEffect.class);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 
         @Test

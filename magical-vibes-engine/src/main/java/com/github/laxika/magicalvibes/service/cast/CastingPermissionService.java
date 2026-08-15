@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -77,6 +78,8 @@ public class CastingPermissionService {
     private static final Set<CardType> WARD_OF_BONES_SPELL_TYPES =
             Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT);
 
+    private static final Set<CardType> DAMPING_ENGINE_SPELL_TYPES = WARD_OF_BONES_SPELL_TYPES;
+
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
@@ -98,9 +101,7 @@ public class CastingPermissionService {
         int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         if (spellsCast >= maxSpells) return false;
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
-        Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
-        if (restricted.contains(card.getType())
-                || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
+        if (isSpellTypeRestricted(gameData, playerId, card)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
         if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
@@ -206,7 +207,15 @@ public class CastingPermissionService {
             }
         }
         addWardOfBonesRestrictedTypes(gameData, playerId, restricted);
+        addDampingEngineRestrictedTypes(gameData, playerId, restricted);
         return restricted;
+    }
+
+    private void addDampingEngineRestrictedTypes(GameData gameData, UUID playerId, Set<CardType> restricted) {
+        if (!controlsMorePermanentsThanEachOtherPlayer(gameData, playerId)) return;
+        if (hasActiveDampingEngine(gameData)) {
+            restricted.addAll(DAMPING_ENGINE_SPELL_TYPES);
+        }
     }
 
     /**
@@ -242,7 +251,41 @@ public class CastingPermissionService {
                 return true;
             }
         }
+        if (controlsMorePermanentsThanEachOtherPlayer(gameData, playerId) && hasActiveDampingEngine(gameData)) {
+            return true;
+        }
         return false;
+    }
+
+    private boolean hasActiveDampingEngine(GameData gameData) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isDampingEngineEffectIgnoredThisTurn()) continue;
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(DampingEngineEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean controlsMorePermanentsThanEachOtherPlayer(GameData gameData, UUID playerId) {
+        int count = gameData.playerBattlefields.getOrDefault(playerId, List.of()).size();
+        for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+            if (!otherPlayerId.equals(playerId)
+                    && count <= gameData.playerBattlefields.getOrDefault(otherPlayerId, List.of()).size()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isSpellTypeRestricted(GameData gameData, UUID playerId, Card card) {
+        Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
+        return restricted.contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(restricted::contains);
     }
 
     private boolean hasActiveGlobalLandPlayRestriction(GameData gameData) {

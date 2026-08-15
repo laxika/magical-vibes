@@ -110,6 +110,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each owner chooses the order of their matching permanents on top of their libraries. */
+    record PutPermanentsOnTopOfOwnersLibraries(List<UUID> remainingPermanentIds,
+                                               List<UUID> orderedPermanentIds, String sourceCardName)
+            implements MultiPermanentChoiceContext {
+
+        public PutPermanentsOnTopOfOwnersLibraries {
+            remainingPermanentIds = List.copyOf(remainingPermanentIds);
+            orderedPermanentIds = List.copyOf(orderedPermanentIds);
+        }
+    }
+
     /**
      * The controller destroys the chosen creatures an opponent controls (Fatal Lore's second mode).
      * {@code sourceName} names the destroying source in the game log and {@code cannotBeRegenerated}

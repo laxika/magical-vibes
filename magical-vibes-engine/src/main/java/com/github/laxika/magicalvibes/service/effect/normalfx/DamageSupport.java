@@ -212,6 +212,9 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
                     gameData, target, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
+            rawDamage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                    gameData, target, sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
             if (rawDamage <= 0) return 0;
             // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
             // a chosen source to the protected creature onto another permanent.
@@ -450,6 +453,11 @@ public class DamageSupport {
         // computation (e.g. future power-based effects) that might produce a negative value.
         // Skip applyCreaturePreventionShield — damage is unpreventable
         int damage = Math.max(0, rawDamage);
+
+        damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
+                gameData, target, entry.getSourcePermanentId(), damage);
+        processSourceRedirectDamage(gameData);
+        if (damage <= 0) return;
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);

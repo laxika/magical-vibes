@@ -591,6 +591,11 @@ public class TargetLegalityService {
                 continue;
             }
 
+            if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                validateGraveyardCardTarget(gameData, sourceCard, graveyardFilter, targetId, playerId);
+                continue;
+            }
+
             // Permanent-targeting position
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -1286,6 +1291,9 @@ public class TargetLegalityService {
                 : gameQueryService.findPermanentController(gameData, firstTargetId);
         for (int i = 1; i < targetIds.size(); i++) {
             UUID controllerOfTarget = gameQueryService.findPermanentController(gameData, targetIds.get(i));
+            if (controllerOfTarget == null) {
+                controllerOfTarget = gameQueryService.findGraveyardOwnerById(gameData, targetIds.get(i));
+            }
             if (!java.util.Objects.equals(requiredControllerId, controllerOfTarget)) {
                 throw new IllegalStateException(
                         "Target must be controlled by the player or planeswalker's controller you targeted");

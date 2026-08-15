@@ -30,9 +30,10 @@ import java.util.List;
  * steps). Sentry Oak's {@code ClashEffect(SequenceEffect.of(BoostSelfEffect, RemoveKeywordEffect))} is the
  * canonical example — both steps resolve without interaction.</p>
  *
- * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step's non-{@link TargetSpec#NONE}
- * spec, so at cast time the entry selects a single target for the sequence exactly as multiple flat
- * targeting effects on one slot share the entry's one target. Multi-target groups inside a sequence
+ * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step with an explicitly declared
+ * target, so at cast time the entry selects a single target for the sequence exactly as multiple
+ * flat targeting effects on one slot share the entry's one target. An implicit source binding such
+ * as {@link SacrificeSelfEffect} does not consume a target slot. Multi-target groups inside a sequence
  * are <em>unsupported</em>: the spliced steps are not registered in the card's effect→target-group
  * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
  * effects on the card for genuinely multi-target abilities.</p>
@@ -51,15 +52,24 @@ public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTrig
         return new SequenceEffect(List.of(steps));
     }
 
+    /**
+     * Returns the first explicitly declared target in the sequence. Implicit source bindings such
+     * as {@link SacrificeSelfEffect} do not consume a target slot; they are retained only when the
+     * sequence has no explicit target at all.
+     */
     @Override
     public TargetSpec targetSpec() {
+        TargetSpec implicitSourceSpec = TargetSpec.NONE;
         for (CardEffect step : steps) {
             TargetSpec spec = step.targetSpec();
-            if (spec != TargetSpec.NONE) {
+            if (spec.declaredTarget() != null) {
                 return spec;
             }
+            if (spec.selfTargeting()) {
+                implicitSourceSpec = spec;
+            }
         }
-        return TargetSpec.NONE;
+        return implicitSourceSpec;
     }
 
     /**

@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "109")
+@CardRegistration(set = "ULG", collectorNumber = "46")
 public class VigilantDrake extends Card {
 
     public VigilantDrake() {

@@ -1,0 +1,26 @@
+package com.github.laxika.magicalvibes.cards.p;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+
+import java.util.List;
+
+@CardRegistration(set = "ULG", collectorNumber = "58")
+public class PhyrexianBroodlings extends Card {
+
+    public PhyrexianBroodlings() {
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{1}",
+                List.of(
+                        new SacrificeCreatureCost(),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
+                ),
+                "{1}, Sacrifice a creature: Put a +1/+1 counter on this creature."
+        ));
+    }
+}

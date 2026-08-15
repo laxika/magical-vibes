@@ -414,6 +414,23 @@ export class TargetingChoiceService {
       return;
     }
 
+    this.validTargetIds.set(new Set(msg.validPermanentIds));
+    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
+    this.targetingPrompt = msg.prompt;
+
+    if (msg.maxTargets > 1) {
+      if (!this.multiTargeting) {
+        this.multiTargeting = true;
+        this.multiTargetCardIndex = this.targetingCardIndex;
+        this.multiTargetCardName = this.targetingCardName;
+        this.multiTargetSelectedIds.set([]);
+      }
+      this.multiTargetMinCount = msg.minTargets;
+      this.multiTargetMaxCount = msg.maxTargets;
+    } else {
+      this.selectingTarget = true;
+    }
+
     // Graveyard targeting: show graveyard cards as targets in an overlay
     if (hasGraveyardTargets) {
       const g = this.gameSignal();
@@ -1608,6 +1625,22 @@ export class TargetingChoiceService {
   selectGraveyardTarget(cardId: string): void {
     if (!this.targetingGraveyard) return;
     if (!this.graveyardTargetCardIds.includes(cardId)) return;
+    if (this.multiTargeting) {
+      const current = this.multiTargetSelectedIds();
+      if (current.includes(cardId) || current.length >= this.multiTargetMaxCount) return;
+      const newSelected = [...current, cardId];
+      this.targetingGraveyard = false;
+      this.graveyardTargetCards = [];
+      this.graveyardTargetCardIds = [];
+      this.graveyardTargetPrompt = '';
+      this.multiTargetSelectedIds.set(newSelected);
+      if (newSelected.length < this.multiTargetMaxCount) {
+        this.refreshMultiTargets(newSelected);
+      } else {
+        this.confirmMultiTargets();
+      }
+      return;
+    }
     const extra: Record<string, any> = {};
     if (this.pendingAbilityXValue != null) {
       extra['xValue'] = this.pendingAbilityXValue;
@@ -1621,10 +1654,14 @@ export class TargetingChoiceService {
   }
 
   cancelGraveyardTargeting(): void {
+    const wasMultiTargeting = this.multiTargeting;
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
     this.graveyardTargetPrompt = '';
+    if (wasMultiTargeting) {
+      this.cancelMultiTargeting();
+    }
     this.resetTargetingState();
   }
 

@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
@@ -387,6 +388,8 @@ public class ConditionEvaluationService {
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
                     activePlayerControlsMoreLandsThanEachOtherPlayer(gameData);
+            case ControllerControlsMorePermanentsThanEachOtherPlayer ignored ->
+                    controllerControlsMorePermanentsThanEachOtherPlayer(gameData, ctx.controllerId());
             case ActivePlayerHandAtLeast c ->
                     countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
             case ActivePlayerHandAtMost c ->
@@ -1092,6 +1095,18 @@ public class ConditionEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)
                     && !gameQueryService.controlsMoreLandsThan(gameData, activePlayerId, playerId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean controllerControlsMorePermanentsThanEachOtherPlayer(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int controllerCount = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).size();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId)
+                    && controllerCount <= gameData.playerBattlefields.getOrDefault(playerId, List.of()).size()) {
                 return false;
             }
         }

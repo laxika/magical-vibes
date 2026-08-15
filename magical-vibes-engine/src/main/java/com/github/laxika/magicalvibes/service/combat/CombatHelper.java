@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -132,26 +133,36 @@ public final class CombatHelper {
     }
 
     /**
-     * Returns the smallest static cap on the number of attackers in the current combat.
+     * Validates every static restriction on the number of attackers in the current combat.
      */
-    public static int getMaximumAttackers(GameData gameData) {
-        return getMaximumCombatCreatures(gameData, true);
+    public static void validateMaximumAttackers(GameData gameData, List<Integer> attackerIndices,
+                                                Map<Integer, UUID> attackTargets) {
+        gameData.forEachPermanent((sourceControllerId, permanent) -> {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatCreatureLimitEffect limit) {
+                    long affectedAttackers = attackerIndices.stream()
+                            .filter(index -> limit.appliesToAttackTarget(sourceControllerId,
+                                    attackTargets.get(index)))
+                            .count();
+                    if (affectedAttackers > limit.maxAttackers()) {
+                        throw new IllegalStateException("No more than " + limit.maxAttackers()
+                                + " creature" + (limit.maxAttackers() == 1 ? "" : "s")
+                                + " can attack each combat");
+                    }
+                }
+            }
+        });
     }
 
     /**
      * Returns the smallest static cap on the number of distinct blockers in the current combat.
      */
     public static int getMaximumBlockers(GameData gameData) {
-        return getMaximumCombatCreatures(gameData, false);
-    }
-
-    private static int getMaximumCombatCreatures(GameData gameData, boolean attackers) {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((ignored, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CombatCreatureLimitEffect limit) {
-                    int candidate = attackers ? limit.maxAttackers() : limit.maxBlockers();
-                    maximum[0] = Math.min(maximum[0], candidate);
+                    maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
             }
         });

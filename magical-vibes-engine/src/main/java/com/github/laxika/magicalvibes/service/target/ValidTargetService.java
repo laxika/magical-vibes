@@ -330,6 +330,7 @@ public class ValidTargetService {
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex, List<UUID> alreadySelectedIds, Integer xValue) {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
+        List<UUID> validGraveyardCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty()
                 && !ability.isAllowSharedTargets() ? Set.copyOf(alreadySelectedIds) : Set.of();
         // Source-relative player predicates ("dealt damage by this creature this turn") key their
@@ -365,6 +366,9 @@ public class ValidTargetService {
                     }
                 }
                 }
+            } else if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
+                        gameData, sourceCard, graveyardFilter, controllerId, excludeIds));
             } else if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
                 // "Target player or planeswalker" position (Chandra, Pyromaster +1): players
                 // matching the filter's player predicate alongside permanents matching its
@@ -429,6 +433,9 @@ public class ValidTargetService {
                 validPermanentIds.removeIf(id ->
                         !java.util.Objects.equals(requiredControllerId,
                                 gameQueryService.findPermanentController(gameData, id)));
+                validGraveyardCardIds.removeIf(id ->
+                        !java.util.Objects.equals(requiredControllerId,
+                                gameQueryService.findGraveyardOwnerById(gameData, id)));
             }
             if (ability.getMultiTargetConstraint() == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET
                     && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
@@ -462,7 +469,7 @@ public class ValidTargetService {
             }
 
             String prompt = "Select targets for " + sourceCard.getName() + " ability";
-            return new ValidTargetsResponse(validPermanentIds, validPlayerIds,
+            return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                     ability.getEffectiveMinTargets(effectiveTargetScalingValue),
                     ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
         }
@@ -493,7 +500,6 @@ public class ValidTargetService {
             }
         }
 
-        List<UUID> validGraveyardCardIds = new ArrayList<>();
         if (targetsGraveyard) {
             validGraveyardCardIds.addAll(computeValidGraveyardTargetsForAbility(
                     gameData, ability, controllerId, excludeIds, sourceCard.getId()));
@@ -705,7 +711,10 @@ public class ValidTargetService {
         if (gameData.playerIds.contains(firstTargetId)) {
             return firstTargetId;
         }
-        return gameQueryService.findPermanentController(gameData, firstTargetId);
+        UUID permanentController = gameQueryService.findPermanentController(gameData, firstTargetId);
+        return permanentController != null
+                ? permanentController
+                : gameQueryService.findGraveyardOwnerById(gameData, firstTargetId);
     }
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId) {

@@ -58,6 +58,7 @@ public sealed interface Condition permits
         ControllerDrewAtLeastCardsThisTurn,
         ControllerHasMoreLifeThanAnOpponent,
         ControllerControlsMoreLandsThanOpponent,
+        ControllerControlsMorePermanentsThanEachOtherPlayer,
         ControllerHandEmpty,
         ControllerLifeAtLeast,
         ControllerLifeAtMost,

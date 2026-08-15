@@ -50,6 +50,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
     ON_CONTROLLER_COUNTERS_SPELL,
+    /** "Whenever a spell you've cast is countered, ..." */
+    ON_CONTROLLER_SPELL_COUNTERED,
     /**
      * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
      * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
@@ -206,6 +208,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  excludes tokens. Checked in {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}.
      *  Used by Jinxed Ring. */
     ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent of any type, including a token, is put into the controller's
+     *  graveyard from the battlefield. Fires only for the graveyard owner. */
+    ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type, any player's) is put into an <em>opponent's</em>
      *  graveyard from the battlefield — the graveyard's owner, not the permanent's controller, is
      *  what makes it an opponent's graveyard. The triggered ability's {@code targetId} is baked to

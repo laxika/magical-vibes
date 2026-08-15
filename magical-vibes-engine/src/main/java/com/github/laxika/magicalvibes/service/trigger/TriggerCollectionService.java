@@ -769,6 +769,17 @@ public class TriggerCollectionService {
         });
     }
 
+    /** Fires effects that care when a spell cast by the given player is countered. */
+    public void checkControllerSpellCounteredTriggers(GameData gameData, UUID spellControllerId) {
+        if (spellControllerId == null) return;
+
+        var ctx = new TriggerContext.SpellCastCountered(spellControllerId);
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(spellControllerId)) return;
+            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_SPELL_COUNTERED, ctx);
+        });
+    }
+
     // ── Discard triggers ───────────────────────────────────────────────
 
     public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
@@ -4408,6 +4419,19 @@ public class TriggerCollectionService {
                     var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
                     dispatch(match,
                             EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+                            resolved, ctx);
+                }
+            }
+
+            if (playerId.equals(graveyardOwnerId)) {
+                for (CardEffect effect : perm.getCard().getEffects(
+                        EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(
+                            effect, dyingCard, gameData, playerId);
+                    if (resolved == null) continue;
+                    var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
+                    dispatch(match,
+                            EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                             resolved, ctx);
                 }
             }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "133")
+@CardRegistration(set = "ULG", collectorNumber = "51")
 public class EngineeredPlague extends Card {
 
     public EngineeredPlague() {

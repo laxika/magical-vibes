@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentA
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -993,6 +994,27 @@ public class DamagePreventionService {
 
         gameData.pendingSourceRedirectDamage.add(
                 new SourceDamageRedirectShield(null, sourcePermanentId, damage, controllerId));
+        return 0;
+    }
+
+    /**
+     * Treacherous Link: damage that would be dealt to the enchanted creature is dealt to its
+     * current controller instead. The Aura is checked dynamically so the effect follows control
+     * changes and stops when the Aura is unattached or ignored.
+     */
+    public int applyEnchantedCreatureDamageRedirectToController(GameData gameData, Permanent target,
+                                                                UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || target == null || !gameQueryService.isCreature(gameData, target)
+                || !gameQueryService.hasAuraWithEffect(
+                gameData, target, RedirectAllDamageToEnchantedCreatureControllerEffect.class)) {
+            return damage;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) return damage;
+
+        gameData.pendingSourceRedirectDamage.add(
+                new SourceDamageRedirectShield(controllerId, sourcePermanentId, damage, controllerId));
         return 0;
     }
 

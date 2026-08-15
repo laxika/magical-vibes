@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostExceptOnCont
 
 @CardRegistration(set = "9ED", collectorNumber = "293")
 @CardRegistration(set = "8ED", collectorNumber = "296")
+@CardRegistration(set = "ULG", collectorNumber = "125")
 public class DefenseGrid extends Card {
 
     public DefenseGrid() {

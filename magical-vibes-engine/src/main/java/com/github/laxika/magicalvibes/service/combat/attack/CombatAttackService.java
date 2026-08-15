@@ -350,12 +350,6 @@ public class CombatAttackService {
             }
         }
 
-        int maximumAttackers = CombatHelper.getMaximumAttackers(gameData);
-        if (attackerIndices.size() > maximumAttackers) {
-            throw new IllegalStateException("No more than " + maximumAttackers
-                    + " creature" + (maximumAttackers == 1 ? "" : "s") + " can attack each combat");
-        }
-
         // CR 508.1c: validate "can't attack alone" — if any declared attacker has this restriction,
         // there must be at least 2 total attackers
         validateCantAttackAlone(battlefield, attackerIndices);
@@ -433,6 +427,8 @@ public class CombatAttackService {
             }
             resolvedTargets.put(idx, targetId);
         }
+
+        CombatHelper.validateMaximumAttackers(gameData, attackerIndices, resolvedTargets);
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
         // defender's side; plus per-attacker taxes scoped to a single creature: aura taxes like Brainwash

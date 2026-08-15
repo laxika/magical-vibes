@@ -178,6 +178,8 @@ public class Permanent {
      *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). Read by
      *  {@code GameQueryService.hasAuraWithEffect}. Cleared at end of turn. */
     @Setter private boolean auraEffectsIgnoredThisTurn;
+    /** When true, this Damping Engine's restriction is ignored until end of turn. */
+    @Setter private boolean dampingEngineEffectIgnoredThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
@@ -622,6 +624,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
+        this.dampingEngineEffectIgnoredThisTurn = source.dampingEngineEffectIgnoredThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
@@ -1247,6 +1250,7 @@ public class Permanent {
         this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
         this.auraEffectsIgnoredThisTurn = false;
+        this.dampingEngineEffectIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;

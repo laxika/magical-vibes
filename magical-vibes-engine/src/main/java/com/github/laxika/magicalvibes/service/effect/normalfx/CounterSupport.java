@@ -306,6 +306,9 @@ public class CounterSupport {
             gameData.recordCreatureSpellCounteredByOpponentThisTurn(target.getControllerId());
         }
         triggerCollectionService.checkControllerCountersSpellTriggers(gameData, counteringPlayerId);
+        if (!target.isCopy()) {
+            triggerCollectionService.checkControllerSpellCounteredTriggers(gameData, target.getControllerId());
+        }
     }
 
     private boolean isAbility(StackEntry entry) {

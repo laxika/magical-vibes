@@ -42,15 +42,19 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        resolveForController(gameData, entry, effect, entry.getControllerId());
+    }
+
+    public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
+                                     UUID graveyardOwnerId) {
         var e = (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
         if (graveyard == null || graveyard.isEmpty() || entry.getTargetCardIds().isEmpty()) {
             return;
         }
 
         Set<UUID> trackedIds = e.fromBattlefieldThisTurn()
-                ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of())
+                ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(graveyardOwnerId, Set.of())
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
         for (UUID targetCardId : entry.getTargetCardIds()) {
@@ -83,12 +87,12 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.enterTapped()) {
                     permanent.tap();
                 }
-                permanent.setEnteredFromGraveyardOwnerId(controllerId);
+                permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                        gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
                 returnedCards.add(card);
-                graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+                graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -96,7 +100,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
         if (!returnedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(controllerId) + " returns " + returnedCards.size()
+                    gameData.playerIdToName.get(graveyardOwnerId) + " returns " + returnedCards.size()
                             + " card(s) from the graveyard to the battlefield."));
         }
     }

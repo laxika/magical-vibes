@@ -14,24 +14,32 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link ForcedCostOrElseEffect}{@code (PayManaCost, [SacrificeSelfEffect], true)} trigger sourced
  * at that permanent. The grant is global (every matching permanent, regardless of who controls the
  * enchantment) and the trigger fires on each permanent's controller's own upkeep. Several grants
- * stack: a permanent matching two of them gets one trigger per grant.
+ * stack: a permanent matching two of them gets one trigger per grant. When {@code excludeSource}
+ * is true, the permanent carrying this grant is excluded from its own grant, for effects using
+ * wording such as "other enchantments."
  *
  * <p>Not part of the layer-system board computation (no {@code LayerClassifier} entry), so the
  * layer system safely ignores it.
  *
  * @param filter      which permanents receive the granted ability
  * @param manaCost   the mana cost that must be paid to avoid the sacrifice; empty for life-only
- * @param lifeAmount the life paid alongside the mana cost
+ * @param lifeAmount   the life paid alongside the mana cost
+ * @param excludeSource whether the permanent carrying this grant is excluded
  */
 public record AllPermanentsUpkeepSacrificeUnlessPayEffect(
-        PermanentPredicate filter, String manaCost, int lifeAmount) implements CardEffect {
+        PermanentPredicate filter, String manaCost, int lifeAmount, boolean excludeSource) implements CardEffect {
 
     public AllPermanentsUpkeepSacrificeUnlessPayEffect(PermanentPredicate filter, String manaCost) {
-        this(filter, manaCost, 0);
+        this(filter, manaCost, 0, false);
+    }
+
+    public AllPermanentsUpkeepSacrificeUnlessPayEffect(PermanentPredicate filter, String manaCost,
+                                                       boolean excludeSource) {
+        this(filter, manaCost, 0, excludeSource);
     }
 
     /** "Unless you pay N life" rather than a mana cost. */
     public AllPermanentsUpkeepSacrificeUnlessPayEffect(PermanentPredicate filter, int lifeAmount) {
-        this(filter, "", lifeAmount);
+        this(filter, "", lifeAmount, false);
     }
 }

@@ -75,5 +75,6 @@ public sealed interface DelayedAction permits
         RevokeExilePlayPermissionAtNextUpkeep,
         TransformSourceAtNextUpkeep,
         GrantChosenLandwalkAtNextUpkeep,
-        PendingExileReturn {
+        PendingExileReturn,
+        EachPlayerHandExileReturnAtNextEndStep {
 }
