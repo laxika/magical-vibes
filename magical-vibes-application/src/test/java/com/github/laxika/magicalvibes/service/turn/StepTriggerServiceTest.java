@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
@@ -62,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndRetur
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -1871,6 +1874,21 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.getFirst().getDescription()).contains("Protean Hydra");
             assertThat(gd.getDelayedActions(DelayedPlusOneCounters.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Delayed destroy-all-permanents trigger pushes a global wipe onto the stack")
+        void delayedDestroyAllPermanentsPushed() {
+            Card sourceCard = createCardWithName("Bearer of the Heavens");
+            gd.queueDelayedAction(new DelayedDestroyAllPermanents(player1Id, sourceCard));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new DestroyAllPermanentsEffect(new PermanentTruePredicate()));
         }
     }
 

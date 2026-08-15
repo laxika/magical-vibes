@@ -375,6 +375,19 @@ public class TargetLegalityService {
                         throw new IllegalStateException("Target card must be a "
                                 + CardPredicateUtils.describeFilter(returnCardsEffect.filter()));
                     }
+                }
+                for (CardType cardType : returnCardsEffect.maxOnePerCardType()) {
+                    long matchingTargets = targetCardIds.stream()
+                            .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                            .filter(java.util.Objects::nonNull)
+                            .filter(card -> card.hasType(cardType))
+                            .count();
+                    if (matchingTargets > 1) {
+                        throw new IllegalStateException("Cannot target more than one "
+                                + cardType.name().toLowerCase() + " card");
+                    }
+                }
+                for (UUID cardId : targetCardIds) {
                     UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
                     if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
                         throw new IllegalStateException("Target must be in your graveyard");
@@ -1189,6 +1202,11 @@ public class TargetLegalityService {
                         if (!gameQueryService.sharesArtifactOrCreatureType(a, b)) {
                             throw new IllegalStateException(
                                     "Chosen permanents must share an artifact or creature type");
+                        }
+                    }
+                    case SHARE_CARD_TYPE -> {
+                        if (!gameQueryService.sharesCardType(a, b)) {
+                            throw new IllegalStateException("Chosen permanents must share a card type");
                         }
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,

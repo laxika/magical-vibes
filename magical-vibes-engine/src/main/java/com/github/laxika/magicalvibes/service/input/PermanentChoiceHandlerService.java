@@ -89,6 +89,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
+        } else if (context instanceof PermanentChoiceContext.ExileCombatOpponent exileCombatOpponent) {
+            battlefieldHandler.handleExileCombatOpponent(gameData, permanentId, exileCombatOpponent);
         } else if (context instanceof PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock chooseBlocker) {
             battlefieldHandler.handleDefendingPlayerChoosesCreatureToBlock(gameData, permanentId, chooseBlocker);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureYouGainControl richesChoice) {
@@ -123,6 +125,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
+        } else if (context instanceof PermanentChoiceContext.PolymorphousRushCreatureChoice polymorphousRush) {
+            battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {

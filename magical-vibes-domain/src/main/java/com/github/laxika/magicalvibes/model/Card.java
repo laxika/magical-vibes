@@ -158,6 +158,8 @@ public class Card {
      */
     private boolean enchantPlayer;
     private int additionalCostPerExtraTarget;
+    /** Additional mana symbols required for each target beyond the first. */
+    private String additionalManaCostPerExtraTarget;
     /**
      * "This spell costs N life more to cast for each target" (Phyrexian Purge). Unlike
      * {@link #additionalCostPerExtraTarget} this applies to every chosen target, including the
@@ -305,6 +307,7 @@ public class Card {
         this.requiresCreatureMana = source.requiresCreatureMana;
         this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
+        this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
         this.multiTargetConstraint = source.multiTargetConstraint;
@@ -411,6 +414,7 @@ public class Card {
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
+    public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }

@@ -111,6 +111,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentManaValueEqualsSourceCountersPredicate` | `(CounterType)` | permanents whose mana value **equals** the number of that counter type on the evaluating **source** permanent ("destroy each creature with mana value equal to the number of age counters on this enchantment" — Wave of Terror). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone (CR 608.2b) |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
+| `PermanentToughnessAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | permanents with toughness <= the number of permanents with that subtype controlled by the source's controller (Scourge of Fleets) |
 | `PermanentPowerEqualsToughnessPredicate` | `()` | creatures whose effective power equals their effective toughness. Wrap in `PermanentNotPredicate` for "whose power and toughness aren't equal" (Gilt-Leaf Winnower) |
 | `PermanentToughnessAtLeastPredicate` | `(int minToughness)` | creatures with toughness >= N (uses effective/last-known toughness; e.g. Colfenor's Urn) |
 

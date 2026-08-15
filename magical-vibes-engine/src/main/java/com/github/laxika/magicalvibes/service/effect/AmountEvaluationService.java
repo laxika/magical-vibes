@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -341,6 +342,8 @@ public class AmountEvaluationService {
                     targetEffectivePower(gameData, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
+            case TopCardOfLibraryManaValue ignored ->
+                    topCardOfLibraryManaValue(gameData, ctx);
             case EnchantedPermanentManaValue ignored ->
                     enchantedPermanentManaValue(gameData, ctx);
             case TargetSpellManaValue ignored ->
@@ -436,6 +439,12 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the targeted handlers.
         return target == null ? 0 : target.getCard().getManaValue();
+    }
+
+    private int topCardOfLibraryManaValue(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        List<Card> library = gameData.playerDecks.get(ctx.controllerId());
+        return library == null || library.isEmpty() ? 0 : library.getFirst().getManaValue();
     }
 
     /** Mana value of the permanent the source Aura enchants (Soul Tithe); 0 if there is none. */

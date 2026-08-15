@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "M15", collectorNumber = "22")
 @CardRegistration(set = "M19", collectorNumber = "31")
+@CardRegistration(set = "JOU", collectorNumber = "20")
 public class OreskosSwiftclaw extends Card {
 }

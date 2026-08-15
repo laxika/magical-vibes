@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect: prevents casting spells with the same name as the card imprinted
+ * Static effect: prevents casting spells with the same name as a card exiled with or imprinted
  * on the source permanent.
  *
  * @param opponentsOnly if true, only opponents of the source's controller are restricted

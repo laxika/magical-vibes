@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "21")
+@CardRegistration(set = "JOU", collectorNumber = "19")
 public class OppressiveRays extends Card {
 
     public OppressiveRays() {

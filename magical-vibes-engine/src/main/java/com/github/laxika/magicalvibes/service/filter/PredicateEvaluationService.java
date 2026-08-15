@@ -165,6 +165,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
@@ -725,6 +726,23 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= subtypeCount;
+            }
+            case PermanentToughnessAtMostControlledSubtypeCountPredicate countPredicate -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                int subtypeCount = 0;
+                if (controllerBattlefield != null) {
+                    PermanentHasSubtypePredicate subtypePredicate =
+                            new PermanentHasSubtypePredicate(countPredicate.subtype());
+                    for (Permanent controlledPermanent : controllerBattlefield) {
+                        if (matchesPermanentPredicate(gameData, controlledPermanent, subtypePredicate)) {
+                            subtypeCount++;
+                        }
+                    }
+                }
+                yield gameQueryService.getEffectiveToughness(gameData, permanent) <= subtypeCount;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as

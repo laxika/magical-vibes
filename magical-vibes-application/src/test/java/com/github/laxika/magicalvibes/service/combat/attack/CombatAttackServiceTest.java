@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
@@ -155,6 +156,22 @@ class CombatAttackServiceTest extends BaseCardTest {
 
             assertThat(service().canOnlyAttackAlone(gd, enchanted)).isTrue();
             assertThat(service().canOnlyAttackAlone(gd, unrestricted)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Identifies a can't-attack-alone restriction through an attached Aura")
+        void identifiesCantAttackAloneRestrictionFromAura() {
+            Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+            Permanent aura = new Permanent(new SightlessBrawler());
+            aura.setAttachedTo(enchanted.getId());
+            gd.playerBattlefields.get(player1.getId()).add(aura);
+
+            assertThat(service().getAttackableCreatureIndices(gd, player1.getId()))
+                    .isEmpty();
+
+            Permanent unrestricted = addCreatureReady(player1, new GrizzlyBears());
+            assertThat(service().getAttackableCreatureIndices(gd, player1.getId()))
+                    .containsExactly(index(enchanted), index(unrestricted));
         }
     }
 

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
@@ -353,6 +354,8 @@ public class TurnCleanupService {
     /**
      * Empties every player's mana pool, unless a permanent with
      * {@link PreventManaDrainEffect} (e.g. Upwelling) is on any battlefield.
+     * A controller's mana is converted to colorless instead when that controller has a permanent
+     * with {@link ReplaceManaDrainWithColorlessEffect} (e.g. Kruphix, God of Horizons).
      * Mana marked as persistent (e.g. from Grand Warlord Radha) survives
      * the drain; only non-persistent mana is removed.
      *
@@ -374,7 +377,14 @@ public class TurnCleanupService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
-                manaPool.drainNonPersistent();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                boolean replaceManaDrain = battlefield != null && battlefield.stream()
+                        .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                        .anyMatch(ReplaceManaDrainWithColorlessEffect.class::isInstance);
+                if (replaceManaDrain) {
+                    manaPool.convertNonPersistentManaToColorless();
+                }
+                manaPool.drainNonPersistent(replaceManaDrain);
             }
         }
 

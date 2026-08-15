@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
@@ -380,6 +381,24 @@ class CastingPermissionServiceTest {
             bolt.setManaCost("{R}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Restricts opponents from casting a name tracked as exiled with the source")
+        void rejectsOpponentSpellNamedLikeTrackedExile() {
+            Card godsend = new Card();
+            godsend.setName("Godsend");
+            godsend.addEffect(EffectSlot.STATIC,
+                    new CantCastSpellsWithSameNameAsExiledCardEffect(true));
+            Permanent godsendPermanent = new Permanent(godsend);
+            gd.playerBattlefields.get(player1Id).add(godsendPermanent);
+
+            Card exiled = new Card();
+            exiled.setName("Lightning Bolt");
+            gd.addToExile(player1Id, exiled, godsendPermanent.getId());
+
+            assertThat(svc.getForbiddenCardNames(gd, player2Id)).contains("Lightning Bolt");
+            assertThat(svc.getForbiddenCardNames(gd, player1Id)).doesNotContain("Lightning Bolt");
         }
 
         @Test

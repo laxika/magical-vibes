@@ -107,6 +107,11 @@ public final class AnyColorManaChoiceSupport {
                                                                boolean fromCreature,
                                                                CardSubtype chosenSubtype,
                                                                Card sourceCard) {
+        if (effect.anyColorCombination()) {
+            return ChoiceContext.ManaColorChoice.fixedColorCombination(
+                    playerId, fromCreature, amount, ManaColor.COLORS);
+        }
+
         return switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);

@@ -1161,15 +1161,96 @@ public class ManaPool {
     }
 
     /**
+     * Changes the mana that would drain at the next step or phase boundary to colorless mana.
+     * Persistent mana remains in its original color until it would actually drain.
+     */
+    public void convertNonPersistentManaToColorless() {
+        for (ManaColor color : ManaColor.COLORS) {
+            int current = pool.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0);
+            int amount = Math.max(0, current - persistent);
+            if (amount == 0) {
+                continue;
+            }
+
+            pool.put(color, current - amount);
+            pool.merge(ManaColor.COLORLESS, amount, Integer::sum);
+            moveTaggedManaToColorless(creatureMana, color, amount);
+            moveTaggedManaToColorless(spellOnlyMana, color, amount);
+            moveTaggedManaToColorless(promotedAbilityOnlyMana, color, amount);
+            moveTaggedManaToColorless(hasteGrantingMana, color, amount);
+            moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
+        }
+
+        artifactOnlyColorless += moveColoredManaToColorless(artifactOnlyMana);
+        pool.merge(ManaColor.COLORLESS, restrictedRed + kickedOnlyGreen, Integer::sum);
+        restrictedRed = 0;
+        kickedOnlyGreen = 0;
+        instantSorceryOnlyColorless += moveColoredManaToColorless(instantSorceryOnlyColored);
+        cumulativeUpkeepOnlyColorless += moveColoredManaToColorless(cumulativeUpkeepOnlyColored);
+        moveColoredManaToColorless(flashbackOnlyMana);
+        moveColoredManaToColorless(abilityOnlyMana);
+        moveColoredManaToColorlessBuckets(subtypeCreatureMana);
+        moveColoredManaToColorlessBuckets(uncounterableSubtypeCreatureMana);
+        moveColoredManaToColorlessBuckets(subtypeSpellOrAbilityMana);
+        moveColoredManaToColorlessBuckets(subtypeCreatureSourceSpellOrAbilityMana);
+        moveColoredManaToColorlessBuckets(subtypeOrPlaneswalkerSpellMana);
+        moveColoredManaToColorless(partySpellOrAbilityMana);
+        moveColoredManaToColorless(creatureSpellOnlyMana);
+        moveColoredManaToColorless(manaValueAtLeastFourOnlyMana);
+        for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : exiledCardOnlyMana.entrySet()) {
+            moveColoredManaToColorless(entry.getValue());
+        }
+    }
+
+    private static void moveTaggedManaToColorless(EnumMap<ManaColor, Integer> tags,
+                                                  ManaColor color, int amount) {
+        int tagged = Math.min(amount, tags.getOrDefault(color, 0));
+        if (tagged > 0) {
+            tags.put(color, tags.get(color) - tagged);
+            tags.merge(ManaColor.COLORLESS, tagged, Integer::sum);
+        }
+    }
+
+    private static int moveColoredManaToColorless(Map<ManaColor, Integer> bucket) {
+        int total = 0;
+        for (ManaColor color : ManaColor.COLORS) {
+            int amount = bucket.getOrDefault(color, 0);
+            if (amount > 0) {
+                bucket.put(color, 0);
+                bucket.merge(ManaColor.COLORLESS, amount, Integer::sum);
+                total += amount;
+            }
+        }
+        return total;
+    }
+
+    private static void moveColoredManaToColorlessBuckets(Map<?, EnumMap<ManaColor, Integer>> buckets) {
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            moveColoredManaToColorless(bucket);
+        }
+    }
+
+    /**
      * Drains all non-persistent mana. For each color, the pool is reduced to
      * at most the persistent amount. Persistent mana survives step/phase transitions.
      */
     public void drainNonPersistent() {
+        drainNonPersistent(false);
+    }
+
+    /**
+     * Drains non-persistent mana while optionally preserving all colorless mana. The latter is used
+     * after a replacement effect has changed mana that would drain into colorless mana.
+     */
+    public void drainNonPersistent(boolean preserveColorlessMana) {
         for (ManaColor color : ManaColor.values()) {
             int persistent = persistentMana.getOrDefault(color, 0);
             int current = pool.getOrDefault(color, 0);
-            // Keep the lesser of current pool and persistent amount
-            pool.put(color, Math.min(current, persistent));
+            int kept = preserveColorlessMana && color == ManaColor.COLORLESS
+                    ? current
+                    : Math.min(current, persistent);
+            pool.put(color, kept);
             // Clamp persistent to not exceed what's in the pool
             persistentMana.put(color, Math.min(current, persistent));
         }
@@ -1184,35 +1265,58 @@ public class ManaPool {
             uncounterableGrantingMana.put(color,
                     Math.min(uncounterableGrantingMana.getOrDefault(color, 0), total));
         }
-        artifactOnlyColorless = 0;
-        for (ManaColor color : ManaColor.values()) {
-            artifactOnlyMana.put(color, 0);
+        if (!preserveColorlessMana) {
+            artifactOnlyColorless = 0;
+            artifactAbilityOnlyColorless = 0;
+            myrOnlyColorless = 0;
+            legendarySpellOnlyColorless = 0;
+            instantSorceryOnlyColorless = 0;
+            xCostOnlyColorless = 0;
+            cumulativeUpkeepOnlyColorless = 0;
         }
-        artifactAbilityOnlyColorless = 0;
-        myrOnlyColorless = 0;
-        legendarySpellOnlyColorless = 0;
+        clearColoredMana(artifactOnlyMana, preserveColorlessMana);
         restrictedRed = 0;
         kickedOnlyGreen = 0;
-        instantSorceryOnlyColorless = 0;
-        xCostOnlyColorless = 0;
-        cumulativeUpkeepOnlyColorless = 0;
-        for (ManaColor color : ManaColor.values()) {
-            flashbackOnlyMana.put(color, 0);
-            instantSorceryOnlyColored.put(color, 0);
-            cumulativeUpkeepOnlyColored.put(color, 0);
-            creatureSpellOnlyMana.put(color, 0);
-            manaValueAtLeastFourOnlyMana.put(color, 0);
-            abilityOnlyMana.put(color, 0);
-            promotedAbilityOnlyMana.put(color, 0);
-        }
-        subtypeCreatureMana.clear();
-        uncounterableSubtypeCreatureMana.clear();
+        clearColoredMana(flashbackOnlyMana, preserveColorlessMana);
+        clearColoredMana(instantSorceryOnlyColored, preserveColorlessMana);
+        clearColoredMana(cumulativeUpkeepOnlyColored, preserveColorlessMana);
+        clearColoredMana(creatureSpellOnlyMana, preserveColorlessMana);
+        clearColoredMana(manaValueAtLeastFourOnlyMana, preserveColorlessMana);
+        clearColoredMana(abilityOnlyMana, preserveColorlessMana);
+        clearColoredMana(promotedAbilityOnlyMana, preserveColorlessMana);
+        clearColoredManaBuckets(subtypeCreatureMana, preserveColorlessMana);
+        clearColoredManaBuckets(uncounterableSubtypeCreatureMana, preserveColorlessMana);
         spentUncounterableGrantingMana = false;
-        subtypeSpellOrAbilityMana.clear();
-        subtypeCreatureSourceSpellOrAbilityMana.clear();
-        subtypeOrPlaneswalkerSpellMana.clear();
-        partySpellOrAbilityMana.replaceAll((color, amount) -> 0);
-        exiledCardOnlyMana.clear();
+        clearColoredManaBuckets(subtypeSpellOrAbilityMana, preserveColorlessMana);
+        clearColoredManaBuckets(subtypeCreatureSourceSpellOrAbilityMana, preserveColorlessMana);
+        clearColoredManaBuckets(subtypeOrPlaneswalkerSpellMana, preserveColorlessMana);
+        clearColoredMana(partySpellOrAbilityMana, preserveColorlessMana);
+        for (EnumMap<ManaColor, Integer> bucket : exiledCardOnlyMana.values()) {
+            clearColoredMana(bucket, preserveColorlessMana);
+        }
+        if (!preserveColorlessMana) {
+            exiledCardOnlyMana.clear();
+        }
+    }
+
+    private static void clearColoredMana(Map<ManaColor, Integer> bucket, boolean preserveColorlessMana) {
+        for (ManaColor color : ManaColor.COLORS) {
+            bucket.put(color, 0);
+        }
+        if (!preserveColorlessMana) {
+            bucket.put(ManaColor.COLORLESS, 0);
+        }
+    }
+
+    private static void clearColoredManaBuckets(Map<?, EnumMap<ManaColor, Integer>> buckets,
+                                                boolean preserveColorlessMana) {
+        if (!preserveColorlessMana) {
+            buckets.clear();
+            return;
+        }
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            clearColoredMana(bucket, true);
+        }
     }
 
     /**

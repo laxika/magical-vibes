@@ -80,11 +80,11 @@ new record. Heartless Summoning is that effect with a `CardTypePredicate(CREATUR
 it compares against the imprinted card rather than a predicate.
 
 **Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
-`controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control")
-and `ReduceOwnCastCostIfTargetingStackEntryEffect`
-stay as their own records. Their reduction depends on the being-cast spell's **chosen first target**,
-which the generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; they are
-resolved inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
+`controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control"),
+`ReduceOwnCastCostIfTargetingStackEntryEffect`, and `ReduceOwnCastCostPerTargetEffect` stay as
+their own records. Their reductions depend on the being-cast spell's chosen targets, which the
+generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; they are resolved
+inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
 not through the handler registry.
 
 ## Buyback-cost reductions

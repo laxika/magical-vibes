@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -873,6 +874,29 @@ class CastingCostServiceTest {
                             new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, true));
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of())).isZero();
+        }
+
+        @Test
+        @DisplayName("Per-target reduction counts repeated matching creature targets")
+        void perTargetReductionCountsRepeatedMatchingTargets() {
+            Card thaumaturge = new Card();
+            thaumaturge.setName("Battlefield Thaumaturge");
+            thaumaturge.setType(CardType.CREATURE);
+            thaumaturge.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerTargetEffect(
+                    new PermanentIsCreaturePredicate(), 1));
+
+            Card bearCard = new Card();
+            bearCard.setName("Bear");
+            bearCard.setType(CardType.CREATURE);
+            Permanent bear = new Permanent(bearCard);
+
+            when(gameQueryService.findPermanentById(gd, bear.getId())).thenReturn(bear);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    gd, bear, new PermanentIsCreaturePredicate())).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, thaumaturge, List.of(bear.getId(), bear.getId())))
+                    .isEqualTo(2);
         }
     }
 

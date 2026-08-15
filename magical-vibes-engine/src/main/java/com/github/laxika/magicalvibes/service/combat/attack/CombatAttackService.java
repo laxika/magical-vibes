@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -138,7 +139,7 @@ public class CombatAttackService {
         // CR 508.1c: if only one creature can attack and it has "can't attack alone", remove it
         if (indices.size() == 1) {
             Permanent sole = battlefield.get(indices.getFirst());
-            if (hasCantAttackOrBlockAlone(sole)) {
+            if (hasCantAttackOrBlockAlone(gameData, sole)) {
                 return List.of();
             }
         }
@@ -173,7 +174,7 @@ public class CombatAttackService {
                 .toList();
         if (targetAttackable.size() == 1) {
             Permanent sole = battlefield.get(targetAttackable.getFirst());
-            if (hasCantAttackOrBlockAlone(sole)) {
+            if (hasCantAttackOrBlockAlone(gameData, sole)) {
                 return List.of();
             }
         }
@@ -352,7 +353,7 @@ public class CombatAttackService {
 
         // CR 508.1c: validate "can't attack alone" — if any declared attacker has this restriction,
         // there must be at least 2 total attackers
-        validateCantAttackAlone(battlefield, attackerIndices);
+        validateCantAttackAlone(gameData, battlefield, attackerIndices);
 
         // Errantry: "can only attack alone" — an enchanted attacker with this restriction
         // may only be declared if it is the sole attacker
@@ -1506,10 +1507,11 @@ public class CombatAttackService {
         }
     }
 
-    private void validateCantAttackAlone(List<Permanent> battlefield, List<Integer> attackerIndices) {
+    private void validateCantAttackAlone(GameData gameData, List<Permanent> battlefield,
+                                         List<Integer> attackerIndices) {
         if (attackerIndices.size() == 1) {
             Permanent sole = battlefield.get(attackerIndices.getFirst());
-            if (hasCantAttackOrBlockAlone(sole)) {
+            if (hasCantAttackOrBlockAlone(gameData, sole)) {
                 throw new IllegalStateException(sole.getCard().getName() + " can't attack alone");
             }
         }
@@ -1528,9 +1530,11 @@ public class CombatAttackService {
         }
     }
 
-    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
+    private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)
+                || gameQueryService.hasAuraWithEffect(gameData, creature,
+                        EnchantedCreatureCantAttackOrBlockAloneEffect.class);
     }
 
     /**

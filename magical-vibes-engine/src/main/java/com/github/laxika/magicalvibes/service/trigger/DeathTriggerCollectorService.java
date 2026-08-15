@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -1261,6 +1262,21 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent {} put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName(), apg.dyingCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleDyingCreatureReturnUnlessTargetPaysLife(TriggerMatchContext match,
+            ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+        ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect baked =
+                new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(effect.lifeCost(), apg.dyingCard().getId());
+        match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked))));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (owned creature put into graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 

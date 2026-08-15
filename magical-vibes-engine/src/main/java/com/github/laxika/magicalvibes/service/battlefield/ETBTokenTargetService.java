@@ -255,6 +255,19 @@ public class ETBTokenTargetService {
                 }
             }
 
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE
+                    && !pending.chosenTargetsSoFar().isEmpty()) {
+                List<Permanent> selected = pending.chosenTargetsSoFar().stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentTargets.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null && selected.stream()
+                            .noneMatch(first -> gameQueryService.sharesCardType(first, candidate));
+                });
+            }
+
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !pending.chosenTargetsSoFar().isEmpty()) {
                 List<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()

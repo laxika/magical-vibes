@@ -250,6 +250,29 @@ class SpellCastingServiceTest {
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Pays a non-X additional target cost")
+    void paysAdditionalTargetCostForNonXSpell() {
+        Card spell = createInstant("Strive Spell", "{W}");
+        spell.setAdditionalManaCostPerExtraTarget("{2}{W}");
+        spell.target(TargetFilters.creature(), 0, 99)
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        Permanent firstTarget = new Permanent(createCreature("First Target", "{1}"));
+        Permanent secondTarget = new Permanent(createCreature("Second Target", "{1}"));
+        gd.playerBattlefields.get(player1Id).add(firstTarget);
+        gd.playerBattlefields.get(player1Id).add(secondTarget);
+        setHand(player1Id, List.of(spell));
+        addMana(player1Id, ManaColor.WHITE, 2);
+        addMana(player1Id, ManaColor.COLORLESS, 2);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+        svc.playCard(gd, player1, 0, null, null, null,
+                List.of(firstTarget.getId(), secondTarget.getId()), List.of(), false, null);
+
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================

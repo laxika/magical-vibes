@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattle
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
@@ -163,6 +165,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -3169,6 +3172,24 @@ public class StepTriggerService {
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — create token."));
                 log.info("Game {} - {} delayed token creation trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(DelayedDestroyAllPermanents.class)) {
+            List<DelayedDestroyAllPermanents> pendingWipes =
+                    gameData.drainDelayedActions(DelayedDestroyAllPermanents.class);
+            for (DelayedDestroyAllPermanents pending : pendingWipes) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — destroy all permanents",
+                        new ArrayList<>(List.of(new DestroyAllPermanentsEffect(new PermanentTruePredicate())))
+                ));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — destroy all permanents."));
+                log.info("Game {} - {} delayed destroy-all-permanents trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }
         }

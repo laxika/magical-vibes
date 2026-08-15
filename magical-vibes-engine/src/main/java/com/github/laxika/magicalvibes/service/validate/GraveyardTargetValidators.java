@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokensEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -312,6 +313,28 @@ public class GraveyardTargetValidators {
         }
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be a creature card");
+        }
+    }
+
+    @ValidatesTarget(ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect.class)
+    public void validateExileTargetCreatureCardCreateToken(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
+        }
+        UUID controllerId = tvs.findSourcePermanentController(ctx);
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
         }
     }
 

@@ -176,6 +176,10 @@ public class DamagePreventionService {
             TargetSourceDamagePreventionShield shield = it.next();
             if (!shield.targetId().equals(targetId) || !shield.sourceId().equals(sourceId)) continue;
 
+            if (shield.allDamage()) {
+                return 0;
+            }
+
             int prevented = Math.min(shield.remainingAmount(), remaining);
             remaining -= prevented;
             it.remove();

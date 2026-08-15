@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargeting
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
+import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
@@ -883,6 +884,21 @@ public class CastingCostService {
             return 0;
         }
 
+        int perTargetReduction = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(PerTargetCastCostReductionEffect.class::isInstance)
+                .map(PerTargetCastCostReductionEffect.class::cast)
+                .mapToInt(effect -> (int) targetIds.stream()
+                        .map(targetId -> targetId == null
+                                ? null : gameQueryService.findPermanentById(gameData, targetId))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, effect.predicate()))
+                        .count() * effect.amount())
+                .sum();
+        if (perTargetReduction != 0) {
+            return perTargetReduction;
+        }
+
         UUID firstTargetId = targetIds.getFirst();
         Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
         if (firstTarget != null) {
@@ -922,7 +938,8 @@ public class CastingCostService {
     public boolean hasTargetBasedCastCostReduction(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
-                        || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect);
+                        || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect
+                        || e instanceof PerTargetCastCostReductionEffect);
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {

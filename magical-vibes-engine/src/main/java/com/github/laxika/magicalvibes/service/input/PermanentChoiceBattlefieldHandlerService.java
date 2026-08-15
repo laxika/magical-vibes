@@ -121,6 +121,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
     /**
      * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
@@ -450,6 +451,16 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExileCombatOpponent(GameData gameData, UUID permanentId,
+                                          PermanentChoiceContext.ExileCombatOpponent context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target != null) {
+            exileSupport.exilePermanentAndTrackWithSource(
+                    gameData, target, context.sourcePermanentId(), context.sourceCard());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -812,6 +823,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         patternMatcherHandler.search(gameData, pendingEntry, chosen.getCard().getName());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePolymorphousRushCreatureChoice(GameData gameData, UUID chosenPermanentId,
+                                                     PermanentChoiceContext.PolymorphousRushCreatureChoice context) {
+        makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler.completeChoice(
+                gameData, chosenPermanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

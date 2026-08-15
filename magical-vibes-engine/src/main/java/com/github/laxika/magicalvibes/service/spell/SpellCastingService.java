@@ -1281,6 +1281,10 @@ public class SpellCastingService {
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
+        int extraTargetCount = Math.max(0, targetIds.size() - 1);
+        int perTargetCost = card.getAdditionalCostPerExtraTarget() * extraTargetCount;
+        boolean hasXCost = card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
+        String perTargetManaCost = repeatAdditionalTargetManaCost(card, extraTargetCount);
         boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
@@ -1556,10 +1560,10 @@ public class SpellCastingService {
             // Check if a non-zero alternative cost from the battlefield is affordable (e.g. Jodah)
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
-                    + targetingTax;
+                    + targetingTax + (hasXCost ? 0 : perTargetCost);
             boolean usingBattlefieldAlternativeCost = false;
             String manaCostString = card.getManaCost() != null
-                    ? card.getManaCost() + escalateManaSuffix : escalateManaSuffix;
+                    ? card.getManaCost() + perTargetManaCost + escalateManaSuffix : escalateManaSuffix;
             if (!manaCostString.isEmpty()) {
                 ManaCost normalCost = castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, new ManaCost(manaCostString));
@@ -1582,7 +1586,6 @@ public class SpellCastingService {
                         if (effectiveXValue < 0) {
                             throw new IllegalStateException("X value cannot be negative");
                         }
-                        int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                         int totalAdditionalCost = additionalCost + perTargetCost;
                         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
                         List<ManaColor> plannedConvoke = planConvokeContributions(gameData, playerId, card, convokeCreatureIds);
@@ -2074,7 +2077,8 @@ public class SpellCastingService {
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
                 paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
-                        sacrificeCostReduction + delveReduction, targetingTax, escalateManaSuffix);
+                        sacrificeCostReduction + delveReduction, targetingTax,
+                        hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool, effectiveXValue);
@@ -2185,7 +2189,6 @@ public class SpellCastingService {
             // Sorcery/Instant spells: pay mana + sacrifice costs, handle targeting, put on stack
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             int resolvedXValue = effectiveXValue;
-            int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
             List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
                     : (targetId != null ? List.of(targetId) : List.of());
             int perTargetLifeCost = card.getAdditionalLifeCostPerTarget() * costReductionTargetIds.size();
@@ -2273,9 +2276,10 @@ public class SpellCastingService {
                 }
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
             } else {
-                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions,
+                paySpellManaCost(gameData, playerId, card,
+                        resolvedXValue + (hasXCost ? perTargetCost : 0), convokeContributions,
                         phyrexianLifeCount, kicked, targetSubtypeCostReduction + delveReduction, targetingTax,
-                        escalateManaSuffix);
+                        hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, preManaPaymentPool, resolvedXValue);
@@ -4790,11 +4794,21 @@ public class SpellCastingService {
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction, int targetingTax, String escalateManaSuffix) {
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, phyrexianLifeCount,
+                kicked, extraCostReduction, targetingTax, 0, "", escalateManaSuffix);
+    }
+
+    public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue,
+                                 List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
+                                 boolean kicked, int extraCostReduction, int targetingTax,
+                                 int additionalGenericCost, String additionalManaCost,
+                                 String escalateManaSuffix) {
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
-                        phyrexianLifeCount, kicked, extraCostReduction, targetingTax, escalateManaSuffix, true));
+                        phyrexianLifeCount, kicked, extraCostReduction, targetingTax, additionalGenericCost,
+                        additionalManaCost, escalateManaSuffix, true));
         applyUncounterableGrantingMana(gameData, playerId, card);
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
@@ -4810,7 +4824,7 @@ public class SpellCastingService {
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         gameData.addSpellCastManaSpent(card.getId(),
                 computeSpellManaPayment(gameData, playerId, card, effectiveXValue, List.of(),
-                        null, false, 0, 0, "", false));
+                        null, false, 0, 0, 0, "", "", false));
         applyUncounterableGrantingMana(gameData, playerId, card);
         applyInstantSorceryUncounterableGrantingMana(gameData, playerId, card, uncounterableGrantingBefore);
         applyHasteGrantingMana(gameData, playerId, card, hasteGrantingBefore);
@@ -4824,6 +4838,14 @@ public class SpellCastingService {
     private int uncounterableGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getUncounterableGrantingManaTotal() : 0;
+    }
+
+    private String repeatAdditionalTargetManaCost(Card card, int extraTargetCount) {
+        String perTargetCost = card.getAdditionalManaCostPerExtraTarget();
+        if (perTargetCost == null || perTargetCost.isEmpty() || extraTargetCount == 0) {
+            return "";
+        }
+        return perTargetCost.repeat(extraTargetCount);
     }
 
     /**
@@ -4923,25 +4945,28 @@ public class SpellCastingService {
     private int computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                         List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
                                         boolean kicked, int extraCostReduction, int targetingTax,
+                                        int additionalGenericCost, String additionalManaCost,
                                         String escalateManaSuffix, boolean fromHand) {
         String suffix = escalateManaSuffix != null ? escalateManaSuffix : "";
         String baseMana = card.getManaCost() != null ? card.getManaCost() : "";
-        String totalMana = baseMana + suffix;
+        String extraMana = additionalManaCost != null ? additionalManaCost : "";
+        String additionalCostsMana = extraMana + suffix;
+        String totalMana = baseMana + additionalCostsMana;
         if (totalMana.isEmpty()) return 0;
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
-                - extraCostReduction + targetingTax;
+                - extraCostReduction + targetingTax + additionalGenericCost;
 
         // Alternative zero cost (e.g. Rooftop Storm, As Foretold): skip the mana cost, but escalate
         // is still paid (CR 702.124c — free cast waives the mana cost, not additional costs).
         if (castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, fromHand)) {
-            if (suffix.isEmpty()) return 0;
-            ManaCost escalateOnly = new ManaCost(suffix);
-            if (!escalateOnly.canPay(pool, additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay escalate cost");
+            if (additionalCostsMana.isEmpty()) return 0;
+            ManaCost additionalCosts = new ManaCost(additionalCostsMana);
+            if (!additionalCosts.canPay(pool, additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay additional spell costs");
             }
-            escalateOnly.pay(pool, additionalCost);
+            additionalCosts.pay(pool, additionalCost);
             return before - pool.getTotalAllMana();
         }
 
@@ -4995,12 +5020,21 @@ public class SpellCastingService {
                     gameData, playerId, card, pool, additionalCost);
             if (altCostStr != null) {
                 ManaCost altCost = castingCostService.applyColoredManaCostReductions(
-                        gameData, playerId, card, new ManaCost(altCostStr));
+                        gameData, playerId, card, new ManaCost(altCostStr + additionalCostsMana));
+                if (!altCost.canPay(pool, additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay additional spell costs");
+                }
                 altCost.pay(pool, additionalCost);
                 return before - pool.getTotalAllMana();
             }
             if (targetingTax > 0) {
                 throw new IllegalStateException("Not enough mana to pay targeting tax");
+            }
+            if (additionalGenericCost > 0) {
+                throw new IllegalStateException("Not enough mana to pay additional generic cost");
+            }
+            if (!extraMana.isEmpty()) {
+                throw new IllegalStateException("Not enough mana to pay additional mana cost");
             }
             if (!suffix.isEmpty()) {
                 throw new IllegalStateException("Not enough mana to pay escalate cost");

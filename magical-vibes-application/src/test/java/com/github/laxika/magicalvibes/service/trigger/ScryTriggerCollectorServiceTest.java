@@ -5,10 +5,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,5 +70,31 @@ class ScryTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
         verify(gameLogService).append(eq(gameData), any());
+    }
+
+    @Test
+    void queuesTargetedMayPayTriggerForTargetSelection() {
+        Card card = new Card();
+        card.setName("Knowledge and Power");
+        Permanent permanent = new Permanent(card);
+        MayPayManaEffect effect = new MayPayManaEffect(
+                "{2}",
+                new DealDamageToAnyTargetEffect(2),
+                "Pay {2}?");
+
+        boolean triggered = registry.dispatch(
+                new TriggerMatchContext(gameData, permanent, playerId, effect),
+                EffectSlot.ON_CONTROLLER_SCRIES,
+                effect,
+                new TriggerContext.Scry(playerId));
+
+        assertThat(triggered).isTrue();
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                .satisfies(pending -> {
+                    assertThat(pending.sourcePermanentId()).isEqualTo(permanent.getId());
+                    assertThat(pending.effects()).containsExactly(effect);
+                    assertThat(pending.targetFilter()).isInstanceOf(AnyTargetPredicateTargetFilter.class);
+                });
     }
 }

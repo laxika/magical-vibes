@@ -421,6 +421,7 @@ public class CombatBlockService {
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeBlockerTriggers = gameData.stack.size();
         Set<Integer> blockersWithOncePerBlockTrigger = new HashSet<>();
+        Set<UUID> auraOncePerBlockTriggers = new HashSet<>();
 
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -502,7 +503,8 @@ public class CombatBlockService {
             // Check for aura/equipment-based "when enchanted/equipped creature blocks" triggers
             Permanent blockerForAura = defenderBattlefield.get(assignment.blockerIndex());
             Permanent attackerForAura = attackerBattlefield.get(assignment.attackerIndex());
-            combatTriggerService.checkAuraTriggersForCreature(gameData, blockerForAura, EffectSlot.ON_BLOCK, attackerForAura);
+            combatTriggerService.checkAuraTriggersForCreature(gameData, blockerForAura,
+                    EffectSlot.ON_BLOCK, attackerForAura, auraOncePerBlockTriggers);
         }
 
         // Check for "whenever this creature blocks two or more creatures" triggers (fires once,
@@ -610,7 +612,8 @@ public class CombatBlockService {
             }
 
             // Check for aura/equipment-based "when enchanted/equipped creature becomes blocked" triggers
-            combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
+            combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED,
+                    null, auraOncePerBlockTriggers);
             combatTriggerService.checkAttachedPerBlockerTriggers(gameData, attacker, blockerAssignments, defenderBattlefield, atkIdx);
 
             // Check for "whenever a creature you control becomes blocked" triggers (active player's / AP's).

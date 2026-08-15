@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -1041,7 +1042,7 @@ public class DrawService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
-        checkControllerDrawTriggers(gameData, playerId);
+        checkControllerDrawTriggers(gameData, playerId, drawn);
         checkOpponentDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
@@ -1166,17 +1167,19 @@ public class DrawService {
         });
     }
 
-    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
-        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS);
+    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS, drawn);
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
-            checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD);
+            checkControllerDrawTriggerSlot(
+                    gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
         }
 
         // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
         checkEmblemDrawTriggers(gameData, drawingPlayerId);
     }
 
-    private void checkControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId, EffectSlot slot) {
+    private void checkControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
+                                                EffectSlot slot, Card drawn) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
         if (battlefield == null) return;
 
@@ -1185,6 +1188,28 @@ public class DrawService {
             if (drawEffects == null || drawEffects.isEmpty()) continue;
 
             for (CardEffect effect : drawEffects) {
+                if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
+                    if (drawn == null
+                            || (firstDraw.onlyOnControllerTurn()
+                            && !drawingPlayerId.equals(gameData.activePlayerId))
+                            || gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
+                        continue;
+                    }
+
+                    String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(drawerName + " reveals ")
+                            .card(drawn)
+                            .text(" with ")
+                            .card(perm.getCard())
+                            .text(".")
+                            .build());
+                    effect = firstDraw.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
+
                 // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the
                 // equipped creature, so an unattached Equipment has no such ability — no trigger.
                 if (effect instanceof BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect
@@ -1225,6 +1250,10 @@ public class DrawService {
             }
         }
 
+    }
+
+    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        checkControllerDrawTriggers(gameData, drawingPlayerId, null);
     }
 
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {

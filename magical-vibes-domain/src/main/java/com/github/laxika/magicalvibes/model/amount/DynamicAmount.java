@@ -94,6 +94,7 @@ public sealed interface DynamicAmount permits
         TargetSpellPower,
         TargetToughness,
         TargetPower,
+        TopCardOfLibraryManaValue,
         TotalPowerOfCardsExiledWithSource,
         TotalPowerOfControlledCreatures,
         TotalToughnessOfCardsExiledWithSource,

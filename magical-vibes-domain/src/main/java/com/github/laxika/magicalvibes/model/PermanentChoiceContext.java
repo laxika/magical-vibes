@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -59,6 +60,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(choosingPlayerId, sourceCardName, false);
         }
     }
+
+    /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
+    record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
 
     /** An attack trigger asks the defending player to choose an untapped creature that must block. */
     record DefendingPlayerChoosesCreatureToBlock(UUID choosingPlayerId, UUID sourcePermanentId,
@@ -443,6 +447,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Pattern Matcher: choose another controlled creature whose name bounds the library search. */
     record PatternMatcherCreatureChoice(UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Polymorphous Rush: choose the creature whose copiable characteristics will be used. */
+    record PolymorphousRushCreatureChoice(UUID controllerId,
+                                           MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
+            implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
     record Populate(UUID controllerId) implements PermanentChoiceContext {}

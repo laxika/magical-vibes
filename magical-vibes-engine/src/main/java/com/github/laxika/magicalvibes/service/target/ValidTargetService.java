@@ -171,6 +171,17 @@ public class ValidTargetService {
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null && selected.stream()
+                            .noneMatch(sel -> gameQueryService.sharesCardType(sel, candidate));
+                });
+            }
             // Cross-target restriction (Bioshift): later positions may only choose permanents
             // controlled by the first target's controller.
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET

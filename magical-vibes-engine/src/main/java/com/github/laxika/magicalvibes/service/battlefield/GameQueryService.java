@@ -4779,6 +4779,18 @@ public class GameQueryService {
                 || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE));
     }
 
+    /** Returns whether two permanents share at least one card type. */
+    public boolean sharesCardType(Permanent a, Permanent b) {
+        Card aCard = a.getCard();
+        Card bCard = b.getCard();
+        for (CardType cardType : CardType.values()) {
+            if (aCard.hasType(cardType) && bCard.hasType(cardType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Returns {@code true} if the given card (in a library, hand, or other non-battlefield zone)
      * shares at least one creature type with a creature the given player controls. Changeling on

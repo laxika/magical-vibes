@@ -113,12 +113,16 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && triggeringPermanentTargetLegal
                 && (exchange.sourceIsFirstTarget()
                         || exchange.triggeringPermanentIsFirstTarget()
-                        || predicateEvaluationService.matchesPermanentPredicate(ownTarget, exchange.targetPredicate(), filterContext))
+                        || predicateEvaluationService.matchesPermanentPredicate(ownTarget,
+                        exchange.firstTargetPredicate() != null
+                                ? exchange.firstTargetPredicate() : exchange.targetPredicate(), filterContext))
                 && predicateEvaluationService.matchesPermanentPredicate(opponentTarget, exchange.targetPredicate(), filterContext)
                 && (!exchange.requireOpponentManaValueNotGreater()
                         || opponentTarget.getCard().getManaValue() <= ownTarget.getCard().getManaValue())
                 && (!exchange.requireSharedArtifactOrCreatureType()
-                        || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget));
+                        || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget))
+                && (!exchange.requireSharedCardType()
+                        || gameQueryService.sharesCardType(ownTarget, opponentTarget));
         if (!stillLegal) {
             logFizzle(gameData, entry, exchange, ownTarget);
             return;

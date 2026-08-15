@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -45,7 +46,22 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenCopyOfTargetPermanentEffect) effect;
 
-        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<UUID> targetIds = entry.targetsForBoundEffectGroup(e);
+        if (targetIds == null) {
+            targetIds = entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
+                && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+
+        for (UUID targetId : targetIds) {
+            resolveForTarget(gameData, entry, e, targetId);
+        }
+    }
+
+    private void resolveForTarget(GameData gameData, StackEntry entry,
+                                   CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId) {
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPermanent == null) {
             log.info("Game {} - Target permanent no longer on battlefield, no token created", gameData.id);
             return;
@@ -58,11 +74,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = buildTokenCopyCard(sourceCard, e);
+            Card tokenCard = buildTokenCopyCard(sourceCard, effect);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-            if (e.tappedAndAttacking()) {
+            if (effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
                 tokenPermanent.setAttacking(true);
                 if (sourcePermanent != null) {
@@ -70,10 +86,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 }
             }
 
-            if (e.exileAtEndStep()) {
+            if (effect.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
-            if (e.sacrificeAtEndStep()) {
+            if (effect.sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
 
@@ -85,9 +101,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
 
-            if (e.initialCounters() != null && !e.initialCounters().isEmpty()
+            if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
-                for (var counterEntry : e.initialCounters().entrySet()) {
+                for (var counterEntry : effect.initialCounters().entrySet()) {
                     if (counterEntry.getValue() > 0) {
                         permanentCounterSupport.placeCounterOnPermanent(
                                 gameData, entry, tokenPermanent, counterEntry.getKey(), counterEntry.getValue());

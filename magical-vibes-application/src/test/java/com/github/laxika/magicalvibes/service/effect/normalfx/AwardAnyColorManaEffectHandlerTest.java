@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,6 +28,24 @@ class AwardAnyColorManaEffectHandlerTest extends AbstractPlayerInteractionHandle
         resolveEffect(gd, entry, effect);
 
         verify(interactionHandlerRegistry).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
+    }
+
+    @Test
+    @DisplayName("Any combination of colors prompts separately for each mana")
+    void sendsIndividualColorChoicesForAnyCombination() {
+        Card card = createCard("Market Festival");
+        AwardAnyColorManaEffect effect = new AwardAnyColorManaEffect(2, true);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        ArgumentCaptor<PendingInteraction.ColorChoice> captor =
+                ArgumentCaptor.forClass(PendingInteraction.ColorChoice.class);
+        verify(interactionHandlerRegistry).begin(eq(gd), captor.capture());
+        ChoiceContext.ManaColorChoice choice =
+                (ChoiceContext.ManaColorChoice) captor.getValue().context();
+        assertThat(choice.amount()).isEqualTo(2);
+        assertThat(choice.fixedColorOptions()).containsExactlyElementsOf(ManaColor.COLORS);
     }
 
     @Test

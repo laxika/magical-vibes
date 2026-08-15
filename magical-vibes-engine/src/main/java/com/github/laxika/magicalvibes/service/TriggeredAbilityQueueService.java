@@ -350,7 +350,7 @@ public class TriggeredAbilityQueueService {
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    pending.sourceCard().getTargetFilter(),
+                    targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.ATTACK);

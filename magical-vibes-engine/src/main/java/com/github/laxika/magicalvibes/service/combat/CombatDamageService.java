@@ -1390,21 +1390,31 @@ public class CombatDamageService {
                         triggerTargetId = gameData.findControllerOf(creature);
                     }
 
-                    StackEntry se = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            attackerId,
-                            perm.getCard().getName() + "'s triggered ability",
-                            new ArrayList<>(effects),
-                            triggerTargetId,
-                            perm.getId()
-                    );
-                    for (CardEffect effect : effects) {
-                        setCombatDamageEventValue(se, effect, damageDealt);
+                    boolean needsTarget = effects.stream()
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    if (needsTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                perm.getCard(), ownerId, effects, perm.getId()));
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                                "'s combat damage trigger goes on the stack — choose a target."));
+                    } else {
+                        StackEntry se = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                attackerId,
+                                perm.getCard().getName() + "'s triggered ability",
+                                new ArrayList<>(effects),
+                                triggerTargetId,
+                                perm.getId()
+                        );
+                        for (CardEffect effect : effects) {
+                            setCombatDamageEventValue(se, effect, damageDealt);
+                        }
+                        se.setNonTargeting(true);
+                        gameData.stack.add(se);
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
                     }
-                    se.setNonTargeting(true);
-                    gameData.stack.add(se);
-                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
                 }
             }
         });

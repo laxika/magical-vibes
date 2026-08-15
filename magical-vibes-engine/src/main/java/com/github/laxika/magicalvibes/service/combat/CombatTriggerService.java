@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -61,6 +62,16 @@ public class CombatTriggerService {
      */
     public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot,
                                               Permanent combatOpponent) {
+        checkAuraTriggersForCreature(gameData, creature, slot, combatOpponent, null);
+    }
+
+    /**
+     * Checks attached triggers while allowing the block collector to suppress each attached
+     * permanent's ONCE_PER_BLOCK registration after its first trigger in the block declaration.
+     */
+    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot,
+                                              Permanent combatOpponent,
+                                              Set<UUID> oncePerBlockTriggeredPermanents) {
         UUID creatureControllerId = gameData.findControllerOf(creature);
         if (creatureControllerId == null) return;
         final UUID finalCreatureControllerId = creatureControllerId;
@@ -69,8 +80,15 @@ public class CombatTriggerService {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<EffectRegistration> auraRegs = perm.getCard().getEffectRegistrations(slot);
                 // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
+                boolean hasOncePerBlockRegistration = auraRegs.stream()
+                        .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
+                boolean includeOncePerBlockRegistration = !hasOncePerBlockRegistration
+                        || oncePerBlockTriggeredPermanents == null
+                        || oncePerBlockTriggeredPermanents.add(perm.getId());
                 List<CardEffect> nonPerBlockerEffects = auraRegs.stream()
                         .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
+                        .filter(r -> r.triggerMode() != TriggerMode.ONCE_PER_BLOCK
+                                || includeOncePerBlockRegistration)
                         .map(EffectRegistration::effect)
                         .toList();
                 if (!nonPerBlockerEffects.isEmpty()) {

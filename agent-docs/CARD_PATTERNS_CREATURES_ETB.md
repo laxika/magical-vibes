@@ -30,6 +30,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 ## ETB creatures
 
+| ETB mass bounce by opponent creature toughness and controlled subtype count | `s/ScourgeOfFleets.java` | `ReturnToHandEffect.allPermanentsMatching(AllOf(IsCreature, Not(ControlledBySourceController), PermanentToughnessAtMostControlledSubtypeCountPredicate(ISLAND)))` — the subtype count and effective toughness are evaluated when the trigger resolves |
+
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | ETB pump target creature | `b/BriarpackAlpha.java` | `target(CreaturePredicate).addEffect(ON_ENTER_BATTLEFIELD, BoostTargetCreatureEffect(P, T))` — any creature. See also `v/VulshokHeartstoker.java` (+2/+0). Flash is auto-loaded from Scryfall, no constructor code needed |

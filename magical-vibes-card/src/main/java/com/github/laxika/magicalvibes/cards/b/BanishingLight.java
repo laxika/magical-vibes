@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "138")
+@CardRegistration(set = "JOU", collectorNumber = "5")
 public class BanishingLight extends Card {
 
     public BanishingLight() {

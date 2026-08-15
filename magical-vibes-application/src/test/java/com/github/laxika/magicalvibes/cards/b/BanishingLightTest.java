@@ -17,12 +17,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BanishingLightTest extends BaseCardTest {
 
-    private void castAndResolveBanishingLight(UUID targetId) {
+    private void setUpCast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new BanishingLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
 
+    private void castAndResolve(UUID targetId) {
+        setUpCast();
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -33,7 +37,7 @@ class BanishingLightTest extends BaseCardTest {
     void etbExilesOpponentPermanent() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        castAndResolveBanishingLight(bearsId);
+        castAndResolve(bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -42,11 +46,11 @@ class BanishingLightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Exiled card returns when Banishing Light leaves the battlefield")
+    @DisplayName("Exiled card returns when Banishing Light is destroyed")
     void exiledCardReturnsWhenSourceDestroyed() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        castAndResolveBanishingLight(bearsId);
+        castAndResolve(bearsId);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -54,9 +58,9 @@ class BanishingLightTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
-        UUID lightId = harness.getPermanentId(player1, "Banishing Light");
+        UUID banishingLightId = harness.getPermanentId(player1, "Banishing Light");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lightId);
+        harness.castInstant(player2, 0, banishingLightId);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -70,11 +74,7 @@ class BanishingLightTest extends BaseCardTest {
     void cannotTargetLand() {
         harness.addToBattlefield(player2, new Forest());
         UUID forestId = harness.getPermanentId(player2, "Forest");
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new BanishingLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        setUpCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
@@ -85,11 +85,7 @@ class BanishingLightTest extends BaseCardTest {
     void cannotTargetOwnPermanent() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new BanishingLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        setUpCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ownBearsId))
                 .isInstanceOf(IllegalStateException.class);

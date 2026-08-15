@@ -465,6 +465,28 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        ReturnTargetCardsFromGraveyardToHandEffect typeLimitedEffect = pendingEffects == null
+                ? null
+                : pendingEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .filter(effect -> !effect.maxOnePerCardType().isEmpty())
+                .findFirst()
+                .orElse(null);
+        if (typeLimitedEffect != null) {
+            for (CardType cardType : typeLimitedEffect.maxOnePerCardType()) {
+                long matchingTargets = cardIds.stream()
+                        .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(card -> card.hasType(cardType))
+                        .count();
+                if (matchingTargets > 1) {
+                    throw new IllegalStateException("Cannot choose more than one "
+                            + cardType.name().toLowerCase() + " card");
+                }
+            }
+        }
+
         // "... from a single graveyard" (Scarab Feast): all chosen targets must share one graveyard.
         if (gameData.graveyardTargetOperation.singleGraveyard && cardIds.size() > 1) {
             UUID firstOwner = gameQueryService.findGraveyardOwnerById(gameData, cardIds.get(0));

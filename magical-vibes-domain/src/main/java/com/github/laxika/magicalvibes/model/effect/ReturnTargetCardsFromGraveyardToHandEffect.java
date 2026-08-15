@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
+import java.util.Set;
 
 /**
  * Return target cards matching the filter from your graveyard to your hand.
@@ -25,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                          player {@link TargetSpec} in that case
  * @param xScaled           when {@code true} the target count is exactly the spell's paid X
  * @param exactTargets      when {@code true} exactly {@code maxTargets} targets must be chosen
+ * @param maxOnePerCardType card types for which at most one selected card is allowed
  */
 public record ReturnTargetCardsFromGraveyardToHandEffect(
         CardPredicate filter,
@@ -33,35 +37,50 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         boolean xScaled,
         boolean exactTargets,
         int minTargets,
-        boolean requireSharedCreatureType
+        boolean requireSharedCreatureType,
+        Set<CardType> maxOnePerCardType
 ) implements CardEffect {
 
+    public ReturnTargetCardsFromGraveyardToHandEffect {
+        maxOnePerCardType = maxOnePerCardType == null ? Set.of() : Set.copyOf(maxOnePerCardType);
+    }
+
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets) {
-        this(filter, maxTargets, null, false, false, 0, false);
+        this(filter, maxTargets, null, false, false, 0, false, Set.of());
     }
 
     /** The dynamic-cap form: the cap is counted off the targeted player as the spell is cast. */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, DynamicAmount dynamicMaxTargets) {
-        this(filter, 0, dynamicMaxTargets, false, false, 0, false);
+        this(filter, 0, dynamicMaxTargets, false, false, 0, false, Set.of());
     }
 
     /** Exact-X form: choose exactly the spell's paid X matching cards (Shattered Crypt). */
     public ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate filter, int maxTargets, boolean xScaled) {
-        this(filter, maxTargets, null, xScaled, false, 0, false);
+        this(filter, maxTargets, null, xScaled, false, 0, false, Set.of());
     }
 
     /** Fixed-exact form: choose exactly {@code targetCount} matching cards (Death's Duet). */
     public static ReturnTargetCardsFromGraveyardToHandEffect exactly(CardPredicate filter, int targetCount) {
         return new ReturnTargetCardsFromGraveyardToHandEffect(
-                filter, targetCount, null, false, true, targetCount, false);
+                filter, targetCount, null, false, true, targetCount, false, Set.of());
     }
 
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyOne(CardPredicate filter) {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, false, 1, false);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, false, 1, false, Set.of());
     }
 
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyTwoSharingCreatureType(CardPredicate filter) {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 2, null, false, false, 2, true);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 2, null, false, false, 2, true, Set.of());
+    }
+
+    /** Return up to one card matching each listed card type. */
+    public static ReturnTargetCardsFromGraveyardToHandEffect upToOnePerCardType(
+            CardPredicate filter, Set<CardType> cardTypes) {
+        if (cardTypes == null || cardTypes.isEmpty()) {
+            throw new IllegalArgumentException("cardTypes must not be empty");
+        }
+        return new ReturnTargetCardsFromGraveyardToHandEffect(
+                filter, cardTypes.size(), null, false, false, 0, false, cardTypes);
     }
 
     @Override

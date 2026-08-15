@@ -485,6 +485,9 @@ public class CastingPermissionService {
                         if (imprinted != null) {
                             forbidden.add(imprinted.getName());
                         }
+                        gameData.getCardsExiledByPermanent(perm.getId()).stream()
+                                .map(Card::getName)
+                                .forEach(forbidden::add);
                     }
                     if (effect instanceof SpellsWithChosenNameCantBeCastEffect chosenNameCast) {
                         // Gideon's Intervention restricts only opponents; the controller may still cast.
