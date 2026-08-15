@@ -456,7 +456,8 @@ class AiTargetSelector {
                     continue;
                 }
                 UUID chosen = pickPlayerTargetForGroup(
-                        gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects);
+                        gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
+                        alreadyChosen, card.isAllowSharedTargets());
                 if (chosen != null) {
                     result.add(chosen);
                     alreadyChosen.add(chosen);
@@ -468,8 +469,9 @@ class AiTargetSelector {
                         st, effectiveMaxTargets, alreadyChosen, groupEffects);
                 if (chosen.size() < st.getMinTargets() && wantsPlayer) {
                     UUID player = pickPlayerTargetForGroup(
-                            gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects);
-                    if (player != null && !alreadyChosen.contains(player)
+                            gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
+                            alreadyChosen, card.isAllowSharedTargets());
+                    if (player != null
                             && !chosen.contains(player) && chosen.size() < effectiveMaxTargets) {
                         chosen.add(player);
                     }
@@ -522,21 +524,29 @@ class AiTargetSelector {
      * (e.g. ExtraTurnEffect), opponent for harmful effects.
      */
     private UUID pickPlayerTargetForGroup(GameData gameData, UUID aiPlayerId, UUID opponentId,
-                                          TargetFilter groupFilter, List<CardEffect> effects) {
+                                          TargetFilter groupFilter, List<CardEffect> effects,
+                                          Set<UUID> alreadyChosen, boolean allowSharedTargets) {
         boolean isBeneficial = effects.stream().anyMatch(ExtraTurnEffect.class::isInstance);
 
         UUID preferred = isBeneficial ? aiPlayerId : opponentId;
         UUID fallback = isBeneficial ? opponentId : aiPlayerId;
 
-        if (isLegalPlayerTargetForGroup(gameData, aiPlayerId, preferred, groupFilter)
+        if (isAvailablePlayerTarget(preferred, alreadyChosen, allowSharedTargets)
+                && isLegalPlayerTargetForGroup(gameData, aiPlayerId, preferred, groupFilter)
                 && (isBeneficial || !gameQueryService.playerHasHexproof(gameData, preferred))) {
             return preferred;
         }
-        if (isLegalPlayerTargetForGroup(gameData, aiPlayerId, fallback, groupFilter)
+        if (isAvailablePlayerTarget(fallback, alreadyChosen, allowSharedTargets)
+                && isLegalPlayerTargetForGroup(gameData, aiPlayerId, fallback, groupFilter)
                 && (!isBeneficial || !gameQueryService.playerHasHexproof(gameData, fallback))) {
             return fallback;
         }
         return null;
+    }
+
+    private boolean isAvailablePlayerTarget(UUID playerId, Set<UUID> alreadyChosen,
+                                            boolean allowSharedTargets) {
+        return playerId != null && (allowSharedTargets || !alreadyChosen.contains(playerId));
     }
 
     private boolean isLegalPlayerTargetForGroup(GameData gameData, UUID aiPlayerId, UUID playerId,

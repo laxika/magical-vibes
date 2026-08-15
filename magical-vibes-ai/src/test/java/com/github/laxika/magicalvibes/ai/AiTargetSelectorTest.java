@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.Befuddle;
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
+import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
@@ -1165,6 +1166,15 @@ class AiTargetSelectorTest {
             assertThat(targets).isNotNull();
             assertThat(targets).hasSize(1);
             assertThat(targets.get(0)).isEqualTo(aiPlayer.getId());
+        }
+
+        @Test
+        @DisplayName("Cultural Exchange chooses different players for its two target groups")
+        void culturalExchangeChoosesDifferentPlayers() {
+            List<UUID> targets = targetSelector.chooseMultiTargets(
+                    gd, new CulturalExchange(), aiPlayer.getId());
+
+            assertThat(targets).containsExactly(human.getId(), aiPlayer.getId());
         }
 
         @Test
