@@ -458,13 +458,15 @@ card's `TargetFilter` is still the conventional home. The end-step pipeline will
 `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before inspecting the wrapped effect's
 targeting (`targetSpec()` category + predicate).
 
-### May-ability target enumeration (`MayAbilityHandlerService`)
+### May-ability target enumeration
 
-A `MayEffect`-wrapped targeting effect resolves its "may" on the stack and *then* chooses a target,
-so its legal-permanent list is built by `MayAbilityHandlerService.mayAbilityPermanentTargets` rather
-than by a `TriggerTargetCollector` pipeline. Both entry points — the accept path
-(`handleTargetedMayAbilityAccepted`) and the CR 603.5 resolution-time path
-(`handleResolutionTimeTargetSelection`) — share that one helper, with this precedence:
+A targeting effect wrapped in `MayEffect` still has its target chosen as the triggered ability is
+put on the stack. `TriggerTargetCollector` unwraps the optional effect to discover that restriction;
+the may decision remains a resolution-time choice. Effects that explicitly create a later reflexive
+trigger are non-targeting until that trigger is created.
+
+When `MayAbilityHandlerService` performs a resolution-time target choice for one of those later
+effects, `mayAbilityPermanentTargets` uses this precedence:
 
 1. the card-level `TargetFilter` (`mayAbilityTargetFilter`, which prefers the effect's own declared
    target group over the card's primary filter), **and**

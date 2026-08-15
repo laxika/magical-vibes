@@ -441,6 +441,7 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Carries a keep-one-per-type choice until the next type pass or final sacrifice. */
     record KeepOneOfEachTypeChoice(UUID controllerId, UUID subjectPlayerId, CardType typePhase,
+                                   java.util.List<UUID> affectedPlayerIds,
                                    java.util.List<UUID> remainingPlayerIds,
                                    java.util.List<UUID> keptIds, String sourceName,
                                    java.util.List<CardType> types, boolean sacrificeAllPermanents,

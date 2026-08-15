@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -169,6 +170,13 @@ public class StaticEffectSupport {
             if (grant.scope() == GrantScope.SELF_AND_PAIRED
                     || selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
+            }
+        } else if (wrapped instanceof GrantSubtypeEffect grant) {
+            if (selfInScope(context, grant.scope(), grant.filter())) {
+                accumulator.addGrantedSubtype(grant.subtype());
+                if (grant.overriding()) {
+                    accumulator.setSubtypeOverriding(true);
+                }
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED

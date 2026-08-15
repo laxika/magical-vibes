@@ -41,6 +41,7 @@ class WildwoodScourgeTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, bears.getId(), null);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(scourge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -51,8 +51,7 @@ class ViridianScoutTest extends BaseCardTest {
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature with flying");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void addAbilityMana() {

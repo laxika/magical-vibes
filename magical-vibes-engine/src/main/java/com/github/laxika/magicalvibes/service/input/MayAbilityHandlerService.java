@@ -648,21 +648,21 @@ public class MayAbilityHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
-            if (innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect) {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            boolean targetAlreadySet = pendingEntry != null
+                    && (pendingEntry.getTargetId() != null
+                    || !pendingEntry.getTargetIds().isEmpty()
+                    || !pendingEntry.getTargetCardIds().isEmpty());
+            if (innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect && !targetAlreadySet) {
                 var mayHandler = mayEffectHandlerRegistry.getHandler(innerEffect);
                 if (mayHandler != null) {
                     mayHandler.handle(gameData, player, true, ability);
                     return;
                 }
             }
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
             boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
             boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-            boolean targetAlreadySet = pendingEntry != null
-                    && (pendingEntry.getTargetId() != null
-                    || !pendingEntry.getTargetIds().isEmpty()
-                    || !pendingEntry.getTargetCardIds().isEmpty());
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
                 gameData.resolvedMayAccepted = true;
                 handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);

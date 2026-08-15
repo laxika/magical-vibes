@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -92,9 +93,14 @@ public class TargetValidationService {
     private void validateSpec(TargetValidationContext ctx, TargetSpec spec, CardEffect effect) {
         TargetPredicate predicate = spec.targetPredicate();
 
-        if (predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+        boolean graveyardTarget = predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && ctx.targetZone() == Zone.GRAVEYARD;
+        if (graveyardTarget
                 && !gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
+        }
+        if (graveyardTarget) {
+            validateGraveyardTarget(ctx, predicate);
         }
 
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
@@ -121,6 +127,34 @@ public class TargetValidationService {
         }
         if (spec.harmful()) {
             checkProtection(ctx, target);
+        }
+    }
+
+    private void validateGraveyardTarget(TargetValidationContext ctx, TargetPredicate predicate) {
+        requireTarget(ctx);
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        Card target = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (target == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+
+        TargetPredicate.GraveyardCards restriction = (TargetPredicate.GraveyardCards)
+                predicate.leaf(TargetPredicate.Kind.GRAVEYARD_CARD).orElseThrow();
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
+                ctx.gameData(), ctx.targetId());
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
+        if (controllerId != null && graveyardOwnerId != null
+                && !restriction.scope().graveyardOwners(
+                        ctx.gameData().orderedPlayerIds, controllerId).contains(graveyardOwnerId)) {
+            throw new IllegalStateException("Target card is not in an allowed graveyard");
+        }
+        UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+        if (!predicateEvaluationService.matchesCardPredicate(
+                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
+            throw new IllegalStateException("Target card does not match the required predicate");
         }
     }
 

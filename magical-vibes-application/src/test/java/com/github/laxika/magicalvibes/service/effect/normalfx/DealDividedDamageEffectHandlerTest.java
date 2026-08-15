@@ -98,7 +98,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id, any(), 1);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                    eq(gd), eq(player2Id), any(), eq(1));
         }
 
         @Test

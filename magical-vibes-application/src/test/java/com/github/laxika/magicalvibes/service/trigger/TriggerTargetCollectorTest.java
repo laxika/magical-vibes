@@ -180,19 +180,22 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
-    @DisplayName("May-pay effects use a targeted else effect when the payment branch is empty")
-    void mayPayEffectUsesTargetedElseEffectWhenWrappedEffectIsNull() {
-        Permanent opponentPermanent = new Permanent(new Card());
-        gd.playerBattlefields.get(player2Id).add(opponentPermanent);
+    @DisplayName("MayPayManaEffect applies a targeted else effect when the paid branch is empty")
+    void mayPayManaEffectAppliesElseEffectTargetRestriction() {
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
 
         List<CardEffect> effects = List.of(new MayPayManaEffect(
-                "{U}", null, "Pay {U}?", new DestroyTargetPermanentEffect(true)));
+                "{U}", null, "Pay {U}?",
+                new DestroyTargetPermanentEffect(
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId()))));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
 
-        assertThat(result.canTargetPermanents()).isTrue();
-        assertThat(result.validTargets()).containsExactly(opponentPermanent.getId());
+        assertThat(result.validTargets()).containsExactly(opponentCreature.getId());
     }
 
     @Test

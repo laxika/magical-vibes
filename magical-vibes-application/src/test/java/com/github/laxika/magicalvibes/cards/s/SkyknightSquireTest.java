@@ -48,16 +48,16 @@ class SkyknightSquireTest extends BaseCardTest {
         Permanent squire = addCreatureReady(player1, new SkyknightSquire());
 
         assertThat(gqs.hasKeyword(gd, squire, Keyword.FLYING)).isFalse();
-        assertThat(gqs.computeStaticBonus(gd, squire).grantedSubtypes()).doesNotContain(CardSubtype.KNIGHT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, squire)).doesNotContain(CardSubtype.KNIGHT);
 
         squire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         assertThat(gqs.hasKeyword(gd, squire, Keyword.FLYING)).isTrue();
-        assertThat(gqs.computeStaticBonus(gd, squire).grantedSubtypes()).contains(CardSubtype.KNIGHT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, squire)).contains(CardSubtype.KNIGHT);
 
         squire.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         assertThat(gqs.hasKeyword(gd, squire, Keyword.FLYING)).isFalse();
-        assertThat(gqs.computeStaticBonus(gd, squire).grantedSubtypes()).doesNotContain(CardSubtype.KNIGHT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, squire)).doesNotContain(CardSubtype.KNIGHT);
     }
 }

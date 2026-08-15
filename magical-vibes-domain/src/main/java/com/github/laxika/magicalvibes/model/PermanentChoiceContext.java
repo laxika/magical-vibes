@@ -550,12 +550,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
-    /**
-     * Heart-Piercer Manticore: its enter trigger's any-target was chosen ({@code targetId}); the
-     * controller now picks another creature to sacrifice, whereupon {@code sourceCard} deals that
-     * creature's power as damage to {@code targetId}.
-     */
-    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, UUID targetId) implements PermanentChoiceContext {}
+    /** Heart-Piercer Manticore: choose the creature whose sacrifice creates the reflexive trigger. */
+    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     record SacrificeAnotherCreatureGainLifeAndDraw(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 

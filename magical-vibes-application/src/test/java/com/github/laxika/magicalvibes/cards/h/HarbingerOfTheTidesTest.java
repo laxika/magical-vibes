@@ -29,8 +29,7 @@ class HarbingerOfTheTidesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HarbingerOfTheTides()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // creature spell resolves, ETB trigger goes on the stack
-        harness.passBothPriorities(); // ETB trigger resolves -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -39,9 +38,9 @@ class HarbingerOfTheTidesTest extends BaseCardTest {
         UUID bearsId = tappedBears(player2).getId();
         hardcast();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -54,9 +53,11 @@ class HarbingerOfTheTidesTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may leaves the tapped creature on the battlefield")
     void decliningMayLeavesCreature() {
-        tappedBears(player2);
+        UUID bearsId = tappedBears(player2).getId();
         hardcast();
 
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();

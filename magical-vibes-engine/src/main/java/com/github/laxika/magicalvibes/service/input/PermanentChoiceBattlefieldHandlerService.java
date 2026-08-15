@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1213,6 +1214,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         // CR 510.1a clamps negative power to 0).
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
 
+        UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
+                .map(Permanent::getId)
+                .findFirst()
+                .orElse(null);
+
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -1220,15 +1227,40 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
-        // The source deals damage equal to the sacrificed creature's power to the chosen any-target.
-        // Reuses the divided-damage helper with a single assignment; it finds the source permanent by
-        // card, so the damage is dealt by the entering creature (honouring protection / prevention).
-        if (power > 0 && ctx.targetId() != null) {
-            damageSupport.dealDividedDamageToAnyTargets(gameData, ctx.sourceCard(), ctx.controllerId(),
-                    Map.of(ctx.targetId(), power));
+        queuePowerDamageReflexiveTrigger(
+                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, power);
+    }
+
+    private void queuePowerDamageReflexiveTrigger(GameData gameData, UUID controllerId,
+                                                   Card sourceCard, UUID sourcePermanentId,
+                                                   int power) {
+        CardEffect damageEffect = new DealDamageToAnyTargetEffect(power);
+        TargetPredicate targetPredicate = damageEffect.targetSpec().targetPredicate();
+        FilterContext filterContext = new FilterContext(
+                gameData, sourceCard.getId(), controllerId, null, null);
+        List<UUID> validPermanentTargets = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (targetPredicateEvaluationService.matchesPermanent(
+                        targetPredicate, permanent, filterContext)) {
+                    validPermanentTargets.add(permanent.getId());
+                }
+            }
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.MayAbilityTriggerTarget(
+                        sourceCard, controllerId, List.of(damageEffect), sourcePermanentId, null));
+        playerInputService.beginAnyTargetChoice(
+                gameData, controllerId, validPermanentTargets,
+                new ArrayList<>(gameData.orderedPlayerIds),
+                sourceCard.getName() + " â€” Choose any target.");
+        gameLogService.append(gameData,
+                GameLog.cardThen(sourceCard, " â€” choose a target for the reflexive trigger."));
     }
 
     public void handleSacrificeAnotherCreatureGainLifeAndDraw(GameData gameData, UUID permanentId,

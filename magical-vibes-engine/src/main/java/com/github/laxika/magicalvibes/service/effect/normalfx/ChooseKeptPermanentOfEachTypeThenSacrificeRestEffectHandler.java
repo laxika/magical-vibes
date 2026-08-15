@@ -51,7 +51,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
         ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect keepEffect =
                 (ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect) effect;
         List<UUID> affectedPlayerIds = affectedPlayers(gameData, entry, keepEffect.recipient());
-        step(gameData, entry.getControllerId(), affectedPlayerIds, 0, List.of(),
+        step(gameData, entry.getControllerId(), affectedPlayerIds, affectedPlayerIds, 0, List.of(),
                 keepEffect.types(), keepEffect.sacrificeAllPermanents(), keepEffect.eachPlayerChooses(),
                 entry.getCard().getName());
     }
@@ -72,7 +72,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             }
         }
 
-        step(gameData, context.controllerId(), context.remainingPlayerIds(),
+        step(gameData, context.controllerId(), context.affectedPlayerIds(), context.remainingPlayerIds(),
                 context.types().indexOf(context.typePhase()) + 1, kept, context.types(),
                 context.sacrificeAllPermanents(), context.eachPlayerChooses(), context.sourceName());
     }
@@ -81,7 +81,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
      * Run passes from {@code phaseIndex} of the first player in {@code playerIds} onwards, stopping
      * at the first pass that needs a choice; when no pass is left, apply the sacrifices.
      */
-    private void step(GameData gameData, UUID controllerId, List<UUID> playerIds, int phaseIndex,
+    private void step(GameData gameData, UUID controllerId, List<UUID> affectedPlayerIds,
+            List<UUID> playerIds, int phaseIndex,
             List<UUID> keptIds, List<CardType> types, boolean sacrificeAllPermanents,
             boolean eachPlayerChooses, String sourceName) {
         List<UUID> remaining = new ArrayList<>(playerIds);
@@ -109,7 +110,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
                 UUID chooserId = eachPlayerChooses ? subjectPlayerId : controllerId;
                 playerInputService.beginMultiPermanentChoice(gameData, chooserId, candidates, 1,
                         new MultiPermanentChoiceContext.KeepOneOfEachTypeChoice(controllerId,
-                                subjectPlayerId, type, List.copyOf(remaining), List.copyOf(kept), sourceName,
+                                subjectPlayerId, type, List.copyOf(affectedPlayerIds),
+                                List.copyOf(remaining), List.copyOf(kept), sourceName,
                                 List.copyOf(types), sacrificeAllPermanents, eachPlayerChooses),
                         sourceName + " — choose the " + type.name().toLowerCase() + " "
                                 + gameData.playerIdToName.get(subjectPlayerId) + " keeps.");
@@ -119,7 +121,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             index = 0;
         }
 
-        sacrificeRest(gameData, playerIds, kept, sacrificeAllPermanents, sourceName);
+        sacrificeRest(gameData, affectedPlayerIds, kept, sacrificeAllPermanents, sourceName);
     }
 
     /** Every affected permanent that was not kept, or every affected nonland permanent for Tragic Arrogance, is sacrificed together. */
