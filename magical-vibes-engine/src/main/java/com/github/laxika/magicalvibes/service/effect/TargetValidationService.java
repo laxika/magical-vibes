@@ -108,6 +108,7 @@ public class TargetValidationService {
         }
         if (graveyardTarget) {
             validateGraveyardTarget(ctx, predicate);
+            return;
         }
 
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);

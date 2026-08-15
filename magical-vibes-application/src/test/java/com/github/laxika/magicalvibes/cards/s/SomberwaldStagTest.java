@@ -21,9 +21,9 @@ class SomberwaldStagTest extends BaseCardTest {
 
         castStag();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, opponentBears.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         Permanent stag = findPermanent(player1, "Somberwald Stag");
@@ -37,6 +37,7 @@ class SomberwaldStagTest extends BaseCardTest {
 
         castStag();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -53,8 +54,6 @@ class SomberwaldStagTest extends BaseCardTest {
 
         castStag();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBears.getId()))
                 .isInstanceOf(IllegalStateException.class);

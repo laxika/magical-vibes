@@ -1284,7 +1284,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, false);
             when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
             // Source-specific prevention is active for this permanent
             when(damagePreventionService.isSourceDamagePreventedForPlayer(gameData, player1Id, perm.getId()))
                     .thenReturn(true);
@@ -1308,7 +1308,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, false);
             when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
             when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
                     .thenReturn(false);
             when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
@@ -1339,7 +1339,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, false);
             when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
             when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
                     .thenReturn(false);
             when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
@@ -1371,7 +1371,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             stubIsCreature(perm, true);
             when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
             when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player2Id), eq(perm.getId())))
                     .thenReturn(false);
             when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player2Id), any()))
@@ -1579,7 +1579,7 @@ class ActivatedAbilityExecutionServiceTest {
 
     private void stubDamagePathForNormalDamage(Permanent perm, int damage) {
         when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-        when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+        when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
         when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
                 .thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))

@@ -143,7 +143,7 @@ class DiscardTriggerCollectorServiceTest {
 
             int lifeBefore = gd.getLife(player2Id);
 
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(true);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gd, megrim)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(megrim, player1Id, effect),

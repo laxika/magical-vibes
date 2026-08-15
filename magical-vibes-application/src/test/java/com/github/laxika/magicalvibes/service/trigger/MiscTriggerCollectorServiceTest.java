@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -149,11 +150,13 @@ class MiscTriggerCollectorServiceTest {
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
 
         assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.SelfTriggeredAbilityTarget pending =
+                gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.effects()).containsExactly(effect);
+        assertThat(pending.controllerId()).isEqualTo(player1Id);
+        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
     }
 
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====

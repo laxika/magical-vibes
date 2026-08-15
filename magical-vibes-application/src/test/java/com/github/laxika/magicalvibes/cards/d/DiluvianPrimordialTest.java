@@ -39,6 +39,8 @@ class DiluvianPrimordialTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(shock.getId()));
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getId().equals(shock.getId()));
     }
 
     @Test

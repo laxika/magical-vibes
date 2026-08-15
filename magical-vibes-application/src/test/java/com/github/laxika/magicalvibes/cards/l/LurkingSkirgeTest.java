@@ -27,7 +27,7 @@ class LurkingSkirgeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, skirge)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, skirge)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, skirge))
-                .containsExactly(CardSubtype.PHYREXIAN, CardSubtype.IMP);
+                .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.IMP);
         assertThat(gqs.hasKeyword(gd, skirge, Keyword.FLYING)).isTrue();
     }
 

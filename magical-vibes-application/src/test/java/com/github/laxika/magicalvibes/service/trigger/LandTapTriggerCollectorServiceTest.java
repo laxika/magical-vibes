@@ -228,7 +228,7 @@ class LandTapTriggerCollectorServiceTest {
             int lifeBefore = gd.getLife(player2Id);
 
             when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(true);
+            when(gameQueryService.isDamageFromPermanentSourcePrevented(gd, manabarbs)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),

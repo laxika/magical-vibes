@@ -155,7 +155,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
                 when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
                 when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
-                when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+                when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
                 when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
@@ -225,7 +225,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
                 when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
                 when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
-                when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+                when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
                 when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);

@@ -155,7 +155,7 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubDamageFromSourceNotPrevented() {
-        when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+        when(gameQueryService.isDamageFromStackEntryPrevented(eq(gd), any())).thenReturn(false);
     }
 
     protected void stubNoDamageMultiplier() {

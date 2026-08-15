@@ -260,30 +260,6 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Must select graveyard targets");
             }
         }
-        List<CardEffect> declarativeGraveyardEffects = effects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .toList();
-        if (!declarativeGraveyardEffects.isEmpty()) {
-            Permanent sourcePermanent = sourceCardId == null ? null : gameData.playerBattlefields.values().stream()
-                    .flatMap(List::stream)
-                    .filter(permanent -> sourceCardId.equals(permanent.getCard().getId())
-                            || sourceCardId.equals(permanent.getOriginalCard().getId()))
-                    .findFirst()
-                    .orElse(null);
-            Card sourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
-            int effectiveXValue = xValue == null ? 0 : xValue;
-            for (UUID targetCardId : targetCardIds) {
-                boolean legalForAnEffect = declarativeGraveyardEffects.stream().anyMatch(effect ->
-                        targetValidationService.checkEffectTargets(
-                                List.of(effect),
-                                new TargetValidationContext(gameData, targetCardId, Zone.GRAVEYARD,
-                                        sourceCard, effectiveXValue, playerId, sourcePermanent))
-                                .isEmpty());
-                if (!legalForAnEffect) {
-                    throw new IllegalStateException("Invalid graveyard target");
-                }
-            }
-        }
         for (CardEffect effect : effects) {
             if (effect instanceof TargetedGraveyardCardsEffect libraryEffect) {
                 validateTargetedGraveyardCardLibraryEffect(gameData, playerId, libraryEffect, targetCardIds);
@@ -499,6 +475,48 @@ public class TargetLegalityService {
                     }
                 }
                 break;
+            }
+        }
+        validateDeclarativeGraveyardTargets(
+                gameData, playerId, effects, targetCardIds, sourceCardId, xValue);
+    }
+
+    private void validateDeclarativeGraveyardTargets(GameData gameData, UUID playerId,
+                                                      List<CardEffect> effects, List<UUID> targetCardIds,
+                                                      UUID sourceCardId, Integer xValue) {
+        List<CardEffect> declarativeEffects = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .toList();
+        if (declarativeEffects.isEmpty()) {
+            return;
+        }
+
+        Permanent sourcePermanent = sourceCardId == null ? null : gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> sourceCardId.equals(permanent.getCard().getId())
+                        || sourceCardId.equals(permanent.getOriginalCard().getId()))
+                .findFirst()
+                .orElse(null);
+        Card sourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
+        int effectiveXValue = xValue == null ? 0 : xValue;
+        for (UUID targetCardId : targetCardIds) {
+            String rejection = null;
+            boolean legalForAnEffect = false;
+            for (CardEffect effect : declarativeEffects) {
+                var reason = targetValidationService.checkEffectTargets(
+                        List.of(effect),
+                        new TargetValidationContext(gameData, targetCardId, Zone.GRAVEYARD,
+                                sourceCard, effectiveXValue, playerId, sourcePermanent));
+                if (reason.isEmpty()) {
+                    legalForAnEffect = true;
+                    break;
+                }
+                if (rejection == null) {
+                    rejection = reason.get();
+                }
+            }
+            if (!legalForAnEffect) {
+                throw new IllegalStateException(rejection != null ? rejection : "Invalid graveyard target");
             }
         }
     }

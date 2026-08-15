@@ -34,6 +34,7 @@ class SpecializedInteractionAiStrategiesTest {
         gameData = new GameData(UUID.randomUUID(), "specialized-ai", aiPlayerId, "AI");
         gameData.playerHands.put(aiPlayerId, new ArrayList<>());
         gameData.playerDecks.put(aiPlayerId, new ArrayList<>());
+        gameData.playerSideboards.put(aiPlayerId, new ArrayList<>());
         actions = mock(AiGameActions.class);
         context = new AiInteractionContext(
                 gameData,
@@ -152,6 +153,22 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void outsideGameSearchChoosesHighestManaValueEligibleCard() throws Exception {
+        Card cheap = card("Cheap", "{1}");
+        Card expensive = card("Expensive", "{5}");
+        Card invalid = card("Invalid", "{9}");
+        gameData.playerSideboards.get(aiPlayerId).addAll(List.of(cheap, expensive, invalid));
+
+        new SearchOutsideGameOrExileCardChoiceAiStrategy().answer(
+                new PendingInteraction.SearchOutsideGameOrExileCardChoice(
+                        aiPlayerId, List.of(cheap.getId(), expensive.getId()), null, "card"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(expensive.getId())));
+    }
+
+    @Test
     void targetHandSpellCopyChoosesHighestManaValueEligibleCard() throws Exception {
         UUID opponentId = UUID.randomUUID();
         Card cheap = card("Cheap", "{1}");
@@ -215,6 +232,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,
+                PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 PendingInteraction.TargetHandSpellCopyChoice.class,
                 PendingInteraction.MagesContestBidChoice.class,
                 PendingInteraction.TargetLibraryDestinationChoice.class,
