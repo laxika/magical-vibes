@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -4813,7 +4814,9 @@ public class AbilityActivationService {
     }
 
     private static boolean movesCardToOrFromLibrary(CardEffect effect) {
-        return effect instanceof CardDrawingEffect
+        // Registering a delayed upkeep draw does not move a card during this ability's resolution.
+        return (effect instanceof CardDrawingEffect
+                && !(effect instanceof RegisterDrawCardsAtNextUpkeepEffect))
                 || effect instanceof MillEffect
                 || effect instanceof DrawCardsCost
                 || effect instanceof ExileTopCardOfLibraryCost

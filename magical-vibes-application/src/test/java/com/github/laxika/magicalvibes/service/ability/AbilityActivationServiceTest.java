@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -1625,6 +1626,26 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
 
             assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when the ability only schedules a draw for the next upkeep")
+        void trueForDelayedDrawRegistration() {
+            Card card = new Card();
+            card.setName("Delayed Draw Mana Rock");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new AwardManaEffect(ManaColor.COLORLESS, 1),
+                            new RegisterDrawCardsAtNextUpkeepEffect()),
+                    "{T}: Add {C}. Draw a card at the beginning of the next turn's upkeep."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isTrue();
         }
 
         @Test

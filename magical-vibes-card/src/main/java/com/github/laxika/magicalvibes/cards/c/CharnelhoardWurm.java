@@ -19,6 +19,7 @@ public class CharnelhoardWurm extends Card {
         addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

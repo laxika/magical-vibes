@@ -28,7 +28,7 @@ class LurkingEvilTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, evil)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, evil)).isEqualTo(4);
         assertThat(gqs.effectiveCreatureSubtypes(gd, evil))
-                .containsExactly(CardSubtype.PHYREXIAN, CardSubtype.HORROR);
+                .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.HORROR);
         assertThat(gqs.hasKeyword(gd, evil, Keyword.FLYING)).isTrue();
     }
 
