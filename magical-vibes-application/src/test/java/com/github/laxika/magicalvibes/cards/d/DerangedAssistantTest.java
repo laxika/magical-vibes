@@ -32,8 +32,13 @@ class DerangedAssistantTest extends BaseCardTest {
         assertThat(assistant.isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore + 1);
-        assertThat(gd.stack).isEmpty(); // mana ability resolves immediately
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

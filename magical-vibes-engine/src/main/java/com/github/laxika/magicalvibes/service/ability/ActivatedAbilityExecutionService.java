@@ -405,10 +405,7 @@ public class ActivatedAbilityExecutionService {
         // and its cost and effect don't move cards to or from a library.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
-        boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
-                && ability.getLoyaltyCost() == null
-                && !snapshotEffects.isEmpty()
-                && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
+        boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
         if (isManaAbility) {
             // A "pure" mana activation (tap-only cost, only fixed-shape mana output) can be undone

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -1605,6 +1606,25 @@ class AbilityActivationServiceTest {
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
 
             assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false for a mana-producing ability with a library-moving cost")
+        void falseForLibraryMovingManaCost() {
+            Card card = new Card();
+            card.setName("Milling Mana Creature");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{2}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new MillControllerCost(1), new AwardManaEffect(ManaColor.COLORLESS, 1)),
+                    "{T}, Mill a card: Add {C}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
         }
 
         @Test

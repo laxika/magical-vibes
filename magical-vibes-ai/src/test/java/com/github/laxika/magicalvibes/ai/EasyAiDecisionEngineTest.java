@@ -56,6 +56,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -2168,6 +2170,35 @@ class EasyAiDecisionEngineTest {
         createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
         // AI should have tapped the land but NOT cast the spell or passed priority
+        verify(messageHandler).handleTapPermanent(any());
+        verify(messageHandler, never()).handlePlayCard(any());
+        verify(messageHandler, never()).handlePassPriority(any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast a spell when mana tapping puts a trigger on the stack")
+    void doesNotCastSpellWhenManaTappingPutsTriggerOnStack() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Knight");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{W}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        Permanent land = new Permanent(new Plains());
+        land.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(land);
+
+        when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+        Mockito.doAnswer(inv -> {
+            gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                    aiPlayer.getId(), "Test trigger", List.of()));
+            return null;
+        }).when(messageHandler).handleTapPermanent(any());
+
+        createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
         verify(messageHandler).handleTapPermanent(any());
         verify(messageHandler, never()).handlePlayCard(any());
         verify(messageHandler, never()).handlePassPriority(any());

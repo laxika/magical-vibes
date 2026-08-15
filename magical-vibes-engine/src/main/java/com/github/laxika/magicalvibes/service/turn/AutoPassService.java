@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
@@ -444,9 +444,8 @@ public class AutoPassService {
                     continue;
                 }
 
-                // Skip mana abilities (any effect that produces mana makes the whole ability a mana ability per CR 605.1a)
-                boolean isManaAbility = ability.getEffects().stream()
-                        .anyMatch(e -> e instanceof ManaProducingEffect);
+                // Skip mana abilities using the shared CR 605.1a classifier.
+                boolean isManaAbility = AbilityActivationService.isManaAbility(ability);
                 if (isManaAbility) continue;
 
                 // Skip loyalty abilities

@@ -2495,9 +2495,8 @@ public abstract class AiDecisionEngine {
      * before sending a PlayCardRequest. Must be called before handlePlayCard so the
      * actual mana pool satisfies the playability check in SpellCastingService.
      *
-     * @return true if the game is now awaiting input (e.g. a Treasure token triggered
-     *         a color choice), meaning the caller should abort the spell cast and let
-     *         the choice handler resolve first.
+     * @return true if the payment opened input or put a triggered ability on the stack,
+     *         meaning the caller should abort the spell cast and let the new decision resolve first.
      */
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue) {
         return tapManaForSpell(gameData, card, xValue, 0);
@@ -2580,10 +2579,11 @@ public abstract class AiDecisionEngine {
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction;
         AiManaManager.ManaTapAction tap = manaTapAction();
+        int stackSizeBeforePayment = gameData.stack.size();
 
         if (card.isRequiresCreatureMana()) {
             manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
-            return gameData.interaction.isAwaitingInput();
+            return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
         }
 
         ManaCost cost = new ManaCost(manaCost);
@@ -2592,7 +2592,13 @@ public abstract class AiDecisionEngine {
         } else {
             manaManager.tapLandsForCost(gameData, aiPlayer.getId(), manaCost, costModifier, tap);
         }
-        return gameData.interaction.isAwaitingInput();
+        return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
+    }
+
+    private boolean paymentOpenedDecisionWindow(GameData gameData, int stackSizeBeforePayment) {
+        return gameData.status != GameStatus.RUNNING
+                || gameData.interaction.isAwaitingInput()
+                || gameData.stack.size() > stackSizeBeforePayment;
     }
 
     /**

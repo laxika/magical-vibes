@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
+import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
+import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
@@ -29,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
+import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
@@ -65,6 +68,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void doesNotRetryCastAfterLibraryMovingManaAbilityOpensStack() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(aiPlayer, new PedanticLearning());
+        Permanent assistant = harness.addToBattlefieldAndReturn(aiPlayer, new DerangedAssistant());
+        assistant.setSummoningSick(false);
+        for (int i = 0; i < 7; i++) {
+            Permanent island = harness.addToBattlefieldAndReturn(aiPlayer, new Island());
+            island.setSummoningSick(false);
+        }
+        harness.setLibrary(aiPlayer, List.of(new Forest()));
+        AladdinsRing ring = new AladdinsRing();
+        harness.setHand(aiPlayer, List.of(ring));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(ring);
+        assertThat(gameData.stack).isNotEmpty();
+        assertThat(gameData.stack).noneMatch(entry -> entry.getCard() == ring);
+        assertThat(assistant.isTapped()).isTrue();
+    }
 
     @Test
     void castsRepeatedXSpellWithGenericCostReduction() {

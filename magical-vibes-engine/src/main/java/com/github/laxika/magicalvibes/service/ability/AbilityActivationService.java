@@ -96,6 +96,11 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
@@ -4780,16 +4785,38 @@ public class AbilityActivationService {
 
     /**
      * Returns true if an activated ability is a mana ability per CR 605.1a: no target, no spell
-     * target, no loyalty cost, and at least one mana-producing (non-cost) effect.
+     * target, no loyalty cost, at least one mana-producing effect, and no cost or effect that moves
+     * a card to or from a library.
      */
     public static boolean isManaAbility(ActivatedAbility ability) {
-        if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
+        return isManaAbility(ability, ability.getEffects());
+    }
+
+    /**
+     * Classifies an ability using the supplied effects. This overload is used during activation,
+     * where effects may be snapshotted or resolved from a granted ability.
+     */
+    public static boolean isManaAbility(ActivatedAbility ability, List<? extends CardEffect> abilityEffects) {
+        if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null
+                || abilityEffects.stream().anyMatch(AbilityActivationService::movesCardToOrFromLibrary)) {
             return false;
         }
-        List<CardEffect> effects = ability.getEffects().stream()
+        List<? extends CardEffect> effects = abilityEffects.stream()
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
         return !effects.isEmpty() && effects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
+    }
+
+    private static boolean movesCardToOrFromLibrary(CardEffect effect) {
+        return effect instanceof CardDrawingEffect
+                || effect instanceof MillEffect
+                || effect instanceof DrawCardsCost
+                || effect instanceof ExileTopCardOfLibraryCost
+                || effect instanceof MillControllerCost
+                || effect instanceof ExileTopCardOfOwnLibraryEffect
+                || effect instanceof SearchLibraryEffect
+                || (effect instanceof HandCardCost handCardCost
+                        && handCardCost.putsPaidCardsOnTopOfLibrary());
     }
 }
 

@@ -146,6 +146,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorEffect;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
@@ -5695,9 +5696,7 @@ public class GameQueryService {
         StaticBonus staticBonus = computeStaticBonus(gameData, permanent);
         if (staticBonus.losesAllAbilities()) {
             boolean hasGrantedMana = staticBonus.grantedActivatedAbilities().stream()
-                    .anyMatch(a -> !a.isNeedsTarget() && !a.isNeedsSpellTarget()
-                            && a.getLoyaltyCost() == null
-                            && a.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect));
+                    .anyMatch(AbilityActivationService::isManaAbility);
             if (!hasGrantedMana) {
                 return false;
             }

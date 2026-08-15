@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -196,21 +197,38 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("Mana ability can draw immediately after producing mana")
-        void manaAbilityDrawsInline() {
+        @DisplayName("A mana-producing ability with a draw effect uses the stack")
+        void manaAbilityWithDrawEffectUsesStack() {
             Card card = createCard("Test Mana Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1), new DrawCardEffect());
             ActivatedAbility ability = new ActivatedAbility(false, null, effects,
                     "Sacrifice this artifact: Add {C}. Draw a card.");
 
-            stubIsCreature(perm, false);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isZero();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            verify(drawService, never()).resolveDrawCard(gameData, player1Id);
+        }
+
+        @Test
+        @DisplayName("A library-moving mana cost uses the stack")
+        void libraryMovingManaCostUsesStack() {
+            Card card = createCard("Test Milling Mana Creature", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new MillControllerCost(1),
+                    new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}, Mill a card: Add {C}.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isEqualTo(1);
-            assertThat(gameData.stack).isEmpty();
-            verify(drawService).resolveDrawCard(gameData, player1Id);
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isZero();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         }
 
         @Test
@@ -233,8 +251,8 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("Mana ability resolves a draw rider immediately without using the stack")
-        void drawsImmediately() {
+        @DisplayName("A mana-producing draw rider uses the stack")
+        void drawRiderUsesStack() {
             Card card = createCard("Test Mana Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(
@@ -242,12 +260,11 @@ class ActivatedAbilityExecutionServiceTest {
                     new DrawCardEffect());
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Draw a card.");
 
-            stubIsCreature(perm, false);
-
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(drawService).resolveDrawCard(gameData, player1Id);
-            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            verify(drawService, never()).resolveDrawCard(gameData, player1Id);
         }
 
         @Test

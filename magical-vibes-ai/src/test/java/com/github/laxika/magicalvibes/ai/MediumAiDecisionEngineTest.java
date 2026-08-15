@@ -66,6 +66,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -1146,6 +1148,35 @@ class MediumAiDecisionEngineTest {
             createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
+            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler, never()).handlePlayCard(any());
+            verify(mockMessageHandler, never()).handlePassPriority(any());
+        }
+
+        @Test
+        @DisplayName("Medium AI does not cast a spell when mana tapping puts a trigger on the stack")
+        void doesNotCastSpellWhenManaTappingPutsTriggerOnStack() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Knight");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{W}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            Permanent land = new Permanent(new Plains());
+            land.setSummoningSick(false);
+            mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
+
+            when(mockGameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+            Mockito.doAnswer(inv -> {
+                mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                        mockAiPlayer.getId(), "Test trigger", List.of()));
+                return null;
+            }).when(mockMessageHandler).handleTapPermanent(any());
+
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
             verify(mockMessageHandler).handleTapPermanent(any());
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
