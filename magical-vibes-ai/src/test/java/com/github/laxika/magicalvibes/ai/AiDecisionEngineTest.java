@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
@@ -1999,6 +2000,20 @@ class AiDecisionEngineTest {
         List<Integer> result = ai.prepareAttackersForTax(gd, original);
 
         assertThat(result).isEqualTo(original);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax respects the maximum attacker count")
+    void prepareAttackersForTaxRespectsMaximumAttackers() {
+        harness.addToBattlefield(human, new DuelingGrounds());
+        for (int i = 0; i < 3; i++) {
+            Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+        }
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1, 2));
+
+        assertThat(result).containsExactly(0);
     }
 
     @Test

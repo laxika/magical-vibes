@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
@@ -190,6 +191,21 @@ public class CombatAttackService {
                 .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
         return selfRestricted || gameQueryService.hasAuraWithEffect(gameData, creature,
                 EnchantedCreatureCanOnlyAttackAloneEffect.class);
+    }
+
+    /**
+     * Returns the maximum number of creatures that may be declared as attackers this combat.
+     */
+    public int getMaximumAttackers(GameData gameData) {
+        int[] maximum = {Integer.MAX_VALUE};
+        gameData.forEachPermanent((ignored, permanent) -> {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CombatCreatureLimitEffect limit) {
+                    maximum[0] = Math.min(maximum[0], limit.maxAttackers());
+                }
+            }
+        });
+        return maximum[0];
     }
 
     /**

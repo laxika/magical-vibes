@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.Brainwash;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -84,6 +85,16 @@ class CombatAttackServiceTest extends BaseCardTest {
 
     private CombatResult declare(List<Integer> attackerIndices) {
         return declare(attackerIndices, null);
+    }
+
+    @Test
+    @DisplayName("Reports the current maximum attacker count")
+    void reportsMaximumAttackerCount() {
+        assertThat(service().getMaximumAttackers(gd)).isEqualTo(Integer.MAX_VALUE);
+
+        harness.addToBattlefield(player2, new DuelingGrounds());
+
+        assertThat(service().getMaximumAttackers(gd)).isEqualTo(1);
     }
 
     @Nested

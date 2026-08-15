@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1117,7 +1116,7 @@ public abstract class AiDecisionEngine {
      * prompt ahead of optional attackers.
      */
     private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices) {
-        int maximumAttackers = CombatHelper.getMaximumAttackers(gameData);
+        int maximumAttackers = combatAttackService.getMaximumAttackers(gameData);
         if (attackerIndices.size() <= maximumAttackers) {
             return attackerIndices;
         }
