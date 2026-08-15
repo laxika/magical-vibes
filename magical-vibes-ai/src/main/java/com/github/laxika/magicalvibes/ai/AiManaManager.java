@@ -318,7 +318,7 @@ public class AiManaManager {
         if (card.getXColorRestrictions() != null) {
             return cost.canPay(pool, xValue, card.getXColorRestrictions(), costModifier);
         }
-        return cost.canPay(pool, xValue + costModifier);
+        return cost.canPayWithAdditionalGenericCost(pool, xValue, costModifier);
     }
 
     private record ManaOption(ManaActivation activation, Map<ManaColor, Integer> output, int cost) {}
@@ -749,7 +749,7 @@ public class AiManaManager {
         if (card.getXColorRestrictions() != null) {
             return cost.calculateMaxX(pool, card.getXColorRestrictions(), costModifier);
         }
-        return Math.max(0, cost.calculateMaxX(pool) - costModifier);
+        return cost.calculateMaxX(pool, costModifier);
     }
 
     int calculateSmartX(GameData gameData, Card card, UUID targetId, ManaPool virtualPool, int costModifier) {

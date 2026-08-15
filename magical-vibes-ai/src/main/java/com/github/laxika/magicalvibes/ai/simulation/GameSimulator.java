@@ -1361,7 +1361,7 @@ public class GameSimulator {
         if (card.getXColorRestrictions() != null) {
             maxX = cost.calculateMaxX(virtualPool, card.getXColorRestrictions(), costModifier);
         } else {
-            maxX = Math.max(0, cost.calculateMaxX(virtualPool) - costModifier);
+            maxX = cost.calculateMaxX(virtualPool, costModifier);
         }
         if (card.getXValueCap() != null) {
             // Cap announced X (e.g. Winter's Chill: snow lands you control).

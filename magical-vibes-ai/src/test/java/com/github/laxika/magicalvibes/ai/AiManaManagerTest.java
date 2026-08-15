@@ -2054,6 +2054,31 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("applies a generic cost modifier once for repeated X symbols")
+        void repeatedXUsesGenericModifierOnce() {
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{X}{R}");
+
+            addUntappedLand("Mountain 1", ManaColor.RED);
+            addUntappedLand("Mountain 2", ManaColor.RED);
+            addUntappedLand("Mountain 3", ManaColor.RED);
+            addUntappedLand("Mountain 4", ManaColor.RED);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(any(int.class), eq(null));
+
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 2, -1, action);
+
+            verify(action).tap(0, null);
+            verify(action).tap(1, null);
+            verify(action).tap(2, null);
+            verify(action).tap(3, null);
+        }
+
+        @Test
         @DisplayName("taps lands for X spell with color restriction")
         void xSpellWithColorRestriction() {
             Card xSpell = new Card();
@@ -2244,6 +2269,20 @@ class AiManaManagerTest {
             card.setManaCost("{X}{R}");
 
             int maxX = manager.calculateMaxAffordableX(card, pool, 1);
+            assertThat(maxX).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("applies a generic cost modifier once for repeated X symbols")
+        void repeatedXUsesGenericModifierOnce() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 8);
+
+            Card card = new Card();
+            card.setManaCost("{X}{X}{U}{U}");
+
+            int maxX = manager.calculateMaxAffordableX(card, pool, -1);
+
             assertThat(maxX).isEqualTo(3);
         }
 

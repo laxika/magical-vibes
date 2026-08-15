@@ -18,9 +18,11 @@ import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
+import com.github.laxika.magicalvibes.cards.m.Mathemagics;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
@@ -47,6 +49,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
@@ -62,6 +65,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void castsRepeatedXSpellWithGenericCostReduction() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(aiPlayer, new JacesSanctum());
+        harness.addMana(aiPlayer, ManaColor.BLUE, 8);
+        Mathemagics mathemagics = new Mathemagics();
+        harness.setHand(aiPlayer, List.of(mathemagics));
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        StackEntry spell = gameData.stack.stream()
+                .filter(entry -> entry.getCard() == mathemagics)
+                .findFirst()
+                .orElseThrow();
+        assertThat(spell.getXValue()).isEqualTo(3);
+    }
 
     @Test
     void castsCulturalExchangeWithDistinctPlayerTargets() {

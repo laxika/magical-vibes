@@ -1421,14 +1421,23 @@ public class ManaCost {
      * Returns 0 if the base cost (colored + generic) cannot be paid.
      */
     public int calculateMaxX(ManaPool pool) {
+        return calculateMaxX(pool, 0);
+    }
+
+    /**
+     * Calculates the maximum X value that can be paid with the given mana pool and an independent
+     * generic-cost modifier.
+     */
+    public int calculateMaxX(ManaPool pool, int additionalGenericCost) {
         if (xSymbolCount <= 0) {
             return 0;
         }
         int low = 0;
-        int high = Math.max(0, pool.getTotal() + pool.getXCostOnlyColorless());
+        int high = Math.max(0, pool.getTotal() + pool.getXCostOnlyColorless()
+                - Math.min(0, additionalGenericCost));
         while (low < high) {
             int candidate = low + (high - low + 1) / 2;
-            if (canPay(pool, candidate)) {
+            if (canPayWithAdditionalGenericCost(pool, candidate, additionalGenericCost)) {
                 low = candidate;
             } else {
                 high = candidate - 1;
