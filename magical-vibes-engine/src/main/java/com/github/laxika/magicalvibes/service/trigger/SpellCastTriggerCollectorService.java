@@ -75,6 +75,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.RashmiRevealTopCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RashmiTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValueEffect;
@@ -886,6 +888,27 @@ public class SpellCastTriggerCollectorService {
 
         log.info("Game {} - Sunbird's Invocation trigger queued (mana value {})",
                 match.gameData().id, manaValue);
+        return true;
+    }
+
+    @CollectsTrigger(value = RashmiTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleRashmiFirstSpell(TriggerMatchContext match,
+            RashmiTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId()) != 1) return false;
+
+        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new RashmiRevealTopCardEffect(manaValue))),
+                null,
+                match.permanent().getId()
+        ));
+        log.info("Game {} - {} first-spell trigger queued (mana value {})",
+                match.gameData().id, match.permanent().getCard().getName(), manaValue);
         return true;
     }
 

@@ -1127,8 +1127,10 @@ public class ValidTargetService {
     private boolean matchesGraveyardEffectTypeFilter(GameData gameData, CardEffect effect, Card c, UUID sourceCardId) {
         if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
             return c.hasType(CardType.CREATURE);
-        } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
-            return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
+        } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {
+            return (c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY))
+                    && (e.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId));
         } else if (effect instanceof GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect) {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof GrantTargetGraveyardCardCastEffect e) {

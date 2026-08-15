@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 public enum GrantScope {
     SELF,
+    /** The permanent referenced by the triggering event of a triggered ability. */
+    TRIGGERING_PERMANENT,
     /**
      * The source permanent and the creature it is soulbond-paired with (CR 702.94).
      * Used for "as long as ~ is paired with another creature, each of those creatures has …".

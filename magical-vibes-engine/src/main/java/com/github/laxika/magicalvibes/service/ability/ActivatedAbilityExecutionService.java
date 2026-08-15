@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
@@ -306,6 +307,22 @@ public class ActivatedAbilityExecutionService {
                     if (amount > 0) {
                         lifeSupport.applyLifeLoss(gameData, playerId, amount, permanent.getCard().getName());
                     }
+                });
+
+        abilityEffects.stream()
+                .filter(PayEnergyCost.class::isInstance)
+                .map(PayEnergyCost.class::cast)
+                .findFirst()
+                .ifPresent(cost -> {
+                    int current = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+                    if (current < cost.amount()) {
+                        throw new IllegalStateException("Not enough energy to pay");
+                    }
+                    int updated = current - cost.amount();
+                    gameData.playerEnergyCounters.put(playerId, updated);
+                    String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
+                    gameLogService.append(gameData,
+                            GameLog.text(playerName + " pays " + cost.amount() + " energy counter(s)."));
                 });
 
         boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
@@ -1040,6 +1057,9 @@ public class ActivatedAbilityExecutionService {
                 if (count > 0) {
                     permanent.setCounterCount(counters.counterType(),
                             permanent.getCounterCount(counters.counterType()) + count);
+                    if (counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
+                    }
                     String counterName = counters.counterType().name().toLowerCase();
                     String counterText = count == 1
                             ? "a " + counterName + " counter"

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +46,10 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
         var e = (DistributeCountersAmongTargetsEffect) effect;
 
         if (e.etbAssignments()) {
+            if (!entry.getDamageAssignments().isEmpty()) {
+                applyAssignments(gameData, entry, e, entry.getDamageAssignments());
+                return;
+            }
             Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
             gameData.pendingETBDamageAssignments = Map.of();
             applyAssignments(gameData, entry, e, assignments);
@@ -61,7 +68,13 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             StackEntry entry,
             DistributeCountersAmongTargetsEffect e,
             Map<UUID, Integer> assignments) {
+        List<UUID> boundTargets = entry.targetsForBoundEffectGroup(e);
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            if (boundTargets != null && !entry.isTargetIdsFromAssignments()
+                    && (!boundTargets.contains(assignment.getKey())
+                            || !entry.isAssignmentTargetLegal(assignment.getKey()))) {
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) {
                 continue; // Partially resolves — skip targets that left the battlefield.
@@ -72,6 +85,12 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                 continue;
             }
             if (!gameQueryService.isCreature(gameData, target)) {
+                continue;
+            }
+            if (e.targetRestriction() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, e.targetRestriction(), FilterContext.of(gameData)
+                            .withSourceControllerId(entry.getControllerId()))) {
                 continue;
             }
             permanentCounterSupport.placeCounterOnPermanent(

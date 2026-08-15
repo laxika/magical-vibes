@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
@@ -1259,6 +1260,8 @@ public class PredicateEvaluationService {
                     true;
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestManaValueAmongAllCreatures(gameData, permanent);
+            case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
+                    gameQueryService.hasGreatestManaValueAmongAllArtifacts(gameData, permanent);
             case PermanentHasGreatestPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate ignored ->
@@ -1371,6 +1374,8 @@ public class PredicateEvaluationService {
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
+            case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
+                    hasGreatestManaValueAmongAllArtifactsStatic(permanent, context);
             case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 CardSubtype chosen = sourceChosenSubtype(context);
@@ -1655,6 +1660,24 @@ public class PredicateEvaluationService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (matchesStaticLeaf(candidate, STATIC_CREATURE_LEAF)) {
+                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return target.getCard().getManaValue() == greatest;
+    }
+
+    private boolean hasGreatestManaValueAmongAllArtifactsStatic(Permanent target, FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null || !matchesStaticLeaf(target, new PermanentIsArtifactPredicate())) {
+            return false;
+        }
+        int greatest = -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (matchesStaticLeaf(candidate, new PermanentIsArtifactPredicate())) {
                     greatest = Math.max(greatest, candidate.getCard().getManaValue());
                 }
             }

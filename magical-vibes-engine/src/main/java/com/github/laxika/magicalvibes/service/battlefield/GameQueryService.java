@@ -3114,6 +3114,27 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given permanent is an artifact with the greatest mana value
+     * among all artifacts on the battlefield. Ties allowed.
+     */
+    public boolean hasGreatestManaValueAmongAllArtifacts(GameData gameData, Permanent permanent) {
+        if (gameData == null || !isArtifact(gameData, permanent)) {
+            return false;
+        }
+        int greatest = -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (isArtifact(gameData, candidate)) {
+                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return permanent.getCard().getManaValue() == greatest;
+    }
+
+    /**
      * Returns {@code true} if the given permanent is a creature with the greatest effective power
      * among all creatures on the battlefield (across every player's battlefield). Ties allowed.
      * Used by Topple.

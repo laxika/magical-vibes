@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
@@ -40,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEff
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -1221,6 +1224,56 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Combustible Gearhulk: the targeted opponent chooses whether the controller draws three cards
+     * or mills three cards and the source deals damage to that opponent equal to the mana values of
+     * the cards that were actually milled.
+     */
+    public void handleCombustibleGearhulkChoice(GameData gameData, Player player, boolean accepted,
+            PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CombustibleGearhulkEffect.class::isInstance)
+                .findFirst()
+                .orElseThrow();
+
+        UUID targetPlayerId = ability.targetCardId();
+        UUID controllerId = ability.sourceControllerId();
+        if (controllerId == null) {
+            controllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        }
+        if (controllerId == null || targetPlayerId == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(targetPlayerId);
+        if (accepted) {
+            for (int i = 0; i < 3 && gameData.status != GameStatus.FINISHED; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " draws three cards (Combustible Gearhulk)."));
+        } else {
+            List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, 3);
+            int damageAmount = milled.stream().mapToInt(Card::getManaValue).sum();
+            if (damageAmount > 0) {
+                DealDamageToPlayersEffect damage =
+                        new DealDamageToPlayersEffect(damageAmount, DamageRecipient.TARGET_PLAYER);
+                StackEntry damageEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                        ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
+                        targetPlayerId, ability.sourcePermanentId());
+                dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
+            }
+            gameLogService.append(gameData, GameLog.text(opponentName + " declines: " + controllerName
+                    + " mills " + milled.size() + " cards and " + ability.sourceCard().getName()
+                    + " deals " + damageAmount + " damage to them."));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeUnlessReturnOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect)
@@ -1379,6 +1432,22 @@ public class MayPenaltyChoiceHandlerService {
                         player.getUsername() + " pays " + lifeAmount + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} life to avoid penalty ({})", gameData.id,
                         player.getUsername(), lifeAmount, ability.sourceCard().getName());
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+                return;
+            }
+        }
+
+        if (accepted && effect.forcedCost() instanceof PayEnergyCost energyCost) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(decidingPlayerId, 0);
+            if (energy >= energyCost.amount()) {
+                gameData.playerEnergyCounters.put(decidingPlayerId, energy - energyCost.amount());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + energyCost.amount()
+                                + " energy counter(s). (", ability.sourceCard(), ")"));
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;

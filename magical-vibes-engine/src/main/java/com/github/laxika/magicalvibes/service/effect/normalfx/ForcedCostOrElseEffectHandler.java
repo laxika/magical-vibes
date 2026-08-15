@@ -59,6 +59,27 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayEnergyCost energyCost) {
+            UUID payer = resolvePayer(gameData, entry, e);
+            int energy = payer == null ? 0 : gameData.playerEnergyCounters.getOrDefault(payer, 0);
+            if (payer == null || energy < energyCost.amount()) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            if (e.optional()) {
+                String prompt = entry.getCard().getName() + " - Pay " + energyCost.amount()
+                        + " energy counter(s)?";
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), payer, List.of(e), prompt,
+                        entry.getTargetId(), null, entry.getSourcePermanentId(), null,
+                        0, 0, null, null, null, entry.getSourcePermanentSnapshot(),
+                        entry.getControllerId(), null));
+                return;
+            }
+            gameData.playerEnergyCounters.put(payer, energy - energyCost.amount());
+            return;
+        }
+
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // "You may pay {cost}; if you don't, [penalty]" — paying mana is always a choice, so
             // ask the controller unconditionally (the accept handler charges mana / checks canPay).

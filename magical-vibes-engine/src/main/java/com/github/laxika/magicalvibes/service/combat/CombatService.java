@@ -443,6 +443,12 @@ public class CombatService {
             }
             perm.setCounterCount(action.counterType(),
                     perm.getCounterCount(action.counterType()) + action.amount());
+            if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                if (controllerId != null) {
+                    gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                }
+            }
             if (action.alsoTap()) {
                 perm.tap();
             }

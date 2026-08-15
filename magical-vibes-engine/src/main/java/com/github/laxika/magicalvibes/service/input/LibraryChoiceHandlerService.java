@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
+import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
@@ -212,7 +213,12 @@ public class LibraryChoiceHandlerService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
                 chosenCard = searchCards.get(cardIndex);
-                if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
+                if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+                    exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
+                            librarySearch.sourcePermanentId());
+                    gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+                    gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
                     UUID sourcePermanentId = followUp.imprintSourcePermanentId();
                     if (sourcePermanentId != null) {
@@ -280,7 +286,10 @@ public class LibraryChoiceHandlerService {
                 }
             } else {
                 GameLogEntry logEntry;
-                if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
+                if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+                    logEntry = GameLog.text(player.getUsername()
+                            + " exiles a card face down and puts the rest on the bottom of the library in a random order.");
+                } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     logEntry = chosenCard == null
                             ? GameLog.text(player.getUsername() + "'s imprint ability does nothing.")
                             : GameLog.text(player.getUsername() + " exiles a card face down.");
@@ -310,6 +319,13 @@ public class LibraryChoiceHandlerService {
                     gameData.pendingLibraryBottomReorders.addLast(
                             new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
                 }
+                return;
+            }
+
+            if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+                Collections.shuffle(sourceCards);
+                deck.addAll(sourceCards);
+                finishSearchAndResume(gameData);
                 return;
             }
 
@@ -1085,6 +1101,7 @@ public class LibraryChoiceHandlerService {
                 case HAND -> "into their hand";
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
+                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> "into exile face down";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
@@ -1611,6 +1628,17 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        PendingDubiousChallengeChoice dubiousChallenge =
+                gameData.pollPendingInteraction(PendingDubiousChallengeChoice.class);
+        if (dubiousChallenge != null) {
+            if (dubiousChallenge.exiledCards().isEmpty()) {
+                handleDubiousChallengeInitialChoice(gameData, allRevealedCards, cardIds, dubiousChallenge);
+            } else {
+                handleDubiousChallengeOpponentChoice(gameData, allRevealedCards, cardIds, dubiousChallenge);
+            }
+            return;
+        }
+
         // Endless Horizons upkeep: controller chose which card exiled with the source to return.
         if (gameData.hasPendingInteraction(PendingReturnExiledWithSourceCard.class)) {
             handleReturnExiledWithSourceCard(gameData, allRevealedCards, cardIds, controllerId);
@@ -1745,6 +1773,91 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private void handleDubiousChallengeInitialChoice(
+            GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds,
+            PendingDubiousChallengeChoice pending) {
+        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
+        List<Card> selectedCards = allRevealedCards.stream()
+                .filter(card -> selectedIds.contains(card.getId()))
+                .toList();
+        List<Card> deck = gameData.playerDecks.get(pending.controllerId());
+
+        for (Card card : selectedCards) {
+            deck.removeIf(libraryCard -> libraryCard.getId().equals(card.getId()));
+            exileService.exileCard(gameData, pending.controllerId(), card);
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, pending.controllerId());
+
+        String controllerName = gameData.playerIdToName.get(pending.controllerId());
+        if (selectedCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " exiles no creature cards with Dubious Challenge. Library is shuffled."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        gameData.queueInteraction(new PendingDubiousChallengeChoice(
+                pending.controllerId(), pending.opponentId(), selectedCards));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                pending.opponentId(), selectedCards, selectedCards.stream().map(Card::getId).toList(),
+                false, false, false, false, false, 0, null, 1,
+                "You may choose one of these exiled cards to put onto the battlefield under your control.",
+                0, false));
+        gameLogService.append(gameData,
+                appendCards(GameLog.builder().text(controllerName + " exiles "), selectedCards)
+                        .text(" with Dubious Challenge.").build());
+    }
+
+    private void handleDubiousChallengeOpponentChoice(
+            GameData gameData, List<Card> allExiledCards, List<UUID> selectedCardIds,
+            PendingDubiousChallengeChoice pending) {
+        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
+        List<Card> opponentCards = allExiledCards.stream()
+                .filter(card -> selectedIds.contains(card.getId()))
+                .toList();
+        List<Card> controllerCards = allExiledCards.stream()
+                .filter(card -> !selectedIds.contains(card.getId()))
+                .toList();
+
+        putDubiousChallengeCardsOntoBattlefield(gameData, opponentCards, pending.opponentId());
+        putDubiousChallengeCardsOntoBattlefield(gameData, controllerCards, pending.controllerId());
+
+        performStateBasedActionsIfResolutionComplete(gameData);
+        finishSearchAndResume(gameData);
+    }
+
+    private void putDubiousChallengeCardsOntoBattlefield(
+            GameData gameData, List<Card> cards, UUID controllerId) {
+        List<Card> cardsToEnter = cards.stream()
+                .filter(card -> gameData.removeFromExile(card.getId()))
+                .toList();
+        if (cardsToEnter.isEmpty()) {
+            return;
+        }
+
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> batch = new ArrayList<>();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        for (Card card : cardsToEnter) {
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, batch);
+            batch.add(permanent);
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, controllerName));
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+                permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+                permanent.setSummoningSick(false);
+            }
+        }
+
+        for (Card card : cardsToEnter) {
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId,
+                        card, null, false);
+            }
+        }
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,

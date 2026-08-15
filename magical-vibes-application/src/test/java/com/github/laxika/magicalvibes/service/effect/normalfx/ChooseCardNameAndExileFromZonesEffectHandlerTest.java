@@ -29,13 +29,27 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
     @Test
             @DisplayName("Passes the required type through to the card name choice")
-            void passesRequiredType() {
-                Card card = createCard("Dispossess");
-                ChooseCardNameAndExileFromZonesEffect effect = new ChooseCardNameAndExileFromZonesEffect(List.of(), CardType.ARTIFACT);
-                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+    void passesRequiredType() {
+        Card card = createCard("Dispossess");
+        ChooseCardNameAndExileFromZonesEffect effect = new ChooseCardNameAndExileFromZonesEffect(List.of(), CardType.ARTIFACT);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                resolveEffect(gd, entry, effect);
+        resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(), CardType.ARTIFACT);
-            }
+        verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(), CardType.ARTIFACT);
+    }
+
+    @Test
+    @DisplayName("Passes through the hand-exiled draw follow-up")
+    void passesHandExiledDrawFollowUp() {
+        Card card = createCard("Lost Legacy");
+        ChooseCardNameAndExileFromZonesEffect effect =
+                new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.ARTIFACT, CardType.LAND), null, true);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginSpellCardNameChoice(
+                gd, player1Id, player2Id, List.of(CardType.ARTIFACT, CardType.LAND), null, true);
+    }
 }

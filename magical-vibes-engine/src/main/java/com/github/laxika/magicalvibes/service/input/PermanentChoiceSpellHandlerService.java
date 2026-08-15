@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -48,6 +49,7 @@ public class PermanentChoiceSpellHandlerService {
     private final InputCompletionService inputCompletionService;
     private final PsychicBattleSupport psychicBattleSupport;
     private final SpellCastingService spellCastingService;
+    private final ChandraTorchExileCastSupport chandraTorchExileCastSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -58,7 +60,8 @@ public class PermanentChoiceSpellHandlerService {
                                               ExileCastTargetSupport exileCastTargetSupport,
                                               @Lazy InputCompletionService inputCompletionService,
                                               PsychicBattleSupport psychicBattleSupport,
-                                              @Lazy SpellCastingService spellCastingService) {
+                                              @Lazy SpellCastingService spellCastingService,
+                                              @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -69,6 +72,7 @@ public class PermanentChoiceSpellHandlerService {
         this.inputCompletionService = inputCompletionService;
         this.psychicBattleSupport = psychicBattleSupport;
         this.spellCastingService = spellCastingService;
+        this.chandraTorchExileCastSupport = chandraTorchExileCastSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -226,6 +230,11 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         resumeAfterExileCast(gameData, ect.controllerId());
+    }
+
+    public void handleChandraTorchCastSpellTarget(GameData gameData, UUID permanentId,
+                                                   PermanentChoiceContext.ChandraTorchCastSpellTarget context) {
+        chandraTorchExileCastSupport.completeTarget(gameData, permanentId, context);
     }
 
     /**

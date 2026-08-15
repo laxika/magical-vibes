@@ -491,6 +491,14 @@
   color: #66ff66;
 }
 
+.badge-energy {
+  color: #d8a52b;
+}
+
+.player-badge.active .badge-energy {
+  color: #ffe082;
+}
+
 .badge-hand,
 .badge-deck {
   opacity: 0.8;

@@ -1268,6 +1268,7 @@ public class MultiPermanentChoiceHandlerService {
                             int placed = gameQueryService.replaceCounters(gameData, perm, CounterType.PLUS_ONE_PLUS_ONE, 1);
                             if (placed > 0) {
                                 perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, perm);
                             }
                         }
                         if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
@@ -1531,6 +1532,8 @@ public class MultiPermanentChoiceHandlerService {
                 added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, entering, context.controllerId());
                 gameLogService.append(gameData, GameLog.cardThen(context.card(),
                         " devours " + devoured + " creature" + (devoured == 1 ? "" : "s")
                                 + " and enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
@@ -1607,6 +1610,8 @@ public class MultiPermanentChoiceHandlerService {
             added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
             entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                     entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, entering, context.controllerId());
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
         }

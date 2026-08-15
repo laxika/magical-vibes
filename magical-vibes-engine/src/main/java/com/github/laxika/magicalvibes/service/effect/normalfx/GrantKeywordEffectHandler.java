@@ -181,6 +181,9 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (ids.isEmpty() && entry.getTargetId() != null) {
                 ids = List.of(entry.getTargetId());
             }
+        } else if (grant.scope() == GrantScope.TRIGGERING_PERMANENT) {
+            UUID triggeringId = entry.getTriggeringPermanentId();
+            ids = triggeringId != null ? List.of(triggeringId) : List.of();
         } else if (grant.scope() == GrantScope.BANDED_WITH_SELF) {
             ids = bandmatesOf(gameData, entry.getSourcePermanentId());
         } else if (grant.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {

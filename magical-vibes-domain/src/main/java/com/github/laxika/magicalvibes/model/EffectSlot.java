@@ -198,7 +198,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type, any player's) is put into a graveyard from the
      *  battlefield. Fires for destroy, sacrifice, state-based death, etc. The source permanent never
      *  sees its own death (it has already left the battlefield), so "other than ~" is implicit.
-     *  Supports gating via {@code TriggeringCardConditionalEffect} on the dead permanent's card.
+     *  Supports gating via {@code TriggeringCardConditionalEffect} on the dead permanent's card or
+     *  {@code TriggeringPermanentControllerConditionalEffect} on its controller.
      *  Checked in {@code PermanentRemovalService.processGraveyardAndTriggers} via
      *  {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}. Used by Yomiji,
      *  Who Bars the Way (pair with {@code ReturnTriggeringCardToOwnerHandEffect}). */
@@ -292,6 +293,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}, driven by the same
      *  tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED}. */
     ON_ALLY_PERMANENT_BECOMES_TAPPED,
+    /** Triggers whenever this creature is tapped to pay the crew cost of a Vehicle. The
+     *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
+     *  Checked from {@code CrewCostHandler}. */
+    ON_CREWS_VEHICLE,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
      *  from any source — the untap step, or an untap effect. Fires only on the permanent that
      *  became untapped. Driven from the untap call sites via
@@ -453,6 +458,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  wrapper. Used by Nature's Wrath / Eye of Singularity. */
     ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_GAINS_LIFE,
+    /** Triggers whenever this permanent's controller gets one or more energy counters. */
+    ON_CONTROLLER_GETS_ENERGY,
     /** Triggers whenever this permanent's controller wins a coin flip. */
     ON_CONTROLLER_WINS_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
@@ -604,6 +611,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is
+     *  in the controller's graveyard. Like {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} but fired from
+     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
+     *  entering artifact. Checked in {@code TriggerCollectionService.checkAllyArtifactEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
      *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
      *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from
@@ -618,6 +630,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
      *  controller controls. Fired once per counter-placement event. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on a permanent the controller controls. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */

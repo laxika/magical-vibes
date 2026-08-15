@@ -106,6 +106,9 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     deck, actual, controllerName, targetName, true, false);
             case EXILE_ONE -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, false, false);
+            case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileOneFaceDownWithPermission(
+                    gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
+                    targetName);
             case MAY_EXILE_ANY_NUMBER -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, true, true);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
@@ -198,6 +201,31 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 prompt,
                 optional));
         log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, entry.getCard().getName());
+    }
+
+    private void resolveExileOneFaceDownWithPermission(GameData gameData, StackEntry entry,
+            UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
+            String controllerName, String targetName) {
+        List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
+        gameLogService.append(gameData, GameLog.text(
+                controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual)
+                        + " of " + targetName + "'s library."));
+        String prompt = "Exile one card face down. Put the rest on the bottom of that library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, topCards)
+                        .canFailToFind(false)
+                        .targetPlayerId(targetPlayerId)
+                        .sourceCards(new ArrayList<>(topCards))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                        .sourcePermanentId(entry.getSourcePermanentId())
+                        .build(),
+                prompt,
+                false));
+        log.info("Game {} - {} looks at top {} of {}'s library for a face-down exile ({})",
+                gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     }
 
     private void resolveMayShuffle(GameData gameData, StackEntry entry, UUID controllerId,

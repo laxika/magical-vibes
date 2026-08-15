@@ -41,6 +41,11 @@
               <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ opponentBadgePoisonCounters }}
             </span>
           }
+          @if (opponentBadgeEnergyCounters > 0) {
+            <span class="badge-stat badge-energy" title="Energy">
+              <svg viewBox="0 0 12 12"><path d="M7.1 0 2 6.5h3.1L4.5 12 10 5.2H6.8z"/></svg>{{ opponentBadgeEnergyCounters }}
+            </span>
+          }
           <span class="badge-stat badge-hand" title="Hand">
             <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ opponentBadgeHandSize }}
           </span>
@@ -70,6 +75,11 @@
           @if (myBadgePoisonCounters > 0) {
             <span class="badge-stat badge-poison" title="Poison">
               <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ myBadgePoisonCounters }}
+            </span>
+          }
+          @if (myBadgeEnergyCounters > 0) {
+            <span class="badge-stat badge-energy" title="Energy">
+              <svg viewBox="0 0 12 12"><path d="M7.1 0 2 6.5h3.1L4.5 12 10 5.2H6.8z"/></svg>{{ myBadgeEnergyCounters }}
             </span>
           }
           <span class="badge-stat badge-hand" title="Hand">

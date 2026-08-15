@@ -122,6 +122,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for controller-energy-gain triggers. */
+    record EnergyGain(UUID gainingPlayerId, int energyGainedAmount) implements TriggerContext {}
+
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
 

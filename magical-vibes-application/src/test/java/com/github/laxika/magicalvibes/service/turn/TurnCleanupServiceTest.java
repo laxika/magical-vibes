@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeE
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -764,6 +765,22 @@ class TurnCleanupServiceTest {
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(2);
             assertThat(sut.getMaxHandSize(gd, player2Id)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("Sets own hand size to the source permanent's current counter count")
+        void setByControllerSourceCounterEffect() {
+            Card card = createCardWithName("Midnight Oil");
+            card.addEffect(EffectSlot.STATIC,
+                    new SetControllerMaximumHandSizeToSourceCountersEffect(CounterType.HOUR));
+            Permanent permanent = new Permanent(card);
+            permanent.setCounterCount(CounterType.HOUR, 3);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);
+
+            permanent.setCounterCount(CounterType.HOUR, 0);
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isZero();
         }
 
         @Test

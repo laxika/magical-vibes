@@ -34,7 +34,8 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
         return switch (action) {
             case MAY_SHUFFLE -> TargetSpec.benign(TargetPredicates.player());
             case PUT_ONE_INTO_GRAVEYARD, REVEAL_AND_PUT_ONE_INTO_GRAVEYARD,
-                    KEEP_ONE_ON_TOP_EXILE_REST, KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD, MAY_PUT_TOP_ON_BOTTOM ->
+                    KEEP_ONE_ON_TOP_EXILE_REST, KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD,
+                    MAY_PUT_TOP_ON_BOTTOM, EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM ->
                     TargetSpec.harmful(TargetPredicates.player());
             default -> CombatDamageTriggerContextEffect.super.targetSpec();
         };

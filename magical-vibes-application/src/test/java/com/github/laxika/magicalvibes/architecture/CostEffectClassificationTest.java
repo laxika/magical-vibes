@@ -48,6 +48,7 @@ class CostEffectClassificationTest {
             "ReduceActivationCostEffect",
             "MillControllerCost",
             "OpponentCreatesTokensCost",
+            "PayEnergyCost",
             "PayManaCost",
             "PutCounterOnSourceCost",
             "PutTypedCounterOnSourceCost",

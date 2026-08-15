@@ -527,6 +527,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | ConditionalEffect | Static | Effect Resolution | Trigger Time |
 |---|---|---|---|
 | `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControllerEnergyAtLeast(threshold), wrapped)` | - | yes | - | controller has at least N energy counters; useful for optional energy payments |
 | `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new EachPlayerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) | "if each player has N or less life" (Cryptolith Fragment, 10) |
 | `ConditionalEffect(new GainedLifeThisTurn(), wrapped)` | yes | yes | yes (end step) |

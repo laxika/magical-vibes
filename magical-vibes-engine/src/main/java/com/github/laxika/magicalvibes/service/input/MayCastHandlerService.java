@@ -133,8 +133,8 @@ public class MayCastHandlerService {
     /**
      * Handles the "may play the revealed top card of your library" choice (e.g. Djinn of Wishes).
      * If accepted: play the card (land → battlefield, spell → stack without paying mana cost).
-     * If declined: the card goes to the effect's not-played destination (exile, bottom of library,
-     * or stays on top).
+     * If declined: the card goes to the effect's not-played destination (hand, exile, bottom of
+     * library, or stays on top).
      */
     public void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToPlay = ability.sourceCard();
@@ -147,6 +147,7 @@ public class MayCastHandlerService {
 
         if (!accepted) {
             switch (notPlayedDestination) {
+                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName);
                 case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
                 case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
                 default -> {
@@ -213,6 +214,11 @@ public class MayCastHandlerService {
 
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
+                        case HAND -> {
+                            gameData.playerHands.get(player.getId()).add(cardToPlay);
+                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
+                                    " can't be cast and is put into " + playerName + "'s hand."));
+                        }
                         case EXILE -> {
                             // No valid targets — exile the card instead
                             exileService.exileCard(gameData, player.getId(), cardToPlay);
@@ -347,6 +353,17 @@ public class MayCastHandlerService {
         log.info("Game {} - {} puts {} on the bottom of their library", gameData.id, playerName, card.getName());
     }
 
+    private void putTopCardIntoHand(GameData gameData, UUID playerId, List<Card> deck,
+                                    Card card, String playerName) {
+        if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+            deck.removeFirst();
+            gameData.playerHands.get(playerId).add(card);
+        }
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is put into " + playerName + "'s hand."));
+        log.info("Game {} - {} puts {} into hand", gameData.id, playerName, card.getName());
+    }
+
     private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {
         if (!deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
@@ -386,7 +403,10 @@ public class MayCastHandlerService {
                     case CONTROLLERS_GRAVEYARD -> graveyardOwnerId.equals(player.getId());
                     case ALL_GRAVEYARDS -> true;
                 };
-                if (!validScope) {
+                boolean matchesFilter = castEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, castEffect.filter(), cardToCast.getId());
+                if (!validScope || !matchesFilter) {
                     
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
                     log.info("Game {} - {} not in valid graveyard (scope={})", gameData.id, cardToCast.getName(), scope);

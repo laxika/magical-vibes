@@ -466,6 +466,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.poisonCounters?.[playerIndex] ?? 0;
   }
 
+  getEnergyCounters(playerIndex: number): number {
+    return this.game()?.energyCounters?.[playerIndex] ?? 0;
+  }
+
   getPlayerId(playerIndex: number): string {
     return this.game()?.playerIds?.[playerIndex] ?? '';
   }
@@ -495,6 +499,7 @@ export class GameComponent implements OnInit, OnDestroy {
       handSizes: state.handSizes,
       lifeTotals: state.lifeTotals,
       poisonCounters: state.poisonCounters,
+      energyCounters: state.energyCounters,
       hand: state.hand,
       opponentHand: state.opponentHand ?? [],
       mulliganCount: state.mulliganCount,

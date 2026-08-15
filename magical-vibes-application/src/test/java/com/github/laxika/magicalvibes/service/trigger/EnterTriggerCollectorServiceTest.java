@@ -424,6 +424,26 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("Graveyard artifact scan queues a may ability")
+    void graveyardArtifactQueuesMayAbility() {
+        Card source = new Card();
+        source.setName("Ovalchase Daredevil");
+        source.addEffect(EffectSlot.GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
+        gd.playerGraveyards.put(player1Id,
+                Collections.synchronizedList(new ArrayList<>(List.of(source))));
+
+        Card enteringArtifact = new Card();
+        enteringArtifact.setName("Entering Artifact");
+        enteringArtifact.setType(CardType.ARTIFACT);
+
+        service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
+    }
+
+    @Test
     @DisplayName("Any-permanent conditional can match an artifact entering under an opponent's control")
     void anyPermanentConditionalCanMatchAnyController() {
         UUID player2Id = UUID.randomUUID();

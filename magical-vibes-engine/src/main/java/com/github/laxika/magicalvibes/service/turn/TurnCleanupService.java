@@ -420,7 +420,7 @@ public class TurnCleanupService {
                     if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
                         maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
                     } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, perm);
                     }
                 }
             }

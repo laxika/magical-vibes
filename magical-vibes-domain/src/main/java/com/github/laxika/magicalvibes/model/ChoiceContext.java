@@ -182,7 +182,12 @@ public sealed interface ChoiceContext {
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
-    record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
+    record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
+                              boolean drawForHandExiled) implements ChoiceContext {
+        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) {
+            this(targetPlayerId, controllerId, excludedTypes, false);
+        }
+    }
 
     /**
      * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
@@ -317,6 +322,20 @@ public sealed interface ChoiceContext {
      */
     record MoveCountersAmountChoice(UUID fromPermanentId, UUID toPermanentId, CounterType counterType,
                                     String sourceCardName) implements ChoiceContext {}
+
+    /**
+     * Aetherborn Marauder: the controller chooses how many counters to move from each selected
+     * eligible permanent onto the source. The sequence advances to the next permanent after every
+     * answer, so zero is a valid choice for each one.
+     */
+    record MoveCountersFromControlledPermanentsAmountChoice(List<UUID> fromPermanentIds, int index,
+                                                             UUID toPermanentId, CounterType counterType,
+                                                             String sourceCardName, String fromCardName)
+            implements ChoiceContext {
+        public MoveCountersFromControlledPermanentsAmountChoice {
+            fromPermanentIds = List.copyOf(fromPermanentIds);
+        }
+    }
 
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
@@ -647,6 +666,29 @@ public sealed interface ChoiceContext {
         public static final String ADD = "ADD";
         public static final String REMOVE = "REMOVE";
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
+    }
+
+    /** Animation Module's choice of a counter kind to add to the target. */
+    record AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                       List<CounterType> counterTypes, boolean poisonCounters)
+            implements ChoiceContext {
+
+        public static final String POISON = "poison counters";
+
+        public List<String> options() {
+            if (poisonCounters) {
+                return List.of(POISON);
+            }
+            return counterTypes.stream().map(AddAnotherCounterTypeChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return switch (counterType) {
+                case PLUS_ONE_PLUS_ONE -> "+1/+1 counters";
+                case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
+                default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
+            };
+        }
     }
 
     /** Dismantle's choice of counter type for the destroyed artifact's counters. */

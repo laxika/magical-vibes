@@ -25,7 +25,6 @@ class AuthorityOfTheConsulsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
-
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -40,7 +39,6 @@ class AuthorityOfTheConsulsTest extends BaseCardTest {
     void controllersCreaturesEnterUntappedWithoutLifeGain() {
         harness.addToBattlefield(player1, new AuthorityOfTheConsuls());
         harness.setLife(player1, 20);
-
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

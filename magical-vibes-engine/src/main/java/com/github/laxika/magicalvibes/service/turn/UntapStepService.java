@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -350,19 +351,34 @@ public class UntapStepService {
      */
     public java.util.Optional<StaticOrbEffect> bindingUntapRestriction(GameData gameData, UUID activePlayerId) {
         List<StaticOrbEffect> active = new ArrayList<>();
-        gameData.forEachPermanent((pid, p) -> {
+        gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (e instanceof StaticOrbEffect orb && (!orb.requiresUntappedSource() || !p.isTapped())) {
+                if (e instanceof StaticOrbEffect orb
+                        && appliesToUntapStep(orb, activePlayerId, controllerId)
+                        && (!orb.requiresUntappedSource() || !p.isTapped())) {
                     active.add(orb);
                 }
             }
         });
+        for (Emblem emblem : gameData.emblems) {
+            for (CardEffect e : emblem.staticEffects()) {
+                if (e instanceof StaticOrbEffect orb
+                        && !orb.requiresUntappedSource()
+                        && appliesToUntapStep(orb, activePlayerId, emblem.controllerId())) {
+                    active.add(orb);
+                }
+            }
+        }
         for (StaticOrbEffect effect : active) {
             if (staticOrbUntapCandidates(gameData, activePlayerId, effect).size() > effect.maxUntap()) {
                 return java.util.Optional.of(effect);
             }
         }
         return java.util.Optional.empty();
+    }
+
+    private boolean appliesToUntapStep(StaticOrbEffect effect, UUID activePlayerId, UUID sourceControllerId) {
+        return !effect.opponentsOnly() || !activePlayerId.equals(sourceControllerId);
     }
 
     /**

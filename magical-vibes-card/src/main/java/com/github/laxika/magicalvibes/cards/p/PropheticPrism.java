@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "234")
+@CardRegistration(set = "KLD", collectorNumber = "229")
 public class PropheticPrism extends Card {
 
     public PropheticPrism() {

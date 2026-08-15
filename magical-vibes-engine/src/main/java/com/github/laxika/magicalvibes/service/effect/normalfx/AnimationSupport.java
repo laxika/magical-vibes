@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -71,6 +73,16 @@ public class AnimationSupport {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
+                duration, 0));
+    }
+
+    private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
+                                                 CardColor color,
+                                                 EffectDuration duration) {
+        if (color == null) return;
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantColorEffect(color, GrantScope.SELF, true), target.getId(), null, null,
                 duration, 0));
     }
 
@@ -148,6 +160,8 @@ public class AnimationSupport {
         target.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
+        addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(),
+                EffectDuration.UNTIL_YOUR_NEXT_TURN);
 
         if (target.isFaceDown()) {
             gameLogService.append(gameData, GameLog.text(
@@ -247,6 +261,8 @@ public class AnimationSupport {
                 perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
                 perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
                 addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
+                addAnimationColorFloatingEffect(gameData, entry, perm, effect.animatedColor(),
+                        EffectDuration.UNTIL_YOUR_NEXT_TURN);
             } else {
                 perm.setAnimatedUntilEndOfTurn(true);
                 perm.setAnimatedPower(power);

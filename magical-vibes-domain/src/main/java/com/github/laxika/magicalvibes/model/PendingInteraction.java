@@ -20,6 +20,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingIntuitionRevealChoice,
         PendingThranTomeChoice,
+        PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingBendOrBreak,
         PendingWhimsOfTheFates,
@@ -774,8 +775,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * time. {@code controllerId} is the effect's controller (same as the deciding player).
      */
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                UUID targetPlayerId, UUID controllerId, String cardName)
+                                UUID targetPlayerId, UUID controllerId, String cardName,
+                                boolean drawForHandExiled)
             implements PendingInteraction {
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {

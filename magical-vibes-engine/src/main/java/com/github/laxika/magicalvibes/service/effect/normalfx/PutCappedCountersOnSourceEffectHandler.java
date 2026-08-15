@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * Resolves {@link PutCappedCountersOnSourceEffect}: put up to the evaluated amount of counters on
@@ -54,6 +57,12 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
         }
 
         source.setCounterCount(e.counterType(), current + toAdd);
+        if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            if (controllerId != null) {
+                gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            }
+        }
         
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + toAdd + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id,

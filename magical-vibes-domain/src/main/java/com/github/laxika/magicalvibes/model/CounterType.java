@@ -38,6 +38,7 @@ public enum CounterType {
     GROWTH,
     HEALING,
     HATCHLING,
+    HOUR,
     HOURGLASS,
     HOOFPRINT,
     ICE,

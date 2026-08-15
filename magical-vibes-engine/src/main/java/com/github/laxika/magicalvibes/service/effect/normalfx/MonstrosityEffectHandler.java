@@ -25,6 +25,7 @@ public class MonstrosityEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +51,7 @@ public class MonstrosityEffectHandler implements NormalEffectHandlerBean {
             if (amount > 0) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
                 gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                         .text(" gets " + amount + " +1/+1 counter(s) and becomes monstrous.").build());
                 log.info("Game {} - {} becomes monstrous with {} +1/+1 counter(s)", gameData.id,

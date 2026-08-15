@@ -105,6 +105,7 @@ public class PermanentCounterSupport {
         }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
+        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
@@ -347,6 +348,9 @@ public class PermanentCounterSupport {
         if (counterName == null || count <= 0) return;
 
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId(gameData, entry, target));
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, target);
+        }
 
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
@@ -741,6 +745,53 @@ public class PermanentCounterSupport {
     public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {
         if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.playersWhoPutCountersOnCreaturesThisTurn.add(placingPlayerId);
+        }
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent target) {
+        if (target == null) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId != null) {
+            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+        }
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+            GameData gameData, Permanent target, UUID controllerId) {
+        if (target != null && controllerId != null) {
+            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId);
+        }
+    }
+
+    private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
+                                                                              UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            Card card = source.getCard();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
+                    card.getName());
         }
     }
 

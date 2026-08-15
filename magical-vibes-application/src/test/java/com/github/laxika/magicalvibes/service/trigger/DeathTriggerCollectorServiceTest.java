@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -960,6 +962,40 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack.get(0).getTargetId()).isNull();
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Controller conditional queues a player-targeted trigger with source snapshot")
+        void controllerConditionalQueuesTargetedTrigger() {
+            Card watcher = createCreature("Marionette Master", 1, 3);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(
+                    new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = (PermanentChoiceContext.SpellTargetTriggerAnyTarget)
+                    gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(pending.playerTargetOnly()).isTrue();
+            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(pending.sourcePermanentSnapshot()).isNotNull();
+            assertThat(pending.effects()).containsExactly(effect.wrapped());
+        }
+
+        @Test
+        @DisplayName("Controller conditional does not fire for an opponent's artifact")
+        void controllerConditionalDoesNotFireForOpponentArtifact() {
+            Card watcher = createCreature("Marionette Master", 1, 3);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(
+                    new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER2_ID);
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.pendingInteractions).isEmpty();
         }
     }
 

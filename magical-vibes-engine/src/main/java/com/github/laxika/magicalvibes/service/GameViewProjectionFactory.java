@@ -87,6 +87,7 @@ public class GameViewProjectionFactory {
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
+        List<Integer> energyCounters = getEnergyCounters(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         Map<UUID, GameStateMessage> messages = new LinkedHashMap<>();
@@ -151,7 +152,7 @@ public class GameViewProjectionFactory {
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     applyFaceDownReveals(battlefields, faceDownReveals, playerId),
-                    stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
+                    stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
@@ -448,6 +449,14 @@ public class GameViewProjectionFactory {
         return counters;
     }
 
+    List<Integer> getEnergyCounters(GameData gameData) {
+        List<Integer> counters = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            counters.add(gameData.playerEnergyCounters.getOrDefault(pid, 0));
+        }
+        return counters;
+    }
+
 
     List<CardView> getPlayableExileCards(GameData gameData, UUID playerId) {
         List<CardView> playable = new ArrayList<>();
@@ -730,6 +739,7 @@ public class GameViewProjectionFactory {
                 autoStopSteps,
                 getLifeTotals(data),
                 getPoisonCounters(data),
+                getEnergyCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data)
         );

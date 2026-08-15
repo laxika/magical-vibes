@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ODY", collectorNumber = "183")
 @CardRegistration(set = "THS", collectorNumber = "118")
 @CardRegistration(set = "ZEN", collectorNumber = "121")
+@CardRegistration(set = "KLD", collectorNumber = "113")
 public class Demolish extends Card {
 
     public Demolish() {

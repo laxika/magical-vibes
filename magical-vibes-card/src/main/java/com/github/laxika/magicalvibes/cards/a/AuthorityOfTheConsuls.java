@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "137")
+@CardRegistration(set = "KLD", collectorNumber = "5")
 public class AuthorityOfTheConsuls extends Card {
 
     public AuthorityOfTheConsuls() {

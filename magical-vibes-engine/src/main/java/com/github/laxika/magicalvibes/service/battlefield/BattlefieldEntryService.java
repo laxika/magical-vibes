@@ -208,6 +208,7 @@ public class BattlefieldEntryService {
                                              int xValue, boolean kicked) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
             return;
         }
@@ -238,8 +239,14 @@ public class BattlefieldEntryService {
             restoreHiddenBattlefields(gameData, hidden);
         }
         int counterCountAfterEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
+        int plusOnePlusOneCountersAfterEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (counterCountAfterEntry > counterCountBeforeEntry && gameQueryService.isCreature(gameData, permanent)) {
             gameData.playersWhoPutCountersOnCreaturesThisTurn.add(controllerId);
+        }
+        if (plusOnePlusOneCountersAfterEntry > plusOnePlusOneCountersBeforeEntry
+                || (plusOnePlusOneCountersBeforeEntry > 0 && plusOnePlusOneCountersAfterEntry > 0)) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, permanent, controllerId);
         }
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());

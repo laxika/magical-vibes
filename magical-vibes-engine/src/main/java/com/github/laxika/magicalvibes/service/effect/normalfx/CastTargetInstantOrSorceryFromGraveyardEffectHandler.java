@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,7 +70,10 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                 continue;
             }
 
-            if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
+            boolean instantOrSorcery = targetCard.hasType(CardType.INSTANT) || targetCard.hasType(CardType.SORCERY);
+            boolean matchesFilter = e.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), entry.getCard().getId());
+            if (!instantOrSorcery || !matchesFilter) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription()
                         + " fizzles (target is not an instant or sorcery)."));
                 continue;

@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
@@ -1665,6 +1666,24 @@ class PredicateEvaluationServiceTest {
 
             PermanentHasGreatestManaValueAmongAllCreaturesPredicate greatest =
                     new PermanentHasGreatestManaValueAmongAllCreaturesPredicate();
+            assertThat(evaluator.matchesStaticFilter(big, greatest, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(small, greatest, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("greatest artifact mana value compares artifacts across both battlefields")
+        void greatestArtifactManaValueSpansBothBattlefields() {
+            Card smallCard = createArtifact("Small Artifact");
+            smallCard.setManaCost("{1}");
+            Permanent small = addPermanent(player1Id, smallCard);
+            Card bigCard = createArtifact("Big Artifact");
+            bigCard.setManaCost("{3}");
+            Permanent big = addPermanent(player2Id, bigCard);
+
+            PermanentHasGreatestManaValueAmongAllArtifactsPredicate greatest =
+                    new PermanentHasGreatestManaValueAmongAllArtifactsPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, big, greatest)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, small, greatest)).isFalse();
             assertThat(evaluator.matchesStaticFilter(big, greatest, ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(small, greatest, ctx())).isFalse();
         }

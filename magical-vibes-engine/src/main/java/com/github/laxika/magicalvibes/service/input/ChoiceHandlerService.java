@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -288,6 +289,10 @@ public class ChoiceHandlerService {
             handleMoveCountersAmountChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice ctx) {
+            handleMoveCountersFromControlledPermanentsAmountChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -394,6 +399,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
             handleAdjustCounterKindChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.AddAnotherCounterTypeChoice ctx) {
+            handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
@@ -1106,6 +1115,32 @@ public class ChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Animation Module: add one counter of the selected kind to the target. */
+    private void handleAddAnotherCounterTypeChoice(GameData gameData, String choice,
+            ChoiceContext.AddAnotherCounterTypeChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter type: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        if (ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice)) {
+            lifeSupport.applyPoisonCounters(gameData, ctx.targetId(), 1, ctx.sourceCardName());
+        } else {
+            CounterType counterType = ctx.counterTypes().stream()
+                    .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
+            Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+            if (target != null) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
+            }
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2099,6 +2134,12 @@ public class ChoiceHandlerService {
                     permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to, ctx.counterType(), moved);
                 } else {
                     to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
+                    if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                        UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
+                        if (controllerId != null) {
+                            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                        }
+                    }
                 }
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " moves " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
@@ -2109,6 +2150,62 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleMoveCountersFromControlledPermanentsAmountChoice(
+            GameData gameData, Player player, String numberName,
+            ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent from = gameQueryService.findPermanentById(gameData,
+                ctx.fromPermanentIds().get(ctx.index()));
+        Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        if (from != null && to != null && chosen > 0
+                && !cantHaveCounter(gameData, to, ctx.counterType())) {
+            int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
+            if (moved > 0) {
+                from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
+                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                if (sourceEntry != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
+                            ctx.counterType(), moved);
+                } else {
+                    to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
+                    if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                        UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
+                        if (controllerId != null) {
+                            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                        }
+                    }
+                }
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " moves " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
+                        .card(from.getCard()).text(" onto ").card(to.getCard()).text(".").build());
+            }
+        }
+
+        int nextIndex = ctx.index() + 1;
+        while (nextIndex < ctx.fromPermanentIds().size()) {
+            Permanent next = gameQueryService.findPermanentById(gameData, ctx.fromPermanentIds().get(nextIndex));
+            if (next != null && next.getCounterCount(ctx.counterType()) > 0 && to != null) {
+                playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
+                        gameData, player.getId(), ctx.fromPermanentIds(), nextIndex, ctx.toPermanentId(),
+                        ctx.counterType(), ctx.sourceCardName(), next.getCard().getName(),
+                        next.getCounterCount(ctx.counterType()));
+                return;
+            }
+            nextIndex++;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean cantHaveCounter(GameData gameData, Permanent permanent, CounterType counterType) {
+        return counterType == CounterType.PLUS_ONE_PLUS_ONE
+                ? gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)
+                : gameQueryService.cantHaveCounters(gameData, permanent);
     }
 
     private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {
@@ -2972,7 +3069,8 @@ public class ChoiceHandlerService {
         }
 
         // Present matching cards for "any number" selection
-        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
+        playerInputService.beginMultiZoneExileChoice(
+                gameData, controllerId, matchingCards, targetPlayerId, cardName, ctx.drawForHandExiled());
         inputCompletionService.publishStateAfterInput(gameData);
     }
 
@@ -3282,6 +3380,7 @@ public class ChoiceHandlerService {
 
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
         int exiledCount = 0;
+        int handExiledCount = 0;
 
         // Remove selected cards from hand
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -3292,6 +3391,7 @@ public class ChoiceHandlerService {
                 gameData.addToExile(targetPlayerId, card);
             }
             exiledCount += toExile.size();
+            handExiledCount = toExile.size();
         }
 
         // Remove selected cards from graveyard
@@ -3330,6 +3430,12 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
+
+        if (ctx.drawForHandExiled() && handExiledCount > 0 && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex,
+                    List.of(new DrawCardForTargetPlayerEffect(handExiledCount)));
+        }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

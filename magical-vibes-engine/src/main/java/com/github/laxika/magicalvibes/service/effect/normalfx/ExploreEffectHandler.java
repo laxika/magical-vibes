@@ -27,6 +27,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,6 +70,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
                     gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                             placed == 1 ? " gets a +1/+1 counter." : " gets " + placed + " +1/+1 counters."));
                 }

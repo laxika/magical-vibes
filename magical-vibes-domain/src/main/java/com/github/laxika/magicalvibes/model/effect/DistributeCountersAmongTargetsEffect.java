@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * "Distribute N {@code counterType} counters among … target creatures." — the counter analogue of
@@ -34,19 +35,22 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                              last only for the turn.
  * @param etbAssignments        when {@code true}, read the target-to-counter mapping from the ETB
  *                              assignment buffer.
+ * @param targetRestriction      optional narrowing predicate for ETB targets whose target group is
+ *                              declared on the card.
  */
 public record DistributeCountersAmongTargetsEffect(
         CounterType counterType,
         DynamicAmount total,
         DivisionMode mode,
         boolean removeAtNextCleanup,
-        boolean etbAssignments)
+        boolean etbAssignments,
+        PermanentPredicate targetRestriction)
         implements CardEffect {
 
     /** Fixed total split evenly across a {@code target(filter, 1, 2)} group (Splendid Agony). */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargets(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.EVEN, false, false);
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, null);
     }
 
     /**
@@ -56,7 +60,7 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenUntilNextCleanup(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false, null);
     }
 
     /**
@@ -67,7 +71,7 @@ public record DistributeCountersAmongTargetsEffect(
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, total, DivisionMode.CHOSEN, false, false);
+                counterType, total, DivisionMode.CHOSEN, false, false, null);
     }
 
     /**
@@ -76,13 +80,22 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreaturesEtb(
             CounterType counterType, int total) {
+        return chosenAmongTargetCreaturesEtb(counterType, total, null);
+    }
+
+    /**
+     * Fixed total distributed as the controller chooses among target creatures for an ETB ability,
+     * with an additional permanent restriction on the declared target group.
+     */
+    public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreaturesEtb(
+            CounterType counterType, int total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, targetRestriction);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        if (etbAssignments) {
+        if (etbAssignments && targetRestriction == null) {
             return TargetSpec.NONE;
         }
         boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
@@ -92,7 +105,7 @@ public record DistributeCountersAmongTargetsEffect(
         // from EffectResolution.distributesAmountsAmongTargets rather than from declaring a
         // category the spec interpreter no-ops on.
         return harmful
-                ? TargetSpec.harmful(TargetPredicates.creature())
-                : TargetSpec.benign(TargetPredicates.creature());
+                ? TargetSpec.harmful(TargetPredicates.creature(), targetRestriction)
+                : TargetSpec.benign(TargetPredicates.creature(), targetRestriction);
     }
 }

@@ -26,7 +26,13 @@ public class ChooseCardNameAndExileFromZonesEffectHandler implements NormalEffec
 
         UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
-        playerInputService.beginSpellCardNameChoice(gameData, controllerId, targetPlayerId, e.excludedTypes(), e.requiredType());
+        if (e.drawForHandExiled()) {
+            playerInputService.beginSpellCardNameChoice(
+                    gameData, controllerId, targetPlayerId, e.excludedTypes(), e.requiredType(), true);
+        } else {
+            playerInputService.beginSpellCardNameChoice(
+                    gameData, controllerId, targetPlayerId, e.excludedTypes(), e.requiredType());
+        }
     
     }
 }

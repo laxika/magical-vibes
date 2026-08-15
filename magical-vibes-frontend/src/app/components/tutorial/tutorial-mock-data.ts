@@ -318,6 +318,7 @@ export const TUTORIAL_MOCK_GAME: Game = {
   autoStopSteps: [TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN],
   lifeTotals: [20, 20],
   poisonCounters: [0, 0],
+  energyCounters: [0, 0],
   stack: [],
   graveyards: [[], []],
   revealedLibraryTopCards: [[], []],

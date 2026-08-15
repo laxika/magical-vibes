@@ -365,12 +365,14 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleLifeLossOnDiscard(TriggerMatchContext match,
             LoseLifeEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
         Card sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
-        // The ON_OPPONENT_DISCARDS marker always carries a literal amount ("that player loses N life").
+        // Discard-triggered life loss carries a literal amount ("that player loses N life" or
+        // "you lose N life").
         int amount = trigger.amount() instanceof Fixed fixed ? fixed.value() : 0;
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();

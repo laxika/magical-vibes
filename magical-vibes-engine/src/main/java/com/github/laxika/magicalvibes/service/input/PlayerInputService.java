@@ -747,6 +747,31 @@ public class PlayerInputService {
     }
 
     /**
+     * Aetherborn Marauder: prompt for the amount to move from one of the controller's eligible
+     * permanents, then continue with the next permanent in the sequence.
+     */
+    public void beginMoveCountersFromControlledPermanentsAmountChoice(
+            GameData gameData, UUID playerId, List<UUID> fromPermanentIds, int index,
+            UUID toPermanentId, CounterType counterType, String sourceCardName, String fromCardName, int max) {
+        ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice choiceContext =
+                new ChoiceContext.MoveCountersFromControlledPermanentsAmountChoice(
+                        fromPermanentIds, index, toPermanentId, counterType, sourceCardName, fromCardName);
+
+        List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
+                .mapToObj(Integer::toString)
+                .toList();
+        String counterName = switch (counterType) {
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> counterType.name().toLowerCase().replace('_', ' ');
+        };
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                sourceCardName + " — choose how many " + counterName + " counters to move from "
+                        + fromCardName + " (0-" + Math.max(0, max) + ")."));
+    }
+
+    /**
      * Quarry Hauler: prompt {@code playerId} to add or remove one counter of the FIRST kind in
      * {@code remainingKinds} on {@code targetId}. {@link ChoiceHandlerService} applies the answer and
      * re-invokes this with the remaining kinds until every kind has been resolved.
@@ -764,6 +789,19 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerName, current);
+    }
+
+    /** Animation Module: choose a counter kind already present on the target, then add one more. */
+    public void beginAddAnotherCounterTypeChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                  String sourceCardName, List<CounterType> counterTypes,
+                                                  boolean poisonCounters) {
+        ChoiceContext.AddAnotherCounterTypeChoice context = new ChoiceContext.AddAnotherCounterTypeChoice(
+                targetId, playerId, sourceCardName, new ArrayList<>(counterTypes), poisonCounters);
+        List<String> options = context.options();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, options,
+                sourceCardName + " — Choose a counter to add another of."));
+        log.info("Game {} - Awaiting {} to choose a counter kind for {}", gameData.id, playerId, targetId);
     }
 
     /** Dismantle: choose whether the copied counter count becomes +1/+1 or charge counters. */
@@ -1073,7 +1111,14 @@ public class PlayerInputService {
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType) {
-        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType, false);
+    }
+
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType,
+                                         boolean drawForHandExiled) {
+        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
+                targetPlayerId, choosingPlayerId, excludedTypes, drawForHandExiled);
 
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
         String prompt;
@@ -1288,10 +1333,16 @@ public class PlayerInputService {
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, targetPlayerId, cardName, false);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          UUID targetPlayerId, String cardName, boolean drawForHandExiled) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
-                choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName));
+                choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName,
+                drawForHandExiled));
     }
 
     /**

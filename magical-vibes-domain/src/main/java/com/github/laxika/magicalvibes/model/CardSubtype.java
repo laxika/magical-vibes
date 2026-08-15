@@ -49,6 +49,7 @@ public enum CardSubtype {
     CAT("Cat"),
     CENTAUR("Centaur"),
     SOLDIER("Soldier"),
+    SERVO("Servo"),
     REBEL("Rebel"),
     KNIGHT("Knight"),
     SPIRIT("Spirit"),

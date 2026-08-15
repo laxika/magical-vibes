@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantCrewEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -69,6 +70,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 // CR 702.122a: "other untapped creatures" — the Vehicle cannot crew itself
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantCrewEffect.class))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -84,9 +86,16 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Permanent is not a creature");
         }
+        if (gameQueryService.hasAuraWithEffect(gameData, chosen, EnchantedCreatureCantCrewEffect.class)) {
+            throw new IllegalStateException("Creature can't crew Vehicles");
+        }
         lastTappedCreaturePower = Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
+        Permanent vehicle = sourcePermanentId == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        triggerCollectionService.checkCrewsVehicleTriggers(gameData, chosen, vehicle);
         
         gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " taps ").card(chosen.getCard()).text(" (power " + lastTappedCreaturePower + ") to crew.").build());
     }

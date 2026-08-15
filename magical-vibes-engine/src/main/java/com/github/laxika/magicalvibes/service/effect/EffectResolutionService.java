@@ -229,6 +229,22 @@ public class EffectResolutionService {
                 }
             }
 
+            // A resolution-time may ability can wrap a conditional effect. Re-enter the same
+            // conditional path after the player accepts the may choice so nested conditions are
+            // evaluated against the current game state rather than being dispatched as ordinary
+            // effects.
+            if (effectToResolve instanceof ConditionalEffect conditional) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                            "'s " + conditional.conditionName() + " ability does nothing ("
+                                    + conditional.conditionNotMetReason() + ")."));
+                    log.info("Game {} - {} condition no longer met for {}", gameData.id,
+                            conditional.conditionName(), entry.getCard().getName());
+                    continue;
+                }
+                effectToResolve = conditional.wrapped();
+            }
+
             // Sequence expansion: splice the steps into this entry's effect list so they resolve
             // in order through this same loop (pause/resume and nested wrappers work unchanged).
             if (effectToResolve instanceof SequenceEffect sequence) {

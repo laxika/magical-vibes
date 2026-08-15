@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.LibraryRevealChoiceInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -99,6 +101,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
                 permanentControlSupport);
+        registry.register(new LibraryRevealChoiceInteractionHandler(service));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -119,6 +122,63 @@ class LibraryChoiceHandlerServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+    }
+
+    @Nested
+    @DisplayName("handleLibraryRevealChoice for Dubious Challenge")
+    class HandleDubiousChallengeChoice {
+
+        @Test
+        @DisplayName("Exiles the controller's selection and prompts the targeted opponent")
+        void initialChoicePromptsOpponent() {
+            Card creature1 = createCard("Creature One", CardType.CREATURE);
+            Card creature2 = createCard("Creature Two", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+            List<Card> lookedAt = List.of(creature1, creature2, land);
+            gd.playerDecks.get(player1Id).addAll(lookedAt);
+
+            gd.queueInteraction(new PendingDubiousChallengeChoice(player1Id, player2Id, List.of()));
+            gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                    player1Id, lookedAt, List.of(creature1.getId(), creature2.getId()),
+                    false, false, false, false, false, 0, null, 2,
+                    "Choose up to two creature cards.", 0, false));
+
+            service.handleLibraryRevealChoice(gd, player1, List.of(creature1.getId(), creature2.getId()));
+
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(land);
+            verify(exileService).exileCard(gd, player1Id, creature1);
+            verify(exileService).exileCard(gd, player1Id, creature2);
+            PendingInteraction.LibraryRevealChoice opponentChoice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(opponentChoice.playerId()).isEqualTo(player2Id);
+            assertThat(opponentChoice.validCardIds()).containsExactly(creature1.getId(), creature2.getId());
+        }
+
+        @Test
+        @DisplayName("Puts the opponent's choice under the opponent's control and the rest under the controller's")
+        void opponentChoicePlacesCardsUnderCorrectPlayers() {
+            Card opponentCard = createCard("Opponent Creature", CardType.CREATURE);
+            Card controllerCard = createCard("Controller Creature", CardType.CREATURE);
+            gd.addToExile(player1Id, opponentCard);
+            gd.addToExile(player1Id, controllerCard);
+            gd.queueInteraction(new PendingDubiousChallengeChoice(
+                    player1Id, player2Id, List.of(opponentCard, controllerCard)));
+            gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                    player2Id, List.of(opponentCard, controllerCard),
+                    List.of(opponentCard.getId(), controllerCard.getId()),
+                    false, false, false, false, false, 0, null, 1,
+                    "Choose one.", 0, false));
+
+            service.handleLibraryRevealChoice(gd, player2, List.of(opponentCard.getId()));
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player2Id), any(), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(), any());
+            assertThat(gd.exiledCards).isEmpty();
+            verify(stateBasedActionService).performStateBasedActions(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+        }
     }
 
     // =========================================================================

@@ -207,6 +207,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
+        } else if (context instanceof PermanentChoiceContext.ChandraTorchCastSpellTarget ctc) {
+            spellHandler.handleChandraTorchCastSpellTarget(gameData, permanentId, ctc);
         } else if (context instanceof PermanentChoiceContext.GraveyardCastSpellTarget gct) {
             spellHandler.handleGraveyardCastSpellTarget(gameData, permanentId, gct);
         } else if (context instanceof PermanentChoiceContext.HandCastSpellTarget hct) {

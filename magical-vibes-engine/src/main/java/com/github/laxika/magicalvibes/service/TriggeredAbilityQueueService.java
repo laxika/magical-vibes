@@ -723,6 +723,7 @@ public class TriggeredAbilityQueueService {
                             pending.sourceCard().getName() + "'s ability",
                             new ArrayList<>(pending.effects()));
         }
+        entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         gameData.stack.add(entry);
     }
 

@@ -148,7 +148,8 @@ public class GraveyardTargetValidators {
     }
 
     @ValidatesTarget(CastTargetInstantOrSorceryFromGraveyardEffect.class)
-    public void validateCastTargetInstantOrSorceryFromGraveyard(TargetValidationContext ctx) {
+    public void validateCastTargetInstantOrSorceryFromGraveyard(
+            TargetValidationContext ctx, CastTargetInstantOrSorceryFromGraveyardEffect effect) {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Spell requires a graveyard target");
         }
@@ -161,6 +162,15 @@ public class GraveyardTargetValidators {
         }
         if (!graveyardCard.hasType(CardType.INSTANT) && !graveyardCard.hasType(CardType.SORCERY)) {
             throw new IllegalStateException("Target must be an instant or sorcery card");
+        }
+        if (effect.filter() != null
+                && !predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard,
+                        effect.filter(),
+                        ctx.sourceCard() == null ? null : ctx.sourceCard().getId(),
+                        ctx.gameData(),
+                        gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()))) {
+            throw new IllegalStateException("Target card does not match the required filter");
         }
         // Opponent-graveyard scope check is enforced in SpellCastingService (which has playerId context)
     }

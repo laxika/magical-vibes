@@ -530,7 +530,7 @@ public class GraveyardTargetingService {
 
     public void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                  List<CardEffect> effects) {
-        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, effects);
+        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, card, effects);
 
         if (matchingCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
@@ -551,7 +551,7 @@ public class GraveyardTargetingService {
      */
     public void handleAttackGraveyardCastTargeting(GameData gameData, UUID controllerId, Card card,
                                                    List<CardEffect> effects, UUID sourcePermanentId) {
-        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, effects);
+        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, card, effects);
 
         if (matchingCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s attack trigger has no valid targets."));
@@ -567,7 +567,7 @@ public class GraveyardTargetingService {
                 "Choose target instant or sorcery card from a graveyard to cast.");
     }
 
-    private List<Card> collectCastableInstantsAndSorceries(GameData gameData, UUID controllerId,
+    private List<Card> collectCastableInstantsAndSorceries(GameData gameData, UUID controllerId, Card sourceCard,
                                                            List<CardEffect> effects) {
         CastTargetInstantOrSorceryFromGraveyardEffect castEffect = effects.stream()
                 .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
@@ -586,7 +586,10 @@ public class GraveyardTargetingService {
             List<Card> graveyard = targetableGraveyard(gameData, playerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                if (graveyardCard.hasType(CardType.INSTANT) || graveyardCard.hasType(CardType.SORCERY)) {
+                if ((graveyardCard.hasType(CardType.INSTANT) || graveyardCard.hasType(CardType.SORCERY))
+                        && (castEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, castEffect.filter(), sourceCard.getId()))) {
                     matchingCards.add(graveyardCard);
                 }
             }

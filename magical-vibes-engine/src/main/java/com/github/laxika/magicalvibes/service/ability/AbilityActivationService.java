@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
@@ -2527,6 +2528,7 @@ public class AbilityActivationService {
                 placedCount = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, placedCount);
                 if (placedCount > 0) {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
+                    gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
                     placed = true;
                 }
             } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
@@ -2566,6 +2568,9 @@ public class AbilityActivationService {
             permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + placedCount);
             if (gameQueryService.isCreature(gameData, permanent) && placedCount > 0) {
                 gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
+            }
+            if (c.counterType() == CounterType.PLUS_ONE_PLUS_ONE && c.count() > 0) {
+                gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
             }
             String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');
             String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
@@ -3286,6 +3291,18 @@ public class AbilityActivationService {
             int needed = payLifeCost.get().effectiveAmount(life, sourceCounterCount(permanent, payLifeCost.get()));
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
+            }
+        }
+
+        Optional<PayEnergyCost> payEnergyCost = abilityEffects.stream()
+                .filter(PayEnergyCost.class::isInstance)
+                .map(PayEnergyCost.class::cast)
+                .findFirst();
+        if (payEnergyCost.isPresent()) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+            int needed = payEnergyCost.get().amount();
+            if (energy < needed) {
+                throw new IllegalStateException("Not enough energy to pay (need " + needed + ", have " + energy + ")");
             }
         }
 

@@ -330,6 +330,7 @@ export interface Game {
   autoStopSteps: string[];
   lifeTotals: number[];
   poisonCounters: number[];
+  energyCounters: number[];
   stack: StackEntry[];
   graveyards: Card[][];
   revealedLibraryTopCards: Card[][];
@@ -403,6 +404,7 @@ export interface GameStateNotification {
   handSizes: number[];
   lifeTotals: number[];
   poisonCounters: number[];
+  energyCounters: number[];
   hand: Card[];
   opponentHand: Card[];
   mulliganCount: number;

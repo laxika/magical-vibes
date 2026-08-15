@@ -182,6 +182,7 @@ All paths relative to `cards/`.
 | Cost reduction per instant/sorcery card in graveyard | `t/TheDawningArchaic.java` | STATIC ReduceOwnCastCostEffect(CardsInGraveyard(CardAnyOfPredicate(CardTypePredicate(INSTANT), CardTypePredicate(SORCERY)), CONTROLLER)) — compose the two type predicates, do not add a new amount |
 | Cost reduction per distinct card type in graveyard | `e/EmrakulThePromisedEnd.java` | STATIC ReduceOwnCastCostEffect(CardTypesAmongCardsInGraveyard()) + ON_SELF_CAST ControlTargetPlayerNextTurnEffect(true) + STATIC ProtectionFromCardTypesEffect(INSTANT) — Emrakul |
 | Cost reduction per creature on battlefield | `b/BlasphemousAct.java` | STATIC ReduceOwnCastCostEffect(PermanentCount(PermanentIsCreaturePredicate, ANY_PLAYER)) — this spell costs {1} less for each creature on the battlefield |
+| Cost reduction by total mana value of noncreature artifacts | `m/MetalworkColossus.java` | STATIC ReduceOwnCastCostEffect(PermanentManaValueSum(AllOf(PermanentIsArtifactPredicate, Not(PermanentIsCreaturePredicate)), CONTROLLER)) — sum the mana values rather than count the artifacts |
 | Cost reduction per card cycled/discarded this turn | `h/HollowOne.java` | STATIC ReduceOwnCastCostEffect(Scaled(CardsDiscardedOrCycledThisTurn(), 2)) + hand Cycling {2} — costs {2} less per card you've cycled or discarded this turn |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
@@ -264,6 +265,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
+| Lockdown (can't attack/block/crew Vehicles) | `r/RevokePrivileges.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantCrewEffect |
 | Lockdown (can't attack/block/transform) + sorcery once-per-turn reattach | `b/BoundByMoonsilver.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantTransformEffect; activated `SacrificePermanentCost(PermanentTruePredicate, â€¦)` + `AttachSourceAuraToTargetCreatureEffect` with `maxActivationsPerTurn=1` + `SORCERY_SPEED` |
 | Untargetable by spells + can't be enchanted | `a/AntiMagicAura.java` | STATIC GrantEffectEffect(TargetingRestrictionEffect.spells(), ENCHANTED_CREATURE) + GrantEffectEffect(CantBeEnchantedByOtherAurasEffect(), ENCHANTED_CREATURE) â€” "can't be the target of spells" reuses Dense Foliage's marker scoped to the enchanted creature; the new CantBeEnchantedByOtherAurasEffect marker is enforced at the Aura-spell targeting path |
 | Predicate-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedPermanentConditionalEffect(PermanentHasSubtypePredicate(HUMAN), StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE), EnchantedCreatureCantAttackOrBlockEffect()) â€” composes existing effects, +2/+2 if Human, can't attack/block otherwise |

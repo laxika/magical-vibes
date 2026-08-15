@@ -342,6 +342,26 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("causes the controller to lose life on their own discard")
+        void causesControllerLifeLossOnDiscard() {
+            Permanent enchantment = createPermanent("Midnight Oil");
+            var effect = new LoseLifeEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            int lifeBefore = gd.getLife(player1Id);
+
+            when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(enchantment, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore - 1);
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+
+        @Test
         @DisplayName("does not change life when player life can't change")
         void noLifeLossWhenPrevented() {
             Permanent enchantment = createPermanent("Liliana's Caress");

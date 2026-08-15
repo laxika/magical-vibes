@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
@@ -98,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEach
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -364,6 +366,20 @@ public class TriggerCollectionService {
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.text(desc + " triggers."));
                     log.info("Game {} - {} generic emblem spell-cast trigger queued", gameData.id, desc);
+                } else if (effect instanceof DealDamageToAnyTargetOnControllerSpellCastEffect damageTrigger) {
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    Card source = emblem.sourceCard();
+                    Card sourceCard = source != null ? source : spellCard;
+                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            sourceCard,
+                            emblem.controllerId(),
+                            new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(damageTrigger.damage())))
+                    ));
+                    gameLogService.append(gameData,
+                            GameLog.text(desc + " triggers — choose a target for " + damageTrigger.damage() + " damage."));
+                    log.info("Game {} - {} damage trigger queued ({})",
+                            gameData.id, desc, damageTrigger.damage());
                 }
             }
         }
@@ -2933,6 +2949,36 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Collects abilities that trigger when a creature pays a Vehicle's crew cost. The Vehicle is
+     * carried as the triggering permanent so the triggered effect can resolve against that object.
+     */
+    public void checkCrewsVehicleTriggers(GameData gameData, Permanent crewingCreature, Permanent vehicle) {
+        if (vehicle == null || !vehicle.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, crewingCreature.getId());
+        if (controllerId == null) {
+            return;
+        }
+        for (CardEffect effect : crewingCreature.getCard().getEffects(EffectSlot.ON_CREWS_VEHICLE)) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    crewingCreature.getCard(),
+                    controllerId,
+                    crewingCreature.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    crewingCreature.getId()
+            );
+            entry.setTriggeringPermanentId(vehicle.getId());
+            gameData.pendingActivatedAbilityCostTriggers.add(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(crewingCreature.getCard()));
+            log.info("Game {} - {} triggers when it crews {}",
+                    gameData.id, crewingCreature.getCard().getName(), vehicle.getCard().getName());
+        }
+    }
+
+    /**
      * For ally/opponent becomes-tapped slots: bake the tapped permanent's controller as
      * {@code targetId} only when the resolved effect deals damage to
      * {@link DamageRecipient#TRIGGERING_PERMANENT_CONTROLLER}. Other effects keep {@code null}
@@ -3453,6 +3499,19 @@ public class TriggerCollectionService {
 
         collectGraveyardOpponentLifeGainTriggers(gameData, gainingPlayerId);
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+    }
+
+    /** Fires triggers for a player's positive energy-counter change. */
+    public void checkEnergyGainTriggers(GameData gameData, UUID gainingPlayerId, int energyGainedAmount) {
+        if (energyGainedAmount <= 0) return;
+
+        var ctx = new TriggerContext.EnergyGain(gainingPlayerId, energyGainedAmount);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(gainingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, gainingPlayerId, EffectSlot.ON_CONTROLLER_GETS_ENERGY, ctx);
+        }
     }
 
     private void collectGraveyardOpponentLifeGainTriggers(GameData gameData, UUID gainingPlayerId) {
@@ -5398,6 +5457,33 @@ public class TriggerCollectionService {
                         resolved, ctx);
             }
         }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
+                    if (resolved == null) continue;
+
+                    if (resolved instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, controllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved))
+                        ));
+                    }
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard artifact trigger queued", gameData.id, card.getName());
+                }
+            }
+        }
     }
 
     /** Fires once for a batch of one or more tokens entering under a player's control. */
@@ -5656,6 +5742,8 @@ public class TriggerCollectionService {
             }
         }
 
+        collectEmblemAllyLandEntersTriggers(gameData, landControllerId, enteringLand);
+
         // Graveyard-resident landfall triggers (GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Reach of Branches).
         List<Card> graveyard = gameData.playerGraveyards.get(landControllerId);
         if (graveyard != null) {
@@ -5681,6 +5769,25 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     log.info("Game {} - {} graveyard landfall trigger queued", gameData.id, card.getName());
                 }
+            }
+        }
+    }
+
+    private void collectEmblemAllyLandEntersTriggers(GameData gameData, UUID landControllerId,
+                                                      Card enteringLand) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(landControllerId)) continue;
+
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof DrawCardOnAllyLandEntersEffect)) continue;
+
+                Card source = emblem.sourceCard();
+                Card sourceCard = source != null ? source : enteringLand;
+                gameData.queueMayAbility(sourceCard, emblem.controllerId(),
+                        new MayEffect(new DrawCardEffect(1), "Draw a card?"));
+                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                gameLogService.append(gameData, GameLog.text(description + " triggers."));
+                log.info("Game {} - {} landfall draw trigger queued", gameData.id, description);
             }
         }
     }
