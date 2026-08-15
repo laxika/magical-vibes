@@ -21,10 +21,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -1763,6 +1765,24 @@ class EasyAiDecisionEngineTest {
                 island.setSummoningSick(false);
                 testGd.playerBattlefields.get(aiTestPlayer.getId()).add(island);
             }
+        }
+
+        @Test
+        @DisplayName("Easy AI uses Pyrokinesis's hand-exile alternate cost")
+        void usesHandExileAlternateCost() {
+            giveAiPriorityLocal();
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            target.setSummoningSick(false);
+            Pyrokinesis pyrokinesis = new Pyrokinesis();
+            LightningBolt redCard = new LightningBolt();
+            testHarness.setHand(aiTestPlayer, List.of(pyrokinesis, redCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId())).containsExactly(redCard);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.RED)).isZero();
         }
 
         @Test

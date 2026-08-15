@@ -1140,7 +1140,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID fSacrifice = plan.sacrificePermanentId;
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
-        final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
+        final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(
+                gameData, plan.card, idx, fXValue, plan.targetingTax);
         final List<Integer> fDiscardHandCardIndices =
                 chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);

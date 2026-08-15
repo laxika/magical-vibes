@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,15 +19,21 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
@@ -1499,6 +1506,9 @@ public abstract class AiDecisionEngine {
         if (!canAffordSpell(gameData, card, virtualPool)) {
             return false;
         }
+        if (isUnsupportedAlternateHandOnlyRoute(gameData, card, virtualPool)) {
+            return false;
+        }
         // Non-mana additional costs (sacrifice / graveyard-exile) — the engine's single
         // satisfiability query, shared with the MCTS simulator so the two can never disagree.
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, aiPlayer.getId(), card)) {
@@ -1540,6 +1550,77 @@ public abstract class AiDecisionEngine {
         int minXPolicy = new ManaCost(card.getManaCost()).hasX() ? 1 : 0;
         return actionAvailabilityService.isCardPlayable(gameData, aiPlayer.getId(), card, virtualPool,
                 extraCost + minXPolicy);
+    }
+
+    /**
+     * Returns true when the engine found only an alternate hand cast that this AI cannot encode in
+     * a regular play-card request. The AI supports alternate costs that select one card from hand;
+     * unsupported routes are filtered out instead of being sent as ordinary mana casts.
+     */
+    private boolean isUnsupportedAlternateHandOnlyRoute(GameData gameData, Card card,
+                                                         ManaPool virtualPool) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || canPayPrintedManaCost(gameData, card, virtualPool, null, 0)) {
+            return false;
+        }
+        return !isAlternateHandCastSupportedByAi(alternate);
+    }
+
+    /**
+     * Checks the printed or selected modal mana cost against the AI's virtual pool. This is kept
+     * separate from the engine playability query because that query also includes alternate costs.
+     */
+    private boolean canPayPrintedManaCost(GameData gameData, Card card, ManaPool virtualPool,
+                                          Integer xValue, int targetingTax) {
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return false;
+        }
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 1) : 0;
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        costModifier += targetingTax;
+        return cost.hasX()
+                ? cost.canPayWithAdditionalGenericCost(virtualPool, effectiveXValue, costModifier)
+                : cost.canPay(virtualPool, costModifier);
+    }
+
+    /**
+     * Returns whether an alternate hand cost should replace the printed mana cost for this cast.
+     * The current request format carries the selected hand card in its discard index field.
+     */
+    protected boolean shouldUseAlternateHandCast(GameData gameData, Card card, Integer xValue,
+                                                 int targetingTax) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null
+                || !isAlternateHandCastSupportedByAi(alternate)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)) {
+            return false;
+        }
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        return !canPayPrintedManaCost(gameData, card, virtualPool, xValue, targetingTax);
+    }
+
+    private boolean isAlternateHandCastSupportedByAi(AlternateHandCast alternate) {
+        ExileCardsFromHandCastingCost exileCost = alternate.getCost(ExileCardsFromHandCastingCost.class).orElse(null);
+        RevealCardsFromHandCastingCost revealCost = alternate.getCost(RevealCardsFromHandCastingCost.class).orElse(null);
+        if (exileCost == null && revealCost == null) {
+            return false;
+        }
+        if (exileCost != null && (exileCost.count() != 1 || exileCost.manaValueEqualsX())) {
+            return false;
+        }
+        return alternate.getCost(SacrificePermanentsCost.class).isEmpty()
+                && alternate.getCost(TapUntappedPermanentsCost.class).isEmpty()
+                && alternate.getCost(ReturnPermanentsCost.class).isEmpty()
+                && alternate.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isEmpty();
     }
 
     /**
@@ -1607,14 +1688,48 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Chooses a hand card to pay a spell's "discard a card" additional cast cost (e.g. Seize
-     * the Spoils), or null when the spell has no such cost. Legal by construction — indices come
-     * from the engine's own {@code CastingCostService.validDiscardCostIndices}. Also returns null
-     * when the cost is unpayable; {@link #isSpellCastable} filters such spells out beforehand.
+     * Chooses a hand card for a spell's discard additional cost or a supported alternate hand
+     * casting cost. Legal by construction — indices come from the engine's own cost predicates.
+     * Returns null when neither route is available.
      */
-    protected Integer chooseDiscardCostIndex(GameData gameData, Card card) {
+    protected Integer chooseDiscardCostIndex(GameData gameData, Card card, int spellCardIndex,
+                                             Integer xValue, int targetingTax) {
         List<Integer> valid = castingCostService.validDiscardCostIndices(gameData, aiPlayer.getId(), card);
-        return valid == null || valid.isEmpty() ? null : valid.get(0);
+        if (valid != null) {
+            return valid.isEmpty() ? null : valid.get(0);
+        }
+        if (!shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return null;
+        }
+        return findAlternateHandCastCardIndex(gameData, card, spellCardIndex);
+    }
+
+    private Integer findAlternateHandCastCardIndex(GameData gameData, Card card, int spellCardIndex) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null) {
+            return null;
+        }
+        ExileCardsFromHandCastingCost exileCost = alternate.getCost(ExileCardsFromHandCastingCost.class).orElse(null);
+        RevealCardsFromHandCastingCost revealCost = alternate.getCost(RevealCardsFromHandCastingCost.class).orElse(null);
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (i == spellCardIndex || candidate.getId().equals(card.getId())) {
+                continue;
+            }
+            if (exileCost != null
+                    && (exileCost.predicate() == null
+                    || !predicateEvaluationService.matchesCardPredicate(candidate, exileCost.predicate(), candidate.getId()))) {
+                continue;
+            }
+            if (revealCost != null
+                    && (revealCost.predicate() == null
+                    || !predicateEvaluationService.matchesCardPredicate(candidate, revealCost.predicate(), candidate.getId()))) {
+                continue;
+            }
+            return i;
+        }
+        return null;
     }
 
     /**
@@ -2366,6 +2481,9 @@ public abstract class AiDecisionEngine {
     }
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return false;
+        }
         String manaCost = manaCostForSpell(card, xValue);
         if (manaCost == null) return false;
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;

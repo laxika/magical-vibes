@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
@@ -130,6 +131,31 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
+
+    @Test
+    @DisplayName("Hard AI uses Pyrokinesis's hand-exile alternate cost")
+    void usesHandExileAlternateCost() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setSummoningSick(false);
+        Pyrokinesis pyrokinesis = new Pyrokinesis();
+        LightningBolt redCard = new LightningBolt();
+        harness.setHand(player1, List.of(pyrokinesis, redCard));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, target.getId(), 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(redCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
 
     @Test
     @DisplayName("Hard AI co-selects a Dominate target within the announced X")

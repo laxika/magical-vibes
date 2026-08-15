@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -174,6 +176,24 @@ class MediumAiDecisionEngineTest {
         card.setPower(2);
         card.setToughness(2);
         return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI uses Pyrokinesis's hand-exile alternate cost")
+    void usesHandExileAlternateCost() {
+        giveAiPriority();
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        target.setSummoningSick(false);
+        Pyrokinesis pyrokinesis = new Pyrokinesis();
+        LightningBolt redCard = new LightningBolt();
+        harness.setHand(aiPlayer, List.of(pyrokinesis, redCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).containsExactly(redCard);
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.RED)).isZero();
     }
 
     @Test

@@ -4952,6 +4952,9 @@ public class SpellCastingService {
         // the normal path when creatures were tapped for it.
         if ((convokeContributions == null || convokeContributions.isEmpty())
                 && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)) {
+            if (!cost.canPayAsGeneric(pool, effectiveXValue, additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay spell");
+            }
             cost.payAsGeneric(pool, effectiveXValue, additionalCost);
             return before - pool.getTotalAllMana();
         }
@@ -4960,9 +4963,31 @@ public class SpellCastingService {
 
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)
         // Use the alternative cost if the normal cost can't be paid but the alternative can
-        boolean normallyPayable = cost.hasX()
-                ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost)
-                : cost.canPay(pool, additionalCost);
+        boolean normallyPayable;
+        if (convokeContributions != null && !convokeContributions.isEmpty()) {
+            normallyPayable = cost.canPayWithConvoke(
+                    pool, additionalCost + (cost.hasX() ? effectiveXValue : 0), convokeContributions);
+        } else if (cost.hasX()) {
+            normallyPayable = flags.hasRestricted()
+                    ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost,
+                            flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(),
+                            flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(),
+                            flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(),
+                            flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
+                            flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
+                            flags.subtypeCreatureSourceSpellOrAbilityContext())
+                    : cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
+        } else {
+            normallyPayable = flags.hasRestricted()
+                    ? cost.canPay(pool, effectiveXValue, flags.isArtifact(), flags.isMyr(),
+                            flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(),
+                            flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(),
+                            flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly(), false,
+                            flags.legendarySpellOnly(), flags.manaValueAtLeastFour(),
+                            flags.subtypeOrPlaneswalkerSpellContext(),
+                            flags.subtypeCreatureSourceSpellOrAbilityContext())
+                    : cost.canPay(pool, additionalCost);
+        }
         if (!normallyPayable) {
             String altCostStr = castingCostService.findAffordableAlternativeCostFromBattlefield(
                     gameData, playerId, card, pool, additionalCost);
@@ -4978,6 +5003,7 @@ public class SpellCastingService {
             if (!suffix.isEmpty()) {
                 throw new IllegalStateException("Not enough mana to pay escalate cost");
             }
+            throw new IllegalStateException("Not enough mana to pay spell");
         }
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before

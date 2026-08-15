@@ -272,7 +272,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
-        final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
+        final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(
+                gameData, card, cardIndex, xValue, targetingTax);
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
@@ -440,7 +441,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
-        final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
+        final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(
+                gameData, card, cardIndex, xValue, targetingTax);
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);

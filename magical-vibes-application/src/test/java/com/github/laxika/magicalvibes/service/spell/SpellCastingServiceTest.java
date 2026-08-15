@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -342,6 +345,24 @@ class SpellCastingServiceTest {
                     .hasMessage("Card is not playable");
 
             verifyNoInteractions(battlefieldEntryService, turnProgressionService, triggerCollectionService);
+        }
+
+        @Test
+        @DisplayName("Rejects an unpayable normal cost without changing the mana pool")
+        void rejectsUnpayableNormalCostWithoutChangingManaPool() {
+            Card spell = createInstant("Alternate Spell", "{R}");
+            spell.addCastingOption(new AlternateHandCast(List.of(
+                    new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red"))));
+            setHand(player1Id, List.of(spell));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null, null, null, false, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Not enough mana to pay spell");
+
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(spell);
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

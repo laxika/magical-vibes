@@ -614,6 +614,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            if (validDiscardIndices == null) {
+                discardHandCardIndex = chooseDiscardCostIndex(
+                        gameData, card, cardIndex, xValue, targetingTax);
+                if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)
+                        && discardHandCardIndex == null) {
+                    telemetry.recordSkip("spell: alternate hand cost selection unavailable", card.getName());
+                    continue;
+                }
+            }
+
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
             if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
