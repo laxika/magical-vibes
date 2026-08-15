@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -176,6 +178,48 @@ class EasyAiDecisionEngineTest {
         card.setPower(2);
         card.setToughness(2);
         return card;
+    }
+
+    @Test
+    @DisplayName("Easy AI uses Delve cards to reduce a spell's generic mana cost")
+    void castsDelveSpellWithGraveyardReduction() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        FakeConnection aiConnection = new FakeConnection("ai-easy-delve-test");
+        testHarness.getSessionManager().registerPlayer(
+                aiConnection, testAiPlayer.getId(), testAiPlayer.getUsername());
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        for (int i = 0; i < 4; i++) {
+            Permanent forest = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Forest());
+            forest.setSummoningSick(false);
+        }
+        HootingMandrills mandrills = new HootingMandrills();
+        testHarness.setHand(testAiPlayer, List.of(mandrills));
+        testHarness.setGraveyard(testAiPlayer, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mandrills);
+        assertThat(testGameData.playerGraveyards.get(testAiPlayer.getId())).hasSize(3);
+        assertThat(testGameData.getPlayerExiledCards(testAiPlayer.getId())).hasSize(2);
     }
 
     @Nested

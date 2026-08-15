@@ -247,6 +247,14 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return false;
+            }
+        }
+        int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
+
         if (!canAffordSelectedSpellTarget(
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
@@ -259,10 +267,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                gameData, card, xValue, targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }
@@ -455,6 +464,14 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return false;
+            }
+        }
+        int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
+
         if (!canAffordSelectedSpellTarget(
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
@@ -467,10 +484,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                gameData, card, xValue, targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }

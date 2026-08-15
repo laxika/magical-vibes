@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
@@ -158,6 +159,36 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(redCard);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Hard AI uses Delve cards to reduce a spell's generic mana cost")
+    void castsDelveSpellWithGraveyardReduction() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        for (int i = 0; i < 4; i++) {
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+            forest.setSummoningSick(false);
+        }
+
+        HootingMandrills mandrills = new HootingMandrills();
+        harness.setHand(player1, List.of(mandrills));
+        harness.setGraveyard(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mandrills);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 
     @Test

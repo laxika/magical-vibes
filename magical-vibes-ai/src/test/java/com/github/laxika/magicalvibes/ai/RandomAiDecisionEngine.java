@@ -614,6 +614,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            if (hasDelveCost(card)) {
+                exileGraveyardCardIndices = selectDelveGraveyardIndices(
+                        gameData, card, xValue, targetingTax);
+                if (exileGraveyardCardIndices == null) {
+                    telemetry.recordSkip("spell: Delve cost unpayable", card.getName());
+                    continue;
+                }
+            }
+            int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
+
             if (validDiscardIndices == null) {
                 discardHandCardIndex = chooseDiscardCostIndex(
                         gameData, card, cardIndex, xValue, targetingTax);
@@ -626,7 +636,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
-            if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+            if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
             if (targetId != null
@@ -651,7 +661,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         targetId = null;
                         break;
                     }
-                    if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax)) {
+                    if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax, delveReduction)) {
                         return true;
                     }
                     currentTargets = findRandomTargets(gameData, card);
@@ -661,7 +671,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
-            List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+            List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                    gameData, card, xValue, targetingTax, delveReduction);
             if (convokeCreatureIds == null) {
                 telemetry.recordSkip("spell: convoke cost unpayable", card.getName());
                 continue;

@@ -1107,6 +1107,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return null;
+            }
+        }
+
         if (!canAffordSelectedSpellTarget(
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return null;
@@ -1125,11 +1132,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private boolean executeSpellCast(GameData gameData, SpellCastingPlan plan, String logLabel) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
-        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax)) {
+        int delveReduction = hasDelveCost(plan.card) && plan.exileGraveyardCardIndices != null
+                ? plan.exileGraveyardCardIndices.size() : 0;
+        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction)) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
-                gameData, plan.card, plan.xValue, plan.targetingTax);
+                gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }
@@ -2782,15 +2791,22 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.info("AI (Hard): Burn-to-face lethal! Casting {} for {} damage in game {}",
                     burnCard.getName(), raceEvaluator.getBurnToFaceDamage(burnCard), gameId);
 
+            List<Integer> delveIndices = hasDelveCost(burnCard)
+                    ? selectDelveGraveyardIndices(gameData, burnCard, null, 0) : List.of();
+            if (delveIndices == null) {
+                continue;
+            }
+            int delveReduction = delveIndices.size();
+
             // Cast the burn spell targeting the opponent player
-            if (tapManaForSpell(gameData, burnCard, null, 0)) {
+            if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction)) {
                 return true; // Mana ability triggered a pending choice
             }
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
                     buildSpellPlayCardRequest(idx, null, targetId, null, null, null, null, null,
-                            null, null, null, List.of(), beholdSelection)));
+                            delveIndices, null, null, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {

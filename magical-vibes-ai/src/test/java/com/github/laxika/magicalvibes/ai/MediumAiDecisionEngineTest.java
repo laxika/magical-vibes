@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
@@ -167,6 +168,30 @@ class MediumAiDecisionEngineTest {
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    @Test
+    @DisplayName("Medium AI uses Delve cards to reduce a spell's generic mana cost")
+    void castsDelveSpellWithGraveyardReduction() {
+        giveAiPriority();
+        for (int i = 0; i < 4; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+        }
+
+        HootingMandrills mandrills = new HootingMandrills();
+        harness.setHand(aiPlayer, List.of(mandrills));
+        harness.setGraveyard(aiPlayer, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mandrills);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(2);
     }
 
     @Test

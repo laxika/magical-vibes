@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -1609,9 +1610,38 @@ public abstract class AiDecisionEngine {
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
         costModifier += targetingTax;
-        return cost.hasX()
-                ? cost.canPayWithAdditionalGenericCost(virtualPool, effectiveXValue, costModifier)
-                : cost.canPay(virtualPool, costModifier);
+        return canPayManaCostWithDelve(gameData, card, cost, virtualPool,
+                cost.hasX() ? effectiveXValue : null, costModifier);
+    }
+
+    protected boolean hasDelveCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream().anyMatch(DelveCost.class::isInstance);
+    }
+
+    private boolean canPayManaCostWithDelve(GameData gameData, Card card, ManaCost cost,
+                                            ManaPool pool, Integer xValue, int costModifier) {
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
+        int maximumDelveReduction = hasDelveCost(card)
+                ? castingCostService.maximumDelveReduction(
+                        gameData, aiPlayer.getId(), card, effectiveXValue, costModifier)
+                : 0;
+        for (int delveReduction = 0; delveReduction <= maximumDelveReduction; delveReduction++) {
+            if (canPayManaCostWithDelveReduction(
+                    card, cost, pool, effectiveXValue, costModifier, delveReduction)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean canPayManaCostWithDelveReduction(Card card, ManaCost cost, ManaPool pool,
+                                                      int xValue, int costModifier,
+                                                      int delveReduction) {
+        boolean canPay = cost.hasX()
+                ? cost.canPayWithAdditionalGenericCost(pool, xValue, costModifier - delveReduction)
+                : cost.canPay(pool, costModifier - delveReduction);
+        return canPay && (!card.isRequiresCreatureMana()
+                || cost.canPayCreatureOnly(pool, costModifier - delveReduction));
     }
 
     /**
@@ -1675,11 +1705,8 @@ public abstract class AiDecisionEngine {
                     ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                     : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
             costModifier += targetingTax - targetReduction;
-            if (!validationCost.canPay(virtualPool, costModifier)) {
-                return false;
-            }
-            return !card.isRequiresCreatureMana()
-                    || validationCost.canPayCreatureOnly(virtualPool, costModifier);
+            return canPayManaCostWithDelve(
+                    gameData, card, validationCost, virtualPool, xValue, costModifier);
         }
 
         if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
@@ -1696,7 +1723,8 @@ public abstract class AiDecisionEngine {
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
-        return validationCost.canPay(virtualPool, costModifier + targetingTax);
+        return canPayManaCostWithDelve(
+                gameData, card, validationCost, virtualPool, xValue, costModifier + targetingTax);
     }
 
     /**
@@ -2154,6 +2182,41 @@ public abstract class AiDecisionEngine {
         return new ArrayList<>(matchingIndices.subList(0, cost.count()));
     }
 
+    /** Selects the smallest number of graveyard cards needed to pay a spell's generic cost with Delve. */
+    protected List<Integer> selectDelveGraveyardIndices(
+            GameData gameData, Card card, Integer xValue, int targetingTax) {
+        if (!hasDelveCost(card)) {
+            return List.of();
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return null;
+        }
+
+        ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        costModifier += targetingTax;
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        int maximumDelveReduction = castingCostService.maximumDelveReduction(
+                gameData, aiPlayer.getId(), card, effectiveXValue, costModifier);
+
+        for (int delveReduction = 0; delveReduction <= maximumDelveReduction; delveReduction++) {
+            if (canPayManaCostWithDelveReduction(
+                    card, cost, virtualPool, effectiveXValue, costModifier, delveReduction)) {
+                List<Integer> selectedIndices = new ArrayList<>(delveReduction);
+                for (int i = 0; i < delveReduction; i++) {
+                    selectedIndices.add(i);
+                }
+                return selectedIndices;
+            }
+        }
+        return null;
+    }
+
     // ===== Modal Spell Handling (ChooseOneEffect) =====
 
     /**
@@ -2504,12 +2567,18 @@ public abstract class AiDecisionEngine {
     }
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
+        return tapManaForSpell(gameData, card, xValue, targetingTax, 0);
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction) {
         if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
             return false;
         }
         String manaCost = manaCostForSpell(card, xValue);
         if (manaCost == null) return false;
-        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction;
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {
@@ -2535,7 +2604,12 @@ public abstract class AiDecisionEngine {
      * when the current state cannot pay the cost with any legal convoke selection
      */
     protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
-                                                  int targetingTax) {
+                                                   int targetingTax) {
+        return selectConvokeCreatureIds(gameData, card, xValue, targetingTax, 0);
+    }
+
+    protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
+                                                   int targetingTax, int delveReduction) {
         String manaCost = manaCostForSpell(card, xValue);
         if (!hasConvokeAbility(gameData, card) || manaCost == null) {
             return List.of();
@@ -2550,7 +2624,7 @@ public abstract class AiDecisionEngine {
                 + targetingTax;
         ManaCost cost = new ManaCost(manaCost);
         int additionalGenericCost = costModifier
-                + (cost.hasX() && xValue != null ? xValue : 0);
+                + (cost.hasX() && xValue != null ? xValue : 0) - delveReduction;
         List<ManaColor> contributions = new ArrayList<>();
         if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
             return List.of();

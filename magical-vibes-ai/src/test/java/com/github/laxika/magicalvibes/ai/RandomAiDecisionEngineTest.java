@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
+import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
@@ -154,6 +155,42 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(adnate);
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void castsDigThroughTimeUsingDelve() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(aiPlayer, new Island());
+        }
+        DigThroughTime digThroughTime = new DigThroughTime();
+        harness.setHand(aiPlayer, List.of(digThroughTime));
+        harness.setGraveyard(aiPlayer, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(digThroughTime);
+        assertThat(gameData.playerGraveyards.get(aiPlayer.getId())).hasSize(4);
+        assertThat(gameData.getPlayerExiledCards(aiPlayer.getId())).hasSize(4);
     }
 
     @Test

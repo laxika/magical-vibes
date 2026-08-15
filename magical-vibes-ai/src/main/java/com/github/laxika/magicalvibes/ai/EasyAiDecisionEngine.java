@@ -248,6 +248,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return false;
+            }
+        }
+        int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
+
         if (!canAffordSelectedSpellTarget(
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
@@ -259,10 +267,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                gameData, card, xValue, targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }
@@ -417,6 +426,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return false;
+            }
+        }
+        int delveReduction = hasDelveCost(card) ? exileGraveyardCardIndices.size() : 0;
+
         if (!canAffordSelectedSpellTarget(
                 gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
             return false;
@@ -428,10 +445,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(gameData, card, xValue, targetingTax);
+        List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
+                gameData, card, xValue, targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }
