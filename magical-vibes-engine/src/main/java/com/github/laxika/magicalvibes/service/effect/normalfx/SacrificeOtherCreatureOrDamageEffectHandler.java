@@ -40,7 +40,8 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
 
                 if (otherCreatureIds.isEmpty()) {
                     // Can't sacrifice — deal damage to controller
-                    destructionSupport.dealNoncombatDamageToPlayer(gameData, controllerId, e.damage(), cardName, entry.getCard().getColor());
+                    destructionSupport.dealNoncombatDamageToPlayer(gameData, controllerId, e.damage(), cardName,
+                            entry.getEffectiveDamageSourceCard());
                     gameOutcomeService.checkWinCondition(gameData);
                     return;
                 }

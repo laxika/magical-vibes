@@ -74,6 +74,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -1110,7 +1112,15 @@ public class AbilityActivationService {
      * the stack entry's flat target list.
      */
     private boolean isMultiTargetGraveyardAbility(ActivatedAbility ability) {
-        return ability.isMultiTarget() || ability.getMaxTargets() > 1;
+        return !targetsGraveyardCards(ability)
+                && (ability.isMultiTarget() || ability.getMaxTargets() > 1);
+    }
+
+    private boolean targetsGraveyardCards(ActivatedAbility ability) {
+        return ability.getEffects().stream().anyMatch(effect ->
+                effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect
+                        || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
     }
 
     /**
@@ -1584,7 +1594,8 @@ public class AbilityActivationService {
         validateNotBlockedByCombatActionLock(gameData, ability);
 
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
-        targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, graveyardCardIds);
+        targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
+                graveyardCardIds, card.getId(), null, ability.getMultiTargetConstraint());
 
         // Pay mana cost (throws before mutating the pool if it can't be afforded)
         String abilityCost = ability.getManaCost();
@@ -2225,12 +2236,12 @@ public class AbilityActivationService {
                 effectiveXValue, damageAssignments);
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
-        boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && abilityEffects.stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean targetsGraveyard = targetZone == Zone.GRAVEYARD && targetsGraveyardCards(ability);
         if (targetsGraveyard && (ability.isMultiTarget() || (targetIds != null && !targetIds.isEmpty()))) {
             targetLegalityService.validateMultiTargetGraveyardAbility(
                     gameData, playerId, abilityEffects,
-                    targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), effectiveXValue);
+                    targetIds != null ? targetIds : List.of(), permanent.getCard().getId(), effectiveXValue,
+                    ability.getMultiTargetConstraint());
         } else if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
                     targetIds != null ? targetIds : List.of(), permanent.getCard(), effectiveXValue);

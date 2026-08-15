@@ -1721,6 +1721,7 @@ public class CombatDamageService {
                             damagedCreatureId,
                             source.getId()
                     );
+                    trigger.setSourcePermanentSnapshot(new Permanent(source));
                     trigger.setNonTargeting(true);
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
@@ -2798,6 +2799,7 @@ public class CombatDamageService {
                                                Permanent source, UUID controllerId,
                                                Permanent target, int damage) {
         if (damage <= 0) return;
+        gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.add(source.getId());
         state.combatDamageDealerControllers.putIfAbsent(source, controllerId);
         state.combatDamageDealtToCreatures.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target.getId());
         state.combatDamageAmountsToCreatures

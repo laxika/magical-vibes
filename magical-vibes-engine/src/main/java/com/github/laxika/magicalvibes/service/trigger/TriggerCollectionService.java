@@ -691,7 +691,14 @@ public class TriggerCollectionService {
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             boolean needsPermanentTarget = selfCastTriggeredEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            if (needsPlayerTarget || needsPermanentTarget) {
+            boolean needsGraveyardTarget = selfCastTriggeredEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+            if (needsGraveyardTarget && !needsPlayerTarget && !needsPermanentTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects)));
+                log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            } else if (needsPlayerTarget || needsPermanentTarget) {
                 boolean multiTarget = spellCard.getSpellTargets().size() > 1
                         || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
                 if (multiTarget) {
@@ -842,8 +849,12 @@ public class TriggerCollectionService {
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DISCARDS)) {
-                    var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, effect);
-                    if (dispatch(match, EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx)) {
+                    CardEffect resolved = discardedCard == null
+                            ? (effect instanceof TriggeringCardConditionalEffect ? null : effect)
+                            : unwrapTriggeringCardConditional(effect, discardedCard, gameData, discardingPlayerId);
+                    if (resolved == null) continue;
+                    var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, resolved);
+                    if (dispatch(match, EffectSlot.ON_CONTROLLER_DISCARDS, resolved, ctx)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -1601,6 +1612,11 @@ public class TriggerCollectionService {
     // ── Ally-permanent-sacrificed triggers ──────────────────────────────
 
     public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
+        checkAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, null);
+    }
+
+    public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
+                                                     Card sacrificedCard, Card castingSpell) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
         if (battlefield != null) {
             var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
@@ -1621,7 +1637,7 @@ public class TriggerCollectionService {
         checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
         // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
-        collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+        collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
         playerInputService.processNextMayAbility(gameData);
     }
@@ -1662,13 +1678,14 @@ public class TriggerCollectionService {
      * ({@link CardEffect#onlyTriggersOnSacrifice()}). Called from the sacrifice path after
      * the permanent has already left the battlefield.
      */
-    private void collectSelfSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
+    private void collectSelfSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
+                                               Card sacrificedCard, Card castingSpell) {
         if (sacrificedCard == null) return;
         List<CardEffect> deathEffects = sacrificedCard.getEffects(EffectSlot.ON_DEATH);
         if (deathEffects == null || deathEffects.isEmpty()) return;
 
         boolean wasCreature = sacrificedCard.hasType(CardType.CREATURE);
-        var ctx = new TriggerContext.SelfDeath(sacrificedCard, sacrificingPlayerId, wasCreature, null);
+        var ctx = new TriggerContext.SelfDeath(sacrificedCard, sacrificingPlayerId, wasCreature, null, castingSpell);
         Permanent perm = new Permanent(sacrificedCard);
         for (CardEffect effect : deathEffects) {
             if (!effect.onlyTriggersOnSacrifice()) continue;
@@ -5508,12 +5525,18 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever an Equipment enters under your control" (ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD).
-     * Simple scan with no per-effect branching: each effect is put straight onto the stack.
      */
     public void checkAllyEquipmentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
         if (!enteringCard.getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        UUID enteringPermanentId = null;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard() == enteringCard) {
+                enteringPermanentId = permanent.getId();
+                break;
+            }
+        }
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard);
         for (Permanent perm : battlefield) {
             if (perm.getCard() == enteringCard) continue;
@@ -5522,6 +5545,14 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    for (int i = 0; i < triggerCount; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                                perm.getCard(), controllerId, new ArrayList<>(List.of(effect)), perm.getId(), enteringPermanentId));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    }
+                    continue;
+                }
                 for (int i = 0; i < triggerCount; i++) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

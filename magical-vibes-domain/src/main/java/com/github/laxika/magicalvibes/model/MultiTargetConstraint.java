@@ -42,6 +42,10 @@ public enum MultiTargetConstraint {
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */
     ONE_PER_CONTROLLER_IF_ABLE,
+    /** At most one chosen graveyard card may be an instant and at most one may be a sorcery. */
+    AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
+    /** At most one chosen graveyard card may be a creature and at most one may be a land. */
+    AT_MOST_ONE_CREATURE_AND_ONE_LAND,
     /** The second target must be another creature or land of the Aura's current host type. */
     SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
     /** At most one selected card may be assigned to each color. */

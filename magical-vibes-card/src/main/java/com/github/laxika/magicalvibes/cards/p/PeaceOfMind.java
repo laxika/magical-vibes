@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "33")
 @CardRegistration(set = "EXO", collectorNumber = "13")
+@CardRegistration(set = "EMN", collectorNumber = "36")
 public class PeaceOfMind extends Card {
 
     public PeaceOfMind() {

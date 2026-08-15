@@ -249,6 +249,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_FROM_COLORS, null, false, colors, null, null);
     }
 
+    /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */
+    public static PreventDamageEffect fromNonHumanSources() {
+        return new PreventDamageEffect(PreventionScope.ALL_FROM_NON_HUMAN_SOURCES, null, false, null, null, null);
+    }
+
     /** "Prevent all combat damage this turn except that dealt by matching creatures" (Moonmist). */
     public static PreventDamageEffect allCombatExcept(PermanentPredicate exemptPredicate) {
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT_EXCEPT, null, false, null, exemptPredicate, null);

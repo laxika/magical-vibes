@@ -5,6 +5,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Target opponent's library until instant/sorcery + free cast | `c/ChaosWand.java` | `{4}`+tap `ActivatedAbility` with `PlayerPredicateTargetFilter(OPPONENT)` + `RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect()` — the target opponent's library is revealed from the top until an instant or sorcery is found, the controller may cast it for free, and the remaining cards are bottomed randomly |
+| Opponent's first spell each turn — exile top card and offer a free cast | `m/MindsDilation.java` | ON_OPPONENT_CASTS_SPELL `ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect()` — collector gates on the opponent's per-turn spell count equaling one, carries the caster as non-target context, then exiles that player's top card and offers a nonland card to the enchantment's controller through `MayPlayExiledCardWithoutPayingManaCostEffect` |
 
 ## Artifacts
 
@@ -117,6 +118,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + EquipActivatedAbility |
+| Boost + filtered required blocker equip | `s/SlayersCleaver.java` | STATIC StaticBoostEffect(3, 1, EQUIPPED_CREATURE) + MustBeBlockedByMatchingCreatureIfAbleEffect(Eldrazi) + EquipActivatedAbility("{4}") |
 | Global anthem relative to equipped creature + attach restriction | `k/KondasBanner.java` | `setAttachRestriction(PermanentHasSupertypePredicate(LEGENDARY))` + STATIC `StaticBoostEffect(1, 1, ALL_CREATURES, PermanentSharesColorWithEquippedCreaturePredicate())` + `StaticBoostEffect(1, 1, ALL_CREATURES, PermanentSharesCreatureTypeWithEquippedCreaturePredicate())` + `EquipActivatedAbility("{2}", legendary, message)`. Both anthems cover the equipped creature itself (it shares its own color and types), so it gets +2/+2; the attach restriction is also a state-based check (CR 704.5n) |
 | Color-count boost equip | `c/CivicSaber.java` | STATIC AttachedBoostEffect(AttachedPermanentColorCount(), Fixed(0), EQUIPPED_CREATURE) + equip — equipped creature gets +1/+0 for each of its colors |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |

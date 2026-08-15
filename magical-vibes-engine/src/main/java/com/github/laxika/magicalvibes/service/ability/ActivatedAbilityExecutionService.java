@@ -981,12 +981,12 @@ public class ActivatedAbilityExecutionService {
                     CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
                     boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
                             gameData, playerId, permanent.getId());
-                    if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+                    if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)) {
                         damagePreventionService.applySourceDamagePreventionForPlayer(
                                 gameData, playerId, permanent.getId(), damage,
                                 gameQueryService.getEffectiveColors(gameData, permanent));
                     }
-                    if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
+                    if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
                             || sourceDamagePrevented
                             || gameData.isPreventedFromDealingDamage(permanent.getId())
                             || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
@@ -1117,12 +1117,12 @@ public class ActivatedAbilityExecutionService {
             CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
             boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
                     gameData, playerId, permanent.getId());
-            if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+            if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)) {
                 damagePreventionService.applySourceDamagePreventionForPlayer(
                         gameData, playerId, permanent.getId(), damage,
                         gameQueryService.getEffectiveColors(gameData, permanent));
             }
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
+            if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
                     || sourceDamagePrevented
                     || gameData.isPreventedFromDealingDamage(permanent.getId())
                     || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {

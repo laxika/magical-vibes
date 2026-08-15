@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * controller's library, then hands the pile split to the appropriate player. Reuses the shared card-pile
  * separation flow ({@link PendingPileSeparation} with {@link CardPileDisposition#HAND}); the
  * pile separator and chooser depend on the effect variant, while the chosen pile goes to hand
- * and the other to the graveyard. (Unesh, Criosphinx Sovereign; Steam Augury.)
+ * and the other to the graveyard. (Unesh, Criosphinx Sovereign; Steam Augury; Fortune's Favor.)
  */
 @Slf4j
 @Component
@@ -62,9 +62,9 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             return;
         }
 
-        if (e.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
-            gameLogService.append(gameData,
-                    GameLog.text(playerName + " looks at the top " + revealedCards.size() + " cards of their library."));
+        if (e.faceDownPile()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " looks at the top "
+                    + revealedCards.size() + " cards of their library."));
         } else {
             String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
             gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + "."));
@@ -73,7 +73,10 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))
                 .toList();
-        if (opponentIds.isEmpty()) {
+        UUID opponentId = e.targetedSeparator()
+                ? entry.getTargetId()
+                : opponentIds.size() == 1 ? opponentIds.getFirst() : null;
+        if (opponentIds.isEmpty() || e.targetedSeparator() && opponentId == null) {
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
             for (Card card : revealedCards) {
                 gameData.addCardToHand(controllerId, card);
@@ -81,13 +84,11 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             return;
         }
 
-        UUID opponentId = opponentIds.size() == 1 ? opponentIds.getFirst() : null;
-
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition(),
                 !e.controllerSeparates()));
 
-        if (e.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE && opponentIds.size() > 1) {
+        if (!e.targetedSeparator() && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CuratorOpponentChoice());
             playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponentIds,
                     "Choose an opponent to choose a pile for Curator of Destinies.");
@@ -95,9 +96,14 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         }
 
         UUID separatorId = e.controllerSeparates() ? controllerId : opponentId;
-        String prompt = e.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
-                ? "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile)."
-                : "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).";
+        String prompt;
+        if (e.faceDownPile()) {
+            prompt = e.controllerSeparates()
+                    ? "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile)."
+                    : "Separate the cards into a face-down pile and a face-up pile. Select cards for the face-down pile (unselected form the face-up pile).";
+        } else {
+            prompt = "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).";
+        }
         playerInputService.beginMultiGraveyardChoice(gameData, separatorId, revealedCards, revealedCards.size(), prompt);
     }
 }

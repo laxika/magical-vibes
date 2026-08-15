@@ -252,9 +252,9 @@ public class DestructionSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
-        // Global "whenever a player sacrifices a creature" watchers (Thraximundar) for the
+        // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers for the
         // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
-        triggerCollectionService.checkAnyCreatureSacrificedTriggers(gameData, playerId, sacrificedCard);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard);
     }
 
     /**
@@ -356,12 +356,13 @@ public class DestructionSupport {
     }
 
     public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
-                                              String cardName, CardColor sourceColor) {
+                                              String cardName, Card sourceCard) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
 
         if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor))) {
+                && (gameQueryService.isDamageFromCardSourcePrevented(gameData, sourceCard)
+                    || damagePreventionService.applyColorDamagePreventionForPlayer(
+                            gameData, playerId, sourceCard.getColor()))) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
@@ -543,7 +544,7 @@ public class DestructionSupport {
                     && damage.recipient() == DamageRecipient.CONTROLLER
                     && damage.amount() instanceof Fixed fixed) {
                 dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
-                        entry.getCard().getName(), entry.getCard().getColor());
+                        entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
                     && damage.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
@@ -552,7 +553,7 @@ public class DestructionSupport {
                 UUID victim = entry.getTargetId();
                 if (victim != null) {
                     dealNoncombatDamageToPlayer(gameData, victim, fixed.value(),
-                            entry.getCard().getName(), entry.getCard().getColor());
+                            entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
@@ -665,7 +666,7 @@ public class DestructionSupport {
         boolean destroyed = tryDestroyAndLog(gameData, source, entry.getCard().getName());
         if (destroyed) {
             dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage,
-                    entry.getCard().getName(), entry.getCard().getColor());
+                    entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
             gameOutcomeService.checkWinCondition(gameData);
         }
     }
@@ -674,7 +675,7 @@ public class DestructionSupport {
         UUID controllerId = entry.getControllerId();
         int lifeBefore = gameData.getLife(controllerId);
         dealNoncombatDamageToPlayer(gameData, controllerId, damage,
-                entry.getCard().getName(), entry.getCard().getColor());
+                entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
         gameOutcomeService.checkWinCondition(gameData);
         // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped.
         if (gameData.getLife(controllerId) < lifeBefore) {

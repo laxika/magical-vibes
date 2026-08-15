@@ -807,6 +807,13 @@ public class GraveyardReturnSupport {
                 logVerbPhrase, logSuffix);
     }
 
+    public void processTargetedGraveyardCards(GameData gameData, StackEntry entry, List<UUID> targetCardIds,
+                                                BiConsumer<List<Card>, Card> cardConsumer,
+                                                String logVerbPhrase, String logSuffix) {
+        processTargetedGraveyardTargets(gameData, entry, targetCardIds, cardConsumer,
+                logVerbPhrase, logSuffix);
+    }
+
     public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
                                                 BiConsumer<List<Card>, Card> cardConsumer,
                                                 String logVerbPhrase, String logSuffix) {
@@ -1679,32 +1686,40 @@ public class GraveyardReturnSupport {
         }
 
         // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it. Preserve the
-        // disposition so BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both survive the re-queue.
+        // disposition so BATTLEFIELD (Boneyard Parley), HAND (Unesh), and Fortune's Favor's
+        // face-down/face-up variant all survive the re-queue.
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
                 state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition(),
                 state.controllerChoosesPile()));
 
-        // Phyrexian Portal's piles are face down, so neither the log nor the controller's prompt may
-        // name their cards — both piles are identified by card count alone.
-        boolean faceDown = state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND;
+        // Phyrexian Portal's piles are both face down. For the shared one-face-down flow,
+        // Fortune's Favor uses a face-down Pile 1 while Curator of Destinies uses a face-down Pile 2.
+        boolean bothPilesFaceDown = state.disposition() == CardPileDisposition.SEARCH_ONE_TO_HAND;
         boolean onePileFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE;
-        String pile1Desc = faceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
-        String pile2Desc = faceDown || onePileFaceDown
-                ? describePileSize(pile2)
-                : buildCardPileDescription(state.cards(), pile2);
+        boolean pile1FaceDown = bothPilesFaceDown || onePileFaceDown && state.controllerChoosesPile();
+        boolean pile2FaceDown = bothPilesFaceDown || onePileFaceDown && !state.controllerChoosesPile();
+        String pile1Desc = pile1FaceDown ? describePileSize(pile1) : buildCardPileDescription(state.cards(), pile1);
+        String pile2Desc = pile2FaceDown ? describePileSize(pile2) : buildCardPileDescription(state.cards(), pile2);
 
         UUID separatorId = state.controllerChoosesPile() ? state.targetPlayerId() : state.controllerId();
         UUID chooserId = state.controllerChoosesPile() ? state.controllerId() : state.targetPlayerId();
         String separatorName = gameData.playerIdToName.get(separatorId);
-        if (faceDown) {
+        if (bothPilesFaceDown) {
             gameLogService.append(gameData, GameLog.text(separatorName
                     + " separates the cards into two face-down piles. Pile 1: " + pile1Desc
                     + ". Pile 2: " + pile2Desc + "."));
         } else if (onePileFaceDown) {
             GameLog.Builder pileLog = GameLog.builder().text(separatorName
-                    + " separates the cards into a face-up pile and a face-down pile. Face-up pile: ");
-            appendCardPile(pileLog, state.cards(), pile1);
-            pileLog.text(". Face-down pile: ").text(pile2Desc).text(".");
+                    + " separates the cards into a face-down pile and a face-up pile. ");
+            if (pile1FaceDown) {
+                pileLog.text("Face-down pile: ").text(pile1Desc).text(". Face-up pile: ");
+                appendCardPile(pileLog, state.cards(), pile2);
+            } else {
+                pileLog.text("Face-up pile: ");
+                appendCardPile(pileLog, state.cards(), pile1);
+                pileLog.text(". Face-down pile: ").text(pile2Desc);
+            }
+            pileLog.text(".");
             gameLogService.append(gameData, pileLog.build());
         } else {
             GameLog.Builder pileLog = GameLog.builder().text(separatorName + " separates cards into two piles. Pile 1: ");
@@ -1717,14 +1732,15 @@ public class GraveyardReturnSupport {
 
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
-            case HAND, HAND_AND_BOTTOM -> "put into your hand";
+            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM -> "put into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
             default -> "put onto the battlefield";
         };
         String prompt = onePileFaceDown
-                ? "Choose a pile to " + destText + ". Yes = face-up pile (" + pile1Desc
-                + "), No = face-down pile (" + pile2Desc + ")."
+                ? "Choose a pile to " + destText + ". Yes = "
+                + (pile1FaceDown ? "face-down" : "face-up") + " pile (" + pile1Desc
+                + "), No = " + (pile2FaceDown ? "face-down" : "face-up") + " pile (" + pile2Desc + ")."
                 : "Choose a pile to " + destText + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, chooserId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
@@ -1762,29 +1778,6 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        if (state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
-            boolean chosenPileIsFaceDown = !accepted;
-            for (UUID cardId : chosenPileCardIds) {
-                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
-                if (card != null) {
-                    gameData.addCardToHand(controllerId, card);
-                    if (!chosenPileIsFaceDown) {
-                        gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
-                                " into their hand."));
-                    }
-                }
-            }
-            for (UUID cardId : otherPileCardIds) {
-                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
-                if (card != null) {
-                    gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
-                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
-                            " into their graveyard."));
-                }
-            }
-            return;
-        }
-
         gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
 
         if (state.disposition() == CardPileDisposition.HAND_AND_BOTTOM) {
@@ -1816,13 +1809,23 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        if (state.disposition() == CardPileDisposition.HAND) {
+        if (state.disposition() == CardPileDisposition.HAND
+                || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
+            boolean chosenPileIsFaceDown = state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE
+                    && accepted == state.controllerChoosesPile();
+            if (chosenPileIsFaceDown) {
+                gameLogService.append(gameData, GameLog.text(
+                        controllerName + " puts the face-down pile into their hand."));
+            }
             for (UUID cardId : chosenPileCardIds) {
                 Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
                 if (card != null) {
                     gameData.addCardToHand(controllerId, card);
-                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their hand."));
+                    if (!chosenPileIsFaceDown) {
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                controllerName + " puts ", card, " into their hand."));
+                    }
                 }
             }
             for (UUID cardId : otherPileCardIds) {

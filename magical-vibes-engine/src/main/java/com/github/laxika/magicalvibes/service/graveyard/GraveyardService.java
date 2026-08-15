@@ -224,9 +224,11 @@ public class GraveyardService {
             return false;
         }
         for (Permanent p : bf) {
-            if (p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(DiscardToTopOfLibraryInsteadEffect.class::isInstance)) {
-                return true;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DiscardToTopOfLibraryInsteadEffect replacement
+                        && (!replacement.opponentCausedOnly() || gameData.discardCausedByOpponent)) {
+                    return true;
+                }
             }
         }
         return false;

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "149")
+@CardRegistration(set = "EMN", collectorNumber = "123")
 public class CollectiveDefiance extends Card {
 
     public CollectiveDefiance() {

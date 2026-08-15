@@ -203,6 +203,8 @@ public class GameData {
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
     public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
+    /** Triggered abilities collected while a spell's casting costs are being paid. */
+    public final List<StackEntry> pendingSpellCastCostTriggers = Collections.synchronizedList(new ArrayList<>());
     /** Triggered abilities collected while an activated ability's discard cost is being paid. */
     public final List<StackEntry> pendingActivatedAbilityCostTriggers = Collections.synchronizedList(new ArrayList<>());
     /** Mana-ability activations that can still be undone by the MTGO-style "cancel casting" UI
@@ -326,6 +328,8 @@ public class GameData {
     public boolean preventAllDamageToAllCreatures;
     /** When true, all damage that would be dealt by creatures is prevented this turn (Ethereal Haze). */
     public boolean preventAllDamageByCreatures;
+    /** When true, all damage that would be dealt by non-Human sources is prevented this turn (Repel the Abominable). */
+    public boolean preventAllDamageFromNonHumanSources;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
@@ -1058,6 +1062,9 @@ public class GameData {
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Permanent IDs of creatures that dealt combat damage to a creature this turn. */
+    public final Set<UUID> combatDamageSourcesThatDealtToCreaturesThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which permanents dealt noncombat damage (spells/abilities) to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. Combined with
@@ -2749,6 +2756,7 @@ public class GameData {
         copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
+        copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
@@ -2979,6 +2987,8 @@ public class GameData {
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        copy.combatDamageSourcesThatDealtToCreaturesThisTurn
+                .addAll(this.combatDamageSourcesThatDealtToCreaturesThisTurn);
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.creatureDamageToPlayersThisTurn.forEach((k, v) ->
@@ -3059,6 +3069,7 @@ public class GameData {
         // --- List<StackEntry> (deep copy each StackEntry) ---
         this.stack.forEach(se -> copy.stack.add(new StackEntry(se)));
         this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
+        this.pendingSpellCastCostTriggers.forEach(se -> copy.pendingSpellCastCostTriggers.add(new StackEntry(se)));
         this.pendingActivatedAbilityCostTriggers.forEach(se -> copy.pendingActivatedAbilityCostTriggers.add(new StackEntry(se)));
 
         // --- InteractionState ---

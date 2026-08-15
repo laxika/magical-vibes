@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -92,6 +93,7 @@ public class AdditionalSpellCostService {
             SacrificePermanentCost.class,
             SacrificeMultiplePermanentsCost.class,
             EscalateSacrificeCost.class,
+            EscalateTapCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
             TapAnyNumberOfPermanentsCost.class,
             ReturnAnyNumberOfPermanentsToHandCost.class,
@@ -134,6 +136,7 @@ public class AdditionalSpellCostService {
             SacrificePermanentCost sacrificePermanentCost,
             SacrificeMultiplePermanentsCost sacrificeMultiplePermanentsCost,
             EscalateSacrificeCost escalateSacrificeCost,
+            EscalateTapCost escalateTapCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
@@ -166,6 +169,7 @@ public class AdditionalSpellCostService {
                     || sacrificeCreatureOrPayManaCost != null
                     || sacrificePermanentCost != null || sacrificeMultiplePermanentsCost != null
                     || escalateSacrificeCost != null
+                    || escalateTapCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || returnAnyNumberCost != null
                     || returnPermanentToHand
@@ -181,7 +185,8 @@ public class AdditionalSpellCostService {
 
         /** True when the spell has any per-extra-mode cost. */
         public boolean hasEscalate() {
-            return escalateDiscardCost != null || escalateManaCost != null || escalateSacrificeCost != null;
+            return escalateDiscardCost != null || escalateManaCost != null || escalateSacrificeCost != null
+                    || escalateTapCost != null;
         }
     }
 
@@ -280,6 +285,7 @@ public class AdditionalSpellCostService {
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         SacrificeMultiplePermanentsCost multiPermCost = removeFirst(effects, SacrificeMultiplePermanentsCost.class);
         EscalateSacrificeCost escalateSacrificeCost = removeFirst(effects, EscalateSacrificeCost.class);
+        EscalateTapCost escalateTapCost = removeFirst(effects, EscalateTapCost.class);
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
                 removeFirst(effects, SacrificeAnyNumberOfPermanentsCost.class);
         TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
@@ -309,7 +315,7 @@ public class AdditionalSpellCostService {
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
-                escalateSacrificeCost,
+                escalateSacrificeCost, escalateTapCost,
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnPermanentToHand,
                 returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
@@ -460,6 +466,7 @@ public class AdditionalSpellCostService {
                 case EscalateDiscardCost ignored -> { }
                 case EscalateManaCost ignored -> { }
                 case EscalateSacrificeCost ignored -> { }
+                case EscalateTapCost ignored -> { }
                 // Sacrificing all creatures / permanents you control is legal with zero.
                 case SacrificeAllCreaturesYouControlCost ignored -> { }
                 case SacrificeAllPermanentsYouControlCost ignored -> { }
@@ -599,6 +606,10 @@ public class AdditionalSpellCostService {
         }
         if (costs.escalateSacrificeCost() != null) {
             validateEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
+                    selection.escalateModeCount(), selection.sacrificePermanentIds());
+        }
+        if (costs.escalateTapCost() != null) {
+            validateEscalateTapCost(gameData, player, card, costs.escalateTapCost(),
                     selection.escalateModeCount(), selection.sacrificePermanentIds());
         }
         if (costs.sacrificeAnyNumberCost() != null) {
@@ -1088,6 +1099,25 @@ public class AdditionalSpellCostService {
         for (UUID id : ids) {
             chosen.add(validateSingleSacrificeCost(gameData, player, card, id, "a matching permanent",
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())));
+        }
+        return chosen;
+    }
+
+    /** Validates the tap payment required for each selected mode beyond the first. */
+    public List<Permanent> validateEscalateTapCost(GameData gameData, Player player, Card card,
+                                                    EscalateTapCost cost, int modesChosen,
+                                                    List<UUID> tapPermanentIds) {
+        int required = Math.max(0, modesChosen - 1);
+        List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
+        if (ids.size() != required) {
+            throw new IllegalStateException("Must tap " + required + " permanents to escalate " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate escalate tap targets for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            chosen.add(validateSingleTapCost(gameData, player, card, cost.filter(), id));
         }
         return chosen;
     }

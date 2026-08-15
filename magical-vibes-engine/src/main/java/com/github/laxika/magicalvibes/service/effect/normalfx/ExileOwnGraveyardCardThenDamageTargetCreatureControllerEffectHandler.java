@@ -64,7 +64,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target != null) {
             UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);

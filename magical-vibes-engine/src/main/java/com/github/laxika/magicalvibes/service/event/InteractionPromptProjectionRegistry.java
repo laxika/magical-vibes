@@ -133,6 +133,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
+        register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
+                this::projectSearchOutsideGameOrExileCardChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -746,6 +748,26 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.params().cards()),
                 interaction.messagePrompt(),
                 interaction.messageCanFailToFind());
+    }
+
+    private InteractionPromptMessage projectSearchOutsideGameOrExileCardChoice(
+            GameData gameData, PendingInteraction.SearchOutsideGameOrExileCardChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerSideboards.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.stream()
+                    .filter(entry -> interaction.playerId().equals(entry.ownerId()) && !entry.faceDown())
+                    .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
+                    .map(ExiledCardEntry::card)
+                    .map(cardViewFactory::create)
+                    .forEach(cardViews::add);
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "You may reveal a " + interaction.cardLabel()
+                        + " from outside the game or choose one in face-up exile.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(

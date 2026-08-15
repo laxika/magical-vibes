@@ -422,9 +422,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , sacrificedCard, "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
 
-        // Fire the "whenever a player sacrifices a creature" watchers (Thraximundar) — this
+        // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers; this
         // interactive single-creature-choice path bypasses DestructionSupport.sacrificeAndLog.
-        triggerCollectionService.checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
         // The choice was begun mid-resolution (e.g. Fleshbag Marauder's "each player sacrifices"),
         // so the standard epilogue must run: it resumes the parked resolution entry — otherwise

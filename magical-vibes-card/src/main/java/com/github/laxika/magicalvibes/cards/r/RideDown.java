@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "194")
+@CardRegistration(set = "EMN", collectorNumber = "188")
 public class RideDown extends Card {
 
     public RideDown() {

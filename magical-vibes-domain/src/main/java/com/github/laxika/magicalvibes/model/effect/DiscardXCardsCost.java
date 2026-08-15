@@ -15,11 +15,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param predicate optional restriction every discarded card must match ("discard X land cards" —
  *                  Scorched Earth); {@code null} accepts any card
- * @param label     human-readable description of {@code predicate}, used in rejection messages
+ * @param label           human-readable description of {@code predicate}, used in rejection messages
+ * @param trackManaValue when true, snapshot the total mana value of the discarded cards into the
+ *                       spell's resolution {@code xValue}
  */
-public record DiscardXCardsCost(CardPredicate predicate, String label) implements CostEffect {
+public record DiscardXCardsCost(CardPredicate predicate, String label, boolean trackManaValue) implements CostEffect {
 
     public DiscardXCardsCost() {
-        this(null, null);
+        this(null, null, false);
+    }
+
+    public DiscardXCardsCost(CardPredicate predicate, String label) {
+        this(predicate, label, false);
+    }
+
+    public DiscardXCardsCost(boolean trackManaValue) {
+        this(null, null, trackManaValue);
     }
 }

@@ -239,9 +239,21 @@ public class TargetLegalityService {
 
     public void validateMultiTargetGraveyardAbility(GameData gameData, UUID playerId,
                                                      List<CardEffect> effects, List<UUID> targetCardIds,
+                                                     UUID sourceCardId, Integer xValue,
+                                                     MultiTargetConstraint constraint) {
+        validateMultiTargetGraveyardAbility(gameData, playerId, effects, targetCardIds,
+                sourceCardId, xValue);
+        validateMultiTargetConstraint(gameData, constraint, targetCardIds);
+    }
+
+    public void validateMultiTargetGraveyardAbility(GameData gameData, UUID playerId,
+                                                     List<CardEffect> effects, List<UUID> targetCardIds,
                                                      UUID sourceCardId, Integer xValue) {
         if (targetCardIds == null || targetCardIds.isEmpty()) {
-            boolean zeroTargetsAllowed = xValue != null && xValue == 0 && effects.stream()
+            boolean zeroTargetsAllowed = effects.stream().anyMatch(effect ->
+                    effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                            && returnEffect.minTargets() == 0)
+                    || xValue != null && xValue == 0 && effects.stream()
                     .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect
                             && ((ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect).xScaled());
             if (!zeroTargetsAllowed) {
@@ -1198,6 +1210,14 @@ public class TargetLegalityService {
             validateAtMostOnePerController(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY) {
+            validateAtMostOneInstantAndOneSorcery(gameData, targetIds);
+            return;
+        }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_CREATURE_AND_ONE_LAND) {
+            validateAtMostOneCreatureAndOneLand(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST) {
             validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
             return;
@@ -1234,12 +1254,63 @@ public class TargetLegalityService {
                         }
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
-                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE -> {
+                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
+                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
                         // Handled by early returns above.
                     }
                 }
             }
         }
+    }
+
+    private void validateAtMostOneInstantAndOneSorcery(GameData gameData, List<UUID> targetIds) {
+        int instantCount = 0;
+        int sorceryCount = 0;
+        for (UUID targetId : targetIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+            if (card == null) {
+                continue;
+            }
+            if (card.hasType(CardType.INSTANT) && ++instantCount > 1) {
+                throw new IllegalStateException("You cannot choose more than one instant card");
+            }
+            if (card.hasType(CardType.SORCERY) && ++sorceryCount > 1) {
+                throw new IllegalStateException("You cannot choose more than one sorcery card");
+            }
+        }
+    }
+
+    private void validateAtMostOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {
+        if (!fitsAtMostOneCreatureAndOneLand(gameData, targetIds)) {
+            throw new IllegalStateException("Must target at most one creature and at most one land");
+        }
+    }
+
+    public boolean fitsAtMostOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {
+        int pureCreatures = 0;
+        int pureLands = 0;
+        int duals = 0;
+        for (UUID id : targetIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, id);
+            if (card == null) {
+                continue;
+            }
+            boolean creature = card.hasType(CardType.CREATURE);
+            boolean land = card.hasType(CardType.LAND);
+            if (creature && land) {
+                duals++;
+            } else if (creature) {
+                pureCreatures++;
+            } else if (land) {
+                pureLands++;
+            } else {
+                return false;
+            }
+        }
+        if (pureCreatures > 1 || pureLands > 1) {
+            return false;
+        }
+        return duals <= (1 - pureCreatures) + (1 - pureLands);
     }
 
     private void validateSameCreatureOrLandTypeAsFirstAuraHost(GameData gameData, List<UUID> targetIds) {

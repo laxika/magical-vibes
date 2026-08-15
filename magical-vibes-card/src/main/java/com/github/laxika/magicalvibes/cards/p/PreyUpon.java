@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "200")
 @CardRegistration(set = "M13", collectorNumber = "181")
+@CardRegistration(set = "EMN", collectorNumber = "166")
 public class PreyUpon extends Card {
 
     public PreyUpon() {

@@ -69,7 +69,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     /** CONTROLLER: "deals N damage to you". */
     private void resolveController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s damage to controller is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, entry.getControllerId());
@@ -101,7 +101,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         String cardName = entry.getCard().getName();
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, controllerId);

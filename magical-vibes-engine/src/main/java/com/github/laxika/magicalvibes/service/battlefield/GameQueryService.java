@@ -5489,9 +5489,7 @@ public class GameQueryService {
                 || gameData.isPreventedFromDealingDamage(creature.getId())) {
             return true;
         }
-        for (CardColor color : getEffectiveColors(gameData, creature)) {
-            if (isDamageFromSourcePrevented(gameData, color)) return true;
-        }
+        if (isDamageFromPermanentSourcePrevented(gameData, creature)) return true;
         if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
             return true;
         }
@@ -5560,6 +5558,38 @@ public class GameQueryService {
     public boolean isDamageFromSourcePrevented(GameData gameData, CardColor sourceColor) {
         sourceColor = getDamageSourceColor(gameData, sourceColor);
         return sourceColor != null && gameData.preventDamageFromColors.contains(sourceColor);
+    }
+
+    /** Returns whether damage from the given permanent is prevented by an active source-based effect. */
+    public boolean isDamageFromPermanentSourcePrevented(GameData gameData, Permanent source) {
+        if (!isDamagePreventable(gameData) || source == null) return false;
+        if (gameData.preventAllDamageFromNonHumanSources
+                && !effectiveCreatureSubtypes(gameData, source).contains(CardSubtype.HUMAN)) {
+            return true;
+        }
+        return getEffectiveColors(gameData, source).stream()
+                .anyMatch(color -> isDamageFromSourcePrevented(gameData, color));
+    }
+
+    /** Returns whether damage from the given non-permanent source card is prevented. */
+    public boolean isDamageFromCardSourcePrevented(GameData gameData, Card sourceCard) {
+        if (!isDamagePreventable(gameData) || sourceCard == null) return false;
+        if (gameData.preventAllDamageFromNonHumanSources
+                && !getCardSubtypes(sourceCard, gameData, sourceCard.getOwnerId()).contains(CardSubtype.HUMAN)) {
+            return true;
+        }
+        return isDamageFromSourcePrevented(gameData, sourceCard.getColor());
+    }
+
+    /** Returns whether damage from the source represented by the stack entry is prevented. */
+    public boolean isDamageFromStackEntryPrevented(GameData gameData, StackEntry entry) {
+        if (entry == null) return false;
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null
+                : findPermanentById(gameData, entry.getSourcePermanentId());
+        return source != null
+                ? isDamageFromPermanentSourcePrevented(gameData, source)
+                : isDamageFromCardSourcePrevented(gameData, entry.getEffectiveDamageSourceCard());
     }
 
     /**

@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -358,6 +359,8 @@ public class CombatBlockService {
                 blockerAssignments);
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
+        validateMustBeBlockedByMatchingCreatureIfAbleRequirements(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable, blockerAssignments);
         validateMustBlockIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
@@ -1552,6 +1555,9 @@ public class CombatBlockService {
 
         // One-shot "can block an additional creature this turn" grants (e.g. Act of Heroism).
         int additionalBlocks = creature.getAdditionalBlocksUntilEndOfTurn();
+        if (additionalBlocks == Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
         for (Permanent p : battlefield) {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect effectiveEffect = staticEffectConditionResolver.resolve(gameData, p,
@@ -1764,6 +1770,51 @@ public class CombatBlockService {
                 if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " must be blocked if able");
+                }
+            }
+        }
+    }
+
+    private void validateMustBeBlockedByMatchingCreatureIfAbleRequirements(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<Integer> blockable,
+            List<BlockerAssignment> blockerAssignments) {
+        Map<Integer, Integer> blockerUsage = new HashMap<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            blockerUsage.merge(assignment.blockerIndex(), 1, Integer::sum);
+        }
+
+        for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (!attacker.isAttacking()) continue;
+            int currentAttackerIdx = attackerIdx;
+
+            for (MustBeBlockedByMatchingCreatureIfAbleEffect requirement
+                    : gameQueryService.collectAuraEffects(
+                            gameData, attacker, MustBeBlockedByMatchingCreatureIfAbleEffect.class)) {
+                boolean hasMatchingBlocker = blockerAssignments.stream()
+                        .filter(assignment -> assignment.attackerIndex() == currentAttackerIdx)
+                        .map(assignment -> defenderBattlefield.get(assignment.blockerIndex()))
+                        .anyMatch(blocker -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, blocker, requirement.blockerFilter()));
+                if (hasMatchingBlocker) continue;
+
+                for (int blockerIdx : blockable) {
+                    Permanent blocker = defenderBattlefield.get(blockerIdx);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, blocker, requirement.blockerFilter())) {
+                        continue;
+                    }
+                    int usage = blockerUsage.getOrDefault(blockerIdx, 0);
+                    if (usage >= getMaxBlocksForCreature(gameData, blocker, defenderBattlefield)
+                            || !blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                        continue;
+                    }
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " must be blocked by a matching creature if able");
                 }
             }
         }

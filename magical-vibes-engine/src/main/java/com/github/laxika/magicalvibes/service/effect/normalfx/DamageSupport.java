@@ -115,6 +115,14 @@ public class DamageSupport {
                 || !damageSource.getId().equals(entry.getSourcePermanentId()))) {
             rawDamage *= gameQueryService.getSourceDamageMultiplier(gameData, sourceControllerId, damageSource);
         }
+        boolean sourceDamagePrevented = source != null
+                ? gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
+                : gameQueryService.isDamageFromStackEntryPrevented(gameData, entry);
+        if (sourceDamagePrevented) {
+            Card sourceCard = source != null ? source.getCard() : entry.getEffectiveDamageSourceCard();
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s damage is prevented."));
+            return 0;
+        }
         if (gameQueryService.isDamageByCreaturePrevented(gameData, source)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage dealt by ", source.getCard(), " is prevented."));
             return 0;
@@ -536,8 +544,7 @@ public class DamageSupport {
 
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
         Card source = entry.getEffectiveDamageSourceCard();
-        if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
@@ -588,7 +595,7 @@ public class DamageSupport {
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())
+                && (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)
                     || gameQueryService.hasProtectionFromDamageSource(gameData, target, source,
                         entry.getControllerId()))) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
@@ -600,7 +607,8 @@ public class DamageSupport {
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (gameQueryService.isDamageByCreaturePrevented(gameData, source)
+        if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
+                || gameQueryService.isDamageByCreaturePrevented(gameData, source)
                 || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
         // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
         // including damage from its own activated and triggered abilities.
@@ -805,6 +813,11 @@ public class DamageSupport {
 
     public void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         Card source = entry.getEffectiveDamageSourceCard();
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

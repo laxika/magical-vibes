@@ -180,7 +180,12 @@ public sealed interface TriggerContext {
     }
 
     record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                     Permanent dyingPermanent) implements TriggerContext {}
+                     Permanent dyingPermanent, Card castingSpell) implements TriggerContext {
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, null);
+        }
+    }
 
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.

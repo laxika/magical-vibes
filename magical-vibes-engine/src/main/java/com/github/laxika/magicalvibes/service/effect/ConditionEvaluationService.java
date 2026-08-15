@@ -101,6 +101,7 @@ import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
+import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
@@ -299,6 +300,8 @@ public class ConditionEvaluationService {
                             .getOrDefault(c.subtype(), 0) >= c.minimum();
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
+            case EquippedCreatureDidntDealCombatDamageToCreatureThisTurn ignored ->
+                    equippedCreatureDidntDealCombatDamageToCreatureThisTurn(gameData, ctx);
             case Enchanted ignored ->
                     isSourceEnchanted(gameData, ctx);
             case EnchantedByAtLeastAuras c ->
@@ -1049,6 +1052,19 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    private boolean equippedCreatureDidntDealCombatDamageToCreatureThisTurn(GameData gameData,
+                                                                             ConditionContext ctx) {
+        Permanent equipment = ctx.sourcePermanent();
+        if (equipment == null && ctx.sourcePermanentId() != null) {
+            equipment = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        }
+        if (equipment == null || !equipment.isAttached()) return false;
+        UUID equippedCreatureId = equipment.getAttachedTo();
+        return equippedCreatureId != null
+                && gameQueryService.findPermanentById(gameData, equippedCreatureId) != null
+                && !gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.contains(equippedCreatureId);
     }
 
     private boolean isSourceEnchanted(GameData gameData, ConditionContext ctx) {

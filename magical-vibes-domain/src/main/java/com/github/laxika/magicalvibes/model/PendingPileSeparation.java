@@ -22,9 +22,10 @@ import java.util.UUID;
  * rest to owners' graveyards; {@code PLAY_FROM_EXILE} (Brilliant Ultimatum) offers the chosen pile
  * to be played/cast for free from exile with everything else staying exiled; {@code HAND} (Unesh)
  * puts the chosen pile into the controller's hand and the other into their graveyard;
- * {@code HAND_WITH_FACE_DOWN_PILE} (Curator of Destinies) uses a face-up pile 1 and a face-down
- * pile 2, with an opponent choosing which pile goes to the controller's hand. The other
- * dispositions are ignored for permanent-pile mode.
+ * {@code HAND_WITH_FACE_DOWN_PILE} puts the chosen pile into the controller's hand and the other
+ * into their graveyard. Curator of Destinies uses a face-up Pile 1 and a face-down Pile 2;
+ * Fortune's Favor reverses those pile identities. The other dispositions are ignored for
+ * permanent-pile mode.
  *
  * <p>{@code controllerChoosesPile} is true for the usual Fact-or-Fiction-style flow, where the
  * opponent separates and the controller chooses. It is false for Steam Augury, where the

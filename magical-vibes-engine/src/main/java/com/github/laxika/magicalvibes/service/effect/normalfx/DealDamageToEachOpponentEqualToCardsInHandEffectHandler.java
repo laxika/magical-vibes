@@ -34,7 +34,7 @@ public class DealDamageToEachOpponentEqualToCardsInHandEffectHandler implements 
             if (playerId.equals(controllerId)) continue;
 
             int handSize = gameData.playerHands.getOrDefault(playerId, List.of()).size();
-            if (handSize == 0 || gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            if (handSize == 0 || gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 continue;
             }
 

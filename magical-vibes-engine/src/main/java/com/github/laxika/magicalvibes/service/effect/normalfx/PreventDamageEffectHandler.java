@@ -111,6 +111,11 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "All damage from " + colorNames + " sources will be prevented this turn."));
             }
+            case ALL_FROM_NON_HUMAN_SOURCES -> {
+                gameData.preventAllDamageFromNonHumanSources = true;
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage from non-Human sources will be prevented this turn."));
+            }
             case ALL_COMBAT_EXCEPT -> {
                 gameData.combatDamageExemptPredicate = e.exemptPredicate();
                 gameLogService.append(gameData, GameLog.text(

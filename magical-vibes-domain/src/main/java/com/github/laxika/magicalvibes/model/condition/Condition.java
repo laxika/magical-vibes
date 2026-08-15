@@ -101,6 +101,7 @@ public sealed interface Condition permits
         EnchantedCreatureDidntAttack,
         EnchantedCreaturePowerAtLeast,
         EnchantedPermanentMatches,
+        EquippedCreatureDidntDealCombatDamageToCreatureThisTurn,
         FirstCombatPhase,
         EndStepPlayerDidntCastCreatureSpell,
         ExtraTurn,

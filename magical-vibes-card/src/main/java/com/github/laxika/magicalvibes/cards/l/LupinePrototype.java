@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "267")
 @CardRegistration(set = "INR", collectorNumber = "444")
+@CardRegistration(set = "EMN", collectorNumber = "197")
 public class LupinePrototype extends Card {
 
     public LupinePrototype() {

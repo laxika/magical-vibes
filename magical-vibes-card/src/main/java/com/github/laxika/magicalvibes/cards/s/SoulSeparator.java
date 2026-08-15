@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "270")
 @CardRegistration(set = "INR", collectorNumber = "446")
+@CardRegistration(set = "EMN", collectorNumber = "199")
 public class SoulSeparator extends Card {
 
     public SoulSeparator() {

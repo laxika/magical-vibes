@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
@@ -487,6 +489,29 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 dyingPermanent.getId()
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenForEmergeSacrificeEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleCreateTokenForEmergeSacrifice(TriggerMatchContext match,
+            CreateTokenForEmergeSacrificeEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Card castingSpell = sd.castingSpell();
+        boolean isEmergeSpell = castingSpell != null
+                && castingSpell.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::reduceManaBySacrificedManaValue)
+                .orElse(false);
+        if (!isEmergeSpell) {
+            return false;
+        }
+
+        match.gameData().pendingSpellCastCostTriggers.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.tokenEffect()))
         ));
         return true;
     }

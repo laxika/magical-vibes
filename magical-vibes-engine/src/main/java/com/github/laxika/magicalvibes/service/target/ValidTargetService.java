@@ -366,6 +366,16 @@ public class ValidTargetService {
                     ? ability.getMultiTargetFilters().get(positionIndex)
                     : null;
 
+            if (positionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                validGraveyardCardIds.addAll(computeValidGraveyardTargetsForFilter(
+                        gameData, sourceCard, graveyardFilter, controllerId, excludeIds,
+                        ability.getMultiTargetConstraint()));
+                return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
+                        ability.getEffectiveMinTargets(effectiveTargetScalingValue),
+                        ability.getEffectiveMaxTargets(effectiveTargetScalingValue),
+                        "Select targets for " + sourceCard.getName() + " ability");
+            }
+
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -991,6 +1001,14 @@ public class ValidTargetService {
     public List<UUID> computeValidGraveyardTargetsForFilter(GameData gameData, Card card,
                                                             GraveyardCardPredicateTargetFilter filter,
                                                             UUID controllerId, Set<UUID> excludeIds) {
+        return computeValidGraveyardTargetsForFilter(gameData, card, filter, controllerId, excludeIds,
+                card.getMultiTargetConstraint());
+    }
+
+    private List<UUID> computeValidGraveyardTargetsForFilter(GameData gameData, Card card,
+                                                             GraveyardCardPredicateTargetFilter filter,
+                                                             UUID controllerId, Set<UUID> excludeIds,
+                                                             MultiTargetConstraint constraint) {
         if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             return List.of();
         }
@@ -998,7 +1016,7 @@ public class ValidTargetService {
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
-            if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
+            if (isOnePerControllerConstraint(constraint)
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
                         .map(id -> {
@@ -1019,10 +1037,43 @@ public class ValidTargetService {
                         && !predicateEvaluationService.matchesCardPredicate(c, filter.predicate(), card.getId())) {
                     continue;
                 }
+                if (constraint == MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY
+                        && !isValidInstantAndSorceryTarget(gameData, c, excludeIds)) {
+                    continue;
+                }
+                if (constraint == MultiTargetConstraint.AT_MOST_ONE_CREATURE_AND_ONE_LAND
+                        && !isValidCreatureAndLandTarget(gameData, c, excludeIds)) {
+                    continue;
+                }
                 validIds.add(c.getId());
             }
         }
         return validIds;
+    }
+
+    private boolean isValidInstantAndSorceryTarget(GameData gameData, Card candidate, Set<UUID> excludeIds) {
+        int instantCount = 0;
+        int sorceryCount = 0;
+        for (UUID selectedId : excludeIds) {
+            Card selected = gameQueryService.findCardInGraveyardById(gameData, selectedId);
+            if (selected == null) {
+                continue;
+            }
+            if (selected.hasType(CardType.INSTANT)) {
+                instantCount++;
+            }
+            if (selected.hasType(CardType.SORCERY)) {
+                sorceryCount++;
+            }
+        }
+        return (!candidate.hasType(CardType.INSTANT) || instantCount == 0)
+                && (!candidate.hasType(CardType.SORCERY) || sorceryCount == 0);
+    }
+
+    private boolean isValidCreatureAndLandTarget(GameData gameData, Card candidate, Set<UUID> excludeIds) {
+        List<UUID> trial = new ArrayList<>(excludeIds);
+        trial.add(candidate.getId());
+        return targetLegalityService.fitsAtMostOneCreatureAndOneLand(gameData, trial);
     }
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {

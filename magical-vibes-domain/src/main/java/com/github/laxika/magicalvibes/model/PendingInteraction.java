@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.UUID;
 
@@ -71,6 +72,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.LibrarySearch,
+        PendingInteraction.SearchOutsideGameOrExileCardChoice,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.ForbiddenRitualRepeatChoice,
@@ -2001,6 +2003,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // The answer handler's decline rule reads params.canFailToFind(), not the message flag.
             return new InteractionOptions.LibraryIndexPick(
                     params.cards() != null ? params.cards().size() : 0, params.canFailToFind());
+        }
+    }
+
+    /** Chooses at most one eligible card from outside the game or face-up exile. */
+    record SearchOutsideGameOrExileCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               CardPredicate filter, String cardLabel) implements PendingInteraction {
+
+        public SearchOutsideGameOrExileCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 

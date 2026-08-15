@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M20", collectorNumber = "203")
+@CardRegistration(set = "EMN", collectorNumber = "178")
 public class WolfkinBond extends Card {
 
     public WolfkinBond() {

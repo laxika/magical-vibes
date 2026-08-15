@@ -250,7 +250,9 @@ public class MiscTriggerCollectorService {
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect))
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
         ));
         return true;
     }

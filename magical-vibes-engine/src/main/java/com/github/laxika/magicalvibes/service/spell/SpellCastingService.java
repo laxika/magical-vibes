@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -418,16 +419,18 @@ public class SpellCastingService {
      * is re-checked by {@code AdditionalSpellCostService.validateDiscardXCardsCost}, which the cast
      * path already ran before any cost was consumed.
      */
-    private void payDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
-                                      int announcedX, List<Integer> discardHandCardIndices, int spellCardIndex) {
+    private int payDiscardXCardsCost(GameData gameData, Player player, Card card, DiscardXCardsCost cost,
+                                     int announcedX, List<Integer> discardHandCardIndices, int spellCardIndex) {
         List<Integer> effectiveIndices = new ArrayList<>(
                 additionalSpellCostService.validateDiscardXCardsCost(
                         gameData, player, card, cost, announcedX, discardHandCardIndices, spellCardIndex));
         effectiveIndices.sort(java.util.Collections.reverseOrder());
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
+        int discardedManaValue = 0;
         for (int effectiveIndex : effectiveIndices) {
             Card toDiscard = hand.get(effectiveIndex);
+            discardedManaValue += toDiscard.getManaValue();
             hand.remove(effectiveIndex);
             graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
             gameLogService.append(gameData, GameLog.builder()
@@ -439,6 +442,7 @@ public class SpellCastingService {
                     .build());
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
         }
+        return cost.trackManaValue() ? discardedManaValue : 0;
     }
 
     /**
@@ -3062,6 +3066,8 @@ public class SpellCastingService {
                 selection.sacrificePermanentIds());
         payEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
                 selection.escalateModeCount(), selection.sacrificePermanentIds());
+        payEscalateTapCost(gameData, player, card, costs.escalateTapCost(),
+                selection.escalateModeCount(), selection.sacrificePermanentIds());
         if (costs.sacrificeAnyNumberCost() != null) {
             resolvedXValue = paySacrificeAnyNumberOfPermanentsCost(gameData, player, card,
                     costs.sacrificeAnyNumberCost(), selection.sacrificePermanentIds());
@@ -3103,8 +3109,11 @@ public class SpellCastingService {
             payDiscardHandCost(gameData, player, card);
         }
         if (costs.discardXCardsCost() != null) {
-            payDiscardXCardsCost(gameData, player, card, costs.discardXCardsCost(), resolvedXValue,
+            int discardedManaValue = payDiscardXCardsCost(gameData, player, card, costs.discardXCardsCost(), resolvedXValue,
                     selection.discardHandCardIndices(), selection.spellCardIndex());
+            if (costs.discardXCardsCost().trackManaValue()) {
+                resolvedXValue = discardedManaValue;
+            }
         }
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
@@ -3314,6 +3323,26 @@ public class SpellCastingService {
         }
     }
 
+    private void payEscalateTapCost(GameData gameData, Player player, Card card,
+                                    EscalateTapCost cost, int modesChosen, List<UUID> tapPermanentIds) {
+        if (cost == null) {
+            return;
+        }
+        List<Permanent> toTap = additionalSpellCostService.validateEscalateTapCost(
+                gameData, player, card, cost, modesChosen, tapPermanentIds);
+        for (Permanent permanent : toTap) {
+            permanent.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " taps ")
+                    .card(permanent.getCard())
+                    .text("to escalate ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+    }
+
     /**
      * Pays the "sacrifice any number of permanents you control" additional cast cost (Devouring
      * Greed) and returns the number sacrificed, which becomes the spell's X value so a companion
@@ -3419,7 +3448,7 @@ public class SpellCastingService {
                     .card(sourceCard)
                     .text(".")
                     .build());
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard(), sourceCard);
         }
         return new SacrificedCreatureStats(toSacrifice.getCard().getId(), manaValue, power, toughness);
     }
@@ -3445,7 +3474,7 @@ public class SpellCastingService {
                         .card(sourceCard)
                         .text(".")
                         .build());
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), creature.getCard());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), creature.getCard(), sourceCard);
             }
         }
         return Math.max(0, totalPower);
@@ -3464,7 +3493,7 @@ public class SpellCastingService {
                         .card(sourceCard)
                         .text(".")
                         .build());
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard(), sourceCard);
             }
         }
     }
@@ -3596,7 +3625,7 @@ public class SpellCastingService {
                         .card(card)
                         .text(".")
                         .build());
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard(), card);
                 sacrificedCount++;
             }
         }
@@ -4029,7 +4058,7 @@ public class SpellCastingService {
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
                     false, false, true,
-                    null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null,
                     false, false,
                     null, null, null,
                     false,
@@ -6109,7 +6138,7 @@ public class SpellCastingService {
                             .card(card)
                             .text(".")
                             .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard(), card);
                 }
             }
         }
@@ -6348,6 +6377,10 @@ public class SpellCastingService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, castFromHand);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        if (!gameData.pendingSpellCastCostTriggers.isEmpty()) {
+            gameData.stack.addAll(gameData.pendingSpellCastCostTriggers);
+            gameData.pendingSpellCastCostTriggers.clear();
+        }
         // CR 603.3: Flush triggers deferred from mana abilities activated to pay for this spell.
         // They go on top of the spell (and spell-cast triggers) so they resolve first.
         if (!gameData.pendingManaAbilityTriggers.isEmpty()) {

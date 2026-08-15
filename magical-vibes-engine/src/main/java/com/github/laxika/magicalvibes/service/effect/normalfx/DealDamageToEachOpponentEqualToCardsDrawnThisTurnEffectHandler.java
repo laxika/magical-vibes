@@ -46,7 +46,7 @@ public class DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler impl
                 continue;
             }
 
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + playerName + " is prevented."));
             } else {
