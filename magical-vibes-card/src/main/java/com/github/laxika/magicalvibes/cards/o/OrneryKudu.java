@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "178")
+@CardRegistration(set = "AKR", collectorNumber = "206")
 public class OrneryKudu extends Card {
 
     public OrneryKudu() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "124")
+@CardRegistration(set = "AKR", collectorNumber = "205")
 public class OasisRitualist extends Card {
 
     public OasisRitualist() {

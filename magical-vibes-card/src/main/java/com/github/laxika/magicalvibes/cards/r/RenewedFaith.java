@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "25")
+@CardRegistration(set = "AKR", collectorNumber = "32")
 public class RenewedFaith extends Card {
 
     public RenewedFaith() {

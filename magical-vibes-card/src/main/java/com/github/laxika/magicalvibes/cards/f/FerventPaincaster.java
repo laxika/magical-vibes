@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "91")
+@CardRegistration(set = "AKR", collectorNumber = "153")
 public class FerventPaincaster extends Card {
 
     public FerventPaincaster() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
@@ -118,6 +119,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
@@ -481,6 +483,28 @@ public class StepTriggerService {
                         "'s delayed ability triggers — " + gameData.playerIdToName.get(action.playerId())
                         + " gets a poison counter unless they pay " + action.manaCost() + "."));
                 log.info("Game {} - {} delayed upkeep pay-or-poison trigger pushed for {}",
+                        gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(action.playerId()));
+            }
+        }
+
+        if (gameData.hasDelayedAction(PayManaOrLoseGameAtNextUpkeep.class)) {
+            List<PayManaOrLoseGameAtNextUpkeep> pending = gameData.drainDelayedActions(
+                    PayManaOrLoseGameAtNextUpkeep.class, a -> a.playerId().equals(gameData.activePlayerId));
+            for (PayManaOrLoseGameAtNextUpkeep action : pending) {
+                ForcedCostOrElseEffect payOrLoseGame = new ForcedCostOrElseEffect(
+                        new PayManaCost(action.manaCost()),
+                        new ArrayList<>(List.of(new ControllerLosesGameEffect())),
+                        true);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.playerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(payOrLoseGame))));
+
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers — pay " + action.manaCost() + " or lose the game."));
+                log.info("Game {} - {} delayed upkeep pay-or-lose-game trigger pushed for {}",
                         gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(action.playerId()));
             }
         }

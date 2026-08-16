@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "126")
+@CardRegistration(set = "AKR", collectorNumber = "208")
 public class PrideSovereign extends Card {
 
     public PrideSovereign() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "27")
+@CardRegistration(set = "AKR", collectorNumber = "43")
 public class UnconventionalTactics extends Card {
 
     public UnconventionalTactics() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpendAnyManaTypeToCastEffect;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "192")
+@CardRegistration(set = "AKR", collectorNumber = "224")
 public class VizierOfTheMenagerie extends Card {
 
     public VizierOfTheMenagerie() {

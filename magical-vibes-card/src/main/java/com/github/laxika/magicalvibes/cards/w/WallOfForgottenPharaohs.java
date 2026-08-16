@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "168")
+@CardRegistration(set = "AKR", collectorNumber = "282")
 public class WallOfForgottenPharaohs extends Card {
 
     public WallOfForgottenPharaohs() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "8")
+@CardRegistration(set = "AKR", collectorNumber = "9")
 public class CastOut extends Card {
 
     public CastOut() {

@@ -71,6 +71,7 @@ public sealed interface DelayedAction permits
         LoseLifeAtNextDrawStepUnlessPays,
         DamageAtNextUpkeepUnlessPays,
         PoisonAtNextUpkeepUnlessPays,
+        PayManaOrLoseGameAtNextUpkeep,
         DrawCardsAtNextUpkeep,
         ExileToOwnerGraveyardAtNextUpkeep,
         PutCounterOnPermanentAtNextUpkeep,

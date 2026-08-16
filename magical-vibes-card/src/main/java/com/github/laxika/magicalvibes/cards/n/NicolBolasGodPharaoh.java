@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "140")
+@CardRegistration(set = "AKR", collectorNumber = "247")
 public class NicolBolasGodPharaoh extends Card {
 
     public NicolBolasGodPharaoh() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -95,6 +96,7 @@ public class DestructionSupport {
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
+    private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -597,6 +599,8 @@ public class DestructionSupport {
                 lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
                         entry.getCard().getName());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof ControllerLosesGameEffect) {
+                controllerLosesGameHandler.resolve(gameData, entry, elseEffect);
             } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
                 destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
             } else if (elseEffect instanceof DealDamageToControllerThenTapSourceIfDamageDealtEffect damageThenTap) {

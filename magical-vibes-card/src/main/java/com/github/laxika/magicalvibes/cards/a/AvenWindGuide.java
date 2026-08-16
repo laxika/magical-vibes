@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "195")
+@CardRegistration(set = "AKR", collectorNumber = "228")
 public class AvenWindGuide extends Card {
 
     public AvenWindGuide() {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.LibraryRevealChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.LibraryReorderInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -102,6 +104,8 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
                 permanentControlSupport);
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
+        registry.register(new LibraryReorderInteractionHandler(
+                gameLogService, mock(WarpWorldService.class), inputCompletionService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -597,6 +601,31 @@ class LibraryChoiceHandlerServiceTest {
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
+    }
+
+    @Test
+    @DisplayName("handleLibraryRevealChoice orders non-random battlefield leftovers on the bottom")
+    void selectedToBattlefieldRestToOrderedBottom() {
+        Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+        Card land = createCard("Forest", CardType.LAND);
+        Card instant = createCard("Shock", CardType.INSTANT);
+        List<Card> allCards = List.of(dino, land, instant);
+
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, new ArrayList<>(allCards), List.of(dino.getId()),
+                false, false, true, false, false, 0, null, 1, "Choose."));
+        when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+        service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(land, instant);
+        assertThat(reorder.toBottom()).isTrue();
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        verify(gameLogService, never()).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                logEntry.plainText().contains("Library is shuffled")));
     }
 
     // =========================================================================

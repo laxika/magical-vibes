@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AdjustEachCounterKindOnTarget
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "181")
+@CardRegistration(set = "AKR", collectorNumber = "210")
 public class QuarryHauler extends Card {
 
     public QuarryHauler() {

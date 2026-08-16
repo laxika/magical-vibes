@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "161")
+@CardRegistration(set = "AKR", collectorNumber = "272")
 public class GodPharaohsGift extends Card {
 
     public GodPharaohsGift() {

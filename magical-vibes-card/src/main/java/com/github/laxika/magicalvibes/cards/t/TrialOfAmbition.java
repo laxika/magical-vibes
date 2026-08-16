@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "113")
+@CardRegistration(set = "AKR", collectorNumber = "130")
 public class TrialOfAmbition extends Card {
 
     public TrialOfAmbition() {

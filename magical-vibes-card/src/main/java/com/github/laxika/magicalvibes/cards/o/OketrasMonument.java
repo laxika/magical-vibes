@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "233")
+@CardRegistration(set = "AKR", collectorNumber = "277")
 public class OketrasMonument extends Card {
 
     public OketrasMonument() {

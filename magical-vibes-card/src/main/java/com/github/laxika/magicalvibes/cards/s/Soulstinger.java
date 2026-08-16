@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "108")
+@CardRegistration(set = "AKR", collectorNumber = "124")
 public class Soulstinger extends Card {
 
     public Soulstinger() {

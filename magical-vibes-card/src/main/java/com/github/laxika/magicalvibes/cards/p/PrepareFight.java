@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Back half (Fight) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "220")
+@CardRegistration(set = "AKR", collectorNumber = "251")
 public class PrepareFight extends Card {
 
     public PrepareFight() {

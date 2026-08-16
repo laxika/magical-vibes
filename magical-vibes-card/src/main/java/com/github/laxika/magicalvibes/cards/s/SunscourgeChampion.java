@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "26")
+@CardRegistration(set = "AKR", collectorNumber = "38")
 public class SunscourgeChampion extends Card {
 
     public SunscourgeChampion() {

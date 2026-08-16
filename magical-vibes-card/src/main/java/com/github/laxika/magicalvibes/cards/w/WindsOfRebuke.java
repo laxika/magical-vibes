@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "AKH", collectorNumber = "76")
+@CardRegistration(set = "AKR", collectorNumber = "90")
 public class WindsOfRebuke extends Card {
 
     public WindsOfRebuke() {

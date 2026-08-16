@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "102")
+@CardRegistration(set = "AKR", collectorNumber = "165")
 public class Magmaroth extends Card {
 
     public Magmaroth() {

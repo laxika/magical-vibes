@@ -16,6 +16,7 @@ import java.util.List;
  * Back half (Dawn) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "210")
+@CardRegistration(set = "AKR", collectorNumber = "16")
 public class DuskDawn extends Card {
 
     public DuskDawn() {

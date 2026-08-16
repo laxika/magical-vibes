@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "HOU", collectorNumber = "34")
+@CardRegistration(set = "AKR", collectorNumber = "61")
 public class EternalOfHarshTruths extends Card {
 
     public EternalOfHarshTruths() {

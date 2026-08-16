@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "205")
+@CardRegistration(set = "AKR", collectorNumber = "258")
 public class SamutVoiceOfDissent extends Card {
 
     public SamutVoiceOfDissent() {

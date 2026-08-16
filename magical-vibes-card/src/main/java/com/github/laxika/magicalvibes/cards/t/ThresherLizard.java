@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "150")
+@CardRegistration(set = "AKR", collectorNumber = "178")
 public class ThresherLizard extends Card {
 
     public ThresherLizard() {

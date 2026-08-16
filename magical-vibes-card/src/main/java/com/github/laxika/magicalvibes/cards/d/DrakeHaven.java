@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "51")
+@CardRegistration(set = "AKR", collectorNumber = "59")
 public class DrakeHaven extends Card {
 
     public DrakeHaven() {

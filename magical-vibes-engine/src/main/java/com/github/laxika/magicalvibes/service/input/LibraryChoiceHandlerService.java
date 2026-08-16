@@ -1766,6 +1766,20 @@ public class LibraryChoiceHandlerService {
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. The rest are put on the bottom of their library in a random order.").build());
             }
+        } else if (libraryRevealChoice.reorderRemainingToBottom()) {
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            if (remainingCards.size() > 1) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                        controllerId, remainingCards, true, controllerId,
+                        "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
+                log.info("Game {} - {} puts {} card(s) onto the battlefield, reordering {} remaining",
+                        gameData.id, playerName, selectedCards.size(), remainingCards.size());
+                return;
+            }
+            deck.addAll(remainingCards);
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                            .text(" onto the battlefield. The rest are put on the bottom of their library.").build());
         } else {
             List<Card> deck = gameData.playerDecks.get(controllerId);
             deck.addAll(remainingCards);

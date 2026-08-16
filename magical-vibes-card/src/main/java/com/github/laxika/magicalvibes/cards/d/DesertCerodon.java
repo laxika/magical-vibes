@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "128")
+@CardRegistration(set = "AKR", collectorNumber = "151")
 public class DesertCerodon extends Card {
 
     public DesertCerodon() {

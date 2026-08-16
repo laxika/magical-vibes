@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "61")
+@CardRegistration(set = "AKR", collectorNumber = "68")
 public class LayClaim extends Card {
 
     public LayClaim() {

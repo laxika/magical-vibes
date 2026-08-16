@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "199")
+@CardRegistration(set = "AKR", collectorNumber = "238")
 public class HapatraVizierOfPoisons extends Card {
 
     public HapatraVizierOfPoisons() {

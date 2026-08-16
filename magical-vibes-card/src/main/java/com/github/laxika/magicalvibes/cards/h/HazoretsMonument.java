@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "229")
+@CardRegistration(set = "AKR", collectorNumber = "273")
 public class HazoretsMonument extends Card {
 
     public HazoretsMonument() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "43")
+@CardRegistration(set = "AKR", collectorNumber = "75")
 public class Riddleform extends Card {
 
     public Riddleform() {

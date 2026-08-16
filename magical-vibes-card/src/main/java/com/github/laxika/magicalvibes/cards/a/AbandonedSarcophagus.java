@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CastSpellsWithCyclingFromGrav
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCyclingCardsUnlessCycledEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "158")
+@CardRegistration(set = "AKR", collectorNumber = "268")
 public class AbandonedSarcophagus extends Card {
 
     public AbandonedSarcophagus() {

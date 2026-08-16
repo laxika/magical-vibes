@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
  * Back half (Earth) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "224")
+@CardRegistration(set = "AKR", collectorNumber = "239")
 public class HeavenEarth extends Card {
 
     public HeavenEarth() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "62")
+@CardRegistration(set = "AKR", collectorNumber = "69")
 public class NagaOracle extends Card {
 
     public NagaOracle() {

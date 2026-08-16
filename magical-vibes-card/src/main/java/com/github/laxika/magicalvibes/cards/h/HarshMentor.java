@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "135")
+@CardRegistration(set = "AKR", collectorNumber = "158")
 public class HarshMentor extends Card {
 
     public HarshMentor() {

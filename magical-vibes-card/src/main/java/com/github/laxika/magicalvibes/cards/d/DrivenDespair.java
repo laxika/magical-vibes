@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
  * Back half (Despair) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "157")
+@CardRegistration(set = "AKR", collectorNumber = "233")
 public class DrivenDespair extends Card {
 
     public DrivenDespair() {

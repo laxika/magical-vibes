@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "40")
+@CardRegistration(set = "AKR", collectorNumber = "71")
 public class NimbleObstructionist extends Card {
 
     public NimbleObstructionist() {

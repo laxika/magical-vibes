@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "145")
+@CardRegistration(set = "AKR", collectorNumber = "168")
 public class NimbleBladeKhenra extends Card {
 
     public NimbleBladeKhenra() {

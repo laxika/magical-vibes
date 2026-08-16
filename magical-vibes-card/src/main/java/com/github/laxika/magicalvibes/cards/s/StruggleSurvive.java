@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
  * Back half (Survive) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "151")
+@CardRegistration(set = "AKR", collectorNumber = "265")
 public class StruggleSurvive extends Card {
 
     public StruggleSurvive() {

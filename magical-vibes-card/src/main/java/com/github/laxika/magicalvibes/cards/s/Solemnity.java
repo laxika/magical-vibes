@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "22")
+@CardRegistration(set = "AKR", collectorNumber = "35")
 public class Solemnity extends Card {
 
     public Solemnity() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "60")
+@CardRegistration(set = "AKR", collectorNumber = "96")
 public class BontusLastReckoning extends Card {
 
     public BontusLastReckoning() {

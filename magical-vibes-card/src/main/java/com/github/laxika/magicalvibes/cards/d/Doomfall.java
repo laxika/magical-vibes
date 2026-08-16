@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCreatureEx
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "62")
+@CardRegistration(set = "AKR", collectorNumber = "102")
 public class Doomfall extends Card {
 
     public Doomfall() {

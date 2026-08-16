@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "AKH", collectorNumber = "65")
+@CardRegistration(set = "AKR", collectorNumber = "74")
 public class PullFromTomorrow extends Card {
 
     public PullFromTomorrow() {

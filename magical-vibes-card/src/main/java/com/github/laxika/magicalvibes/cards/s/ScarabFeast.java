@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 
 
 @CardRegistration(set = "AKH", collectorNumber = "106")
+@CardRegistration(set = "AKR", collectorNumber = "122")
 public class ScarabFeast extends Card {
 
     public ScarabFeast() {

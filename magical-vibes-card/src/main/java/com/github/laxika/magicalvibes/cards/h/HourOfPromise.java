@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "120")
+@CardRegistration(set = "AKR", collectorNumber = "197")
 public class HourOfPromise extends Card {
 
     public HourOfPromise() {

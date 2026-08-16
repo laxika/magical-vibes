@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "80")
+@CardRegistration(set = "AKR", collectorNumber = "93")
 public class BlightedBat extends Card {
 
     public BlightedBat() {

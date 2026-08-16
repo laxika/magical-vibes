@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "144")
+@CardRegistration(set = "AKR", collectorNumber = "257")
 public class SamutTheTested extends Card {
 
     public SamutTheTested() {

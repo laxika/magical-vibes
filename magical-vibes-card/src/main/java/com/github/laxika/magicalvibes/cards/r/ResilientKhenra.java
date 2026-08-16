@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "131")
+@CardRegistration(set = "AKR", collectorNumber = "212")
 public class ResilientKhenra extends Card {
 
     public ResilientKhenra() {

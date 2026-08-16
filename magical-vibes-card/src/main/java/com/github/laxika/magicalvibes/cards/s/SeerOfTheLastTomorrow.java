@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "44")
+@CardRegistration(set = "AKR", collectorNumber = "77")
 public class SeerOfTheLastTomorrow extends Card {
 
     public SeerOfTheLastTomorrow() {

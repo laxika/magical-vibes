@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ALA", collectorNumber = "108")
 @CardRegistration(set = "AKH", collectorNumber = "141")
 @CardRegistration(set = "JOU", collectorNumber = "103")
+@CardRegistration(set = "AKR", collectorNumber = "164")
 public class MagmaSpray extends Card {
 
     public MagmaSpray() {

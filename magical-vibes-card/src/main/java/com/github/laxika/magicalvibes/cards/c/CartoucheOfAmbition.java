@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "83")
+@CardRegistration(set = "AKR", collectorNumber = "97")
 public class CartoucheOfAmbition extends Card {
 
     public CartoucheOfAmbition() {

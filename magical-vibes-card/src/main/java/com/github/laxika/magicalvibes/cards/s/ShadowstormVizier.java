@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "206")
+@CardRegistration(set = "AKR", collectorNumber = "261")
 public class ShadowstormVizier extends Card {
 
     public ShadowstormVizier() {

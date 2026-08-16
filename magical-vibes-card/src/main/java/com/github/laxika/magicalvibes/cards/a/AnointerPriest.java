@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "3")
+@CardRegistration(set = "AKR", collectorNumber = "3")
 public class AnointerPriest extends Card {
 
     public AnointerPriest() {

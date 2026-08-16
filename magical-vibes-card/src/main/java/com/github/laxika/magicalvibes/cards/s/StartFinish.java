@@ -18,6 +18,7 @@ import java.util.Set;
  * Back half (Finish) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "215")
+@CardRegistration(set = "AKR", collectorNumber = "264")
 public class StartFinish extends Card {
 
     public StartFinish() {

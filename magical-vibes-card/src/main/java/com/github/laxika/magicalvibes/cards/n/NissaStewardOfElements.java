@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "204")
+@CardRegistration(set = "AKR", collectorNumber = "248")
 public class NissaStewardOfElements extends Card {
 
     public NissaStewardOfElements() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "169")
+@CardRegistration(set = "AKR", collectorNumber = "286")
 public class CryptOfTheEternals extends Card {
 
     public CryptOfTheEternals() {

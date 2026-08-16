@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "237")
+@CardRegistration(set = "AKR", collectorNumber = "281")
 public class ThroneOfTheGodPharaoh extends Card {
 
     public ThroneOfTheGodPharaoh() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "129")
+@CardRegistration(set = "AKR", collectorNumber = "211")
 public class RamunapExcavator extends Card {
 
     public RamunapExcavator() {

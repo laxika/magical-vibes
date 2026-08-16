@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "175")
+@CardRegistration(set = "AKR", collectorNumber = "201")
 public class Manglehorn extends Card {
 
     public Manglehorn() {

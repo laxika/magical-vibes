@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "45")
+@CardRegistration(set = "AKR", collectorNumber = "51")
 public class CartoucheOfKnowledge extends Card {
 
     public CartoucheOfKnowledge() {

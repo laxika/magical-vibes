@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "75")
+@CardRegistration(set = "AKR", collectorNumber = "89")
 public class VizierOfTumblingSands extends Card {
 
     public VizierOfTumblingSands() {

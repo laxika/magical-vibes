@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "165")
+@CardRegistration(set = "AKR", collectorNumber = "190")
 public class ExemplarOfStrength extends Card {
 
     public ExemplarOfStrength() {
