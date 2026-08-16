@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "7ED", collectorNumber = "225")
 @CardRegistration(set = "8ED", collectorNumber = "228")
 @CardRegistration(set = "VIS", collectorNumber = "99")
+@CardRegistration(set = "S99", collectorNumber = "121")
 public class Tremor extends Card {
 
     public Tremor() {

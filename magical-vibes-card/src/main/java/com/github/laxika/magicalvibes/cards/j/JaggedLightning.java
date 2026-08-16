@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "106")
 @CardRegistration(set = "USG", collectorNumber = "200")
+@CardRegistration(set = "S99", collectorNumber = "109")
 public class JaggedLightning extends Card {
 
     public JaggedLightning() {

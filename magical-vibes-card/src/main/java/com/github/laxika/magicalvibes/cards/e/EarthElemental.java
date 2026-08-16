@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "199")
 @CardRegistration(set = "4ED", collectorNumber = "188")
+@CardRegistration(set = "S99", collectorNumber = "95")
 public class EarthElemental extends Card {
 }

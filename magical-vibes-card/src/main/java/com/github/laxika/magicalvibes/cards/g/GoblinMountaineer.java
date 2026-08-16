@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "193")
 @CardRegistration(set = "P02", collectorNumber = "101")
 @CardRegistration(set = "ALA", collectorNumber = "102")
+@CardRegistration(set = "S99", collectorNumber = "105")
 public class GoblinMountaineer extends Card {
 
     public GoblinMountaineer() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "177")
+@CardRegistration(set = "S99", collectorNumber = "135")
 public class NaturesCloak extends Card {
 
     public NaturesCloak() {

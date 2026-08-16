@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "115")
 @CardRegistration(set = "USG", collectorNumber = "115")
+@CardRegistration(set = "S99", collectorNumber = "63")
 public class AbyssalHorror extends Card {
 
     public AbyssalHorror() {

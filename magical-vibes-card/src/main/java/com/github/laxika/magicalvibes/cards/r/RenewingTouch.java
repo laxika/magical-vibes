@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveya
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "143")
+@CardRegistration(set = "S99", collectorNumber = "140")
 public class RenewingTouch extends Card {
 
     public RenewingTouch() {

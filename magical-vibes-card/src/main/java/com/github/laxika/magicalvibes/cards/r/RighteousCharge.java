@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "20")
 @CardRegistration(set = "GTC", collectorNumber = "23")
+@CardRegistration(set = "S99", collectorNumber = "22")
 public class RighteousCharge extends Card {
 
     public RighteousCharge() {

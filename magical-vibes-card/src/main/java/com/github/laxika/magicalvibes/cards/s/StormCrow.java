@@ -10,5 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "69")
 @CardRegistration(set = "ALL", collectorNumber = "36a")
 @CardRegistration(set = "ALL", collectorNumber = "36b")
+@CardRegistration(set = "S99", collectorNumber = "53")
 public class StormCrow extends Card {
 }

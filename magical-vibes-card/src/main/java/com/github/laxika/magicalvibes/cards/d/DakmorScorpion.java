@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "P02", collectorNumber = "70")
+@CardRegistration(set = "S99", collectorNumber = "73")
 public class DakmorScorpion extends Card {
 
     public DakmorScorpion() {

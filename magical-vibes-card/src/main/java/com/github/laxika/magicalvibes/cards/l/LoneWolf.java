@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 @CardRegistration(set = "8ED", collectorNumber = "262")
 @CardRegistration(set = "7ED", collectorNumber = "254")
 @CardRegistration(set = "ULG", collectorNumber = "105")
+@CardRegistration(set = "S99", collectorNumber = "130")
 public class LoneWolf extends Card {
 
     public LoneWolf() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "283")
+@CardRegistration(set = "S99", collectorNumber = "150")
 public class Whirlwind extends Card {
 
     public Whirlwind() {

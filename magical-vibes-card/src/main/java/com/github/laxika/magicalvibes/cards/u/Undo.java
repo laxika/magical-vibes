@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "59")
 @CardRegistration(set = "VIS", collectorNumber = "47")
+@CardRegistration(set = "S99", collectorNumber = "58")
 public class Undo extends Card {
 
     public Undo() {

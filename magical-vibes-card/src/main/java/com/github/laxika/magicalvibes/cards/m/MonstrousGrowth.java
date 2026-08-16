@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "P02", collectorNumber = "133")
 @CardRegistration(set = "8ED", collectorNumber = "266")
 @CardRegistration(set = "7ED", collectorNumber = "258")
+@CardRegistration(set = "S99", collectorNumber = "132")
 public class MonstrousGrowth extends Card {
 
     public MonstrousGrowth() {

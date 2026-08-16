@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "39")
+@CardRegistration(set = "S99", collectorNumber = "38")
 public class EyeSpy extends Card {
 
     public EyeSpy() {

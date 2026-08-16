@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "75")
 @CardRegistration(set = "TMP", collectorNumber = "97")
 @CardRegistration(set = "TPR", collectorNumber = "74")
+@CardRegistration(set = "S99", collectorNumber = "56")
 public class TimeWarp extends Card {
 
     public TimeWarp() {

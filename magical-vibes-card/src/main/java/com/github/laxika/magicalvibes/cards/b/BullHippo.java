@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "POR", collectorNumber = "160")
 @CardRegistration(set = "7ED", collectorNumber = "233")
 @CardRegistration(set = "USG", collectorNumber = "239")
+@CardRegistration(set = "S99", collectorNumber = "126")
 public class BullHippo extends Card {
 
     public BullHippo() {

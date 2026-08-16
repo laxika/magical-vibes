@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "128")
+@CardRegistration(set = "S99", collectorNumber = "97")
 public class FireTempest extends Card {
 
     public FireTempest() {

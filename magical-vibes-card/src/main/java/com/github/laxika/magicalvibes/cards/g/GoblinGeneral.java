@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "97")
+@CardRegistration(set = "S99", collectorNumber = "101")
 public class GoblinGeneral extends Card {
 
     public GoblinGeneral() {
