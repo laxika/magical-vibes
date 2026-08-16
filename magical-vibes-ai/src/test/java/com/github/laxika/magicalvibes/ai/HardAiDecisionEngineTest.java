@@ -965,9 +965,15 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
-    @DisplayName("Hard AI does not declare Orcish Conscripts without enough other attackers")
+    @DisplayName("Hard AI chooses a legal attacker when forced and the first candidate is restricted")
     void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
-        gd.playerLifeTotals.put(player2.getId(), 4);
+        gd.playerLifeTotals.put(player2.getId(), 20);
+
+        Permanent trove = harness.addToBattlefieldAndReturn(player2, new TroveOfTemptation());
+        trove.setSummoningSick(false);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        blocker.setSummoningSick(false);
+
         Permanent conscripts = harness.addToBattlefieldAndReturn(player1, new OrcishConscripts());
         conscripts.setSummoningSick(false);
         Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -978,6 +984,10 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.DeclareAttackers(List.of()));
+        ai.setMctsEngine(mcts);
 
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {

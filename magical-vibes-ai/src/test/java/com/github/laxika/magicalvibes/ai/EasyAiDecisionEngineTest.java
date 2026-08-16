@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
+import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
@@ -1631,13 +1632,17 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Easy AI does not declare Orcish Conscripts without enough other attackers")
+        @DisplayName("Easy AI chooses a legal attacker when forced and the first candidate is restricted")
         void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
             Permanent conscripts = combatHarness.addToBattlefieldAndReturn(combatAiPlayer,
                     new OrcishConscripts());
             conscripts.setSummoningSick(false);
             Permanent ally = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
             ally.setSummoningSick(false);
+            Permanent trove = combatHarness.addToBattlefieldAndReturn(opponent, new TroveOfTemptation());
+            trove.setSummoningSick(false);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(opponent, new AirElemental());
+            blocker.setSummoningSick(false);
 
             combatHarness.forceActivePlayer(combatAiPlayer);
             combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);

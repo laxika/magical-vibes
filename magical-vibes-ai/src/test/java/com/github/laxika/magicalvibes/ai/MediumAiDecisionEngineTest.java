@@ -1972,7 +1972,7 @@ class MediumAiDecisionEngineTest {
     // ===== Forced attack (Trove of Temptation) =====
 
     @Test
-    @DisplayName("Medium AI attacks with at least one creature when Trove of Temptation forces attack")
+    @DisplayName("Medium AI chooses a legal attacker when forced and the first candidate is restricted")
     void attacksWithAtLeastOneWhenForcedByTroveOfTemptation() {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -1984,6 +1984,10 @@ class MediumAiDecisionEngineTest {
         Permanent trove = new Permanent(new TroveOfTemptation());
         trove.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(trove);
+
+        Permanent conscripts = new Permanent(new OrcishConscripts());
+        conscripts.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(conscripts);
 
         // AI has a 2/2 creature and opponent has a 4/4 A?€�t simulator would normally skip attacking
         Permanent bears = new Permanent(new GrizzlyBears());
@@ -2001,6 +2005,8 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isGreaterThanOrEqualTo(1);
+        assertThat(conscripts.isAttacking()).isFalse();
+        assertThat(bears.isAttacking()).isTrue();
     }
 
     // ===== Targeting tax handling =====

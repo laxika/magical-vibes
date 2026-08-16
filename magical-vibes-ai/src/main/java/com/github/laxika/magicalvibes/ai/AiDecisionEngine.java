@@ -518,8 +518,12 @@ public abstract class AiDecisionEngine {
                 gameData, activeDecisionPlayerId(gameData))) {
             return attackerIndices;
         }
+        List<Integer> legalAvailableIndices = removeUnmetAttackRestrictions(gameData, availableIndices);
+        if (legalAvailableIndices.isEmpty()) {
+            return attackerIndices;
+        }
         List<Integer> forced = new ArrayList<>(attackerIndices);
-        forced.add(availableIndices.getFirst());
+        forced.add(legalAvailableIndices.getFirst());
         return forced;
     }
 
@@ -1087,6 +1091,17 @@ public abstract class AiDecisionEngine {
         DeclareAttackersRequest combatLimitLegalRequest = gameData == null
                 ? restrictionLegalRequest
                 : capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
+        if (gameData != null) {
+            combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
+            if (combatLimitLegalRequest.attackerIndices().isEmpty()
+                    && combatAttackService.isOpponentForcedToAttack(
+                            gameData, activeDecisionPlayerId(gameData))) {
+                DeclareAttackersRequest forcedFallback = findLegalFallbackAttackerDeclaration(gameData);
+                if (!forcedFallback.attackerIndices().isEmpty()) {
+                    combatLimitLegalRequest = forcedFallback;
+                }
+            }
+        }
         String rejection = attemptAttackerDeclaration(combatLimitLegalRequest);
         if (rejection == null) {
             return;
@@ -1104,6 +1119,17 @@ public abstract class AiDecisionEngine {
         if (gameData == null) {
             return;
         }
+        DeclareAttackersRequest fallback = findLegalFallbackAttackerDeclaration(gameData);
+        if (!fallback.attackerIndices().isEmpty()) {
+            rejection = attemptAttackerDeclaration(fallback);
+            if (rejection == null) {
+                return;
+            }
+        }
+        log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+    }
+
+    private DeclareAttackersRequest findLegalFallbackAttackerDeclaration(GameData gameData) {
         UUID attackingPlayerId = activeDecisionPlayerId(gameData);
         UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
         List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndicesForTarget(
@@ -1111,13 +1137,17 @@ public abstract class AiDecisionEngine {
         if (allAttackable == null) {
             allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
         }
-        if (!allAttackable.isEmpty()) {
-            rejection = attemptAttackerDeclaration(new DeclareAttackersRequest(allAttackable, null));
-            if (rejection == null) {
-                return;
-            }
+        if (allAttackable == null || allAttackable.isEmpty()) {
+            return new DeclareAttackersRequest(List.of(), null);
         }
-        log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
+
+        DeclareAttackersRequest fallback = new DeclareAttackersRequest(allAttackable, null);
+        fallback = enforceConditionalAttackRequirements(gameData, fallback);
+        fallback = removeAttackersThatCannotAttackDefaultTarget(gameData, fallback);
+        fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        fallback = capAttackersToCombatMaximum(gameData, fallback);
+        fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        return fallback;
     }
 
     /**
