@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
@@ -2196,6 +2197,17 @@ public abstract class AiDecisionEngine {
     protected record BeholdSelection(UUID permanentId, Integer handCardIndex) {
     }
 
+    /** The optional creatures and generic reduction selected for a spell's alternate cost. */
+    protected record CostReductionPlan(List<UUID> permanentIds, int reduction) {
+        protected CostReductionPlan {
+            permanentIds = permanentIds == null ? List.of() : List.copyOf(permanentIds);
+        }
+
+        protected static CostReductionPlan none() {
+            return new CostReductionPlan(List.of(), 0);
+        }
+    }
+
     /**
      * Builds the common spell cast request, including the selected object for any behold cost.
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
@@ -2208,6 +2220,7 @@ public abstract class AiDecisionEngine {
             Map<UUID, Integer> damageAssignments,
             List<UUID> targetIds,
             List<UUID> convokeCreatureIds,
+            List<UUID> alternateCostSacrificePermanentIds,
             UUID sacrificePermanentId,
             Integer exileGraveyardCardIndex,
             List<Integer> exileGraveyardCardIndices,
@@ -2227,7 +2240,8 @@ public abstract class AiDecisionEngine {
         }
         return new PlayCardRequest(
                 cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
-                null, sacrificePermanentId, null, null, null, null, exileGraveyardCardIndex,
+                null, sacrificePermanentId, null, null, alternateCostSacrificePermanentIds, null,
+                exileGraveyardCardIndex,
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
@@ -3060,6 +3074,57 @@ public abstract class AiDecisionEngine {
         return tapManaForSpell(gameData, card, xValue, targetingTax, 0);
     }
 
+    /**
+     * Selects the smallest set of controlled creatures that makes an optional creature-sacrifice
+     * cost reduction payable. Returns an empty plan for ordinary spells and null when even all
+     * available creatures cannot make the spell payable.
+     */
+    protected CostReductionPlan selectCostReductionPlan(
+            GameData gameData, Card card, Integer xValue, int targetingTax, int delveReduction,
+            ManaPool pool) {
+        SacrificeCreaturesForCostReductionEffect reductionEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
+                .map(SacrificeCreaturesForCostReductionEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (reductionEffect == null) {
+            return CostReductionPlan.none();
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null || pool == null) {
+            return null;
+        }
+
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction;
+        ManaCost cost = new ManaCost(manaCost);
+        List<Permanent> creatures = gameData.playerBattlefields
+                .getOrDefault(aiPlayer.getId(), List.of())
+                .stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .sorted(Comparator.comparingInt(permanent ->
+                        gameQueryService.getEffectivePower(gameData, permanent)
+                                + gameQueryService.getEffectiveToughness(gameData, permanent)))
+                .toList();
+        boolean sacrificeAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        int effectiveXValue = xValue != null ? xValue : 0;
+        for (int count = 0; count <= creatures.size(); count++) {
+            int reduction = count * reductionEffect.reductionPerCreature();
+            int remainingModifier = costModifier - reduction;
+            boolean canPay = cost.hasX()
+                    ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, remainingModifier)
+                    : cost.canPay(pool, remainingModifier);
+            if (canPay && (!card.isRequiresCreatureMana()
+                    || cost.canPayCreatureOnly(pool, remainingModifier))) {
+                if (count == 0 || sacrificeAllowed) {
+                    return new CostReductionPlan(
+                            creatures.subList(0, count).stream().map(Permanent::getId).toList(), reduction);
+                }
+            }
+        }
+        return null;
+    }
+
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
                                       int targetingTax, int delveReduction) {
         if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
@@ -3067,8 +3132,23 @@ public abstract class AiDecisionEngine {
         }
         String manaCost = manaCostForSpell(card, xValue);
         if (manaCost == null) return false;
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, card, xValue, targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) return false;
+        return tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction());
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction, int costReduction) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return false;
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) return false;
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
-                + targetingTax - delveReduction;
+                + targetingTax - delveReduction - costReduction;
         AiManaManager.ManaTapAction tap = manaTapAction();
         int stackSizeBeforePayment = gameData.stack.size();
 

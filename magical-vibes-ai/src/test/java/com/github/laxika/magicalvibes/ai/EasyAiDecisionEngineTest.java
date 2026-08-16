@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
+import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
@@ -282,6 +284,43 @@ class EasyAiDecisionEngineTest {
         assertThat(testGameData.stack).hasSize(1);
         assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mercenary);
         assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Easy AI supplies Torgaar's sacrifice-based cost reduction")
+    void castsTorgaarWithSacrificeCostReduction() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        Permanent fodder = testHarness.addToBattlefieldAndReturn(testAiPlayer, new TolarianScholar());
+        TorgaarFamineIncarnate torgaar = new TorgaarFamineIncarnate();
+        testHarness.setHand(testAiPlayer, List.of(torgaar));
+        testHarness.addMana(testAiPlayer, ManaColor.BLACK, 2);
+        testHarness.addMana(testAiPlayer, ManaColor.COLORLESS, 4);
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        FakeConnection aiConnection = new FakeConnection("ai-easy-torgaar-test");
+        testHarness.getSessionManager().registerPlayer(
+                aiConnection, testAiPlayer.getId(), testAiPlayer.getUsername());
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(torgaar);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(fodder);
     }
 
     @Nested

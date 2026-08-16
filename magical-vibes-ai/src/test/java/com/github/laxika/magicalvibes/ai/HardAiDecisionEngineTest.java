@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
+import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -205,6 +207,30 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies Torgaar's sacrifice-based cost reduction")
+    void castsTorgaarWithSacrificeCostReduction() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        TorgaarFamineIncarnate torgaar = new TorgaarFamineIncarnate();
+        harness.setHand(player1, List.of(torgaar));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
     }
 
     @Test

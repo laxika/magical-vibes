@@ -264,10 +264,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (beholdSelection == null) {
             return false;
         }
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, card, xValue, targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) {
+            return false;
+        }
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction())) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -294,7 +301,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
-                        finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
+                        finalMultiTargetIds, convokeCreatureIds, costReductionPlan.permanentIds(),
+                        finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
                         finalDiscardHandCardIndices, finalImposedSacrificeIds, finalMultiSacrificeIds,
                         finalBeholdSelection)));
@@ -448,10 +456,17 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (beholdSelection == null) {
             return false;
         }
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, card, xValue, targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) {
+            return false;
+        }
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction())) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -478,7 +493,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
-                        finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
+                        finalMultiTargetIds, convokeCreatureIds, costReductionPlan.permanentIds(),
+                        finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
                         finalDiscardHandCardIndices, finalImposedSacrificeIds, finalMultiSacrificeIds,
                         finalBeholdSelection)));

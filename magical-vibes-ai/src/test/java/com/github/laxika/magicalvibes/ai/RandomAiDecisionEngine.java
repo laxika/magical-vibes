@@ -643,6 +643,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
+            CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                    gameData, card, xValue, targetingTax, delveReduction,
+                    manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+            if (costReductionPlan == null) {
+                telemetry.recordSkip("spell: sacrifice-for-reduction cost unpayable", card.getName());
+                continue;
+            }
+
             if (validDiscardIndices == null) {
                 discardHandCardIndex = chooseDiscardCostIndex(
                         gameData, card, cardIndex, xValue, targetingTax);
@@ -655,7 +663,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
-            if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction)) {
+            if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                    costReductionPlan.reduction())) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
             if (targetId != null
@@ -680,7 +689,17 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         targetId = null;
                         break;
                     }
-                    if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax, delveReduction)) {
+                    CostReductionPlan refreshedCostReductionPlan = selectCostReductionPlan(
+                            gameData, card, xValue, refreshedTargetingTax, delveReduction,
+                            refreshedVirtualPool);
+                    if (refreshedCostReductionPlan == null) {
+                        telemetry.recordSkip("spell: refreshed sacrifice-for-reduction cost unpayable", card.getName());
+                        targetId = null;
+                        break;
+                    }
+                    costReductionPlan = refreshedCostReductionPlan;
+                    if (tapManaForSpell(gameData, card, xValue, refreshedTargetingTax, delveReduction,
+                            costReductionPlan.reduction())) {
                         return true;
                     }
                     currentTargets = findRandomTargets(gameData, card);
@@ -696,7 +715,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 telemetry.recordSkip("spell: convoke cost unpayable", card.getName());
                 continue;
             }
-
             // Chosen after mana payment: tapping can sacrifice a permanent for mana, which would
             // invalidate a selection made earlier and get the whole cast rejected.
             List<UUID> multiSacrificeIds = selectRandomMultiSacrificeTargets(gameData, card);
@@ -726,10 +744,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                             finalXValue != null ? finalXValue : 0);
             final List<UUID> finalImposedSacrificeIds = imposedSacrificeIds;
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
+            final CostReductionPlan finalCostReductionPlan = costReductionPlan;
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
                     buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
-                            finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId,
+                            finalMultiTargetIds, convokeCreatureIds, finalCostReductionPlan.permanentIds(),
+                            finalSacrificePermanentId,
                             finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,
                             finalDiscardHandCardIndex, finalDiscardHandCardIndices,
                             finalImposedSacrificeIds, finalMultiSacrificeIds, finalBeholdSelection)));

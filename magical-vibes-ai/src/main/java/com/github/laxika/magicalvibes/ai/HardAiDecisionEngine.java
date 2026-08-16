@@ -1134,7 +1134,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         int delveReduction = hasDelveCost(plan.card) && plan.exileGraveyardCardIndices != null
                 ? plan.exileGraveyardCardIndices.size() : 0;
-        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction)) {
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) {
+            return false;
+        }
+        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
+                costReductionPlan.reduction())) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -1161,7 +1168,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(plan.card, idx, fXValue, fTargetId, fDamage,
-                        fMultiTargets, convokeCreatureIds, fSacrifice, null, fExileIndices,
+                        fMultiTargets, convokeCreatureIds, costReductionPlan.permanentIds(),
+                        fSacrifice, null, fExileIndices,
                         fDiscardHandCardIndex, fDiscardHandCardIndices, fImposedSacrificeIds,
                         fMultiSacrificeIds, plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -2802,9 +2810,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
             int delveReduction = delveIndices.size();
+            CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                    gameData, burnCard, null, 0, delveReduction,
+                    manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+            if (costReductionPlan == null) {
+                continue;
+            }
 
             // Cast the burn spell targeting the opponent player
-            if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction)) {
+            if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction,
+                    costReductionPlan.reduction())) {
                 return true; // Mana ability triggered a pending choice
             }
             List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(
@@ -2815,8 +2830,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
-                    buildSpellPlayCardRequest(burnCard, idx, null, targetId, null, null, null, null, null,
-                            delveIndices, null, null, imposedSacrificeIds, List.of(), beholdSelection)));
+                    buildSpellPlayCardRequest(burnCard, idx, null, targetId, null, null, null,
+                            costReductionPlan.permanentIds(), null, null, delveIndices, null, null,
+                            imposedSacrificeIds, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {

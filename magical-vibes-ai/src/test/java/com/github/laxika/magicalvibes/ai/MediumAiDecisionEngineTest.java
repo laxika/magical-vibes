@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
+import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
@@ -259,6 +261,23 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
         assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies Torgaar's sacrifice-based cost reduction")
+    void castsTorgaarWithSacrificeCostReduction() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(aiPlayer, new TolarianScholar());
+        TorgaarFamineIncarnate torgaar = new TorgaarFamineIncarnate();
+        harness.setHand(aiPlayer, List.of(torgaar));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 4);
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(fodder);
     }
 
     @Test
