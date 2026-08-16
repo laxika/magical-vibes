@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -772,6 +774,11 @@ public abstract class AiDecisionEngine {
                 || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
             return assignments;
         }
+        assignments = dropIncompleteAllDefendingCreatureBlocks(
+                gameData, defenderBattlefield, attackerBattlefield, assignments);
+        if (assignments.isEmpty()) {
+            return assignments;
+        }
         BlockTax tax = new BlockTax(gameData, defenderBattlefield, attackerBattlefield);
         if (tax.mana(assignments) == 0 && tax.life(assignments) == 0) {
             return assignments;
@@ -804,7 +811,10 @@ public abstract class AiDecisionEngine {
             log.info("AI: Dropping {} of {} blocks in game {} whose block cost can't be paid",
                     assignments.size() - affordable.size(), assignments.size(), gameId);
         }
-        return dropBlocksLeftUnderfilled(gameData, defenderBattlefield, attackerBattlefield, affordable);
+        List<BlockerAssignment> legal = dropBlocksLeftUnderfilled(
+                gameData, defenderBattlefield, attackerBattlefield, affordable);
+        return dropIncompleteAllDefendingCreatureBlocks(
+                gameData, defenderBattlefield, attackerBattlefield, legal);
     }
 
     private boolean indicesInRange(List<BlockerAssignment> assignments, List<Permanent> defenderBattlefield,
@@ -837,6 +847,51 @@ public abstract class AiDecisionEngine {
             return List.of();
         }
         return kept;
+    }
+
+    private List<BlockerAssignment> dropIncompleteAllDefendingCreatureBlocks(
+            GameData gameData, List<Permanent> defenderBattlefield, List<Permanent> attackerBattlefield,
+            List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty()) {
+            return assignments;
+        }
+        BlockLegalityContext blockContext =
+                blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+        Set<Integer> incompleteAttackers = assignments.stream()
+                .map(BlockerAssignment::attackerIndex)
+                .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                .filter(attackerIdx -> blockLegalityService.requiresAllDefendingCreaturesToBlock(
+                        blockContext, attackerBattlefield.get(attackerIdx)))
+                .filter(attackerIdx -> !hasCompleteAllDefendingCreatureBlock(
+                        gameData, blockContext, defenderBattlefield, attackerBattlefield, assignments, attackerIdx))
+                .collect(Collectors.toSet());
+        if (incompleteAttackers.isEmpty()) {
+            return assignments;
+        }
+        return assignments.stream()
+                .filter(assignment -> !incompleteAttackers.contains(assignment.attackerIndex()))
+                .toList();
+    }
+
+    private boolean hasCompleteAllDefendingCreatureBlock(
+            GameData gameData, BlockLegalityContext blockContext, List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield, List<BlockerAssignment> assignments, int attackerIdx) {
+        Permanent attacker = attackerBattlefield.get(attackerIdx);
+        List<Integer> defendingCreatureIndices = defendingCreatureIndices(gameData, defenderBattlefield);
+        if (!canAllDefendingCreaturesBlock(
+                gameData, blockContext, defenderBattlefield, attackerBattlefield, attacker,
+                defendingCreatureIndices)) {
+            return false;
+        }
+        Set<Integer> assignedBlockers = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toSet());
+        long assignedBlockCount = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .count();
+        return assignedBlockCount == defendingCreatureIndices.size()
+                && assignedBlockers.equals(new HashSet<>(defendingCreatureIndices));
     }
 
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
@@ -951,6 +1006,15 @@ public abstract class AiDecisionEngine {
         private List<BlockerAssignment> fitToBudget(List<BlockerAssignment> group, int manaLeft,
                                                     int lifeBudget, Map<UUID, Integer> lifeCharged,
                                                     Map<UUID, Integer> manaCharged) {
+            Permanent groupAttacker = attacker(group.getFirst());
+            if (requiresAllDefendingCreaturesToBlock(groupAttacker)) {
+                int groupMana = mana(group, manaCharged);
+                int groupLife = lifeByBlocker(group, lifeCharged).values().stream()
+                        .mapToInt(Integer::intValue)
+                        .sum();
+                return groupMana <= manaLeft && groupLife <= lifeBudget ? group : List.of();
+            }
+
             List<BlockerAssignment> fitted = new ArrayList<>();
             Map<UUID, Integer> life = lifeCharged;
             Map<UUID, Integer> globalMana = new HashMap<>(manaCharged);
@@ -970,8 +1034,14 @@ public abstract class AiDecisionEngine {
                 fitted.add(assignment);
             }
             int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
-                    gameData, gameQueryService, attacker(group.getFirst()));
+                    gameData, gameQueryService, groupAttacker);
             return fitted.size() >= minimumBlockers ? fitted : List.of();
+        }
+
+        private boolean requiresAllDefendingCreaturesToBlock(Permanent attacker) {
+            BlockLegalityContext context =
+                    blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+            return blockLegalityService.requiresAllDefendingCreaturesToBlock(context, attacker);
         }
 
         private double damagePreventedPerMana(List<BlockerAssignment> group) {
@@ -1369,6 +1439,51 @@ public abstract class AiDecisionEngine {
             }
         }
         return repaired;
+    }
+
+    private List<Integer> defendingCreatureIndices(GameData gameData, List<Permanent> defenderBattlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < defenderBattlefield.size(); i++) {
+            if (gameQueryService.isCreature(gameData, defenderBattlefield.get(i))) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private boolean canAllDefendingCreaturesBlock(
+            GameData gameData, BlockLegalityContext blockContext, List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield, Permanent attacker, List<Integer> defenderIndices) {
+        if (defenderIndices.isEmpty()
+                || !blockLegalityService.canBeBlockedByAllDefendingCreatures(blockContext, attacker)) {
+            return false;
+        }
+        int maximumBlockers = Math.min(
+                gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                CombatHelper.getMaximumBlockers(gameData));
+        maximumBlockers = Math.min(maximumBlockers, maximumBlockersForTeam(attackerBattlefield));
+        if (defenderIndices.size() > maximumBlockers
+                || defenderIndices.size() < AiUtils.minimumBlockersRequiredToBlock(
+                        gameData, gameQueryService, attacker)) {
+            return false;
+        }
+        return defenderIndices.stream().allMatch(blockerIdx -> {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            return blockLegalityService.canBlock(blockContext, blocker)
+                    && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker);
+        });
+    }
+
+    private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
+        int maximumBlockers = Integer.MAX_VALUE;
+        for (Permanent permanent : attackerBattlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                    maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
+                }
+            }
+        }
+        return maximumBlockers;
     }
 
     private List<Integer> attackingCreatureIndices(List<Permanent> battlefield) {

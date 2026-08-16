@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -1131,6 +1132,39 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
         assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI drops a partial Tromokratis block without rejection")
+    void dropsPartialTromokratisBlockWithoutRejection() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new Tromokratis());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        secondBlocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int firstBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 

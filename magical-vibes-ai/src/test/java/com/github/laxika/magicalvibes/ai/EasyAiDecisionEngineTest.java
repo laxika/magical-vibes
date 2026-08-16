@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
@@ -1402,6 +1403,73 @@ class EasyAiDecisionEngineTest {
             combatAi.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
             assertThat(blocker.isBlocking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI drops a partial Tromokratis block without rejection")
+        void dropsPartialTromokratisBlockWithoutRejection() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new Tromokratis());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent firstBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstBlocker.setSummoningSick(false);
+            Permanent secondBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            secondBlocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int firstBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(firstBlocker);
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(firstBlocker.isBlocking()).isFalse();
+            assertThat(secondBlocker.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI leaves Tromokratis unblocked when a defending creature cannot block")
+        void leavesTromokratisUnblockedWhenADefendingCreatureCannotBlock() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new Tromokratis());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent firstBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstBlocker.setSummoningSick(false);
+            Permanent secondBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            secondBlocker.setSummoningSick(false);
+            secondBlocker.tap();
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int firstBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(firstBlocker);
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(firstBlocker.isBlocking()).isFalse();
+            assertThat(secondBlocker.isBlocking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
                     .isNull();
         }
