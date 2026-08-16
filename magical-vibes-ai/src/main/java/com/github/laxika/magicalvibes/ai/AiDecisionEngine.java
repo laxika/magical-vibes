@@ -1369,10 +1369,16 @@ public abstract class AiDecisionEngine {
         if (gameData != null) {
             requirementLegal = new DeclareBlockersRequest(
                     capBlockersToLegalMaximum(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
         }
         DeclareBlockersRequest affordable = gameData == null
                 ? requirementLegal
                 : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
+        if (gameData != null) {
+            affordable = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, affordable.blockerAssignments()));
+        }
 
         String rejection;
         try {
@@ -1401,6 +1407,7 @@ public abstract class AiDecisionEngine {
         if (gameData != null) {
             fallbackAssignments = capBlockersToLegalMaximum(gameData, fallbackAssignments);
             fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
+            fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
         }
         try {
             String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(fallbackAssignments));
@@ -1460,6 +1467,67 @@ public abstract class AiDecisionEngine {
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
                         maximumBlockersForTeam(attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
+    }
+
+    /**
+     * Removes blockers whose own "also blocks" restriction became unsatisfied after another
+     * blocker was removed by a later legality or affordability pass. Repeats the dependent
+     * cleanup because removing one blocker can invalidate another block or its minimum size.
+     */
+    private List<BlockerAssignment> normalizeBlockerAssignments(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null
+                || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> normalized = new ArrayList<>(assignments);
+        boolean changed;
+        do {
+            List<BlockerAssignment> previous = new ArrayList<>(normalized);
+            Set<Integer> selectedBlockers = normalized.stream()
+                    .map(BlockerAssignment::blockerIndex)
+                    .collect(Collectors.toSet());
+            Set<Integer> invalidRestrictedBlockers = selectedBlockers.stream()
+                    .filter(blockerIdx -> hasUnmetBlockPartnerRequirement(
+                            gameData, defenderBattlefield, selectedBlockers, blockerIdx))
+                    .collect(Collectors.toSet());
+            normalized.removeIf(assignment -> invalidRestrictedBlockers.contains(assignment.blockerIndex()));
+            normalized = new ArrayList<>(dropBlocksLeftUnderfilled(
+                    gameData, defenderBattlefield, attackerBattlefield, normalized));
+            normalized = new ArrayList<>(dropIncompleteAllDefendingCreatureBlocks(
+                    gameData, defenderBattlefield, attackerBattlefield, normalized));
+            changed = !normalized.equals(previous);
+        } while (changed);
+        return normalized;
+    }
+
+    private boolean hasUnmetBlockPartnerRequirement(
+            GameData gameData, List<Permanent> battlefield, Set<Integer> selectedBlockers, int blockerIdx) {
+        Permanent blocker = battlefield.get(blockerIdx);
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                boolean hasGreaterPowerPartner = selectedBlockers.stream()
+                        .filter(otherIdx -> otherIdx != blockerIdx)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
+                if (!hasGreaterPowerPartner) {
+                    return true;
+                }
+            }
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && selectedBlockers.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

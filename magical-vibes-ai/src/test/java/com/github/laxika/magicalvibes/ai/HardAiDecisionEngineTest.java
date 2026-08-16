@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
@@ -1245,6 +1247,43 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         assertThat(firstBlocker.isBlocking()).isFalse();
         assertThat(secondBlocker.isBlocking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI drops Okk when its greater-power partner is unaffordable")
+    void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent okk = harness.addToBattlefieldAndReturn(player2, new Okk());
+        okk.setSummoningSick(false);
+        TestCards.mutableCard(okk).setPower(2);
+        Permanent partner = harness.addToBattlefieldAndReturn(player2, new Hipparion());
+        partner.setSummoningSick(false);
+        TestCards.mutableCard(partner).setPower(4);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int okkIndex = gd.playerBattlefields.get(player2.getId()).indexOf(okk);
+        int partnerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(partner);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(okkIndex, attackerIndex),
+                    new BlockerAssignment(partnerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(okk.isBlocking()).isFalse();
+        assertThat(partner.isBlocking()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 

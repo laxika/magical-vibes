@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
@@ -1499,6 +1501,43 @@ class EasyAiDecisionEngineTest {
 
             assertThat(firstBlocker.isBlocking()).isFalse();
             assertThat(secondBlocker.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI drops Okk when its greater-power partner is unaffordable")
+        void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new HillGiant());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent okk = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Okk());
+            okk.setSummoningSick(false);
+            TestCards.mutableCard(okk).setPower(2);
+            Permanent partner = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Hipparion());
+            partner.setSummoningSick(false);
+            TestCards.mutableCard(partner).setPower(4);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int okkIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(okk);
+            int partnerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(partner);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(okkIndex, attackerIndex),
+                        new BlockerAssignment(partnerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(okk.isBlocking()).isFalse();
+            assertThat(partner.isBlocking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
                     .isNull();
         }
