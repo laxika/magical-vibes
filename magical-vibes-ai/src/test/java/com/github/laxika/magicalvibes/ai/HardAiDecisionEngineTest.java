@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
+import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -60,9 +61,11 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.k.KillerBees;
 import com.github.laxika.magicalvibes.cards.v.VigilForTheLost;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
@@ -1161,6 +1164,44 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
         assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI caps Lure blocks to an aura-granted maximum")
+    void capsLureBlocksToAuraGrantedMaximum() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new KjeldoranRoyalGuard());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent authority = harness.addToBattlefieldAndReturn(player1, new AlphaAuthority());
+        authority.setAttachedTo(attacker.getId());
+        Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
+        lure.setAttachedTo(attacker.getId());
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        secondBlocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int firstBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker);
+        int secondBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(secondBlocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(firstBlockerIndex, attackerIndex),
+                    new BlockerAssignment(secondBlockerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(List.of(firstBlocker, secondBlocker)).filteredOn(Permanent::isBlocking).hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 

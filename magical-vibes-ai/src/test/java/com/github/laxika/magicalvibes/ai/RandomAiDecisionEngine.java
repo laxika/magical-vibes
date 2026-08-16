@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
@@ -1057,7 +1056,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             Permanent attacker = opponentBattlefield.get(attackerIdx);
             int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
                     gameData, gameQueryService, attacker);
-            int maximumBlockers = Math.min(teamMaxBlockers, maxBlockersForAttacker(attacker));
+            int maximumBlockers = Math.min(teamMaxBlockers,
+                    gameQueryService.getMaxBlockersAllowed(gameData, attacker));
             // e.g. menace plus "can't be blocked by more than one creature" — no legal block exists.
             if (minimumBlockers > maximumBlockers) continue;
             boolean lure = lureAttackerIndices.contains(attackerIdx);
@@ -1229,21 +1229,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
         return false;
-    }
-
-    /**
-     * The most creatures that may be assigned to the given attacker under its own
-     * "can't be blocked by more than N creatures" restriction (Charging Rhino), or
-     * {@link Integer#MAX_VALUE} when it carries none.
-     */
-    private int maxBlockersForAttacker(Permanent attacker) {
-        int maximum = Integer.MAX_VALUE;
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
-                maximum = Math.min(maximum, restriction.maxBlockers());
-            }
-        }
-        return maximum;
     }
 
     /**

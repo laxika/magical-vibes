@@ -1602,41 +1602,127 @@ public class CombatBlockService {
                                                    List<Permanent> defenderBattlefield,
                                                    List<Integer> blockable,
                                                    List<BlockerAssignment> blockerAssignments) {
+        Map<Integer, Set<Integer>> requiredAttackersByBlocker = new LinkedHashMap<>();
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
+            Set<Integer> requiredAttackerIndices = new LinkedHashSet<>();
+            for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+                Permanent attacker = attackerBattlefield.get(attackerIdx);
+                if (attacker.isAttacking()
+                        && gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)
+                        && canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                        defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
+                    requiredAttackerIndices.add(attackerIdx);
+                }
+            }
+            if (!requiredAttackerIndices.isEmpty()) {
+                requiredAttackersByBlocker.put(blockerIdx, requiredAttackerIndices);
+            }
+        }
+        if (requiredAttackersByBlocker.isEmpty()) {
+            return;
+        }
 
-            Set<Integer> requiredAttackerIndices = new HashSet<>();
-            for (int i = 0; i < attackerBattlefield.size(); i++) {
-                Permanent attacker = attackerBattlefield.get(i);
-                if (!attacker.isAttacking()) {
-                    continue;
-                }
-                if (!gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker)) {
-                    continue;
-                }
-                if (canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
-                        defenderBattlefield, blockable, blockerIdx, i)) {
-                    requiredAttackerIndices.add(i);
-                }
-            }
-            if (requiredAttackerIndices.isEmpty()) {
-                continue;
-            }
+        int maximumSatisfiable = maximumSatisfiableLureRequirements(
+                gameData, attackerBattlefield, defenderBattlefield, requiredAttackersByBlocker);
+        long currentLureBlocks = blockerAssignments.stream()
+                .filter(assignment -> requiredAttackersByBlocker.getOrDefault(
+                        assignment.blockerIndex(), Set.of()).contains(assignment.attackerIndex()))
+                .count();
+        if (currentLureBlocks < maximumSatisfiable) {
+            int missingBlockerIdx = requiredAttackersByBlocker.entrySet().stream()
+                    .filter(entry -> entry.getValue().stream()
+                            .anyMatch(attackerIdx -> blockerAssignments.stream()
+                                    .noneMatch(assignment -> assignment.blockerIndex() == entry.getKey()
+                                            && assignment.attackerIndex() == attackerIdx)))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(requiredAttackersByBlocker.keySet().iterator().next());
+            throw new IllegalStateException(defenderBattlefield.get(missingBlockerIdx).getCard().getName()
+                    + " must block enchanted creature if able");
+        }
+    }
 
-            int currentLureBlocks = 0;
-            for (BlockerAssignment assignment : blockerAssignments) {
-                if (assignment.blockerIndex() == blockerIdx
-                        && requiredAttackerIndices.contains(assignment.attackerIndex())) {
-                    currentLureBlocks++;
+    private int maximumSatisfiableLureRequirements(
+            GameData gameData,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            Map<Integer, Set<Integer>> requiredAttackersByBlocker) {
+        List<Integer> blockerIndices = new ArrayList<>(requiredAttackersByBlocker.keySet());
+        List<Integer> attackerIndices = requiredAttackersByBlocker.values().stream()
+                .flatMap(Set::stream)
+                .distinct()
+                .toList();
+        int source = 0;
+        int blockerStart = 1;
+        int attackerStart = blockerStart + blockerIndices.size();
+        int sink = attackerStart + attackerIndices.size();
+        int[][] residual = new int[sink + 1][sink + 1];
+
+        Map<Integer, Integer> blockerNodes = new HashMap<>();
+        for (int i = 0; i < blockerIndices.size(); i++) {
+            int blockerIdx = blockerIndices.get(i);
+            int blockerNode = blockerStart + i;
+            blockerNodes.put(blockerIdx, blockerNode);
+            int capacity = Math.min(getMaxBlocksForCreature(gameData, defenderBattlefield.get(blockerIdx),
+                    defenderBattlefield), attackerIndices.size());
+            residual[source][blockerNode] = capacity;
+        }
+
+        Map<Integer, Integer> attackerNodes = new HashMap<>();
+        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
+        int globalMaxBlockers = CombatHelper.getMaximumBlockers(gameData);
+        for (int i = 0; i < attackerIndices.size(); i++) {
+            int attackerIdx = attackerIndices.get(i);
+            int attackerNode = attackerStart + i;
+            attackerNodes.put(attackerIdx, attackerNode);
+            int capacity = Math.min(
+                    Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attackerBattlefield.get(attackerIdx)),
+                            teamMaxBlockers),
+                    globalMaxBlockers);
+            capacity = Math.min(capacity, blockerIndices.size());
+            residual[attackerNode][sink] = capacity;
+        }
+
+        for (Map.Entry<Integer, Set<Integer>> entry : requiredAttackersByBlocker.entrySet()) {
+            int blockerNode = blockerNodes.get(entry.getKey());
+            for (int attackerIdx : entry.getValue()) {
+                residual[blockerNode][attackerNodes.get(attackerIdx)] = 1;
+            }
+        }
+        return maximumFlow(residual, source, sink);
+    }
+
+    private int maximumFlow(int[][] residual, int source, int sink) {
+        int flow = 0;
+        while (true) {
+            int[] parent = new int[residual.length];
+            Arrays.fill(parent, -1);
+            parent[source] = source;
+            ArrayDeque<Integer> queue = new ArrayDeque<>();
+            queue.add(source);
+            while (!queue.isEmpty() && parent[sink] < 0) {
+                int current = queue.removeFirst();
+                for (int next = 0; next < residual.length; next++) {
+                    if (parent[next] < 0 && residual[current][next] > 0) {
+                        parent[next] = current;
+                        queue.addLast(next);
+                    }
                 }
             }
-
-            int maxSatisfiable = Math.min(
-                    getMaxBlocksForCreature(gameData, blocker, defenderBattlefield),
-                    requiredAttackerIndices.size());
-            if (currentLureBlocks < maxSatisfiable) {
-                throw new IllegalStateException(blocker.getCard().getName() + " must block enchanted creature if able");
+            if (parent[sink] < 0) {
+                return flow;
             }
+            int pathCapacity = Integer.MAX_VALUE;
+            for (int current = sink; current != source; current = parent[current]) {
+                pathCapacity = Math.min(pathCapacity, residual[parent[current]][current]);
+            }
+            for (int current = sink; current != source; current = parent[current]) {
+                int previous = parent[current];
+                residual[previous][current] -= pathCapacity;
+                residual[current][previous] += pathCapacity;
+            }
+            flow += pathCapacity;
         }
     }
 

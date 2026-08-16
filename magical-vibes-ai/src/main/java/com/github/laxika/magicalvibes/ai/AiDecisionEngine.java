@@ -1336,6 +1336,10 @@ public abstract class AiDecisionEngine {
         DeclareBlockersRequest requirementLegal = gameData == null
                 ? request
                 : new DeclareBlockersRequest(enforceBlockRequirements(gameData, request.blockerAssignments()));
+        if (gameData != null) {
+            requirementLegal = new DeclareBlockersRequest(
+                    capBlockersToLegalMaximum(gameData, requirementLegal.blockerAssignments()));
+        }
         DeclareBlockersRequest affordable = gameData == null
                 ? requirementLegal
                 : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
@@ -1365,6 +1369,7 @@ public abstract class AiDecisionEngine {
                 ? List.of()
                 : enforceBlockRequirements(gameData, List.of());
         if (gameData != null) {
+            fallbackAssignments = capBlockersToLegalMaximum(gameData, fallbackAssignments);
             fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
         }
         try {
@@ -1375,6 +1380,56 @@ public abstract class AiDecisionEngine {
         } catch (Exception e) {
             log.error("AI: Fallback blocker declaration also failed in game {}", gameId, e);
         }
+    }
+
+    private List<BlockerAssignment> capBlockersToLegalMaximum(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null
+                || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
+            return assignments;
+        }
+
+        Map<Integer, List<BlockerAssignment>> assignmentsByAttacker = assignments.stream()
+                .collect(Collectors.groupingBy(BlockerAssignment::attackerIndex,
+                        LinkedHashMap::new, Collectors.toList()));
+        Set<BlockerAssignment> kept = new LinkedHashSet<>();
+        for (Map.Entry<Integer, List<BlockerAssignment>> entry : assignmentsByAttacker.entrySet()) {
+            int attackerIdx = entry.getKey();
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            int maximumBlockers = maximumLegalBlockersForAttacker(gameData, attacker, attackerBattlefield);
+            List<BlockerAssignment> group = entry.getValue();
+            if (group.size() <= maximumBlockers) {
+                kept.addAll(group);
+                continue;
+            }
+
+            List<BlockerAssignment> lureBlocks = group.stream()
+                    .filter(assignment -> gameQueryService.isRequiredToBlockByLure(
+                            gameData, attacker, defenderBattlefield.get(assignment.blockerIndex())))
+                    .toList();
+            lureBlocks.stream().limit(maximumBlockers).forEach(kept::add);
+            if (kept.stream().filter(group::contains).count() < maximumBlockers) {
+                group.stream()
+                        .filter(assignment -> !kept.contains(assignment))
+                        .limit(maximumBlockers - kept.stream().filter(group::contains).count())
+                        .forEach(kept::add);
+            }
+        }
+        return assignments.stream().filter(kept::contains).toList();
+    }
+
+    private int maximumLegalBlockersForAttacker(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
+        return Math.min(
+                Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                        maximumBlockersForTeam(attackerBattlefield)),
+                CombatHelper.getMaximumBlockers(gameData));
     }
 
     /**
@@ -1439,7 +1494,57 @@ public abstract class AiDecisionEngine {
                         blockerIndices, defenderBattlefield, attackerBattlefield);
             }
         }
+        enforceLureRequirements(gameData, repaired, attackerIndices, blockerIndices,
+                defenderBattlefield, attackerBattlefield);
         return repaired;
+    }
+
+    private void enforceLureRequirements(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            List<Integer> attackerIndices,
+            List<Integer> blockerIndices,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        for (int attackerIdx : attackerIndices) {
+            if (!isIndexInRange(attackerIdx, attackerBattlefield)
+                    || !attackerBattlefield.get(attackerIdx).isAttacking()) {
+                continue;
+            }
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            List<Integer> lureBlockers = blockerIndices.stream()
+                    .filter(blockerIdx -> isIndexInRange(blockerIdx, defenderBattlefield))
+                    .filter(blockerIdx -> canBlockPair(gameData, defenderBattlefield.get(blockerIdx), attacker,
+                            defenderBattlefield))
+                    .filter(blockerIdx -> gameQueryService.isRequiredToBlockByLure(
+                            gameData, attacker, defenderBattlefield.get(blockerIdx)))
+                    .toList();
+            int target = Math.min(lureBlockers.size(),
+                    maximumLegalBlockersForAttacker(gameData, attacker, attackerBattlefield));
+            while (countLureBlocks(assignments, attackerIdx, lureBlockers) < target) {
+                int blockerIdx = lureBlockers.stream()
+                        .filter(candidate -> !hasAssignmentForBlocker(assignments, candidate))
+                        .findFirst()
+                        .orElse(-1);
+                if (blockerIdx < 0) {
+                    return;
+                }
+                int previousCount = countLureBlocks(assignments, attackerIdx, lureBlockers);
+                addRequiredBlock(gameData, assignments, blockerIdx, List.of(attackerIdx), blockerIndices,
+                        defenderBattlefield, attackerBattlefield);
+                if (countLureBlocks(assignments, attackerIdx, lureBlockers) == previousCount) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private int countLureBlocks(
+            List<BlockerAssignment> assignments, int attackerIdx, List<Integer> lureBlockers) {
+        return (int) assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx
+                        && lureBlockers.contains(assignment.blockerIndex()))
+                .count();
     }
 
     private List<Integer> defendingCreatureIndices(GameData gameData, List<Permanent> defenderBattlefield) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
+import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
@@ -22,9 +23,11 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mathemagics;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
@@ -910,6 +913,29 @@ class RandomAiDecisionEngineTest {
         declareBlockersAsRandomAi(harness);
 
         assertThat(hipparion.isBlocking()).isTrue();
+    }
+
+    @Test
+    void capsLureBlocksToAuraGrantedMaximum() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        Permanent attacker = harness.addToBattlefieldAndReturn(harness.getPlayer1(), new KjeldoranRoyalGuard());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent authority = harness.addToBattlefieldAndReturn(harness.getPlayer1(), new AlphaAuthority());
+        authority.setAttachedTo(attacker.getId());
+        Permanent lure = harness.addToBattlefieldAndReturn(harness.getPlayer1(), new Lure());
+        lure.setAttachedTo(attacker.getId());
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(harness.getPlayer2(), new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(harness.getPlayer2(), new GrizzlyBears());
+        secondBlocker.setSummoningSick(false);
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(List.of(firstBlocker, secondBlocker)).filteredOn(Permanent::isBlocking).hasSize(1);
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                .isNull();
     }
 
     @Test
