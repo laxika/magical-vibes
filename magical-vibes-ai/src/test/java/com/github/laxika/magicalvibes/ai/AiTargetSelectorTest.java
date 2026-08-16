@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantAmbushBeetle;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -83,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -806,6 +808,26 @@ class AiTargetSelectorTest {
                 gd, new MorbidBloom(), aiPlayer.getId());
 
         assertThat(results).extracting(Card::getName).containsExactly("GY Creature");
+    }
+
+    @Test
+    @DisplayName("findValidGraveyardReturnTargets returns no cards while Ground Seal is on the battlefield")
+    void findValidGraveyardReturnTargets_emptyWhenGraveyardsCannotBeTargeted() {
+        harness.addToBattlefield(human, new GroundSeal());
+        Card firstCreature = makeGraveyardCard("First creature", CardType.CREATURE);
+        Card secondCreature = makeGraveyardCard("Second creature", CardType.CREATURE);
+        harness.setGraveyard(aiPlayer, List.of(firstCreature, secondCreature));
+
+        Card spell = new Card();
+        spell.setName("Return spell");
+        spell.setType(CardType.SORCERY);
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                ReturnTargetCardsFromGraveyardToHandEffect.exactly(
+                        new CardTypePredicate(CardType.CREATURE), 2);
+        spell.addEffect(EffectSlot.SPELL, effect);
+
+        assertThat(targetSelector.findValidGraveyardReturnTargets(
+                gd, spell, aiPlayer.getId(), effect)).isEmpty();
     }
 
     // =====================================================================

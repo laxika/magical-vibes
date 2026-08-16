@@ -960,6 +960,9 @@ class AiTargetSelector {
      */
     List<Card> findValidGraveyardReturnTargets(GameData gameData, Card card, UUID aiPlayerId,
                                                ReturnTargetCardsFromGraveyardToHandEffect effect) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
         List<Card> candidates = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of()).stream()
                 .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
                         candidate, effect.filter(), card.getId()))

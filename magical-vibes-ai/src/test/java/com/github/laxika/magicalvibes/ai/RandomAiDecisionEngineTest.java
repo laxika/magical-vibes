@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
+import com.github.laxika.magicalvibes.cards.d.DeathsDuet;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -1067,6 +1069,38 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotCastGraveyardReturnSpellWhenGroundSealBlocksTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        DeathsDuet spell = new DeathsDuet();
+
+        harness.addToBattlefield(opponent, new GroundSeal());
+        harness.setGraveyard(aiPlayer, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
