@@ -881,6 +881,23 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void acceptsUnfulfillableMustBlockRequirementForOkk() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gameData = harness.getGameData();
+        Permanent attacker = harness.addToBattlefieldAndReturn(harness.getPlayer1(), new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent okk = harness.addToBattlefieldAndReturn(harness.getPlayer2(), new Okk());
+        okk.setSummoningSick(false);
+        okk.getMustBlockIds().add(attacker.getId());
+
+        declareBlockersAsRandomAi(harness);
+
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+        assertThat(okk.isBlocking()).isFalse();
+    }
+
+    @Test
     void doesNotDeclareOrcishConscriptsWithoutTwoOtherBlockers() {
         GameTestHarness harness = new GameTestHarness();
         GameData gameData = harness.getGameData();

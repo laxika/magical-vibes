@@ -1962,11 +1962,168 @@ public class CombatBlockService {
             return false;
         }
 
+        if (!canSatisfyBlockerSideRequirements(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                blockerIdx, attackerIdx)) {
+            return false;
+        }
+
         long availableBlockers = blockable.stream()
                 .filter(candidateIdx -> blockLegalityService.canBlockAttacker(
                         blockContext, defenderBattlefield.get(candidateIdx), attacker))
                 .count();
         return availableBlockers >= minimumBlockers;
+    }
+
+    private boolean canSatisfyBlockerSideRequirements(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<Integer> blockable,
+            int blockerIdx,
+            int assignedAttackerIdx) {
+        Permanent blocker = defenderBattlefield.get(blockerIdx);
+        int maximumAdditionalBlockers = maximumAdditionalBlockers(
+                gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                assignedAttackerIdx, blockerIdx);
+
+        if (hasCantAttackOrBlockAlone(blocker) && maximumAdditionalBlockers < 1) {
+            return false;
+        }
+
+        int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect
+                    && !hasGreaterPowerAdditionalBlocker(
+                    gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                    assignedAttackerIdx, blockerIdx, blockerPower)) {
+                return false;
+            }
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && maximumAdditionalBlockers < restriction.otherCount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean hasGreaterPowerAdditionalBlocker(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<Integer> blockable,
+            int assignedAttackerIdx,
+            int blockerIdx,
+            int blockerPower) {
+        if (CombatHelper.getMaximumBlockers(gameData) <= 1) {
+            return false;
+        }
+        for (int otherBlockerIdx : blockable) {
+            if (otherBlockerIdx == blockerIdx) {
+                continue;
+            }
+            Permanent otherBlocker = defenderBattlefield.get(otherBlockerIdx);
+            if (gameQueryService.getEffectivePower(gameData, otherBlocker) <= blockerPower
+                    || !canBeAssignedAsAdditionalBlocker(
+                    gameData, blockContext, attackerBattlefield,
+                    otherBlocker, assignedAttackerIdx)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canBeAssignedAsAdditionalBlocker(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            Permanent blocker,
+            int assignedAttackerIdx) {
+        for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            if (!attacker.isAttacking()
+                    || !blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                continue;
+            }
+            if (attackerIdx != assignedAttackerIdx
+                    || maximumBlockersForAttacker(gameData, attacker, attackerBattlefield) >= 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int maximumAdditionalBlockers(
+            GameData gameData,
+            BlockLegalityContext blockContext,
+            List<Permanent> attackerBattlefield,
+            List<Permanent> defenderBattlefield,
+            List<Integer> blockable,
+            int assignedAttackerIdx,
+            int blockerIdx) {
+        int globalMaximum = CombatHelper.getMaximumBlockers(gameData);
+        if (globalMaximum <= 1) {
+            return 0;
+        }
+
+        List<Integer> partnerIndices = blockable.stream()
+                .filter(candidateIdx -> candidateIdx != blockerIdx)
+                .toList();
+        List<Integer> attackingIndices = new ArrayList<>();
+        for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
+            if (attackerBattlefield.get(attackerIdx).isAttacking()) {
+                attackingIndices.add(attackerIdx);
+            }
+        }
+        if (partnerIndices.isEmpty() || attackingIndices.isEmpty()) {
+            return 0;
+        }
+
+        int source = 0;
+        int partnerStart = 1;
+        int attackerStart = partnerStart + partnerIndices.size();
+        int sink = attackerStart + attackingIndices.size();
+        int[][] residual = new int[sink + 1][sink + 1];
+
+        for (int i = 0; i < partnerIndices.size(); i++) {
+            int partnerIdx = partnerIndices.get(i);
+            int partnerNode = partnerStart + i;
+            residual[source][partnerNode] = 1;
+            Permanent partner = defenderBattlefield.get(partnerIdx);
+            for (int j = 0; j < attackingIndices.size(); j++) {
+                int attackerIdx = attackingIndices.get(j);
+                if (canBeAssignedAsAdditionalBlocker(
+                        gameData, blockContext, attackerBattlefield,
+                        partner, assignedAttackerIdx)
+                        && blockLegalityService.canBlockAttacker(
+                        blockContext, partner, attackerBattlefield.get(attackerIdx))) {
+                    residual[partnerNode][attackerStart + j] = 1;
+                }
+            }
+        }
+
+        for (int i = 0; i < attackingIndices.size(); i++) {
+            int attackerIdx = attackingIndices.get(i);
+            int capacity = maximumBlockersForAttacker(
+                    gameData, attackerBattlefield.get(attackerIdx), attackerBattlefield);
+            if (attackerIdx == assignedAttackerIdx) {
+                capacity--;
+            }
+            residual[attackerStart + i][sink] = Math.max(0, capacity);
+        }
+
+        return Math.min(maximumFlow(residual, source, sink), globalMaximum - 1);
+    }
+
+    private int maximumBlockersForAttacker(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
+        return Math.min(
+                Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                        maximumBlockersForTeam(attackerBattlefield)),
+                CombatHelper.getMaximumBlockers(gameData));
     }
 
     private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
