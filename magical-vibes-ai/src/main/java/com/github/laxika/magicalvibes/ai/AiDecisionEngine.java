@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -1913,6 +1914,10 @@ public abstract class AiDecisionEngine {
      */
     protected Integer chooseDiscardCostIndex(GameData gameData, Card card, int spellCardIndex,
                                              Integer xValue, int targetingTax) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            return null;
+        }
         List<Integer> valid = castingCostService.validDiscardCostIndices(gameData, aiPlayer.getId(), card);
         if (valid != null) {
             return valid.isEmpty() ? null : valid.get(0);
@@ -2138,12 +2143,30 @@ public abstract class AiDecisionEngine {
                 .orElse(null);
     }
 
+    private DiscardCardTypeCost findDiscardCardTypeCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
-     * Picks {@code count} pre-removal hand indices to pay a {@link DiscardXCardsCost}, skipping the
-     * spell's own index. Returns null when the card has no such cost, so the request field stays
-     * empty for every other spell.
+     * Picks pre-removal hand indices for a fixed multi-card or X-based discard cost, skipping the
+     * spell's own index. Returns null when the card has no list-valued discard cost, so the request
+     * field stays empty for every other spell.
      */
-    protected List<Integer> chooseDiscardXCostIndices(GameData gameData, Card card, int cardIndex, int count) {
+    protected List<Integer> chooseDiscardCostIndices(GameData gameData, Card card, int cardIndex, int count) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            List<Integer> valid = castingCostService.validDiscardCostIndices(
+                    gameData, aiPlayer.getId(), card);
+            if (valid == null || valid.size() < fixedCost.count()) {
+                return null;
+            }
+            return new ArrayList<>(valid.subList(0, fixedCost.count()));
+        }
+
         DiscardXCardsCost cost = findDiscardXCardsCost(card);
         if (cost == null) {
             return null;

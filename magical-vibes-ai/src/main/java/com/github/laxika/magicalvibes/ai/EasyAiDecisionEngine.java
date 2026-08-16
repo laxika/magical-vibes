@@ -284,7 +284,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(
                 gameData, card, cardIndex, xValue, targetingTax);
         final List<Integer> finalDiscardHandCardIndices =
-                chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
+                chooseDiscardCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
@@ -462,7 +462,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(
                 gameData, card, cardIndex, xValue, targetingTax);
         final List<Integer> finalDiscardHandCardIndices =
-                chooseDiscardXCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
+                chooseDiscardCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(

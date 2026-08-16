@@ -1152,7 +1152,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(
                 gameData, plan.card, idx, fXValue, plan.targetingTax);
         final List<Integer> fDiscardHandCardIndices =
-                chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
+                chooseDiscardCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(plan.card, idx, fXValue, fTargetId, fDamage,

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
@@ -1823,6 +1824,26 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactly(discard);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies all cards for a fixed multi-card discard cost")
+    void castsCatharticReunionWithTwoDiscardCards() {
+        giveAiPriority();
+        giveAiMountains(2);
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(reunion);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(remainingCard);
     }
 
     // ===== X value cap handling =====

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
@@ -515,6 +516,26 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).isEmpty();
             assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
                     .containsExactly(discard);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies all cards for a fixed multi-card discard cost")
+        void castsCatharticReunionWithTwoDiscardCards() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            CatharticReunion reunion = new CatharticReunion();
+            GrizzlyBears firstDiscard = new GrizzlyBears();
+            GrizzlyBears secondDiscard = new GrizzlyBears();
+            GrizzlyBears remainingCard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(reunion);
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
+                    .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(remainingCard);
         }
 
         @Test

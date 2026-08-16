@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
@@ -516,6 +517,41 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactly(discard);
+    }
+
+    @Test
+    void castsFixedMultiCardDiscardSpellWithAllRequiredDiscardCards() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(reunion);
+        assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(remainingCard);
     }
 
     @Test

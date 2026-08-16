@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -526,6 +527,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // (e.g. Seize the Spoils) — the engine rejects the cast without a selection.
             // Discard-or-pay-mana (Lightning Axe) may leave the index null to pay the mana option.
             Integer discardHandCardIndex = null;
+            List<Integer> discardHandCardIndices = null;
             List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
                     gameData, aiPlayer.getId(), card);
             if (validDiscardIndices != null) {
@@ -536,6 +538,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         telemetry.recordSkip("spell: discard cost unpayable", card.getName());
                         continue;
                     }
+                } else if (card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(DiscardCardTypeCost.class::isInstance)
+                        .map(DiscardCardTypeCost.class::cast)
+                        .anyMatch(cost -> cost.count() > 1)) {
+                    discardHandCardIndices = chooseDiscardCostIndices(gameData, card, cardIndex, 0);
+                    if (discardHandCardIndices == null) {
+                        telemetry.recordSkip("spell: discard cost unpayable", card.getName());
+                        continue;
+                    }
+                    Collections.shuffle(discardHandCardIndices, rng);
                 } else {
                     discardHandCardIndex = validDiscardIndices.get(rng.nextInt(validDiscardIndices.size()));
                 }
@@ -701,7 +713,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
             final List<Integer> finalDiscardHandCardIndices =
-                    chooseDiscardXCostIndices(gameData, card, cardIndex, finalXValue != null ? finalXValue : 0);
+                    discardHandCardIndices != null
+                            ? discardHandCardIndices
+                            : chooseDiscardCostIndices(gameData, card, cardIndex,
+                            finalXValue != null ? finalXValue : 0);
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(

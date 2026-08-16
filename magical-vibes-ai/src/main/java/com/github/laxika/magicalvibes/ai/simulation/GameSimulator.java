@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -728,7 +729,7 @@ public class GameSimulator {
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
         List<UUID> multiSacrificeIds = computeMultiSacrificeTargets(gd, playerId, card);
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
-        List<Integer> discardIndices = computeDiscardXCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
+        List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()
                 || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null) {
@@ -1183,11 +1184,15 @@ public class GameSimulator {
     }
 
     /**
-     * Finds the first valid hand card to pay the card's "discard a card" additional cast cost.
+     * Finds the first valid hand card to pay a card's single-card discard additional cast cost.
      * Returns null if the card has no such cost (or, defensively, no valid discard exists —
      * enumeration already filters unpayable casts via canPayAdditionalSpellCosts).
      */
     private Integer computeDiscardCostIndex(GameData gd, UUID playerId, Card card) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            return null;
+        }
         List<Integer> valid = castingCostService.validDiscardCostIndices(gd, playerId, card);
         return valid == null || valid.isEmpty() ? null : valid.get(0);
     }
@@ -1216,9 +1221,18 @@ public class GameSimulator {
         return (int) Math.max(0, matching);
     }
 
-    /** Selects pre-removal hand indices for a spell's X-discard additional cost. */
-    private List<Integer> computeDiscardXCostIndices(GameData gd, UUID playerId, Card card,
-                                                     int spellIndex, int xValue) {
+    /** Selects pre-removal hand indices for a spell's fixed multi-card or X-discard cost. */
+    private List<Integer> computeDiscardCostIndices(GameData gd, UUID playerId, Card card,
+                                                    int spellIndex, int xValue) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            List<Integer> valid = castingCostService.validDiscardCostIndices(gd, playerId, card);
+            if (valid == null || valid.size() < fixedCost.count()) {
+                return null;
+            }
+            return new ArrayList<>(valid.subList(0, fixedCost.count()));
+        }
+
         DiscardXCardsCost cost = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(DiscardXCardsCost.class::isInstance)
                 .map(DiscardXCardsCost.class::cast)
@@ -1237,6 +1251,14 @@ public class GameSimulator {
             }
         }
         return indices;
+    }
+
+    private DiscardCardTypeCost findDiscardCardTypeCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

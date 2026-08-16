@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -197,6 +198,34 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
         assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI supplies all cards for a fixed multi-card discard cost")
+    void castsCatharticReunionWithTwoDiscardCards() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(reunion);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard);
     }
 
     @Test

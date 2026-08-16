@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -192,6 +193,33 @@ class GameSimulatorTest {
         assertThat(copy.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(copy.stack).hasSize(1);
         assertThat(copy.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Applying a fixed multi-card discard spell supplies every discard index")
+    void appliesFixedMultiCardDiscardSpell() {
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(remainingCard.getId());
+        assertThat(copy.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(firstDiscard.getId(), secondDiscard.getId());
+        assertThat(copy.stack).hasSize(1);
     }
 
     private List<SimulationAction.PlayCard> actionsForHandCard(int handIndex) {
