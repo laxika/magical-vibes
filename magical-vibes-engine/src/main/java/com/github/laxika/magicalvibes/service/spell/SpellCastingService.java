@@ -4487,20 +4487,15 @@ public class SpellCastingService {
             }
         }
 
-        // Remove from exile and clean up permission
-        if (sourceFreeCast
-                && !castingPermissionService.consumeFreeCastFromExiledWithSource(
-                gameData, playerId, exileCardId)) {
-            throw new IllegalStateException("Exile cast permission is no longer available");
-        }
-        boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.remove(exileCardId)
+        // Keep the card and its cast permissions in exile until the cast has passed every
+        // validation and payment. A failed cast (for example, one that cannot pay its mana cost)
+        // does not move the card out of exile.
+        boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(exileCardId)
                 || sourceFreeCast;
-        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.remove(exileCardId);
-        gameData.removeFromExile(exileCardId);
-        gameData.exilePlayPermissions.remove(exileCardId);
-        gameData.exilePlayAnyManaTypeWhileExiled.remove(exileCardId);
+        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
 
         if (card.hasType(CardType.LAND)) {
+            commitExileCast(gameData, playerId, exileCardId, sourceFreeCast);
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
@@ -4633,6 +4628,8 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
+        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast);
+
         StackEntry stackEntry;
         if (!targetIds.isEmpty()) {
             stackEntry = new StackEntry(
@@ -4683,6 +4680,17 @@ public class SpellCastingService {
         if (autoPass) {
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    /** Commits a successful cast by moving the card out of exile and consuming its permissions. */
+    private void commitExileCast(GameData gameData, UUID playerId, UUID exileCardId,
+                                 boolean sourceFreeCast) {
+        if (sourceFreeCast
+                && !castingPermissionService.consumeFreeCastFromExiledWithSource(
+                gameData, playerId, exileCardId)) {
+            throw new IllegalStateException("Exile cast permission is no longer available");
+        }
+        gameData.removeFromExile(exileCardId);
     }
 
     /**

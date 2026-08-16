@@ -56,6 +56,24 @@ class ChandraTorchOfDefianceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("First +1 keeps an uncastable nonland card in exile and deals damage")
+    void firstPlusOneKeepsUncastableCardExiled() {
+        Permanent chandra = addReadyChandra(player1, 4);
+        Card creature = new GrizzlyBears();
+        gd.playerDecks.get(player1.getId()).addFirst(creature);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+    }
+
+    @Test
     @DisplayName("Second +1 adds two red mana")
     void secondPlusOneAddsTwoRedMana() {
         Permanent chandra = addReadyChandra(player1, 4);
