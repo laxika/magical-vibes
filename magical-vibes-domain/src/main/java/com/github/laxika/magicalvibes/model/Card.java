@@ -766,6 +766,12 @@ public class Card {
         castingOptions.add(option);
     }
 
+    /** Adds a prototype alternate cast with its alternate color and base power/toughness. */
+    public void addPrototype(String manaCost, CardColor color, int power, int toughness) {
+        assertMutable();
+        addCastingOption(AlternateHandCast.prototype(manaCost, color, power, toughness));
+    }
+
     /** Adds morph and its standard face-down alternate casting cost. */
     public void addMorph(String morphCost) {
         assertMutable();
@@ -906,6 +912,7 @@ public class Card {
                         .grantHaste(true)
                         .exileAtEndStep(true)
                         .exileIfLeavesBattlefield(true)
+                        .unearth(true)
                         .build()),
                 "Unearth " + cost,
                 ActivationTimingRestriction.SORCERY_SPEED));

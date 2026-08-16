@@ -186,6 +186,21 @@ public class DamageSupport {
         if (recipientSourceControllerId == null && entry != null) {
             recipientSourceControllerId = entry.getControllerId();
         }
+        Permanent sourcePermanentForBonus = damageSource != null
+                ? damageSource
+                : (entry == null || entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()));
+        UUID bonusSourceControllerId = sourcePermanentForBonus == null
+                ? entry == null ? null : entry.getControllerId()
+                : gameQueryService.findPermanentController(gameData, sourcePermanentForBonus.getId());
+        Card sourceCardForBonus = sourcePermanentForBonus == null
+                ? entry == null ? null : entry.getEffectiveDamageSourceCard()
+                : sourcePermanentForBonus.getCard();
+        if (rawDamage > 0) {
+            rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                    gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
+        }
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
         // combat counterpart lives in GameQueryService.applyCombatDamageMultiplier.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, targetControllerId, recipientSourceControllerId);
@@ -461,6 +476,19 @@ public class DamageSupport {
         // computation (e.g. future power-based effects) that might produce a negative value.
         // Skip applyCreaturePreventionShield — damage is unpreventable
         int damage = Math.max(0, rawDamage);
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID sourceControllerId = sourcePermanent == null
+                ? entry.getControllerId()
+                : gameQueryService.findPermanentController(gameData, sourcePermanent.getId());
+        if (damage > 0) {
+            damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                    gameData, sourceControllerId,
+                    sourcePermanent == null ? entry.getEffectiveDamageSourceCard() : sourcePermanent.getCard(),
+                    sourcePermanent,
+                    gameQueryService.findPermanentController(gameData, target.getId()));
+        }
 
         damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
                 gameData, target, entry.getSourcePermanentId(), damage);
@@ -869,6 +897,8 @@ public class DamageSupport {
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
                     gameQueryService.getDamageSourceColors(gameData, sourceColors));
+            rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                    gameData, sourceControllerId, source, sourcePermanent, playerId);
         }
         rawDamage = gameQueryService.applyDamageReplacementEffects(gameData, rawDamage);
         if (damagePreventionService.isColorDamagePreventedForTarget(gameData, playerId, sourceColors)) {

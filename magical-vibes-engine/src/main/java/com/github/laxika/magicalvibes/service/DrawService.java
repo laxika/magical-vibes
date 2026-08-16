@@ -1182,6 +1182,7 @@ public class DrawService {
                                                 EffectSlot slot, Card drawn) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
         if (battlefield == null) return;
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
 
         for (Permanent perm : battlefield) {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
@@ -1208,6 +1209,9 @@ public class DrawService {
                     if (effect == null) {
                         continue;
                     }
+                }
+                if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) {
+                    continue;
                 }
 
                 // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the

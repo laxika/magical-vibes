@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBl
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -819,7 +821,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private UUID selectRandomSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!(effect instanceof CostEffect cost) || effect instanceof SacrificeMultiplePermanentsCost) {
+            if (!(effect instanceof CostEffect cost)
+                    || effect instanceof SacrificeMultiplePermanentsCost
+                    || effect instanceof TapMultiplePermanentsCost) {
                 continue;
             }
             if (declinesOptionalCostForSingleModalMode(card, cost)) {
@@ -846,6 +850,18 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private List<UUID> selectRandomMultiSacrificeTargets(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof TapMultiplePermanentsCost tapCost
+                    && tapCost.count() instanceof Fixed fixed) {
+                List<Permanent> matching = new ArrayList<>(battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, tapCost.filter()))
+                        .toList());
+                if (matching.size() < fixed.value()) {
+                    return null;
+                }
+                Collections.shuffle(matching, rng);
+                return matching.subList(0, fixed.value()).stream().map(Permanent::getId).toList();
+            }
             if (!(effect instanceof SacrificeMultiplePermanentsCost cost)) {
                 continue;
             }

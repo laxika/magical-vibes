@@ -38,7 +38,12 @@ import java.util.List;
  * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
  * effects on the card for genuinely multi-target abilities.</p>
  */
-public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTriggerContextEffect {
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
+        implements CombatDamageTriggerContextEffect {
+
+    public SequenceEffect(List<CardEffect> steps) {
+        this(steps, 0);
+    }
 
     public SequenceEffect {
         steps = List.copyOf(steps);
@@ -57,6 +62,14 @@ public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTrig
      * as {@link SacrificeSelfEffect} do not consume a target slot; they are retained only when the
      * sequence has no explicit target at all.
      */
+    public static SequenceEffect onSecondControllerDraw(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 2);
+    }
+
+    @Override
+    public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
+        return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
+    }
     @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;

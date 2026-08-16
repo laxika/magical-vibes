@@ -540,6 +540,29 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Graveyard activation cost modifier lowers the generic mana requirement")
+        void graveyardActivationCostReductionLowersManaRequirement() {
+            Card card = createGenericArtifact("Graveyard Cost Reducer");
+            card.addGraveyardActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}{B}",
+                    List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
+                    "{3}{B}: Draw a card."
+            ));
+            gameData.playerGraveyards.get(player1Id).add(card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+            when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
+
+            service.activateGraveyardAbility(gameData, player1, 0, null);
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gameData.stack).hasSize(1);
+        }
+
+        @Test
         @DisplayName("Target-aware activation cost reduction uses the chosen target")
         void targetAwareActivationCostReductionUsesChosenTarget() {
             Card artifact = createGenericArtifact("Target Cost Reducer");

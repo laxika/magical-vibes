@@ -759,6 +759,17 @@ class PlayerInputServiceTest {
         }
 
         @Test
+        @DisplayName("Stores a finite exile cap and hand-exile draw rider")
+        void storesFiniteExileOptions() {
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null, 4, true);
+
+            ChoiceContext.ExileByNameChoice ctx =
+                    (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.maxCount()).isEqualTo(4);
+            assertThat(ctx.drawForEachHandCardExiled()).isTrue();
+        }
+
+        @Test
         @DisplayName("A required type offers only names of cards with that type")
         void requiredTypeOffersOnlyMatchingNames() {
             Card artifact = createCard("Sol Ring", CardType.ARTIFACT);

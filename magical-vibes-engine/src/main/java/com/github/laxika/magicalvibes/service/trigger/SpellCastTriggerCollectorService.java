@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -672,7 +673,8 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry snapshot = new StackEntry(spellEntry);
         CardEffect copyEffect =
-                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords());
+                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
+                        trigger.additionalTypes(), trigger.tokenCopy());
         if (trigger.intervening() != null) {
             copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
         }
@@ -1362,7 +1364,8 @@ public class SpellCastTriggerCollectorService {
 
         if (trigger.intervening() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+                ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                        .withXValue(match.gameData().getSpellCastManaSpent(spellCard.getId())))) {
             return false;
         }
 
@@ -1575,10 +1578,12 @@ public class SpellCastTriggerCollectorService {
         }
         if (effect instanceof ConditionalEffect conditional) {
             return conditional.condition() instanceof SpellManaSpentAtLeast
+                    || conditional.condition() instanceof SpellManaSpentGreaterThanSourcePower
                     || effectNeedsSpellManaSpentX(conditional.wrapped());
         }
         if (effect instanceof ConditionalReplacementEffect replacement) {
             return replacement.condition() instanceof SpellManaSpentAtLeast
+                    || replacement.condition() instanceof SpellManaSpentGreaterThanSourcePower
                     || effectNeedsSpellManaSpentX(replacement.baseEffect())
                     || effectNeedsSpellManaSpentX(replacement.upgradedEffect());
         }

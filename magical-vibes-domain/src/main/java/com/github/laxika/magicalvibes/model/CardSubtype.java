@@ -211,6 +211,7 @@ public enum CardSubtype {
     CLUE("Clue"),
     BLOOD("Blood"),
     FOOD("Food"),
+    POWERSTONE("Powerstone"),
     VEHICLE("Vehicle"),
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),

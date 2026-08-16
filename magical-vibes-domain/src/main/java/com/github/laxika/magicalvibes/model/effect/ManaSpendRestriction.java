@@ -37,6 +37,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
 
+    /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
+    CREATURE_SPELLS_OR_ABILITIES,
+
     /**
      * Spendable only to cast creature spells of the type chosen as the source entered
      * (Pillar of Origins, Unclaimed Territory).

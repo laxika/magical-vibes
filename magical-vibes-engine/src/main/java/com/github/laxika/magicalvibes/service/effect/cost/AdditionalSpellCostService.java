@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -96,6 +98,7 @@ public class AdditionalSpellCostService {
             EscalateTapCost.class,
             SacrificeAnyNumberOfPermanentsCost.class,
             TapAnyNumberOfPermanentsCost.class,
+            TapMultiplePermanentsCost.class,
             ReturnAnyNumberOfPermanentsToHandCost.class,
             ReturnPermanentToHandCost.class,
             ReturnCreatureToHandCost.class,
@@ -139,6 +142,7 @@ public class AdditionalSpellCostService {
             EscalateTapCost escalateTapCost,
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
+            TapMultiplePermanentsCost tapMultipleCost,
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
             boolean returnPermanentToHand,
             boolean returnCreatureToHand,
@@ -171,7 +175,7 @@ public class AdditionalSpellCostService {
                     || escalateSacrificeCost != null
                     || escalateTapCost != null
                     || sacrificeAnyNumberCost != null
-                    || tapAnyNumberCost != null || returnAnyNumberCost != null
+                    || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
                     || returnPermanentToHand
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
                     || payXLife || payLifeCost != null
@@ -289,6 +293,7 @@ public class AdditionalSpellCostService {
         SacrificeAnyNumberOfPermanentsCost sacAnyNumberCost =
                 removeFirst(effects, SacrificeAnyNumberOfPermanentsCost.class);
         TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
+        TapMultiplePermanentsCost tapMultipleCost = removeFirst(effects, TapMultiplePermanentsCost.class);
         ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost =
                 removeFirst(effects, ReturnAnyNumberOfPermanentsToHandCost.class);
         boolean returnPermanentToHand = effects.removeIf(ReturnPermanentToHandCost.class::isInstance);
@@ -316,8 +321,8 @@ public class AdditionalSpellCostService {
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
-                sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnPermanentToHand,
-                returnCreature,
+                sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, returnAnyNumberCost,
+                returnPermanentToHand, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
                 discardCost, discardRandomCost, discardOrPay,
@@ -427,6 +432,14 @@ public class AdditionalSpellCostService {
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                             .count();
                     if (matching < cost.count()) return false;
+                }
+                case TapMultiplePermanentsCost cost -> {
+                    int required = fixedTapCount(cost);
+                    long matching = battlefield.stream()
+                            .filter(p -> !p.isTapped())
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                            .count();
+                    if (matching < required) return false;
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
                     long matchingCount = graveyard.stream()
@@ -618,6 +631,10 @@ public class AdditionalSpellCostService {
         }
         if (costs.tapAnyNumberCost() != null) {
             validateTapAnyNumberOfPermanentsCost(gameData, player, card, costs.tapAnyNumberCost(),
+                    selection.sacrificePermanentIds());
+        }
+        if (costs.tapMultipleCost() != null) {
+            validateTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
                     selection.sacrificePermanentIds());
         }
         if (costs.returnAnyNumberCost() != null) {
@@ -1174,6 +1191,45 @@ public class AdditionalSpellCostService {
             chosen.add(permanent);
         }
         return chosen;
+    }
+
+    /** Validates a fixed-count spell cost that taps untapped permanents the caster controls. */
+    public List<Permanent> validateTapMultiplePermanentsCost(GameData gameData, Player player, Card card,
+                                                             TapMultiplePermanentsCost cost,
+                                                             List<UUID> tapPermanentIds) {
+        List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
+        int required = fixedTapCount(cost);
+        if (ids.size() != required) {
+            throw new IllegalStateException("Must tap " + required + " permanents to cast " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate permanents chosen to tap for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent == null) {
+                throw new IllegalStateException("Permanent to tap not found on battlefield");
+            }
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, id))) {
+                throw new IllegalStateException("Can only tap permanents you control to cast " + card.getName());
+            }
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Cannot tap an already tapped permanent to cast " + card.getName());
+            }
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter())) {
+                throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
+            }
+            chosen.add(permanent);
+        }
+        return chosen;
+    }
+
+    private int fixedTapCount(TapMultiplePermanentsCost cost) {
+        if (cost.count() instanceof Fixed fixed) {
+            return fixed.value();
+        }
+        throw new IllegalStateException("Spell tap costs must have a fixed count");
     }
 
     /**

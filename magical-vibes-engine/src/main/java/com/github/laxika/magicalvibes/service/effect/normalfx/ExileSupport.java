@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -146,6 +147,22 @@ public class ExileSupport {
         int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
+    /** Grants an owner permission to play a card from exile for as long as it remains exiled. */
+    public void grantPlayWhileExiled(GameData gameData, UUID cardId, UUID ownerId) {
+        gameData.exilePlayPermissions.put(cardId, ownerId);
+    }
+
+    /**
+     * Grants an owner permission to play a card from exile and records a cost increase for players
+     * who are opponents of {@code sourceControllerId}.
+     */
+    public void grantPlayWhileExiledWithOpponentTax(GameData gameData, UUID cardId, UUID ownerId,
+                                                     UUID sourceControllerId, int amount) {
+        grantPlayWhileExiled(gameData, cardId, ownerId);
+        gameData.exilePlayCostModifiers.put(cardId,
+                new ExilePlayCostModifier(ownerId, sourceControllerId, amount));
     }
 
     /**

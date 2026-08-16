@@ -51,7 +51,11 @@ public sealed interface TriggerContext {
     record Discard(UUID discardingPlayerId, Card discardedCard) implements TriggerContext {}
 
     /** Context for controller-scry triggers. */
-    record Scry(UUID scryingPlayerId) implements TriggerContext {}
+    record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
+        public Scry(UUID scryingPlayerId) {
+            this(scryingPlayerId, 0);
+        }
+    }
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -338,7 +342,11 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
-    record SelfLeaves(UUID controllerId) implements TriggerContext {}
+    record SelfLeaves(UUID controllerId, Zone destination) implements TriggerContext {
+        public SelfLeaves(UUID controllerId) {
+            this(controllerId, Zone.GRAVEYARD);
+        }
+    }
 
     /** Context for a permanent becoming monstrous. */
     record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {

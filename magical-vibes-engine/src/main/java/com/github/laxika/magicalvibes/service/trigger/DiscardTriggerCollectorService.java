@@ -327,28 +327,12 @@ public class DiscardTriggerCollectorService {
      */
     @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleCreateTokenOnDiscard(TriggerMatchContext match, CreateTokenEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "create token");
+        return enqueueDiscardTrigger(match, trigger, "create token");
     }
 
-    /**
-     * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
-     * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
-     * controller's pool when it resolves. (Waste Not)
-     */
-    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "add mana");
-    }
-
-    /**
-     * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
-     */
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "draw");
-    }
-
-    private boolean enqueueOpponentDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleCreateTokenOnControllerDiscard(TriggerMatchContext match,
+            CreateTokenEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -360,7 +344,43 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on opponent discard ({})", gameData.id, sourceCard.getName(), what);
+        log.info("Game {} - {} triggers on controller discard (create token)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    /**
+     * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
+     * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
+     * controller's pool when it resolves. (Waste Not)
+     */
+    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "add mana");
+    }
+
+    /**
+     * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
+     */
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "draw");
+    }
+
+    private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard ({})", gameData.id, sourceCard.getName(), what);
         return true;
     }
 

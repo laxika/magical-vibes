@@ -407,6 +407,7 @@ public class TurnProgressionService {
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.clear();
+        gameData.playersWhoSacrificedPermanentsThisTurn.clear();
         gameData.creaturesAttackedCountThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -468,6 +469,7 @@ public class TurnProgressionService {
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
+        gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
@@ -513,6 +515,7 @@ public class TurnProgressionService {
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
+        gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);
         // Jace, Architect of Thought +1: the delayed "whenever a creature an opponent controls
         // attacks" trigger lasts until its controller's next turn, so it expires here rather than at
         // turn cleanup like the other delayed families.

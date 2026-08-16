@@ -43,6 +43,7 @@ public class CopySupport {
         copy.setType(original.getType());
         copy.setManaCost(original.getManaCost());
         copy.setColor(original.getColor());
+        copy.setAdditionalTypes(original.getAdditionalTypes());
         copy.setSupertypes(original.getSupertypes());
         copy.setSubtypes(original.getSubtypes());
         copy.setCardText(original.getCardText());

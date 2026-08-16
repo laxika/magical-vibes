@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -163,6 +164,9 @@ import java.util.Set;
  *                             {@link #plusOneCounterCount} alone is an unconditional rider (e.g.
  *                             Miraculous Recovery — "Put a +1/+1 counter on it"); only meaningful for
  *                             {@code BATTLEFIELD}
+ * @param plusOneCountersIfCardType when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
+ *                             the returned permanent only if it is currently that card type; use this for
+ *                             riders such as Recommission's creature-only counter
  * @param plusOneCountersIfCondition when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if this condition is met as the effect resolves
  *                             (e.g. Necromantic Summons' spell mastery — "If there are two or more instant
@@ -170,7 +174,8 @@ import java.util.Set;
  *                             additional +1/+1 counters on it"); combines with
  *                             {@link #plusOneCountersIfSubtype} as an AND when both are set
  * @param plusOneCounterCount  number of +1/+1 counters placed after the return; gated by
- *                             {@link #plusOneCountersIfSubtype} / {@link #plusOneCountersIfCondition} when
+ *                             {@link #plusOneCountersIfSubtype} / {@link #plusOneCountersIfCardType} /
+ *                             {@link #plusOneCountersIfCondition} when
  *                             those fields are non-null
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
@@ -191,6 +196,9 @@ import java.util.Set;
  *                             where it overrides {@link #destination}
  * @param dynamicMaxManaValue dynamic mana-value limit to snapshot when a death trigger is collected;
  *                             used for abilities such as Kodama of the Center Tree's soulshift X
+ * @param unearth              {@code true} when the battlefield return is an unearth activation,
+ *                             so the returned permanent can be recognized by effects that treat
+ *                             unearth returns specially
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -235,13 +243,15 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileIfLeavesBattlefield,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
+        CardType plusOneCountersIfCardType,
         Condition plusOneCountersIfCondition,
         int plusOneCounterCount,
         CounterType enterWithCounter,
         int enterWithCounterCount,
         boolean linkToSource,
         boolean battlefieldIfCreatureElseHand,
-        DynamicAmount dynamicMaxManaValue
+        DynamicAmount dynamicMaxManaValue,
+        boolean unearth
 ) implements CardEffect {
 
     /**

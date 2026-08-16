@@ -91,6 +91,8 @@ public class GameData {
     public final Set<UUID> playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who searched their own libraries this turn, including searches that found no card. */
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who played at least one card from exile this turn. */
+    public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -145,6 +147,8 @@ public class GameData {
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who sacrificed at least one permanent this turn. */
+    public final Set<UUID> playersWhoSacrificedPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
     /** Cumulative count of attacking creatures by subtype each player declared this turn. */
@@ -383,6 +387,8 @@ public class GameData {
      */
     public final List<UUID> bounceUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
+    public final QueenKaylaBinKroogOperationState queenKaylaBinKroogOperation =
+            new QueenKaylaBinKroogOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
@@ -588,6 +594,8 @@ public class GameData {
     public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players whose own damage is fully prevented until the beginning of their next turn (Morningtide's Light). */
     public final Set<UUID> playersWithAllPlayerDamagePreventedUntilNextTurn = ConcurrentHashMap.newKeySet();
+    /** Players with protection from everything until the beginning of their next turn. */
+    public final Set<UUID> playersWithProtectionFromEverythingUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
@@ -977,6 +985,8 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Cost modifiers attached to cards that may be played from exile. */
+    public final Map<UUID, ExilePlayCostModifier> exilePlayCostModifiers = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
      *  Cleared during cleanup step — matching entries are also removed from {@link #exilePlayPermissions}. */
     public final Set<UUID> exilePlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -1019,6 +1029,8 @@ public class GameData {
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
     /** Owners whose graveyards had creature cards leave during a suppressed batch. */
     public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
+    /** Owners whose graveyards had artifact or creature cards leave during a suppressed batch. */
+    public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
     public final Map<UUID, Integer> graveyardExileNotificationPendingCounts = new ConcurrentHashMap<>();
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
@@ -1212,6 +1224,9 @@ public class GameData {
 
     /** Tracks permanents that have added mana with a source ability this turn. */
     public final Set<UUID> permanentsThatAddedManaWithAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Tracks keyed triggered-ability resolutions that have already happened for each permanent
+     *  this turn. Cleared at start of new turn. */
+    public final Map<UUID, Set<String>> firstResolutionTriggerKeysThisTurn = new ConcurrentHashMap<>();
 
     /** Crown permanent IDs that have replaced a token creation event this turn. */
     public final Set<UUID> tokenCreationReplacementUsedThisTurn = ConcurrentHashMap.newKeySet();
@@ -2087,6 +2102,11 @@ public class GameData {
         }
     }
 
+    /** Records that a player played a real card from exile this turn. */
+    public void recordCardPlayedFromExile(UUID playerId) {
+        playersWhoPlayedCardFromExileThisTurn.add(playerId);
+    }
+
     /**
      * Adds a pending "the next creature spell you cast this turn ..." grant for the player
      * (Savage Summoning).
@@ -2526,6 +2546,7 @@ public class GameData {
             stashCounterCardIds.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
@@ -2870,12 +2891,15 @@ public class GameData {
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
                 .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
+        copy.playersWithProtectionFromEverythingUntilNextTurn
+                .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
         copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
+        copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
@@ -2965,6 +2989,7 @@ public class GameData {
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                 .addAll(this.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn);
+        copy.playersWhoSacrificedPermanentsThisTurn.addAll(this.playersWhoSacrificedPermanentsThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
@@ -3012,6 +3037,11 @@ public class GameData {
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         copy.permanentsThatAddedManaWithAbilityThisTurn.addAll(this.permanentsThatAddedManaWithAbilityThisTurn);
+        this.firstResolutionTriggerKeysThisTurn.forEach((k, v) -> {
+            Set<String> keys = ConcurrentHashMap.newKeySet();
+            keys.addAll(v);
+            copy.firstResolutionTriggerKeysThisTurn.put(k, keys);
+        });
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
@@ -3160,12 +3190,23 @@ public class GameData {
         copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
                 this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
 
+        copy.queenKaylaBinKroogOperation.active = this.queenKaylaBinKroogOperation.active;
+        copy.queenKaylaBinKroogOperation.controllerId = this.queenKaylaBinKroogOperation.controllerId;
+        copy.queenKaylaBinKroogOperation.discardedCardIds.addAll(
+                this.queenKaylaBinKroogOperation.discardedCardIds);
+        copy.queenKaylaBinKroogOperation.chosenCardIds.addAll(this.queenKaylaBinKroogOperation.chosenCardIds);
+        copy.queenKaylaBinKroogOperation.nextManaValue = this.queenKaylaBinKroogOperation.nextManaValue;
+        copy.queenKaylaBinKroogOperation.awaitingChoice = this.queenKaylaBinKroogOperation.awaitingChoice;
+        copy.queenKaylaBinKroogOperation.choiceMade = this.queenKaylaBinKroogOperation.choiceMade;
+        copy.queenKaylaBinKroogOperation.chosenCardId = this.queenKaylaBinKroogOperation.chosenCardId;
+
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
         copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;
         copy.cloneOperation.powerOverride = this.cloneOperation.powerOverride;
         copy.cloneOperation.toughnessOverride = this.cloneOperation.toughnessOverride;
+        copy.cloneOperation.copyPowerToughnessFromSource = this.cloneOperation.copyPowerToughnessFromSource;
         copy.cloneOperation.additionalTypesOverride = this.cloneOperation.additionalTypesOverride;
         copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
 
@@ -3269,6 +3310,7 @@ public class GameData {
 
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
@@ -3283,6 +3325,7 @@ public class GameData {
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
+        copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
 

@@ -88,6 +88,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsTappedPredicate,
         PermanentIsTokenPredicate,
         PermanentManaValueAtMostOwnCountersPredicate,
+        PermanentManaValueAtMostControlledCountPredicate,
         PermanentManaValueEqualsSourceCountersPredicate,
         PermanentManaValueAtMostXPredicate,
         PermanentManaValueEqualsXPredicate,

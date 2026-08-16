@@ -304,11 +304,52 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — counter the spell/ability
-        counterUnlessDiscardCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void counterUnlessDiscardCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
+    public void handleCounterUnlessSacrificesChoice(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessEffect ce
+                        && ce.ransomKind() == CounterUnlessEffect.RansomKind.SACRIFICE_PERMANENT)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            List<UUID> validIds = battlefield == null
+                    ? List.of()
+                    : battlefield.stream().map(Permanent::getId).toList();
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.SacrificePermanentThen(controllerId, ability.sourceCard(), null));
+                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                        "Choose a permanent to sacrifice.");
+                log.info("Game {} - {} accepts counter-unless-sacrifice for {}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void counterUnlessCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
         gameData.stack.remove(targetEntry);
         stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
 

@@ -470,20 +470,39 @@ public class PlayerInputService {
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
             UUID sourcePermanentId) {
-        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId, false);
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
+                false, List.of());
     }
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
             UUID sourcePermanentId, boolean consumeMode) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
+                consumeMode, List.of());
+    }
+
+    public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
+            UUID sourcePermanentId, List<String> chosenLabels) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
+                false, chosenLabels);
+    }
+
+    public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
+            UUID sourcePermanentId, boolean consumeMode, List<String> chosenLabels) {
         ChoiceContext.ChooseModeChoice ctx =
                 new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime,
-                        sourcePermanentId, consumeMode);
+                        sourcePermanentId, consumeMode, chosenLabels);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .filter(label -> !ctx.chosenLabels().contains(label))
                 .toList();
+        String prompt = effect.choicesRequired() > 1
+                ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
+                : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " — Choose one."));
+                controllerId, null, null, ctx, optionLabels, prompt));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
@@ -1111,14 +1130,22 @@ public class PlayerInputService {
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType, false);
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
+                Integer.MAX_VALUE, false);
     }
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType,
                                          boolean drawForHandExiled) {
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
+                Integer.MAX_VALUE, drawForHandExiled);
+    }
+
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
+                                         boolean drawForHandExiled) {
         ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
-                targetPlayerId, choosingPlayerId, excludedTypes, drawForHandExiled);
+                targetPlayerId, choosingPlayerId, excludedTypes, maxCount, drawForHandExiled);
 
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
         String prompt;
@@ -1333,16 +1360,24 @@ public class PlayerInputService {
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
-        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, targetPlayerId, cardName, false);
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, matchingCards.size(), targetPlayerId,
+                cardName, false);
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
                                           UUID targetPlayerId, String cardName, boolean drawForHandExiled) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, matchingCards.size(), targetPlayerId,
+                cardName, drawForHandExiled);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
-                choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName,
-                drawForHandExiled));
+                choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
+                choosingPlayerId, cardName, drawForHandExiled));
     }
 
     /**

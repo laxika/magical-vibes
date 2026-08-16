@@ -29,6 +29,7 @@ public class StackEntry {
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
+    private boolean targetIdOverriddenForEffectResolution;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
@@ -154,6 +155,8 @@ public class StackEntry {
     @Setter private UUID triggeringCardId;
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
+    /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
+    @Setter private Card sacrificedCardSnapshot;
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -376,6 +379,25 @@ public class StackEntry {
         this.targetIds = List.of();
     }
 
+    // Zone-aware triggered ability with a source permanent and target (e.g. dynamic ward)
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
+                      List<CardEffect> effectsToResolve, UUID targetId, Zone targetZone,
+                      UUID sourcePermanentId) {
+        this.entryType = entryType;
+        this.card = freezeCard(card);
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = 0;
+        this.targetId = targetId;
+        this.sourcePermanentId = sourcePermanentId;
+        this.damageAssignments = Map.of();
+        this.targetZone = targetZone;
+        this.targetCardIds = List.of();
+        this.targetFilter = null;
+        this.targetIds = List.of();
+    }
+
     // Spell copy constructor - preserves all fields from the original stack entry
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID targetId,
@@ -472,11 +494,13 @@ public class StackEntry {
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
         this.sacrificedCardId = source.sacrificedCardId;
+        this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
+        this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
         this.targetGroupSizes = source.targetGroupSizes.isEmpty()
@@ -685,7 +709,8 @@ public class StackEntry {
                     ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
-        if (targeting.isAura() || primaryTargetStoredSeparately) {
+        if ((targeting.isAura() || primaryTargetStoredSeparately)
+                && !targetIdOverriddenForEffectResolution) {
             if (group == 0) {
                 return targetId != null ? List.of(targetId) : List.of();
             }
@@ -719,6 +744,16 @@ public class StackEntry {
             consumed += size;
         }
         return List.of();
+    }
+
+    public void setTargetIdForEffectResolution(UUID targetId) {
+        this.targetId = targetId;
+        this.targetIdOverriddenForEffectResolution = true;
+    }
+
+    public void restoreTargetIdAfterEffectResolution(UUID targetId) {
+        this.targetId = targetId;
+        this.targetIdOverriddenForEffectResolution = false;
     }
 
     /**

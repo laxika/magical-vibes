@@ -25,6 +25,7 @@ public sealed interface DynamicAmount permits
         CardsInLibrary,
         CardsPutIntoGraveyardByTargetPlayerThisTurn,
         ColorManaSymbolsAmongControlledPermanents,
+        ColorManaPairsSpentToCast,
         ColorsAmongControlledPermanents,
         ColorManaSymbolsInGraveyard,
         ColorManaSymbolsInHand,

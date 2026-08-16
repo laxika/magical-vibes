@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -249,7 +250,18 @@ public class TargetLegalityService {
     public void validateMultiTargetGraveyardAbility(GameData gameData, UUID playerId,
                                                      List<CardEffect> effects, List<UUID> targetCardIds,
                                                      UUID sourceCardId, Integer xValue) {
-        if (targetCardIds == null || targetCardIds.isEmpty()) {
+        if (targetCardIds == null) {
+            throw new IllegalStateException("Must select graveyard targets");
+        }
+        for (CardEffect effect : effects) {
+            if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
+                    && returnEffect.hasTotalManaValueCap()) {
+                validateTotalManaValueGraveyardTargets(gameData, playerId, returnEffect, targetCardIds,
+                        sourceCardId);
+                return;
+            }
+        }
+        if (targetCardIds.isEmpty()) {
             boolean zeroTargetsAllowed = effects.stream().anyMatch(effect ->
                     effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0)
@@ -517,6 +529,40 @@ public class TargetLegalityService {
             }
             if (!legalForAnEffect) {
                 throw new IllegalStateException(rejection != null ? rejection : "Invalid graveyard target");
+            }
+        }
+    }
+
+    private void validateTotalManaValueGraveyardTargets(
+            GameData gameData, UUID playerId,
+            ReturnTargetCardsFromGraveyardToBattlefieldEffect effect,
+            List<UUID> targetCardIds, UUID sourceCardId) {
+        if (!targetCardIds.isEmpty() && !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
+        }
+        if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+            throw new IllegalStateException("Cannot target the same card twice");
+        }
+
+        int totalManaValue = 0;
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card == null) {
+                throw new IllegalStateException("Target card not found in any graveyard");
+            }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwnerId == null || !graveyardOwnerId.equals(playerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
+            if (effect.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                throw new IllegalStateException("Target card must be a "
+                        + CardPredicateUtils.describeFilter(effect.filter()));
+            }
+            totalManaValue += card.getManaValue();
+            if (totalManaValue > effect.maxTotalManaValue()) {
+                throw new IllegalStateException("Target cards' total mana value cannot exceed "
+                        + effect.maxTotalManaValue());
             }
         }
     }
@@ -1197,7 +1243,8 @@ public class TargetLegalityService {
             case ALL_GRAVEYARDS -> { }
         }
         if (filter.predicate() != null
-                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter.predicate(), card.getId())) {
+                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter.predicate(), card.getId(),
+                gameData, graveyardOwnerId)) {
             throw new IllegalStateException("Target must be a "
                     + CardPredicateUtils.describeFilter(filter.predicate()));
         }
@@ -2052,6 +2099,9 @@ public class TargetLegalityService {
                                                  Card sourceCard) {
         if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
             return gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted";
+        }
+        if (gameQueryService.playerHasProtectionFromEverything(gameData, targetPlayerId)) {
+            return gameData.playerIdToName.get(targetPlayerId) + " has protection from everything and can't be targeted";
         }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && gameQueryService.playerHasHexproof(gameData, targetPlayerId)

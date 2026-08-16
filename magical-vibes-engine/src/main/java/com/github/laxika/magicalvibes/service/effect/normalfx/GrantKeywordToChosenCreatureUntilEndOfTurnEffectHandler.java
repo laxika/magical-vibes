@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,13 +30,14 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantKeywordToChosenCreatureUntilEndOfTurnEffect) effect;
-        if (e.chosenCreatureId() == null) {
+        UUID chosenCreatureId = e.chosenCreatureId() != null ? e.chosenCreatureId() : entry.getChosenPermanentId();
+        if (chosenCreatureId == null) {
             log.info("Game {} - {} ability has no chosen creature", gameData.id,
                     entry.getCard() != null ? entry.getCard().getName() : "Unknown");
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, e.chosenCreatureId());
+        Permanent target = gameQueryService.findPermanentById(gameData, chosenCreatureId);
         if (target == null) {
             log.info("Game {} - Chosen creature no longer on battlefield", gameData.id);
             return;

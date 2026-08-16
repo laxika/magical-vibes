@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param trackManaValue when true, snapshot the total mana value of the discarded cards into the
  *                       spell's resolution {@code xValue}
  */
-public record DiscardXCardsCost(CardPredicate predicate, String label, boolean trackManaValue) implements CostEffect {
+public record DiscardXCardsCost(CardPredicate predicate, String label, boolean trackManaValue)
+        implements HandCardCost {
 
     public DiscardXCardsCost() {
         this(null, null, false);
@@ -31,5 +32,15 @@ public record DiscardXCardsCost(CardPredicate predicate, String label, boolean t
 
     public DiscardXCardsCost(boolean trackManaValue) {
         this(null, null, trackManaValue);
+    }
+
+    @Override
+    public int count() {
+        return 0;
+    }
+
+    @Override
+    public int requiredCount(int xValue) {
+        return xValue;
     }
 }

@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,12 +27,29 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
+
+    @Autowired
+    public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
+                                              GameLogService gameLogService,
+                                              AmountEvaluationService amountEvaluationService,
+                                              ExileService exileService) {
+        this.gameQueryService = gameQueryService;
+        this.gameLogService = gameLogService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.exileService = exileService;
+    }
+
+    public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
+                                              GameLogService gameLogService,
+                                              ExileService exileService) {
+        this(gameQueryService, gameLogService, null, exileService);
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,8 +88,18 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
-            exileTopCards(gameData, e, playerId, sourcePermanent, sourcePermanentId);
+            exileTopCards(gameData, e, playerId, sourcePermanent, sourcePermanentId,
+                    effectiveCount(gameData, entry, sourcePermanent, e));
         }
+    }
+
+    private int effectiveCount(GameData gameData, StackEntry entry, Permanent sourcePermanent,
+                               ExileTopCardsToSourceEffect effect) {
+        if (effect.dynamicCount() == null) {
+            return effect.count();
+        }
+        return Math.max(0, amountEvaluationService.evaluate(gameData, effect.dynamicCount(),
+                AmountContext.forStackEntry(entry, sourcePermanent)));
     }
 
     /** The players who exile, in the order they do so. */
@@ -98,13 +127,13 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     }
 
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
-                               Permanent sourcePermanent, UUID sourcePermanentId) {
+                               Permanent sourcePermanent, UUID sourcePermanentId, int count) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null) {
             return;
         }
 
-        int toExile = Math.min(e.count(), deck.size());
+        int toExile = Math.min(count, deck.size());
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
             if (e.faceDown()) {

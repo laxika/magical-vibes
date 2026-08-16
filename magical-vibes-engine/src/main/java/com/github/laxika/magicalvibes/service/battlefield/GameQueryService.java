@@ -122,6 +122,7 @@ import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -599,21 +600,19 @@ public class GameQueryService {
     }
 
     /**
-     * Computes the graveyard-activated abilities granted to creature cards owned by the given player
-     * by static effects on that player's battlefield (e.g. Sedris, the Traitor King grants unearth
-     * {2}{B} to each creature card in its controller's graveyard). Scans the owner's battlefield for
-     * permanents carrying {@link GraveyardAbilityGrantingEffect}. The abilities are computed for
-     * {@code card} because a grant may derive its cost from the card (Varolz, the Scar-Striped grants
-     * scavenge for a cost equal to the card's mana cost); a grant that does not apply is skipped.
+     * Computes the graveyard-activated abilities granted to a card owned by the given player by
+     * static effects on that player's battlefield. The abilities are computed for {@code card}
+     * because a grant may derive its cost from the card, and each grant decides whether it applies.
      */
-    public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCreatureCard(GameData gameData, UUID ownerId,
-                                                                                      Card card) {
+    public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCard(GameData gameData, UUID ownerId,
+                                                                                Card card) {
         List<ActivatedAbility> result = new ArrayList<>();
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) return result;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                    if (!g.appliesTo(card)) continue;
                     ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
                     if (granted != null) {
                         result.add(granted);
@@ -4058,6 +4057,11 @@ public class GameQueryService {
         return colors != null && colors.contains(color);
     }
 
+    /** Returns whether the player has protection from every source until their next turn. */
+    public boolean playerHasProtectionFromEverything(GameData gameData, UUID playerId) {
+        return gameData.playersWithProtectionFromEverythingUntilNextTurn.contains(playerId);
+    }
+
     /**
      * Returns {@code true} if the player controls a permanent with a
      * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name equals
@@ -4525,7 +4529,7 @@ public class GameQueryService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect active = effect;
                 if (effect instanceof EnchantedPermanentConditionalEffect cond) {
-                    active = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
+                    active = matchesEnchantedPermanentPredicate(gameData, permanent, creature, cond.filter())
                             ? cond.ifMatch()
                             : cond.ifNotMatch();
                 }
@@ -4574,7 +4578,7 @@ public class GameQueryService {
         // Gift of the Deity wraps lure in EnchantedPermanentConditionalEffect ("as long as enchanted
         // is green") — same unwrap as hasAuraWithEffect / isActiveEffect.
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
-            CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, cond.filter())
+            CardEffect active = matchesEnchantedPermanentPredicate(gameData, source, attacker, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
             return active != null && matchesLureBlockerFilter(gameData, attacker, source, blocker, active);
@@ -4725,12 +4729,23 @@ public class GameQueryService {
             return isActiveEffect(gameData, aura, creature, conditional.wrapped(), effectMatcher);
         }
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
-            CardEffect activeEffect = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
+            CardEffect activeEffect = matchesEnchantedPermanentPredicate(gameData, aura, creature, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
             return activeEffect != null && isActiveEffect(gameData, aura, creature, activeEffect, effectMatcher);
         }
         return false;
+    }
+
+    private boolean matchesEnchantedPermanentPredicate(GameData gameData, Permanent aura,
+                                                       Permanent creature, PermanentPredicate predicate) {
+        UUID controllerId = findPermanentController(gameData, aura.getId());
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(aura.getOriginalCard().getId())
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentSnapshot(aura)
+                .withSourcePermanentId(aura.getId());
+        return predicateEvaluationService.matchesPermanentPredicate(creature, predicate, context);
     }
 
     /**
@@ -5042,6 +5057,44 @@ public class GameQueryService {
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * Returns the additive damage bonus from red or artifact sources controlled by the given
+     * player when they would damage the given opponent. The bonus is summed across matching static
+     * effects controlled by that source's controller.
+     */
+    public int getAdditionalDamageToOpponentsBonus(GameData gameData, UUID sourceControllerId,
+                                                   Card sourceCard, Permanent sourcePermanent,
+                                                   UUID recipientPlayerId) {
+        if (sourceControllerId == null || recipientPlayerId == null
+                || sourceControllerId.equals(recipientPlayerId)) {
+            return 0;
+        }
+
+        Set<CardColor> sourceColors;
+        boolean artifactSource;
+        if (sourcePermanent != null) {
+            sourceColors = getDamageSourceColors(gameData, getEffectiveColors(gameData, sourcePermanent));
+            artifactSource = isArtifact(gameData, sourcePermanent);
+        } else if (sourceCard != null) {
+            sourceColors = getDamageSourceColors(gameData, new HashSet<>(sourceCard.getColors()));
+            artifactSource = sourceCard.hasType(CardType.ARTIFACT);
+        } else {
+            return 0;
+        }
+        if (!artifactSource && !sourceColors.contains(CardColor.RED)) return 0;
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!sourceControllerId.equals(controllerId)) return;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect additional) {
+                    bonus[0] += additional.amount();
+                }
+            }
+        });
+        return bonus[0];
     }
 
     /**
@@ -5403,6 +5456,11 @@ public class GameQueryService {
                 bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
                         + getColorSourcePermanentDamageBonus(gameData, controllerId,
                                 source.getCard().getColors(), source.getId());
+                if (target != null) {
+                    UUID targetControllerId = findPermanentController(gameData, target.getId());
+                    bonus += getAdditionalDamageToOpponentsBonus(
+                            gameData, controllerId, source.getCard(), source, targetControllerId);
+                }
             }
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);

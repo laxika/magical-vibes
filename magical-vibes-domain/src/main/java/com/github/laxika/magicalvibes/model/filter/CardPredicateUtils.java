@@ -67,6 +67,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
         }
+        if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
+            return "card with mana value at most this creature's power";
+        }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
         }

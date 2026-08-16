@@ -185,6 +185,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificePermanentAndReturnTargetCards(gameData, permanentId, spar);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndBoostSelf spabs) {
             battlefieldHandler.handleSacrificePermanentAndBoostSelf(gameData, permanentId, spabs);
+        } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf spagks) {
+            battlefieldHandler.handleSacrificePermanentAndGrantKeywordSelf(gameData, permanentId, spagks);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp) {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCost
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardTargetCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerTargetCastCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -81,9 +83,9 @@ public class CastingCostService {
     private final AmountEvaluationService amountEvaluationService;
 
     /**
-     * All cost-modifying static effects currently on the battlefield that could affect spells
-     * cast by one player, pre-collected in a single pass so per-card evaluation doesn't re-scan
-     * all permanents.
+     * All cost-modifying static effects currently on the battlefield, in emblems, or among active
+     * floating continuous effects that could affect spells cast by one player, pre-collected in a
+     * single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
     }
@@ -102,6 +104,25 @@ public class CastingCostService {
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect, new CostModificationSource(perm, pid)));
                     }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (CardEffect effect : emblem.staticEffects()) {
+                CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
+                if (handler != null) {
+                    modifiers.add(new CollectedCostModifier(handler, effect,
+                            new CostModificationSource(null, emblem.controllerId())));
+                }
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (var floating : gameData.floatingEffects) {
+                CostModificationHandlerBean handler =
+                        costModificationHandlerRegistry.getBattlefieldHandler(floating.effect());
+                if (handler != null) {
+                    modifiers.add(new CollectedCostModifier(handler, floating.effect(),
+                            new CostModificationSource(null, floating.controllerId())));
                 }
             }
         }
@@ -154,6 +175,12 @@ public class CastingCostService {
                 flashbackCost, xValue);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
+        var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
+        if (exilePlayCostModifier != null
+                && playerId.equals(exilePlayCostModifier.permittedPlayerId())
+                && !playerId.equals(exilePlayCostModifier.sourceControllerId())) {
+            delta += exilePlayCostModifier.amount();
+        }
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
@@ -521,12 +548,17 @@ public class CastingCostService {
     }
 
     /**
-     * As {@link #hasAlternativeZeroCostFromBattlefield(GameData, UUID, Card)}, but {@code fromHand}
-     * tells whether the spell is being cast from the caster's hand. Pass {@code false} for casts from
-     * any other zone (top of library, exile) so a hand-only source (Omniscience) is not offered.
+     * Legacy boolean overload of {@link #hasAlternativeZeroCostFromBattlefield(GameData, UUID, Card, Zone)}.
+     * {@code false} represents an exile cast; use the {@link Zone} overload for other source zones.
      */
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card, boolean fromHand) {
-        return findFreeCastSource(gameData, playerId, card, fromHand) != null;
+        return hasAlternativeZeroCostFromBattlefield(gameData, playerId, card,
+                fromHand ? Zone.HAND : Zone.EXILE);
+    }
+
+    public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card,
+                                                         Zone sourceZone) {
+        return findFreeCastSource(gameData, playerId, card, sourceZone) != null;
     }
 
     /**
@@ -611,12 +643,16 @@ public class CastingCostService {
     }
 
     /**
-     * As {@link #consumeFreeCastFromBattlefield(GameData, UUID, Card)}, but {@code fromHand} tells
-     * whether the spell is being cast from the caster's hand (see
-     * {@link #hasAlternativeZeroCostFromBattlefield(GameData, UUID, Card, boolean)}).
+     * Legacy boolean overload of {@link #consumeFreeCastFromBattlefield(GameData, UUID, Card, Zone)}.
+     * {@code false} represents an exile cast; use the {@link Zone} overload for other source zones.
      */
     public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card, boolean fromHand) {
-        FreeCastSource source = findFreeCastSource(gameData, playerId, card, fromHand);
+        return consumeFreeCastFromBattlefield(gameData, playerId, card,
+                fromHand ? Zone.HAND : Zone.EXILE);
+    }
+
+    public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        FreeCastSource source = findFreeCastSource(gameData, playerId, card, sourceZone);
         if (source == null) return false;
         if (source.effect().oncePerTurn()) {
             gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
@@ -637,8 +673,8 @@ public class CastingCostService {
      * consulted first; permanents are then searched across every battlefield, but an opponent's
      * source only counts when it applies to all players (Aluren).
      */
-    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
-        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, fromHand);
+    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, sourceZone);
         if (emblemSource != null) return emblemSource;
 
         FreeCastSource oncePerTurnFallback = null;
@@ -649,8 +685,10 @@ public class CastingCostService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AlternativeCostForSpellsEffect altCost
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
+                            && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                             && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
-                            && (fromHand || !altCost.fromHandOnly())
+                            && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
+                            && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                             && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
                             && manaValueCapSatisfied(perm, card, altCost)
                             && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
@@ -677,7 +715,7 @@ public class CastingCostService {
      * only consults {@code effect()}, and {@code consumeFreeCastFromBattlefield} touches the
      * permanent only on the once-each-turn path this can never take.
      */
-    private FreeCastSource findEmblemFreeCastSource(GameData gameData, UUID playerId, Card card, boolean fromHand) {
+    private FreeCastSource findEmblemFreeCastSource(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
             if (!playerId.equals(emblem.controllerId())) continue;
             for (CardEffect effect : emblem.staticEffects()) {
@@ -685,7 +723,8 @@ public class CastingCostService {
                         && altCost.manaValueCapCounter() == null
                         && !altCost.oncePerTurn()
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
-                        && (fromHand || !altCost.fromHandOnly())
+                        && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
+                        && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     return new FreeCastSource(null, altCost);
                 }
@@ -928,6 +967,21 @@ public class CastingCostService {
             return 0;
         }
 
+        Card firstTargetCard = gameQueryService.findCardInGraveyardById(gameData, firstTargetId);
+        if (firstTargetCard != null) {
+            GraveyardCardTargetCostReductionEffect graveyardEffect = card.getEffects(EffectSlot.STATIC).stream()
+                    .filter(GraveyardCardTargetCostReductionEffect.class::isInstance)
+                    .map(GraveyardCardTargetCostReductionEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (graveyardEffect != null
+                    && predicateEvaluationService.matchesCardPredicate(
+                    firstTargetCard, graveyardEffect.predicate(), card.getId(), gameData,
+                    gameQueryService.findGraveyardOwnerById(gameData, firstTargetId))) {
+                return graveyardEffect.amount();
+            }
+            return 0;
+        }
+
         StackEntry firstTargetSpell = gameQueryService.findStackEntryByCardId(gameData, firstTargetId);
         if (firstTargetSpell == null) {
             return 0;
@@ -948,7 +1002,8 @@ public class CastingCostService {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
                         || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect
-                        || e instanceof PerTargetCastCostReductionEffect);
+                        || e instanceof PerTargetCastCostReductionEffect
+                        || e instanceof GraveyardCardTargetCostReductionEffect);
     }
 
     public boolean hasPerTargetCastCostReduction(GameData gameData, UUID playerId, Card card) {

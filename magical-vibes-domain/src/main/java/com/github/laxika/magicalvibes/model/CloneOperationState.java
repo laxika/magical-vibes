@@ -15,6 +15,7 @@ public class CloneOperationState {
     public UUID etbTargetId;
     public Integer powerOverride;
     public Integer toughnessOverride;
+    public boolean copyPowerToughnessFromSource;
     public Set<CardType> additionalTypesOverride = Set.of();
     public List<ActivatedAbility> additionalActivatedAbilities = List.of();
     // Vizier-of-Many-Faces embalm exception: applied to the final copy only when the entering permanent is a token.

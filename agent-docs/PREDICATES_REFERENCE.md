@@ -126,6 +126,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentPowerGreaterThanActivePlayerHandSizePredicate` | `()` | permanents with effective power greater than the active player's current hand size | `gameData` |
 | `PermanentPowerAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | creatures with power <= number of permanents of the subtype source's controller controls | `gameData` + `sourceControllerId` |
+| `PermanentManaValueAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | permanents with mana value <= the number of matching permanents source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
 | `PermanentManaValueAtMostXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null) | `xValue` |
@@ -315,6 +316,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
+| `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
 | `CardSharesCardTypeWithImprintedCardPredicate` | `()` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly so target selection can occur before an activation cost imprints the exiled card, while resolution with game state performs the comparison (Holistic Wisdom) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |

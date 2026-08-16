@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
@@ -83,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
@@ -569,6 +571,32 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentManaValueAtMostControlledCountPredicate counts matching permanents on the source controller's battlefield")
+        void manaValueAtMostControlledCountMatches() {
+            Card plainsOne = createLand("Plains");
+            plainsOne.setSubtypes(List.of(CardSubtype.PLAINS));
+            addPermanent(player1Id, plainsOne);
+            Card plainsTwo = createLand("Snow-Covered Plains");
+            plainsTwo.setSubtypes(List.of(CardSubtype.PLAINS));
+            addPermanent(player1Id, plainsTwo);
+
+            Card eligibleCard = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+            eligibleCard.setManaCost("{2}");
+            Permanent eligible = addPermanent(player2Id, eligibleCard);
+            Card ineligibleCard = createCreature("Hill Giant", 3, 3, CardColor.RED);
+            ineligibleCard.setManaCost("{3}");
+            Permanent ineligible = addPermanent(player2Id, ineligibleCard);
+
+            PermanentManaValueAtMostControlledCountPredicate predicate =
+                    new PermanentManaValueAtMostControlledCountPredicate(
+                            new PermanentHasSubtypePredicate(CardSubtype.PLAINS));
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(eligible, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(ineligible, predicate, context)).isFalse();
         }
 
         @Test
@@ -1528,6 +1556,22 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(evaluator.matchesStaticFilter(perm, null, ctx())).isTrue();
+        }
+
+        @Test
+        @DisplayName("a maximum mana value filter matches only permanents at or below its threshold")
+        void maximumManaValueFilterMatches() {
+            Card cheapCard = createCreature("Cheap Creature", 2, 2, CardColor.GREEN);
+            cheapCard.setManaCost("{3}");
+            Card expensiveCard = createCreature("Expensive Creature", 4, 4, CardColor.GREEN);
+            expensiveCard.setManaCost("{4}");
+            Permanent cheap = addPermanent(player1Id, cheapCard);
+            Permanent expensive = addPermanent(player1Id, expensiveCard);
+
+            PermanentMaxManaValuePredicate predicate = new PermanentMaxManaValuePredicate(3);
+
+            assertThat(evaluator.matchesStaticFilter(cheap, predicate, ctx())).isTrue();
+            assertThat(evaluator.matchesStaticFilter(expensive, predicate, ctx())).isFalse();
         }
 
         @Test

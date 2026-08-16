@@ -71,6 +71,10 @@ public class InteractionPromptProjectionRegistry {
                 this::projectBrilliantUltimatumPileChoice);
         register(PendingInteraction.BrilliantUltimatumPlayChoice.class,
                 this::projectBrilliantUltimatumPlayChoice);
+        register(PendingInteraction.HostileNegotiationsFaceUpChoice.class,
+                this::projectHostileNegotiationsFaceUpChoice);
+        register(PendingInteraction.HostileNegotiationsOpponentPileChoice.class,
+                this::projectHostileNegotiationsOpponentPileChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
         register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
@@ -330,6 +334,29 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
                 "You may play lands and cast spells from this pile without paying their mana costs.");
+    }
+
+    private InteractionPromptMessage projectHostileNegotiationsFaceUpChoice(
+            GameData gameData, PendingInteraction.HostileNegotiationsFaceUpChoice interaction) {
+        return InteractionPromptMessage.acceptDecline(
+                "Choose a pile to turn face up. Yes = Pile 1 ("
+                        + describeCards(interaction.pile1Cards()) + "), No = Pile 2 ("
+                        + describeCards(interaction.pile2Cards()) + ").",
+                true, null);
+    }
+
+    private InteractionPromptMessage projectHostileNegotiationsOpponentPileChoice(
+            GameData gameData, PendingInteraction.HostileNegotiationsOpponentPileChoice interaction) {
+        String pile1 = interaction.pile1FaceUp()
+                ? describeCards(interaction.pile1Cards())
+                : "face down, " + interaction.pile1Cards().size() + " cards";
+        String pile2 = interaction.pile1FaceUp()
+                ? "face down, " + interaction.pile2Cards().size() + " cards"
+                : describeCards(interaction.pile2Cards());
+        return InteractionPromptMessage.acceptDecline(
+                "Choose a pile to put into the controller's hand. Yes = Pile 1 ("
+                        + pile1 + "), No = Pile 2 (" + pile2 + ").",
+                true, null);
     }
 
     private InteractionPromptMessage projectMirrorOfFateChoice(
@@ -903,6 +930,13 @@ public class InteractionPromptProjectionRegistry {
                 .filter(java.util.Objects::nonNull)
                 .map(entry -> entry.card().getName())
                 .collect(Collectors.joining(", "));
+    }
+
+    private String describeCards(List<Card> cards) {
+        if (cards.isEmpty()) {
+            return "empty";
+        }
+        return cards.stream().map(Card::getName).collect(Collectors.joining(", "));
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

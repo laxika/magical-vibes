@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
@@ -2050,6 +2051,16 @@ public class DeathTriggerCollectorService {
     }
 
     // ── ON_SELF_LEAVES_BATTLEFIELD ─────────────────────────────────────
+
+    @CollectsTrigger(value = SelfExiledFromBattlefieldEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfExiledFromBattlefield(TriggerMatchContext match,
+            SelfExiledFromBattlefieldEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        if (sl.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
+            return false;
+        }
+        return handleSelfLeavesDefault(match, effect.wrapped(), ctx);
+    }
 
     @CollectsTrigger(value = ControllerLosesGameOnLeavesEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
     boolean handleControllerLosesGameOnLeaves(TriggerMatchContext match,

@@ -22,6 +22,7 @@ public sealed interface ChoiceContext {
                            List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
                            boolean artifactSpellOrAbilityOnly,
                            boolean grantsUncounterable, boolean manaValueAtLeastFour,
+                           boolean creatureSpellOrAbilityOnly,
                            UUID sourcePermanentId,
                            Set<CardSubtype> restrictedToSpellOrAbilitySubtypes) implements ChoiceContext {
 
@@ -29,11 +30,12 @@ public sealed interface ChoiceContext {
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
                                List<ManaColor> fixedColorOptions, boolean creatureSpellOnly,
                                boolean artifactSpellOrAbilityOnly, boolean grantsUncounterable,
-                               boolean manaValueAtLeastFour, UUID sourcePermanentId) {
+                               boolean manaValueAtLeastFour, boolean creatureSpellOrAbilityOnly,
+                               UUID sourcePermanentId) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
                     spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly,
                     artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
-                    sourcePermanentId, null);
+                    creatureSpellOrAbilityOnly, sourcePermanentId, null);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -41,13 +43,13 @@ public sealed interface ChoiceContext {
                                List<ManaColor> fixedColorOptions, boolean creatureSpellOnly) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
                     spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly,
-                    false, false, false, null, null);
+                    false, false, false, false, null, null);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
-                    spellOrAbilitySubtype, false, null, false, false, false, false, null, null);
+                    spellOrAbilitySubtype, false, null, false, false, false, false, false, null, null);
         }
 
         public ManaColorChoice withSourcePermanentId(UUID sourcePermanentId) {
@@ -55,7 +57,8 @@ public sealed interface ChoiceContext {
                     flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility,
                     fixedColorOptions,
                     creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
-                    manaValueAtLeastFour, sourcePermanentId, restrictedToSpellOrAbilitySubtypes);
+                    manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId,
+                    restrictedToSpellOrAbilitySubtypes);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
@@ -95,7 +98,7 @@ public sealed interface ChoiceContext {
         /** "Add one mana of any color" restricted to the four party creature types. */
         public static ManaColorChoice partySpellOrAbility(UUID playerId, int amount) {
             return new ManaColorChoice(playerId, false, amount, null, false, false, true,
-                    false, null, false, false, false, false, null,
+                    false, null, false, false, false, false, false, null,
                     Set.of(CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD));
         }
 
@@ -106,7 +109,7 @@ public sealed interface ChoiceContext {
         public static ManaColorChoice creatureSourceSpellOrAbility(UUID playerId, int amount,
                                                                      CardSubtype subtype) {
             return new ManaColorChoice(playerId, false, amount, subtype, false, false, false,
-                    true, null, false, false, false, false, null, null);
+                    true, null, false, false, false, false, false, null, null);
         }
 
         /**
@@ -127,11 +130,18 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, false, amount, null, false, false, false, null, true);
         }
 
+        /** "Add N mana of any one color, spendable only to cast creature spells or activate abilities of creature sources" (Gwenna, Eyes of Gaea). */
+        public static ManaColorChoice creatureSpellOrAbilityOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(
+                    playerId, false, amount, null, false, false, false, false, null,
+                    false, false, false, false, true, null, null);
+        }
+
         /** "Add N mana of any one color, spendable only to cast artifact spells or activate abilities of artifacts". */
         public static ManaColorChoice artifactSpellOrAbilityOnly(UUID playerId, int amount) {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, false, null,
-                    false, true, false, false, null, null);
+                    false, true, false, false, false, null, null);
         }
 
         /**
@@ -142,14 +152,14 @@ public sealed interface ChoiceContext {
         public static ManaColorChoice chosenSubtypeCreatureUncounterable(UUID playerId, int amount, CardSubtype subtype) {
             return new ManaColorChoice(
                     playerId, false, amount, subtype, false, false, false, false, null,
-                    false, false, true, false, null, null);
+                    false, false, true, false, false, null, null);
         }
 
         /** "Add N mana of any one color, spendable only to cast spells with mana value 4 or greater." */
         public static ManaColorChoice manaValueAtLeastFour(UUID playerId, int amount) {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, false, null,
-                    false, false, false, true, null, null);
+                    false, false, false, true, false, null, null);
         }
     }
 
@@ -183,9 +193,19 @@ public sealed interface ChoiceContext {
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                              boolean drawForHandExiled) implements ChoiceContext {
+                              int maxCount, boolean drawForHandExiled) implements ChoiceContext {
+
         public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) {
-            this(targetPlayerId, controllerId, excludedTypes, false);
+            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, false);
+        }
+
+        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
+                                 boolean drawForHandExiled) {
+            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, drawForHandExiled);
+        }
+
+        public boolean drawForEachHandCardExiled() {
+            return drawForHandExiled;
         }
     }
 
@@ -713,10 +733,25 @@ public sealed interface ChoiceContext {
      * A targeted modal trigger also sets {@code triggerTime} without setting {@code consumeMode}.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                            boolean triggerTime, UUID sourcePermanentId, boolean consumeMode) implements ChoiceContext {
+                            boolean triggerTime, UUID sourcePermanentId, boolean consumeMode,
+                            List<String> chosenLabels) implements ChoiceContext {
+
+        public ChooseModeChoice {
+            chosenLabels = chosenLabels == null ? List.of() : List.copyOf(chosenLabels);
+        }
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
-            this(sourceCard, controllerId, effect, false, null, false);
+            this(sourceCard, controllerId, effect, false, null, false, List.of());
+        }
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                boolean triggerTime, UUID sourcePermanentId, boolean consumeMode) {
+            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, consumeMode, List.of());
+        }
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                boolean triggerTime, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, false, List.of());
         }
     }
 

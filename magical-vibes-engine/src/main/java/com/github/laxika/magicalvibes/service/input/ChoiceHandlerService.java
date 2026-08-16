@@ -534,7 +534,28 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
-        if (ctx.spellOrAbilitySubtype() || ctx.creatureSourceSpellOrAbility()) {
+        if (ctx.creatureSpellOrAbilityOnly()) {
+            // "Any combination of colors" means each mana gets its own color choice.
+            manaPool.addCreatureSpellOrAbilityMana(manaColor, 1);
+
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
+                    + " mana (creature spells or creature abilities only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds one {} creature-spell-or-ability mana", gameData.id,
+                    player.getUsername(), colorName.toLowerCase());
+
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice
+                        .creatureSpellOrAbilityOnly(ctx.playerId(), remaining);
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors,
+                        "Choose a color of mana to add (creature spells or creature abilities only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+        } else if (ctx.spellOrAbilitySubtype() || ctx.creatureSourceSpellOrAbility()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
             String subtypeLabel;
             String restriction;
@@ -667,7 +688,8 @@ public class ChoiceHandlerService {
         }
 
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
-                && !ctx.creatureSpellOnly() && !ctx.artifactSpellOrAbilityOnly()) {
+                && !ctx.creatureSpellOnly() && !ctx.creatureSpellOrAbilityOnly()
+                && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -1178,6 +1200,11 @@ public class ChoiceHandlerService {
      */
     private void handleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
             ChoiceContext.ChooseModeChoice ctx) {
+        if (ctx.effect().choicesRequired() > 1) {
+            handleMultipleChooseModeChoice(gameData, player, chosenLabel, ctx);
+            return;
+        }
+
         ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
@@ -1201,6 +1228,68 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleMultipleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
+            ChoiceContext.ChooseModeChoice ctx) {
+        ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
+                .filter(o -> o.label().equals(chosenLabel))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+        if (ctx.chosenLabels().contains(chosenLabel)) {
+            throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
+        }
+
+        List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
+        chosenLabels.add(chosen.label());
+        if (chosenLabels.size() < ctx.effect().choicesRequired()) {
+            gameData.interaction.clearAwaitingInput();
+            playerInputService.beginChooseModeChoice(gameData, ctx.controllerId(), ctx.sourceCard(), ctx.effect(),
+                    ctx.triggerTime(), ctx.sourcePermanentId(), chosenLabels);
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        if (ctx.triggerTime()) {
+            throw new IllegalStateException("Multi-mode trigger-time choices are not supported");
+        }
+
+        List<CardEffect> selectedEffects = ctx.effect().options().stream()
+                .filter(option -> chosenLabels.contains(option.label()))
+                .flatMap(option -> option.effects().stream())
+                .toList();
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, selectedEffects);
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses " + chosenLabels + " for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses modes {} for {}", gameData.id, player.getUsername(), chosenLabels,
+                ctx.sourceCard().getName());
+
+        boolean hasTargets = selectedEffects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
+        if (hasTargets && !ctx.sourceCard().getSpellTargets().isEmpty()) {
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),
+                    List.of(), 0, 0, List.of(), 0, true));
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(
+                        gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -3069,8 +3158,8 @@ public class ChoiceHandlerService {
         }
 
         // Present matching cards for "any number" selection
-        playerInputService.beginMultiZoneExileChoice(
-                gameData, controllerId, matchingCards, targetPlayerId, cardName, ctx.drawForHandExiled());
+        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, ctx.maxCount(),
+                targetPlayerId, cardName, ctx.drawForHandExiled());
         inputCompletionService.publishStateAfterInput(gameData);
     }
 
@@ -3364,6 +3453,9 @@ public class ChoiceHandlerService {
 
         // Validate selected card IDs against valid set
         List<UUID> validIds = ctx.validCardIds();
+        if (cardIds.size() > ctx.maxCount()) {
+            throw new IllegalStateException("Too many cards selected");
+        }
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
@@ -3390,6 +3482,7 @@ public class ChoiceHandlerService {
             for (Card card : toExile) {
                 gameData.addToExile(targetPlayerId, card);
             }
+            handExiledCount = toExile.size();
             exiledCount += toExile.size();
             handExiledCount = toExile.size();
         }
@@ -3422,6 +3515,10 @@ public class ChoiceHandlerService {
         // Always shuffle target player's library
         if (library != null) {
             Collections.shuffle(library);
+        }
+
+        if (ctx.drawForHandExiled()) {
+            playerInteractionSupport.applyDrawCards(gameData, targetPlayerId, handExiledCount);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")

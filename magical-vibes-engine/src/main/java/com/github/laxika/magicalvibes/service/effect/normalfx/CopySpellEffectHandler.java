@@ -58,11 +58,12 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
                 ? targetEntry.getControllerId()
                 : entry.getControllerId();
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
-        // Creature-copy mode (Choreographed Sparks): the copy is a token that gains haste and is
-        // sacrificed at the next end step. The sacrifice is registered when the token enters the
-        // battlefield (see BattlefieldEntryService).
-        if (copyEffect.tokenWithHaste()) {
+        // Token-copy modes mark the copy before it resolves into a permanent. The creature-copy
+        // mode additionally grants haste and may register a delayed sacrifice.
+        if (copyEffect.tokenCopy() || copyEffect.tokenWithHaste()) {
             copyCard.setToken(true);
+        }
+        if (copyEffect.tokenWithHaste()) {
             copyCard.setSacrificeAtEndStep(copyEffect.sacrificeAtEndStep());
         }
         StackEntry copyEntry = copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
@@ -79,7 +80,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".
-        if (!copyEffect.tokenWithHaste() && copyEntry.getTargetId() != null) {
+        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste() && copyEntry.getTargetId() != null) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     copyControllerId,

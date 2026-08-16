@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "215")
+@CardRegistration(set = "BRO", collectorNumber = "174")
 public class Bushwhack extends Card {
 
     public Bushwhack() {

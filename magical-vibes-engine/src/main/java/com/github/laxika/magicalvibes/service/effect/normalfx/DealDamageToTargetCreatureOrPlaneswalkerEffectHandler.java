@@ -63,7 +63,9 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
 
     private void markForExileInsteadOfDying(GameData gameData, Permanent target,
                                             DealDamageToTargetCreatureOrPlaneswalkerEffect effect) {
-        if (effect.exileInsteadOfDie() && gameQueryService.isCreature(gameData, target)) {
+        if (effect.exileInsteadOfDie()
+                && (gameQueryService.isCreature(gameData, target)
+                || gameQueryService.isPlaneswalker(gameData, target))) {
             target.setExileInsteadOfDieThisTurn(true);
         }
     }

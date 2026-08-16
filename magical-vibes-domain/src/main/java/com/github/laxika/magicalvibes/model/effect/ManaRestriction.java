@@ -95,6 +95,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
+    record Powerstone() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerstoneOnlyColorless(amount);
+        }
+
+        @Override
+        public String description() {
+            return "nonartifact spells prohibited";
+        }
+    }
+
     /**
      * Colorless mana spendable only to cast legendary spells — any spell with the legendary supertype
      * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.

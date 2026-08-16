@@ -283,7 +283,7 @@ public class GameViewProjectionFactory {
             List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, pid);
             graveyards.add(gy != null
                     ? gy.stream().map(c -> cardViewFactory.createForGraveyard(c, granted,
-                            gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(data, pid, c))).toList()
+                            gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c))).toList()
                     : new ArrayList<>());
         }
         return graveyards;
@@ -550,11 +550,13 @@ public class GameViewProjectionFactory {
                     } else {
                         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
+                        boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
                                 || card.hasType(CardType.CREATURE);
-                        canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                        canAfford = (isArtifact || isMyr || hasRestrictedRedContext || powerstoneContext)
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext,
+                                false, false, null, null, false, false, false, false, Set.of(), powerstoneContext)
                                 : cost.canPay(pool, additionalCost);
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!canAfford) {
@@ -668,9 +670,8 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (freeTopPlay) {
-            playable.add(cardViewFactory.create(topCard));
-        } else if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard, false)) {
+        if (freeTopPlay || castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, playerId, topCard, Zone.LIBRARY)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(

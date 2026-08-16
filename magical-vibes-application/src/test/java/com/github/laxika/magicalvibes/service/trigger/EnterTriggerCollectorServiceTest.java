@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -88,6 +90,7 @@ class EnterTriggerCollectorServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameLogService gameLogService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
+    @Mock private GraveyardTargetingService graveyardTargetingService;
 
     private TriggerCollectionService service;
     private TriggerCollectorRegistry registry;
@@ -99,6 +102,7 @@ class EnterTriggerCollectorServiceTest {
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService), gameQueryService,
+                graveyardTargetingService,
                 predicateEvaluationService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService)), registry);
 
@@ -432,6 +436,28 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Creature entering from a graveyard queues an optional equipment attachment")
+    void creatureFromGraveyardQueuesEquipmentAttachment() {
+        Card source = new Card();
+        source.setName("Equipment");
+        source.addEffect(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD,
+                new AttachSourceEquipmentToEnteringCreatureEffect());
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        enteringPermanent.setEnteredFromGraveyardOwnerId(player1Id);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkEntersFromGraveyardTriggers(gd, player1Id, entering);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(enteringPermanent.getId());
+        assertThat(gd.pendingMayAbilities.getFirst().sourcePermanentId()).isEqualTo(sourcePermanent.getId());
     }
 
     @Test

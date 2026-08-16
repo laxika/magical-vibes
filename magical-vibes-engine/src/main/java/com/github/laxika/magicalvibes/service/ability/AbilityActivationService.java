@@ -439,6 +439,7 @@ public class AbilityActivationService {
                 && !manaChoice.instantSorceryOnly()
                 && !manaChoice.spellOrAbilitySubtype()
                 && !manaChoice.creatureSpellOnly()
+                && !manaChoice.creatureSpellOrAbilityOnly()
                 && !manaChoice.artifactSpellOrAbilityOnly()
                 && manaChoice.fixedColorOptions() == null;
     }
@@ -945,7 +946,7 @@ public class AbilityActivationService {
             // so the id list carries those targets rather than graveyard cards.
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
                     graveyardTargetIds != null ? graveyardTargetIds : List.of(), card, xValue);
-        } else if (graveyardTargetIds != null && !graveyardTargetIds.isEmpty()) {
+        } else if (graveyardTargetIds != null) {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
                     graveyardTargetIds);
         } else {
@@ -1038,7 +1039,7 @@ public class AbilityActivationService {
                 .orElse(null);
         if (discardCardTypeCost != null
                 && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
-                < discardCardTypeCost.count()) {
+                < discardCardTypeCost.requiredCount(xValue)) {
             throw new IllegalStateException("No valid card to discard for the activation cost");
         }
 
@@ -1048,10 +1049,27 @@ public class AbilityActivationService {
         // additional generic cost.
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
-            int reduction = Math.min(
+            ManaCost manaCost = new ManaCost(abilityCost);
+            int genericCost = manaCost.getGenericCost();
+            int additionalGenericCost = -Math.min(
                     castingCostService.getGraveyardActivatedAbilityCostReduction(gameData, playerId, card),
-                    new ManaCost(abilityCost).getGenericCost());
-            payManaCost(gameData, playerId, abilityCost, xValue, false, false, null, -reduction);
+                    genericCost);
+            AmountContext activationCostContext = new AmountContext(
+                    playerId, null, null, xValue, 0, false, null, List.of(), card);
+            for (CardEffect effect : abilityEffects) {
+                if (effect instanceof ActivationCostModifierEffect modifier) {
+                    int amount = amountEvaluationService.evaluate(gameData, modifier.amount(), activationCostContext);
+                    if (modifier.reducesGenericCost()) {
+                        int reduction = Math.min(
+                                amount, Math.max(0, genericCost + additionalGenericCost));
+                        additionalGenericCost -= reduction;
+                    } else {
+                        additionalGenericCost += amount;
+                    }
+                }
+            }
+            payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
+                    additionalGenericCost);
         }
 
         // Pay the mill-controller cost. Milled cards land on top of the graveyard, leaving the
@@ -1091,11 +1109,11 @@ public class AbilityActivationService {
         if (discardCardTypeCost != null) {
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
             gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
-                    playerId, card, ability, xValue, targetId, discardCardTypeCost.count());
+                    playerId, card, ability, xValue, targetId, discardCardTypeCost.requiredCount(xValue));
             String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
-            String prompt = discardCardTypeCost.count() > 1
+            String prompt = discardCardTypeCost.requiredCount(xValue) > 1
                     ? "Choose a " + labelText + "card to " + discardCardTypeCost.payVerb() + " as an activation cost ("
-                    + discardCardTypeCost.count() + " remaining)."
+                    + discardCardTypeCost.requiredCount(xValue) + " remaining)."
                     : "Choose a " + labelText + "card to " + discardCardTypeCost.payVerb() + " as an activation cost.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     playerId, validDiscardIndices, prompt));
@@ -1125,15 +1143,12 @@ public class AbilityActivationService {
 
     /**
      * The graveyard-activated abilities a card offers from the given owner's graveyard: its own
-     * printed graveyard abilities plus any granted to owned creature cards by static effects on the
-     * battlefield (e.g. Sedris, the Traitor King grants unearth {2}{B}). Granted abilities are
-     * appended after the card's own so indices stay aligned with the client's card view.
+     * printed graveyard abilities plus any granted by static effects on the battlefield. Granted
+     * abilities are appended after the card's own so indices stay aligned with the client's card view.
      */
     public List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
         List<ActivatedAbility> abilities = new ArrayList<>(card.getGraveyardActivatedAbilities());
-        if (card.hasType(CardType.CREATURE)) {
-            abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, ownerId, card));
-        }
+        abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(gameData, ownerId, card));
         return abilities;
     }
 
@@ -1248,7 +1263,7 @@ public class AbilityActivationService {
         // battlefield/player target group instead rides in the flat targetIds list, exactly as it
         // does for a battlefield activation.
         boolean multiTarget = isMultiTargetGraveyardAbility(ability);
-        boolean hasGraveyardTargets = !multiTarget && graveyardTargetIds != null && !graveyardTargetIds.isEmpty();
+        boolean hasGraveyardTargets = !multiTarget && graveyardTargetIds != null;
         StackEntry stackEntry = multiTarget
                 ? new StackEntry(
                         StackEntryType.ACTIVATED_ABILITY,
@@ -1379,8 +1394,8 @@ public class AbilityActivationService {
                     ? Math.min(castingCostService.getCyclingAbilityCostReduction(gameData, playerId),
                     new ManaCost(abilityCost).getGenericCost())
                     : 0;
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false,
-                    null, -cyclingReduction);
+            payManaCostForSourceCard(gameData, playerId, card, abilityCost, effectiveXValue,
+                    false, false, -cyclingReduction);
         }
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability — or exile it
@@ -1481,7 +1496,7 @@ public class AbilityActivationService {
         // Mana first: payManaCost throws before mutating the pool if it can't be afforded, so an
         // unaffordable activation never bounces the attacker.
         if (ability.getManaCost() != null) {
-            payManaCost(gameData, playerId, ability.getManaCost(), 0, false, false);
+            payManaCostForSourceCard(gameData, playerId, card, ability.getManaCost(), 0, false, false, 0);
         }
         permanentRemovalService.removePermanentToHand(gameData, attacker);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " is returned to its owner's hand."));
@@ -1600,7 +1615,7 @@ public class AbilityActivationService {
         // Pay mana cost (throws before mutating the pool if it can't be afforded)
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
-            payManaCost(gameData, playerId, abilityCost, 0, false, false);
+            payManaCostForSourceCard(gameData, playerId, card, abilityCost, 0, false, false, 0);
         }
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability
@@ -2336,13 +2351,14 @@ public class AbilityActivationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost, effectiveXValue);
             if (discardCardIndex == null) {
-                if (validDiscardIndices.size() < discardCardTypeCost.count()) {
+                if (validDiscardIndices.size() < discardCardTypeCost.requiredCount(effectiveXValue)) {
                     String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
                     throw new IllegalStateException("Must " + discardCardTypeCost.payVerb() + " a " + costLabel
                             + "card to activate ability");
                 }
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        targetIds, damageAssignments, discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count(),
+                        targetIds, damageAssignments, discardCardTypeCost.label(), validDiscardIndices,
+                        discardCardTypeCost.requiredCount(effectiveXValue),
                         discardCardTypeCost.payVerb());
                 return;
             }
@@ -2384,15 +2400,36 @@ public class AbilityActivationService {
                     ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
-                    subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    additionalGenericCost, ability.getXColorRestrictions());
+            EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(payingPool);
+            EnumMap<ManaColor, Integer> promotedCreatureSourceMana = gameQueryService.isCreature(gameData, permanent)
+                    ? payingPool.promoteCreatureSpellOrAbilityMana()
+                    : null;
+            try {
+                payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                        subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
+                        additionalGenericCost, ability.getXColorRestrictions());
+            } finally {
+                if (promotedCreatureSourceMana != null) {
+                    payingPool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana,
+                            regularManaBefore);
+                }
+            }
             recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
         } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaCost taxCost = new ManaCost("{" + additionalGenericCost + "}");
-            taxCost.pay(pool);
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(pool);
+                EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+                try {
+                    taxCost.pay(pool);
+                } finally {
+                    pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+                }
+            } else {
+                taxCost.pay(pool);
+            }
         }
 
         // discardCardIndex < 0 means the interactive path already paid all required discards.
@@ -3328,31 +3365,41 @@ public class AbilityActivationService {
                 affordabilityPool = copyManaPool(manaPool);
                 affordabilityPool.setBlueSpendableAsAnyColorForActivatedAbilities(true);
             }
+            if (manaPool != null && gameQueryService.isCreature(gameData, permanent)) {
+                affordabilityPool = copyManaPool(affordabilityPool);
+                affordabilityPool.promoteCreatureSpellOrAbilityMana();
+            }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
+            boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
             if (preCheck.hasX() && ability.getXColorRestrictions() != null) {
-                if (!preCheck.canPay(manaPool, xValue, ability.getXColorRestrictions(), additionalGenericCost)) {
+                if (!preCheck.canPay(affordabilityPool, xValue, ability.getXColorRestrictions(), additionalGenericCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else if (preCheck.hasX()) {
                 if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx,
                         false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
-                        creatureSourceSoaCtx)) {
+                        creatureSourceSoaCtx, powerstoneCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
                 if (!preCheck.canPay(affordabilityPool, additionalGenericCost, artifactCtx, myrCtx,
                         false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
-                        creatureSourceSoaCtx)) {
+                        creatureSourceSoaCtx, powerstoneCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }
         } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — validate player can pay the tax
-            if (manaPool.getTotal() < additionalGenericCost) {
+            ManaPool affordabilityPool = manaPool;
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                affordabilityPool = copyManaPool(manaPool);
+                affordabilityPool.promoteCreatureSpellOrAbilityMana();
+            }
+            if (affordabilityPool.getTotal() < additionalGenericCost) {
                 throw new IllegalStateException("Not enough mana to activate ability");
             }
         }
@@ -3426,7 +3473,7 @@ public class AbilityActivationService {
                     .orElse(null);
             if (discardCardTypeCost != null
                     && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
-                    < discardCardTypeCost.count()) {
+                    < discardCardTypeCost.requiredCount(xValue)) {
                 String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
                 throw new IllegalStateException("Must " + discardCardTypeCost.payVerb() + " a " + costLabel
                         + "card to activate ability");
@@ -3984,6 +4031,27 @@ public class AbilityActivationService {
         payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, null, 0);
     }
 
+    private void payManaCostForSourceCard(GameData gameData, UUID playerId, Card sourceCard,
+                                           String abilityCost, int effectiveXValue,
+                                           boolean artifactContext, boolean myrContext,
+                                           int additionalCost) {
+        if (!sourceCard.hasType(CardType.CREATURE)) {
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                    null, additionalCost);
+            return;
+        }
+
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(pool);
+        EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+        try {
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                    null, additionalCost);
+        } finally {
+            pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+        }
+    }
+
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext, Set<CardSubtype> subtypeSpellOrAbilityContext, int additionalCost) {
         payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
                 subtypeSpellOrAbilityContext, additionalCost, null);
@@ -4014,7 +4082,9 @@ public class AbilityActivationService {
         boolean hasSubtypeSoa = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
         boolean hasCreatureSourceSoa = subtypeCreatureSourceSpellOrAbilityContext != null
                 && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty();
-        boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa || hasCreatureSourceSoa;
+        boolean powerstoneContext = pool.getPowerstoneOnlyColorless() > 0;
+        boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa
+                || hasCreatureSourceSoa || powerstoneContext;
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
         // generic costs consume it — but only where the rest of the cost stays payable,
@@ -4032,12 +4102,12 @@ public class AbilityActivationService {
             if (hasRestricted) {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext)) {
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
                 cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext);
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -4048,12 +4118,12 @@ public class AbilityActivationService {
             if (hasRestricted) {
                 if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext)) {
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
                 cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext);
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
             } else {
                 if (additionalCost != 0) {
                     // additionalCost may be negative (a static generic-cost reduction, floored to the
@@ -4166,10 +4236,11 @@ public class AbilityActivationService {
                 validIndices.add(i);
             }
         }
-        if (cost.sameName() && requiredName == null && cost.count() > 1) {
+        int requiredCount = cost.requiredCount(xValue);
+        if (cost.sameName() && requiredName == null && requiredCount > 1) {
             Map<String, Long> countsByName = validIndices.stream()
                     .collect(Collectors.groupingBy(i -> hand.get(i).getName(), Collectors.counting()));
-            validIndices.removeIf(i -> countsByName.get(hand.get(i).getName()) < cost.count());
+            validIndices.removeIf(i -> countsByName.get(hand.get(i).getName()) < requiredCount);
         }
         return validIndices;
     }

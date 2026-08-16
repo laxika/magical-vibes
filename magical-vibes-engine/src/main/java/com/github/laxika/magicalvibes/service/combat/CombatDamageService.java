@@ -2407,6 +2407,10 @@ public class CombatDamageService {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;
             }
+            if (damage > 0) {
+                damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                        gameData, sourceControllerId, atk.getCard(), atk, pwControllerId);
+            }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
@@ -2470,6 +2474,8 @@ public class CombatDamageService {
             if (damage > 0) {
                 damage += gameQueryService.getDamageToPlayerColorSourceBonus(gameData,
                         gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
+                damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                        gameData, sourceControllerId, atk.getCard(), atk, defenderId);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.

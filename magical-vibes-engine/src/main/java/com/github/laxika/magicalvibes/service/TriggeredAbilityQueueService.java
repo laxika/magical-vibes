@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1016,6 +1017,13 @@ public class TriggeredAbilityQueueService {
             } else {
                 for (CardEffect effect : pending.effects()) {
                     CardEffect targetEffect = unwrapConditionalEffect(effect);
+                    if (targetEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect
+                            && pending.sourceCard().getEffectTargetIndex(targetEffect) >= 0
+                            && pending.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                        filter = graveyardFilter.predicate();
+                        scope = graveyardFilter.scope();
+                        break;
+                    }
                     if (targetEffect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.ALL_GRAVEYARDS) {
                         // BecomeAuraReanimateFromGraveyardEffect (Necromancy): creature card from any graveyard
                         filter = new CardTypePredicate(CardType.CREATURE);
@@ -1032,6 +1040,11 @@ public class TriggeredAbilityQueueService {
                     if (targetEffect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards graveyardCards) {
                         filter = graveyardCards.inner();
                         scope = graveyardCards.scope();
+                        break;
+                    }
+                    GraveyardSearchScope declaredScope = targetEffect.targetSpec().graveyardScope().orElse(null);
+                    if (declaredScope != null) {
+                        scope = declaredScope;
                         break;
                     }
                 }

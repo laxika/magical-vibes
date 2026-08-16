@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "172")
+@CardRegistration(set = "BRO", collectorNumber = "179")
 public class FaunaShaman extends Card {
 
     public FaunaShaman() {

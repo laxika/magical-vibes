@@ -530,6 +530,27 @@ public class ValidTargetService {
         int maxTargets = 1;
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
 
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
+                    && returnEffect.hasTotalManaValueCap()) {
+                int selectedManaValue = (alreadySelectedIds == null ? List.<UUID>of() : alreadySelectedIds).stream()
+                        .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .mapToInt(Card::getManaValue)
+                        .sum();
+                validGraveyardCardIds.removeIf(id -> {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, id);
+                    return card == null
+                            || selectedManaValue + card.getManaValue() > returnEffect.maxTotalManaValue();
+                });
+                minTargets = 0;
+                maxTargets = validGraveyardCardIds.size();
+                prompt = "Select any number of target artifact cards with total mana value "
+                        + returnEffect.maxTotalManaValue() + " or less";
+                break;
+            }
+        }
+
         if (ability.isXScaledTargets()) {
             minTargets = ability.getEffectiveMinTargets(effectiveTargetScalingValue);
             maxTargets = ability.getEffectiveMaxTargets(effectiveTargetScalingValue);
@@ -1034,7 +1055,8 @@ public class ValidTargetService {
             for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                 if (excludeIds.contains(c.getId())) continue;
                 if (filter.predicate() != null
-                        && !predicateEvaluationService.matchesCardPredicate(c, filter.predicate(), card.getId())) {
+                        && !predicateEvaluationService.matchesCardPredicate(c, filter.predicate(), card.getId(),
+                        gameData, gameQueryService.findGraveyardOwnerById(gameData, c.getId()))) {
                     continue;
                 }
                 if (constraint == MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY
@@ -1209,6 +1231,8 @@ public class ValidTargetService {
                     || (graveyardOwnerId != null
                     && gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(c.getId()));
+        } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e && e.filter() != null) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {

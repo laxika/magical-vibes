@@ -57,14 +57,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(graveyardOwnerId, Set.of())
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
+        int totalManaValue = 0;
         for (UUID targetCardId : entry.getTargetCardIds()) {
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
                     .findFirst().orElse(null);
             if (card != null
                     && (trackedIds == null || trackedIds.contains(card.getId()))
-                    && predicateEvaluationService.matchesCardPredicate(card, e.filter(), entry.getCard().getId())) {
+                    && predicateEvaluationService.matchesCardPredicate(card, e.filter(), entry.getCard().getId())
+                    && (!e.hasTotalManaValueCap()
+                    || totalManaValue + card.getManaValue() <= e.maxTotalManaValue())) {
                 cardsToReturn.add(card);
+                totalManaValue += card.getManaValue();
             }
         }
 

@@ -116,23 +116,31 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * false = bottom of the library).
      */
     public record SecondBoundedPick(CardType type, boolean restToGraveyard, CardSubtype subtype,
-                                    List<CardSubtype> remainingSubtypes, boolean randomRest) {
+                                    List<CardSubtype> remainingSubtypes, boolean randomRest,
+                                    List<CardType> remainingTypes) {
 
         public SecondBoundedPick {
             remainingSubtypes = List.copyOf(remainingSubtypes);
+            remainingTypes = List.copyOf(remainingTypes);
         }
 
         public SecondBoundedPick(CardType type, boolean restToGraveyard) {
-            this(type, restToGraveyard, null, List.of(), false);
+            this(type, restToGraveyard, null, List.of(), false, List.of());
         }
 
         public static SecondBoundedPick subtype(CardSubtype subtype, List<CardSubtype> remaining,
                                                 boolean randomRest) {
-            return new SecondBoundedPick(null, false, subtype, remaining, randomRest);
+            return new SecondBoundedPick(null, false, subtype, remaining, randomRest, List.of());
+        }
+
+        /** The next card-type pick in a dynamic one-per-type flow. */
+        public static SecondBoundedPick cardType(CardType type, List<CardType> remaining,
+                                                 boolean randomRest) {
+            return new SecondBoundedPick(type, false, null, List.of(), randomRest, remaining);
         }
 
         public static SecondBoundedPick terminal(boolean randomRest) {
-            return new SecondBoundedPick(null, false, null, List.of(), randomRest);
+            return new SecondBoundedPick(null, false, null, List.of(), randomRest, List.of());
         }
     }
 
@@ -258,6 +266,15 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(),
                 new SecondBoundedPick(type, restToGraveyard), null, List.of(), null, null, null);
+    }
+
+    /** Begins the next one-card pick for each remaining card type, with random bottoming at the end. */
+    public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types) {
+        if (types.isEmpty()) {
+            return forBoundedPick(SecondBoundedPick.terminal(true));
+        }
+        return forBoundedPick(SecondBoundedPick.cardType(
+                types.getFirst(), types.subList(1, types.size()), true));
     }
 
     /** Begins a bounded subtype-pick flow, optionally randomizing the cards left on the bottom. */

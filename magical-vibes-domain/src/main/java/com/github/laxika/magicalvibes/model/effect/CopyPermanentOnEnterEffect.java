@@ -29,6 +29,9 @@ import java.util.Set;
  * <p>{@code additionalSubtypesOverride} and {@code additionalSlotEffects} cover "except it's an
  * [subtype] in addition to its other types and it has '[triggered ability]'" (Phantasmal Image).
  * Both are applied to the final copy only when the controller chooses to copy.
+ *
+ * <p>{@code copyPowerToughnessFromSource} covers copy exceptions whose power and toughness come
+ * from the entering card's cast-mode characteristics rather than the chosen permanent.
  */
 public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                          Integer toughnessOverride,
@@ -38,35 +41,43 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                          boolean embalmRemoveManaCost,
                                          DynamicAmount additionalPlusOnePlusOneCounters,
                                          Set<CardSubtype> additionalSubtypesOverride,
-                                         Map<EffectSlot, List<CardEffect>> additionalSlotEffects) implements ReplacementEffect {
+                                         Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                         boolean copyPowerToughnessFromSource) implements ReplacementEffect {
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel) {
-        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null, Set.of(), Map.of());
+        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null, Set.of(), Map.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       DynamicAmount additionalPlusOnePlusOneCounters) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
-                additionalPlusOnePlusOneCounters, Set.of(), Map.of());
+                additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride) {
         this(filter, typeLabel, powerOverride, toughnessOverride, Set.of(), List.of(), null, null, false, null,
-                Set.of(), Map.of());
+                Set.of(), Map.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
         this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride, List.of(), null, null,
-                false, null, Set.of(), Map.of());
+                false, null, Set.of(), Map.of(), false);
+    }
+
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardType> additionalTypesOverride,
+                                      boolean copyPowerToughnessFromSource) {
+        this(filter, typeLabel, null, null, additionalTypesOverride, List.of(), null, null,
+                false, null, Set.of(), Map.of(), copyPowerToughnessFromSource);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride, Set<CardType> additionalTypesOverride,
                                       List<ActivatedAbility> additionalActivatedAbilities) {
         this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride,
-                additionalActivatedAbilities, null, null, false, null, Set.of(), Map.of());
+                additionalActivatedAbilities, null, null, false, null, Set.of(), Map.of(), false);
     }
 
     /** Clone with the embalm exception (Vizier of Many Faces): copy a creature, but an embalm token
@@ -75,7 +86,7 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                       CardColor embalmColorOverride, CardSubtype embalmAddedSubtype,
                                       boolean embalmRemoveManaCost) {
         this(filter, typeLabel, null, null, Set.of(), List.of(),
-                embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost, null, Set.of(), Map.of());
+                embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost, null, Set.of(), Map.of(), false);
     }
 
     /** Clone that also gains creature types and triggered/static abilities of its own (Phantasmal Image). */
@@ -83,6 +94,6 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                       Set<CardSubtype> additionalSubtypesOverride,
                                       Map<EffectSlot, List<CardEffect>> additionalSlotEffects) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null,
-                additionalSubtypesOverride, additionalSlotEffects);
+                additionalSubtypesOverride, additionalSlotEffects, false);
     }
 }

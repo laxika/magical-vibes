@@ -1170,9 +1170,13 @@ public class GraveyardService {
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingCreatureOwners) {
                 triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
             }
+            for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
+                triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+            }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
             gameData.graveyardExileNotificationPendingCounts.clear();
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         }
     }
 
@@ -1199,6 +1203,10 @@ public class GraveyardService {
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
         }
+        if (leavingCard != null && !leavingCard.isToken()
+                && (leavingCard.hasType(CardType.ARTIFACT) || leavingCard.hasType(CardType.CREATURE))) {
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
+        }
     }
 
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, List<Card> leavingCards) {
@@ -1208,6 +1216,10 @@ public class GraveyardService {
         notifyCardsLeftGraveyard(gameData, ownerId);
         if (leavingCards.stream().anyMatch(card -> !card.isToken() && card.hasType(CardType.CREATURE))) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
+        }
+        if (leavingCards.stream().anyMatch(card -> !card.isToken()
+                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)))) {
+            notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
         }
     }
 
@@ -1240,6 +1252,14 @@ public class GraveyardService {
             return;
         }
         triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+    }
+
+    private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        if (gameData.graveyardLeaveNotificationDepth > 0) {
+            gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.add(ownerId);
+            return;
+        }
+        triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
     }
 
     /**
@@ -1343,7 +1363,7 @@ public class GraveyardService {
                 allTracked.remove(card.getId());
             }
         }
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, moving);
         return moving;
     }
 }

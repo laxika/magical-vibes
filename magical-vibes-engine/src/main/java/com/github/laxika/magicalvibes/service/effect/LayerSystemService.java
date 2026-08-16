@@ -2141,7 +2141,7 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), protection);
                     }
                     case GrantEffectEffect grant -> {
-                        if (grant.scope() != GrantScope.TARGET) {
+                        if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
                             continue;
                         }
                         state.addStaticEffect(grant.effect());

@@ -90,7 +90,7 @@ class ScryEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new ScryInteractionHandler(
-                gameLogService, mock(InputCompletionService.class)));
+                gameLogService, mock(InputCompletionService.class), triggerCollectionService));
         scryEffectHandler = new ScryEffectHandler(
                 gameLogService,
                 interactionHandlerRegistry,

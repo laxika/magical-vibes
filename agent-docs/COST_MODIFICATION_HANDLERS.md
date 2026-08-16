@@ -87,6 +87,10 @@ generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; t
 inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
 not through the handler registry.
 
+`ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
+graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
+same `CastingCostService.computeTargetBasedCostReduction` path.
+
 ## Buyback-cost reductions
 
 Effects that reduce the optional buyback cost, rather than the spell's own mana cost, use a
@@ -107,6 +111,9 @@ cost.
   `IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype)`; returns `+amount` unless the
   caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
   "reveal a creature-type card or pay {N}" cycle, e.g. Goldmeadow Stalwart).
+- `cast/costmod/IncreaseOwnCastCostEffectHandler.java` — spell-self handler for
+  `IncreaseOwnCastCostEffect(int amount)`; returns `+amount` for the spell being cast. Wrap it in
+  `ConditionalEffect` for a cast-time condition such as `NotControllerTurn`.
 - `cast/costmod/ReduceCastCostForMatchingSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope)`; scopes by
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), matches the spell against the predicate, and evaluates the amount with the **source
@@ -160,6 +167,8 @@ cost.
   (`magical-vibes-application/src/test/.../service/cast/`), mirroring `GameEngineConfig`.
 
 ## Adding a new cost-modifier card
+
+Temporary reductions are represented by `ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect`, whose normal-effect handler adds the existing `ReduceCastCostForMatchingSpellsEffect` as an until-end-of-turn floating effect. `CastingCostService` includes active floating cost modifiers in its snapshot so preview and payment use the same result.
 
 **First check whether it's a spell-self reduction** ("this spell costs {N} less to cast …"). If so,
 do NOT add a record or handler — use `ReduceOwnCastCostEffect(DynamicAmount)`, optionally wrapped in

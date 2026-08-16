@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
@@ -216,6 +217,8 @@ public class AmountEvaluationService {
                     countLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
+            case ColorManaPairsSpentToCast c ->
+                    colorManaPairsSpentToCast(gameData, c, ctx);
             case ColorsAmongControlledPermanents ignored ->
                     countColorsAmongControlledPermanents(gameData, ctx);
             case ColorManaSymbolsInGraveyard c ->
@@ -686,6 +689,12 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int colorManaPairsSpentToCast(
+            GameData gameData, ColorManaPairsSpentToCast amount, AmountContext ctx) {
+        if (ctx.sourceCard() == null) return 0;
+        return gameData.getSpellCastManaSpentByColor(ctx.sourceCard().getId(), amount.color()) / 2;
     }
 
     private int countColorManaSymbolsInGraveyard(

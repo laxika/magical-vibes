@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -912,6 +913,16 @@ public class CombatAttackService {
                             ConditionContext.forPermanent(perm, playerId));
                     if (!allMatch) {
                         log.info("Game {} - {} attack trigger skipped (not all matching creatures attack)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof MinimumAttackingCreaturesOfSubtype) {
+                    boolean hasEnoughMatchingAttackers = conditionEvaluationService.isMet(
+                            gameData, ce.condition(), ConditionContext.forPermanent(perm, playerId));
+                    if (!hasEnoughMatchingAttackers) {
+                        log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
                                 gameData.id, perm.getCard().getName());
                         continue;
                     }

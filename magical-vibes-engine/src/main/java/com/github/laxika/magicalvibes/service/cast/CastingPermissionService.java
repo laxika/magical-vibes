@@ -767,6 +767,11 @@ public class CastingPermissionService {
                 && !isLandPlayForbiddenByChosenName(gameData, card);
     }
 
+    public boolean canPlayLandFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        return canPlayLandsFromTopOfLibrary(gameData, playerId)
+                && canPlayLandNow(gameData, playerId, card);
+    }
+
     /**
      * Returns true if the player controls a permanent granting permission to cast this card from
      * their graveyard as a spell matching a {@link CastSpellsFromGraveyardPermission} filter

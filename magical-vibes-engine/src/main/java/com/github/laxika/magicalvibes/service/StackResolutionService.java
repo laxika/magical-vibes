@@ -722,7 +722,7 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = new Permanent(card);
+        Permanent perm = createEnteringPermanent(entry, card, card);
 
         // Gather Specimens (CR 614.1): an artifact creature that would enter under an opponent's
         // control instead enters under the gatherer's control. Resolve up front so the log, ETB

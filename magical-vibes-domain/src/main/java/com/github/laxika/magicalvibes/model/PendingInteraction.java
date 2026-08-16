@@ -25,6 +25,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingBendOrBreak,
         PendingWhimsOfTheFates,
+        PendingHostileNegotiations,
         PendingEachPlayerLibraryExile, PendingGuildFeud,
         PendingInteraction.XValueChoice, PendingInteraction.AlternateCastXValueChoice,
         PendingInteraction.Scry,
@@ -38,6 +39,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
         PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
+        PendingInteraction.HostileNegotiationsFaceUpChoice,
+        PendingInteraction.HostileNegotiationsOpponentPileChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.PutLandsFromHandChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
@@ -459,6 +462,49 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Hostile Negotiations: the controller chooses which of two piles to turn face up. */
+    record HostileNegotiationsFaceUpChoice(UUID playerId, java.util.List<Card> pile1Cards,
+                                           java.util.List<Card> pile2Cards)
+            implements PendingInteraction {
+
+        public HostileNegotiationsFaceUpChoice {
+            pile1Cards = java.util.List.copyOf(pile1Cards);
+            pile2Cards = java.util.List.copyOf(pile2Cards);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /** Hostile Negotiations: the opponent chooses which pile goes to the controller's hand. */
+    record HostileNegotiationsOpponentPileChoice(UUID playerId, java.util.List<Card> pile1Cards,
+                                                 java.util.List<Card> pile2Cards,
+                                                 boolean pile1FaceUp)
+            implements PendingInteraction {
+
+        public HostileNegotiationsOpponentPileChoice {
+            pile1Cards = java.util.List.copyOf(pile1Cards);
+            pile2Cards = java.util.List.copyOf(pile2Cards);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
     /**
      * Mirror of Fate: choose up to seven face-up exiled cards to put on top of the library.
      * {@code validCardIds} keeps the begin-time order; views are re-derived from the player's
@@ -771,8 +817,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * "Exile any number of cards named X" from {@code targetPlayerId}'s hand, graveyard, and
-     * library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
+     * "Exile up to the offered maximum of cards named X" from {@code targetPlayerId}'s hand,
+     * graveyard, and library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
      * hand → graveyard → library scan order; views are re-derived by the same scan at prompt
      * time. {@code controllerId} is the effect's controller (same as the deciding player).
      */

@@ -318,7 +318,8 @@ public class PermanentChoiceSpellHandlerService {
         if (target != null || isPlayerTarget) {
             if (!gct.withoutPayingManaCost()) {
                 try {
-                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), gct.cardToCast(), 0);
+                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), gct.cardToCast(), 0,
+                            Zone.GRAVEYARD);
                 } catch (IllegalStateException ex) {
                     graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
                     gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), " can't be cast because its mana cost can't be paid."));

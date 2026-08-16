@@ -262,7 +262,7 @@ public class EffectResolutionService {
             if (targetIdx >= 0) {
                 List<UUID> groupTargets = entry.targetsForEffect(effect);
                 if (!groupTargets.isEmpty()) {
-                    entry.setTargetId(groupTargets.getFirst());
+                    entry.setTargetIdForEffectResolution(groupTargets.getFirst());
                 }
             }
 
@@ -275,7 +275,7 @@ public class EffectResolutionService {
 
             // Restore original targetId after multi-target override
             if (targetIdx >= 0) {
-                entry.setTargetId(savedTargetId);
+                entry.restoreTargetIdAfterEffectResolution(savedTargetId);
             }
 
             effects = entry.getEffectsToResolve();

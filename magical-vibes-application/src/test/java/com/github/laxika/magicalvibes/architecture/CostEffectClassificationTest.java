@@ -33,7 +33,9 @@ class CostEffectClassificationTest {
     /**
      * Cost types only ever used as activation costs (activated/triggered abilities, crew, etc.).
      * If one of these starts appearing in a SPELL slot, move it to
-     * {@code HANDLED_SPELL_COST_TYPES} and implement its cast-time support instead.
+     * {@code HANDLED_SPELL_COST_TYPES} and implement its cast-time support instead. TapMultiplePermanentsCost
+     * is intentionally spell-handled as well as activation-handled because fixed-count spell costs
+     * reuse the same domain record.
      */
     private static final Set<String> ABILITY_ONLY_COST_TYPES = Set.of(
             "CrewCost",
@@ -73,7 +75,6 @@ class CostEffectClassificationTest {
             "TapEnchantedPermanentCost",
             "TapGrantingEquipmentCost",
             "TapTwoCreaturesSharingTypeCost",
-            "TapMultiplePermanentsCost",
             "UnattachSourceEquipmentCost",
             "UntapMultiplePermanentsCost");
 

@@ -232,7 +232,7 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
         handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
                 returnEffect.filter(), returnEffect.maxTargets(),
-                " from your graveyard to return to your hand.");
+                returnEffect.minTargets(), " from your graveyard to return to your hand.");
     }
 
     /** ETB targeting for returning up to a computed number of cards to the battlefield. */
@@ -307,6 +307,13 @@ public class GraveyardTargetingService {
 
     private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, String promptSuffix) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects, filter,
+                requestedMaxTargets, 0, promptSuffix);
+    }
+
+    private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
+            String promptSuffix) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId);
         if (graveyard != null) {
@@ -318,6 +325,15 @@ public class GraveyardTargetingService {
             }
         }
 
+        if (matchingCards.size() < minTargets) {
+            if (minTargets > 0) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        "'s enter-the-battlefield ability has no legal targets."));
+                log.info("Game {} - {} ETB ability skipped (not enough matching graveyard cards)",
+                        gameData.id, card.getName());
+                return;
+            }
+        }
         if (matchingCards.isEmpty() || requestedMaxTargets <= 0) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -335,9 +351,12 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            String choicePrompt = minTargets > 0
+                    ? "Choose " + minTargets + " target card" + (minTargets != 1 ? "s" : "") + promptSuffix
+                    : "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
+                    + promptSuffix;
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
-                            + promptSuffix);
+                    minTargets, choicePrompt);
         }
     }
 

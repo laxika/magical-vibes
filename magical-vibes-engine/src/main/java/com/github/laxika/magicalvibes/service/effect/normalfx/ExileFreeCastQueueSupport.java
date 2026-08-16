@@ -158,6 +158,9 @@ public class ExileFreeCastQueueSupport {
 
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
             gameData.removeFromExile(cardId);
+            if (!asCopy) {
+                gameData.recordCardPlayedFromExile(playerId);
+            }
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType, asCopy));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
@@ -167,6 +170,9 @@ public class ExileFreeCastQueueSupport {
         }
 
         gameData.removeFromExile(cardId);
+        if (!asCopy) {
+            gameData.recordCardPlayedFromExile(playerId);
+        }
         StackEntry entry = new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null

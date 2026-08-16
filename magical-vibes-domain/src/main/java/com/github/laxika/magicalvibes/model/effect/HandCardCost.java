@@ -29,6 +29,14 @@ public interface HandCardCost extends CostEffect {
     int count();
 
     /**
+     * Number of cards required when this cost is used as an activation cost.
+     * Fixed-count costs use {@link #count()}; dynamic costs may derive the count from X.
+     */
+    default int requiredCount(int xValue) {
+        return count();
+    }
+
+    /**
      * When true, a chosen card's mana value must equal the ability's chosen X
      * (Knollspine Invocation "Discard a card with mana value X").
      */

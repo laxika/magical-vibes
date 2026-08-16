@@ -237,6 +237,7 @@ public class BattlefieldEntryService {
         }
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
+        RevealSubtypeOrEntersTappedEffect conditionalRevealEffect = null;
         try {
             if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
                 sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
@@ -244,6 +245,7 @@ public class BattlefieldEntryService {
             carrySpellTextReplacements(gameData, permanent);
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
+            conditionalRevealEffect = findActiveConditionalRevealEffect(gameData, controllerId, permanent);
             applyEnterTappedEffects(permanent, enterTappedTypes);
             applySelfEnterTapped(permanent);
             applyConditionalEnterTapped(gameData, controllerId, permanent);
@@ -287,7 +289,7 @@ public class BattlefieldEntryService {
         }
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
-        applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+        applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
     }
@@ -468,28 +470,51 @@ public class BattlefieldEntryService {
      * the pending-may-ability pipeline; the answer is handled in
      * {@code MayAbilityHandlerService.handleMayAbilityChosen}.
      */
-    private void applyRevealSubtypeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent) {
-        RevealSubtypeOrEntersTappedEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof RevealSubtypeOrEntersTappedEffect)
-                .map(e -> (RevealSubtypeOrEntersTappedEffect) e)
+    private RevealSubtypeOrEntersTappedEffect findActiveConditionalRevealEffect(
+            GameData gameData, UUID controllerId, Permanent permanent) {
+        ConditionContext ctx = ConditionContext.forPermanent(permanent, controllerId);
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof ConditionalReplacementEffect conditional
+                        && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersTappedEffect
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(), ctx))
+                .map(e -> (ConditionalReplacementEffect) e)
+                .map(conditional -> (RevealSubtypeOrEntersTappedEffect) conditional.upgradedEffect())
                 .findFirst().orElse(null);
+    }
+
+    private void applyRevealSubtypeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent,
+                                                  RevealSubtypeOrEntersTappedEffect activeConditionalEffect) {
+        RevealSubtypeOrEntersTappedEffect effect = null;
+        for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (staticEffect instanceof RevealSubtypeOrEntersTappedEffect revealEffect) {
+                effect = revealEffect;
+                break;
+            }
+            if (staticEffect instanceof ConditionalReplacementEffect conditional
+                    && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersTappedEffect revealEffect
+                    && revealEffect == activeConditionalEffect) {
+                    effect = revealEffect;
+                    break;
+            }
+        }
         if (effect == null) {
             return;
         }
+        RevealSubtypeOrEntersTappedEffect activeEffect = effect;
         List<Card> hand = gameData.playerHands.get(controllerId);
         boolean canReveal = hand != null && hand.stream()
-                .anyMatch(c -> c.getSubtypes().contains(effect.subtype()));
+                .anyMatch(c -> c.getSubtypes().contains(activeEffect.subtype()));
         if (!canReveal) {
             permanent.tap();
             log.info("Game {} - {} enters tapped (no {} card to reveal)",
-                    gameData.id, permanent.getCard().getName(), effect.subtype().getDisplayName());
+                    gameData.id, permanent.getCard().getName(), activeEffect.subtype().getDisplayName());
             return;
         }
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 permanent.getCard(),
                 controllerId,
-                List.of(effect),
-                permanent.getCard().getName() + " — Reveal a " + effect.subtype().getDisplayName()
+                List.of(activeEffect),
+                permanent.getCard().getName() + " — Reveal a " + activeEffect.subtype().getDisplayName()
                         + " card from your hand? (If you don't, it enters tapped.)",
                 null,
                 null,
@@ -1627,7 +1652,8 @@ public class BattlefieldEntryService {
                     kicked, evoked, prowl, enteringPermanent);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
-                    .map(e -> etbEffectResolver.resolve(etbCtx, e))
+                    .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
+                            ? e : etbEffectResolver.resolve(etbCtx, e))
                     .filter(Objects::nonNull)
                     .toList();
 

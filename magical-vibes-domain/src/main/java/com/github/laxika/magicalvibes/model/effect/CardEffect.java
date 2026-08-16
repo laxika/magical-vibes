@@ -47,6 +47,12 @@ public interface CardEffect {
     default boolean onlyTriggersOnSacrifice() { return false; }
 
     /**
+     * Returns whether this effect should trigger for the controller's current draw count this turn.
+     * Effects that do not restrict a draw count always return {@code true}.
+     */
+    default boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) { return true; }
+
+    /**
      * Returns {@code true} if this effect resolves against the permanent its source Aura/Equipment
      * is attached to rather than against a chosen target. The activation path captures that attached
      * permanent as the ability's target before any sacrifice cost severs the attachment, so the

@@ -441,7 +441,8 @@ public class MayCastHandlerService {
                         // Non-targeted spell — put directly on stack
                         if (!castEffect.withoutPayingManaCost()) {
                             try {
-                                spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0);
+                                spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
+                                        Zone.GRAVEYARD);
                             } catch (IllegalStateException ex) {
                                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast because its mana cost can't be paid."));
                                 log.info("Game {} - {} cannot pay to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
@@ -633,6 +634,7 @@ public class MayCastHandlerService {
 
         if (cardToPlay.hasType(CardType.LAND)) {
             gameData.removeFromExile(cardToPlay.getId());
+            gameData.recordCardPlayedFromExile(player.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
             gameLogService.append(gameData,

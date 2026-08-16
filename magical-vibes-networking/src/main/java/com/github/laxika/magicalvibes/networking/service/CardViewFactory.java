@@ -57,13 +57,13 @@ public class CardViewFactory {
 
     /**
      * Creates a CardView with granted subtypes merged in and additional graveyard-activated abilities
-     * appended (e.g. unearth granted by Sedris, the Traitor King). Granted graveyard abilities are only
-     * merged for creature cards and are appended after the card's own so indices stay aligned with the
-     * server-side graveyard ability list.
+     * appended (e.g. unearth granted by Sedris, the Traitor King or Mishra, Tamer of Mak Fawa).
+     * They are appended after the card's own so indices stay aligned with the server-side graveyard
+     * ability list.
      */
     public CardView create(Card card, List<CardSubtype> grantedSubtypes, List<ActivatedAbility> grantedGraveyardAbilities) {
         CardView base = create(card, grantedSubtypes);
-        if (grantedGraveyardAbilities.isEmpty() || !card.hasType(CardType.CREATURE)) return base;
+        if (grantedGraveyardAbilities.isEmpty()) return base;
         List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
         for (ActivatedAbility ability : grantedGraveyardAbilities) {
             mergedGraveyard.add(createAbilityView(ability));

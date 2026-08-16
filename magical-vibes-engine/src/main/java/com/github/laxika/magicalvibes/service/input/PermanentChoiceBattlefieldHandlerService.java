@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
@@ -23,8 +24,11 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
@@ -62,6 +66,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -1499,6 +1504,65 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificePermanentAndGrantKeywordSelf(GameData gameData, UUID permanentId,
+                                                            PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData,
+                GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        Permanent source = ctx.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+            if (battlefield != null) {
+                source = battlefield.stream()
+                        .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
+        if (source != null) {
+            source.getGrantedKeywords().addAll(ctx.keywords());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(),
+                    ctx.sourceCard().getName(),
+                    null,
+                    ctx.controllerId(),
+                    new GrantKeywordEffect(ctx.keywords(), GrantScope.SELF),
+                    source.getId(),
+                    null,
+                    null,
+                    EffectDuration.UNTIL_END_OF_TURN,
+                    0));
+            String keywordNames = formatKeywords(ctx.keywords());
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(source.getCard())
+                    .text(" gains " + keywordNames + " until end of turn.")
+                    .build());
+            log.info("Game {} - {} gains {}", gameData.id, source.getCard().getName(), ctx.keywords());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private String formatKeywords(Set<Keyword> keywords) {
+        return keywords.stream()
+                .map(keyword -> keyword.name().charAt(0)
+                        + keyword.name().substring(1).toLowerCase().replace('_', ' '))
+                .reduce((first, second) -> first + ", " + second)
+                .orElse("");
     }
 
     /**

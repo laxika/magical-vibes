@@ -18,12 +18,14 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
@@ -34,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -48,6 +51,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -279,6 +284,29 @@ class CastingCostServiceTest {
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isEqualTo(-2);
             // Enchantment is unaffected
             assertThat(svc.getCastCostModifier(gd, player1Id, enchantment, snapshot)).isZero();
+        }
+
+        @Test
+        @DisplayName("Includes active floating cost reductions in the snapshot")
+        void appliesFloatingCostReduction() {
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Temporary reducer", null, player1Id,
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.ARTIFACT), 2, CostModificationScope.SELF),
+                    null, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+            evaluateCardTypePredicates();
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            Card artifact = new Card();
+            artifact.setName("Mind Stone");
+            artifact.setType(CardType.ARTIFACT);
+            Card creature = new Card();
+            creature.setName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, artifact, snapshot)).isEqualTo(-2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isZero();
         }
 
         @Test
@@ -688,6 +716,22 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Applies a conditional spell-self cost increase only during another player's turn")
+        void conditionalSpellSelfCostIncreaseUsesActiveTurn() {
+            Card spell = new Card();
+            spell.setName("Hurkyl's Final Meditation");
+            spell.setType(CardType.INSTANT);
+            spell.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    new NotControllerTurn(), new IncreaseOwnCastCostEffect(3)));
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isZero();
+
+            gd.activePlayerId = player2Id;
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("One-off and snapshot-based computation agree")
         void oneOffAndSnapshotAgree() {
             Card taxCard = new Card();
@@ -902,6 +946,26 @@ class CastingCostServiceTest {
             assertThat(svc.computeTargetBasedCostReduction(
                     gd, player1Id, spell, List.of(bear.getId(), bear.getId())))
                     .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Graveyard-card reduction applies when the first target matches")
+        void graveyardCardReductionApplies() {
+            var predicate = new CardTypePredicate(CardType.CREATURE);
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.STATIC,
+                    new ReduceOwnCastCostIfTargetingGraveyardCardEffect(predicate, 3));
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+            gd.playerGraveyards.get(player1Id).add(creature);
+
+            when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+            when(predicateEvaluationService.matchesCardPredicate(
+                    creature, predicate, spell.getId(), gd, player1Id)).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(creature.getId())))
+                    .isEqualTo(3);
         }
     }
 

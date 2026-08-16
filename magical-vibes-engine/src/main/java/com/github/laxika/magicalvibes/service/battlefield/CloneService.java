@@ -72,6 +72,7 @@ public class CloneService {
         gameData.cloneOperation.etbTargetId = targetId;
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
+        gameData.cloneOperation.copyPowerToughnessFromSource = copyEffect.copyPowerToughnessFromSource();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
@@ -99,6 +100,7 @@ public class CloneService {
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
         Integer powerOverride = gameData.cloneOperation.powerOverride;
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
+        boolean copyPowerToughnessFromSource = gameData.cloneOperation.copyPowerToughnessFromSource;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
         CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
@@ -114,6 +116,7 @@ public class CloneService {
         gameData.cloneOperation.etbTargetId = null;
         gameData.cloneOperation.powerOverride = null;
         gameData.cloneOperation.toughnessOverride = null;
+        gameData.cloneOperation.copyPowerToughnessFromSource = false;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
         gameData.cloneOperation.embalmColorOverride = null;
@@ -129,7 +132,10 @@ public class CloneService {
         if (targetId != null) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPerm != null) {
-                permanentCopierService.applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride, additionalTypesOverride);
+                Integer effectivePowerOverride = copyPowerToughnessFromSource ? card.getPower() : powerOverride;
+                Integer effectiveToughnessOverride = copyPowerToughnessFromSource ? card.getToughness() : toughnessOverride;
+                permanentCopierService.applyCloneCopy(
+                        perm, targetPerm, effectivePowerOverride, effectiveToughnessOverride, additionalTypesOverride);
                 // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
                 for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
                     perm.getCard().addActivatedAbility(extraAbility);

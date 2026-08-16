@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.Scry> handledType() {
@@ -96,6 +98,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             for (int idx : bottomCardOrder) {
                 deck.add(scryCards.get(idx));
             }
+            triggerCollectionService.checkScryTriggers(gameData, player.getId(), bottomCardOrder.size());
         }
 
         // Clear awaiting state

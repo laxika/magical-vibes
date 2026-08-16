@@ -239,6 +239,9 @@ public class AuraAttachmentService {
             // Aura enchanting a player (curse-style): illegal while the player has protection
             // from one of the aura's colors
             if (isAura) {
+                if (gameQueryService.playerHasProtectionFromEverything(gameData, attachedTo)) {
+                    return "enchanted player has protection from everything";
+                }
                 for (CardColor color : gameQueryService.getEffectiveColors(gameData, attachment)) {
                     if (gameQueryService.playerHasProtectionFromColor(gameData, attachedTo, color)) {
                         return "enchanted player has protection from it";

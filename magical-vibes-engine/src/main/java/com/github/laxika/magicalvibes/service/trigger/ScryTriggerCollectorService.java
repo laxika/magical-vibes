@@ -34,15 +34,21 @@ public class ScryTriggerCollectorService {
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
     private boolean handleSequenceOnScry(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        return queueScryTrigger(match, trigger);
+        return enqueueOnScry(match, trigger, ctx);
     }
 
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
     private boolean handleMayPayOnScry(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        return queueScryTrigger(match, trigger);
+        return enqueueOnScry(match, trigger, ctx);
     }
 
-    private boolean queueScryTrigger(TriggerMatchContext match, CardEffect trigger) {
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
+    private boolean handleSingleEffectOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
+        return enqueueOnScry(match, trigger, ctx);
+    }
+
+    private boolean enqueueOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
+        TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
         Card sourceCard = match.permanent().getCard();
         TargetSpec targetSpec = trigger.targetSpec();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
@@ -56,14 +62,16 @@ public class ScryTriggerCollectorService {
                     0,
                     match.permanent().getId()));
         } else {
-            match.gameData().enqueueTrigger(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(trigger)),
                     null,
-                    match.permanent().getId()));
+                    match.permanent().getId());
+            entry.setEventValue(scry.bottomedCardCount());
+            match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on scry", match.gameData().id, sourceCard.getName());

@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
@@ -329,6 +330,16 @@ public class PredicateEvaluationService {
                             || card.getSubtypes().contains(CardSubtype.SAGA);
             case CardSupertypePredicate p ->
                     card.getSupertypes().contains(p.supertype());
+            case CardManaValueAtMostSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                Integer sourcePower = sourcePermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : basePowerOfCardInAnyZone(gameData, sourceCardId);
+                yield sourcePower != null && card.getManaValue() <= sourcePower;
+            }
             case CardMaxManaValuePredicate p ->
                     card.getManaValue() <= p.maxManaValue();
             case CardMinManaValuePredicate p ->
@@ -353,16 +364,6 @@ public class PredicateEvaluationService {
                 }
                 yield java.util.Arrays.stream(CardType.values())
                         .anyMatch(type -> card.hasType(type) && imprintedCard.hasType(type));
-            }
-            case CardManaValueAtMostSourcePowerPredicate ignored -> {
-                if (gameData == null || sourceCardId == null) {
-                    yield false;
-                }
-                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
-                if (source == null) {
-                    yield false;
-                }
-                yield card.getManaValue() <= gameQueryService.getEffectivePower(gameData, source);
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
@@ -744,6 +745,21 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= subtypeCount;
+            }
+            case PermanentManaValueAtMostControlledCountPredicate countPredicate -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                int matchingCount = 0;
+                if (controllerBattlefield != null) {
+                    for (Permanent controlledPermanent : controllerBattlefield) {
+                        if (matchesPermanentPredicate(controlledPermanent, countPredicate.countFilter(), filterContext)) {
+                            matchingCount++;
+                        }
+                    }
+                }
+                yield permanent.getCard().getManaValue() <= matchingCount;
             }
             case PermanentManaValueAtMostXPredicate ignored -> {
                 // Before X is known (target enumeration / static filters) treat every permanent as
@@ -1459,6 +1475,7 @@ public class PredicateEvaluationService {
             case PermanentHasProtectionFromColorPredicate p -> hasRecursionSafeProtectionFrom(permanent, p.color());
             case PermanentPowerAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentPowerAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentToughnessAtMostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentTruePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             default -> throw new IllegalArgumentException(
@@ -1893,7 +1910,8 @@ public class PredicateEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null) {
                 for (Permanent p : battlefield) {
-                    if (p.getOriginalCard().getId().equals(cardId)) {
+                    if (p.getOriginalCard().getId().equals(cardId)
+                            || p.getCard().getId().equals(cardId)) {
                         return p;
                     }
                 }

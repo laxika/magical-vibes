@@ -134,13 +134,15 @@ public class GameActionAvailabilityService {
                 ManaCost abilityManaCost = new ManaCost(ability.getManaCost());
                 boolean artifactCtx = gameQueryService.isArtifact(perm);
                 boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
+                boolean powerstoneCtx = pool.getPowerstoneOnlyColorless() > 0;
                 Set<CardSubtype> soaCtx = new HashSet<>(perm.getCard().getSubtypes());
                 soaCtx.addAll(perm.getTransientSubtypes());
                 soaCtx.addAll(perm.getGrantedSubtypes());
                 Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
                         ? soaCtx : Set.of();
                 if (abilityManaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null,
-                        soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx)) {
+                        soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx,
+                        powerstoneCtx)) {
                     payable.add(i);
                 }
             }
@@ -252,6 +254,12 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
+        }
+        if (card.hasType(CardType.CREATURE) && pool.getCreatureSpellOrAbilityManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteCreatureSpellOrAbilityMana();
         }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
@@ -379,6 +387,7 @@ public class GameActionAvailabilityService {
         ManaCost totalCost = new ManaCost(combinedManaCost);
         int kickerXValue = totalCost.hasX() ? totalCost.calculateMaxX(pool) : 0;
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
+        boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
         boolean kickedOnlyGreen = pool.getKickedOnlyGreen() > 0;
@@ -393,12 +402,14 @@ public class GameActionAvailabilityService {
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
-                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
+                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
+                || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
+                || powerstoneContext;
         return hasRestricted
                 ? totalCost.canPay(pool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                Set.of(), subtypeCreatureSourceSpellOrAbilityContext)
+                Set.of(), subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
 
@@ -492,6 +503,7 @@ public class GameActionAvailabilityService {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
+        boolean powerstoneContext = isArtifact && pool.getPowerstoneOnlyColorless() > 0;
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact
                 || card.hasType(CardType.CREATURE);
@@ -520,7 +532,8 @@ public class GameActionAvailabilityService {
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
-                || !subtypeOrPlaneswalkerSpellContext.isEmpty();
+                || !subtypeOrPlaneswalkerSpellContext.isEmpty()
+                || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty() || powerstoneContext;
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, cost, ctx.costSnapshot(), false);
@@ -529,7 +542,8 @@ public class GameActionAvailabilityService {
                     isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
-                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext)
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext)
                     : cost.canPayWithAdditionalGenericCost(pool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
@@ -580,10 +594,13 @@ public class GameActionAvailabilityService {
 
         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
         ReduceOwnCastCostIfTargetingPermanentEffect targetReduce = null;
+        GraveyardCardTargetCostReductionEffect graveyardTargetReduce = null;
         ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
         for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
             if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
                 targetReduce = r;
+            } else if (e instanceof GraveyardCardTargetCostReductionEffect r) {
+                graveyardTargetReduce = r;
             } else if (e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect r) {
                 stackTargetReduce = r;
             }
@@ -592,6 +609,11 @@ public class GameActionAvailabilityService {
                 ? castingCostService.controlsPermanent(gameData, playerId, targetReduce.predicate())
                 : castingCostService.battlefieldHasPermanentMatching(gameData, targetReduce.predicate()))) {
             if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
+                return true;
+            }
+        } else if (graveyardTargetReduce != null
+                && hasMatchingGraveyardTarget(gameData, card, playerId, graveyardTargetReduce.predicate())) {
+            if (cost.canPay(pool, additionalCost - graveyardTargetReduce.amount())) {
                 return true;
             }
         } else if (stackTargetReduce != null
@@ -621,6 +643,18 @@ public class GameActionAvailabilityService {
             return true;
         }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
+    }
+
+    private boolean hasMatchingGraveyardTarget(GameData gameData, Card card, UUID playerId,
+                                               com.github.laxika.magicalvibes.model.filter.CardPredicate predicate) {
+        for (UUID targetId : validTargetService.computeValidTargetsForSpell(gameData, card, playerId, List.of())
+                .validGraveyardCardIds()) {
+            Card target = gameQueryService.findCardInGraveyardById(gameData, targetId);
+            if (target != null && predicateEvaluationService.matchesCardPredicate(target, predicate, null)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card, Keyword ability) {

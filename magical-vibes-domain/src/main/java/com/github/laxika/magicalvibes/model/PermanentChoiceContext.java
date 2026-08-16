@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -828,6 +829,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Sacrifice another permanent. If you do, this creature gets +X/+Y." */
     record SacrificePermanentAndBoostSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                           int power, int toughness, String permanentDescription) implements PermanentChoiceContext {}
+
+    /** "Sacrifice another permanent. If you do, this creature gains [keyword]." */
+    record SacrificePermanentAndGrantKeywordSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                                 Set<Keyword> keywords, String permanentDescription)
+            implements PermanentChoiceContext {}
 
     /** "Blight N. If you do, [effect]." */
     record BlightCreatureChoice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,

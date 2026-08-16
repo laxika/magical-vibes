@@ -236,6 +236,34 @@ class LibraryChoiceHandlerServiceTest {
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
+    @Test
+    @DisplayName("Dynamic card-type follow-up offers one card for each remaining type")
+    void dynamicCardTypeFollowUpOffersEachRemainingType() {
+        Card instant = createCard("Instant One", CardType.INSTANT);
+        Card artifact = createCard("Artifact One", CardType.ARTIFACT);
+        Card sorcery = createCard("Sorcery One", CardType.SORCERY);
+        gd.playerDecks.get(player1Id).addAll(List.of(instant, artifact, sorcery));
+
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(instant))
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.HAND)
+                .sourceCards(new ArrayList<>(List.of(instant, artifact, sorcery)))
+                .reorderRemainingToBottom(true)
+                .followUp(LibrarySearchFollowUp.forCardTypeBoundedPick(
+                        List.of(CardType.ARTIFACT, CardType.SORCERY)))
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                params, "Choose an instant card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(artifact);
+        assertThat(next.params().cards()).doesNotContain(sorcery);
+    }
+
     private static Card createBasicLand(String name) {
         Card card = createCard(name, CardType.LAND);
         card.setSupertypes(Set.of(CardSupertype.BASIC));

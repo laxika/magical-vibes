@@ -359,6 +359,9 @@ public class GraveyardReturnSupport {
                 && (effect.plusOneCountersIfSubtype() == null
                 || (card.getSubtypes() != null
                 && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())))
+                && (effect.plusOneCountersIfCardType() == null
+                || effect.plusOneCountersIfCardType() == CardType.CREATURE
+                || card.hasType(effect.plusOneCountersIfCardType()))
                 && (effect.plusOneCountersIfCondition() == null
                 || conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
                 ConditionContext.forCasting(controllerId)));
@@ -366,6 +369,7 @@ public class GraveyardReturnSupport {
         if (!effect.enterWithMannequinCounter()
                 && !enterWithCounter
                 && !effect.exileIfLeavesBattlefield()
+                && !effect.unearth()
                 && !plusOneCounters
                 && (effect.grantKeywords() == null || effect.grantKeywords().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
@@ -389,11 +393,21 @@ public class GraveyardReturnSupport {
             if (effect.exileIfLeavesBattlefield()) {
                 p.setExileIfLeavesBattlefield(true);
             }
+            if (effect.unearth()) {
+                p.setEnteredViaUnearth(true);
+            }
             if (effect.grantKeywords() != null) {
                 p.getPersistentGrantedKeywords().addAll(effect.grantKeywords());
             }
             if (plusOneCounters) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, p, effect.plusOneCounterCount());
+                boolean cardTypeMatches = effect.plusOneCountersIfCardType() == null
+                        || (effect.plusOneCountersIfCardType() == CardType.CREATURE
+                        ? gameQueryService.isCreature(gameData, p)
+                        : p.getCard().hasType(effect.plusOneCountersIfCardType()));
+                if (cardTypeMatches) {
+                    permanentCounterSupport.applyPlusOnePlusOneCounters(
+                            gameData, null, p, effect.plusOneCounterCount());
+                }
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
@@ -988,6 +1002,43 @@ public class GraveyardReturnSupport {
                 simultaneouslyEntered.add(permanent);
                 enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
             }
+        }
+
+        for (ReturnedPermanent returned : enteredPermanents) {
+            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
+        }
+    }
+
+    /** Puts selected cards from the graveyard and exile onto the battlefield simultaneously. */
+    public void putCardsFromGraveyardAndExileOntoBattlefieldSimultaneously(
+            GameData gameData, UUID controllerId, List<Card> graveyardCards, List<Card> exiledCards) {
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<ReturnedPermanent> enteredPermanents = new ArrayList<>();
+
+        for (Card card : graveyardCards) {
+            if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                gameData.playerGraveyards.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(card);
+                continue;
+            }
+            Permanent permanent = new Permanent(card);
+            permanent.setEnteredFromGraveyardOwnerId(controllerId);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
+            enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
+        }
+
+        for (Card card : exiledCards) {
+            if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.EXILE)) {
+                exileService.exileCard(gameData, controllerId, card);
+                continue;
+            }
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
+            enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
         }
 
         for (ReturnedPermanent returned : enteredPermanents) {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -198,6 +199,17 @@ public record CreateTokenEffect(
                                                      List<CardSubtype> subtypes,
                                                      List<ActivatedAbility> abilities) {
         return new CreateTokenEffect(CardType.ARTIFACT, amount, tokenName, 0, 0, null, null, subtypes, Set.of(), Set.of(), false, false, Map.of(), abilities, false, false, false, 0, Set.of());
+    }
+
+    /** Colorless Powerstone artifact token with the standard restricted colorless-mana ability. */
+    public static CreateTokenEffect ofPowerstoneToken(DynamicAmount amount) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Powerstone", 0, 0, null, null,
+                List.of(CardSubtype.POWERSTONE), Set.of(), Set.of(), false, true, Map.of(),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 1, new ManaRestriction.Powerstone())),
+                        "{T}: Add {C}. This mana can't be spent to cast a nonartifact spell."
+                )), false, false, false, 0, Set.of());
     }
 
     /** 1/1 white Spirit creature token with flying */

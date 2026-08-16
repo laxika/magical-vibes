@@ -45,6 +45,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -1280,6 +1282,7 @@ public class GameSimulator {
             if (effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
+                    || effect instanceof TapMultiplePermanentsCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
@@ -1325,6 +1328,15 @@ public class GameSimulator {
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
                         .map(Permanent::getId)
                         .toList();
+            }
+            if (effect instanceof TapMultiplePermanentsCost cost && cost.count() instanceof Fixed fixed) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .limit(fixed.value())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == fixed.value() ? chosen : List.of();
             }
             if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
                 return battlefield.stream()

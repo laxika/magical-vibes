@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -9,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +57,15 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         }
 
         Card copyCard = copySupport.createCopyCard(spellCard);
+        if (e.tokenCopy()) {
+            copyCard.setToken(true);
+        }
+        if (!e.additionalTypes().isEmpty()) {
+            EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+            additionalTypes.addAll(copyCard.getAdditionalTypes());
+            additionalTypes.addAll(e.additionalTypes());
+            copyCard.setAdditionalTypes(Set.copyOf(additionalTypes));
+        }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 
         gameData.stack.add(copyEntry);

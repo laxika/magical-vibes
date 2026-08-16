@@ -101,6 +101,8 @@ public class MultiPermanentChoiceHandlerService {
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
             whimsOfTheFatesEffectHandler;
@@ -159,6 +161,11 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice choice
+                && permanentIds.size() != choice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + choice.requiredCount()
+                    + " lands must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.CulturalExchange culturalExchange
                 && !culturalExchange.firstSelection()
@@ -260,6 +267,8 @@ public class MultiPermanentChoiceHandlerService {
             handleAimCounterPlacement(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement ctx) {
             handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
+            handleOwnPermanentCounterPlacementWithChosenReference(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AwakeningCounterPlacement) {
             handleAwakeningCounterPlacement(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.Proliferate ctx) {
@@ -332,6 +341,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {
             handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice ctx) {
+            handleEachPlayerChoosesLandsThenDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
@@ -1260,6 +1271,21 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleOwnPermanentCounterPlacementWithChosenReference(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference context) {
+        if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                gameData.pendingEffectResolutionEntry.setChosenPermanentId(target.getId());
+                permanentCounterSupport.placeCounterOnPermanent(gameData,
+                        gameData.pendingEffectResolutionEntry, target, context.counterType(), context.count());
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleProliferate(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                    MultiPermanentChoiceContext.Proliferate context) {
         int remainingProliferates = context.remainingCount() - 1;
@@ -1410,6 +1436,8 @@ public class MultiPermanentChoiceHandlerService {
             } else {
                 // Apply damage multiplier (GlobalDamageMultiplyingEffect)
                 int damage = count;
+                damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
+                        gameData, playerId, sourceCard, sourcePermanent, defendingPlayerId);
                 final int[] multiplier = {1};
                 gameData.forEachPermanent((pid, p) -> {
                     for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
@@ -1821,6 +1849,19 @@ public class MultiPermanentChoiceHandlerService {
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice context) {
         chooseLandOfEachBasicTypeThenDestroyHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerChoosesLandsThenDestroyRestChoice(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice context) {
+        eachPlayerChoosesLandsThenDestroyRestHandler.completeChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

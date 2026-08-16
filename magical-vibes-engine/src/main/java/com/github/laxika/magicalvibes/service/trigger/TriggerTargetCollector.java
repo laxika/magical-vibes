@@ -76,8 +76,8 @@ public class TriggerTargetCollector {
      *                                 creatures. Used by death triggers such as Black Cat.
      * @param supportControlledFilter  when {@code true}, a target filter of type
      *                                 {@link ControlledPermanentPredicateTargetFilter} is consulted
-     *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death and attack
-     *                                 trigger pipelines support this.
+     *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death, attack,
+     *                                 and end-step trigger pipelines support this.
      * @param unwrapConditional        when {@code true}, {@link ConditionalEffect} wrappers are
      *                                 unwrapped before inspecting {@code canTarget*} /
      *                                 {@code targetPredicate}. End-step wraps effects in morbid /

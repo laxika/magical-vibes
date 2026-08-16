@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -82,17 +84,20 @@ public class EnterTriggerCollectorService {
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final GraveyardTargetingService graveyardTargetingService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
 
     public EnterTriggerCollectorService(GameLogService gameLogService,
                                         AmountEvaluationService amountEvaluationService,
                                         GameQueryService gameQueryService,
+                                        GraveyardTargetingService graveyardTargetingService,
                                         PredicateEvaluationService predicateEvaluationService,
                                         ConditionEvaluationService conditionEvaluationService) {
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
         this.gameQueryService = gameQueryService;
+        this.graveyardTargetingService = graveyardTargetingService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
     }
@@ -272,6 +277,25 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
+                    slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureEnterReturnToHand(TriggerMatchContext match,
+                                                     ReturnTargetCardsFromGraveyardToHandEffect effect,
+                                                     TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            graveyardTargetingService.handleReturnToHandETBTargeting(
+                    match.gameData(), match.controllerId(), sourceCard, List.of(effect), effect);
+        }
+        logTriggered(match);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
@@ -312,6 +336,23 @@ public class EnterTriggerCollectorService {
             return true;
         }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
+    private boolean handleCreatureEnterFromGraveyardDefault(TriggerMatchContext match,
+                                                             CardEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId));
+        }
         logTriggered(match);
         return true;
     }
@@ -962,7 +1003,9 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
                     slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    slot = EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
     })
     private boolean handleCreatureAttachEquipment(TriggerMatchContext match,
             AttachSourceEquipmentToEnteringCreatureEffect effect, TriggerContext ctx) {

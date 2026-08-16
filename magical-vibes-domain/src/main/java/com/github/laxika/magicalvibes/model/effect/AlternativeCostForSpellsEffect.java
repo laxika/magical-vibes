@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
+import java.util.Set;
 
 /**
  * Static effect from a permanent on the battlefield that allows the controller
@@ -15,10 +18,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * is at most the number of that counter on the source permanent — "a spell you cast with mana value X
  * or less, where X is the number of time counters on this enchantment" (As Foretold, {@code CounterType.TIME}).
  * {@code oncePerTurn} limits the source to a single use of the alternative cost each turn.
+ * {@code controllerTurnOnly} restricts the alternative cost to the source controller's turn.
+ * {@code allowedZones} optionally restricts the alternative cost to casts from specific zones.
  *
  * <p>{@code fromHandOnly} restricts the alternative cost to spells cast from the controller's hand —
  * "you may cast spells from your hand without paying their mana costs" (Omniscience). Sources without
- * this restriction (Rooftop Storm, Jodah, As Foretold) apply regardless of the zone cast from.
+ * this restriction (Rooftop Storm, Jodah, As Foretold) apply regardless of the zone cast from unless
+ * {@code allowedZones} restricts them.
  *
  * <p>{@code appliesToAllPlayers} offers the alternative cost to every player rather than only the
  * source's controller — "Any player may cast creature spells with mana value 3 or less without
@@ -32,27 +38,28 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
                                              boolean fromHandOnly, boolean appliesToAllPlayers,
-                                             boolean genericEqualToManaValue) implements CardEffect {
+                                             boolean genericEqualToManaValue, boolean controllerTurnOnly,
+                                             Set<Zone> allowedZones) implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false, false, false, false);
+        this(manaCost, filter, null, false, false, false, false, false, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly, boolean appliesToAllPlayers) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers, false, false, null);
     }
 
     /**
@@ -69,6 +76,12 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
      * the filter (Kentaro, the Smiling Cat).
      */
     public static AlternativeCostForSpellsEffect genericEqualToManaValue(CardPredicate filter) {
-        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, true);
+        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, true, false, null);
+    }
+
+    /** A zero alternative cost usable once during each turn of the source controller. */
+    public static AlternativeCostForSpellsEffect onceDuringControllerTurn(CardPredicate filter) {
+        return new AlternativeCostForSpellsEffect("{0}", filter, null, true, false, false, false, true,
+                Set.of(Zone.HAND, Zone.LIBRARY));
     }
 }

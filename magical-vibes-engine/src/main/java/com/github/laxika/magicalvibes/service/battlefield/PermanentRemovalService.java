@@ -154,6 +154,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
+                gameData, target, controllerId, Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, controllerId, ownerId,
                 destroyedBySpellOrAbility, grantedDeathEffects);
@@ -202,6 +204,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, info.controllerId());
+        triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
+                gameData, target, info.controllerId(), Zone.GRAVEYARD);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, wasEnchantment,
                 creatureSubtypesAtDeath, hadUndying, hadPersist, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects);
@@ -268,18 +272,41 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.EXILE);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+        triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
+                gameData, target, controllerId, Zone.EXILE);
         for (Card leaving : target.cardsLeavingBattlefield()) {
             exileService.exileCard(gameData, ownerId, leaving);
         }
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
+        return true;
+    }
+
+    /**
+     * Exiles a permanent that entered through unearth and immediately returns its card to its
+     * owner's hand.
+     */
+    public boolean removeUnearthedPermanentToHand(GameData gameData, Permanent target) {
+        List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
+        if (!removePermanentToExile(gameData, target)) {
+            return false;
+        }
+        for (Card leavingCard : leavingCards) {
+            ExiledCardEntry exiled = gameData.findExiledCard(leavingCard.getId());
+            if (exiled == null) {
+                continue;
+            }
+            gameData.removeFromExile(leavingCard.getId());
+            gameData.addCardToHand(exiled.ownerId(), exiled.card());
+            triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, exiled.ownerId());
+        }
         return true;
     }
 

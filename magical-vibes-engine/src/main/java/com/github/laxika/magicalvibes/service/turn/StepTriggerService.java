@@ -492,6 +492,7 @@ public class StepTriggerService {
                     ExileToOwnerGraveyardAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
             for (ExileToOwnerGraveyardAtNextUpkeep action : pending) {
                 gameData.exilePlayPermissions.remove(action.cardId());
+                gameData.exilePlayCostModifiers.remove(action.cardId());
                 var exiled = gameData.findExiledCard(action.cardId());
                 if (exiled == null) {
                     // The card was played (or otherwise left exile) — nothing to clean up.
@@ -514,6 +515,7 @@ public class StepTriggerService {
             for (RevokeExilePlayPermissionAtNextUpkeep action : pending) {
                 if (gameData.exilePlayPermissions.remove(action.cardId()) != null
                         && gameData.findExiledCard(action.cardId()) != null) {
+                    gameData.exilePlayCostModifiers.remove(action.cardId());
                     String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
                     gameLogService.append(gameData, GameLog.text(
                             "The card exiled with " + sourceName + " can no longer be played."));
@@ -2947,6 +2949,7 @@ public class StepTriggerService {
                     gameData.drainDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class);
             for (ExileToOwnerGraveyardAtNextEndStep action : pending) {
                 gameData.exilePlayPermissions.remove(action.cardId());
+                gameData.exilePlayCostModifiers.remove(action.cardId());
                 gameData.exilePlayPermissionsExpireEndOfTurn.remove(action.cardId());
                 var exiled = gameData.findExiledCard(action.cardId());
                 if (exiled == null) {

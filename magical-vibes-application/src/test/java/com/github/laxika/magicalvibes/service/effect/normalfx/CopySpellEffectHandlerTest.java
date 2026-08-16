@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -401,6 +402,26 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
+                assertThat(gd.pendingMayAbilities).isEmpty();
+            }
+
+            @Test
+            @DisplayName("Token copy does not grant haste or offer retargeting")
+            void tokenCopyDoesNotGrantHasteOrRetargeting() {
+                Card artifactCreature = createCard("Artifact Creature");
+                artifactCreature.setType(CardType.CREATURE);
+                StackEntry targetEntry = spellEntry(artifactCreature, player1Id, StackEntryType.CREATURE_SPELL,
+                        List.of(), null);
+                gd.stack.add(targetEntry);
+
+                Card drafnaCard = createCard("Drafna, Founder of Lat-Nam");
+                StackEntry drafnaEntry = copySpellTriggerEntry(drafnaCard, player1Id, artifactCreature.getId());
+
+                copySpellHandler.resolve(gd, drafnaEntry, CopySpellEffect.asToken());
+
+                StackEntry copyEntry = gd.stack.getLast();
+                assertThat(copyEntry.getCard().isToken()).isTrue();
+                assertThat(copyEntry.getGrantedKeywordsOnEntry()).doesNotContain(Keyword.HASTE);
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }
 }

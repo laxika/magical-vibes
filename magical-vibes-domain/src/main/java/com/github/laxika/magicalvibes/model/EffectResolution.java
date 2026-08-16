@@ -19,11 +19,25 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.Max;
+import com.github.laxika.magicalvibes.model.amount.Min;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -384,7 +398,64 @@ public final class EffectResolution {
         return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
                 .anyMatch(e -> e instanceof ConditionalEffect c
-                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.ColorSpentToCast);
+                        && conditionUsesColorSpentMana(c.condition()));
+    }
+
+    private static boolean conditionUsesColorSpentMana(Condition condition) {
+        return switch (condition) {
+            case ColorSpentToCast ignored -> true;
+            case AllConditions c -> c.conditions().stream().anyMatch(EffectResolution::conditionUsesColorSpentMana);
+            case AnyOf c -> c.conditions().stream().anyMatch(EffectResolution::conditionUsesColorSpentMana);
+            case NotCondition c -> conditionUsesColorSpentMana(c.inner());
+            default -> false;
+        };
+    }
+
+    /**
+     * Returns true if a spell or its battlefield-entry effect reads the number of complete pairs of
+     * one color spent to cast it. The cast path must retain the per-color payment snapshot until
+     * the permanent's entry replacements and entry triggers have resolved.
+     */
+    public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+                .flatMap(slot -> card.getEffects(slot).stream())
+                .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
+    }
+
+    private static boolean effectUsesColorManaPairsSpentToCast(CardEffect effect) {
+        if (effect instanceof EnterWithCountersEffect enter) {
+            return amountUsesColorManaPairsSpentToCast(enter.count());
+        }
+        if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {
+            return amountUsesColorManaPairsSpentToCast(putCounter.amount());
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return effectUsesColorManaPairsSpentToCast(conditional.wrapped());
+        }
+        return false;
+    }
+
+    private static boolean amountUsesColorManaPairsSpentToCast(DynamicAmount amount) {
+        if (amount instanceof ColorManaPairsSpentToCast) return true;
+        if (amount instanceof Scaled scaled) {
+            return amountUsesColorManaPairsSpentToCast(scaled.amount());
+        }
+        if (amount instanceof Divided divided) {
+            return amountUsesColorManaPairsSpentToCast(divided.amount());
+        }
+        if (amount instanceof HalvedRoundedUp halved) {
+            return amountUsesColorManaPairsSpentToCast(halved.amount());
+        }
+        if (amount instanceof Sum sum) {
+            return sum.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        if (amount instanceof Min min) {
+            return min.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        if (amount instanceof Max max) {
+            return max.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        return false;
     }
 
     public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {

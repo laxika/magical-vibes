@@ -72,17 +72,13 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             if (!targetLibrary) {
-                triggerCollectionService.checkScryTriggers(gameData, controllerId);
+                triggerCollectionService.checkScryTriggers(gameData, controllerId, 0);
             }
             return;
         }
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
-
-        if (!targetLibrary) {
-            triggerCollectionService.checkScryTriggers(gameData, controllerId);
-        }
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.Scry(controllerId, topCards, false, libraryOwnerId));

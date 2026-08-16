@@ -428,8 +428,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
      *  after a creature enters, using the {@code enteredFromGraveyardOwnerId} flag on the entering
-     *  permanent. Routed into the any-target pipeline ({@code EnteringPermanentAnyTargetTrigger} interactions).
-     *  Used by Flayer of the Hatebound. */
+     *  permanent. Targeting effects use the any-target pipeline
+     *  ({@code EnteringPermanentAnyTargetTrigger} interactions); entering-creature attachment effects
+     *  use the enter-trigger collector's baked-in creature instead. Used by Flayer of the Hatebound
+     *  and Dredging Claw. */
     ON_CREATURE_ENTERS_FROM_GRAVEYARD,
     /** "Whenever this creature or another permanent enters from a graveyard" — fires for ANY permanent
      *  (not just creatures) entering the battlefield from ANY graveyard, checked via the
@@ -571,6 +573,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} for "whenever another artifact you control
      *  enters or leaves the battlefield" (Sludge Strider). */
     ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another nontoken artifact controlled by this permanent's controller is
+     *  put into a graveyard or exile from the battlefield. */
+    ON_ANOTHER_NONTOKEN_ARTIFACT_PUT_INTO_GRAVEYARD_OR_EXILE_FROM_BATTLEFIELD,
     /** Triggers whenever another creature controlled by this permanent's controller leaves the
      *  battlefield by any means (destruction, exile, bounce, sacrifice, tuck). Controller-scoped
      *  watcher — fires only on permanents sharing the leaving creature's controller, except the
@@ -678,6 +683,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
+    /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
+    ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */

@@ -1431,14 +1431,21 @@ public class LibraryChoiceHandlerService {
                         : card.hasType(spec.type()))
                 .toList();
         if (eligible.isEmpty()) {
-            if (spec.remainingSubtypes().isEmpty()) {
-                return false;
+            if (!spec.remainingSubtypes().isEmpty()) {
+                return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
+                        LibrarySearchFollowUp.SecondBoundedPick.subtype(
+                                spec.remainingSubtypes().getFirst(),
+                                spec.remainingSubtypes().subList(1, spec.remainingSubtypes().size()),
+                                spec.randomRest()));
             }
-            return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
-                    LibrarySearchFollowUp.SecondBoundedPick.subtype(
-                            spec.remainingSubtypes().getFirst(),
-                            spec.remainingSubtypes().subList(1, spec.remainingSubtypes().size()),
-                            spec.randomRest()));
+            if (!spec.remainingTypes().isEmpty()) {
+                return startSecondBoundedPick(gameData, controllerId, lookedAtCards,
+                        LibrarySearchFollowUp.SecondBoundedPick.cardType(
+                                spec.remainingTypes().getFirst(),
+                                spec.remainingTypes().subList(1, spec.remainingTypes().size()),
+                                spec.randomRest()));
+            }
+            return false;
         }
 
         String category = spec.subtype() != null
@@ -1446,9 +1453,18 @@ public class LibraryChoiceHandlerService {
                 : spec.type().getDisplayName().toLowerCase();
         String prompt = "You may reveal a " + category
                 + " card from among them and put it into your hand.";
-        LibrarySearchFollowUp nextFollowUp = spec.subtype() == null
-                ? LibrarySearchFollowUp.NONE
-                : LibrarySearchFollowUp.forSubtypeBoundedPick(spec.remainingSubtypes(), spec.randomRest());
+        LibrarySearchFollowUp nextFollowUp;
+        if (spec.subtype() != null) {
+            nextFollowUp = LibrarySearchFollowUp.forSubtypeBoundedPick(
+                    spec.remainingSubtypes(), spec.randomRest());
+        } else if (!spec.remainingTypes().isEmpty()) {
+            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes());
+        } else if (spec.randomRest()) {
+            nextFollowUp = LibrarySearchFollowUp.forBoundedPick(
+                    LibrarySearchFollowUp.SecondBoundedPick.terminal(true));
+        } else {
+            nextFollowUp = LibrarySearchFollowUp.NONE;
+        }
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)

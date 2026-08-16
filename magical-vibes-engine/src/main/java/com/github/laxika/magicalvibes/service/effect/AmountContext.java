@@ -112,6 +112,12 @@ public record AmountContext(
         return new AmountContext(controllerId, source, null, xValue, 0);
     }
 
+    /** Context for evaluating replacement effects on a permanent as it enters the battlefield. */
+    public static AmountContext forEnteringPermanent(UUID controllerId, Permanent permanent, int xValue) {
+        return new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
+                List.of(), permanent.getCard());
+    }
+
     /** Source-less context for heuristic estimation (AI evaluation). */
     public static AmountContext forEstimation(UUID controllerId) {
         return new AmountContext(controllerId, null, null, 0, 0);

@@ -377,6 +377,7 @@ public class Permanent {
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
+    @Setter private boolean enteredViaUnearth;
     /** When this permanent entered the battlefield from a graveyard, the ID of the player whose graveyard
      *  it came from; {@code null} otherwise. Read during the entering creature's ETB processing to fire
      *  "whenever a creature enters from your graveyard" triggers (e.g. Flayer of the Hatebound). */
@@ -691,6 +692,7 @@ public class Permanent {
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
+        this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);

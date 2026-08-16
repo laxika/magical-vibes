@@ -1509,4 +1509,36 @@ public class MiscTriggerCollectorService {
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD)
+    boolean handleControllerArtifactOrCreatureCardsLeaveGraveyard(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    "leaves-the-graveyard", match.permanent().getId()));
+        } else {
+            match.gameData().enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId()
+            ));
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (artifact or creature cards left graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
 }

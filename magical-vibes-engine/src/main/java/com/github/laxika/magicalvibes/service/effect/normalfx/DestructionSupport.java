@@ -249,6 +249,7 @@ public class DestructionSupport {
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
@@ -749,6 +750,12 @@ public class DestructionSupport {
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            if (token.tappedAndAttacking()) {
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+            } else if (token.tapped()) {
+                tokenPermanent.tap();
+            }
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";

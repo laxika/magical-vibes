@@ -239,6 +239,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put counters on the chosen permanent and remember it for a following effect. */
+    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put an awakening counter on each chosen land (they become 8/8 Elementals). */
     record AwakeningCounterPlacement() implements MultiPermanentChoiceContext {
     }
@@ -523,6 +528,20 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
         public ChooseLandOfEachBasicTypeThenDestroyChoice {
             chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
+    /**
+     * Urza's Sylex-style choice: the current player chooses the required number of lands to keep
+     * before the effect destroys every other permanent.
+     */
+    record EachPlayerChoosesLandsThenDestroyRestChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                       int requiredCount, java.util.List<UUID> keptIds,
+                                                       String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandsThenDestroyRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
         }
     }
 

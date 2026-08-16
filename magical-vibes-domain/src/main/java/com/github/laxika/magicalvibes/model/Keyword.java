@@ -76,7 +76,8 @@ public enum Keyword {
     OFFERING,
     DELVE,
     MODULAR,
-    SUNBURST;
+    SUNBURST,
+    PROTOTYPE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

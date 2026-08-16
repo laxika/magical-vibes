@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayer
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
@@ -56,6 +58,8 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -2479,6 +2483,37 @@ class GameQueryServiceTest {
 
             assertThat(gqs.hasAuraWithEffect(gd, creature,
                     e -> e instanceof EnchantedCreatureCantAttackOrBlockEffect r && r.preventsBlocking())).isTrue();
+        }
+
+        @Test
+        @DisplayName("passes Aura source context to controller-relative conditional predicates")
+        void conditionalPredicateUsesAuraController() {
+            var controllerFilter = new PermanentControllerControlsPermanentPredicate(
+                    new PermanentIsSourcePermanentPredicate());
+
+            Permanent controlledCreature = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent controlledAura = addPermanent(player1Id, createAura("Mishra's Domination",
+                    new EnchantedPermanentConditionalEffect(
+                            controllerFilter,
+                            new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                            new CantBlockEffect())));
+            controlledAura.setAttachedTo(controlledCreature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, controlledCreature, StaticBoostEffect.class)).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, controlledCreature, CantBlockEffect.class)).isFalse();
+
+            Permanent opponentCreature = addPermanent(player2Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent opponentAura = addPermanent(player1Id, createAura("Mishra's Domination",
+                    new EnchantedPermanentConditionalEffect(
+                            controllerFilter,
+                            new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                            new CantBlockEffect())));
+            opponentAura.setAttachedTo(opponentCreature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, opponentCreature, StaticBoostEffect.class)).isFalse();
+            assertThat(gqs.hasAuraWithEffect(gd, opponentCreature, CantBlockEffect.class)).isTrue();
         }
 
         @Test

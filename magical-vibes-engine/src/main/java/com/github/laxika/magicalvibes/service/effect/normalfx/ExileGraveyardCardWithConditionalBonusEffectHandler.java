@@ -40,7 +40,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
         var e = (ExileGraveyardCardWithConditionalBonusEffect) effect;
 
         UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+        if (targetCardId == null && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
             targetCardId = entry.getTargetCardIds().getFirst();
         }
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
@@ -70,8 +70,14 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, source, e.creatureCountersOnSource());
                 }
             }
-            lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
-                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            if (e.creatureLifeGain() > 0) {
+                lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
+                        entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            }
+            if (e.creatureLifeLossToGraveyardOwner() > 0 && graveyardOwnerId != null) {
+                lifeSupport.applyLifeLoss(gameData, graveyardOwnerId,
+                        e.creatureLifeLossToGraveyardOwner(), entry.getCard().getName());
+            }
         } else if (e.noncreaturePowerBoost() != 0 || e.noncreatureToughnessBoost() != 0) {
             // Noncreature card exiled: boost source permanent
             UUID sourcePermanentId = entry.getSourcePermanentId();

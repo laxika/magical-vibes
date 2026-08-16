@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -25,10 +26,11 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -43,10 +45,17 @@ import java.util.UUID;
  * handlers reuse these helpers; behavior is identical to the original monolith privates.
  */
 @Component
-@RequiredArgsConstructor
 public class StaticEffectSupport {
 
     private final GameQueryService gameQueryService;
+
+    private final AmountEvaluationService amountEvaluationService;
+
+    @Autowired
+    public StaticEffectSupport(GameQueryService gameQueryService, AmountEvaluationService amountEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = amountEvaluationService;
+    }
 
     /**
      * Evaluates the filter predicates the handlers pass in. Injected lazily because the
@@ -166,6 +175,11 @@ public class StaticEffectSupport {
                 accumulator.addToughness(boost.toughnessBoost());
                 accumulator.addKeywords(boost.grantedKeywords());
             }
+        } else if (wrapped instanceof BoostSelfEffect boost) {
+            AmountContext amountContext =
+                    AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+            accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));
+            accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), amountContext));
         } else if (wrapped instanceof GrantKeywordEffect grant) {
             if (grant.scope() == GrantScope.SELF_AND_PAIRED
                     || selfInScope(context, grant.scope(), grant.filter())) {

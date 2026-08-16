@@ -94,6 +94,15 @@ public class GraveyardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        if (gameData.queenKaylaBinKroogOperation.awaitingChoice) {
+            gameData.queenKaylaBinKroogOperation.awaitingChoice = false;
+            gameData.queenKaylaBinKroogOperation.choiceMade = true;
+            gameData.queenKaylaBinKroogOperation.chosenCardId = cardIndex == -1
+                    ? null : cardPool.get(cardIndex).getId();
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Forgotten Lore: the opponent only *names* a card in the controller's graveyard — nothing
         // moves yet. Record it and resume the paused resolution so the handler can offer the {G}.
         if (gameData.graveyardTargetOperation.resolutionTimeForgottenLoreResume) {
