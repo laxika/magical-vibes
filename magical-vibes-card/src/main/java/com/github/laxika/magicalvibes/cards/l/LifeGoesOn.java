@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "121")
 @CardRegistration(set = "AKR", collectorNumber = "199")
+@CardRegistration(set = "M21", collectorNumber = "192")
 public class LifeGoesOn extends Card {
 
     public LifeGoesOn() {

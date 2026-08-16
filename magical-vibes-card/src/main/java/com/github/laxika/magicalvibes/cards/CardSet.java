@@ -33,6 +33,7 @@ public enum CardSet {
     SET_M15("M15"),
     SET_M19("M19"),
     SET_M20("M20"),
+    SET_M21("M21"),
     SET_ORI("ORI"),
     SET_LRW("LRW"),
     SET_MOR("MOR"),

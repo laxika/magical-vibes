@@ -68,6 +68,7 @@ public record CardView(
         String alternateCostExileHandLabel,
         boolean alternateCostDiscardsHandCard,
         boolean alternateCostRevealsHandCard,
+        boolean graveyardCastRequiresDiscard,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
         boolean transformable,

@@ -132,6 +132,8 @@ public class LandTapTriggerCollectorService {
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
+            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, tappingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, tappingPlayerId)) {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, tappingPlayerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(tappingPlayerId, 0);

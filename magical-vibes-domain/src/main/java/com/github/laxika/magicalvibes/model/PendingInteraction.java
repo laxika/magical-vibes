@@ -43,6 +43,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HostileNegotiationsOpponentPileChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.PutLandsFromHandChoice,
+        PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
@@ -588,6 +589,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses up to a bounded number of matching cards from hand to enter together. */
+    record PutUpToCardsFromHandOntoBattlefieldChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                      int maxCount, String cardName)
+            implements PendingInteraction {
+
+        public PutUpToCardsFromHandOntoBattlefieldChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, Math.min(maxCount, validCardIds.size()));
+        }
+    }
+
     /**
      * One player may put one matching card from their hand onto the battlefield. The selected cards
      * are held in {@code chosenCardIds} until every player has chosen, then enter simultaneously.
@@ -824,12 +845,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
-                                boolean drawForHandExiled)
+                                boolean drawForHandExiled,
+                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                String sourceSetCode)
             implements PendingInteraction {
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName, false);
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName, false, null, null);
+        }
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName,
+                                    boolean drawForHandExiled) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    drawForHandExiled, null, null);
         }
 
         @Override

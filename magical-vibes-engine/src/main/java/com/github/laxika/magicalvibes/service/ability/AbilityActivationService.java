@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLand
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -3974,15 +3975,16 @@ public class AbilityActivationService {
      * (possibly negative) loyalty delta the activation will apply.
      */
     private int validateLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
-        // Sorcery-speed timing: must be active player, main phase, stack empty
-        if (!playerId.equals(gameData.activePlayerId)) {
-            throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
-        }
-        if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
-            throw new IllegalStateException("Loyalty abilities can only be activated during a main phase");
-        }
-        if (!gameData.stack.isEmpty()) {
-            throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
+        if (!gameQueryService.allowsInstantSpeedLoyaltyActivation(permanent)) {
+            if (!playerId.equals(gameData.activePlayerId)) {
+                throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
+            }
+            if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                throw new IllegalStateException("Loyalty abilities can only be activated during a main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
+            }
         }
         // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi), plus any
         // one-shot extra activations granted to this planeswalker this turn (The Chain Veil).
@@ -4819,6 +4821,12 @@ public class AbilityActivationService {
 
     private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent,
                                                        boolean manaAbility) {
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent,
+                effect -> effect instanceof EnchantedPermanentAbilityLockEffect lock
+                        && (lock.blocksManaAbilities() || !manaAbility))) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+                    + " can't be activated (enchanted permanent lock)");
+        }
         // Detain / Edifice of Authority: a floating lock forbids activating this permanent's
         // activated abilities (mana abilities included; triggered abilities are unaffected).
         if (gameQueryService.isLockedFromActivatingAbilities(gameData, permanent.getId())) {

@@ -35,6 +35,9 @@ import java.util.UUID;
  *                          {@code SourceCardPower} for abilities that have no source permanent at
  *                          all (scavenge activates from the graveyard). {@code null} outside stack
  *                          resolution
+ * @param chosenPermanentPowerAtTrigger last-known effective power captured for an entering permanent
+ *                          carried as the chosen permanent; used if that permanent leaves before
+ *                          resolution
  */
 public record AmountContext(
         UUID controllerId,
@@ -45,8 +48,16 @@ public record AmountContext(
         boolean staticEvaluation,
         UUID chosenPermanentId,
         List<String> repeatedAdditionalCosts,
-        Card sourceCard
+        Card sourceCard,
+        Integer chosenPermanentPowerAtTrigger
 ) {
+
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation, UUID chosenPermanentId,
+                         List<String> repeatedAdditionalCosts, Card sourceCard) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null);
+    }
 
     /** Convenience for the common case with no repeatable additional cost payments. */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -75,14 +86,15 @@ public record AmountContext(
      */
     public AmountContext withControllerId(UUID otherControllerId) {
         return new AmountContext(otherControllerId, sourcePermanent, targetPermanentId, xValue,
-                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard);
+                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
+                chosenPermanentPowerAtTrigger);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
-                entry.getRepeatedAdditionalCosts(), entry.getCard());
+                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry.getTriggeringPermanentPowerAtTrigger());
     }
 
     /**

@@ -61,6 +61,8 @@ public class GraveyardChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileMatchingCardsFromGraveyardAndLibrarySupport
+            exileMatchingCardsSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -504,6 +506,25 @@ public class GraveyardChoiceHandlerService {
                     throw new IllegalStateException("All targets must be in a single graveyard");
                 }
             }
+        }
+
+        var exileMatchingContext = gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume;
+        if (exileMatchingContext != null) {
+            gameData.graveyardTargetOperation.resolutionTimeExileMatchingCardsResume = null;
+            gameData.interaction.clearAwaitingInput();
+            boolean librarySearchStarted = exileMatchingCardsSupport.completeGraveyardChoice(gameData,
+                    exileMatchingContext.controllerId(), exileMatchingContext.filter(), cardIds);
+            if (!librarySearchStarted) {
+                if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+                    effectResolutionService.resolveEffectsFrom(gameData,
+                            gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+            return;
         }
 
         // As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured

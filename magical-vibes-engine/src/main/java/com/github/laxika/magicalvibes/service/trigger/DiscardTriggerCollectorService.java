@@ -90,6 +90,8 @@ public class DiscardTriggerCollectorService {
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
+            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);

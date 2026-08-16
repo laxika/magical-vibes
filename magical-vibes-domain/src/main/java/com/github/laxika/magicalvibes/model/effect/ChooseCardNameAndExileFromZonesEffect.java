@@ -17,7 +17,9 @@ import java.util.List;
  * <p>Used by: Memoricide, Cranial Extraction, Dispossess, Lost Legacy, The Stone Brain, etc.
  */
 public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
-                                                     int maxCount, boolean drawForHandExiled)
+                                                     int maxCount, boolean drawForHandExiled,
+                                                     boolean excludeBasicLandNames,
+                                                     CreateTokenEffect tokenTemplate)
         implements CardEffect {
 
     public ChooseCardNameAndExileFromZonesEffect {
@@ -29,17 +31,28 @@ public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes
 
     /** Unlimited selection with no draw rider. */
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType) {
-        this(excludedTypes, requiredType, Integer.MAX_VALUE, false);
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, false, null);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   boolean drawForHandExiled) {
-        this(excludedTypes, requiredType, Integer.MAX_VALUE, drawForHandExiled);
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, drawForHandExiled, false, null);
+    }
+
+    public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
+                                                  int maxCount, boolean drawForHandExiled) {
+        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null);
+    }
+
+    public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
+                                                  boolean excludeBasicLandNames,
+                                                  CreateTokenEffect tokenTemplate) {
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, excludeBasicLandNames, tokenTemplate);
     }
 
     /** No required-type restriction (the offered names are only narrowed by {@code excludedTypes}). */
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes) {
-        this(excludedTypes, null, Integer.MAX_VALUE, false);
+        this(excludedTypes, null, Integer.MAX_VALUE, false, false, null);
     }
 
     /** No draw follow-up; retained for the existing name-choice exile cards. */

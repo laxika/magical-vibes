@@ -92,6 +92,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExileNonlandCardFromTargetHandOrGraveyardChoice);
         register(PendingInteraction.MagesContestBidChoice.class, this::projectMagesContestBidChoice);
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
+        register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
+                this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
@@ -511,6 +513,19 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.");
+    }
+
+    private InteractionPromptMessage projectPutUpToCardsFromHandOntoBattlefieldChoice(
+            GameData gameData, PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                "Choose up to " + interaction.maxCount()
+                        + " permanent cards from your hand to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(

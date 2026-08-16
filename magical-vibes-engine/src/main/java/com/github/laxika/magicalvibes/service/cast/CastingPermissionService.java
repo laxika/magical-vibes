@@ -995,7 +995,10 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow && allow.matches(card)) {
+                if (effect instanceof AllowCastFromTopOfLibraryEffect allow
+                        && (allow.matches(card)
+                        || (card.getType() != CardType.LAND && allow.filter() != null
+                        && predicateEvaluationService.matchesCardPredicate(card, allow.filter(), null)))) {
                     return true;
                 }
             }
@@ -1034,6 +1037,12 @@ public class CastingPermissionService {
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> castableIds = new HashSet<>();
+        for (GameData.ExileCastPermission permission : gameData.exileCastPermissionsUntilEndOfTurn) {
+            if (playerId.equals(permission.castingPlayerId())
+                    && gameData.findExiledCard(permission.cardId()) != null) {
+                castableIds.add(permission.cardId());
+            }
+        }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (gameData.stashCounterCardIds.contains(entry.card().getId())
                     && hasStashCounterPermission(gameData, playerId, entry.card().getId(), false)) {
@@ -1097,6 +1106,7 @@ public class CastingPermissionService {
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
+        if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -1125,6 +1135,15 @@ public class CastingPermissionService {
     private boolean findFreeCastPermission(GameData gameData, UUID playerId, UUID cardId, boolean consume) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
+        GameData.ExileCastPermission temporaryPermission =
+                findTemporaryExileCastPermission(gameData, playerId, entry, true);
+        if (temporaryPermission != null) {
+            if (consume) {
+                gameData.exileCastPermissionsUntilEndOfTurn.removeIf(permission ->
+                        permission.grantId().equals(temporaryPermission.grantId()));
+            }
+            return true;
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -1153,6 +1172,9 @@ public class CastingPermissionService {
     public OptionalInt findAdditionalCounterCostFromSource(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return OptionalInt.empty();
+        if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) {
+            return OptionalInt.of(0);
+        }
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) {
             return OptionalInt.of(0);
         }
@@ -1218,6 +1240,17 @@ public class CastingPermissionService {
             if (entry.card().getManaValue() > limit) return false;
         }
         return true;
+    }
+
+    private GameData.ExileCastPermission findTemporaryExileCastPermission(
+            GameData gameData, UUID playerId, ExiledCardEntry entry, boolean freeOnly) {
+        return gameData.exileCastPermissionsUntilEndOfTurn.stream()
+                .filter(permission -> permission.cardId().equals(entry.card().getId()))
+                .filter(permission -> permission.sourcePermanentId().equals(entry.sourcePermanentId()))
+                .filter(permission -> permission.castingPlayerId().equals(playerId))
+                .filter(permission -> !freeOnly || permission.withoutPayingManaCost())
+                .findFirst()
+                .orElse(null);
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {

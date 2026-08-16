@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "168")
+@CardRegistration(set = "M21", collectorNumber = "177")
 public class Cultivate extends Card {
 
     public Cultivate() {

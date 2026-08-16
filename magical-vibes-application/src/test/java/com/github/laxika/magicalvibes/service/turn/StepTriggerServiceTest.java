@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
@@ -67,6 +68,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -1320,6 +1322,27 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Targeted beginning-of-combat MayEffect queues target selection before resolution")
+        void targetedBeginningOfCombatMayEffectQueuesTargetSelection() {
+            Card sourceCard = createCardWithName("Battle-Rattle Shaman");
+            sourceCard.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Target creature"))
+                    .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                            new MayEffect(new BoostTargetCreatureEffect(2, 0), "Boost target creature?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+            Permanent target = new Permanent(createCardWithName("Target Creature"));
+            gd.playerBattlefields.get(player2Id).add(target);
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(target), any(PermanentPredicate.class), any())).thenReturn(true);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED fires for the non-active player's permanents")
         void opponentBeginningOfCombatFiresForNonActivePlayer() {
             Card card = createCardWithName("Opponent Combat Card");
@@ -1548,6 +1571,32 @@ class StepTriggerServiceTest {
 
             // MayEffect goes through queueMayAbility which adds to stack
             assertThat(gd.stack).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED fires during the card owner's end step")
+        void graveyardControllerEndStepTriggeredFiresOnOwnersEndStep() {
+            Card card = createCardWithName("Silversmote Ghoul");
+            card.addEffect(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            gd.playerGraveyards.get(player1Id).add(card);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Silversmote Ghoul");
+        }
+
+        @Test
+        @DisplayName("GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED skips an opponent's end step")
+        void graveyardControllerEndStepTriggeredSkipsOpponentsEndStep() {
+            gd.activePlayerId = player2Id;
+            Card card = createCardWithName("Silversmote Ghoul");
+            card.addEffect(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            gd.playerGraveyards.get(player1Id).add(card);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

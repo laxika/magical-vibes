@@ -444,6 +444,15 @@ public class LibraryChoiceHandlerService {
                         tokenTemplate, sourceSetCode, shuffleAfterSelection);
                 return;
             }
+            if (destination == LibrarySearchDestination.EXILE_PLAYABLE_ANY_NUMBER) {
+                if (shuffleAfterSelection) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                }
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " stops searching. Library is shuffled."));
+                finishSearchAndResume(gameData);
+                return;
+            }
             // A pile search stopped early still shuffles whatever was already exiled into it.
             if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
@@ -544,6 +553,37 @@ public class LibraryChoiceHandlerService {
 
             finishExileAndCreateTokensSearch(gameData, player, deckOwnerId, accumulatedCards,
                     tokenTemplate, sourceSetCode, shuffleAfterSelection);
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_PLAYABLE_ANY_NUMBER) {
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            com.github.laxika.magicalvibes.service.effect.normalfx
+                    .ExileMatchingCardsFromGraveyardAndLibrarySupport.grantCastPermission(
+                            gameData, playerId, chosenCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", chosenCard, "."));
+
+            List<Card> remainingMatches = filterPredicate == null
+                    ? new ArrayList<>(deck)
+                    : deck.stream().filter(card -> predicateEvaluationService.matchesCardPredicate(
+                            card, filterPredicate, null, gameData, deckOwnerId)).toList();
+            if (!remainingMatches.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
+                                .remainingCount(remainingMatches.size())
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.EXILE_PLAYABLE_ANY_NUMBER)
+                                .filterPredicate(filterPredicate)
+                                .build(),
+                        "Search your library for matching cards to exile (any number).", true));
+                return;
+            }
+
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -1109,6 +1149,8 @@ public class LibraryChoiceHandlerService {
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
+                case EXILE_PLAYABLE_ANY_NUMBER -> throw new IllegalStateException(
+                        "EXILE_PLAYABLE_ANY_NUMBER should be handled earlier");
                 case EXILE_FACE_DOWN_PILE -> throw new IllegalStateException("EXILE_FACE_DOWN_PILE should be handled earlier");
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
@@ -1338,6 +1380,10 @@ public class LibraryChoiceHandlerService {
             } else {
                 gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, ownerName));
             }
+        }
+
+        if (cards.size() == 1 && permanents.size() == 1 && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanents.getFirst().getId());
         }
 
         if (anyBlocked) {

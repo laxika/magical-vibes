@@ -80,6 +80,39 @@ public class DamageTriggerCollectorService {
     private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
+    private boolean handleAllyCreatureDealsDamageToPlaneswalker(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
+                (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) return false;
+        if (trigger.predicate() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
+                damageContext.damageSource(), trigger.predicate())) return false;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger.wrapped())),
+                damageContext.damagedPlaneswalkerId(),
+                watcher.getId());
+        entry.setNonTargeting(true);
+        if (damageContext.deferredTriggers() == null) {
+            match.gameData().enqueueTrigger(entry);
+        } else {
+            damageContext.deferredTriggers().add(entry);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after creature damage to a planeswalker",
+                match.gameData().id, watcher.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleAllyCreatureDealsCombatDamageToCreatureMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
@@ -973,6 +1006,8 @@ public class DamageTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER)
     private boolean handleSelfDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0) return false;

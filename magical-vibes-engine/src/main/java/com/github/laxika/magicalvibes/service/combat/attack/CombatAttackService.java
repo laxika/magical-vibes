@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
@@ -52,6 +54,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
@@ -927,6 +931,16 @@ public class CombatAttackService {
                         continue;
                     }
                     filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof MinimumMatchingAttackers) {
+                    boolean met = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId));
+                    if (!met) {
+                        log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
                 } else {
                     filteredEffects.add(effect);
                 }
@@ -1302,7 +1316,16 @@ public class CombatAttackService {
         for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
             UUID permController = bf.getKey();
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
-                List<CardEffect> playerAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS);
+                List<CardEffect> playerAttackEffects = new ArrayList<>();
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
+                        continue;
+                    }
+                    playerAttackEffects.add(effect);
+                }
                 if (playerAttackEffects.isEmpty()) continue;
 
                 StackEntry playerAttackTrigger = new StackEntry(
@@ -1324,6 +1347,7 @@ public class CombatAttackService {
         }
 
         processDelayedAttackerBoostTriggers(gameData, battlefield, attackerIndices);
+        processDelayedNontokenAttackTokenTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
@@ -1396,6 +1420,31 @@ public class CombatAttackService {
                 log.info("Game {} - {} delayed attacker boost fires for {}",
                         gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
             }
+        }
+    }
+
+    private void processDelayedNontokenAttackTokenTriggers(GameData gameData, List<Permanent> battlefield,
+                                                            List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedNontokenAttackTokenCreation.class)) return;
+        int nontokenAttackers = (int) attackerIndices.stream()
+                .map(battlefield::get)
+                .filter(attacker -> !attacker.getCard().isToken())
+                .count();
+        if (nontokenAttackers == 0) return;
+
+        for (DelayedNontokenAttackTokenCreation action
+                : gameData.getDelayedActions(DelayedNontokenAttackTokenCreation.class)) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    action.sourceCard(),
+                    action.controllerId(),
+                    action.sourceCard().getName() + "'s delayed trigger",
+                    List.of(new CreateTokensAttackingEffect(nontokenAttackers, action.tokenEffect())));
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
+            log.info("Game {} - {} delayed token creation trigger fires for {} nontoken attacker(s)",
+                    gameData.id, action.sourceCard().getName(), nontokenAttackers);
         }
     }
 

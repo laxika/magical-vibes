@@ -275,6 +275,8 @@ public class MultiPermanentChoiceHandlerService {
             handleProliferate(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapSubtypeBoost ctx) {
             handleTapSubtypeBoost(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberBoostSelf ctx) {
+            handleTapAnyNumberBoostSelf(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
@@ -1491,6 +1493,42 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleTapAnyNumberBoostSelf(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                              MultiPermanentChoiceContext.TapAnyNumberBoostSelf context) {
+        List<Card> tappedCards = new ArrayList<>();
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null && !permanent.isTapped()) {
+                permanent.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                tappedCards.add(permanent.getCard());
+            }
+        }
+
+        int tappedCount = tappedCards.size();
+        if (tappedCount == 0) {
+            gameLogService.append(gameData,
+                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to tap any permanents."));
+        } else {
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
+                            + " taps " + tappedCount + " permanent" + (tappedCount == 1 ? "" : "s") + ": "),
+                            tappedCards).text(".").build());
+            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            if (source != null) {
+                int powerBoost = context.powerPerPermanent() * tappedCount;
+                int toughnessBoost = context.toughnessPerPermanent() * tappedCount;
+                source.setPowerModifier(source.getPowerModifier() + powerBoost);
+                source.setToughnessModifier(source.getToughnessModifier() + toughnessBoost);
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                        " gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn."));
+                log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
+                        powerBoost, toughnessBoost);
+            }
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

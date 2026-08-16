@@ -563,6 +563,15 @@ public class Card {
      */
     public TargetFilter getTargetFilter() {
         if (castTimeTargetFilter != null) return castTimeTargetFilter;
+        return getDeclaredTargetFilter();
+    }
+
+    /**
+     * Returns the target filter declared by the card's target group, ignoring any cast-time
+     * override used by a triggered ability or a modal choice. Aura attachment legality uses this
+     * filter because a cast-time target restriction is not an ongoing enchant restriction.
+     */
+    public TargetFilter getDeclaredTargetFilter() {
         if (spellTargets.isEmpty()) return null;
         return spellTargets.getFirst().getFilter();
     }

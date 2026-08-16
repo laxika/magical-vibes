@@ -1606,6 +1606,10 @@ public class SpellCastingService {
         // Compute targeting tax from effects like Kopala, Warden of Waves and Kaervek's Torch
         int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
+        int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
+        if (targetingLifeTax > gameData.getLife(playerId)) {
+            throw new IllegalStateException("Not enough life to pay the targeting life cost");
+        }
         int selectedDelveReduction = additionalSpellCostService.delveReduction(
                 additionalCosts, costSelection.exileGraveyardCardIndices());
 
@@ -2161,6 +2165,7 @@ public class SpellCastingService {
             BeheldCardPayment beholdPayment = payBeholdCost(
                     gameData, player, card, additionalCosts.beholdCost(), costSelection);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
+            payTargetingLifeCost(gameData, player, card, targetingLifeTax);
             if (convergeSnapshot != null) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int converge = ManaPool.countDistinctColoredManaSpent(
@@ -2368,6 +2373,7 @@ public class SpellCastingService {
             resolvedXValue = additionalCostPayment.resolvedXValue();
             payPerTargetLifeCost(gameData, player, card, perTargetLifeCost);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
+            payTargetingLifeCost(gameData, player, card, targetingLifeTax);
             if (convergeSnapshot != null) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int converge = ManaPool.countDistinctColoredManaSpent(
@@ -3232,6 +3238,19 @@ public class SpellCastingService {
         }
         UUID playerId = player.getId();
         gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - amount);
+        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " pays " + amount + " life to cast " + card.getName() + "."));
+    }
+
+    private void payTargetingLifeCost(GameData gameData, Player player, Card card, int amount) {
+        if (amount <= 0) return;
+        UUID playerId = player.getId();
+        int currentLife = gameData.getLife(playerId);
+        if (currentLife < amount) {
+            throw new IllegalStateException("Not enough life to pay the targeting life cost");
+        }
+        gameData.playerLifeTotals.put(playerId, currentLife - amount);
         gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " pays " + amount + " life to cast " + card.getName() + "."));
@@ -4132,10 +4151,15 @@ public class SpellCastingService {
                 gameData, playerId, card, paysFlashbackCost, effectiveXValue);
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
+        int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
+        if (targetingLifeTax > gameData.getLife(playerId)) {
+            throw new IllegalStateException("Not enough life to pay the targeting life cost");
+        }
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedGraveyardCardCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
                 isGraveyardCast, isRetrace, isDisturb, isGrantedCyclingGraveyardCast, isMayCastTopInstantOrSorcery,
                 effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
+        payTargetingLifeCost(gameData, player, card, targetingLifeTax);
         payRemoveCountersFromControlledCreaturesCost(
                 gameData, player, card, graveyardCounterCost, additionalCostSacrificePermanentIds);
         if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {

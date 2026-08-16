@@ -359,6 +359,15 @@
       </div>
     }
 
+    @if (choice.targeting.selectingGraveyardCastDiscard) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Select a card in your hand to discard for {{ choice.targeting.graveyardCastDiscardCardName }}</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelGraveyardCastDiscard()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.selectingAlternateCostCreatures) {
       <div class="side-prompt prompt-targeting">
         @if (choice.targeting.alternateCostSacrificeCount > 0) {

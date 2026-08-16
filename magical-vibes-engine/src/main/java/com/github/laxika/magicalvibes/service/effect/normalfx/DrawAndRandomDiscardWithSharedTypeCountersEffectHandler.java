@@ -32,6 +32,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
     private final GraveyardService graveyardService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -81,6 +82,8 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                     if (placed > 0) {
                         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                        permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                                gameData, source, placed, controllerId);
                         gameLogService.append(gameData, GameLog.builder()
                                 .card(source.getCard())
                                 .text(" gets " + placed

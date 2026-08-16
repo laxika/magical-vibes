@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -72,13 +73,20 @@ public class DamagePreventionService {
     private final LifeSupport lifeSupport;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
+    private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
 
     public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
-                                   AmountEvaluationService amountEvaluationService) {
+                                   AmountEvaluationService amountEvaluationService,
+                                   DamagePreventionReplacementSupport damagePreventionReplacementSupport) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
+        this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
+    }
+
+    public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
+        return damagePreventionReplacementSupport.preventDamageToControllerAndPutCounterOnSelf(gameData, playerId, damage);
     }
 
     /**
@@ -208,6 +216,8 @@ public class DamagePreventionService {
         if (gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithAllDamagePrevented.contains(permanent.getId())) return 0;
         // Ethersworn Shieldmage: prevent all damage to permanents matching an active predicate this turn (e.g. artifact creatures)
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isAllDamagePreventedByPredicate(gameData, permanent)) return 0;
+        if (isCombatDamage && gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isDamagePreventedByControlledPredicate(gameData, permanent)) return 0;
         // Foxfire: prevent all combat damage that would be dealt to specific target creatures this turn
         if (isCombatDamage && gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithCombatDamagePrevented.contains(permanent.getId())) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention

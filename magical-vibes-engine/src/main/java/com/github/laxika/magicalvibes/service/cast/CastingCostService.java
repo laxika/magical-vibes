@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardTargetCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
@@ -249,6 +252,42 @@ public class CastingCostService {
     }
 
     /**
+     * Applies spell-self and battlefield reductions that remove colored mana symbols from a spell's
+     * cost. Generic-only modifiers remain represented by {@link #getCastCostModifier}.
+     */
+    public ManaCost applyCastCostReductions(GameData gameData, UUID playerId, Card card,
+                                            ManaCost cost) {
+        return applyCastCostReductions(gameData, playerId, card, cost,
+                buildCostModifierSnapshot(gameData, playerId), false);
+    }
+
+    public ManaCost applyCastCostReductions(GameData gameData, UUID playerId, Card card,
+                                            ManaCost cost, CostModifierSnapshot snapshot,
+                                            boolean flashbackCost) {
+        if (cost == null) {
+            return null;
+        }
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
+        ManaCost reduced = cost;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
+            if (handler != null) {
+                ManaCost reduction = handler.coloredManaCostReduction(context, effect, CostModificationSource.SPELL_ITSELF);
+                if (reduction != null) {
+                    reduced = reduced.reducedBy(reduction);
+                }
+            }
+        }
+        for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            ManaCost reduction = modifier.handler().coloredManaCostReduction(context, modifier.effect(), modifier.source());
+            if (reduction != null) {
+                reduced = reduced.reducedBy(reduction);
+            }
+        }
+        return reduced;
+    }
+
+    /**
      * Net generic-mana adjustment to an optional buyback cost paid while casting {@code card}.
      * Positive means more expensive, negative means cheaper.
      */
@@ -303,6 +342,47 @@ public class CastingCostService {
                                     tax += taxEffect.amount();
                                     break;
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return tax;
+    }
+
+    /**
+     * Computes the additional life cost imposed by static effects that tax opponent spells
+     * targeting matching permanents controlled by the effect's controller.
+     * The tax applies once per source permanent, regardless of how many matching permanents
+     * are targeted.
+     */
+    public int getTargetingLifeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds) {
+        Set<UUID> allTargetIds = new HashSet<>();
+        if (targetId != null) allTargetIds.add(targetId);
+        if (targetIds != null) allTargetIds.addAll(targetIds);
+        if (allTargetIds.isEmpty()) return 0;
+
+        int tax = 0;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(casterId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof IncreaseOpponentLifeCostForTargetingControlledPermanentEffect taxEffect)) {
+                        continue;
+                    }
+                    for (UUID tid : allTargetIds) {
+                        Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
+                        if (targetPerm != null) {
+                            UUID targetController = gameQueryService.findPermanentController(gameData, tid);
+                            if (controllerId.equals(targetController)
+                                    && predicateEvaluationService.matchesPermanentPredicate(
+                                    targetPerm, taxEffect.predicate(),
+                                    FilterContext.of(gameData).withSourcePermanentSnapshot(perm))) {
+                                tax += taxEffect.amount();
+                                break;
                             }
                         }
                     }
@@ -1132,6 +1212,16 @@ public class CastingCostService {
                     default -> 0;
                 })
                 .sum();
+    }
+
+    /** Checks non-mana costs on a card's own graveyard-casting option. */
+    public boolean canPayGraveyardCastCosts(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
+        var lifeCost = graveyardCast.getCost(LifeCastingCost.class);
+        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) {
+            return false;
+        }
+        var discardCost = graveyardCast.getCost(DiscardCardCastingCost.class);
+        return discardCost.isEmpty() || !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty();
     }
 
     /** Returns the maximum generic mana reduction currently available from delve, if present. */

@@ -46,6 +46,8 @@ public class UnleashHandler implements MayEffectHandlerBean {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                             source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
+                    permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                            gameData, source, placed, player.getId());
                 }
             }
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " unleashes ", ability.sourceCard(), " (+1/+1 counter)."));

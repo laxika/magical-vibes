@@ -610,11 +610,21 @@ public class TriggeredAbilityQueueService {
                 if (filter == null) {
                     validPermanentTargets =
                             anyTargetPermanents(gameData, pending.controllerId(), pending.sourceCard());
+                    if (pending.permanentTargetControllerId() != null) {
+                        validPermanentTargets = validPermanentTargets.stream()
+                                .filter(id -> pending.permanentTargetControllerId().equals(
+                                        gameQueryService.findPermanentController(gameData, id)))
+                                .toList();
+                    }
                 } else {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceControllerId(pending.controllerId())
                             .withSourceCardId(pending.sourceCard().getId());
                     for (UUID pid : gameData.orderedPlayerIds) {
+                        if (pending.permanentTargetControllerId() != null
+                                && !pending.permanentTargetControllerId().equals(pid)) {
+                            continue;
+                        }
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) continue;
                         for (Permanent p : battlefield) {

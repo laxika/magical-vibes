@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -280,6 +281,9 @@ public class BattlefieldEntryService {
         // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                 gameData, permanent, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
+        permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                gameData, permanent, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE),
+                controllerId, simultaneouslyEntered);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
@@ -403,7 +407,8 @@ public class BattlefieldEntryService {
         }
         Card card = permanent.getCard();
         boolean applies = !gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
-                || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty());
+                || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
+                || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card);
         if (!applies) {
             return false;
         }

@@ -184,6 +184,7 @@ export interface Card {
   alternateCostExileHandLabel: string | null;
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
+  graveyardCastRequiresDiscard?: boolean;
   additionalBeholdSubtype: string | null;
   additionalBeholdCount: number;
   additionalBeholdFlashbackOnly: boolean;

@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggerin
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
@@ -121,6 +122,7 @@ import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTu
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
@@ -139,6 +141,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatu
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
@@ -151,6 +154,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredTh
 import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestroyedByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
@@ -212,6 +216,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -344,6 +349,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) <= c.maxCount();
             case ControlsPermanentsWithDifferentNames c ->
                     countControlledMatchingPermanentNames(gameData, ctx, c.filter()) >= c.minCount();
+            case ControlsPermanentsWithSameName c ->
+                    controlsMatchingPermanentsWithSameName(gameData, ctx, c.minCount(), c.filter());
             case ControlsOtherPermanentCount c ->
                     countOtherControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsOtherThanTriggeringPermanentCount c ->
@@ -454,6 +461,10 @@ public class ConditionEvaluationService {
                     gameData.combatPhasesThisTurn == 1;
             case MinimumAttackers c ->
                     ctx.xValue() >= c.minimumAttackers();
+            case MinimumMatchingAttackers c ->
+                    countMatchingAttackers(gameData, ctx, c.predicate()) >= c.minimum();
+            case OpponentAttacksWithAtLeastCreatures c ->
+                    countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx) >= c.minimum();
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -485,6 +496,10 @@ public class ConditionEvaluationService {
                             && gameData.orderedPlayerIds.stream()
                             .filter(playerId -> !playerId.equals(ctx.controllerId()))
                             .anyMatch(gameData.playersWhoSearchedLibraryThisTurn::contains);
+            case PermanentPutIntoYourHandFromBattlefieldThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn
+                            .contains(ctx.controllerId());
             case DidntActivateLoyaltyAbilityThisTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersWhoActivatedLoyaltyAbilityThisTurn.contains(ctx.controllerId());
@@ -1517,6 +1532,56 @@ public class ConditionEvaluationService {
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
                 .anyMatch(p -> matchesPermanent(gameData, p, predicate, ctx));
+    }
+
+    private long countMatchingAttackers(GameData gameData, ConditionContext ctx,
+                                        PermanentPredicate predicate) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        return battlefield.stream()
+                .filter(Permanent::isAttacking)
+                .filter(p -> matchesPermanent(gameData, p, predicate, ctx))
+                .count();
+    }
+
+    private long countOpponentAttackersAtControllerOrPlaneswalkers(GameData gameData,
+                                                                    ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
+            return 0;
+        }
+
+        List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (controlledPermanents == null || attackers == null) return 0;
+
+        Set<UUID> controlledPlaneswalkerIds = controlledPermanents.stream()
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .filter(attacker -> controllerId.equals(attacker.getAttackTarget())
+                        || controlledPlaneswalkerIds.contains(attacker.getAttackTarget()))
+                .count();
+    }
+
+    private boolean controlsMatchingPermanentsWithSameName(GameData gameData, ConditionContext ctx,
+                                                            int minimum, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+
+        Map<String, Long> countsByName = new HashMap<>();
+        for (Permanent permanent : battlefield) {
+            if (matchesPermanent(gameData, permanent, filter, ctx)) {
+                countsByName.merge(permanent.getCard().getName(), 1L, Long::sum);
+            }
+        }
+        return countsByName.values().stream().anyMatch(count -> count >= minimum);
     }
 
     /**

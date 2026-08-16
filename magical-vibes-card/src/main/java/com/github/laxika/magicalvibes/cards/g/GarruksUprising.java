@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "220")
+@CardRegistration(set = "M21", collectorNumber = "186")
 public class GarruksUprising extends Card {
 
     public GarruksUprising() {

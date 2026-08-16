@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
@@ -126,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFr
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerRecipientDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
@@ -4232,6 +4234,11 @@ public class GameQueryService {
         return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraLoyaltyActivationEffect.class);
     }
 
+    public boolean allowsInstantSpeedLoyaltyActivation(Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance);
+    }
+
     /**
      * Returns {@code true} if the given card cannot be countered, either because it has
      * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
@@ -4395,7 +4402,10 @@ public class GameQueryService {
             for (CardEffect effect : staticSource.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AdditionalTriggeredAbilityEffect additional
                         && predicateEvaluationService.matchesPermanentPredicate(
-                                triggeringPermanent, additional.sourcePredicate(), filterContext)) {
+                                triggeringPermanent, additional.sourcePredicate(), filterContext)
+                        && (additional.condition() == null
+                        || conditionEvaluationService.isMet(gameData, additional.condition(),
+                        ConditionContext.forStaticEffect(staticSource, controllerId)))) {
                     count++;
                 }
             }
@@ -5231,6 +5241,10 @@ public class GameQueryService {
         Permanent source = entry != null && entry.getSourcePermanentId() != null
                 ? findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
+        if (source != null) {
+            UUID sourceControllerId = findPermanentController(gameData, source.getId());
+            if (sourceControllerId != null) controllerId = sourceControllerId;
+        }
         return (damage + bonus) * getDamageMultiplier(gameData)
                 * getControllerDamageMultiplier(gameData, controllerId, entry, false)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
@@ -5330,14 +5344,16 @@ public class GameQueryService {
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleControllerDamageEffect dcde) {
+                if (effect instanceof ControllerDamageMultiplyingEffect multiplyingEffect) {
                     if (isCombat) {
-                        if (dcde.appliesToCombatDamage()) {
-                            multiplier[0] *= 2;
+                        if (multiplyingEffect.appliesToCombatDamage()) {
+                            multiplier[0] *= multiplyingEffect.damageMultiplier();
                         }
                     } else if (entry != null) {
-                        if (dcde.stackFilter() == null || predicateEvaluationService.matchesStackEntryPredicate(entry, dcde.stackFilter(), null)) {
-                            multiplier[0] *= 2;
+                        if (multiplyingEffect.stackFilter() == null
+                                || predicateEvaluationService.matchesStackEntryPredicate(
+                                entry, multiplyingEffect.stackFilter(), null)) {
+                            multiplier[0] *= multiplyingEffect.damageMultiplier();
                         }
                     }
                 } else if (!isCombat && entry != null && damageSource == null
@@ -5592,6 +5608,16 @@ public class GameQueryService {
      * (a {@code null} filter covers every creature that player controls). Both combat and noncombat
      * damage dealt to such a creature is fully prevented by the caller.
      */
+    /** Returns whether a controlled matching permanent is protected from combat damage this turn. */
+    public boolean isDamagePreventedByControlledPredicate(GameData gameData, Permanent permanent) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) return false;
+        Set<PermanentPredicate> predicates = gameData.combatDamagePreventionPredicatesByController.get(controllerId);
+        return predicates != null && predicates.stream()
+                .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, predicate, FilterContext.of(gameData)));
+    }
+
     public boolean isAllDamageToControlledCreaturePrevented(GameData gameData, Permanent creature) {
         UUID controllerId = findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;

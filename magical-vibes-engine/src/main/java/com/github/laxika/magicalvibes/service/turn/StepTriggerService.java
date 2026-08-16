@@ -3853,7 +3853,12 @@ public class StepTriggerService {
             if (playerGraveyard == null) continue;
 
             for (Card card : new ArrayList<>(playerGraveyard)) {
-                List<CardEffect> graveyardEndStepEffects = card.getEffects(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED);
+                List<CardEffect> graveyardEndStepEffects = new ArrayList<>(
+                        card.getEffects(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED));
+                if (playerId.equals(activePlayerId)) {
+                    graveyardEndStepEffects.addAll(
+                            card.getEffects(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED));
+                }
                 if (graveyardEndStepEffects == null || graveyardEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : graveyardEndStepEffects) {

@@ -691,6 +691,22 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
+
+        @Test
+        @DisplayName("snapshots life gained for a dynamic counter amount")
+        void snapshotsLifeGainedForDynamicAmount() {
+            Permanent perm = createPermanent("Light of Promise");
+            var effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            when(amountEvaluationService.referencesEventValue(effect.amount())).thenReturn(true);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+        }
     }
 
     // ===== ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect =====

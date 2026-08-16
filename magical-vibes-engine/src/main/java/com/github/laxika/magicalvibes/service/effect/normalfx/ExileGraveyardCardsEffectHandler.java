@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -99,6 +100,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         UUID playerId = e.affectedPlayerId() != null ? e.affectedPlayerId() : entry.getControllerId();
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        UUID sourcePermanentId = null;
+        if (e.trackWithSource()
+                && entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null) {
+            sourcePermanentId = entry.getSourcePermanentId();
+        }
 
         if (graveyard == null || graveyard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
@@ -120,7 +127,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         for (Card card : toExile) {
-            exileService.exileCard(gameData, playerId, card);
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, playerId, card);
+            } else {
+                exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                        PendingExileReturn.toGraveyard(card, playerId));
+            }
         }
 
         GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");

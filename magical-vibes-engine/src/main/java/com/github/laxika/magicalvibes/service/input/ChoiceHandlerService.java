@@ -3159,7 +3159,7 @@ public class ChoiceHandlerService {
 
         // Present matching cards for "any number" selection
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, ctx.maxCount(),
-                targetPlayerId, cardName, ctx.drawForHandExiled());
+                targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode());
         inputCompletionService.publishStateAfterInput(gameData);
     }
 
@@ -3527,6 +3527,11 @@ public class ChoiceHandlerService {
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(new DrawCardForTargetPlayerEffect(handExiledCount)));
+        }
+
+        if (ctx.tokenTemplate() != null && handExiledCount > 0) {
+            permanentControlSupport.applyCreateToken(gameData, targetPlayerId, ctx.tokenTemplate(),
+                    handExiledCount, ctx.sourceSetCode());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -245,6 +245,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.addCardToHand(ownerId, leaving);
         }
+        gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
@@ -944,6 +945,9 @@ public class PermanentRemovalService {
                     gameData, target.getOriginalCard(), controllerId, ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                if (!target.getCard().isToken()) {
+                    gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                }
                 Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn
                         .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.ConcurrentHashMap<>());
                 for (CardSubtype subtype : creatureSubtypesAtDeath) {
@@ -1126,19 +1130,35 @@ public class PermanentRemovalService {
         if (pendingReturns == null) return;
 
         for (PendingExileReturn pending : pendingReturns) {
-            returnPendingExiledCard(gameData, pending);
+            returnPendingExiledCard(gameData, removedPermanent.getId(), pending);
         }
     }
 
-    private void returnPendingExiledCard(GameData gameData, PendingExileReturn pending) {
+    private void returnPendingExiledCard(GameData gameData, UUID sourcePermanentId,
+                                         PendingExileReturn pending) {
         Card exiledCard = pending.card();
         UUID ownerId = pending.controllerId();
+
+        ExiledCardEntry currentExileEntry = gameData.findExiledCard(exiledCard.getId());
+        if (pending.returnToGraveyard()
+                && (currentExileEntry == null
+                || !sourcePermanentId.equals(currentExileEntry.sourcePermanentId()))) {
+            log.info("Game {} - Idol-linked card {} no longer exiled with its source, return skipped",
+                    gameData.id, exiledCard.getName());
+            return;
+        }
 
         // Remove card from exile zone
         if (gameData.removeFromExile(exiledCard.getId())) {
             String playerName = gameData.playerIdToName.get(ownerId);
 
-            if (pending.returnToHand()) {
+            if (pending.returnToGraveyard()) {
+                graveyardService.addCardToGraveyard(gameData, ownerId, exiledCard, Zone.EXILE);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(exiledCard, " returns to " + playerName + "'s graveyard."));
+                log.info("Game {} - {} returns to graveyard from exile (source left battlefield)",
+                        gameData.id, exiledCard.getName());
+            } else if (pending.returnToHand()) {
                 // Return to owner's hand (e.g. Kitesail Freebooter — exiled from hand)
                 gameData.playerHands.get(ownerId).add(exiledCard);
                 gameLogService.append(gameData,

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "253")
 @CardRegistration(set = "JOU", collectorNumber = "164")
+@CardRegistration(set = "M21", collectorNumber = "252")
 public class TempleOfEpiphany extends Card {
 
     public TempleOfEpiphany() {

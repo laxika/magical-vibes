@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.EnumSet;
 import java.util.Locale;
@@ -73,7 +74,17 @@ final class TokenCardFactory {
         }
         if (token.tokenEffects() != null) {
             for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
-                tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                if (tokenEffect.getKey() == EffectSlot.STATIC
+                        && tokenEffect.getValue() instanceof SequenceEffect sequence) {
+                    // Token blueprints use a sequence to carry multiple static abilities through
+                    // the one-effect-per-slot blueprint map; live token cards keep each ability
+                    // as an ordinary static effect for the layered and combat queries.
+                    for (CardEffect step : sequence.steps()) {
+                        tokenCard.addEffect(EffectSlot.STATIC, step);
+                    }
+                } else {
+                    tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                }
             }
         }
         if (token.tokenAbilities() != null) {

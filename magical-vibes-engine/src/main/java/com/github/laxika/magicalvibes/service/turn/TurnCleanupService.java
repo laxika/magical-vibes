@@ -245,6 +245,7 @@ public class TurnCleanupService {
         gameData.allDamagePreventionPredicates.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
+        gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.playersCantGainLifeThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
@@ -324,6 +325,7 @@ public class TurnCleanupService {
 
         // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
         gameData.exilePlayAnyManaType.clear();
+        gameData.exileCastPermissionsUntilEndOfTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;

@@ -66,7 +66,10 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), amount, counterLabel);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, source, entry.getControllerId());
 
-        if (e.powerModifier() <= 0 && !plusZeroPlusOne) {
+        if (e.powerModifier() > 0) {
+            permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                    gameData, source, amount, entry.getControllerId());
+        } else if (!plusZeroPlusOne) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, amount);
         }
     }

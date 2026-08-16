@@ -125,6 +125,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
             case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> filter == null
                     ? subject + " to exile face down."
                     : subject + " to exile.";
+            case EXILE_PLAYABLE_ANY_NUMBER -> subject + " to exile (any number).";
             case GRAVEYARD -> subject + " to put into their graveyard (" + count + " remaining).";
             case BATTLEFIELD_UNDER_SEARCHER -> subject + " to put onto the battlefield under your control.";
             default -> throw new IllegalStateException("Unsupported destination " + destination);

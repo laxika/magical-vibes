@@ -54,6 +54,8 @@ public class RenownEffectHandler implements NormalEffectHandlerBean {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
+                permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                        gameData, source, amount, entry.getControllerId());
                 gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                         .text(" gets " + amount + " +1/+1 counter(s) and becomes renowned.").build());
                 log.info("Game {} - {} becomes renowned with {} +1/+1 counter(s)", gameData.id,

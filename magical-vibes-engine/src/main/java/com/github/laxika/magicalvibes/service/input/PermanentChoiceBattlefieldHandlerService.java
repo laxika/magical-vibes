@@ -1495,6 +1495,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (source != null) {
             source.setPowerModifier(source.getPowerModifier() + ctx.power());
             source.setToughnessModifier(source.getToughnessModifier() + ctx.toughness());
+            source.getGrantedKeywords().addAll(ctx.grantedKeywords());
             gameLogService.append(gameData, GameLog.builder()
                     .card(source.getCard())
                     .text(String.format(" gets %+d/%+d until end of turn.", ctx.power(), ctx.toughness()))

@@ -332,6 +332,11 @@ public class DamageSupport {
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
 
+            if (target.getCard().hasType(CardType.PLANESWALKER)) {
+                triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
+                        gameData, reflectionSource, sourceControllerId, target.getId(), damage, false, null);
+            }
+
             // All three slots below trigger on damage dealt *to a creature* — "whenever a creature …
             // is dealt damage" (Kazarov, Sengir Pureblood; Death Pits of Rath) and "whenever … deals
             // damage to a creature" (Greatbow Doyen, Bellowing Fiend, Cruel Deceiver's granted
@@ -740,6 +745,9 @@ public class DamageSupport {
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
+                    triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
+                            gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
+                            loyaltyDamage, false, null);
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
                             entry.getSourcePermanentId(), loyaltyDamage);
                     queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, loyaltyDamage);
@@ -1054,6 +1062,9 @@ public class DamageSupport {
             // Soul Echo: each 1 damage removes an echo counter instead (replacement, not prevention).
             effectiveDamage -= applySoulEchoCounterRemoval(gameData, playerId, effectiveDamage);
 
+            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, playerId, effectiveDamage);
+
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 
@@ -1101,6 +1112,7 @@ public class DamageSupport {
                 triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
                         gameData, sourceCreature, effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordNoncombatDamageToPlayer(playerId, effectiveDamage);
                 gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
                 gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
                 entry.recordPlayerDealtDamage(playerId);
@@ -1117,6 +1129,8 @@ public class DamageSupport {
                 // Night Dealings: "whenever a source you control deals damage to another player".
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
+                triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
+                        gameData, playerId, entry.getControllerId(), effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
@@ -1231,6 +1245,8 @@ public class DamageSupport {
             int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
             // Recursively process any redirects triggered by the target's shields
             processPendingRedirectDamage(gameData);
+            redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, targetId, redirectEffective);
 
             if (redirectEffective > 0) {
                 if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
@@ -1301,6 +1317,8 @@ public class DamageSupport {
 
                 int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
                 processPendingRedirectDamage(gameData);
+                redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                        gameData, targetId, redirectEffective);
 
                 if (redirectEffective > 0) {
                     if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {

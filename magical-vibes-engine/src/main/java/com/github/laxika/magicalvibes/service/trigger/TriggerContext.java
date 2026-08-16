@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 
@@ -387,6 +388,17 @@ public sealed interface TriggerContext {
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
                                    UUID sourcePermanentId, int totalDamage) implements TriggerContext {}
+
+    record CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
+                                              int damage, boolean combatDamage,
+                                              java.util.List<StackEntry> deferredTriggers)
+            implements TriggerContext {
+
+        public CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
+                                                  int damage, boolean combatDamage) {
+            this(damageSource, damagedPlaneswalkerId, damage, combatDamage, null);
+        }
+    }
 
     /**
      * Context for ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT triggers (Mangara's Equity).

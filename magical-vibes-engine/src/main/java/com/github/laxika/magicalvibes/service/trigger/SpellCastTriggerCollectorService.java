@@ -782,7 +782,10 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTriggers({
+            @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    })
     private boolean handleNthSpellCastTrigger(TriggerMatchContext match, NthSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         int spellsCast = match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId());

@@ -201,6 +201,13 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(CardType.ARTIFACT, amount, tokenName, 0, 0, null, null, subtypes, Set.of(), Set.of(), false, false, Map.of(), abilities, false, false, false, 0, Set.of());
     }
 
+    /** Non-creature artifact token with a dynamically computed count. */
+    public static CreateTokenEffect ofArtifactToken(DynamicAmount amount, String tokenName,
+                                                     List<CardSubtype> subtypes,
+                                                     List<ActivatedAbility> abilities) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, tokenName, 0, 0, null, null, subtypes, Set.of(), Set.of(), false, false, Map.of(), abilities, false, false, false, 0, Set.of());
+    }
+
     /** Colorless Powerstone artifact token with the standard restricted colorless-mana ability. */
     public static CreateTokenEffect ofPowerstoneToken(DynamicAmount amount) {
         return new CreateTokenEffect(CardType.ARTIFACT, amount, "Powerstone", 0, 0, null, null,
@@ -257,6 +264,16 @@ public record CreateTokenEffect(
 
     /** Treasure token: colorless artifact with "{T}, Sacrifice this artifact: Add one mana of any color." */
     public static CreateTokenEffect ofTreasureToken(int amount) {
+        return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )));
+    }
+
+    /** Treasure token with a dynamically computed count. */
+    public static CreateTokenEffect ofTreasureToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),
                 List.of(new ActivatedAbility(
                         true, null,

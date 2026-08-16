@@ -12,6 +12,9 @@ public enum EmblemTriggerStep {
     /** "At the beginning of your draw step, …" */
     DRAW_STEP,
 
+    /** "At the beginning of combat on your turn, …" */
+    BEGINNING_OF_COMBAT,
+
     /** "At the beginning of your end step, …" */
     END_STEP
 }

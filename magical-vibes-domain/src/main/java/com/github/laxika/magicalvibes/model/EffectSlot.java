@@ -114,6 +114,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} gate checked at trigger
      *  time. Used by Krovikan Horror. Contrast {@link #GRAVEYARD_UPKEEP_TRIGGERED}. */
     GRAVEYARD_END_STEP_TRIGGERED,
+    /** End-step trigger fired from a card in its owner's graveyard during that owner's end step. */
+    GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
     /** "At the beginning of each opponent's end step" — fires during the end step of any player who
      *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
@@ -929,6 +931,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  player, or a planeswalker. All combat damage dealt by the source in one combat damage step
      *  is summed into one trigger. */
     ON_SELF_DEALS_COMBAT_DAMAGE,
+    /** Triggers whenever this permanent itself deals combat damage to a player or planeswalker. */
+    ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
     /** Triggers whenever a creature its controller controls deals combat damage to anything — a
      *  creature, a player, or a planeswalker. Fires on the watcher permanent (which need not be a
      *  creature), once per damage-dealing creature per combat damage step; all damage that creature
@@ -938,6 +942,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@link #ON_SELF_DEALS_COMBAT_DAMAGE} ({@code CombatDamageService}) via
      *  {@code TriggerCollectionService.queueSourceDealsCombatDamageTriggers}. Used by Five-Alarm Fire. */
     ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
+    /** Triggers whenever a creature the controller controls deals damage to a planeswalker. */
+    ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
      *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
      *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires
@@ -963,6 +969,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
      *  Used by Night Dealings. */
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+    /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
+    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
      *  source an <em>opponent</em> controls — "Whenever a source an opponent controls deals damage to
      *  you, ...". Like {@link #ON_CONTROLLER_DEALT_DAMAGE} (fires once per damage source, snapshots the

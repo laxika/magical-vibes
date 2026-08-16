@@ -193,15 +193,22 @@ public sealed interface ChoiceContext {
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                              int maxCount, boolean drawForHandExiled) implements ChoiceContext {
+                              int maxCount, boolean drawForHandExiled,
+                              com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                              String sourceSetCode) implements ChoiceContext {
 
         public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) {
-            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, false);
+            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, false, null, null);
         }
 
         public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
                                  boolean drawForHandExiled) {
-            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, drawForHandExiled);
+            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, drawForHandExiled, null, null);
+        }
+
+        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
+                                 int maxCount, boolean drawForHandExiled) {
+            this(targetPlayerId, controllerId, excludedTypes, maxCount, drawForHandExiled, null, null);
         }
 
         public boolean drawForEachHandCardExiled() {

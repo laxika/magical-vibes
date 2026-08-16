@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -321,6 +322,7 @@ public class PermanentCounterSupport {
             case VERSE -> { target.setCounterCount(CounterType.VERSE, target.getCounterCount(CounterType.VERSE) + count); yield "verse"; }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
             case INFECTION -> { target.setCounterCount(CounterType.INFECTION, target.getCounterCount(CounterType.INFECTION) + count); yield "infection"; }
+            case INCARNATION -> { target.setCounterCount(CounterType.INCARNATION, target.getCounterCount(CounterType.INCARNATION) + count); yield "incarnation"; }
             case INCUBATION -> { target.setCounterCount(CounterType.INCUBATION, target.getCounterCount(CounterType.INCUBATION) + count); yield "incubation"; }
             case MAGNET -> { target.setCounterCount(CounterType.MAGNET, target.getCounterCount(CounterType.MAGNET) + count); yield "magnet"; }
             case MANIFESTATION -> { target.setCounterCount(CounterType.MANIFESTATION, target.getCounterCount(CounterType.MANIFESTATION) + count); yield "manifestation"; }
@@ -710,7 +712,20 @@ public class PermanentCounterSupport {
      */
     private void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
             GameData gameData, Permanent target) {
-        if (target == null || !gameQueryService.isCreature(gameData, target)
+        firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                gameData, target, 1, null, List.of());
+    }
+
+    public void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId) {
+        firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                gameData, target, count, placingPlayerId, List.of());
+    }
+
+    public void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+            GameData gameData, Permanent target, int count, UUID placingPlayerId,
+            List<Permanent> excludedSources) {
+        if (count <= 0 || target == null || !gameQueryService.isCreature(gameData, target)
                 || predicateEvaluationService.matchesPermanentPredicate(target,
                 new PermanentHasSubtypePredicate(CardSubtype.HYDRA),
                 FilterContext.of(gameData))) {
@@ -726,8 +741,10 @@ public class PermanentCounterSupport {
         if (battlefield == null) {
             return;
         }
+        Set<UUID> excludedSourceIds = excludedSources.stream().map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
         for (Permanent watcher : new ArrayList<>(battlefield)) {
-            if (watcher.getId().equals(target.getId())) {
+            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())) {
                 continue;
             }
             Card card = watcher.getCard();

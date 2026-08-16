@@ -37,7 +37,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         List<Permanent> toExile = new ArrayList<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {

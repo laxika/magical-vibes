@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -19,7 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves multi-target bounce followed by a rider that uses the number of permanents returned.
+ * Resolves multi-target bounce followed by a rider that uses the number or statistic of permanents returned.
  */
 @Slf4j
 @Component
@@ -67,9 +68,12 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
         }
 
         List<Permanent> returned = new ArrayList<>();
+        int eventValue = 0;
         for (Permanent target : toReturn) {
+            int statValue = snapshotStat(gameData, target, e.stat());
             if (permanentRemovalService.removePermanentToHand(gameData, target)) {
                 returned.add(target);
+                eventValue += statValue;
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
                 log.info("Game {} - {} returned to owner's hand by {}",
@@ -84,9 +88,18 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
 
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        thenEntry.setEventValue(returned.size());
+        thenEntry.setEventValue(e.stat() == EventStat.NONE ? returned.size() : eventValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         effectResolutionService.resolveEffects(gameData, thenEntry);
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private int snapshotStat(GameData gameData, Permanent target, EventStat stat) {
+        return switch (stat) {
+            case NONE -> 0;
+            case MANA_VALUE -> target.getCard().getManaValue();
+            case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
+            case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+        };
     }
 }

@@ -999,6 +999,8 @@ public class ActivatedAbilityExecutionService {
                 if (damage > 0) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+                    effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                            gameData, playerId, effectiveDamage);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
                         if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                             int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
@@ -1135,6 +1137,8 @@ public class ActivatedAbilityExecutionService {
         if (damage > 0) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, playerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);

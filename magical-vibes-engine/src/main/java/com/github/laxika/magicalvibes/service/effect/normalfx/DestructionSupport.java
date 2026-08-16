@@ -372,6 +372,8 @@ public class DestructionSupport {
 
         int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+        effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                gameData, playerId, effectiveDamage);
 
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "229")
+@CardRegistration(set = "M21", collectorNumber = "236")
 public class ShortSword extends Card {
 
     public ShortSword() {

@@ -125,6 +125,10 @@ export class TargetingChoiceService {
     this.spellTargetSelectedIds = [];
     // Flashback
     this.pendingFlashback = false;
+    this.selectingGraveyardCastDiscard = false;
+    this.graveyardCastDiscardCardIndex = -1;
+    this.graveyardCastDiscardCardName = '';
+    this.pendingGraveyardCastDiscardHandIndex = null;
     // Exile / library-top casting
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
@@ -314,6 +318,10 @@ export class TargetingChoiceService {
 
   // --- Flashback state ---
   private pendingFlashback = false;
+  selectingGraveyardCastDiscard = false;
+  graveyardCastDiscardCardIndex = -1;
+  graveyardCastDiscardCardName = '';
+  private pendingGraveyardCastDiscardHandIndex: number | null = null;
 
   // --- Exile / library-top casting state ---
   private pendingFromExileCardId: string | null = null;
@@ -972,7 +980,39 @@ export class TargetingChoiceService {
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
     this.pendingFlashback = true;
+    if (card.graveyardCastRequiresDiscard) {
+      this.selectingGraveyardCastDiscard = true;
+      this.graveyardCastDiscardCardIndex = graveyardIndex;
+      this.graveyardCastDiscardCardName = card.name;
+      return;
+    }
     this.continueFlashbackPlay(graveyardIndex, card);
+  }
+
+  selectGraveyardCastDiscardHandCard(handIndex: number): void {
+    if (!this.selectingGraveyardCastDiscard) return;
+    const graveyardIndex = this.graveyardCastDiscardCardIndex;
+    const game = this.gameSignal();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    const card = playerIndex >= 0 ? game?.graveyards[playerIndex]?.[graveyardIndex] : undefined;
+    if (!card) return;
+    this.pendingGraveyardCastDiscardHandIndex = handIndex;
+    this.selectingGraveyardCastDiscard = false;
+    this.graveyardCastDiscardCardIndex = -1;
+    this.graveyardCastDiscardCardName = '';
+    if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
+      this.continueFlashbackPlay(graveyardIndex, card);
+    } else {
+      this.sendPlayCardMessage(graveyardIndex, null);
+    }
+  }
+
+  cancelGraveyardCastDiscard(): void {
+    this.selectingGraveyardCastDiscard = false;
+    this.graveyardCastDiscardCardIndex = -1;
+    this.graveyardCastDiscardCardName = '';
+    this.pendingGraveyardCastDiscardHandIndex = null;
+    this.pendingFlashback = false;
   }
 
   private continueFlashbackPlay(graveyardIndex: number, card: Card): void {
@@ -1142,6 +1182,10 @@ export class TargetingChoiceService {
         msg.morph = true;
       }
       this.pendingAlternateExileHandIndex = null;
+    }
+    if (this.pendingGraveyardCastDiscardHandIndex != null) {
+      msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
+      this.pendingGraveyardCastDiscardHandIndex = null;
     }
     if (this.pendingBeholdPermanentId != null) {
       msg.beholdPermanentId = this.pendingBeholdPermanentId;
@@ -1680,6 +1724,9 @@ export class TargetingChoiceService {
     // A completed cast consumes these in sendPlayCardMessage before we get here;
     // clearing them covers the cancel paths so the flags can't leak into a later cast.
     this.pendingFlashback = false;
+    this.selectingGraveyardCastDiscard = false;
+    this.graveyardCastDiscardCardIndex = -1;
+    this.graveyardCastDiscardCardName = '';
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
@@ -1689,6 +1736,7 @@ export class TargetingChoiceService {
 
   cancelTargeting(): void {
     this.resetTargetingState();
+    this.pendingGraveyardCastDiscardHandIndex = null;
     this.pendingPhyrexianLifeCount = null;
   }
 

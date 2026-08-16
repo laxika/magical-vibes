@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -782,6 +784,29 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Sol Ring");
             assertThat(msg.options()).doesNotContain("Bear");
+        }
+
+        @Test
+        @DisplayName("Excludes basic land names while retaining nonbasic land names")
+        void excludesBasicLandNames() {
+            Card basicLand = createCard("Plains", CardType.LAND);
+            basicLand.setSupertypes(Set.of(CardSupertype.BASIC));
+            Card nonbasicLand = createCard("Bojuka Bog", CardType.LAND);
+            Card creature = createCreature("Bear");
+            gd.playerHands.get(PLAYER2_ID).addAll(List.of(basicLand, nonbasicLand, creature));
+            CreateTokenEffect tokenTemplate = CreateTokenEffect.blackZombie(1);
+
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null,
+                    true, tokenTemplate, "M21");
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).contains("Bojuka Bog", "Bear");
+            assertThat(msg.options()).doesNotContain("Plains");
+            assertThat(msg.prompt()).isEqualTo("Choose a card name other than a basic land card name.");
+            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice)
+                    gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.tokenTemplate()).isEqualTo(tokenTemplate);
+            assertThat(ctx.sourceSetCode()).isEqualTo("M21");
         }
     }
 

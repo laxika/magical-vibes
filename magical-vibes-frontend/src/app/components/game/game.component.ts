@@ -593,6 +593,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playCard(index: number): void {
+    if (this.choice.targeting.selectingGraveyardCastDiscard) {
+      this.choice.targeting.selectGraveyardCastDiscardHandCard(index);
+      return;
+    }
     if (this.choice.targeting.selectingAlternateCostHandCard) {
       this.choice.targeting.selectAlternateCostHandCard(index);
       return;
@@ -639,7 +643,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playFlashback(index: number): void {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
-      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly) {
+      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -1632,6 +1636,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
+    if (t.selectingGraveyardCastDiscard) { t.cancelGraveyardCastDiscard(); return true; }
     if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
     if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
@@ -1657,7 +1662,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
-      || t.selectingAlternateCostHandCard || t.selectingExileCounterCost
+      || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard;
   }

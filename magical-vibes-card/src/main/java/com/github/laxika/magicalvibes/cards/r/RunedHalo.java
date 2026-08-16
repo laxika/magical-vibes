@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "21")
+@CardRegistration(set = "M21", collectorNumber = "32")
 public class RunedHalo extends Card {
 
     public RunedHalo() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "79")
+@CardRegistration(set = "M21", collectorNumber = "124")
 public class TavernSwindler extends Card {
 
     public TavernSwindler() {

@@ -215,7 +215,7 @@ public class AuraAttachmentService {
      * @param auraControllerId the controller of the Aura, for controller-relative enchant filters
      */
     public boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
-        TargetFilter filter = auraCard.getTargetFilter();
+        TargetFilter filter = auraCard.getDeclaredTargetFilter();
         if (filter == null) {
             return gameQueryService.isCreature(gameData, host);
         }
@@ -282,7 +282,7 @@ public class AuraAttachmentService {
 
         // The card's declared target filter is its enchant restriction (e.g. "Enchant creature");
         // player-shaped filters never apply to a permanent host.
-        TargetFilter filter = attachment.getCard().getTargetFilter();
+        TargetFilter filter = attachment.getCard().getDeclaredTargetFilter();
         if (filter instanceof PermanentPredicateTargetFilter
                 || filter instanceof ControlledPermanentPredicateTargetFilter
                 || filter instanceof OwnedPermanentPredicateTargetFilter) {

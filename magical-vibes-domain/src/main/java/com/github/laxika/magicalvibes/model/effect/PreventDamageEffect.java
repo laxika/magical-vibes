@@ -19,10 +19,12 @@ import java.util.Set;
  *
  * @param scope           which shield-state slot to write
  * @param amount          the shield size for {@code NEXT_*} scopes ({@code null} for ALL-style scopes)
- * @param combatOnly      combat-only window for the controller and target-creature scopes
+     * @param combatOnly      combat-only window for the controller, target-creature, and matching-permanent scopes
  * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
- * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS};
+     * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+     *                        or all combat damage to which is prevented for
+     *                        {@link PreventionScope#ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS};
  *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
@@ -68,13 +70,15 @@ public record PreventDamageEffect(
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
         }
         boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
         if (victimPredicate != null && !acceptsVictimPredicate) {
             throw new IllegalArgumentException(
-                    "victimPredicate is only the ALL_TO_MATCHING_PERMANENTS / NEXT_TO_TARGET_CREATURE parameter: " + scope);
+                    "victimPredicate is only a matching-permanent or NEXT_TO_TARGET_CREATURE parameter: " + scope);
         }
-        if (victimPredicate == null && scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS) {
-            throw new IllegalArgumentException("ALL_TO_MATCHING_PERMANENTS requires a victimPredicate");
+        if (victimPredicate == null && (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS)) {
+            throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
             throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
@@ -169,6 +173,12 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt to [permanents matching {@code victimPredicate}] this turn" (Ethersworn Shieldmage). */
     public static PreventDamageEffect allToMatchingPermanents(PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(PreventionScope.ALL_TO_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
+    }
+
+    /** "Prevent all combat damage that would be dealt this turn to matching permanents you control." */
+    public static PreventDamageEffect allCombatToControlledMatchingPermanents(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS, null, true, null, null, victimPredicate);
     }
 
     /** "Prevent all damage that would be dealt to target creature(s) this turn." */

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "245")
+@CardRegistration(set = "M21", collectorNumber = "238")
 public class Skyscanner extends Card {
 
     public Skyscanner() {

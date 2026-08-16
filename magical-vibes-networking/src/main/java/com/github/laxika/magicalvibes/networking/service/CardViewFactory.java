@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CastingOption;
+import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
@@ -126,6 +128,9 @@ public class CardViewFactory {
         String alternateCostExileHandLabel = exileHandCost.map(ExileCardsFromHandCastingCost::label)
                 .orElseGet(() -> revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
         boolean alternateCostRevealsHandCard = revealHandCost.isPresent();
+        boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
+                .isPresent();
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -189,6 +194,7 @@ public class CardViewFactory {
                 alternateCostExileHandLabel,
                 false,
                 alternateCostRevealsHandCard,
+                graveyardCastRequiresDiscard,
                 graveyardAbilityViews,
                 handAbilityViews,
                 card.getBackFaceCard() != null,

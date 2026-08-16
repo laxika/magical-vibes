@@ -10,14 +10,17 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -29,6 +32,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -79,6 +83,7 @@ class CombatDamageServiceTest {
     @Mock private LifeSupport lifeSupport;
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
 
     private CombatDamageService combatDamageService;
 
@@ -109,7 +114,7 @@ class CombatDamageServiceTest {
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                predicateEvaluationService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
@@ -1200,6 +1205,32 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Delayed combat-damage draw checks the source predicate and player-only damage")
+        void delayedDrawFiltersDamageSources() {
+            stubbedDelayedDrawPredicate();
+            addAttacker("Small creature", 2, 2);
+            addAttacker("Large creature", 3, 3);
+            gameData.queueDelayedAction(new DelayedCombatDamageDraw(
+                    player1Id, createCard("Subira", 2, 3), new PermanentPowerAtMostPredicate(2), false));
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(DrawCardEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+        }
+
+        private void stubbedDelayedDrawPredicate() {
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(gameData), any(Permanent.class), any(PermanentPowerAtMostPredicate.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent source = invocation.getArgument(1);
+                        return source.getCard().getPower() <= 2;
+                    });
         }
     }
 }

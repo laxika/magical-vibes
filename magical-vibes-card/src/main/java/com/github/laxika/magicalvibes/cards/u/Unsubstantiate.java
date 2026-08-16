@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrCreatureToHandEffect;
 
 @CardRegistration(set = "EMN", collectorNumber = "79")
+@CardRegistration(set = "M21", collectorNumber = "82")
 public class Unsubstantiate extends Card {
 
     public Unsubstantiate() {

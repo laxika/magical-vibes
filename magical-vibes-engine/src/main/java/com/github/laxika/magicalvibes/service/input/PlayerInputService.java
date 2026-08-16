@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -1144,12 +1145,25 @@ public class PlayerInputService {
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType, int maxCount,
                                          boolean drawForHandExiled) {
-        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
-                targetPlayerId, choosingPlayerId, excludedTypes, maxCount, drawForHandExiled);
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
+                maxCount, drawForHandExiled, false, null, null);
+    }
 
-        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
+                                         boolean drawForHandExiled, boolean excludeBasicLandNames,
+                                         CreateTokenEffect tokenTemplate, String sourceSetCode) {
+        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
+                targetPlayerId, choosingPlayerId, excludedTypes, maxCount, drawForHandExiled,
+                tokenTemplate, sourceSetCode);
+
+        List<String> cardNames = excludeBasicLandNames
+                ? collectNonbasicCardNamesInGame(gameData)
+                : collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
         String prompt;
-        if (requiredType != null) {
+        if (excludeBasicLandNames) {
+            prompt = "Choose a card name other than a basic land card name.";
+        } else if (requiredType != null) {
             String typeLabel = requiredType.name().toLowerCase();
             String article = "aeiou".indexOf(typeLabel.charAt(0)) >= 0 ? "an " : "a ";
             prompt = "Choose " + article + typeLabel + " card name.";
@@ -1373,11 +1387,19 @@ public class PlayerInputService {
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
+                cardName, drawForHandExiled, null, null);
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled, CreateTokenEffect tokenTemplate,
+                                          String sourceSetCode) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
-                choosingPlayerId, cardName, drawForHandExiled));
+                choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode));
     }
 
     /**

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "262")
+@CardRegistration(set = "M21", collectorNumber = "230")
 public class EpitaphGolem extends Card {
 
     public EpitaphGolem() {

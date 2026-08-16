@@ -259,6 +259,11 @@ public sealed interface MultiPermanentChoiceContext {
     record TapSubtypeBoost(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap the chosen permanents to boost the source by the number tapped (Siege Striker). */
+    record TapAnyNumberBoostSelf(UUID sourcePermanentId, int powerPerPermanent, int toughnessPerPermanent)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * {@code targetPlayerId} chose one creature to keep able to block; every other creature they
      * control can't block this turn (Goblin War Cry).

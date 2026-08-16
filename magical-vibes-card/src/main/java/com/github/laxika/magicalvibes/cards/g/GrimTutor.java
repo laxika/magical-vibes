@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "S99", collectorNumber = "79")
+@CardRegistration(set = "M21", collectorNumber = "103")
 public class GrimTutor extends Card {
 
     public GrimTutor() {

@@ -55,6 +55,11 @@ public record ExileGraveyardCardsEffect(
                 filter, null, true, trackWithSource);
     }
 
+    public static ExileGraveyardCardsEffect ownAllMatchingUntilSourceLeaves(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.OWN_ALL_MATCHING,
+                filter, null, false, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         // Per-scope spec reproducing the old conditional booleans exactly:

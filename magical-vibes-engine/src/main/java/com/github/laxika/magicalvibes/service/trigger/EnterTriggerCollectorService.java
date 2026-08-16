@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
@@ -639,8 +640,15 @@ public class EnterTriggerCollectorService {
         }
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId));
+            PermanentChoiceContext.EnteringPermanentAnyTargetTrigger context = effect.damage() instanceof ChosenPermanentPower
+                    ? new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(), enteringPermanentId,
+                    gameQueryService.getEffectivePower(match.gameData(),
+                            gameQueryService.findPermanentById(match.gameData(), enteringPermanentId)))
+                    : new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId);
+            match.gameData().queueInteraction(context);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (entering creature deals its power to any target)",

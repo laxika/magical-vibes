@@ -13,6 +13,8 @@ public enum LibrarySearchDestination {
     EXILE_WITH_SOURCE,
     /** Exile any number of matching cards, then create one token for each selected card. */
     EXILE_AND_CREATE_TOKENS,
+    /** Exile any number of matching cards and grant permission to cast each until end of turn. */
+    EXILE_PLAYABLE_ANY_NUMBER,
     /** Exile the chosen card face down into a pile tracked "with" a source permanent, shuffling the
      * pile once the last of {@code remainingCount} picks is made (Mangara's Tome). Carries the
      * {@code sourcePermanentId}. */

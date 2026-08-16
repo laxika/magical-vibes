@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndRet
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -455,6 +456,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = GainLifeEqualToDyingSourcePowerEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleDeathGainLifeEqualToPower(TriggerMatchContext match,
+            GainLifeEqualToDyingSourcePowerEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        int power = dyingPermanent != null
+                ? dyingPermanent.getEffectivePower()
+                : (sd.dyingCard().getPower() != null ? sd.dyingCard().getPower() : 0);
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new GainLifeEffect(Math.max(0, power))))
+        ));
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handleDeathMayEffect(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
@@ -654,7 +673,9 @@ public class DeathTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect))
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId()
             ));
         }
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 import java.util.UUID;
@@ -50,6 +51,8 @@ public class GraveyardTargetOperationState {
      * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
      */
     public boolean resolutionTimeExileCreateZombieTokenCopyResume;
+    /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
+    public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;
     /** Resolution-time optional filtered exile whose successful choice has a life-loss rider. */
     public boolean resolutionTimeExileThenEachOpponentLosesLifeResume;
     /** Whether the optional filtered exile choice has been answered. */
@@ -93,5 +96,8 @@ public class GraveyardTargetOperationState {
     public record AsEntersGraveyardExileContext(UUID enteringPermanentId, UUID controllerId, Card card,
                                                 UUID targetId, boolean wasCastFromHand, int etbMode,
                                                 boolean kicked) {
+    }
+
+    public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
     }
 }

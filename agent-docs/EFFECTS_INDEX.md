@@ -3421,3 +3421,28 @@ Samite Blessing uses `PreventDamageFromChosenSourceEffect.nextDamageToTargetCrea
 | `DiscardHandThenDrawAndReturnArtifactOrCreatureCardsEffect` | `()` | discard the controller's hand, draw that many, then optionally choose one discarded artifact or creature at each of mana values 1, 2, and 3 to return simultaneously to the battlefield. Used by Queen Kayla bin-Kroog |
 | `CopyControllerCastSpellOnSpellCastEffect.asArtifactToken` | `(CardPredicate spellFilter)` | optional controller spell-cast copy that becomes a token and gains artifact as an additional type. Used by Tawnos, the Toymaker |
 | `ChooseCardNameAndExileFromZonesEffect` capped/draw variant | `(List<CardType> excludedTypes, CardType requiredType, int maxCount, boolean drawForEachHandCardExiled)` | Extends the named multi-zone exile interaction with a finite selection cap; when the draw flag is true, the target draws once per selected card exiled from their hand after the library shuffle. The Stone Brain uses `(List.of(), null, 4, true)` with an opponent target. |
+
+## M21 additions
+
+| Effect | Constructor shape | Usage |
+|---|---|---|
+| `AllowCastCardsExiledWithSourceUntilEndOfTurnEffect` | `(CardPredicate filter, boolean withoutPayingManaCost)` | Grants one source-linked cast permission until end of turn; the free-cast grant is consumed when used. |
+| `AllowLoyaltyActivationAtInstantSpeedEffect` | `()` | Lets the source planeswalker's controller activate its loyalty abilities at instant speed while retaining the normal activation limit. |
+| `ControllerDamageMultiplierEffect` | `(int multiplier, StackEntryPredicate filter, boolean combat)` | Multiplies damage from sources controlled by the static effect's controller; Fiery Emancipation uses `(3, null, true)`. |
+| `CreateTokensAttackingEffect` | `(int amount, CreateTokenEffect token)` | Internal delayed payload that creates a token batch tapped and attacking after choosing attack targets. |
+| `EachPlayerDiscardsOrLosesLifeEffect` | `(int lifeLoss)` | Processes one discard per player in turn order; opponents unable to discard lose life instead. |
+| `EnchantedPermanentCantActivateAbilitiesEffect` | `()` / `(boolean blocksManaAbilities)` | Aura restriction for any enchanted permanent; the default preserves mana abilities. |
+| `ExileMatchingCardsFromGraveyardAndLibraryMayCastThisTurnEffect` | `(CardPredicate filter)` | Chooses matching cards from the controller's graveyard and library, exiles them, and grants cast permission for the turn. |
+| `ExileSelfAndCreateTokenEffect` | `(CreateTokenEffect token)` | Exiles the source and creates the token only if that exile succeeds. |
+| `ExileSelfThenEffect` | `(CardEffect thenEffect)` | Exiles the source and resolves the follow-up only if that exile succeeds. |
+| `ExileTopCardMayPlayUntilAnotherEffect` | `()` | Replaces this source's previous indefinite exile-play permission with one for the newly exiled top card. |
+| `GainLifeEqualToDyingSourcePowerEffect` | `()` | Death trigger whose collector snapshots the dying source's effective power. |
+| `IncreaseOpponentLifeCostForTargetingControlledPermanentEffect` | `(PermanentPredicate predicate, int amount)` | Adds a life cost to opponent spells targeting a matching permanent controlled by the tax source's controller. |
+| `PayManaThenMayTapOrUntapTargetCreatureEffect` | `(String manaCost)` | Pays during resolution, then creates the separate optional targeted tap-or-untap reflexive trigger. |
+| `PreventDamageToControllerAndPutCounterOnSelfEffect` | `(CounterType counterType)` | Prevents each damage event to the controller and puts one counter on the source permanent. |
+| `PutUpToCardsFromHandOntoBattlefieldEffect` | `(CardPredicate predicate, String label, int maxCount)` | Multi-selects up to the limit from hand and puts the chosen permanent cards onto the battlefield. |
+| `ReduceOwnCastCostByManaCostEffect` | `(String reduction)` / `(ManaCost reduction)` | Reduces matching colored requirements as well as generic mana; wrap in a cast-time condition when needed. |
+| `RegisterDelayedNontokenAttackTokenEffect` | `(CreateTokenEffect token)` | Registers a turn-scoped trigger that counts declared nontoken attackers and creates that many attacking tokens. |
+| `SearchLibraryAndOrGraveyardForCardToBattlefieldEffect` | `(CardPredicate filter)` | Takes a matching graveyard card first or searches and shuffles the library, putting the chosen card onto the battlefield. |
+| `TapAnyNumberBoostSelfEffect` | `(PermanentPredicate filter, int powerEach, int toughnessEach)` | Taps any number of eligible permanents and boosts the source for each permanent actually tapped. |
+| `UntapSearchedPermanentEffect` | `()` | Untaps the permanent placed by the preceding search effect without targeting it. |

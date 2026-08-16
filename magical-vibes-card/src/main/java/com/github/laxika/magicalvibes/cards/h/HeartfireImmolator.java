@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "201")
+@CardRegistration(set = "M21", collectorNumber = "150")
 public class HeartfireImmolator extends Card {
 
     public HeartfireImmolator() {

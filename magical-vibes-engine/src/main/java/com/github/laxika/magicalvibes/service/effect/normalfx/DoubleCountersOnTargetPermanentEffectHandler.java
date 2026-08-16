@@ -40,13 +40,29 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
             targetIds = List.of(entry.getTargetId());
         }
         for (UUID targetId : targetIds) {
-            doubleCounters(gameData, entry, targetId);
+            doubleCounters(gameData, entry, targetId, (DoubleCountersOnTargetPermanentEffect) effect);
         }
     }
 
-    private void doubleCounters(GameData gameData, StackEntry entry, UUID targetId) {
+    private void doubleCounters(GameData gameData, StackEntry entry, UUID targetId,
+                                DoubleCountersOnTargetPermanentEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
+            return;
+        }
+
+        if (effect.counterType() != null) {
+            int current = target.getCounterCount(effect.counterType());
+            if (current <= 0) return;
+            int before = current;
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, target, effect.counterType(), current);
+            if (target.getCounterCount(effect.counterType()) > before) {
+                gameLogService.append(gameData,
+                        GameLog.textCardText("Doubled the number of counters on ", target.getCard(), "."));
+                log.info("Game {} - doubled {} counters on {}", gameData.id,
+                        effect.counterType(), target.getCard().getName());
+            }
             return;
         }
 

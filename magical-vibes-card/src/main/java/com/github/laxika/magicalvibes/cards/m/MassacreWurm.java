@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "46")
+@CardRegistration(set = "M21", collectorNumber = "114")
 public class MassacreWurm extends Card {
 
     public MassacreWurm() {

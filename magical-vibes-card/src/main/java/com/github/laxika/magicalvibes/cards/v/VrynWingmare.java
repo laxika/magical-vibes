@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "40")
+@CardRegistration(set = "M21", collectorNumber = "43")
 public class VrynWingmare extends Card {
 
     public VrynWingmare() {

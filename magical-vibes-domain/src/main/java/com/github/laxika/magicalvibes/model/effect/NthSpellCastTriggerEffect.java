@@ -5,8 +5,9 @@ import java.util.List;
 /**
  * Trigger descriptor for "whenever you cast your Nth spell in a turn" abilities.
  * <p>
- * Works in {@code ON_CONTROLLER_CASTS_SPELL} slot. The trigger fires only when
- * the controller's spell-cast count for the current turn equals {@code spellNumber}.
+ * Works in {@code ON_CONTROLLER_CASTS_SPELL} and {@code ON_OPPONENT_CASTS_SPELL} slots. The
+ * trigger fires only when the relevant caster's spell-cast count for the current turn equals
+ * {@code spellNumber}.
  * <p>
  * When wrapped in {@link MayEffect}, the player is prompted before the resolved
  * effects execute (e.g. "you may transform" on Vance's Blasting Cannons).

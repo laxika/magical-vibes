@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCre
 
 @CardRegistration(set = "SOM", collectorNumber = "106")
 @CardRegistration(set = "M13", collectorNumber = "153")
+@CardRegistration(set = "M21", collectorNumber = "168")
 public class TurnToSlag extends Card {
 
     public TurnToSlag() {

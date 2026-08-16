@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForMatc
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceColoredCastCostForMatchingSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceBuybackCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostByManaCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -52,6 +53,7 @@ public final class CostModificationTestRegistry {
         registry.register(new ReduceCastCostForChosenNameSpellsEffectHandler());
         registry.register(new ReduceCastCostForChosenSubtypeSpellsEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
+        registry.register(new ReduceOwnCastCostByManaCostEffectHandler());
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
         return registry;
     }

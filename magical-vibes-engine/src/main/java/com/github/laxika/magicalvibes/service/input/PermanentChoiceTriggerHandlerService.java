@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final CreatureControlService creatureControlService;
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
+    private final PermanentControlSupport permanentControlSupport;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         boolean declined = stt.optionalTarget()
@@ -724,6 +726,45 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCreateTokensAttacking(GameData gameData, UUID attackTargetId,
+                                             PermanentChoiceContext.CreateTokensAttacking context) {
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        chosenTargets.add(attackTargetId);
+
+        if (chosenTargets.size() < context.tokenCount()) {
+            beginCreateTokensAttackingTargetChoice(gameData, new PermanentChoiceContext.CreateTokensAttacking(
+                    context.controllerId(), context.sourceCard(), context.tokenEffect(),
+                    context.amount(), context.tokenCount(), chosenTargets));
+            return;
+        }
+
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                gameData, context.controllerId(), context.tokenEffect(), context.amount(),
+                context.sourceCard().getSetCode());
+        for (int i = 0; i < createdIds.size(); i++) {
+            Permanent token = gameQueryService.findPermanentById(gameData, createdIds.get(i));
+            if (token != null && !chosenTargets.isEmpty()) {
+                token.setAttackTarget(chosenTargets.get(i % chosenTargets.size()));
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void beginCreateTokensAttackingTargetChoice(
+            GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, List.of(opponentId),
+                "Choose the player or planeswalker for the next Soldier token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,

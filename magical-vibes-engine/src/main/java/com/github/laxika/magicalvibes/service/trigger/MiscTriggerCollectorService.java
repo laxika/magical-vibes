@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
@@ -1193,6 +1195,42 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on controlled-source noncombat damage ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), damage.damageAmount());
+        return true;
+    }
+
+    @CollectsTrigger(value = SequenceEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        return enqueueNoncombatDamageTrigger(match, effect);
+    }
+
+    @CollectsTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
+            slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    private boolean handleNoncombatDamageToDamagedPlayerPermanent(TriggerMatchContext match,
+            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, TriggerContext ctx) {
+        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
+        if (!match.controllerId().equals(damage.sourceControllerId())) return false;
+
+        Card sourceCard = match.permanent().getCard();
+        int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
+        TargetFilter targetFilter = targetGroupIndex >= 0
+                ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
+                : sourceCard.getTargetFilter();
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                sourceCard,
+                match.controllerId(),
+                new ArrayList<>(List.of(effect)),
+                false,
+                targetFilter,
+                damage.damageAmount(),
+                match.permanent().getId(),
+                false,
+                damage.damagedPlayerId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on noncombat damage to opponent and awaits a target",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

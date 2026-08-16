@@ -1207,6 +1207,21 @@ public class TriggerCollectionService {
         checkAllySourceDealtDamageToOpponentTriggers(gameData, damagedPlayerId, sourceControllerId, null, amount);
     }
 
+    public void checkAllySourceDealtNoncombatDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
+            UUID sourceControllerId, int amount) {
+        if (amount <= 0 || sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) return;
+        var ctx = new TriggerContext.NoncombatDamageToOpponent(damagedPlayerId, sourceControllerId, amount);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            for (CardEffect effect : permanent.getCard().getEffects(
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)) {
+                var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
+                dispatch(match, EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+            }
+        }
+    }
+
     public void checkAllySourceDealtDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
             UUID sourceControllerId, UUID sourcePermanentId, int amount) {
         if (amount <= 0 || sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) return;
@@ -1455,18 +1470,8 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage);
-        List<CardEffect> selfEffects = new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (snapshottedSelfEffects != null) {
-            selfEffects.addAll(snapshottedSelfEffects);
-        } else if (sourcePermanent != null) {
-            selfEffects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
-            selfEffects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
-        }
-        for (CardEffect effect : selfEffects) {
-            var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
-            registry.dispatch(match, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE, effect, ctx);
-        }
+        dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                totalDamage, snapshottedSelfEffects, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE);
 
         // "Whenever a creature you control deals combat damage" watchers (Five-Alarm Fire). Scanned on
         // the damage source's controller's battlefield only; the watcher itself needn't be a creature.
@@ -2587,6 +2592,64 @@ public class TriggerCollectionService {
         // blocker has already moved the source off the battlefield.
         fireAllyDealtDamageToCreatureTrigger(gameData, damageSource, damageSource, damageSourceControllerId,
                 damagedCreatureControllerId, damagedCreatureId, damage, combatDamage);
+    }
+
+    public void checkAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, Permanent damageSource,
+            UUID damageSourceControllerId, UUID damagedPlaneswalkerId, int damage, boolean combatDamage,
+            List<StackEntry> deferredTriggers) {
+        if (damageSource == null || damageSourceControllerId == null || damagedPlaneswalkerId == null || damage <= 0) {
+            return;
+        }
+        Permanent planeswalker = gameQueryService.findPermanentById(gameData, damagedPlaneswalkerId);
+        if (planeswalker == null || !planeswalker.getCard().hasType(CardType.PLANESWALKER)
+                || !gameQueryService.isCreature(gameData, damageSource)) return;
+
+        TriggerContext context = new TriggerContext.CreatureDealsDamageToPlaneswalker(
+                damageSource, damagedPlaneswalkerId, damage, combatDamage, deferredTriggers);
+        gameData.forEachPermanent((watcherControllerId, watcher) -> {
+            if (!watcherControllerId.equals(damageSourceControllerId)) return;
+            List<CardEffect> effects = new ArrayList<>(
+                    watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER));
+            effects.addAll(watcher.getTemporaryTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER));
+            effects.addAll(watcher.getPersistentTriggeredEffects(
+                    EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER));
+            for (CardEffect effect : effects) {
+                TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
+                registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, context);
+            }
+        });
+    }
+
+    public void queueSourceDealsCombatDamageToPlayerOrPlaneswalkerTriggers(GameData gameData, Card sourceCard,
+                                                                            UUID sourceControllerId,
+                                                                            UUID sourcePermanentId,
+                                                                            int totalDamage,
+                                                                            List<CardEffect> snapshottedEffects) {
+        if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) return;
+        dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                totalDamage, snapshottedEffects,
+                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER);
+    }
+
+    private void dispatchSourceDealsCombatDamageTriggers(GameData gameData, Card sourceCard,
+                                                         UUID sourceControllerId, UUID sourcePermanentId,
+                                                         int totalDamage, List<CardEffect> snapshottedEffects,
+                                                         EffectSlot slot) {
+        var ctx = new TriggerContext.SourceDealsCombatDamage(
+                sourceCard, sourceControllerId, sourcePermanentId, totalDamage);
+        List<CardEffect> effects = new ArrayList<>(sourceCard.getEffects(slot));
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (snapshottedEffects != null) {
+            effects.addAll(snapshottedEffects);
+        } else if (sourcePermanent != null) {
+            effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(slot));
+            effects.addAll(sourcePermanent.getPersistentTriggeredEffects(slot));
+        }
+        for (CardEffect effect : effects) {
+            var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
+            registry.dispatch(match, slot, effect, ctx);
+        }
     }
 
     private void fireAllyDealtDamageToCreatureTrigger(GameData gameData, Permanent watcher, Permanent damageSource,

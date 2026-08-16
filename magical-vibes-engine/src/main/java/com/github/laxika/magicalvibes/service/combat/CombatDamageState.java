@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.*;
@@ -54,10 +55,14 @@ class CombatDamageState {
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
     final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
+    final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
+    final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
 
     // Per-source damage amounts to each target creature (for ON_DEALT_DAMAGE triggers needing damage amount)
     // Key: source permanent, Value: map of target creature ID -> damage amount
@@ -71,4 +76,7 @@ class CombatDamageState {
     // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
     // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.
     boolean defenderDamageAsInfect;
+
+    record DelayedCombatDamageDrawQualification(DelayedCombatDamageDraw delayedAction, Set<UUID> sourceIds) {
+    }
 }

@@ -62,7 +62,7 @@ public class SacrificePermanentAndBoostSelfEffectHandler implements NormalEffect
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificePermanentAndBoostSelf(
                         controllerId, entry.getCard(), entry.getSourcePermanentId(),
-                        e.power(), e.toughness(), e.permanentDescription()));
+                        e.power(), e.toughness(), e.permanentDescription(), e.grantedKeywords()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose " + e.permanentDescription() + " to sacrifice.");
 

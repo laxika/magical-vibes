@@ -237,6 +237,7 @@ public class CombatDamageService {
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
+        processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
         checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers(gameData, state, defenderId);
 
         for (var entry : state.combatDamageDealt.entrySet()) {
@@ -261,6 +262,14 @@ public class CombatDamageService {
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, source, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE));
             state.selfDealsCombatDamageEffects.put(source, effects);
+
+            List<CardEffect> playerOrPlaneswalkerEffects = new ArrayList<>(
+                    source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER));
+            playerOrPlaneswalkerEffects.addAll(source.getPersistentTriggeredEffects(
+                    EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER));
+            playerOrPlaneswalkerEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER));
+            state.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(source, playerOrPlaneswalkerEffects);
         }
 
         // Snapshot attacker IDs so blocking state can be cleaned up for attackers that die.
@@ -280,6 +289,7 @@ public class CombatDamageService {
         }
 
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
+        snapshotDelayedCombatDamageDrawSources(gameData, state);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
@@ -318,8 +328,10 @@ public class CombatDamageService {
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);
+        processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -1639,16 +1651,12 @@ public class CombatDamageService {
             damageSources.put(creature.getId(), creature);
         }
 
-        for (DelayedCombatDamageDraw delayed : gameData.getDelayedActions(DelayedCombatDamageDraw.class)) {
-            for (Permanent creature : damageSources.values()) {
-                int playerDamage = state.combatDamageDealtToPlayer.getOrDefault(creature, 0);
-                int planeswalkerDamage = state.combatDamageDealtToPlaneswalker.getOrDefault(creature, 0);
-                if (playerDamage <= 0 && planeswalkerDamage <= 0) continue;
-
-                UUID controllerId = state.combatDamageDealerControllers.get(creature);
-                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
-                if (!delayed.controllerId().equals(controllerId)) continue;
-
+        for (CombatDamageState.DelayedCombatDamageDrawQualification qualification
+                : state.delayedCombatDamageDrawQualifications) {
+            DelayedCombatDamageDraw delayed = qualification.delayedAction();
+            for (UUID sourceId : qualification.sourceIds()) {
+                Permanent creature = damageSources.get(sourceId);
+                if (creature == null) continue;
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         delayed.sourceCard(),
@@ -1660,6 +1668,53 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                         "'s delayed trigger fires — draw a card."));
             }
+        }
+    }
+
+    private void processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(GameData gameData,
+                                                                             CombatDamageState state) {
+        for (Permanent source : state.combatDamageDealt.keySet()) {
+            int damageDealtToPlayerOrPlaneswalker = state.combatDamageDealtToPlayer.getOrDefault(source, 0)
+                    + state.combatDamageDealtToPlaneswalker.getOrDefault(source, 0);
+            if (damageDealtToPlayerOrPlaneswalker <= 0) continue;
+
+            UUID controllerId = state.combatDamageDealerControllers.get(source);
+            if (controllerId == null) controllerId = gameData.findControllerOf(source);
+            if (controllerId == null) continue;
+            triggerCollectionService.queueSourceDealsCombatDamageToPlayerOrPlaneswalkerTriggers(
+                    gameData, source.getCard(), controllerId, source.getId(), damageDealtToPlayerOrPlaneswalker,
+                    state.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.get(source));
+        }
+    }
+
+    private void snapshotDelayedCombatDamageDrawSources(GameData gameData, CombatDamageState state) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageDraw.class)) return;
+
+        Map<UUID, Permanent> damageSources = new LinkedHashMap<>();
+        for (Permanent creature : state.combatDamageDealtToPlayer.keySet()) {
+            damageSources.put(creature.getId(), creature);
+        }
+        for (Permanent creature : state.combatDamageDealtToPlaneswalker.keySet()) {
+            damageSources.put(creature.getId(), creature);
+        }
+
+        for (DelayedCombatDamageDraw delayed : gameData.getDelayedActions(DelayedCombatDamageDraw.class)) {
+            Set<UUID> qualifyingSources = new LinkedHashSet<>();
+            for (Permanent creature : damageSources.values()) {
+                int playerDamage = state.combatDamageDealtToPlayer.getOrDefault(creature, 0);
+                int planeswalkerDamage = state.combatDamageDealtToPlaneswalker.getOrDefault(creature, 0);
+                if (playerDamage <= 0 && (!delayed.includesPlaneswalkers() || planeswalkerDamage <= 0)) continue;
+
+                UUID controllerId = state.combatDamageDealerControllers.get(creature);
+                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
+                if (!delayed.controllerId().equals(controllerId)) continue;
+                if (delayed.sourcePredicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, creature, delayed.sourcePredicate())) continue;
+                qualifyingSources.add(creature.getId());
+            }
+            state.delayedCombatDamageDrawQualifications.add(
+                    new CombatDamageState.DelayedCombatDamageDrawQualification(delayed, qualifyingSources));
         }
     }
 
@@ -1863,6 +1918,19 @@ public class CombatDamageService {
                     triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
                             gameData, damagedCreatureControllerId, damagedCreature, source, amountEntry.getValue());
                 }
+            }
+        }
+    }
+
+    private void processAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, CombatDamageState state) {
+        for (var entry : state.combatDamageAmountsToPlaneswalkers.entrySet()) {
+            Permanent source = entry.getKey();
+            UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
+            if (sourceControllerId == null) continue;
+            for (var amountEntry : entry.getValue().entrySet()) {
+                triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
+                        gameData, source, sourceControllerId, amountEntry.getKey(), amountEntry.getValue(), true,
+                        state.allyCreatureDealsDamageToPlaneswalkerTriggers);
             }
         }
     }
@@ -2316,6 +2384,8 @@ public class CombatDamageService {
 
                 int redirectEffective = damagePreventionService.applyCombatPlayerPreventionShield(gameData, targetId, damage);
                 processPendingRedirectDamage(gameData);
+                redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                        gameData, targetId, redirectEffective);
 
                 if (redirectEffective > 0) {
                     if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
@@ -2365,6 +2435,8 @@ public class CombatDamageService {
 
             int effective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, reflection.amount());
             processPendingRedirectDamage(gameData);
+            effective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, targetId, effective);
 
             if (effective > 0) {
                 if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
@@ -2433,6 +2505,9 @@ public class CombatDamageService {
             state.combatDamageDealtToPlaneswalker.merge(atk, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
             if (damage > 0) {
+                state.combatDamageAmountsToPlaneswalkers
+                        .computeIfAbsent(atk, ignored -> new HashMap<>())
+                        .merge(attackTarget, damage, Integer::sum);
                 gameData.recordDamageRecipientBySource(atk.getId(), attackTarget);
             }
             return;
@@ -2607,6 +2682,8 @@ public class CombatDamageService {
                 }
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage);
                 damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
+                damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                        gameData, defenderId, damage);
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
