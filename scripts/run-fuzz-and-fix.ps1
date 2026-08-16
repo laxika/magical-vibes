@@ -5,7 +5,7 @@
 param(
     # Number of random AI games to run. The repository default for this script is 500.
     [ValidateRange(1, 1000000)]
-    [int] $Rounds = 500,
+    [int] $Rounds = 5000,
 
     # Codex model used to diagnose and fix a failed fuzz run.
     [string] $Model = "gpt-5.6-luna",
