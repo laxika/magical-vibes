@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.f.FellwarStone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1594,6 +1595,36 @@ class AiManaManagerTest {
 
             verify(action).tap(eq(0), any());
             verify(action, never()).tap(eq(1), any());
+        }
+
+        @Test
+        @DisplayName("skips Fellwar Stone when paying an attack tax")
+        void skipsFellwarStoneDuringAttackTaxPayment() {
+            addUntappedLand("Plains", ManaColor.WHITE);
+
+            Permanent fellwarStone = new Permanent(new FellwarStone());
+            fellwarStone.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(fellwarStone);
+            lenient().when(gameQueryService.isCreature(gd, fellwarStone)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, fellwarStone)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, fellwarStone)).thenReturn(List.of());
+
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1Id));
+            List<Integer> tappedIndices = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                if (permanentIndex == 0) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.WHITE);
+                } else {
+                    gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                            player1Id, null, null, null, List.of("WHITE", "BLUE"), "Choose a color."));
+                }
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, true);
+
+            assertThat(tappedIndices).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
         }
 
         @Test
