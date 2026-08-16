@@ -961,6 +961,7 @@ class CastingCostServiceTest {
             gd.playerGraveyards.get(player1Id).add(creature);
 
             when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.findGraveyardOwnerById(gd, creature.getId())).thenReturn(player1Id);
             when(predicateEvaluationService.matchesCardPredicate(
                     creature, predicate, spell.getId(), gd, player1Id)).thenReturn(true);
 

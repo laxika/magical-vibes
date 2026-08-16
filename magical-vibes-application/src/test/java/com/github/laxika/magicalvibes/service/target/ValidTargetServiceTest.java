@@ -1769,9 +1769,23 @@ class ValidTargetServiceTest {
                     gyCreature, gyInstant, gySorcery, gyArtifact, gyEnchantment, gyBasicLand));
             gameData.playerGraveyards.put(player2Id, opponentGraveyard);
             gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+            lenient().when(gameQueryService.findGraveyardOwnerById(eq(gameData), any(UUID.class)))
+                    .thenReturn(player2Id);
 
             // Stub matchesCardPredicate for ExileTargetCardFromGraveyardAndImprintOnSourceEffect tests
             lenient().when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(CardPredicate.class), any()))
+                    .thenAnswer(inv -> {
+                        Card c = inv.getArgument(0);
+                        CardPredicate p = inv.getArgument(1);
+                        if (p instanceof CardTypePredicate tp) return c.hasType(tp.cardType());
+                        if (p instanceof CardAnyOfPredicate anyOf) {
+                            return anyOf.predicates().stream()
+                                    .anyMatch(sub -> sub instanceof CardTypePredicate tp && c.hasType(tp.cardType()));
+                        }
+                        return true;
+                    });
+            lenient().when(predicateEvaluationService.matchesCardPredicate(
+                            any(Card.class), any(CardPredicate.class), any(), eq(gameData), eq(player2Id)))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardPredicate p = inv.getArgument(1);

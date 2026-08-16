@@ -34,6 +34,8 @@ public final class AiInteractionStrategies {
         register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());
         register(new BrilliantUltimatumPileChoiceAiStrategy());
         register(new BrilliantUltimatumPlayChoiceAiStrategy());
+        register(new HostileNegotiationsFaceUpChoiceAiStrategy());
+        register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());

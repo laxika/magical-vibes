@@ -61,7 +61,7 @@ class SoulPartitionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player2, bearsId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Not enough mana");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 

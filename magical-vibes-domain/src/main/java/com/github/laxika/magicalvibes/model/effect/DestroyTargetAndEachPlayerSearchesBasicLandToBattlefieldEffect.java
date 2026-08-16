@@ -7,10 +7,15 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Used by Field of Ruin.
  */
-public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() implements CardEffect {
+public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() implements RemovalEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(TargetPredicates.land());
+    }
+
+    @Override
+    public RemovalKind removalKind() {
+        return RemovalKind.DESTROY;
     }
 }

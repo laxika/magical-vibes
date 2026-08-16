@@ -3482,7 +3482,6 @@ public class ChoiceHandlerService {
             for (Card card : toExile) {
                 gameData.addToExile(targetPlayerId, card);
             }
-            handExiledCount = toExile.size();
             exiledCount += toExile.size();
             handExiledCount = toExile.size();
         }
@@ -3515,10 +3514,6 @@ public class ChoiceHandlerService {
         // Always shuffle target player's library
         if (library != null) {
             Collections.shuffle(library);
-        }
-
-        if (ctx.drawForHandExiled()) {
-            playerInteractionSupport.applyDrawCards(gameData, targetPlayerId, handExiledCount);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")

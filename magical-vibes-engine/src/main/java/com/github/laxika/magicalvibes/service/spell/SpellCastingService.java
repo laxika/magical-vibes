@@ -4601,8 +4601,6 @@ public class SpellCastingService {
         }
 
         payExileCounterCost(gameData, player, card, additionalCounterCost, exileCounterCostPermanentIds);
-        gameData.removeFromExile(exileCardId);
-        gameData.recordCardPlayedFromExile(playerId);
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
@@ -4747,6 +4745,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Exile cast permission is no longer available");
         }
         gameData.removeFromExile(exileCardId);
+        gameData.recordCardPlayedFromExile(playerId);
     }
 
     /**

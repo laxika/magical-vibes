@@ -138,7 +138,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.graveyardTargetOperation.controllerId).isEqualTo(player1Id);
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
-                eq(1), anyString());
+                eq(1), eq(0), anyString());
     }
 
     @Test

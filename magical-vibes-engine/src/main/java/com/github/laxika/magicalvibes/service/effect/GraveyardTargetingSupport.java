@@ -47,8 +47,8 @@ public class GraveyardTargetingSupport {
     }
 
     private Target targetOf(CardEffect effect) {
-        if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect) {
-            return new Target(null, GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
+        if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect exile) {
+            return new Target(null, exile.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature) {
             return new Target(exileCreature.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);

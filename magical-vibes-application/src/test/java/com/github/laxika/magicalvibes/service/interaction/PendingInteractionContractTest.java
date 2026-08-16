@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.model.PendingHostileNegotiations;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
@@ -61,6 +62,7 @@ class PendingInteractionContractTest {
             PendingPortalPileSearch.class,
             PendingKarnRestart.class,
             PendingKnowledgePoolCast.class,
+            PendingHostileNegotiations.class,
             PendingPileSeparation.class,
             PendingEachPlayerLibraryExile.class,
             PendingBendOrBreak.class,

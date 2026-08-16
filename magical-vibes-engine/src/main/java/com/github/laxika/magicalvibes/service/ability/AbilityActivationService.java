@@ -4843,7 +4843,7 @@ public class AbilityActivationService {
     private void validateNotBlockedByNameLock(GameData gameData, String cardName, boolean manaAbility) {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (!cardName.equals(p.getChosenName())) continue;
+                if (!java.util.Objects.equals(cardName, p.getChosenName())) continue;
                 var lockEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect)
                         .map(e -> (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) e)

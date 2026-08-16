@@ -455,9 +455,10 @@ class EnterTriggerCollectorServiceTest {
 
         service.checkEntersFromGraveyardTriggers(gd, player1Id, entering);
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
-        assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(enteringPermanent.getId());
-        assertThat(gd.pendingMayAbilities.getFirst().sourcePermanentId()).isEqualTo(sourcePermanent.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanent.getId());
     }
 
     @Test

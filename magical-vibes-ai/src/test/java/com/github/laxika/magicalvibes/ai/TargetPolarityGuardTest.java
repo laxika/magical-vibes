@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -73,6 +75,12 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new MayEffect(new EnteringCreatureFightsTargetCreatureEffect(), "Fight?"), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd,
+                new ExileTargetPermanentMayPlayWithOpponentTaxEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd,
+                new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
     }
 
     @Test

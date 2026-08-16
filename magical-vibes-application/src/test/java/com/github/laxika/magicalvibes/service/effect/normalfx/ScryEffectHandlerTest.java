@@ -150,7 +150,7 @@ class ScryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
-                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
+                verify(triggerCollectionService).checkScryTriggers(gd, player1Id, 0);
             }
 
             @Test
@@ -169,7 +169,7 @@ class ScryEffectHandlerTest {
                 verifyNoInteractions(sessionManager);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
-                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
+                verifyNoInteractions(triggerCollectionService);
             }
 
             @Test
