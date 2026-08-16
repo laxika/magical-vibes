@@ -2213,6 +2213,7 @@ public abstract class AiDecisionEngine {
             List<Integer> exileGraveyardCardIndices,
             Integer discardHandCardIndex,
             List<Integer> discardHandCardIndices,
+            List<UUID> imposedSacrificePermanentIds,
             List<UUID> additionalCostSacrificePermanentIds,
             BeholdSelection beholdSelection) {
         BeholdSelection selection = beholdSelection != null
@@ -2228,7 +2229,8 @@ public abstract class AiDecisionEngine {
                 cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
                 null, sacrificePermanentId, null, null, null, null, exileGraveyardCardIndex,
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
-                discardHandCardIndices, null, additionalCostSacrificePermanentIds, List.of(), null,
+                discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
+                List.of(), null,
                 null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null);
     }
 
@@ -2445,6 +2447,43 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Selects the permanents required by battlefield-imposed cast taxes such as Drought's
+     * per-black-symbol Swamp sacrifice. The selection is made after mana payment by callers so
+     * a permanent sacrificed while producing that mana cannot also pay this tax.
+     *
+     * @return the selected permanent ids, an empty list when no imposed tax applies, or null when
+     *         the tax became unpayable after mana payment
+     */
+    protected List<UUID> selectImposedSacrificePermanentIds(
+            GameData gameData, Card card, UUID singleConsumedPermanentId,
+            List<UUID> otherConsumedPermanentIds) {
+        CastingCostService.ImposedSacrificeRequirement requirement =
+                castingCostService.getImposedSacrificeRequirementForSpell(gameData, card);
+        if (requirement == null || requirement.isEmpty()) {
+            return List.of();
+        }
+
+        Set<UUID> unavailableIds = new HashSet<>();
+        if (singleConsumedPermanentId != null) {
+            unavailableIds.add(singleConsumedPermanentId);
+        }
+        if (otherConsumedPermanentIds != null) {
+            unavailableIds.addAll(otherConsumedPermanentIds);
+        }
+
+        List<UUID> selectedIds = gameData.playerBattlefields
+                .getOrDefault(aiPlayer.getId(), List.of())
+                .stream()
+                .filter(permanent -> !unavailableIds.contains(permanent.getId()))
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, requirement.filter()))
+                .limit(requirement.count())
+                .map(Permanent::getId)
+                .toList();
+        return selectedIds.size() == requirement.count() ? selectedIds : null;
     }
 
     /**

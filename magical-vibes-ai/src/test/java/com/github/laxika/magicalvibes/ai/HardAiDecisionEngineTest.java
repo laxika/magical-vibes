@@ -30,7 +30,9 @@ import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -178,6 +180,31 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(purge);
         assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Hard AI pays a battlefield-imposed sacrifice tax when casting a black spell")
+    void castsBlackSpellWithDroughtTax() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addToBattlefield(player2, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(player1, List.of(mercenary));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, null, 0));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swamp);
     }
 
     @Test

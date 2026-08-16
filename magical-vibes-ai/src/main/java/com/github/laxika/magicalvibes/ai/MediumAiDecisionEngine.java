@@ -287,12 +287,18 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
+        final List<UUID> finalImposedSacrificeIds = selectImposedSacrificePermanentIds(
+                gameData, card, finalSacrificePermanentId, finalMultiSacrificeIds);
+        if (finalImposedSacrificeIds == null) {
+            return false;
+        }
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
-                        finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));
+                        finalDiscardHandCardIndices, finalImposedSacrificeIds, finalMultiSacrificeIds,
+                        finalBeholdSelection)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -503,12 +509,18 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalDiscardHandCardIndices =
                 chooseDiscardCostIndices(gameData, card, cardIndex, xValue != null ? xValue : 0);
         final List<UUID> finalMultiSacrificeIds = selectMultiPermanentCostIds(gameData, card);
+        final List<UUID> finalImposedSacrificeIds = selectImposedSacrificePermanentIds(
+                gameData, card, finalSacrificePermanentId, finalMultiSacrificeIds);
+        if (finalImposedSacrificeIds == null) {
+            return false;
+        }
         final BeholdSelection finalBeholdSelection = beholdSelection;
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(card, cardIndex, finalXValue, finalTargetId, finalDamageAssignments,
                         finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId, null,
                         finalExileGraveyardCardIndices, finalDiscardHandCardIndex,
-                        finalDiscardHandCardIndices, finalMultiSacrificeIds, finalBeholdSelection)));
+                        finalDiscardHandCardIndices, finalImposedSacrificeIds, finalMultiSacrificeIds,
+                        finalBeholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {

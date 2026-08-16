@@ -1154,11 +1154,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> fDiscardHandCardIndices =
                 chooseDiscardCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
+        final List<UUID> fImposedSacrificeIds = selectImposedSacrificePermanentIds(
+                gameData, plan.card, fSacrifice, fMultiSacrificeIds);
+        if (fImposedSacrificeIds == null) {
+            return false;
+        }
         send(() -> gameActions.handlePlayCard(
                 buildSpellPlayCardRequest(plan.card, idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, convokeCreatureIds, fSacrifice, null, fExileIndices,
-                        fDiscardHandCardIndex, fDiscardHandCardIndices, fMultiSacrificeIds,
-                        plan.beholdSelection)));
+                        fDiscardHandCardIndex, fDiscardHandCardIndices, fImposedSacrificeIds,
+                        fMultiSacrificeIds, plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(plan.card)) {
@@ -2802,11 +2807,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction)) {
                 return true; // Mana ability triggered a pending choice
             }
+            List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(
+                    gameData, burnCard, null, List.of());
+            if (imposedSacrificeIds == null) {
+                continue;
+            }
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
                     buildSpellPlayCardRequest(burnCard, idx, null, targetId, null, null, null, null, null,
-                            delveIndices, null, null, List.of(), beholdSelection)));
+                            delveIndices, null, null, imposedSacrificeIds, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {

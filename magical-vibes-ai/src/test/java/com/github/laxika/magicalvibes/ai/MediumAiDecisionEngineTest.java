@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
@@ -239,6 +241,24 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
         assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
         assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Medium AI pays a battlefield-imposed sacrifice tax when casting a black spell")
+    void castsBlackSpellWithDroughtTax() {
+        harness.addToBattlefield(human, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(aiPlayer, List.of(mercenary));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(swamp);
     }
 
     @Test

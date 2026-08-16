@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -187,6 +189,39 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    void castsBlackSpellWithDroughtTax() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(aiPlayer, List.of(mercenary));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(gameData.playerBattlefields.get(aiPlayer.getId())).doesNotContain(swamp);
     }
 
     @Test

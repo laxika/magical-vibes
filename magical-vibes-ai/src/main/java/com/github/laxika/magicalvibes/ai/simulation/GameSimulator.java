@@ -71,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -728,14 +729,21 @@ public class GameSimulator {
         List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
         List<UUID> multiSacrificeIds = computeMultiSacrificeTargets(gd, playerId, card);
+        List<UUID> imposedSacrificeIds = computeImposedSacrificeTargets(
+                gd, playerId, card, sacrificeId, multiSacrificeIds);
+        if (imposedSacrificeIds == null) {
+            return;
+        }
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
         List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()
+                || !imposedSacrificeIds.isEmpty()
                 || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
-                    false, discardIndex, discardIndices, null, multiSacrificeIds, List.of(), false,
+                    false, discardIndex, discardIndices, imposedSacrificeIds, multiSacrificeIds,
+                    List.of(), false,
                     beholdSelection.permanentId(), beholdSelection.handCardIndex());
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
@@ -1326,6 +1334,31 @@ public class GameSimulator {
             }
         }
         return List.of();
+    }
+
+    private List<UUID> computeImposedSacrificeTargets(
+            GameData gd, UUID playerId, Card card, UUID singleConsumedPermanentId,
+            List<UUID> otherConsumedPermanentIds) {
+        com.github.laxika.magicalvibes.service.cast.CastingCostService.ImposedSacrificeRequirement requirement =
+                castingCostService.getImposedSacrificeRequirementForSpell(gd, card);
+        if (requirement == null || requirement.isEmpty()) {
+            return List.of();
+        }
+
+        Set<UUID> unavailableIds = new HashSet<>();
+        if (singleConsumedPermanentId != null) {
+            unavailableIds.add(singleConsumedPermanentId);
+        }
+        unavailableIds.addAll(otherConsumedPermanentIds);
+
+        List<UUID> selectedIds = gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !unavailableIds.contains(permanent.getId()))
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gd, permanent, requirement.filter()))
+                .limit(requirement.count())
+                .map(Permanent::getId)
+                .toList();
+        return selectedIds.size() == requirement.count() ? selectedIds : null;
     }
 
     /**

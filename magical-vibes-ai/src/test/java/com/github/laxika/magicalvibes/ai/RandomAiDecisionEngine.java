@@ -702,6 +702,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 telemetry.recordSkip("spell: multi-permanent sacrifice cost unpayable", card.getName());
                 continue;
             }
+            List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(
+                    gameData, card, sacrificePermanentId, multiSacrificeIds);
+            if (imposedSacrificeIds == null) {
+                telemetry.recordSkip("spell: imposed sacrifice cost unpayable", card.getName());
+                continue;
+            }
 
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
@@ -716,6 +722,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                             ? discardHandCardIndices
                             : chooseDiscardCostIndices(gameData, card, cardIndex,
                             finalXValue != null ? finalXValue : 0);
+            final List<UUID> finalImposedSacrificeIds = imposedSacrificeIds;
             final List<UUID> finalMultiSacrificeIds = multiSacrificeIds;
             final BeholdSelection finalBeholdSelection = beholdSelection;
             send(() -> gameActions.handlePlayCard(
@@ -723,7 +730,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                             finalMultiTargetIds, convokeCreatureIds, finalSacrificePermanentId,
                             finalExileGraveyardCardIndex, finalExileGraveyardCardIndices,
                             finalDiscardHandCardIndex, finalDiscardHandCardIndices,
-                            finalMultiSacrificeIds, finalBeholdSelection)));
+                            finalImposedSacrificeIds, finalMultiSacrificeIds, finalBeholdSelection)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

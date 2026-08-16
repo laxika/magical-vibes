@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
 import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -244,6 +246,42 @@ class EasyAiDecisionEngineTest {
         assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mandrills);
         assertThat(testGameData.playerGraveyards.get(testAiPlayer.getId())).hasSize(3);
         assertThat(testGameData.getPlayerExiledCards(testAiPlayer.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Easy AI pays a battlefield-imposed sacrifice tax when casting a black spell")
+    void castsBlackSpellWithDroughtTax() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        Player opponent = testHarness.getPlayer1();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        testHarness.addToBattlefield(opponent, new Drought());
+        Permanent swamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+        DauthiMercenary mercenary = new DauthiMercenary();
+        testHarness.setHand(testAiPlayer, List.of(mercenary));
+        testHarness.addMana(testAiPlayer, ManaColor.BLACK, 1);
+        testHarness.addMana(testAiPlayer, ManaColor.COLORLESS, 2);
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(swamp);
     }
 
     @Nested
