@@ -2107,7 +2107,7 @@ public abstract class AiDecisionEngine {
      * target it while it is on the stack.
      */
     protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds)
+        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds, false)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, multiTargetIds);
     }
 

@@ -1929,6 +1929,41 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI leaves mana untapped when a targeting tax makes a spell unaffordable")
+    void leavesManaUntappedWhenTargetingTaxMakesSpellUnaffordable() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        for (int i = 0; i < 2; i++) {
+            Permanent plains = new Permanent(new Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(kopala);
+
+        com.github.laxika.magicalvibes.cards.p.Pacifism pacifism =
+                new com.github.laxika.magicalvibes.cards.p.Pacifism();
+        harness.setHand(player1, List.of(pacifism));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pacifism);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
     @DisplayName("Hard AI supplies both targets for Blinding Beam's tap mode")
     void castsBlindingBeamWithTwoTargetCreatures() {
         HardAiDecisionEngine ai = createHardAi(player1);

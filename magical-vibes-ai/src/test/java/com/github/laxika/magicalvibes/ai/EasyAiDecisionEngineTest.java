@@ -2674,6 +2674,9 @@ class EasyAiDecisionEngineTest {
 
             // Should NOT cast A?€�t can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
             assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
 
         @Test
@@ -2692,6 +2695,9 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(Permanent::isTapped);
         }
 
         @Test
