@@ -62,7 +62,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
                 beginXPrompt(gameData, controllerId, cardName);
                 return;
             }
-            new ManaCost("{0}").pay(pool, chosenValue);
+            new ManaCost("{X}").pay(pool, chosenValue);
 
             gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
@@ -95,6 +95,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
 
     /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal() + pool.getArtifactOnlyColorless()
+                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
     }
 }

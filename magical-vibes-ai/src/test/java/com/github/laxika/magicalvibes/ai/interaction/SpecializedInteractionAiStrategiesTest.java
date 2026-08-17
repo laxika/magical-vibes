@@ -206,6 +206,20 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void xValueChoiceUsesXCostOnlyMana() throws Exception {
+        ManaPool manaPool = new ManaPool();
+        manaPool.addXCostOnlyColorless(4);
+        gameData.playerManaPools.put(aiPlayerId, manaPool);
+
+        new XValueChoiceAiStrategy().answer(
+                new PendingInteraction.XValueChoice(
+                        aiPlayerId, 7, "Choose X.", "Vigil for the Lost", true),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(4));
+    }
+
+    @Test
     void exileFromOpponentHandOrGraveyardChoosesHighestManaValue() throws Exception {
         UUID opponentId = UUID.randomUUID();
         Card handCard = card("Hand card", "{2}");

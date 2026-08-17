@@ -171,7 +171,7 @@ class EffectResolutionServiceTest {
         doAnswer(invocation -> {
             gd.rerunCurrentEffectAfterInteraction = true;
             gd.interaction.beginInteraction(new PendingInteraction.XValueChoice(
-                    player1Id, 0, 1, "Choose", "Nested choice", false));
+                    player1Id, 0, 1, "Choose", "Nested choice"));
             return null;
         }).when(handler).resolve(gd, entry, wrapped);
 

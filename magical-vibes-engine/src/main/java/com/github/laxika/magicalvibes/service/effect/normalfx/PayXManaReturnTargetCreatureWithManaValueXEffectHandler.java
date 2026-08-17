@@ -83,7 +83,7 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
             return;
         }
 
-        new ManaCost("{0}").pay(pool, chosenX);
+        new ManaCost("{X}").pay(pool, chosenX);
         gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenX + "} for " + cardName + "."));
 
         CardPredicate filter = manaValueCreatureFilter(e.filter(), chosenX);
@@ -144,7 +144,8 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
     }
 
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal() + pool.getArtifactOnlyColorless()
+                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
     }
 
     private static CardPredicate manaValueCreatureFilter(CardPredicate filter, int x) {

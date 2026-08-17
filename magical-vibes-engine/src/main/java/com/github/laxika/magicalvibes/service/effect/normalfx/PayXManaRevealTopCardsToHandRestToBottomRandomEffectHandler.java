@@ -62,7 +62,7 @@ public class PayXManaRevealTopCardsToHandRestToBottomRandomEffectHandler impleme
                 return;
             }
 
-            new ManaCost("{0}").pay(pool, chosenValue);
+            new ManaCost("{X}").pay(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays {" + chosenValue + "} for " + cardName + "."));
 
@@ -125,7 +125,8 @@ public class PayXManaRevealTopCardsToHandRestToBottomRandomEffectHandler impleme
     }
 
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal() + pool.getArtifactOnlyColorless()
+                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
     }
 
     private static String cardNames(List<Card> cards) {

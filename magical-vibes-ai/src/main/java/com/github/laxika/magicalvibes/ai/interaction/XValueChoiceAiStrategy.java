@@ -37,7 +37,8 @@ class XValueChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction
             } else if (interaction.manaCost() != null) {
                 chosenValue = Math.min(chosenValue, new ManaCost(interaction.manaCost()).calculateMaxX(pool));
             } else {
-                int payable = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+                int payable = pool.getTotal() + pool.getArtifactOnlyColorless()
+                        + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
                 chosenValue = Math.min(chosenValue, payable);
             }
         }
