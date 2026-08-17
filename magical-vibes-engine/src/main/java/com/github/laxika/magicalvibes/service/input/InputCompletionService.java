@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,6 +34,9 @@ public class InputCompletionService {
     private final EffectResolutionService effectResolutionService;
     @Autowired
     private ObjectProvider<StackResolutionService> stackResolutionService;
+    @Autowired
+    @Lazy
+    private WarpWorldService warpWorldService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -83,6 +88,12 @@ public class InputCompletionService {
 
             if (gameData.status == GameStatus.FINISHED) {
                 return;
+            }
+            if (gameData.stack.isEmpty() && !gameData.pendingLibraryBottomReorders.isEmpty()) {
+                warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
             }
             if (clearPriorityPasses) {
                 gameData.priorityPassedBy.clear();

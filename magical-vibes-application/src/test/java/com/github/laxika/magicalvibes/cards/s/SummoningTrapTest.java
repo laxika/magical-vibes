@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.r.ResilientKhenra;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +53,49 @@ class SummoningTrapTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5)));
+    }
+
+    @Test
+    @DisplayName("Returns the remaining cards after the found creature's ETB interaction")
+    void returnsRemainingCardsAfterFoundCreatureEtbInteraction() {
+        GrizzlyBears counteredCreature = new GrizzlyBears();
+        SummoningTrap trap = new SummoningTrap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(counteredCreature, trap));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, counteredCreature.getId());
+        harness.passBothPriorities();
+
+        ResilientKhenra khenra = new ResilientKhenra();
+        List<Card> remaining = List.of(
+                new LlanowarElves(), new MightOfOaks(), new LlanowarElves(),
+                new MightOfOaks(), new LlanowarElves(), new MightOfOaks());
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        deck.add(khenra);
+        deck.addAll(remaining);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5)));
+
+        assertThat(deck).containsExactlyElementsOf(remaining);
+        assertThat(gd.pendingLibraryBottomReorders).isEmpty();
     }
 
     @Test
