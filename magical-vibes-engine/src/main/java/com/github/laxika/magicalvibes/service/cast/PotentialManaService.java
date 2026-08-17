@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -554,8 +555,9 @@ public class PotentialManaService {
 
     /**
      * Returns true if the card's activated mana abilities would trigger an interactive
-     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise or
-     * AwardManaOfColorsLandsCouldProduceEffect on Fellwar Stone).
+     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise,
+     * AwardManaOfColorsEffect with multiple colors, or AwardManaOfColorsLandsCouldProduceEffect on
+     * Fellwar Stone).
      * Cards with ON_TAP effects are always safe — they produce mana without choices.
      */
     public static boolean wouldManaAbilityTriggerChoice(Card card) {
@@ -565,6 +567,8 @@ public class PotentialManaService {
             }
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof AwardAnyColorManaEffect
+                        || (effect instanceof AwardManaOfColorsEffect ofColors
+                        && ofColors.colors().size() > 1)
                         || effect instanceof AwardManaOfColorsLandsCouldProduceEffect) {
                     return true;
                 }

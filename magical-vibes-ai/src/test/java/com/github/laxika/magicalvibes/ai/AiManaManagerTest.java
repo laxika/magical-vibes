@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -1626,6 +1627,39 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, true);
 
             assertThat(tappedIndices).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
+        }
+
+        @Test
+        @DisplayName("skips fixed multi-color mana abilities when paying an attack tax")
+        void skipsFixedMultiColorManaAbilityDuringAttackTaxPayment() {
+            Permanent plains = addUntappedLand("Plains", ManaColor.WHITE);
+            Card cluestone = new Card();
+            cluestone.setName("Fixed Color Mana Source");
+            cluestone.setType(CardType.ARTIFACT);
+            cluestone.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new AwardManaOfColorsEffect(List.of(ManaColor.GREEN, ManaColor.WHITE))),
+                    "Add {G} or {W}."));
+            Permanent cluestonePermanent = new Permanent(cluestone);
+            cluestonePermanent.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(cluestonePermanent);
+            lenient().when(gameQueryService.isCreature(gd, cluestonePermanent)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, cluestonePermanent)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColors(gd, cluestonePermanent)).thenReturn(List.of());
+
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1Id));
+            List<Integer> tappedIndices = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                if (permanentIndex == gd.playerBattlefields.get(player1Id).indexOf(plains)) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.WHITE);
+                }
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, true);
+
+            assertThat(tappedIndices).containsExactly(gd.playerBattlefields.get(player1Id).indexOf(plains));
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
         }
 
