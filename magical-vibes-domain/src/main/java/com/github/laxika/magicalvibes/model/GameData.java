@@ -97,6 +97,8 @@ public class GameData {
     public final Set<UUID> playersWhoInvestigatedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts permanents sacrificed by subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> sacrificedPermanentSubtypeCountThisTurn = new ConcurrentHashMap<>();
+    /** Players who surveilled at least once this turn. */
+    public final Set<UUID> playersWhoSurveilledThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -308,6 +310,8 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
     public final Map<UUID, Integer> exiledCardDreamCounters = new ConcurrentHashMap<>();
+    /** Maps exiled card UUID → hit counter count (Etrata, the Silencer). */
+    public final Map<UUID, Integer> exiledCardHitCounters = new ConcurrentHashMap<>();
     /** Spells whose successful resolution is replaced by exile with a dream counter. */
     public final Set<UUID> spellsWithDreamCounterOnResolution = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
@@ -460,6 +464,8 @@ public class GameData {
             new EachPlayerDiscardsOrLosesLifeState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
+    public final DispersalState dispersal = new DispersalState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
@@ -475,6 +481,8 @@ public class GameData {
     /** Progress state for each-player discard-or-sacrifice effects such as Possessed Portal. */
     public final EachPlayerSacrificeOrDiscardState eachPlayerSacrificeOrDiscard =
             new EachPlayerSacrificeOrDiscardState();
+    /** Progress state for Plaguecrafter's simultaneous sacrifice-then-discard effect. */
+    public final PlaguecrafterState plaguecrafter = new PlaguecrafterState();
     /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
     public final WintersChillState wintersChill = new WintersChillState();
     /** Progress state for Forgotten Lore's "opponent chooses a card; you may pay {G} to repeat" flow. */
@@ -2611,6 +2619,7 @@ public class GameData {
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
+            exiledCardHitCounters.remove(cardId);
         }
         return removed;
     }
@@ -2684,6 +2693,7 @@ public class GameData {
             exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
         }
         removedIds.forEach(exiledCardDreamCounters::remove);
+        removedIds.forEach(exiledCardHitCounters::remove);
         removedIds.forEach(antedCardIds::remove);
     }
 
@@ -2899,6 +2909,11 @@ public class GameData {
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
+        copy.dispersal.active = this.dispersal.active;
+        copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
+        copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
+        copy.dispersal.selectedPermanentId = this.dispersal.selectedPermanentId;
+        copy.dispersal.awaitingDiscard = this.dispersal.awaitingDiscard;
         copy.eachPlayerPayLife.active = this.eachPlayerPayLife.active;
         copy.eachPlayerPayLife.order.addAll(this.eachPlayerPayLife.order);
         copy.eachPlayerPayLife.index = this.eachPlayerPayLife.index;
@@ -2934,6 +2949,13 @@ public class GameData {
         copy.eachPlayerSacrificeOrDiscard.remaining.addAll(this.eachPlayerSacrificeOrDiscard.remaining);
         copy.eachPlayerSacrificeOrDiscard.currentPlayerId = this.eachPlayerSacrificeOrDiscard.currentPlayerId;
         copy.eachPlayerSacrificeOrDiscard.chosenMode = this.eachPlayerSacrificeOrDiscard.chosenMode;
+        copy.plaguecrafter.active = this.plaguecrafter.active;
+        copy.plaguecrafter.sacrificeChoicesInProgress = this.plaguecrafter.sacrificeChoicesInProgress;
+        copy.plaguecrafter.completed = this.plaguecrafter.completed;
+        copy.plaguecrafter.sourceControllerId = this.plaguecrafter.sourceControllerId;
+        copy.plaguecrafter.playersWhoCannotSacrifice.addAll(this.plaguecrafter.playersWhoCannotSacrifice);
+        copy.plaguecrafter.remainingDiscardPlayers.addAll(this.plaguecrafter.remainingDiscardPlayers);
+        copy.plaguecrafter.selectedDiscards.addAll(this.plaguecrafter.selectedDiscards);
         copy.wintersChill.active = this.wintersChill.active;
         copy.wintersChill.remainingTargetIds.addAll(this.wintersChill.remainingTargetIds);
         copy.wintersChill.currentTargetId = this.wintersChill.currentTargetId;
@@ -3079,6 +3101,7 @@ public class GameData {
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
+        copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
@@ -3175,6 +3198,7 @@ public class GameData {
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardDreamCounters.putAll(this.exiledCardDreamCounters);
+        copy.exiledCardHitCounters.putAll(this.exiledCardHitCounters);
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);

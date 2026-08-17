@@ -75,6 +75,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = buildTokenCopyCard(sourceCard, effect);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, entry.getControllerId(), tokenCard);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 

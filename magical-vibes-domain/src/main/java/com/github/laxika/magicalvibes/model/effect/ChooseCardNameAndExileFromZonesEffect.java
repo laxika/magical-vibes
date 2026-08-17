@@ -45,6 +45,11 @@ public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
+                                                  boolean drawForHandExiled, int maxCount) {
+        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null);
+    }
+
+    public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   boolean excludeBasicLandNames,
                                                   CreateTokenEffect tokenTemplate) {
         this(excludedTypes, requiredType, Integer.MAX_VALUE, false, excludeBasicLandNames, tokenTemplate);

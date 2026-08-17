@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,6 +32,7 @@ import org.springframework.stereotype.Component;
  * {@code ALL_MATCHING} (every permanent matching the filter across all battlefields),
  * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents),
  * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller),
+ * {@code TARGET_CHOSEN_CREATURE_TYPE} (the chosen target creatures matching the cast-time type),
  * {@code AURAS_ATTACHED_TO_TARGET}, and {@code ENCHANTED} (the permanent the source Aura is on).
  */
 @Slf4j
@@ -53,6 +58,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         var e = (ReturnToHandEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
+            case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
             case SELF_SPELL -> resolveSelfSpell(gameData, entry);
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
@@ -128,6 +134,38 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private void resolveTargetChosenCreatureType(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (entry.getChosenCreatureType() == null) {
+            return;
+        }
+
+        PermanentPredicate chosenTypeFilter = new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasSubtypePredicate(entry.getChosenCreatureType())));
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null && predicateEvaluationService.matchesPermanentPredicate(
+                        target, chosenTypeFilter, filterContext)) {
+                    bounceTarget(gameData, entry, e, targetId);
+                }
+            }
+        } else if (entry.getTargetId() != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target != null && predicateEvaluationService.matchesPermanentPredicate(
+                    target, chosenTypeFilter, filterContext)) {
+                bounceTarget(gameData, entry, e, entry.getTargetId());
+            }
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void bounceTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, UUID targetId) {

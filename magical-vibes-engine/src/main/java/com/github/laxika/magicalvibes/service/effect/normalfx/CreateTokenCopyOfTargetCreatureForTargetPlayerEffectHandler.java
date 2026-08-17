@@ -76,6 +76,8 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
+        tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                gameData, tokenControllerId, tokenCard);
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);

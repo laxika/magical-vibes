@@ -355,7 +355,9 @@ public class TriggeredAbilityQueueService {
                     targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
                     pending.controllerId(),
                     pending.sourceCard(),
-                    TriggerTargetCollector.Options.ATTACK);
+                    TriggerTargetCollector.Options.ATTACK,
+                    null,
+                    defendingPlayerId(gameData, pending.attackedTargetId()));
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
@@ -380,6 +382,15 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
     /**

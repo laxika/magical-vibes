@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.CardNameRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
@@ -105,7 +107,7 @@ public class CastingPermissionService {
         if (isSpellTypeRestricted(gameData, playerId, card)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
-        if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
+        if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return false;
@@ -258,6 +260,14 @@ public class CastingPermissionService {
         return false;
     }
 
+    public boolean isLandPlayFromHandRestricted(GameData gameData, UUID playerId) {
+        return controlsStatic(gameData, playerId, ControllerCantPlayLandsFromHandEffect.class);
+    }
+
+    public boolean isSpellCastingFromHandRestricted(GameData gameData, UUID playerId) {
+        return controlsStatic(gameData, playerId, ControllerCantCastSpellsFromHandEffect.class);
+    }
+
     private boolean hasActiveDampingEngine(GameData gameData) {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) continue;
@@ -337,11 +347,11 @@ public class CastingPermissionService {
     }
 
     /**
-     * Returns true if a global {@link NoncreatureSpellsCantBeCastEffect} (e.g. Gaddock Teeg) on any
-     * player's battlefield prevents this noncreature spell from being cast. Symmetric — the source's
-     * own controller is restricted too.
+     * Returns true if an active noncreature-spell restriction on the battlefield prevents the given
+     * player from casting this card. Controller-only restrictions apply only to their source's
+     * controller; the two-argument overload retains the legacy global-only query semantics.
      */
-    public boolean isNoncreatureSpellCastRestricted(GameData gameData, Card card) {
+    public boolean isNoncreatureSpellCastRestricted(GameData gameData, UUID playerId, Card card) {
         if (card.hasType(CardType.CREATURE)) return false;
         int manaValue = card.getManaValue();
         boolean hasX = card.getParsedManaCost() != null && card.getParsedManaCost().hasX();
@@ -349,15 +359,20 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof NoncreatureSpellsCantBeCastEffect restriction) {
-                        if (manaValue >= restriction.minManaValue()) return true;
-                        if (restriction.restrictXSpells() && hasX) return true;
-                    }
+                    if (!(effect instanceof NoncreatureSpellsCantBeCastEffect restriction)
+                            || (!restriction.appliesToAllPlayers() && !pid.equals(playerId))) continue;
+                    if (manaValue >= restriction.minManaValue()) return true;
+                    if (restriction.restrictXSpells() && hasX) return true;
                 }
             }
         }
         return false;
+    }
+
+    public boolean isNoncreatureSpellCastRestricted(GameData gameData, Card card) {
+        return isNoncreatureSpellCastRestricted(gameData, null, card);
     }
 
     /**

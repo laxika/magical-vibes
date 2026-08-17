@@ -30,7 +30,7 @@ import java.util.UUID;
  * </ul>
  */
 public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect,
-        CombatDamageTriggerContextEffect {
+        CombatDamageTriggerContextEffect, CastTimeCreatureTypeChoiceEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
@@ -75,6 +75,10 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0);
     }
 
+    public static ReturnToHandEffect target(PermanentPredicate filter) {
+        return new ReturnToHandEffect(BounceScope.TARGET, filter, 0, 0);
+    }
+
     public static ReturnToHandEffect targetAndControllerLosesLife(int lifeLoss) {
         return new ReturnToHandEffect(BounceScope.TARGET, null, lifeLoss, 0);
     }
@@ -85,6 +89,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     public static ReturnToHandEffect targetWithCastTimeXValue(DynamicAmount castTimeXValue) {
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0, null, castTimeXValue);
+    }
+
+    /** Returns the targeted creatures that have the creature type chosen while casting this spell. */
+    public static ReturnToHandEffect targetCreaturesOfChosenType() {
+        return new ReturnToHandEffect(BounceScope.TARGET_CHOSEN_CREATURE_TYPE, null, 0, 0);
     }
 
     public static ReturnToHandEffect self() {
@@ -210,8 +219,14 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
         // validator imposed no guard there). SELF acts on the source permanent without choosing a
         // target, but marks it as self-targeting so trigger collectors retain the source id.
-        if (scope == BounceScope.TARGET || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
-            return TargetSpec.benign(TargetPredicates.permanent());
+        if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+                || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
+            if (scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE) {
+                return TargetSpec.benign(TargetPredicates.creature());
+            }
+            return filter == null
+                    ? TargetSpec.benign(TargetPredicates.permanent())
+                    : TargetSpec.benign(TargetPredicates.permanent(), filter);
         }
         if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
             return TargetSpec.benign(TargetPredicates.player());
@@ -231,12 +246,18 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     public RemovalKind removalKind() {
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.
-        return scope == BounceScope.TARGET ? RemovalKind.BOUNCE : null;
+        return scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+                ? RemovalKind.BOUNCE : null;
     }
 
     @Override
     public boolean sweepsBoard() {
         // Only the all-matching scope is a board sweep; the targeted / self scopes are not.
         return scope == BounceScope.ALL_MATCHING;
+    }
+
+    @Override
+    public boolean requiresCastTimeCreatureTypeChoice() {
+        return scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE;
     }
 }

@@ -1481,6 +1481,8 @@ public class GraveyardReturnSupport {
                 tokenCard.addActivatedAbility(ability);
             }
             tokenCard.copyTargetingFrom(sourceCard);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (grantHasteUntilEndOfTurn) {

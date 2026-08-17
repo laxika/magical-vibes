@@ -2313,7 +2313,7 @@ public abstract class AiDecisionEngine {
                 exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
-                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null);
+                null, selection.permanentId(), selection.handCardIndex(), null, null, null, null, null, null);
     }
 
 

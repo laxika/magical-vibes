@@ -532,7 +532,7 @@ public class GameViewProjectionFactory {
 
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
-            if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) continue;
+            if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
@@ -610,22 +610,10 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if (freeTopPlay
+            if ((freeTopPlay || canPlayLandFromTop)
                     && isActivePlayer
                     && isMainPhase
-                    && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
-                    < gameData.getMaxLandsThisTurn(playerId)
-                    && gameData.stack.isEmpty()
-                    && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
-                    && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
-                    && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, topCard)) {
-                playable.add(cardViewFactory.create(topCard));
-            }
-            return playable;
-        }
-
-        if (topCard.hasType(CardType.LAND)) {
-            if (canPlayLandFromTop && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
+                    && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
                 playable.add(cardViewFactory.create(topCard));
             }
             return playable;
@@ -659,7 +647,7 @@ public class GameViewProjectionFactory {
 
         if (spellLimitReached || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
-        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, topCard)) return playable;
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
 

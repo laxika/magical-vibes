@@ -12,6 +12,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * library (in any order) and the graveyard.
  *
  * @param count the number of cards to surveil
+ * @param applyAdditionalChoices whether static additional-surveil abilities should be offered
  */
-public record SurveilEffect(int count) implements CardEffect {
+public record SurveilEffect(int count, boolean applyAdditionalChoices) implements CardEffect {
+
+    public SurveilEffect(int count) {
+        this(count, true);
+    }
 }

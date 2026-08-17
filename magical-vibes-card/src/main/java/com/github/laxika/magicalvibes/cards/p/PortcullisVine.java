@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "195")
+@CardRegistration(set = "GRN", collectorNumber = "142")
 public class PortcullisVine extends Card {
 
     public PortcullisVine() {

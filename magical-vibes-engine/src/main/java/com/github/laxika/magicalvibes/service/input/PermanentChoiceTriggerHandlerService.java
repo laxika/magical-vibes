@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,13 @@ public class PermanentChoiceTriggerHandlerService {
     private final CreatureControlService creatureControlService;
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
+    private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+
+    public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
+                                                          PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
+        copySpellHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         boolean declined = stt.optionalTarget()
@@ -708,6 +716,9 @@ public class PermanentChoiceTriggerHandlerService {
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+            if (att.attackedTargetId() != null) {
+                entry.setAttackedTargetId(att.attackedTargetId());
             }
             pushTriggeredEntry(gameData, entry);
 

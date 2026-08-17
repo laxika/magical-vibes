@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -386,6 +387,22 @@ public final class EffectResolution {
         return (card.getKeywords().contains(Keyword.CONVERGE)
                 || card.getKeywords().contains(Keyword.SUNBURST))
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+    }
+
+    /**
+     * Returns true when an enter-with-counters effect gets its X value from distinct colors spent
+     * to cast the permanent.
+     */
+    public static boolean hasColorsSpentCounterEffect(Card card) {
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> {
+                    if (effect instanceof EnterWithCountersEffect enterWith) {
+                        return enterWith.countColorsSpent();
+                    }
+                    return effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof EnterWithCountersEffect wrapped
+                            && wrapped.countColorsSpent();
+                });
     }
 
     /**

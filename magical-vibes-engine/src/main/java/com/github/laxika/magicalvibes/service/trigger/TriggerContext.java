@@ -61,6 +61,9 @@ public sealed interface TriggerContext {
     /** Context for controller-investigate triggers. */
     record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
 
+    /** Context for controller-surveil triggers. */
+    record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
+
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */

@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AdditionalSurveilCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +37,22 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SurveilEffect e = (SurveilEffect) effect;
+
+        if (e.applyAdditionalChoices()) {
+            List<Integer> additionalCounts = additionalSurveilCounts(gameData, entry.getControllerId());
+            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            if (e.count() > 0 && !additionalCounts.isEmpty() && deck != null && deck.size() > e.count()) {
+                int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+                entry.insertEffectsToResolve(effectIndex + 1,
+                        List.of(buildAdditionalSurveilChoices(additionalCounts, 0, e.count())));
+                return;
+            }
+        }
+
+        resolveSurveil(gameData, entry, e);
+    }
+
+    private void resolveSurveil(GameData gameData, StackEntry entry, SurveilEffect e) {
 
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -46,6 +67,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + " surveil).";
             gameLogService.append(gameData, GameLog.text(logEntry));
+            triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
             return;
         }
 
@@ -59,6 +81,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
             String logEntry = playerName + " surveils " + count + " (" + sourceName + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} surveils {} ({})", gameData.id, playerName, count, sourceName);
+            triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
 
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.Scry(controllerId, topCards, true));
@@ -70,6 +93,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         String logEntry = playerName + " surveils 1 (" + sourceName + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} surveils 1, top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+        triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
@@ -80,6 +104,35 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
                 null,
                 entry.getSourcePermanentId()
         ));
-    
+    }
+
+    private List<Integer> additionalSurveilCounts(GameData gameData, UUID controllerId) {
+        List<Integer> counts = new ArrayList<>();
+        List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return counts;
+        }
+        for (var permanent : battlefield) {
+            for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (staticEffect instanceof AdditionalSurveilCardsEffect additional && additional.amount() > 0) {
+                    counts.add(additional.amount());
+                }
+            }
+        }
+        return counts;
+    }
+
+    private CardEffect buildAdditionalSurveilChoices(List<Integer> additionalCounts, int index, int count) {
+        if (index >= additionalCounts.size()) {
+            return new SurveilEffect(count, false);
+        }
+
+        int additionalCount = additionalCounts.get(index);
+        String cardText = additionalCount == 1 ? "card" : "cards";
+        return new MayEffect(
+                buildAdditionalSurveilChoices(additionalCounts, index + 1, count + additionalCount),
+                "Look at " + additionalCount + " additional " + cardText + " with Enhanced Surveillance?",
+                buildAdditionalSurveilChoices(additionalCounts, index + 1, count)
+        );
     }
 }

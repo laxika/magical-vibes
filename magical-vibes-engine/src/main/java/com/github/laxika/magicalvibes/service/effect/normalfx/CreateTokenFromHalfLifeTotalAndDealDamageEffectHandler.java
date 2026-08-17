@@ -61,6 +61,8 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                     tokenCard.setCollectorNumber(imageData.collectorNumber());
                 }
 
+                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                        gameData, controllerId, tokenCard);
                 Permanent tokenPerm = new Permanent(tokenCard);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
 

@@ -52,6 +52,7 @@ public enum Keyword {
     FLANKING,
     CONSPIRE,
     RETRACE,
+    JUMP_START,
     BANDING,
     EMERGE,
     COVEN,

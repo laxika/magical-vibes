@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "245")
+@CardRegistration(set = "GRN", collectorNumber = "254")
 public class SacredFoundry extends Card {
 
     public SacredFoundry() {

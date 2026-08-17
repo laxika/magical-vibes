@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -129,6 +130,32 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException(
                         "Target card's mana value must be " + lifeGained + " or less");
             }
+        }
+    }
+
+    @ValidatesTarget(BecomeCopyOfTargetCreatureCardInGraveyardEffect.class)
+    public void validateBecomeCopyOfTargetCreatureCardInGraveyard(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Ability requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
+        }
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+        if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            throw new IllegalStateException("Target must be in your graveyard");
+        }
+        if (graveyardCard.getManaValue() != ctx.xValue()) {
+            throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
     }
 

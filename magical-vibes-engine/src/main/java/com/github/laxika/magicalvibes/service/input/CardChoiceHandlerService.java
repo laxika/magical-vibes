@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -58,7 +59,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -225,6 +228,11 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        if (discardChoice.followUp().plaguecrafter()) {
+            handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
+            return;
+        }
+
         List<Integer> validIndices = discardChoice.validIndices();
         if (cardIndex == -1 && discardChoice.declinable()) {
             DiscardFollowUp followUp = discardChoice.followUp();
@@ -312,6 +320,94 @@ public class CardChoiceHandlerService {
                     discardChoice.stopAfterDiscardingType(), mayDecline);
         } else {
             finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
+        }
+    }
+
+    private void handlePlaguecrafterDiscardCardChosen(GameData gameData, Player player, int cardIndex,
+            PendingInteraction.DiscardChoice discardChoice) {
+        if (!discardChoice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
+        if (cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.plaguecrafter.selectedDiscards.add(new PlaguecrafterState.SelectedDiscard(
+                player.getId(), hand.get(cardIndex).getId()));
+
+        List<UUID> remainingPlayers = discardChoice.followUp().remainingEachPlayerDiscards();
+        if (!remainingPlayers.isEmpty()) {
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            UUID nextPlayerId = remainingPlayers.getFirst();
+            playerInputService.beginDiscardChoice(gameData, nextPlayerId, 1,
+                    DiscardFollowUp.plaguecrafter(remainingPlayers.subList(1, remainingPlayers.size())));
+            return;
+        }
+
+        discardCollectedPlaguecrafterCards(gameData);
+        gameData.plaguecrafter.completed = true;
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void discardCollectedPlaguecrafterCards(GameData gameData) {
+        PlaguecrafterState state = gameData.plaguecrafter;
+        List<PlaguecrafterState.SelectedDiscard> selected = List.copyOf(state.selectedDiscards);
+        List<PlaguecrafterState.SelectedDiscard> actualDiscards = new ArrayList<>();
+        Map<UUID, Card> cardsById = new HashMap<>();
+
+        for (PlaguecrafterState.SelectedDiscard selection : selected) {
+            List<Card> hand = gameData.playerHands.get(selection.playerId());
+            if (hand == null) {
+                continue;
+            }
+            int index = -1;
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(selection.cardId())) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index >= 0) {
+                Card card = hand.remove(index);
+                cardsById.put(card.getId(), card);
+                actualDiscards.add(selection);
+            }
+        }
+
+        for (PlaguecrafterState.SelectedDiscard selection : actualDiscards) {
+            Card card = cardsById.get(selection.cardId());
+            if (card == null) {
+                continue;
+            }
+
+            boolean causedByOpponent = !selection.playerId().equals(state.sourceControllerId);
+            gameData.discardCausedByOpponent = causedByOpponent;
+            boolean replacedByBattlefield = false;
+            if (hasEnterBattlefieldOnDiscardEffect(card) && causedByOpponent) {
+                Permanent permanent = new Permanent(card);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, selection.playerId(), permanent);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(selection.playerId()) + " discards ", card,
+                        " — it enters the battlefield instead."));
+                replacedByBattlefield = true;
+            } else {
+                graveyardService.discardCard(gameData, selection.playerId(), card);
+                gameLogService.append(gameData, GameLog.playerDiscards(
+                        gameData.playerIdToName.get(selection.playerId()), card));
+            }
+
+            triggerCollectionService.checkDiscardTriggers(gameData, selection.playerId(), card);
+            if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(
+                        gameData, selection.playerId(), card, null, false);
+            }
+            checkPendingReturnToHandOnDiscard(gameData, card);
+            checkPendingTransformOnCreatureDiscard(gameData, card);
+            checkPendingUntapOnDiscardType(gameData, card);
+            checkPendingBoostSourceByDiscardedManaValue(gameData, card);
         }
     }
 

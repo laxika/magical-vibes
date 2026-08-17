@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -22,10 +24,15 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentTo
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -807,6 +814,31 @@ class DamageTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_DEALT_DAMAGE — default handler")
     class DealtDamageDefault {
+
+        @Test
+        @DisplayName("queues a player-only target choice for a target-player damage trigger")
+        void queuesPlayerOnlyTargetChoice() {
+            Permanent damagedCreature = createPermanent("Truefire Captain");
+            damagedCreature.getCard().target(TargetFilters.creature());
+            var effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue());
+            damagedCreature.getCard().target(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
+                    .addEffect(EffectSlot.ON_DEALT_DAMAGE, effect);
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect),
+                    EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(pending.playerTargetOnly()).isTrue();
+            assertThat(pending.spellManaSpentX()).isEqualTo(3);
+            assertThat(pending.targetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
+        }
 
         @Test
         @DisplayName("does not add to stack when controller is null")

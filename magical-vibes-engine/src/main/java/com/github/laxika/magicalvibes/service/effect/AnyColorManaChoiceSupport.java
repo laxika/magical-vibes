@@ -108,11 +108,12 @@ public final class AnyColorManaChoiceSupport {
                                                                CardSubtype chosenSubtype,
                                                                Card sourceCard) {
         if (effect.anyColorCombination()) {
-            return ChoiceContext.ManaColorChoice.fixedColorCombination(
+            ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
+            return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
 
-        return switch (effect.restriction()) {
+        ChoiceContext.ManaColorChoice choice = switch (effect.restriction()) {
             case NONE, INSTANT_SORCERY_COPY ->
                     new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
             case IMPRINTED_CARD_COLORS -> {
@@ -151,6 +152,7 @@ public final class AnyColorManaChoiceSupport {
             case PARTY_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.partySpellOrAbility(playerId, amount);
         };
+        return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
     }
 
     private static List<ManaColor> imprintedCardColors(GameData gameData, Card sourceCard) {

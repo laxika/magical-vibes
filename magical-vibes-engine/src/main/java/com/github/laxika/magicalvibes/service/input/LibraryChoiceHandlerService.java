@@ -215,7 +215,8 @@ public class LibraryChoiceHandlerService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
                 chosenCard = searchCards.get(cardIndex);
-                if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
+                if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
+                        || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId());
                     gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
@@ -293,6 +294,9 @@ public class LibraryChoiceHandlerService {
                 if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest on the bottom of the library in a random order.");
+                } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
+                    logEntry = GameLog.text(player.getUsername()
+                            + " exiles a card face down and puts the rest into the graveyard.");
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     logEntry = chosenCard == null
                             ? GameLog.text(player.getUsername() + "'s imprint ability does nothing.")
@@ -1154,7 +1158,7 @@ public class LibraryChoiceHandlerService {
                 case HAND -> "into their hand";
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
-                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> "into exile face down";
+                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");

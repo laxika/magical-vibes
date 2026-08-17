@@ -31,11 +31,14 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -145,6 +148,39 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack")
+    void lifeGainMayPayTriggerKeepsOptionalPayment() {
+        Permanent perm = createPermanent("Dawn of Hope");
+        var effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?");
+        var ctx = new TriggerContext.LifeGain(player1Id, 1);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("surveil once-per-turn trigger queues its wrapped effect only once")
+    void surveilOncePerTurnTriggerQueuesWrappedEffectOnlyOnce() {
+        Permanent perm = createPermanent("Whispering Snitch");
+        var effect = new OncePerTurnTriggerEffect(SequenceEffect.of(
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(1)));
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect.wrapped());
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     @Test

@@ -992,7 +992,10 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 UUID controllerId = gameData.findControllerOf(permanent);
-                yield controllerId != null && gameQueryService.isPlayerBeingAttacked(gameData, controllerId);
+                UUID defendingPlayerId = filterContext == null ? null : filterContext.defendingPlayerId();
+                yield controllerId != null && (defendingPlayerId != null
+                        ? defendingPlayerId.equals(controllerId)
+                        : gameQueryService.isPlayerBeingAttacked(gameData, controllerId));
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();
@@ -1097,6 +1100,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
                 if (sourcePermanent == null) {
                     yield false;
                 }

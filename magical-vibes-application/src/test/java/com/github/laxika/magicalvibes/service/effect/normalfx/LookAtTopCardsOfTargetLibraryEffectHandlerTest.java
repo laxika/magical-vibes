@@ -301,4 +301,31 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
             verifyNoInteractions(gameLogService);
         }
     }
+
+    @Nested
+    class ExileOneFaceDownRestToGraveyard {
+
+        @Test
+        @DisplayName("Enters a mandatory face-down exile search with graveyard remainder")
+        void entersSearchWithGraveyardRemainder() {
+            stubCardViewFactory();
+            Card first = createCard("First");
+            Card second = createCard("Second");
+            Card third = createCard("Third");
+            gd.playerDecks.get(player2Id).addAll(List.of(first, second, third));
+
+            LookAtTopCardsOfTargetLibraryEffect effect = new LookAtTopCardsOfTargetLibraryEffect(
+                    3, TargetLibraryAction.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
+            handler.resolve(gd, entryTargeting("Thief of Sanity", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().targetPlayerId()).isEqualTo(player2Id);
+            assertThat(search.params().destination())
+                    .isEqualTo(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
+            assertThat(search.params().restToGraveyard()).isTrue();
+            assertThat(search.params().reorderRemainingToBottom()).isFalse();
+            assertThat(search.params().canFailToFind()).isFalse();
+        }
+    }
 }

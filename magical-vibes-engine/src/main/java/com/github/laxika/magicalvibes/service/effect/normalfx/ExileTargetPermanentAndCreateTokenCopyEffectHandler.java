@@ -48,6 +48,8 @@ public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements Norm
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     exiledCard, tokenProfile);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, entry.getControllerId(), tokenCard);
             Permanent token = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), token);
             entry.getCreatedPermanentIds().add(token.getId());

@@ -1343,6 +1343,14 @@ public class CombatDamageService {
                     continue;
                 }
 
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
+                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                            "'s combat damage trigger goes on the stack — choose a target."));
+                    continue;
+                }
+
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
                 // A single capability interface reports the context the fired trigger needs (which
@@ -1434,7 +1442,7 @@ public class CombatDamageService {
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                     if (needsTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), ownerId, effects, perm.getId()));
+                                perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId));
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
                     } else {

@@ -21,6 +21,8 @@ public enum LibrarySearchDestination {
     EXILE_FACE_DOWN_PILE,
     /** Exile one card face down with a source while returning a preselected remainder to the bottom randomly. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
+    EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     EXILE_PLAYABLE,
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */

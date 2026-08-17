@@ -138,9 +138,11 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", sourceCard, " is created."));
                         log.info("Game {} - Token clone copy of {} created via embalm", gameData.id, sourceCard.getName());
-                        return;
+                            return;
                     }
 
+                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, entry.getControllerId(), tokenCard);
                     Permanent tokenPermanent = new Permanent(tokenCard);
 
                     // Planeswalker tokens enter with loyalty counters and no summoning sickness

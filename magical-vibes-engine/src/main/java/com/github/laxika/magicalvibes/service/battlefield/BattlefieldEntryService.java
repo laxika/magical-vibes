@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -229,6 +230,7 @@ public class BattlefieldEntryService {
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
+        TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
@@ -1300,6 +1302,15 @@ public class BattlefieldEntryService {
                                                  boolean wasCastFromHand, int etbMode, int xValue,
                                                  boolean kicked, List<UUID> targetIds,
                                                  List<String> repeatedAdditionalCosts) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, List.of());
+    }
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 boolean wasCastFromHand, int etbMode, int xValue,
+                                                 boolean kicked, List<UUID> targetIds,
+                                                 List<String> repeatedAdditionalCosts,
+                                                 List<UUID> convokeCreatureIds) {
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1528,7 +1539,7 @@ public class BattlefieldEntryService {
         }
 
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
-                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts);
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -1588,6 +1599,15 @@ public class BattlefieldEntryService {
                                           boolean wasCastFromHand, int etbMode, int xValue,
                                           boolean kicked, List<UUID> targetIds,
                                           List<String> repeatedAdditionalCosts) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, List.of());
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                          boolean wasCastFromHand, int etbMode, int xValue,
+                                          boolean kicked, List<UUID> targetIds,
+                                          List<String> repeatedAdditionalCosts,
+                                          List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
         ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -1682,7 +1702,7 @@ public class BattlefieldEntryService {
                         || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                             List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
-                            repeatedAdditionalCosts);
+                            repeatedAdditionalCosts, convokeCreatureIds);
                     continue;
                 }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1697,7 +1717,7 @@ public class BattlefieldEntryService {
             if (!mandatoryEffects.isEmpty()) {
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                         mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
-                        repeatedAdditionalCosts);
+                        repeatedAdditionalCosts, convokeCreatureIds);
             }
         }
 
@@ -1788,7 +1808,8 @@ public class BattlefieldEntryService {
                                           List<UUID> targetIds, List<CardEffect> mandatoryEffects,
                                           TargetFilter modeTargetFilter, int extraTriggerCopies,
                                           int etbMode, int xValue,
-                                          List<String> repeatedAdditionalCosts) {
+                                          List<String> repeatedAdditionalCosts,
+                                          List<UUID> convokeCreatureIds) {
         // Separate graveyard exile effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
@@ -1979,6 +2000,7 @@ public class BattlefieldEntryService {
                 if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                 }
+                etbEntry.setConvokeCreatureIds(convokeCreatureIds);
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
@@ -2004,6 +2026,7 @@ public class BattlefieldEntryService {
                     if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                     }
+                    extraEtbEntry.setConvokeCreatureIds(convokeCreatureIds);
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }

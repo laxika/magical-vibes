@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToH
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
@@ -162,23 +161,20 @@ public class GraveyardService {
             }
         }
 
-        // Fire self-mill triggers (e.g. Gaea's Blessing — "When ~ is put into your graveyard
-        // from your library, shuffle your graveyard into your library.")
+        // Fire self-mill triggers after the cards have entered the graveyard.
         for (Card card : cardsEnteredGraveyard) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_MILLED)) {
-                if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
-                    List<Card> moving = takeGraveyardCardsForZoneChange(gameData, targetPlayerId);
-                    int graveyardCount = moving.size();
-                    if (graveyardCount > 0) {
-                        deck.addAll(moving);
-                        LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-                        gameLogService.append(gameData, GameLog.cardThen(card, " was milled — " + playerName
-                                + " shuffles their graveyard (" + graveyardCount
-                                + " card" + (graveyardCount != 1 ? "s" : "") + ") into their library."));
-                        log.info("Game {} - {} self-mill trigger: {} shuffles graveyard ({} cards) into library",
-                                gameData.id, card.getName(), playerName, graveyardCount);
-                    }
-                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        targetPlayerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        (UUID) null
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} triggers on being milled", gameData.id, card.getName());
             }
         }
         return cardsEnteredGraveyard;

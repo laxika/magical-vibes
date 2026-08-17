@@ -100,6 +100,8 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             tokenCard.setPower(2);
             tokenCard.setToughness(2);
             tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(

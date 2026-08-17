@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M19", collectorNumber = "25")
+@CardRegistration(set = "GRN", collectorNumber = "21")
 public class LuminousBonds extends Card {
 
     public LuminousBonds() {

@@ -35,7 +35,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
                               Permanent enteringPermanent, UUID enteringControllerId,
                               UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
-                              UUID thenEffectTargetId) {
+                              UUID thenEffectTargetId, boolean plaguecrafter) {
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
@@ -45,7 +45,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            Card thenEffectSourceCard, CardEffect thenEffect) {
         this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
                 eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
-                boostToughness, thenEffectSourceCard, thenEffect, null, null, null, null, 0, null);
+                boostToughness, thenEffectSourceCard, thenEffect, null, null, null, null, 0, null, false);
     }
 
     public static final DiscardFollowUp NONE =
@@ -72,11 +72,17 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     /** Put a fixed number of +1/+1 counters on a permanent once the discard completes. */
     public static DiscardFollowUp plusOnePlusOneCounters(UUID permanentId, int amount) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                null, null, null, null, null, permanentId, amount, null);
+                null, null, null, null, null, permanentId, amount, null, false);
     }
 
     public static DiscardFollowUp eachPlayer(List<UUID> remainingChoosers, UUID controllerId, int amount) {
         return new DiscardFollowUp(0, null, remainingChoosers, controllerId, amount, 0, List.of(), null, 0, 0, null, null);
+    }
+
+    /** Carries the APNAP discard-choice remainder for Plaguecrafter. */
+    public static DiscardFollowUp plaguecrafter(List<UUID> remainingChoosers) {
+        return new DiscardFollowUp(0, null, remainingChoosers, null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, null, null, 0, null, true);
     }
 
     /**
@@ -115,13 +121,13 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect,
                                               CardPredicate condition, UUID thenEffectTargetId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                sourceCard, thenEffect, condition, null, null, null, 0, thenEffectTargetId);
+                sourceCard, thenEffect, condition, null, null, null, 0, thenEffectTargetId, false);
     }
 
     /** Completes a permanent's entry after the controller discards the required card. */
     public static DiscardFollowUp enteringPermanent(Permanent permanent, UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
-                null, null, null, permanent, controllerId, null, 0, null);
+                null, null, null, permanent, controllerId, null, 0, null, false);
     }
 
     /**
@@ -134,6 +140,6 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
                 thenEffectCondition,
                 enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId,
-                plusOnePlusOneCounterAmount, thenEffectTargetId);
+                plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter);
     }
 }

@@ -882,8 +882,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Choose one nonland card from a target player's hand or graveyard to exile. */
     record ExileNonlandCardFromTargetHandOrGraveyardChoice(
-            UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds)
+            UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds,
+            boolean grantPlayPermission)
             implements PendingInteraction {
+
+        public ExileNonlandCardFromTargetHandOrGraveyardChoice(
+                UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds) {
+            this(playerId, targetPlayerId, validCardIds, true);
+        }
 
         @Override
         public UUID decidingPlayerId() {

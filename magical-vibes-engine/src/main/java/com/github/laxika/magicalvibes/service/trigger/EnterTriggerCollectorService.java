@@ -277,7 +277,8 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
+                findEnteringPermanentId(match, pe.enteringCard()));
         logTriggered(match);
         return true;
     }
@@ -1170,9 +1171,16 @@ public class EnterTriggerCollectorService {
     // ── Helpers ─────────────────────────────────────────────────────────────────────────
 
     private void enqueue(TriggerMatchContext match, CardEffect effect, UUID targetPlayerId, int count) {
+        enqueue(match, effect, targetPlayerId, count, null);
+    }
+
+    private void enqueue(TriggerMatchContext match, CardEffect effect, UUID targetPlayerId, int count,
+                         UUID enteringPermanentId) {
         Card sourceCard = match.permanent().getCard();
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < count; i++) {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
@@ -1180,7 +1188,14 @@ public class EnterTriggerCollectorService {
                     new ArrayList<>(List.of(effect)),
                     targetPlayerId,
                     match.permanent().getId()
-            ));
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            if (enteringPermanent != null) {
+                entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringPermanentPowerAtTrigger(
+                        gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
+            }
+            match.gameData().stack.add(entry);
         }
     }
 

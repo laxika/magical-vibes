@@ -475,6 +475,20 @@ public class GameTestHarness {
                 List.of(), discardHandCardIndex);
     }
 
+    /** Casts a jump-start spell from the graveyard, discarding the selected hand card. */
+    public void castJumpStart(Player player, int graveyardCardIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, null,
+                List.of(), discardHandCardIndex);
+    }
+
+    /** Casts a targeted jump-start spell from the graveyard, discarding the selected hand card. */
+    public void castJumpStart(Player player, int graveyardCardIndex, int discardHandCardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(), null, null,
+                List.of(), discardHandCardIndex);
+    }
+
     public void castFromExile(Player player, UUID exileCardId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, null);
@@ -680,6 +694,14 @@ public class GameTestHarness {
     public void castSorcery(Player player, int cardIndex, int xValue, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of());
+    }
+
+    public void castSorceryWithChosenCreatureType(Player player, int cardIndex, int xValue,
+                                                   CardSubtype chosenType, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, List.of(), List.of(), null, chosenType);
     }
 
     /**

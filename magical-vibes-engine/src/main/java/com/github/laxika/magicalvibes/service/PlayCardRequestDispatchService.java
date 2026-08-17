@@ -81,6 +81,8 @@ public class PlayCardRequestDispatchService {
         }
         CardSubtype chosenBeholdType = request.beholdCreatureType() != null
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
+        CardSubtype chosenCreatureType = request.chosenCreatureType() != null
+                ? CardSubtype.valueOf(request.chosenCreatureType()) : null;
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
         // former per-field branches keyed on, so an empty list still means "cost not used".
         if (request.sharedColorDiscardHandCardIndex() != null) {
@@ -112,7 +114,7 @@ public class PlayCardRequestDispatchService {
                 Boolean.TRUE.equals(request.buyback()),
                 request.beholdPermanentId(), request.beholdHandCardIndex(),
                 listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                chosenBeholdType);
+                chosenBeholdType, chosenCreatureType);
     }
 
     private static <T> List<T> listOrEmpty(List<T> list) {

@@ -27,6 +27,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum BounceScope {
     TARGET,
+    TARGET_CHOSEN_CREATURE_TYPE,
     SELF,
     SELF_SPELL,
     ALL_MATCHING,

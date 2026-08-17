@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "M19", collectorNumber = "161")
 @CardRegistration(set = "FDN", collectorNumber = "209")
 @CardRegistration(set = "M21", collectorNumber = "163")
+@CardRegistration(set = "GRN", collectorNumber = "118")
 public class SureStrike extends Card {
 
     public SureStrike() {

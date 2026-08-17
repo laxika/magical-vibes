@@ -82,6 +82,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Flanking", Keyword.FLANKING);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
+        KEYWORD_MAP.put("Jump", Keyword.JUMP_START);
+        KEYWORD_MAP.put("Jump-start", Keyword.JUMP_START);
         KEYWORD_MAP.put("Emerge", Keyword.EMERGE);
         KEYWORD_MAP.put("Coven", Keyword.COVEN);
         KEYWORD_MAP.put("Meld", Keyword.MELD);

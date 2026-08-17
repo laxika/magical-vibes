@@ -126,6 +126,7 @@ import java.util.UUID;
 import java.util.Set;
 
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 /**
  * Trigger collectors for spell-cast events (ON_ANY_PLAYER_CASTS_SPELL,
  * ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
@@ -141,6 +142,7 @@ public class SpellCastTriggerCollectorService {
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final ValidTargetService validTargetService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
 
@@ -397,6 +399,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherControlledCreature(TriggerMatchContext match,
             CopySpellForEachOtherControlledCreatureEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -407,11 +410,13 @@ public class SpellCastTriggerCollectorService {
         if (singleTargetId == null) return false;
         // Mirrorwing style: spell must target only this source permanent
         if (!singleTargetId.equals(match.permanent().getId())) return false;
+        if (trigger.chooseOne() && !hasOtherLegalCreatureTarget(
+                match.gameData(), spellEntry.getCard(), sc.castingPlayerId(), singleTargetId)) return false;
 
         StackEntry snapshot = new StackEntry(spellEntry);
         CopySpellForEachOtherControlledCreatureEffect resolutionEffect =
                 new CopySpellForEachOtherControlledCreatureEffect(
-                        snapshot, sc.castingPlayerId(), singleTargetId);
+                        snapshot, sc.castingPlayerId(), singleTargetId, trigger.chooseOne());
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -421,6 +426,15 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(resolutionEffect))
         ));
         return true;
+    }
+
+    private boolean hasOtherLegalCreatureTarget(GameData gameData, Card spellCard,
+                                                UUID castingPlayerId, UUID originalTargetId) {
+        return gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of()).stream()
+                .anyMatch(permanent -> !permanent.getId().equals(originalTargetId)
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && validTargetService.canPermanentBeTargetedBySpell(
+                                gameData, permanent, spellCard, castingPlayerId));
     }
 
     private StackEntry findInstantOrSorceryOnStack(TriggerMatchContext match, TriggerContext.SpellCast sc) {
@@ -1048,7 +1062,8 @@ public class SpellCastTriggerCollectorService {
                 match.gameData(), sc.castingPlayerId())) return false;
 
         int manaValue = sc.spellCard().getManaValue();
-        List<CardEffect> resolved = new ArrayList<>(List.of(new BoostSelfEffect(manaValue, manaValue)));
+        int toughnessBoost = trigger.boostToughness() ? manaValue : 0;
+        List<CardEffect> resolved = new ArrayList<>(List.of(new BoostSelfEffect(manaValue, toughnessBoost)));
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

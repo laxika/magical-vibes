@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "211")
+@CardRegistration(set = "GRN", collectorNumber = "121")
 public class AffectionateIndrik extends Card {
 
     public AffectionateIndrik() {

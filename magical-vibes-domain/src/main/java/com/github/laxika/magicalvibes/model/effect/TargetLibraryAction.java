@@ -24,6 +24,8 @@ public enum TargetLibraryAction {
     EXILE_ONE,
     /** The controller exiles one card face down, grants a cast permission for it, and puts the rest on the bottom randomly (Gonti, Lord of Luxury). */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** The controller exiles one card face down, grants a cast permission for it, and puts the rest into the target player's graveyard (Thief of Sanity). */
+    EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
     /**
      * The controller may put the single looked-at top card on the bottom of that player's library;
      * declining leaves it on top (Coral Fighters). Only meaningful with {@code count == 1}.

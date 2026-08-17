@@ -168,6 +168,7 @@ on what the mana may pay for.
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
 | Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
 | Bounce target spell or creature | `u/Unsubstantiate.java` | `ReturnTargetSpellOrCreatureToHandEffect()` — declarative `spellOnStack` + `creature` target; the handler routes the chosen ID to the stack or battlefield |
+| Bounce X target creatures of a chosen type | `s/SelectiveSnare.java` | `targetX(TargetFilters.creature(), 100)` + `ReturnToHandEffect.targetCreaturesOfChosenType()`; the type is supplied with the cast-time choice and targets must match it while casting |
 | Bounce target + all same name | `e/EchoingTruth.java` | `target(nonland)` + `ReturnTargetPermanentAndAllWithSameNameToHandEffect(nonland, PermanentTruePredicate())` — only the chosen nonland permanent is targeted; every other permanent with that name is returned without being targeted |
 | Bounce target + life loss | `v/VaporSnag.java` | ReturnToHandEffect.targetAndControllerLosesLife(1) — bounce creature, its controller loses life |
 | Bounce target + controller draws | `c/CallToHeel.java` | ReturnToHandEffect.targetAndControllerDraws(1) — bounce creature, its controller draws a card |
@@ -227,6 +228,7 @@ on what the mana may pay for.
 | Graveyard return (multi-target, cards with cycling) | `s/SacredExcavation.java` | ReturnTargetCardsFromGraveyardToHandEffect(new CardHasCyclingPredicate(), 2) — up to two target cards with cycling to hand |
 | Graveyard return (one per subtype to hand) | `g/GrimCaptainsCall.java` | ReturnOneOfEachSubtypeFromGraveyardToHandEffect(List.of(PIRATE, VAMPIRE, DINOSAUR, MERFOLK)) — one of each subtype, chosen at resolution |
 | Graveyard return (any number with different mana values) | `s/SeasonsPast.java` | ReturnUpToOneCardOfEachManaValueFromGraveyardToHandEffect — non-targeting sequential choices, with each selected mana value excluded from later choices |
+| Graveyard return (one creature per mana value to battlefield) | `g/GruesomeMenagerie.java` | ReturnOneCreatureOfEachManaValueFromGraveyardToBattlefieldEffect(List.of(1, 2, 3)) — one creature card of each listed mana value, chosen sequentially at resolution |
 | Graveyard return (up to one card of each color) | `a/AllSunsDawn.java` | Five optional controller-graveyard color target groups plus `ReturnUpToOneCardOfEachColorFromGraveyardToHandEffect`; `TargetGroupAssignmentService` assigns multicolored cards to distinct color groups and `ExileSpellEffect` exiles the spell |
 | Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardAnyOfPredicate).source(ALL_GRAVEYARDS).build() |
 | Targeted reanimate + indestructible | `f/FatedReturn.java` | ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).source(ALL_GRAVEYARDS).filter(CardTypePredicate(CREATURE)).targetGraveyard(true).grantIndestructible(true).build() + ConditionalEffect(ControllerTurn, ScryEffect(2)) |

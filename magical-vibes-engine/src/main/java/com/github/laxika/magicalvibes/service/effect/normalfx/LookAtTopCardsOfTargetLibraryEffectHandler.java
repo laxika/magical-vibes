@@ -54,6 +54,8 @@ import org.springframework.stereotype.Component;
  *       their library and the rest are exiled (Ashnod's Cylix).</li>
  *   <li>{@code KEEP_ONE_ON_TOP_REST_TO_GRAVEYARD} — the controller picks one card to go back on top
  *       of the target player's library; the rest go into that player's graveyard (Dimir Charm).</li>
+ *   <li>{@code EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD} puts the unchosen cards into the target
+ *       player's graveyard after the face-down exile (Thief of Sanity).</li>
  * </ul>
  */
 @Slf4j
@@ -108,7 +110,10 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     deck, actual, controllerName, targetName, false, false);
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileOneFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName);
+                    targetName, false);
+            case EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> resolveExileOneFaceDownWithPermission(
+                    gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
+                    targetName, true);
             case MAY_EXILE_ANY_NUMBER -> resolveExileOne(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName, true, true);
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
@@ -205,21 +210,26 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
 
     private void resolveExileOneFaceDownWithPermission(GameData gameData, StackEntry entry,
             UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
-            String controllerName, String targetName) {
+            String controllerName, String targetName, boolean restToGraveyard) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual)
                         + " of " + targetName + "'s library."));
-        String prompt = "Exile one card face down. Put the rest on the bottom of that library in a random order.";
+        String prompt = restToGraveyard
+                ? "Exile one card face down. Put the rest into that player's graveyard."
+                : "Exile one card face down. Put the rest on the bottom of that library in a random order.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
                         .canFailToFind(false)
                         .targetPlayerId(targetPlayerId)
                         .sourceCards(new ArrayList<>(topCards))
-                        .reorderRemainingToBottom(true)
+                        .reorderRemainingToBottom(!restToGraveyard)
+                        .restToGraveyard(restToGraveyard)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
-                        .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                        .destination(restToGraveyard
+                                ? LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD
+                                : LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
                         .sourcePermanentId(entry.getSourcePermanentId())
                         .build(),
                 prompt,

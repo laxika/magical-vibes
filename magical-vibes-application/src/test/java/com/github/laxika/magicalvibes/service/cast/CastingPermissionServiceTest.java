@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -319,6 +320,22 @@ class CastingPermissionServiceTest {
             creature.setManaCost("{1}{G}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Controller-only noncreature restriction does not affect an opponent")
+        void controllerOnlyNoncreatureRestriction() {
+            Card nullhide = new Card();
+            nullhide.addEffect(EffectSlot.STATIC,
+                    new NoncreatureSpellsCantBeCastEffect(0, false, false));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(nullhide));
+
+            Card shock = new Card();
+            shock.setType(CardType.INSTANT);
+            shock.setManaCost("{R}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, shock)).isFalse();
+            assertThat(svc.isSpellCastingAllowed(gd, player2Id, shock)).isTrue();
         }
 
         @Test

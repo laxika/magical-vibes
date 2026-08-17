@@ -332,6 +332,17 @@ class CombatServiceTest {
         }
 
         @Test
+        @DisplayName("Clears combat-scoped attack requirements")
+        void clearsCombatScopedAttackRequirements() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            attacker.setMustAttackThisCombat(true);
+
+            combatService.clearCombatState(gd);
+
+            assertThat(attacker.isMustAttackThisCombat()).isFalse();
+        }
+
+        @Test
         @DisplayName("Clears blocking flag and blocking targets on all permanents")
         void clearsBlockingFlagAndTargets() {
             Permanent blocker = addPermanent(player2Id, createCreature("Grizzly Bears"));

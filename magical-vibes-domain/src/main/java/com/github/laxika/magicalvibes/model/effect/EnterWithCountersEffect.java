@@ -13,5 +13,10 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * are on the permanent before ETB triggers fire and before static/CDA evaluation sees it
  * (CR 614.12).
  */
-public record EnterWithCountersEffect(CounterType type, DynamicAmount count) implements ReplacementEffect {
+public record EnterWithCountersEffect(CounterType type, DynamicAmount count, boolean countColorsSpent)
+        implements ReplacementEffect {
+
+    public EnterWithCountersEffect(CounterType type, DynamicAmount count) {
+        this(type, count, false);
+    }
 }

@@ -115,6 +115,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
 | Upkeep control-to-most-creatures | `w/WildMammoth.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer, PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect) — unique player with the most creatures gains control; no-op on a tie |
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
+| ETB each player sacrifices a creature or planeswalker, otherwise discards | `p/Plaguecrafter.java` | EachPlayerSacrificesPermanentOrDiscardsEffect(creature OR planeswalker) — APNAP sacrifice choices and simultaneous sacrifice, followed by APNAP discard choices and simultaneous discards |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (exile unless discard) | `b/BodySnatcher.java` | ExileUnlessDiscardCardTypeEffect |
 | ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |

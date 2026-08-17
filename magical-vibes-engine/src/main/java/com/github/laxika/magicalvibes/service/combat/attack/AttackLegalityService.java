@@ -402,7 +402,7 @@ public class AttackLegalityService {
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
         // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement
         // lapses once that permanent is no longer a legal attack target.
-        if (creature.isMustAttackThisTurn()
+        if ((creature.isMustAttackThisTurn() || creature.isMustAttackThisCombat())
                 && (creature.getMustAttackTargetId() == null
                         || gameData.playerIds.contains(creature.getMustAttackTargetId())
                         || getValidAttackTargetIds(gameData, creatureControllerId)

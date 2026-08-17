@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPer
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
@@ -72,6 +73,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanA
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
@@ -202,6 +204,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanS
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
@@ -550,6 +553,9 @@ public class ConditionEvaluationService {
                             && gameData.sacrificedPermanentSubtypeCountThisTurn
                                     .getOrDefault(ctx.controllerId(), Map.of())
                                     .getOrDefault(c.subtype(), 0) >= c.minimum();
+            case ControllerSurveiledThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoSurveilledThisTurn.contains(ctx.controllerId());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
             case SelfWasDealtDamageThisTurn ignored ->
@@ -593,6 +599,9 @@ public class ConditionEvaluationService {
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), null, c.filter());
+            case ControllerCastThreeOrMoreSpellsThisTurn c ->
+                    ctx.controllerId() != null && gameQueryService.hasControllerCastThreeOrMoreSpellsThisTurn(
+                            gameData, ctx.controllerId(), c.filter());
             case ControllerCreatureSpellCounteredByOpponentThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
@@ -708,6 +717,18 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
             }
+            case TriggeringPermanentPowerGreaterThanSourcePower ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                if (source == null || ctx.triggeringPermanentPowerAtTrigger() == null) {
+                    yield false;
+                }
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                int triggeringPower = triggeringPermanent == null
+                        ? ctx.triggeringPermanentPowerAtTrigger()
+                        : gameQueryService.getEffectivePower(gameData, triggeringPermanent);
+                yield triggeringPower > gameQueryService.getEffectivePower(gameData, source);
+            }
             case SourceAddedManaThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatAddedManaWithAbilityThisTurn.contains(ctx.sourcePermanentId());
@@ -743,7 +764,9 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && gameQueryService.isEnchantment(gameData, source);
             }
-            case SourceIsOnBattlefield ignored -> sourcePermanent(gameData, ctx) != null;
+            case SourceIsOnBattlefield ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
@@ -1022,9 +1045,11 @@ public class ConditionEvaluationService {
      * the call site and falling back to a battlefield lookup by id.
      */
     private Permanent sourcePermanent(GameData gameData, ConditionContext ctx) {
-        if (ctx.sourcePermanent() != null) return ctx.sourcePermanent();
-        if (ctx.sourcePermanentId() == null) return null;
-        return gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (ctx.sourcePermanentId() != null) {
+            Permanent live = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (live != null) return live;
+        }
+        return ctx.sourcePermanent();
     }
 
     /**

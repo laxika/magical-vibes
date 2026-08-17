@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -32,21 +33,32 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var switchEffect = (SwitchPowerToughnessEffect) effect;
-        UUID targetId = switchEffect.self() ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
+        List<UUID> targetIds;
+        if (switchEffect.self()) {
+            targetIds = entry.getSourcePermanentId() == null
+                    ? List.of()
+                    : List.of(entry.getSourcePermanentId());
+        } else {
+            targetIds = entry.targetsForEffect(switchEffect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
 
-        // CR 613 layer engine: each resolution adds ONE floating layer-7d switch. The layered
-        // pass applies every active switch as its own step on the finished 7a-7c values
-        // (CR 613.4d) — an even count is a no-op, an odd count swaps the final P/T.
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s power and toughness are switched until end of turn."));
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    "'s power and toughness are switched until end of turn."));
+
+            log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
+        }
     }
 }

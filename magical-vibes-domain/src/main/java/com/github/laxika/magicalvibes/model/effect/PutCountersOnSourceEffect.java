@@ -18,6 +18,11 @@ public record PutCountersOnSourceEffect(int powerModifier, int toughnessModifier
     }
 
     @Override
+    public TargetSpec targetSpec() {
+        return new TargetSpec(null, false, null, true, 1);
+    }
+
+    @Override
     public TriggerContext combatDamageTriggerContext() {
         return TriggerContext.SOURCE_SELF;
     }

@@ -55,7 +55,10 @@ public class PopulateSupport {
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(tokenCard));
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             log.info("Game {} - Populate creates a token copy of {}", gameData.id, sourceCard.getName());

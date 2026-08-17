@@ -857,7 +857,8 @@ public class CombatAttackService {
                                         ? defendingPlayerId : playerId;
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.AttackTriggerTarget(
-                                                attackCard, playerId, otherEffects, attacker.getId(), targetChooserId));
+                                                attackCard, playerId, otherEffects, attacker.getId(),
+                                                targetChooserId, defendingPlayerId));
                             }
                         } else {
                             // Capture the attacked player/planeswalker so non-targeting attack

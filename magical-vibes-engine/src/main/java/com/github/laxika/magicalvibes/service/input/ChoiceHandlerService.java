@@ -663,6 +663,21 @@ public class ChoiceHandlerService {
                     + " " + colorName.toLowerCase() + " mana (creature spells only).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds {} {} creature-spell-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
+        } else if (ctx.grantsAdditionalPlusOneCounter()) {
+            manaPool.add(manaColor, amount);
+            manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureMana(manaColor, amount);
+            }
+            if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+                AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+            }
+
+            String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
+                    + " " + colorName.toLowerCase()
+                    + " mana (gives a multicolored creature spell an additional +1/+1 counter).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds {} {} counter-granting mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
         } else if (ctx.artifactSpellOrAbilityOnly()) {
@@ -700,6 +715,7 @@ public class ChoiceHandlerService {
 
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
                 && !ctx.creatureSpellOnly() && !ctx.creatureSpellOrAbilityOnly()
+                && !ctx.grantsAdditionalPlusOneCounter()
                 && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
@@ -3555,7 +3571,10 @@ public class ChoiceHandlerService {
         // Validate selected card IDs against valid set
         List<UUID> validIds = ctx.validCardIds();
         if (cardIds.size() > ctx.maxCount()) {
-            throw new IllegalStateException("Too many cards selected");
+            throw new IllegalStateException("Choose at most " + ctx.maxCount() + " cards");
+        }
+        if (cardIds.stream().distinct().count() != cardIds.size()) {
+            throw new IllegalStateException("A card cannot be chosen more than once");
         }
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {

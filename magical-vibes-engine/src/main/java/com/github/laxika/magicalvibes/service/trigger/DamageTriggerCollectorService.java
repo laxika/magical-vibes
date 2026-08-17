@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -362,10 +363,18 @@ public class DamageTriggerCollectorService {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         GameData gameData = match.gameData();
         if (trigger.playerRelation() != PlayerRelation.OPPONENT) {
-            // Only the opponent-only wording has a single implied player to auto-target; the plain
-            // "target player" form queues as an ordinary trigger, exactly as the default collector
-            // handled it before this class absorbed its opponent-only sibling.
-            addDealtDamageEntry(gameData, dc.damagedCreature(), trigger, dc.damageDealt());
+            TargetFilter targetFilter = targetFilterFor(dc.damagedCreature(), trigger);
+            boolean playerTargetOnly = targetFilter instanceof PlayerPredicateTargetFilter;
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    dc.damagedCreature().getCard(),
+                    gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId()),
+                    new ArrayList<>(List.of(trigger)),
+                    playerTargetOnly,
+                    targetFilter,
+                    dc.damageDealt()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
+            log.info("Game {} - {} ON_DEALT_DAMAGE target trigger fires",
+                    gameData.id, dc.damagedCreature().getCard().getName());
             return true;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId());
@@ -402,8 +411,7 @@ public class DamageTriggerCollectorService {
             gameData.stack.add(entry);
         } else {
             // Planeswalkers present — need player choice between opponent and planeswalkers
-            TargetFilter targetFilter = dc.damagedCreature().getCard().getEffectTargetIndex(trigger) >= 0
-                    ? dc.damagedCreature().getCard().getTargetFilter() : null;
+            TargetFilter targetFilter = targetFilterFor(dc.damagedCreature(), trigger);
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)),
                     false, targetFilter, dc.damageDealt()
@@ -1267,5 +1275,13 @@ public class DamageTriggerCollectorService {
         gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
+    }
+
+    private TargetFilter targetFilterFor(Permanent source, CardEffect effect) {
+        int targetIndex = source.getCard().getEffectTargetIndex(effect);
+        if (targetIndex < 0 || targetIndex >= source.getCard().getSpellTargets().size()) {
+            return null;
+        }
+        return source.getCard().getSpellTargets().get(targetIndex).getFilter();
     }
 }

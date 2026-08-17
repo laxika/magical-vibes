@@ -1,6 +1,7 @@
 # Card Patterns: Triggered Creatures
 
 | Same-name graveyard instant/sorcery cast on hand spell | `h/HarnessTheStorm.java` | ON_CONTROLLER_CASTS_SPELL `CastSameNameCardFromGraveyardOnSpellCastEffect()` — accepts only an instant or sorcery cast from hand, chooses the matching controller-graveyard card as the trigger is queued, then the existing graveyard-cast effect offers its normal-cost cast |
+| Attack: tap any number of creatures for self-boost | `l/LedevChampion.java` | `ON_ATTACK TapCreaturesBoostSelfEffect()` — controller chooses any number of untapped creatures they control at resolution; the source gets +1/+1 until end of turn per creature tapped |
 
 | Heroic may-pay X counters | `h/HeroOfLeinaTower.java` | ON_CONTROLLER_CASTS_SPELL `SpellCastTriggerEffect(null, List.of(PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)), StackEntryTargetsSourcePredicate())` — on resolution, choose and pay X, then put X +1/+1 counters on the source; X=0 declines |
 

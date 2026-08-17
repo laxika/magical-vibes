@@ -134,6 +134,23 @@ public class TriggerTargetCollector {
                           Card sourceCard,
                           Options options,
                           Permanent sourcePermanentSnapshot) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, null);
+    }
+
+    /**
+     * Collects targets with the player that was attacked by the trigger's source, when the
+     * trigger captured a combat-damage event. This lets defending-player filters use the event's
+     * last known combat target after combat state has been cleared.
+     */
+    public Result collect(GameData gameData,
+                          List<CardEffect> effects,
+                          TargetFilter targetFilter,
+                          UUID controllerId,
+                          Card sourceCard,
+                          Options options,
+                          Permanent sourcePermanentSnapshot,
+                          UUID defendingPlayerId) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -169,6 +186,7 @@ public class TriggerTargetCollector {
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    .withDefendingPlayerId(defendingPlayerId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -182,7 +200,7 @@ public class TriggerTargetCollector {
                         .findFirst().orElse(null);
                 if (effectPredicate != null) {
                     effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
-                            sourcePermanentSnapshot);
+                            sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);
                 }
             }
 

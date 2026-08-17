@@ -137,6 +137,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_SCRIES,
     /** Triggers when this permanent's controller investigates for the first time each turn. */
     ON_CONTROLLER_INVESTIGATES,
+    /** Triggers whenever this permanent's controller surveils. Checked by
+     *  {@code TriggerCollectionService.checkSurveilTriggers}. */
+    ON_CONTROLLER_SURVEILS,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -553,6 +556,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller surveils, while this card is in the controller's
+     *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
+    GRAVEYARD_ON_CONTROLLER_SURVEILS,
     /** Triggers once for each creature card that leaves an opponent's graveyard, while this card is
      *  in its owner's graveyard. Fired per leaving card from
      *  {@code GraveyardService.notifyCardLeftGraveyard} (and the bulk clear path), which scans the

@@ -470,6 +470,11 @@ public class DestructionSupport {
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds) {
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -479,7 +484,7 @@ public class DestructionSupport {
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
-                        List.copyOf(accumulatedSacrificeIds)),
+                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
@@ -754,6 +759,8 @@ public class DestructionSupport {
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = TokenCardFactory.create(
                     token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);

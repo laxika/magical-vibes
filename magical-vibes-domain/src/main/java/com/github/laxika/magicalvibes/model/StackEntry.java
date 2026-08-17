@@ -109,6 +109,7 @@ public class StackEntry {
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
+    @Setter private CardSubtype chosenCreatureType;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -163,6 +164,8 @@ public class StackEntry {
     @Setter private int sacrificedPower;
     /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedToughness;
+    /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
+    private List<UUID> convokeCreatureIds = List.of();
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -490,6 +493,7 @@ public class StackEntry {
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
+        this.chosenCreatureType = source.chosenCreatureType;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
@@ -507,6 +511,8 @@ public class StackEntry {
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
+        this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
@@ -577,6 +583,10 @@ public class StackEntry {
 
     public void setBestowOriginalCard(Card bestowOriginalCard) {
         this.bestowOriginalCard = freezeCard(bestowOriginalCard);
+    }
+
+    public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
+        this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
     }
 
     public Card getPhysicalCard() {

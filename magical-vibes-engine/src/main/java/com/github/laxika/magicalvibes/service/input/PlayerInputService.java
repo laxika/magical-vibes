@@ -1155,6 +1155,13 @@ public class PlayerInputService {
     }
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType,
+                                         boolean drawForHandExiled, int maxCount) {
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
+                maxCount, drawForHandExiled);
+    }
+
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType, int maxCount,
                                          boolean drawForHandExiled) {
         beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
@@ -1446,6 +1453,13 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode));
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          UUID targetPlayerId, String cardName, boolean drawForHandExiled,
+                                          int maxCount) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
+                cardName, drawForHandExiled);
     }
 
     /**

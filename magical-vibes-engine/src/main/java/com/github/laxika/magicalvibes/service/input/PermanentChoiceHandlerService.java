@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final AbilityActivationService abilityActivationService;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
+    private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -127,6 +129,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
         } else if (context instanceof PermanentChoiceContext.PolymorphousRushCreatureChoice polymorphousRush) {
             battlefieldHandler.handlePolymorphousRushCreatureChoice(gameData, permanentId, polymorphousRush);
+        } else if (context instanceof PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice copyChoice) {
+            triggerHandler.handleCopySpellForOtherControlledCreature(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
@@ -287,6 +291,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.TariffTieBreak tariffTieBreak) {
             battlefieldHandler.handleTariffTieBreak(gameData, permanentId, tariffTieBreak);
+        } else if (context instanceof PermanentChoiceContext.DispersalTieBreak dispersalTieBreak) {
+            dispersalEffectHandler.handleTieBreakChosen(gameData, permanentId, dispersalTieBreak);
         } else if (context instanceof PermanentChoiceContext.JuxtaposeTieBreak juxtaposeTieBreak) {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {

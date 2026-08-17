@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -331,11 +332,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** A targeted attack trigger. {@code choosingPlayerId} defaults to the ability controller and
      *  differs only for text such as Erithizon's "of defending player's choice". */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                               UUID sourcePermanentId, UUID choosingPlayerId) implements PermanentChoiceContext {
+                               UUID sourcePermanentId, UUID choosingPlayerId,
+                               UUID attackedTargetId) implements PermanentChoiceContext {
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId);
+            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId, null);
+        }
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId, null);
         }
     }
 
@@ -496,6 +503,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Polymorphous Rush: choose the creature whose copiable characteristics will be used. */
     record PolymorphousRushCreatureChoice(UUID controllerId,
                                            MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect)
+            implements PermanentChoiceContext {}
+
+    record CopySpellForOtherControlledCreatureChoice(CopySpellForEachOtherControlledCreatureEffect effect)
             implements PermanentChoiceContext {}
 
     /** Populate (CR 701.36a): the controller chooses which creature token they control is copied. */
@@ -960,6 +970,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
      *  value is the one they must pay for or sacrifice. */
     record TariffTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}
+
+    /** Dispersal tie-break: the opponent chooses which tied nonland permanent to return. */
+    record DispersalTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}
 
     /** Juxtapose tie-break: a player chooses which of their permanents tied for greatest mana value
      *  participates in the exchange. {@code artifactPhase} distinguishes the creature step from the

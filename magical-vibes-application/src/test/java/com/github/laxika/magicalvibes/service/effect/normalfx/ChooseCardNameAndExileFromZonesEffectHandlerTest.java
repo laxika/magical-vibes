@@ -70,4 +70,18 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
                 gd, player1Id, player2Id, List.of(), null,
                 4, true, false, null, card.getSetCode());
     }
+
+    @Test
+    @DisplayName("Passes a finite exile cap through to the card name choice")
+    void passesFiniteExileCap() {
+        Card card = createCard("Unmoored Ego");
+        ChooseCardNameAndExileFromZonesEffect effect =
+                new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.ARTIFACT, CardType.LAND), null, true, 4);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginSpellCardNameChoice(
+                gd, player1Id, player2Id, List.of(CardType.ARTIFACT, CardType.LAND), null, true, 4);
+    }
 }

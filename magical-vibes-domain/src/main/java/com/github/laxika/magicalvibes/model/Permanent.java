@@ -162,6 +162,8 @@ public class Permanent {
     /** When true, this creature must be declared as a blocker this turn if it can block any attacker
      *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
     @Setter private boolean mustBlockThisTurnIfAble;
+    /** When true, this creature must attack during the current combat if able. Cleared when combat ends. */
+    @Setter private boolean mustAttackThisCombat;
     @Setter private boolean mustAttackThisTurn;
     /** When non-null, this creature must attack this specific player (not their planeswalkers). Cleared at end of turn. */
     @Setter private UUID mustAttackTargetId;
@@ -620,6 +622,7 @@ public class Permanent {
         this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
+        this.mustAttackThisCombat = source.mustAttackThisCombat;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
@@ -879,6 +882,7 @@ public class Permanent {
         this.blockingTargetIds.clear();
         this.bandId = null;
         this.cantBlockThisCombat = false;
+        this.mustAttackThisCombat = false;
         clearUntilEndOfCombatAnimation();
     }
 
@@ -1246,6 +1250,7 @@ public class Permanent {
         this.cantBlockThisTurn = false;
         this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;
+        this.mustAttackThisCombat = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
         this.mustBeBlockedThisTurn = false;

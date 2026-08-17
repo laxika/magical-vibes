@@ -110,6 +110,8 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                         tokenCard.addActivatedAbility(ability);
                     }
                     tokenCard.copyTargetingFrom(sourceCard);
+                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, entry.getControllerId(), tokenCard);
 
                     Permanent tokenPermanent = new Permanent(tokenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);

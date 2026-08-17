@@ -214,9 +214,7 @@ public class DrawService {
             return;
         }
 
-        // Tomorrow, Azami's Familiar — "If you would draw a card, look at the top three cards of your
-        // library instead. Put one of those cards into your hand and the rest on the bottom of your
-        // library in any order." Mandatory replacement for the drawing controller.
+        // Top-three hand replacement effects (Tomorrow, Azami's Familiar and Underrealm Lich).
         Permanent lookChooseOneSource = findLookAtTopChooseOneToHandDrawReplacementSource(gameData, playerId);
         if (lookChooseOneSource != null) {
             resolveLookAtTopChooseOneToHandDrawReplacement(gameData, playerId, lookChooseOneSource);
@@ -731,10 +729,9 @@ public class DrawService {
     }
 
     /**
-     * Tomorrow, Azami's Familiar replacement: look at the top {@code lookCount} cards of the drawing
-     * player's library, put one of them into their hand and the rest on the bottom of their library in
-     * any order (an async {@link PendingInteraction.LibraryRevealChoice} that both picks the kept card
-     * and orders the leftovers).
+     * Resolves a top-card hand replacement: look at the top {@code lookCount} cards of the drawing
+     * player's library, put one of them into their hand, and put the rest in the effect's declared
+     * destination (an async {@link PendingInteraction.LibraryRevealChoice} when a choice is needed).
      *
      * <p>The draw is replaced entirely, so the kept card is put into hand rather than "drawn" (no draw
      * triggers, no cards-drawn bookkeeping), and an empty library does not lose the game — the player
@@ -747,10 +744,15 @@ public class DrawService {
             return;
         }
 
-        int lookCount = source.getCard().getEffects(EffectSlot.STATIC).stream()
+        var replacement = source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect)
-                .map(effect -> ((LookAtTopCardsChooseOneToHandDrawReplacementEffect) effect).lookCount())
-                .findFirst().orElse(0);
+                .map(LookAtTopCardsChooseOneToHandDrawReplacementEffect.class::cast)
+                .findFirst().orElse(null);
+        if (replacement == null) {
+            return;
+        }
+        int lookCount = replacement.lookCount();
+        boolean restToGraveyard = replacement.restToGraveyard();
 
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -786,8 +788,11 @@ public class DrawService {
 
         List<UUID> cardIds = looked.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                playerId, looked, cardIds, false, true, true, false, false, 0, null, 1,
-                "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
+                playerId, looked, cardIds, restToGraveyard, true, !restToGraveyard,
+                false, false, 0, null, 1,
+                restToGraveyard
+                        ? "Put one of these cards into your hand and the rest into your graveyard."
+                        : "Put one of these cards into your hand and the rest on the bottom of your library in any order."));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {

@@ -265,6 +265,7 @@ public class GameActionAvailabilityService {
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
@@ -448,6 +449,9 @@ public class GameActionAvailabilityService {
 
     private boolean isPlayableAsSpell(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                       int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        if (castingPermissionService.isSpellCastingFromHandRestricted(gameData, playerId)) {
+            return false;
+        }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return castingCostService.canPayAlternateHandCast(gameData, playerId, card)
@@ -461,7 +465,7 @@ public class GameActionAvailabilityService {
         if (castingPermissionService.isSpellRestricted(gameData, playerId, card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
             return false;
         }
-        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) {
             return false;
         }
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) {
@@ -831,6 +835,18 @@ public class GameActionAvailabilityService {
                     && !isGrantedGraveyardCast
                     && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
 
+            boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
+                    && flashback.isEmpty()
+                    && !isDisturb
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && !grantedGraveyardCardCast
+                    && !isGrantedGraveyardPlay
+                    && !isGraveyardCast
+                    && !isGrantedGraveyardCast
+                    && !isGrantedCyclingGraveyardCast
+                    && !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty();
+
             // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
             // player has a land card in hand to discard as the additional cost.
             boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
@@ -843,6 +859,7 @@ public class GameActionAvailabilityService {
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
                     && !isGrantedCyclingGraveyardCast
+                    && !isJumpStart
                     && gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                             .anyMatch(c -> c.hasType(CardType.LAND));
 
@@ -855,11 +872,12 @@ public class GameActionAvailabilityService {
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
                     && !isGrantedCyclingGraveyardCast
+                    && !isJumpStart
                     && !isRetrace
                     && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card);
 
             if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
-                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
+                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isJumpStart && !isRetrace
                     && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
                 continue;
             }
@@ -884,7 +902,7 @@ public class GameActionAvailabilityService {
                 manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
-                    || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
+                    || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
                 manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
             } else {
                 manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);

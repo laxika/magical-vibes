@@ -371,6 +371,16 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A combat-scoped must-attack flag is counted")
+    void combatScopedMustAttackRequirementIsCounted() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        bears.setMustAttackThisCombat(true);
+
+        assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("A must-attack flag naming a thing that is no longer attackable stops counting")
     void directedMustAttackRequirementLapsesWhenItsTargetIsGone() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());

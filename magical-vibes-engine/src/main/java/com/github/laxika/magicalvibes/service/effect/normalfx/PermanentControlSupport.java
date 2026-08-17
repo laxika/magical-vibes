@@ -85,6 +85,8 @@ public class PermanentControlSupport {
         boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (token.initialPlusOnePlusOneCounters() > 0

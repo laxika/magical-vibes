@@ -294,11 +294,12 @@ public class StackResolutionService {
                                             UUID targetId, int etbMode, StackEntry entry) {
         if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
-                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    List.of(), entry.getConvokeCreatureIds());
         } else {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts());
+                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
         }
     }
 
@@ -306,11 +307,12 @@ public class StackResolutionService {
                                              UUID targetId, StackEntry entry) {
         if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
-                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    List.of(), entry.getConvokeCreatureIds());
         } else {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts());
+                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
         }
     }
 

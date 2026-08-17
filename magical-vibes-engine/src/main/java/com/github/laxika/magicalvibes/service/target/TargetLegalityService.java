@@ -1709,7 +1709,8 @@ public class TargetLegalityService {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
                                 filterContext(gameData,
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
-                                                entry.getControllerId()).withXValue(entry.getXValue())
+                                                entry.getControllerId(), defendingPlayerId(gameData, entry))
+                                                .withXValue(entry.getXValue())
                                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                                 .withMadness(entry.isMadness()));
                             } catch (IllegalStateException e) {
@@ -1882,7 +1883,7 @@ public class TargetLegalityService {
             try {
                 predicateEvaluationService.validateTargetFilter(targetFilter, target,
                         filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
-                                entry.getControllerId()).withXValue(entry.getXValue())
+                                entry.getControllerId(), defendingPlayerId(gameData, entry)).withXValue(entry.getXValue())
                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                 .withMadness(entry.isMadness()));
             } catch (IllegalStateException e) {
@@ -2419,6 +2420,22 @@ public class TargetLegalityService {
         return FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
                 .withSourceControllerId(controllerId);
+    }
+
+    private FilterContext filterContext(GameData gameData, UUID sourceCardId, UUID controllerId,
+                                        UUID defendingPlayerId) {
+        return filterContext(gameData, sourceCardId, controllerId)
+                .withDefendingPlayerId(defendingPlayerId);
+    }
+
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
     private TargetFilter getPositionFilter(List<TargetFilter> filters, int index) {

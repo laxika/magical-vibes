@@ -1454,6 +1454,18 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given player has cast at least three spells matching
+     * {@code filter} this turn.
+     */
+    public boolean hasControllerCastThreeOrMoreSpellsThisTurn(
+            GameData gameData, UUID controllerId, CardPredicate filter) {
+        return gameData.getSpellsCastThisTurn(controllerId).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId()))
+                .limit(3)
+                .count() == 3;
+    }
+
+    /**
      * Returns {@code true} if the permanent is an artifact, either by its natural card type,
      * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
      */

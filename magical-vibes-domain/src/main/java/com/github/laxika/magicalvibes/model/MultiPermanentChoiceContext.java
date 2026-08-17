@@ -169,8 +169,15 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record ForcedSacrifice(UUID sacrificingPlayerId,
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
-                           java.util.List<UUID> accumulatedSacrificeIds)
+                           java.util.List<UUID> accumulatedSacrificeIds,
+                           boolean simultaneousFlow)
             implements MultiPermanentChoiceContext {
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false);
+        }
     }
 
     /** The target player chooses a creature and a planeswalker to sacrifice when possible. */
@@ -310,6 +317,10 @@ public sealed interface MultiPermanentChoiceContext {
     record TapCreaturesGainLife(int lifePerCreature) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap each chosen untapped creature, then boost the source by +1/+1 per creature tapped. */
+    record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses exactly two creatures; their power difference determines the effect. */
     record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
     }
@@ -322,6 +333,10 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapCreaturesCreateTokens(com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                     String sourceSetCode) implements MultiPermanentChoiceContext {
+    }
+
+    /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */
+    record TapPermanentsDrawPerTapped() implements MultiPermanentChoiceContext {
     }
 
     /** Tap each chosen permanent and put one counter of the specified type on it. */

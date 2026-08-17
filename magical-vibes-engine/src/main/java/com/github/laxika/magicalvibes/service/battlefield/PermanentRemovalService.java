@@ -503,6 +503,43 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Finds a card that has already left the battlefield and shuffles it into its owner's library.
+     * This is used by triggered abilities whose source may leave before resolution.
+     */
+    public boolean shuffleCardIntoOwnerLibrary(GameData gameData, Card card, UUID fallbackOwnerId) {
+        if (card == null || card.isToken()) {
+            return false;
+        }
+        UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : fallbackOwnerId;
+        List<Card> library = ownerId == null ? null : gameData.playerDecks.get(ownerId);
+        if (library == null) {
+            return false;
+        }
+
+        boolean removed = false;
+        for (List<Card> zone : gameData.playerDecks.values()) {
+            removed |= zone.removeIf(candidate -> candidate.getId().equals(card.getId()));
+        }
+        for (List<Card> zone : gameData.playerHands.values()) {
+            removed |= zone.removeIf(candidate -> candidate.getId().equals(card.getId()));
+        }
+        for (List<Card> zone : gameData.playerGraveyards.values()) {
+            removed |= zone.removeIf(candidate -> candidate.getId().equals(card.getId()));
+        }
+        for (List<Card> zone : gameData.playerCommandZones.values()) {
+            removed |= zone.removeIf(candidate -> candidate.getId().equals(card.getId()));
+        }
+        removed |= gameData.removeFromExile(card.getId());
+        if (!removed) {
+            return false;
+        }
+
+        library.add(card);
+        LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        return true;
+    }
+
+    /**
      * Removes all auras whose enchanted permanent is no longer on the battlefield.
      *
      * @param gameData the current game state
