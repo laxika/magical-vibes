@@ -114,6 +114,22 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void multiZoneExileRespectsMaximum() throws Exception {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+
+        new MultiZoneExileChoiceAiStrategy().answer(
+                new PendingInteraction.MultiZoneExileChoice(
+                        aiPlayerId, List.of(first, second, third), 2,
+                        UUID.randomUUID(), aiPlayerId, "Plains"),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first, second)));
+    }
+
+    @Test
     void brilliantUltimatumPileStrategiesProduceLegalAnswers() throws Exception {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
