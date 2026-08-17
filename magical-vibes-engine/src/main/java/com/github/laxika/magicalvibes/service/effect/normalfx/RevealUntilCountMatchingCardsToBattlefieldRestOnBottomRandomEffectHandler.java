@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -32,6 +38,8 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -78,6 +86,16 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
             return;
         }
 
+        if (typedEffect.putAllMatching()) {
+            List<Card> notPutOntoBattlefield = putMatchingCardsOntoBattlefield(
+                    gameData, controllerId, playerName, matchingCards, typedEffect.enterTapped());
+            List<Card> remainingCards = new ArrayList<>(revealedCards);
+            remainingCards.removeAll(matchingCards);
+            remainingCards.addAll(notPutOntoBattlefield);
+            putRevealedCardsOnBottom(gameData, controllerId, remainingCards);
+            return;
+        }
+
         List<UUID> matchingIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, revealedCards, matchingIds, false, false, false, true, false, 0, null,
@@ -88,6 +106,52 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
         log.info("Game {} - {} resolving {} with required count {}, {} cards revealed, {} matching",
                 gameData.id, playerName, entry.getCard().getName(), requiredCount,
                 revealedCards.size(), matchingCards.size());
+    }
+
+    private List<Card> putMatchingCardsOntoBattlefield(GameData gameData, UUID controllerId,
+                                                        String playerName, List<Card> cards,
+                                                        boolean enterTapped) {
+        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Card> placedCards = new ArrayList<>();
+        List<Permanent> placedPermanents = new ArrayList<>();
+        List<Card> notPutOntoBattlefield = new ArrayList<>();
+
+        for (Card card : cards) {
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
+                notPutOntoBattlefield.add(card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " can't enter the battlefield from a library; it stays in the library."));
+                continue;
+            }
+
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
+            if (enterTapped) {
+                permanent.tap();
+            }
+            placedCards.add(card);
+            placedPermanents.add(permanent);
+            gameLogService.append(gameData, enterTapped
+                    ? GameLog.entersBattlefieldTappedUnder(card, playerName)
+                    : GameLog.entersBattlefieldUnder(card, playerName));
+        }
+
+        for (int i = 0; i < placedCards.size(); i++) {
+            Card card = placedCards.get(i);
+            Permanent permanent = placedPermanents.get(i);
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            }
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+                permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+                permanent.setSummoningSick(false);
+            }
+        }
+
+        return notPutOntoBattlefield;
     }
 
     private void putRevealedCardsOnBottom(GameData gameData, UUID controllerId, List<Card> cards) {

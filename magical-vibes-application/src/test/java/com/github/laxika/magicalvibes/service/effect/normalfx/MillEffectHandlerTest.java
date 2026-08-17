@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -28,8 +29,10 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MillEffectHandlerTest {
@@ -137,6 +140,26 @@ class MillEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 0);
+        }
+
+        @Test
+        @DisplayName("Evaluates target-relative counts separately for each target")
+        void evaluatesTargetRelativeCountForEachTarget() {
+            gd.playerGraveyards.get(player1Id).addAll(List.of(createCard("Bear1"), createCard("Bear2")));
+            gd.playerGraveyards.get(player2Id).addAll(List.of(
+                    createCard("Bear3"), createCard("Bear4"), createCard("Bear5"), createCard("Bear6")));
+            when(predicateEvaluationService.matchesCardPredicate(any(), isNull(), isNull())).thenReturn(true);
+
+            MillEffect effect = new MillEffect(new CardsInGraveyard(null, CountScope.TARGET_PLAYER),
+                    MillRecipient.TARGET_PLAYER);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Riverchurn Monument"),
+                    player1Id, "Riverchurn Monument", List.of(effect), null,
+                    List.of(player1Id, player2Id));
+
+            handler.resolve(gd, entry, effect);
+
+            verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
+            verify(graveyardService).resolveMillPlayer(gd, player2Id, 4);
         }
     }
 

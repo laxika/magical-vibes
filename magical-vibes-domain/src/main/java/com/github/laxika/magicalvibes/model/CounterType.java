@@ -30,6 +30,7 @@ public enum CounterType {
     FATE,
     FEATHER,
     FILIBUSTER,
+    FINALITY,
     FLOOD,
     FUNGUS,
     FUSE,

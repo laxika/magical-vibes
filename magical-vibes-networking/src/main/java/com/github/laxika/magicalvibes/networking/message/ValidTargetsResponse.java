@@ -10,15 +10,23 @@ public record ValidTargetsResponse(
         List<UUID> validPermanentIds,
         List<UUID> validPlayerIds,
         List<UUID> validGraveyardCardIds,
+        List<UUID> validExiledCardIds,
         int minTargets,
         int maxTargets,
         String prompt
 ) {
     public ValidTargetsResponse(List<UUID> validPermanentIds, List<UUID> validPlayerIds, int minTargets, int maxTargets, String prompt) {
-        this(MessageType.VALID_TARGETS_RESPONSE, validPermanentIds, validPlayerIds, List.of(), minTargets, maxTargets, prompt);
+        this(MessageType.VALID_TARGETS_RESPONSE, validPermanentIds, validPlayerIds, List.of(), List.of(), minTargets, maxTargets, prompt);
     }
 
     public ValidTargetsResponse(List<UUID> validPermanentIds, List<UUID> validPlayerIds, List<UUID> validGraveyardCardIds, int minTargets, int maxTargets, String prompt) {
-        this(MessageType.VALID_TARGETS_RESPONSE, validPermanentIds, validPlayerIds, validGraveyardCardIds, minTargets, maxTargets, prompt);
+        this(MessageType.VALID_TARGETS_RESPONSE, validPermanentIds, validPlayerIds, validGraveyardCardIds, List.of(), minTargets, maxTargets, prompt);
+    }
+
+    public ValidTargetsResponse(List<UUID> validPermanentIds, List<UUID> validPlayerIds,
+                                List<UUID> validGraveyardCardIds, List<UUID> validExiledCardIds,
+                                int minTargets, int maxTargets, String prompt) {
+        this(MessageType.VALID_TARGETS_RESPONSE, validPermanentIds, validPlayerIds,
+                validGraveyardCardIds, validExiledCardIds, minTargets, maxTargets, prompt);
     }
 }

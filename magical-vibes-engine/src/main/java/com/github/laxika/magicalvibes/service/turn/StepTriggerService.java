@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
@@ -4493,6 +4494,8 @@ public class StepTriggerService {
             }
         });
 
+        triggerCollectionService.checkUntapAttackedCreaturesEachCombatThisTurnTriggers(gameData);
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
@@ -4594,14 +4597,13 @@ public class StepTriggerService {
             if (effect instanceof MayEffect && effect.targetSpec() == TargetSpec.NONE) {
                 continue;
             }
-            // Intervening-if (CR 603.4): AllOf / ControlsPermanentCount /
-            // ControlsEachCreatureWithGreatestPower gate at trigger time (Graf Rats meld,
-            // Might Makes Right). Leave ConditionalEffect wrappers with other conditions
-            // (e.g. Odric ControlsPermanent) on the stack for resolution-time checks.
+            // Intervening-if conditions gate at trigger time. Max speed is an ability-granting
+            // condition, so the wrapped ability does not exist unless the controller is at speed 4.
             if (effect instanceof ConditionalEffect conditional
                     && (conditional.condition() instanceof AllOf
                         || conditional.condition() instanceof ControlsPermanentCount
-                        || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower)) {
+                        || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower
+                        || conditional.condition() instanceof MaxSpeed)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, controllerId))) {
                     log.info("Game {} - {} beginning-of-combat trigger skipped ({} not met)",

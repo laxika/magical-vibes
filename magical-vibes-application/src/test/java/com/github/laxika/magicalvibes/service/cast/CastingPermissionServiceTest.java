@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -477,6 +479,29 @@ class CastingPermissionServiceTest {
             when(conditionEvaluationService.isMet(eq(gd), eq(card.getCastCondition()), any()))
                     .thenReturn(true);
             assertThat(svc.canCastWithCastCondition(gd, player1Id, card)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("isGraveyardCastAvailable — graveyard-only condition")
+    class GraveyardCastAvailability {
+
+        @Test
+        @DisplayName("Rejects a graveyard cast while its availability condition is unmet")
+        void rejectsWhenAvailabilityConditionIsUnmet() {
+            GraveyardCast graveyardCast = new GraveyardCast(new MaxSpeed());
+            when(conditionEvaluationService.isMet(eq(gd), eq(new MaxSpeed()), any())).thenReturn(false);
+
+            assertThat(svc.isGraveyardCastAvailable(gd, player1Id, graveyardCast)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Allows a graveyard cast when its availability condition is met")
+        void allowsWhenAvailabilityConditionIsMet() {
+            GraveyardCast graveyardCast = new GraveyardCast(new MaxSpeed());
+            when(conditionEvaluationService.isMet(eq(gd), eq(new MaxSpeed()), any())).thenReturn(true);
+
+            assertThat(svc.isGraveyardCastAvailable(gd, player1Id, graveyardCast)).isTrue();
         }
     }
 

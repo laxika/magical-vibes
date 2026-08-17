@@ -848,6 +848,9 @@ public class PermanentChoiceTriggerHandlerService {
                     dct.sourcePermanentId()
             );
             entry.setTargetId(permanentId);
+            if (dct.discardedCount() > 0) {
+                entry.setEventValue(dct.discardedCount());
+            }
             pushTriggeredEntry(gameData, entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);

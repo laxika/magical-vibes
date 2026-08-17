@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final InputCompletionService inputCompletionService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,22 +32,24 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID groupId = ability.effects().stream()
+        ReturnMilledPermanentToHandEffect marker = ability.effects().stream()
                 .filter(ReturnMilledPermanentToHandEffect.class::isInstance)
                 .map(ReturnMilledPermanentToHandEffect.class::cast)
-                .map(ReturnMilledPermanentToHandEffect::groupId)
                 .findFirst()
                 .orElseThrow();
+        UUID groupId = marker.groupId();
 
         if (accepted) {
             gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()
                     .filter(ReturnMilledPermanentToHandEffect.class::isInstance)
                     .map(ReturnMilledPermanentToHandEffect.class::cast)
-                    .anyMatch(marker -> groupId.equals(marker.groupId())));
+                    .anyMatch(candidate -> groupId.equals(candidate.groupId())));
 
             Card card = gameQueryService.findCardInGraveyardById(gameData, ability.sourceCard().getId());
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, ability.sourceCard().getId());
-            if (card != null && ownerId != null && card.getType().isPermanentType()) {
+            if (card != null && ownerId != null
+                    && predicateEvaluationService.matchesCardPredicate(
+                    card, marker.filter(), ability.sourceCard().getId(), gameData, ownerId)) {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 gameData.addCardToHand(ownerId, card);
             }

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsC
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
@@ -1417,6 +1418,33 @@ class StepTriggerServiceTest {
             sut.handleBeginningOfCombatTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Max speed intervening-if skips beginning-of-combat trigger when unmet")
+        void maxSpeedInterveningIfSkipsWhenUnmet() {
+            Card card = createCardWithName("Max Speed Combat Card");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new MaxSpeed(), new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Max speed intervening-if allows beginning-of-combat trigger at speed 4")
+        void maxSpeedInterveningIfAllowsAtMaxSpeed() {
+            Card card = createCardWithName("Max Speed Combat Card");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new MaxSpeed(), new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playerSpeeds.put(player1Id, 4);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
         }
     }
 

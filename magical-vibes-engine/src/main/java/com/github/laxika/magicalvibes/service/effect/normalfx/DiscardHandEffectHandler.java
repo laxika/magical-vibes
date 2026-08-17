@@ -88,10 +88,12 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         hand.clear();
         gameData.discardCausedByOpponent = !playerId.equals(controllerId);
 
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         gameLogService.append(gameData, GameLog.text(playerName + " discards their hand ("
                 + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ")."));

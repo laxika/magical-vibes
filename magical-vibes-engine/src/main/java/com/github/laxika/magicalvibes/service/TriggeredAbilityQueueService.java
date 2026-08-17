@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -520,8 +521,22 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             PermanentChoiceContext.TriggeredModalTrigger pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+            ChooseOneEffect effect = pending.effect();
+            if (pending.modesResetEachTurn()) {
+                Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+                Set<String> alreadyChosen = source == null ? Set.of() : source.getChosenModeLabelsThisTurn();
+                List<ChooseOneEffect.ChooseOneOption> remaining = effect.options().stream()
+                        .filter(option -> !alreadyChosen.contains(option.label()))
+                        .toList();
+                if (remaining.isEmpty()) {
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(pending.sourceCard(), "'s discard trigger has no modes left to choose."));
+                    continue;
+                }
+                effect = new ChooseOneEffect(remaining);
+            }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
-                    pending.effect(), pending.sourcePermanentId());
+                    effect, pending.sourcePermanentId(), pending.modesResetEachTurn());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1021,6 +1036,8 @@ public class TriggeredAbilityQueueService {
             // Find the graveyard-targeting effect to extract its filter and search scope
             CardPredicate filter = null;
             boolean lifeGainedCap = false;
+            boolean manaValueEqualsX = false;
+            boolean manaValueAtMostX = false;
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             GraveyardTargetingSupport.Target describedTarget =
                     graveyardTargetingSupport.findTarget(pending.effects());
@@ -1032,6 +1049,8 @@ public class TriggeredAbilityQueueService {
             if (returnEffect != null) {
                 filter = returnEffect.filter();
                 lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
+                manaValueEqualsX = returnEffect.requiresManaValueEqualsX();
+                manaValueAtMostX = returnEffect.requiresManaValueAtMostX();
                 scope = returnEffect.source();
             } else if (describedTarget != null) {
                 filter = describedTarget.filter();
@@ -1073,7 +1092,8 @@ public class TriggeredAbilityQueueService {
             }
             // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
             int maxManaValue = lifeGainedCap
-                    ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;
+                    ? gameData.getLifeGainedThisTurn(pending.controllerId())
+                    : manaValueAtMostX ? pending.xValue() : Integer.MAX_VALUE;
 
             List<UUID> searchPlayerIds = pending.graveyardOwnerId() != null
                     ? List.of(pending.graveyardOwnerId())
@@ -1086,6 +1106,9 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (manaValueEqualsX && graveyardCard.getManaValue() != pending.xValue()) {
+                        continue;
+                    }
                     if (graveyardCard.getManaValue() > maxManaValue) {
                         continue;
                     }
@@ -1110,6 +1133,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.card = pending.sourceCard();
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+            gameData.graveyardTargetOperation.xValue = pending.xValue();
             // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
             List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
             if (bf != null) {
@@ -1161,6 +1185,9 @@ public class TriggeredAbilityQueueService {
         }
         if (effect instanceof MayEffect may) {
             return targetedReturnEffect(may.wrapped());
+        }
+        if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
+            return targetedReturnEffect(sacrificeThen.thenEffect());
         }
         return null;
     }

@@ -57,7 +57,7 @@ final class TokenCardFactory {
         if (token.colors() != null && !token.colors().isEmpty()) {
             tokenCard.setColors(token.colors().stream().toList());
         }
-        if (isCreature) {
+        if (isCreature || power != 0 || toughness != 0) {
             tokenCard.setPower(power);
             tokenCard.setToughness(toughness);
         }

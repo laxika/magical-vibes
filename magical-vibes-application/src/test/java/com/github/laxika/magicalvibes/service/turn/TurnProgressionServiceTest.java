@@ -432,6 +432,28 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Returns to the normal next phase after postcombat additional combats")
+        void returnsToNormalPhaseAfterAdditionalCombatsAfterMain() {
+            gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+            gd.additionalCombatPhasesAfterMain = 2;
+            gd.additionalCombatPhasesAfterMainReturnStep = TurnStep.END_STEP;
+
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.additionalCombatPhasesAfterMain).isEqualTo(1);
+
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.additionalCombatPhasesAfterMain).isZero();
+
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gd.additionalCombatPhasesAfterMainReturnStep).isNull();
+        }
+
+        @Test
         @DisplayName("Advances to END_STEP normally when additionalCombatMainPhasePairs is 0")
         void advancesToEndStepWhenNoExtraPairs() {
             gd.currentStep = TurnStep.POSTCOMBAT_MAIN;

@@ -934,6 +934,11 @@ public class CastingPermissionService {
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
+        if (graveyardCast.availabilityCondition() != null
+                && !conditionEvaluationService.isMet(gameData, graveyardCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
+            return false;
+        }
         if (graveyardCast.controllerControlsPredicate() == null) {
             return true;
         }

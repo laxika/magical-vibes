@@ -319,6 +319,7 @@ export const TUTORIAL_MOCK_GAME: Game = {
   lifeTotals: [20, 20],
   poisonCounters: [0, 0],
   energyCounters: [0, 0],
+  speeds: [0, 0],
   stack: [],
   graveyards: [[], []],
   revealedLibraryTopCards: [[], []],

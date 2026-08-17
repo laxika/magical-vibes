@@ -335,6 +335,7 @@ export interface Game {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  speeds: number[];
   stack: StackEntry[];
   graveyards: Card[][];
   revealedLibraryTopCards: Card[][];
@@ -409,6 +410,7 @@ export interface GameStateNotification {
   lifeTotals: number[];
   poisonCounters: number[];
   energyCounters: number[];
+  speeds: number[];
   hand: Card[];
   opponentHand: Card[];
   mulliganCount: number;
@@ -648,6 +650,7 @@ export interface ValidTargetsResponse {
   validPermanentIds: string[];
   validPlayerIds: string[];
   validGraveyardCardIds: string[];
+  validExiledCardIds: string[];
   minTargets: number;
   maxTargets: number;
   prompt: string;

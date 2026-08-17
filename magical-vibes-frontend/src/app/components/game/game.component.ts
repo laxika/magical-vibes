@@ -500,6 +500,7 @@ export class GameComponent implements OnInit, OnDestroy {
       lifeTotals: state.lifeTotals,
       poisonCounters: state.poisonCounters,
       energyCounters: state.energyCounters,
+      speeds: state.speeds ?? [0, 0],
       hand: state.hand,
       opponentHand: state.opponentHand ?? [],
       mulliganCount: state.mulliganCount,
@@ -1642,6 +1643,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
     if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
+    if (t.targetingExile) { t.cancelExileTargeting(); return true; }
     if (t.multiTargeting) { t.cancelMultiTargeting(); return true; }
     if (t.targetingSpell) { t.cancelSpellTargeting(); return true; }
     if (t.selectingTarget) { t.cancelTargeting(); return true; }
@@ -1664,7 +1666,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
-      || t.targetingGraveyard;
+      || t.targetingGraveyard || t.targetingExile;
   }
 
   // ========== Formatting ==========

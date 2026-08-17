@@ -16,6 +16,9 @@ public enum ManaSpendRestriction {
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Spendable only to pay activated ability costs (Thran Turbine). */
+    ABILITIES,
+
     /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
     IMPRINTED_CARD_COLORS,
 

@@ -170,7 +170,8 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/Blustersquall.java`
 
 - Graveyard cast ("You may cast this card from your graveyard"):
-  - `addCastingOption(new GraveyardCast())` — uses the card's normal mana cost, no exile after resolution (unlike flashback)
+  - `addCastingOption(new GraveyardCast())` — uses the card’s normal mana cost, no exile after resolution (unlike flashback)
+  - `addCastingOption(new GraveyardCast(new Condition()))` — same permission, but only while the supplied condition is met (e.g. max speed)
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts
   - Can be combined with additional costs like `ExileNCardsFromGraveyardCost`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`

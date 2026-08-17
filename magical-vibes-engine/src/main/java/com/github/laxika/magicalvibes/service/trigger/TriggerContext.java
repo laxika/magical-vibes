@@ -51,6 +51,9 @@ public sealed interface TriggerContext {
      */
     record Discard(UUID discardingPlayerId, Card discardedCard) implements TriggerContext {}
 
+    /** Context for a discard event containing one or more cards. */
+    record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -385,6 +388,9 @@ public sealed interface TriggerContext {
 
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
+
+    /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
+    record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
 
     /**
      * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers (Justice). Carries the damage source object,

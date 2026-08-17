@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEff
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
@@ -1803,7 +1804,8 @@ public class SpellCastingService {
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean needsImmediateGraveyardEffectTargeting = graveyardTargetingSource.stream()
-                .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect))
+                .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect)
+                        && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToHandEffect))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
@@ -2318,6 +2320,12 @@ public class SpellCastingService {
                 entry.setOverloaded(true);
             }
             stampSacrificedCostSnapshot(entry, additionalCostPayment);
+            if (additionalCostPayment.sacrificedCardId() != null) {
+                entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
+            }
+            if (additionalCostPayment.sacrificedCardSnapshot() != null) {
+                entry.setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
+            }
             entry.setPutCounterCostPaid(isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             if (!repeatedAdditionalCosts.isEmpty()) {
                 entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -2483,6 +2491,11 @@ public class SpellCastingService {
                             .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
                             .findFirst().orElse(null);
 
+            ReturnUpToOneOfEachFilterFromGraveyardToHandEffect oneOfEachFilterGraveyardEffect =
+                    (ReturnUpToOneOfEachFilterFromGraveyardToHandEffect) filteredSpellEffects.stream()
+                            .filter(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::isInstance)
+                            .findFirst().orElse(null);
+
             // Check for "any number of target cards from graveyard" spells (e.g. Frantic Salvage)
             PutTargetCardsFromGraveyardOnTopOfLibraryEffect graveyardToTopEffect =
                     (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).stream()
@@ -2602,6 +2615,21 @@ public class SpellCastingService {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, targetGraveyardOwner,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (oneOfEachFilterGraveyardEffect != null) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> oneOfEachFilterGraveyardEffect.filters().stream().anyMatch(filter ->
+                                predicateEvaluationService.matchesCardPredicate(c, filter, card.getId())))
+                        .count();
+                if (matchingCount > 0) {
+                    graveyardTargetingService.handleUpToOneOfEachFilterGraveyardSpellTargeting(
+                            gameData, playerId, card, entryType, oneOfEachFilterGraveyardEffect, filteredSpellEffects);
+                    return;
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
                         null, Map.of(), null, List.of(), List.of()
                 ));
             } else if (graveyardToHandEffect != null && graveyardToHandEffect.xScaled()) {
@@ -3089,6 +3117,9 @@ public class SpellCastingService {
             }
             if (!gameData.stack.isEmpty()) {
                 stampSacrificedCostSnapshot(gameData.stack.getLast(), additionalCostPayment);
+            }
+            if (additionalCostPayment.sacrificedCardSnapshot() != null && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
             }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPutCounterCostPaid(
@@ -3761,10 +3792,12 @@ public class SpellCastingService {
         List<Card> discarded = new ArrayList<>(hand);
         hand.clear();
         gameData.discardCausedByOpponent = false;
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (Card discardedCard : discarded) {
             graveyardService.addCardToGraveyard(gameData, playerId, discardedCard);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " discards their hand (" + discarded.size()
                         + " card" + (discarded.size() != 1 ? "s" : "") + ") to cast "
@@ -4333,6 +4366,9 @@ public class SpellCastingService {
                 gameData, player, card, graveyardCounterCost, additionalCostSacrificePermanentIds);
         if (isJumpStart) {
             validateJumpStartDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
+        }
+        if (isGraveyardCast) {
+            validateGraveyardCastPermanentSacrificeCosts(gameData, player, card, tapPermanentIds);
         }
 
         // Validate and pay flashback / disturb / graveyard cast cost
@@ -5747,6 +5783,7 @@ public class SpellCastingService {
         if (hand == null || hand.size() < count) {
             throw new IllegalStateException("Must discard a card at random to pay buyback cost");
         }
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (int i = 0; i < count; i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             graveyardService.addCardToGraveyard(gameData, playerId, discarded);
@@ -5760,6 +5797,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
     }
 
     /**
@@ -6329,6 +6367,10 @@ public class SpellCastingService {
             if (isJumpStart) {
                 payJumpStartDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
             }
+            if (isGraveyardCast) {
+                payGraveyardCastPermanentSacrificeCosts(
+                        gameData, player, card, graveyardCastOpt.orElseThrow(), tapPermanentIds);
+            }
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
             return effectiveXValue;
         }
@@ -6427,8 +6469,86 @@ public class SpellCastingService {
         if (isJumpStart) {
             payJumpStartDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
         }
+        if (isGraveyardCast) {
+            payGraveyardCastPermanentSacrificeCosts(
+                    gameData, player, card, graveyardCastOpt.orElseThrow(), tapPermanentIds);
+        }
         gameData.addSpellCastManaSpent(card.getId(), manaSpent);
         return effectiveXValue;
+    }
+
+    private void validateGraveyardCastPermanentSacrificeCosts(
+            GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {
+        GraveyardCast graveyardCast = card.getCastingOption(GraveyardCast.class)
+                .orElseThrow(() -> new IllegalStateException("Card has no graveyard cast permission"));
+        List<UUID> selectedIds = sacrificePermanentIds == null ? List.of() : sacrificePermanentIds;
+        int requiredSacrificeCount = graveyardCast.additionalCosts().stream()
+                .filter(SacrificePermanentsCost.class::isInstance)
+                .mapToInt(cost -> ((SacrificePermanentsCost) cost).count())
+                .sum();
+        if (selectedIds.size() != requiredSacrificeCount) {
+            throw new IllegalStateException("Must sacrifice exactly " + requiredSacrificeCount
+                    + " permanents for the graveyard cast");
+        }
+        if (new HashSet<>(selectedIds).size() != selectedIds.size()) {
+            throw new IllegalStateException("Duplicate permanents cannot be sacrificed");
+        }
+        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                && graveyardCast.additionalCosts().stream().anyMatch(LifeCastingCost.class::isInstance)) {
+            throw new IllegalStateException("Cannot pay life or sacrifice creatures as a cost");
+        }
+
+        UUID playerId = player.getId();
+        if (graveyardCast.additionalCosts().stream()
+                .filter(LifeCastingCost.class::isInstance)
+                .map(LifeCastingCost.class::cast)
+                .anyMatch(cost -> gameData.getLife(playerId) < cost.amount())) {
+            throw new IllegalStateException("Not enough life to pay graveyard cast cost");
+        }
+
+        int selectedIndex = 0;
+        for (CastingCost cost : graveyardCast.additionalCosts()) {
+            if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                for (int i = 0; i < sacrificeCost.count(); i++) {
+                    UUID permanentId = selectedIds.get(selectedIndex++);
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                    if (permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                        throw new IllegalStateException("Sacrifice target is not on your battlefield");
+                    }
+                    if (!predicateEvaluationService.matchesPermanentPredicate(permanent,
+                            sacrificeCost.filter(), FilterContext.of(gameData).withSourceControllerId(playerId))) {
+                        throw new IllegalStateException("Sacrifice target does not match the required filter");
+                    }
+                }
+            } else if (!(cost instanceof LifeCastingCost)) {
+                throw new IllegalStateException("Cannot pay this graveyard cast cost");
+            }
+        }
+    }
+
+    private void payGraveyardCastPermanentSacrificeCosts(
+            GameData gameData, Player player, Card card, GraveyardCast graveyardCast,
+            List<UUID> sacrificePermanentIds) {
+        int selectedIndex = 0;
+        for (CastingCost cost : graveyardCast.additionalCosts()) {
+            if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                for (int i = 0; i < sacrificeCost.count(); i++) {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData,
+                            sacrificePermanentIds.get(selectedIndex++));
+                    if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                        gameLogService.append(gameData, GameLog.builder()
+                                .text(player.getUsername() + " sacrifices ")
+                                .card(permanent.getCard())
+                                .text(" for ")
+                                .card(card)
+                                .text(".")
+                                .build());
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                gameData, player.getId(), permanent.getCard());
+                    }
+                }
+            }
+        }
     }
 
     private void validateBestowManaCost(GameData gameData, UUID playerId, Card card, int targetingTax) {

@@ -133,7 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
-import com.github.laxika.magicalvibes.model.effect.CrewCost;
+import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -445,6 +445,7 @@ public class AbilityActivationService {
                 && !manaChoice.spellOrAbilitySubtype()
                 && !manaChoice.creatureSpellOnly()
                 && !manaChoice.creatureSpellOrAbilityOnly()
+                && !manaChoice.abilityOnly()
                 && !manaChoice.artifactSpellOrAbilityOnly()
                 && manaChoice.fixedColorOptions() == null;
     }
@@ -2292,6 +2293,10 @@ public class AbilityActivationService {
                     gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
         }
 
+        if (ability.isExhaustAbility()) {
+            gameData.playersWhoActivatedExhaustAbilityThisTurn.add(playerId);
+        }
+
         ExileXCardsFromGraveyardCost exileXGraveyardCost = abilityEffects.stream()
                 .filter(ExileXCardsFromGraveyardCost.class::isInstance)
                 .map(ExileXCardsFromGraveyardCost.class::cast)
@@ -2854,7 +2859,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
                 c, xValue, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
-        if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof PowerBasedTapCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(c, gameLogService);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof RemoveOneOrMoreCountersFromControlledCreaturesCost c) return new RemoveCounterFromCreatureCostHandler(c, xValue, gameQueryService, gameLogService);
@@ -4752,7 +4757,7 @@ public class AbilityActivationService {
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
-        validateActivationLimitPerGame(gameData, permanent, ability, abilityIndex);
+        validateActivationLimitPerGame(gameData, playerId, permanent, ability, abilityIndex);
 
         Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();
         if (maxActivationsPerTurn == null && ability.getMaxActivationsPerTurnAmount() == null) {
@@ -4783,9 +4788,15 @@ public class AbilityActivationService {
      * "Activate only once" (Goblin Ski Patrol): counted for the whole game against this permanent
      * object, so a permanent that leaves and re-enters the battlefield may activate again (CR 400.7).
      */
-    private void validateActivationLimitPerGame(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+    private void validateActivationLimitPerGame(GameData gameData, UUID playerId, Permanent permanent,
+                                                ActivatedAbility ability, int abilityIndex) {
         Integer maxActivationsPerGame = ability.getMaxActivationsPerGame();
         if (maxActivationsPerGame == null) {
+            return;
+        }
+
+        if (ability.isExhaustAbility()
+                && gameQueryService.canActivateExhaustAbilityAsThoughNotActivated(gameData, playerId)) {
             return;
         }
 

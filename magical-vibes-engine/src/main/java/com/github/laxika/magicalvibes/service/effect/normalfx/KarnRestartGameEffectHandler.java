@@ -203,6 +203,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersSilencedThisTurn.clear();
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.activatedAbilityUsesThisGame.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();

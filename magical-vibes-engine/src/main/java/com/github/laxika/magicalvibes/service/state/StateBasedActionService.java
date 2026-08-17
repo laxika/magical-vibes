@@ -58,6 +58,8 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        initializeSpeedForPlayers(gameData);
+
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
         // check repeats until none are performed. One pass is not enough: a death can remove a
         // static effect (e.g. an anthem) and make another creature's marked damage newly lethal.
@@ -121,6 +123,24 @@ public class StateBasedActionService {
         stateTriggerService.checkStateTriggers(gameData);
 
         checkEmptyLibraryLoss(gameData);
+    }
+
+    private void initializeSpeedForPlayers(GameData gameData) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (gameData.playerSpeeds.containsKey(playerId)) {
+                return;
+            }
+            boolean hasStartYourEngines = battlefield.stream()
+                    .anyMatch(permanent -> gameQueryService.hasKeyword(
+                            gameData, permanent, Keyword.START_YOUR_ENGINES));
+            if (hasStartYourEngines) {
+                gameData.playerSpeeds.put(playerId, 1);
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " starts their engines at speed 1."));
+                log.info("Game {} - {} starts their engines at speed 1", gameData.id, playerName);
+            }
+        });
     }
 
     /**

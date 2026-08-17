@@ -18,5 +18,6 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<List<PermanentView>> battlefields, Map<String, Integer> manaPool,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
                        List<Integer> energyCounters,
-                       List<StackEntryView> stack, List<List<CardView>> graveyards) {
+                       List<StackEntryView> stack, List<List<CardView>> graveyards,
+                       List<Integer> speeds) {
 }

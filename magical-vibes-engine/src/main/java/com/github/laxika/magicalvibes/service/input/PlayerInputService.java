@@ -128,7 +128,14 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceCardId, null));
+                returnExiledSourceCardId, null, null, 0));
+    }
+
+    public void beginCardChoiceWithArtifactCounters(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                     String prompt, CounterType counterType, int counterCount) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, false, false, false, null, false, null,
+                false, null, null, false, false, 0, 0, Set.of(), null, null, counterType, counterCount));
     }
 
     public void beginCardChoiceThenReturnSourceToHand(GameData gameData, UUID playerId, List<Integer> validIndices,
@@ -527,8 +534,15 @@ public class PlayerInputService {
 
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, false);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn) {
         ChoiceContext.TriggeredModalChoice ctx =
-                new ChoiceContext.TriggeredModalChoice(sourceCard, controllerId, effect, sourcePermanentId);
+                new ChoiceContext.TriggeredModalChoice(
+                        sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -1167,7 +1181,6 @@ public class PlayerInputService {
         beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
                 maxCount, drawForHandExiled, false, null, null);
     }
-
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
                                          List<CardType> excludedTypes, CardType requiredType, int maxCount,
                                          boolean drawForHandExiled, boolean excludeBasicLandNames,
@@ -1567,6 +1580,14 @@ public class PlayerInputService {
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                    int remainingCount, DiscardFollowUp followUp,
                                    CardType stopAfterDiscardingType, boolean declinable) {
+        if (remainingCount > 0 && !validIndices.isEmpty()) {
+            if (gameData.discardEventPlayerId == null) {
+                gameData.discardEventPlayerId = playerId;
+                gameData.discardEventCardCount = 0;
+            } else if (!gameData.discardEventPlayerId.equals(playerId)) {
+                throw new IllegalStateException("A discard event is already in progress for another player");
+            }
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
                 playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt,
                 stopAfterDiscardingType, declinable));

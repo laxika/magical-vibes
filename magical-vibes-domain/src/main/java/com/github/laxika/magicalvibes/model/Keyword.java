@@ -79,7 +79,9 @@ public enum Keyword {
     MODULAR,
     SUNBURST,
     PROTOTYPE,
-    REBOUND;
+    REBOUND,
+    START_YOUR_ENGINES,
+    MAX_SPEED;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

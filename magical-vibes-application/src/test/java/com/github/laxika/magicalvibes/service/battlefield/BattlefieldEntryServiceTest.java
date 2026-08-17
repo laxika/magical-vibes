@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -118,6 +119,22 @@ class BattlefieldEntryServiceTest {
         // is chosen as the trigger goes on the stack rather than pushing a targetless entry.
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land's enter-the-battlefield color choice is presented during land entry")
+    void landColorChoiceIsPresentedDuringEntry() {
+        Card land = new Card();
+        land.setName("Night Market");
+        land.setType(CardType.LAND);
+        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        Permanent entering = new Permanent(land);
+        gd.playerBattlefields.get(player1Id).add(entering);
+
+        service.processLandETBEffects(gd, player1Id, land);
+
+        verify(playerInputService).beginColorChoice(gd, player1Id, entering.getId(), null,
+                new ChooseColorOnEnterEffect());
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -84,7 +85,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             if (assignment.getValue() == null || assignment.getValue() <= 0) {
                 continue;
             }
-            if (!gameQueryService.isCreature(gameData, target)) {
+            if (!isLegalTarget(gameData, entry, e, target)) {
                 continue;
             }
             if (e.targetRestriction() != null
@@ -102,6 +103,20 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                         .merge(e.counterType(), assignment.getValue(), Integer::sum);
             }
         }
+    }
+
+    private boolean isLegalTarget(GameData gameData, StackEntry entry,
+                                  DistributeCountersAmongTargetsEffect effect, Permanent target) {
+        if (effect.targetRestriction() == null) {
+            return gameQueryService.isCreature(gameData, target);
+        }
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        FilterContext context = new FilterContext(
+                gameData, entry.getCard().getId(), entry.getControllerId(), null,
+                source, entry.getSourcePermanentId());
+        return predicateEvaluationService.matchesPermanentPredicate(
+                target, effect.targetRestriction(), context);
     }
 
     private Map<UUID, Integer> chosenAssignments(StackEntry entry) {

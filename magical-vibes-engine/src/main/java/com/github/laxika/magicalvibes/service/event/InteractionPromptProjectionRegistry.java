@@ -83,6 +83,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
                 this::projectRevealAnyNumberOfCardsFromHandChoice);
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
+        register(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class,
+                this::projectSearchLibraryAndOrGraveyardChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
@@ -430,6 +432,16 @@ public class InteractionPromptProjectionRegistry {
                 interaction.maxCount(),
                 "Choose up to five cards from your library and graveyard to put on top of your "
                         + "library. The rest are exiled.");
+    }
+
+    private InteractionPromptMessage projectSearchLibraryAndOrGraveyardChoice(
+            GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                1,
+                "Choose a " + interaction.cardLabel()
+                        + " from your library or graveyard to reveal and put into your hand.");
     }
 
     private InteractionPromptMessage projectSearchLibraryToTopChoice(

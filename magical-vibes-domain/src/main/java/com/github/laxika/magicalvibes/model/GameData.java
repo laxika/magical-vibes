@@ -208,6 +208,10 @@ public class GameData {
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerEnergyCounters = new ConcurrentHashMap<>();
+    /** Persistent speed values; absent means the player has not started their engines. */
+    public final Map<UUID, Integer> playerSpeeds = new ConcurrentHashMap<>();
+    /** Players whose speed has already increased during the current turn. */
+    public final Set<UUID> playersWhoseSpeedIncreasedThisTurn = ConcurrentHashMap.newKeySet();
     public final InteractionState interaction = new InteractionState();
     public final List<StackEntry> stack = Collections.synchronizedList(new TriggerAwareStackList(this));
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
@@ -518,6 +522,8 @@ public class GameData {
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
+    /** Players who have begun activating an exhaust ability this turn. */
+    public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
      *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
      *  loyalty cost is paid, so an activation whose ability is countered still counts. */
@@ -563,6 +569,10 @@ public class GameData {
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
+    /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
+    public int additionalCombatPhasesAfterMain;
+    /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
+    public TurnStep additionalCombatPhasesAfterMainReturnStep;
     /** How many combat phases have begun this turn (1 during the first combat phase). Reset at the
      *  start of each turn and incremented on entering BEGINNING_OF_COMBAT; read by FirstCombatPhase. */
     public int combatPhasesThisTurn;
@@ -862,6 +872,10 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs that have been granted embalm until end of turn (e.g. Cursecloth Wrappings).
+     *  The embalm cost for these cards equals their mana cost. Cleared at end of turn. */
+    public final Set<UUID> cardsGrantedEmbalmUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
     public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
@@ -958,6 +972,9 @@ public class GameData {
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
 
+    /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
+    public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
+
     /** "Whenever you cast a creature spell this turn, draw a card" delayed triggers (Glimpse of
      *  Nature). The value is how many cards that player draws per creature spell cast; cleared at
      *  end of turn. */
@@ -965,6 +982,9 @@ public class GameData {
 
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
+
+    /** "At the beginning of each combat this turn, untap all creatures that attacked this turn" delayed triggers. */
+    public final Map<UUID, List<Card>> untapAttackedCreaturesEachCombatThisTurnSources = new ConcurrentHashMap<>();
 
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
@@ -1077,6 +1097,8 @@ public class GameData {
     public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
     public final Map<UUID, Integer> graveyardExileNotificationPendingCounts = new ConcurrentHashMap<>();
+    /** Whether a suppressed batch exiled one or more cards from a graveyard or the battlefield. */
+    public boolean graveyardOrBattlefieldExileNotificationPending;
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
     public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
@@ -1093,6 +1115,10 @@ public class GameData {
     /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
+
+    /** Player and count for a discard event whose cards are being processed one at a time. */
+    public UUID discardEventPlayerId;
+    public int discardEventCardCount;
 
     /** Mana value of the most recently discarded card (any player, any source), recorded by the
      *  central discard hook. Read by {@code LastDiscardedCardManaValue} so a later effect of the same
@@ -2972,6 +2998,8 @@ public class GameData {
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
+        copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
+        copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
@@ -3011,6 +3039,7 @@ public class GameData {
                 .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
+        copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
@@ -3113,6 +3142,8 @@ public class GameData {
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerEnergyCounters.putAll(this.playerEnergyCounters);
+        copy.playerSpeeds.putAll(this.playerSpeeds);
+        copy.playersWhoseSpeedIncreasedThisTurn.addAll(this.playersWhoseSpeedIncreasedThisTurn);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
@@ -3124,6 +3155,8 @@ public class GameData {
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
+        copy.discardEventPlayerId = this.discardEventPlayerId;
+        copy.discardEventCardCount = this.discardEventCardCount;
         copy.lastDiscardedCardManaValue = this.lastDiscardedCardManaValue;
         copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
@@ -3429,9 +3462,12 @@ public class GameData {
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
+        copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
+        this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->
+                copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
@@ -3454,6 +3490,7 @@ public class GameData {
         copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
+        copy.graveyardOrBattlefieldExileNotificationPending = this.graveyardOrBattlefieldExileNotificationPending;
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
 
         // --- Search tax payments (Leonin Arbiter) ---
@@ -3531,6 +3568,7 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
                 copy.cardTypeFlashGrantsThisTurn.put(k, ConcurrentHashMap.newKeySet()));

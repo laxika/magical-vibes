@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
@@ -92,6 +93,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
+import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -256,6 +258,8 @@ public class AmountEvaluationService {
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
                     // is a ConcurrentHashMap, which rejects null keys.
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case ControllerSpeed ignored ->
+                    ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
             case HighestLifeTotalAmongPlayers ignored ->
                     gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
             case LowestLifeTotalAmongPlayers ignored ->
@@ -300,6 +304,8 @@ public class AmountEvaluationService {
                     countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
             case CreaturesEnteredBattlefieldThisTurn c ->
                     countCreaturesEnteredBattlefieldThisTurn(gameData, c, ctx);
+            case PermanentsEnteredBattlefieldThisTurn c ->
+                    countPermanentsEnteredBattlefieldThisTurn(gameData, c, ctx);
             case LifeGainedThisTurn c ->
                     countLifeGainedThisTurn(gameData, c, ctx);
             case LifeLostThisTurn c ->
@@ -1121,6 +1127,20 @@ public class AmountEvaluationService {
                     .filter(card -> card.hasType(CardType.CREATURE))
                     .mapToInt(ignored -> 1)
                     .sum();
+        }
+        return total;
+    }
+
+    private int countPermanentsEnteredBattlefieldThisTurn(
+            GameData gameData, PermanentsEnteredBattlefieldThisTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += (int) gameData.permanentsEnteredBattlefieldThisTurn
+                    .getOrDefault(playerId, List.of())
+                    .stream()
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(card, count.filter(), null))
+                    .count();
         }
         return total;
     }

@@ -21,22 +21,29 @@ import java.util.UUID;
  * @param castingPlayerId the player who cast the spell (and controls the copy)
  * @param additionalTypes types added to the copied card
  * @param tokenCopy whether the copied creature spell becomes a token as it resolves
+ * @param mayChooseNewTargets whether the copy gets a choose-new-targets prompt
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
         Set<Keyword> grantedKeywords,
         Set<CardType> additionalTypes,
-        boolean tokenCopy
+        boolean tokenCopy,
+        boolean mayChooseNewTargets
 ) implements CardEffect {
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
-        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), false);
+        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), false, true);
     }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords) {
-        this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), false);
+        this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), false, true);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, tokenCopy, true);
     }
 
     public CopyControllerCastSpellEffect {

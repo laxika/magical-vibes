@@ -101,6 +101,8 @@ import java.util.Set;
  *                             next end step (Unearth, Postmortem Lunge, Shallow Grave). Unearth's extra
  *                             "exile it instead if it would leave the battlefield" clause is the separate
  *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
+ * @param exileAtYourNextEndStep {@code true} to schedule the permanent for exile at the beginning of
+ *                             its controller's next end step (e.g. Coalstoke Gearhulk)
  * @param sacrificeAtEndStep   {@code true} to schedule the permanent for sacrifice at the beginning of the
  *                             next end step (Apprentice Necromancer)
  * @param returnToHandAtEndStep {@code true} to schedule a pre-targeted returned permanent for return to
@@ -221,6 +223,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean grantHaste,
         Set<Keyword> grantKeywords,
         boolean exileAtEndStep,
+        boolean exileAtYourNextEndStep,
         boolean sacrificeAtEndStep,
         boolean returnToHandAtEndStep,
         boolean requiresManaValueEqualsX,

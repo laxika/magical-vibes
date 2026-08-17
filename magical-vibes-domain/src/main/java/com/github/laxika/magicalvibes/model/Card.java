@@ -964,6 +964,20 @@ public class Card {
     }
 
     /**
+     * Builds an embalm graveyard-activated ability for {@code cost}. This form is used when a
+     * permanent grants embalm to a card whose own creature types are not available in the granting
+     * permanent's constructor.
+     */
+    public static ActivatedAbility embalmAbility(String cost) {
+        return new ActivatedAbility(false, cost,
+                List.of(new ExileSelfFromGraveyardCost(),
+                        new CreateTokenCopyOfSourceEffect(false, 1, CardColor.WHITE, CardSubtype.ZOMBIE, true)),
+                "Embalm " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
+                        + "that's a copy of it, except it's a white Zombie with no mana cost. Embalm only as a sorcery.)",
+                ActivationTimingRestriction.SORCERY_SPEED);
+    }
+
+    /**
      * Adds eternalize for {@code cost}: like {@link #addEmbalm}, except the token is a 4/4 black
      * Zombie.
      *

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
- * Replacement behavior for +1/+1 counters put on creatures controlled by the effect's controller.
+ * Replacement behavior for +1/+1 counters put on permanents controlled by the effect's
+ * controller.
  */
 public interface PlusOnePlusOneCountersReplacementEffect extends CounterReplacementEffect {
 
@@ -17,5 +18,12 @@ public interface PlusOnePlusOneCountersReplacementEffect extends CounterReplacem
     @Override
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return affectedPermanentIsCreature && counterType == CounterType.PLUS_ONE_PLUS_ONE;
+    }
+
+    /**
+     * Returns whether this replacement also applies to a noncreature Vehicle.
+     */
+    default boolean appliesToNonCreatureVehicles() {
+        return false;
     }
 }

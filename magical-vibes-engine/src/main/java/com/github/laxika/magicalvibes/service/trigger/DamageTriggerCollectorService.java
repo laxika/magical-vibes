@@ -1210,6 +1210,18 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
+    private boolean handleConditionalEquippedCreatureDealsCombatDamage(TriggerMatchContext match,
+                                                                         ConditionalEffect conditional,
+                                                                         TriggerContext ctx) {
+        if (match.permanent() == null || !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        return handleEquippedCreatureDealsCombatDamage(match, conditional, ctx);
+    }
+
     private boolean sourceHasColor(Card card, CardColor color) {
         if (card == null || color == null) return false;
         if (card.getColor() == color) return true;

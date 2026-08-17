@@ -144,6 +144,8 @@ public class Permanent {
      * stays on the battlefield.
      */
     private final Set<String> chosenModeLabels = new HashSet<>();
+    /** Labels of modes chosen this turn for a turn-scoped modal trigger. */
+    private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     /**
@@ -467,6 +469,8 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
+    /** Whether this permanent is saddled until end of turn. */
+    @Setter private boolean saddled;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
@@ -614,6 +618,8 @@ public class Permanent {
         this.chosenSubtype = source.chosenSubtype;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenNumber = source.chosenNumber;
+        this.chosenModeLabels.addAll(source.chosenModeLabels);
+        this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.chosenCard = source.chosenCard;
@@ -726,6 +732,7 @@ public class Permanent {
         this.castFromZone = source.castFromZone;
         this.cast = source.cast;
         this.monstrous = source.monstrous;
+        this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
@@ -1264,6 +1271,7 @@ public class Permanent {
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();
+        this.saddled = false;
         this.animatedUntilEndOfTurn = false;
         this.animatedUntilEndOfCombat = false;
         this.animatedPower = 0;

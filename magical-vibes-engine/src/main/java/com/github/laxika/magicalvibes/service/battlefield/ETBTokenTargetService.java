@@ -142,7 +142,6 @@ public class ETBTokenTargetService {
             List<UUID> validPermanentTargets = targets.validTargets().stream()
                     .filter(id -> !gameData.playerIds.contains(id))
                     .toList();
-
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
@@ -260,7 +259,7 @@ public class ETBTokenTargetService {
                     for (Permanent p : battlefield) {
                         if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card)) {
+                                pending.controllerId(), card, pending.sourcePermanentId())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -462,7 +461,8 @@ public class ETBTokenTargetService {
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
-                                                  UUID controllerId, Card sourceCard) {
+                                                  UUID controllerId, Card sourceCard,
+                                                  UUID sourcePermanentId) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -470,7 +470,7 @@ public class ETBTokenTargetService {
             return false;
         }
         FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null);
+                gameData, sourceCard.getId(), controllerId, null, null, sourcePermanentId);
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

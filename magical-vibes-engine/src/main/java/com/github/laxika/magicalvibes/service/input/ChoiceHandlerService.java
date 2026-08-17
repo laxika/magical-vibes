@@ -543,7 +543,8 @@ public class ChoiceHandlerService {
         PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
         gameData.pendingRevertableManaActivation = null;
 
-        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
         int amount = ctx.amount();
         if (ctx.creatureSpellOrAbilityOnly()) {
             // "Any combination of colors" means each mana gets its own color choice.
@@ -680,6 +681,14 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} counter-granting mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
+        } else if (ctx.abilityOnly()) {
+            manaPool.addAbilityOnlyMana(manaColor, amount);
+
+            String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
+                    + " " + colorName.toLowerCase() + " mana (activated abilities only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds {} {} activated-ability-only mana", gameData.id,
+                    player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.artifactSpellOrAbilityOnly()) {
             manaPool.addArtifactOnlyMana(manaColor, amount);
 
@@ -716,7 +725,7 @@ public class ChoiceHandlerService {
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null
                 && !ctx.creatureSpellOnly() && !ctx.creatureSpellOrAbilityOnly()
                 && !ctx.grantsAdditionalPlusOneCounter()
-                && !ctx.artifactSpellOrAbilityOnly()) {
+                && !ctx.abilityOnly() && !ctx.artifactSpellOrAbilityOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -877,6 +886,12 @@ public class ChoiceHandlerService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
 
         gameData.interaction.clearAwaitingInput();
+        if (ctx.modesResetEachTurn()) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null) {
+                source.getChosenModeLabelsThisTurn().add(chosenLabel);
+            }
+        }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
@@ -1604,10 +1619,12 @@ public class ChoiceHandlerService {
         if (!toDiscard.isEmpty()) {
             gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
             hand.removeAll(toDiscard);
+            triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
                 graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
+            triggerCollectionService.finishDiscardEvent(gameData);
             gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
                     + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + "."));
             log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
@@ -2732,12 +2749,14 @@ public class ChoiceHandlerService {
                 .filter(card -> card.getName().equals(cardName))
                 .toList();
         gameData.discardCausedByOpponent = true;
+        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
         for (Card card : toDiscard) {
             hand.remove(card);
             graveyardService.discardCard(gameData, targetPlayerId, card);
             gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
             triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
@@ -3580,6 +3599,12 @@ public class ChoiceHandlerService {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
             }
+        }
+        if (cardIds.size() > ctx.maxCount()) {
+            throw new IllegalStateException("Too many cards selected");
+        }
+        if (new java.util.HashSet<>(cardIds).size() != cardIds.size()) {
+            throw new IllegalStateException("A card cannot be selected more than once");
         }
 
         gameData.interaction.clearAwaitingInput();

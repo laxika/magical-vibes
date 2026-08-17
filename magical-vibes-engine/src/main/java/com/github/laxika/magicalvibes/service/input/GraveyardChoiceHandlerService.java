@@ -20,12 +20,15 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -48,6 +51,7 @@ import java.util.stream.IntStream;
 public class GraveyardChoiceHandlerService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameLogService gameLogService;
@@ -469,6 +473,18 @@ public class GraveyardChoiceHandlerService {
         }
 
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
+        ReturnUpToOneOfEachFilterFromGraveyardToHandEffect oneOfEachFilterEffect = pendingEffects == null
+                ? null
+                : pendingEffects.stream()
+                .filter(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (oneOfEachFilterEffect != null
+                && !canAssignEachFilter(gameData, cardIds, oneOfEachFilterEffect)) {
+            throw new IllegalStateException("Each selected card must match a different target group");
+        }
+
         ReturnTargetCardsFromGraveyardToHandEffect sharedCreatureTypeEffect = pendingEffects == null
                 ? null
                 : pendingEffects.stream()
@@ -546,17 +562,22 @@ public class GraveyardChoiceHandlerService {
             var context = gameData.graveyardTargetOperation.asEntersExile;
             gameData.graveyardTargetOperation.asEntersExile = null;
             gameData.interaction.clearAwaitingInput();
+            int exiledCount = 0;
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null) {
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
                     exileService.exileCard(gameData, player.getId(), card, context.enteringPermanentId());
+                    exiledCount++;
                     gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " exiles ", card, " from their graveyard."));
+                        player.getUsername() + " exiles ", card, " from their graveyard."));
                 }
             }
+            battlefieldEntryService.applyAsEntersExileCounters(gameData, context.controllerId(),
+                    context.enteringPermanentId(), exiledCount, context.countersPerCard());
             battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
-                    context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+                    context.targetId(), context.wasCastFromHand(), context.etbMode(), context.xValue(),
+                    context.kicked(), context.targetIds());
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
@@ -747,7 +768,7 @@ public class GraveyardChoiceHandlerService {
                         controllerId,
                         description,
                         new ArrayList<>(pendingEffects),
-                        0,
+                        pendingXValue,
                         null,
                         pendingSourcePermanentId,
                         Map.of(),
@@ -762,7 +783,13 @@ public class GraveyardChoiceHandlerService {
                         controllerId,
                         description,
                         new ArrayList<>(pendingEffects),
-                        new ArrayList<>(cardIds)
+                        pendingXValue,
+                        null,
+                        null,
+                        Map.of(),
+                        null,
+                        new ArrayList<>(cardIds),
+                        List.of()
                 );
             }
             if (pendingTargetPlayerId != null) {
@@ -802,6 +829,41 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private boolean canAssignEachFilter(GameData gameData, List<UUID> cardIds,
+                                        ReturnUpToOneOfEachFilterFromGraveyardToHandEffect effect) {
+        List<Card> selectedCards = cardIds.stream()
+                .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                .toList();
+        if (selectedCards.stream().anyMatch(java.util.Objects::isNull)) {
+            return false;
+        }
+        boolean[] usedFilters = new boolean[effect.filters().size()];
+        UUID sourceCardId = gameData.graveyardTargetOperation.card == null
+                ? null
+                : gameData.graveyardTargetOperation.card.getId();
+        return canAssignEachFilter(selectedCards, effect.filters(), 0, usedFilters, sourceCardId);
+    }
+
+    private boolean canAssignEachFilter(List<Card> selectedCards, List<CardPredicate> filters,
+                                        int cardIndex, boolean[] usedFilters, UUID sourceCardId) {
+        if (cardIndex == selectedCards.size()) {
+            return true;
+        }
+        Card selectedCard = selectedCards.get(cardIndex);
+        for (int filterIndex = 0; filterIndex < filters.size(); filterIndex++) {
+            if (!usedFilters[filterIndex]
+                    && predicateEvaluationService.matchesCardPredicate(
+                    selectedCard, filters.get(filterIndex), sourceCardId)) {
+                usedFilters[filterIndex] = true;
+                if (canAssignEachFilter(selectedCards, filters, cardIndex + 1, usedFilters, sourceCardId)) {
+                    return true;
+                }
+                usedFilters[filterIndex] = false;
+            }
+        }
+        return false;
     }
 }
 

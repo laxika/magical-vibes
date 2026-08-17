@@ -345,7 +345,7 @@ public class CombatDamageService {
 
         // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
         // deals combat damage, you draw a card".
-        processDelayedWatchedCreatureCombatDamageTriggers(gameData, state.combatDamageDealt);
+        processDelayedWatchedCreatureCombatDamageTriggers(gameData, state);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
@@ -1399,6 +1399,8 @@ public class CombatDamageService {
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     firedBatchedAllyTriggerSources);
+            triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
+                    gameData, creature, attackerId, defenderId, damageDealt);
         }
     }
 
@@ -1896,23 +1898,26 @@ public class CombatDamageService {
     }
 
     /**
-     * Fires the "whenever either of those creatures deals combat damage" delayed triggers registered
-     * by Tamiyo, Field Researcher's +1. {@code combatDamageDealt} already sums each source's damage to
-     * every recipient, so a watched creature that damaged both a blocker and a player triggers once.
+     * Fires delayed triggers watching creatures for combat damage. {@code combatDamageDealt} already
+     * sums each source's damage to every recipient, so a watched creature that damaged both a blocker
+     * and a player triggers once. Player-only watches additionally use the player-specific damage map.
      * The trigger is controlled by the player who activated the ability, not by the creature's
      * controller, so "you draw a card" always draws for them.
      */
     private void processDelayedWatchedCreatureCombatDamageTriggers(GameData gameData,
-                                                                   Map<Permanent, Integer> combatDamageDealt) {
-        if (combatDamageDealt.isEmpty()
+                                                                   CombatDamageState state) {
+        if (state.combatDamageDealt.isEmpty()
                 || !gameData.hasDelayedAction(DelayedWatchedCreaturesCombatDamage.class)) {
             return;
         }
 
         for (DelayedWatchedCreaturesCombatDamage watch
                 : gameData.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class)) {
-            for (var entry : combatDamageDealt.entrySet()) {
-                if (entry.getValue() <= 0 || !watch.watchedPermanentIds().contains(entry.getKey().getId())) {
+            for (var entry : state.combatDamageDealt.entrySet()) {
+                if (entry.getValue() <= 0
+                        || !watch.watchedPermanentIds().contains(entry.getKey().getId())
+                        || (watch.combatDamageToPlayerOnly()
+                        && state.combatDamageDealtToPlayer.getOrDefault(entry.getKey(), 0) <= 0)) {
                     continue;
                 }
 
@@ -2539,6 +2544,8 @@ public class CombatDamageService {
             if (damage > 0) {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, pwControllerId);
+                damage += gameQueryService.getControllerDamageToOpponentBonus(
+                        gameData, sourceControllerId, pwControllerId);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
@@ -2611,6 +2618,8 @@ public class CombatDamageService {
                         gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)));
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, defenderId);
+                damage += gameQueryService.getControllerDamageToOpponentBonus(
+                        gameData, sourceControllerId, defenderId);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.

@@ -103,7 +103,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         return switch (restriction) {
             case NONE, CREATURE_SPELL_ONLY, CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
                     amount instanceof Fixed fixed ? fixed.value() : 0;
-            case IMPRINTED_CARD_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
+            case ABILITIES, IMPRINTED_CARD_COLORS, INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY,
                  ARTIFACT_SPELLS_OR_ABILITIES, FLASHBACK_ONLY,
                  CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
                  CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,

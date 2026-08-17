@@ -88,6 +88,7 @@ public class GameViewProjectionFactory {
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
         List<Integer> energyCounters = getEnergyCounters(gameData);
+        List<Integer> speeds = getSpeeds(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         Map<UUID, GameStateMessage> messages = new LinkedHashMap<>();
@@ -157,7 +158,7 @@ public class GameViewProjectionFactory {
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                    potentialPayableAbilityIndices
+                    potentialPayableAbilityIndices, speeds
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -457,6 +458,14 @@ public class GameViewProjectionFactory {
         return counters;
     }
 
+    List<Integer> getSpeeds(GameData gameData) {
+        List<Integer> speeds = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            speeds.add(gameData.playerSpeeds.getOrDefault(pid, 0));
+        }
+        return speeds;
+    }
+
 
     List<CardView> getPlayableExileCards(GameData gameData, UUID playerId) {
         List<CardView> playable = new ArrayList<>();
@@ -730,7 +739,8 @@ public class GameViewProjectionFactory {
                 getPoisonCounters(data),
                 getEnergyCounters(data),
                 getStackViews(data),
-                getGraveyardViews(data)
+                getGraveyardViews(data),
+                getSpeeds(data)
         );
     }
 

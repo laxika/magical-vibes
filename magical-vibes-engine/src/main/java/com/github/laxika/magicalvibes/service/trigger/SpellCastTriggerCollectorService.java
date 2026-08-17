@@ -739,7 +739,7 @@ public class SpellCastTriggerCollectorService {
         StackEntry snapshot = new StackEntry(spellEntry);
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
-                        trigger.additionalTypes(), trigger.tokenCopy());
+                        trigger.additionalTypes(), trigger.tokenCopy(), trigger.mayChooseNewTargets());
         if (trigger.intervening() != null) {
             copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
         }
@@ -1369,9 +1369,15 @@ public class SpellCastTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SpellCastDamageToCasterEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleOpponentSpellCastDamage(TriggerMatchContext match,
+    @CollectsTrigger(value = SpellCastDamageToCasterEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleSpellCastDamage(TriggerMatchContext match,
             SpellCastDamageToCasterEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.onlyWhenCasterNotActiveTurn()
+                && match.gameData().activePlayerId != null
+                && match.gameData().activePlayerId.equals(sc.castingPlayerId())) {
+            return false;
+        }
         if (trigger.spellFilter() != null
                 && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                         match.gameData(), sc.castingPlayerId())) {

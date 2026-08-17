@@ -164,6 +164,7 @@ public class LibraryChoiceHandlerService {
         CreateTokenEffect tokenTemplate = librarySearch.tokenTemplate();
         String sourceSetCode = librarySearch.sourceSetCode();
         CardSubtype battlefieldIfChosenBeholdType = librarySearch.battlefieldIfChosenBeholdType();
+        Integer battlefieldIfManaValueAtMost = librarySearch.battlefieldIfManaValueAtMost();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -506,6 +507,14 @@ public class LibraryChoiceHandlerService {
         }
 
         Card chosenCard = searchCards.get(cardIndex);
+
+        if (battlefieldIfManaValueAtMost != null) {
+            destination = chosenCard.getManaValue() <= battlefieldIfManaValueAtMost
+                    ? LibrarySearchDestination.BATTLEFIELD
+                    : LibrarySearchDestination.HAND;
+            toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD;
+            toBattlefieldTapped = false;
+        }
 
         boolean putChosenCardOnBattlefield = destination == LibrarySearchDestination.HAND
                 && battlefieldIfChosenBeholdType != null

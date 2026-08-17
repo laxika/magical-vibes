@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -72,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -258,6 +261,7 @@ public class BattlefieldEntryService {
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+            applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyAdditionalEnterCountersThisTurn(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithSourcePowerCounters(gameData, controllerId, permanent);
@@ -1210,6 +1214,39 @@ public class BattlefieldEntryService {
         }
     }
 
+    private void applyControlledPermanentEntryReplacements(GameData gameData, UUID controllerId,
+                                                           Permanent permanent) {
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null || battlefield.isEmpty()) return;
+
+        int additionalCounters = 0;
+        for (Permanent source : battlefield) {
+            FilterContext sourceContext = FilterContext.of(gameData)
+                    .withSourceCardId(source.getCard().getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentSnapshot(source)
+                    .withSourcePermanentId(source.getId());
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
+                    additionalCounters += Math.max(0, replacement.additionalCounterCount(permanent));
+                }
+            }
+        }
+
+        if (additionalCounters > 0) {
+            additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                    gameData, permanent, controllerId, additionalCounters);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
+            log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a mana-value entry effect",
+                    gameData.id, permanent.getCard().getName(), additionalCounters);
+        }
+    }
+
     /**
      * Replacement effect (MTG Rule 614.1c) recorded on the game state for the rest of the turn
      * (Zameck Guildmage): each creature entering under {@code controllerId}'s control gets the
@@ -1517,29 +1554,59 @@ public class BattlefieldEntryService {
         // "As this creature enters, exile any number of creature cards from your graveyard"
         // (CR 614.1c, Sutured Ghoul). The exiled cards are tracked with the entering permanent so
         // its characteristic-defining power/toughness can be derived from them.
-        boolean needsGraveyardExile = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect limitedGraveyardExile =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
+                        .map(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
+                        .findFirst().orElse(null);
+        boolean needsGraveyardExile = limitedGraveyardExile != null
+                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect);
         if (needsGraveyardExile) {
             List<Card> creatureCards = gameData.playerGraveyards
                     .getOrDefault(controllerId, List.of()).stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .toList();
-            if (!creatureCards.isEmpty()) {
+            int maxExiledCards = limitedGraveyardExile == null
+                    ? creatureCards.size()
+                    : Math.min(Math.max(xValue, 0), creatureCards.size());
+            if (!creatureCards.isEmpty() && maxExiledCards > 0) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 gameData.graveyardTargetOperation.asEntersExile =
                         new GraveyardTargetOperationState.AsEntersGraveyardExileContext(
-                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked);
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,
+                                xValue, kicked, targetIds,
+                                limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard());
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
-                        new ArrayList<>(creatureCards), creatureCards.size(),
-                        card.getName() + " — Exile any number of creature cards from your graveyard.");
+                        new ArrayList<>(creatureCards), maxExiledCards,
+                        limitedGraveyardExile == null
+                                ? card.getName() + " — Exile any number of creature cards from your graveyard."
+                                : card.getName() + " — Exile up to " + xValue
+                                + " creature cards from your graveyard.");
                 return;
             }
-            // Empty graveyard — nothing is exiled; the creature enters with 0 total power/toughness.
         }
 
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
                 etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds);
+    }
+
+    public void applyAsEntersExileCounters(GameData gameData, UUID controllerId, UUID enteringPermanentId,
+                                           int exiledCardCount, int countersPerCard) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (permanent == null || exiledCardCount <= 0 || countersPerCard <= 0
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return;
+        }
+        int count = exiledCardCount * countersPerCard;
+        count = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, controllerId, count);
+        if (count > 0) {
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
+            log.info("Game {} - {} enters with {} +1/+1 counter(s) from exiled creature cards",
+                    gameData.id, permanent.getCard().getName(), count);
+        }
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -1561,6 +1628,16 @@ public class BattlefieldEntryService {
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseColorEffect)
+                .map(e -> (ChooseColorEffect) e)
+                .findFirst()
+                .orElse(null);
+        if (enteringPermanent != null && enteringPermanent.getChosenColor() == null && colorChoice != null) {
+            playerInputService.beginColorChoice(gameData, controllerId, enteringPermanent.getId(), null, colorChoice);
+            return;
+        }
+
         ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
                 .map(ChooseSubtypeOnEnterEffect.class::cast)
@@ -1688,6 +1765,14 @@ public class BattlefieldEntryService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof SacrificePermanentThenEffect
+                        && may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                card, controllerId, List.of(may), xValue));
+                    }
+                    continue;
+                }
                 // CR 603.3c: a "may [do X to] target permanent" ETB (e.g. Leonin Relic-Warder)
                 // targets, so with no legal target the ability isn't put onto the stack at all —
                 // the controller isn't even prompted. Skip queueing it in that case.
@@ -1712,6 +1797,11 @@ public class BattlefieldEntryService {
                 for (int i = 0; i < extraTriggerCopies; i++) {
                     gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
                 }
+            }
+
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
+                    && !gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             }
 
             if (!mandatoryEffects.isEmpty()) {
@@ -2148,7 +2238,7 @@ public class BattlefieldEntryService {
         for (CardEffect effect : graveyardTargetReturnEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, List.of(effect), null, minimumGraveyardTargets));
+                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, xValue));
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)

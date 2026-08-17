@@ -95,7 +95,8 @@ public class GraveyardTargetOperationState {
      */
     public record AsEntersGraveyardExileContext(UUID enteringPermanentId, UUID controllerId, Card card,
                                                 UUID targetId, boolean wasCastFromHand, int etbMode,
-                                                boolean kicked) {
+                                                int xValue, boolean kicked, List<UUID> targetIds,
+                                                int countersPerCard) {
     }
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {

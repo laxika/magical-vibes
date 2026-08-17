@@ -24,11 +24,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -575,6 +578,33 @@ class DiscardTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — DealDamageToPlayersEffect")
+    class ControllerDiscardEventDamageToEachOpponent {
+
+        @Test
+        @DisplayName("queues damage using the number of cards discarded in the event")
+        void queuesDamageTriggerWithDiscardedCount() {
+            Permanent artillerist = createPermanent("Magmakin Artillerist");
+            var effect = new DealDamageToPlayersEffect(
+                    new com.github.laxika.magicalvibes.model.amount.EventValue(), DamageRecipient.EACH_OPPONENT);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(artillerist, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(artillerist.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
     @DisplayName("ON_CONTROLLER_DISCARDS — AwardManaEffect")
     class ControllerDiscardAwardMana {
 
@@ -595,6 +625,34 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(mishra.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — PutCountersOnSelfEffect")
+    class ControllerDiscardEventSelfCounters {
+
+        @Test
+        @DisplayName("queues counters using the number of cards discarded in the event")
+        void queuesCounterTriggerWithDiscardedCount() {
+            Permanent mako = createPermanent("Marauding Mako");
+            var effect = new PutCountersOnSelfEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE,
+                    new com.github.laxika.magicalvibes.model.amount.EventValue());
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(mako, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(mako.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
     }
@@ -623,6 +681,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(survivor.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(SequenceEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — SequenceEffect")
+    class ControllerDiscardEventSequence {
+
+        @Test
+        @DisplayName("queues a target choice carrying the discard-event count")
+        void queuesTargetChoiceWithDiscardedCount() {
+            Permanent captain = createPermanent("Captain Howler, Sea Scourge");
+            var effect = SequenceEffect.of(
+                    new BoostTargetCreatureEffect(2, 0),
+                    new RegisterDelayedWatchedCreaturesCombatDamageEffect(List.of(new DrawCardEffect(1))));
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(captain, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            PermanentChoiceContext.DiscardControllerTriggerTarget pending =
+                    gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+            assertThat(pending.discardedCount()).isEqualTo(3);
+            assertThat(pending.effects()).containsExactly(effect);
         }
     }
 

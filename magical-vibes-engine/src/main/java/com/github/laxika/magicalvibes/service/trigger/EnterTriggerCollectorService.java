@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCre
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -297,6 +299,42 @@ public class EnterTriggerCollectorService {
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             graveyardTargetingService.handleReturnToHandETBTargeting(
                     match.gameData(), match.controllerId(), sourceCard, List.of(effect), effect);
+        }
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
+                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AnimatePermanentsEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = AnimatePermanentsEffect.class,
+                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleEnteringPermanentSelfEffect(TriggerMatchContext match, CardEffect effect,
+                                                       TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setNonTargeting(true);
+            match.gameData().enqueueTrigger(entry);
         }
         logTriggered(match);
         return true;

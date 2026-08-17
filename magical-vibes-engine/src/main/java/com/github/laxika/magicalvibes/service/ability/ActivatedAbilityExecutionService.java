@@ -410,6 +410,10 @@ public class ActivatedAbilityExecutionService {
         // priority window alongside cost triggers (mana abilities, per CR 603.3).
         int stackBeforeActivationTriggers = gameData.stack.size();
         triggerCollectionService.checkControllerActivatesAbilityTriggers(gameData, playerId, permanent);
+        if (ability.isExhaustAbility()) {
+            triggerCollectionService.checkControllerActivatesExhaustAbilityTriggers(gameData, playerId);
+            triggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard(gameData, playerId);
+        }
         List<StackEntry> deferredActivationTriggers = List.of();
         if (gameData.stack.size() > stackBeforeActivationTriggers) {
             deferredActivationTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()));
@@ -1037,7 +1041,9 @@ public class ActivatedAbilityExecutionService {
                         new AmountContext(playerId, permanent, null, 0, 0));
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
-                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, damage);
+                    int opponentDamage = damage + gameQueryService.getControllerDamageToOpponentBonus(
+                            gameData, playerId, opponentId);
+                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, opponentDamage);
                 }
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).

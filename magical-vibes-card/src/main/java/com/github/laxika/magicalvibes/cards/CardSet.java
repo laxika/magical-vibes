@@ -101,7 +101,8 @@ public enum CardSet {
     SET_TPR("TPR"),
     SET_ATH("ATH"),
     SET_FDN("FDN"),
-    SET_ULG("ULG");
+    SET_ULG("ULG"),
+    SET_DFT("DFT");
 
     @Getter
     private final String code;

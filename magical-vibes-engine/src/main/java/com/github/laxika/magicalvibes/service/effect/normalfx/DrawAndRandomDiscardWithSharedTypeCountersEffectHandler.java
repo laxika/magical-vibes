@@ -55,6 +55,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
         List<Card> discardedCards = new ArrayList<>();
         gameData.discardCausedByOpponent = false;
 
+        triggerCollectionService.beginDiscardEvent(gameData, controllerId);
         for (int i = 0; i < e.discardAmount(); i++) {
             if (hand == null || hand.isEmpty()) break;
             int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
@@ -66,6 +67,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         // Process any pending self-discard triggers
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {

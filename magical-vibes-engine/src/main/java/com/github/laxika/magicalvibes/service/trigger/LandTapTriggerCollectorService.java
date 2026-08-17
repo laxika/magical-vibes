@@ -112,6 +112,8 @@ public class LandTapTriggerCollectorService {
         var sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
         int damage = gameQueryService.applyDamageMultiplier(gameData, trigger.damage());
+        damage += gameQueryService.getControllerDamageToOpponentBonus(
+                gameData, match.controllerId(), tappingPlayerId);
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(tappingPlayerId) + "."));

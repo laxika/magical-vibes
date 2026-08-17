@@ -24,6 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
@@ -39,6 +42,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
+import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
@@ -65,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -756,6 +761,15 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
+                // Filter out saddled attack conditionals when the attacker wasn't saddled when
+                // it was declared.
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof SourceIsSaddled
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof SourceIsSaddled ? ce.wrapped() : e);
+
                 // Filter out defending-player conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && isDefendingPlayerCondition(ce.condition())
@@ -814,7 +828,8 @@ public class CombatAttackService {
                         // pipeline collects only one target, so route to the bespoke two-step flow.
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                                .anyMatch(e -> e instanceof GraveyardCardChoosingEffect
+                                        || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                         boolean needsTarget = otherEffects.stream()
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                         UUID attackedTargetId = attacker.getAttackTarget();
@@ -969,6 +984,9 @@ public class CombatAttackService {
             // attacking (Mob Mentality). These event conditions are unwrapped onto the stack: the
             // trigger event already happened, and targeted triggers are assembled after target
             // selection without the combat's xValue.
+            // or if not every matching creature is attacking (Mob Mentality). AllMatching is
+            // unwrapped onto the stack: the trigger event already happened. Compound HasAttacker
+            // gates are checked and unwrapped here for the same event-snapshot reason.
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
                 if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
@@ -989,6 +1007,15 @@ public class CombatAttackService {
                         continue;
                     }
                     filteredEffects.add(effect);
+                } else if (effect instanceof ConditionalEffect ce
+                        && containsHasAttackerCondition(ce.condition())) {
+                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        log.info("Game {} - {} attack trigger skipped (attacker condition not met)",
+                                gameData.id, perm.getCard().getName());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
                 } else if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof AllMatchingCreaturesAttack) {
                     boolean allMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -1850,6 +1877,17 @@ public class CombatAttackService {
             result.add(members);
         }
         return result;
+    }
+
+    private boolean containsHasAttackerCondition(Condition condition) {
+        return switch (condition) {
+            case HasAttacker ignored -> true;
+            case AllConditions c -> c.conditions().stream().anyMatch(this::containsHasAttackerCondition);
+            case AllOf c -> c.conditions().stream().anyMatch(this::containsHasAttackerCondition);
+            case AnyOf c -> c.conditions().stream().anyMatch(this::containsHasAttackerCondition);
+            case NotCondition c -> containsHasAttackerCondition(c.inner());
+            default -> false;
+        };
     }
 
     public void payGenericMana(ManaPool pool, int amount) {

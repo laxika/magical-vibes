@@ -43,6 +43,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
         }
+        if (predicate instanceof CardHasNoAbilitiesPredicate) {
+            return "card with no abilities";
+        }
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }

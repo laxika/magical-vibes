@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -285,6 +286,25 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
             assertThat(gd.floatingEffects).noneMatch(fe -> fe.isControlEffect());
+        }
+
+        @Test
+        @DisplayName("Expires a while-source lock when its creator no longer controls the source")
+        void expiresLockWhenSourceChangesController() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent source = addCreature(player1Id, "Possession Engine");
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), source.getCard().getName(), source.getId(), player1Id,
+                    new LockTargetPermanentEffect(true, true, false,
+                            EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                    bear.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+
+            gd.playerBattlefields.get(player1Id).remove(source);
+            gd.playerBattlefields.get(player2Id).add(source);
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.floatingEffects)
+                    .noneMatch(fe -> source.getId().equals(fe.sourcePermanentId()));
         }
 
         @Test

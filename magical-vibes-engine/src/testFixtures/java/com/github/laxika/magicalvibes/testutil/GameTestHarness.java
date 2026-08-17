@@ -440,6 +440,12 @@ public class GameTestHarness {
                 List.of(), null, null, counterCostPermanentIds, Map.of());
     }
 
+    public void castFromGraveyardWithSacrifice(Player player, int graveyardCardIndex, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null,
+                List.of(), null, null, List.of(sacrificePermanentId), null, null);
+    }
+
     public void castFromGraveyard(Player player, int graveyardCardIndex, CardType chosenGraveyardType) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, chosenGraveyardType);

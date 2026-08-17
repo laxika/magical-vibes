@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              assignment buffer.
  * @param targetRestriction      optional narrowing predicate for ETB targets whose target group is
  *                              declared on the card.
+ * @param targetRestriction     optional permanent predicate narrowing the legal targets.
  */
 public record DistributeCountersAmongTargetsEffect(
         CounterType counterType,
@@ -93,6 +94,13 @@ public record DistributeCountersAmongTargetsEffect(
                 counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, targetRestriction);
     }
 
+    /** Fixed total split evenly across a target group narrowed by a permanent predicate. */
+    public static DistributeCountersAmongTargetsEffect evenlyAmongTargetPermanents(
+            CounterType counterType, int total, PermanentPredicate targetRestriction) {
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, targetRestriction);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (etbAssignments && targetRestriction == null) {
@@ -100,12 +108,14 @@ public record DistributeCountersAmongTargetsEffect(
         }
         boolean harmful = counterType == CounterType.MINUS_ONE_MINUS_ONE
                 || counterType == CounterType.MINUS_TWO_MINUS_ONE;
-        // Both modes distribute among target *creatures*. CHOSEN-mode targets ride on
+        TargetPredicate declaredTarget = targetRestriction == null
+                ? TargetPredicates.creature() : TargetPredicates.permanent();
+        // CHOSEN-mode targets ride on
         // StackEntry.damageAssignments, so the validated targetId is null; that tolerance comes
         // from EffectResolution.distributesAmountsAmongTargets rather than from declaring a
         // category the spec interpreter no-ops on.
         return harmful
-                ? TargetSpec.harmful(TargetPredicates.creature(), targetRestriction)
-                : TargetSpec.benign(TargetPredicates.creature(), targetRestriction);
+                ? TargetSpec.harmful(declaredTarget, targetRestriction)
+                : TargetSpec.benign(declaredTarget, targetRestriction);
     }
 }

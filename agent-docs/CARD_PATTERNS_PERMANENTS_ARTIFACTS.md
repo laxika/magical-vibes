@@ -116,6 +116,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Vehicle with Crew + combat trigger | `w/Weatherlight.java` | CrewCost(3) + AnimatePermanentsEffect.crew() activated ability (no tap, no mana). ON_COMBAT_DAMAGE_TO_PLAYER LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, CardIsHistoricPredicate()). Crew cost auto-pays when all creatures must be tapped; prompts interactively otherwise |
+| Vehicle with Exhaust + Crew + exhaust-activation draw trigger | `r/RangersRefueler.java` | Exhaust ability uses `.withMaxActivationsPerGame(1).withExhaust()` and permanent `AnimatePermanentsEffect`; `ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY` draws before the exhaust ability resolves; Crew 2 remains a separate ordinary activated ability |
 
 ## Equipment
 

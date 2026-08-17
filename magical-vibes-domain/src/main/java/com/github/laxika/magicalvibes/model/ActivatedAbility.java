@@ -128,6 +128,8 @@ public class ActivatedAbility {
      * {@link #withMaxActivationsPerGame(int)}.
      */
     private Integer maxActivationsPerGame;
+    /** Whether this is an exhaust ability, which may be activated only once per permanent object. */
+    private boolean exhaustAbility;
     /**
      * When true this hand-activated ability's intrinsic cost exiles the source card instead of
      * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
@@ -261,6 +263,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
+        copy.exhaustAbility = this.exhaustAbility;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
@@ -296,6 +299,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /** Marks this activated ability as an exhaust ability. */
+    public ActivatedAbility withExhaust() {
+        this.exhaustAbility = true;
         return this;
     }
 
@@ -466,7 +475,8 @@ public class ActivatedAbility {
                     TargetSpec spec = e.targetSpec();
                     return spec.admits(TargetPredicate.Kind.PLAYER)
                             || spec.admits(TargetPredicate.Kind.PERMANENT)
-                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                            || spec.admits(TargetPredicate.Kind.EXILED_CARD);
                 });
     }
 

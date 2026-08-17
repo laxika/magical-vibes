@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "244")
 @CardRegistration(set = "FDN", collectorNumber = "269")
 @CardRegistration(set = "M21", collectorNumber = "257")
+@CardRegistration(set = "DFT", collectorNumber = "266")
 public class ThornwoodFalls extends Card {
 
     public ThornwoodFalls() {

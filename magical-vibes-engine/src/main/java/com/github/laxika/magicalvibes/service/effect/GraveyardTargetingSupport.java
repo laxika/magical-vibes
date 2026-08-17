@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -33,6 +34,14 @@ public class GraveyardTargetingSupport {
                     return nested;
                 }
                 continue;
+            }
+            if (targetEffect instanceof SacrificePermanentThenEffect sacrificeThen) {
+                if (sacrificeThen.thenEffect() != null) {
+                    Target nested = findTarget(List.of(sacrificeThen.thenEffect()));
+                    if (nested != null) {
+                        return nested;
+                    }
+                }
             }
             Target target = targetOf(targetEffect);
             if (target != null) {

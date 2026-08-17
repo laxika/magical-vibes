@@ -1464,15 +1464,24 @@ public class PermanentChoiceBattlefieldHandlerService {
                     return;
                 }
             } else {
-                gameData.stack.add(new StackEntry(
+                StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
+                List<UUID> targetCardIds = originalEntry == null || originalEntry.getTargetCardIds() == null
+                        ? List.of() : new ArrayList<>(originalEntry.getTargetCardIds());
+                StackEntry triggeredEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         ctx.sourceCard(),
                         ctx.controllerId(),
                         ctx.sourceCard().getName() + "'s effect",
                         thenEffects,
+                        0,
                         null,
-                        sourcePermanentId
-                ));
+                        sourcePermanentId,
+                        Map.of(),
+                        null,
+                        targetCardIds,
+                        List.of()
+                );
+                gameData.stack.add(triggeredEntry);
             }
         }
 

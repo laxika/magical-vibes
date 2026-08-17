@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackTargetRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -205,6 +206,10 @@ public class AttackLegalityService {
      * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
      */
     public boolean canAttackDefender(GameData gameData, Permanent attacker, UUID targetId) {
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPermanent != null && isAttackTargetRestricted(gameData, targetPermanent)) {
+            return false;
+        }
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         // The protected player is the attacked player, or the controller of the attacked planeswalker.
         UUID protectedPlayerId = targetIsPlayer ? targetId
@@ -243,6 +248,20 @@ public class AttackLegalityService {
             }
         }
         return true;
+    }
+
+    private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {
+        if (!target.isAttached() || target.getAttachedTo() == null) {
+            return false;
+        }
+        Permanent attachedTo = gameQueryService.findPermanentById(gameData, target.getAttachedTo());
+        if (attachedTo == null || !gameQueryService.isCreature(gameData, attachedTo)) {
+            return false;
+        }
+        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(AttackTargetRestrictionEffect.class::isInstance)
+                .map(AttackTargetRestrictionEffect.class::cast)
+                .anyMatch(AttackTargetRestrictionEffect::preventsBeingAttacked);
     }
 
     /**
@@ -477,8 +496,10 @@ public class AttackLegalityService {
         if (defBf != null) {
             for (Permanent p : defBf) {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
+                    if (!isAttackTargetRestricted(gameData, p)) {
+                        targets.add(new CombatAttackTarget(
+                                p.getId(), p.getCard().getName(), false));
+                    }
                 } else if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
                     targets.add(new CombatAttackTarget(
@@ -514,7 +535,9 @@ public class AttackLegalityService {
         if (defBf != null) {
             for (Permanent p : defBf) {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    validIds.add(p.getId());
+                    if (!isAttackTargetRestricted(gameData, p)) {
+                        validIds.add(p.getId());
+                    }
                 } else if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
                     validIds.add(p.getId());

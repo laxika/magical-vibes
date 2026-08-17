@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -115,6 +116,8 @@ public class CardChoiceHandlerService {
         UUID attachEquipmentCardId = null;
         UUID exileSourceIfDeclinedId = null;
         Integer sacrificeUnlessPayGenericReduction = null;
+        CounterType artifactCounterType = null;
+        int artifactCounterCount = 0;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -136,6 +139,8 @@ public class CardChoiceHandlerService {
             faceDownToughness = hc.faceDownToughness();
             faceDownCardTypes = hc.faceDownCardTypes();
             returnSourcePermanentId = hc.returnSourcePermanentId();
+            artifactCounterType = hc.artifactCounterType();
+            artifactCounterCount = hc.artifactCounterCount();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -187,10 +192,15 @@ public class CardChoiceHandlerService {
             if (isTargeted) {
                 resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
             } else {
-                resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
+                Permanent enteredPermanent = resolveUntargetedCardChoice(gameData, player, playerId, card, enterTapped, grantHaste,
                         sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                         faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                         returnExiledSourceCardId);
+                if (artifactCounterType != null && gameQueryService.isArtifact(gameData, enteredPermanent)) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData,
+                            gameData.pendingEffectResolutionEntry, enteredPermanent,
+                            artifactCounterType, artifactCounterCount);
+                }
                 if (returnSourcePermanentId != null) {
                     StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                     if (pendingEntry != null) {
@@ -414,6 +424,7 @@ public class CardChoiceHandlerService {
     private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
                                     DiscardFollowUp followUp, Card discardedCard) {
         gameData.interaction.clearAwaitingInput();
+        triggerCollectionService.finishDiscardEvent(gameData);
         finalizePendingReturnToHandOnDiscard(gameData);
 
         // After cleanup discard, apply end-of-turn resets (CR 514.2)
@@ -736,7 +747,6 @@ public class CardChoiceHandlerService {
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
-
         // Distended Mindbender: after the first filtered pick, begin a second pick under followUpFilter.
         if (remainingChoices == 0 && revealedHandChoice.followUpFilter() != null && !targetHand.isEmpty()) {
             CardPredicate followUp = revealedHandChoice.followUpFilter();
@@ -806,6 +816,7 @@ public class CardChoiceHandlerService {
         boolean exileMode = revealedHandChoice.exileMode();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
         boolean shuffleIntoLibraryMode = revealedHandChoice.shuffleIntoLibraryMode();
+        boolean discardThenDrawMode = revealedHandChoice.discardThenDrawMode();
 
         gameData.interaction.clearAwaitingInput();
 
@@ -845,14 +856,20 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
             }
 
+            triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card discarded : chosenCards) {
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
             }
+            triggerCollectionService.finishDiscardEvent(gameData);
 
             for (Card replaced : replacedCards) {
                 if (replaced.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
                 }
+            }
+
+            if (discardThenDrawMode) {
+                drawService.resolveDrawCard(gameData, targetPlayerId);
             }
         } else if (exileMode) {
             // Exile chosen cards
@@ -1310,7 +1327,7 @@ public class CardChoiceHandlerService {
         }
     }
 
-    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card,
+    private Permanent resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                              UUID attachEquipmentCardId, boolean enterAttacking,
                                              Integer sacrificeUnlessPayGenericReduction, boolean faceDown,
@@ -1373,6 +1390,7 @@ public class CardChoiceHandlerService {
                     null, reducedCost, permanent.getId()));
             playerInputService.processNextMayAbility(gameData);
         }
+        return permanent;
     }
 
     /**

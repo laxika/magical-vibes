@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivat
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowExtraExhaustActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
@@ -114,6 +115,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
@@ -125,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -625,6 +628,10 @@ public class GameQueryService {
                     }
                 }
             }
+        }
+        if (card != null && gameData.cardsGrantedEmbalmUntilEndOfTurn.contains(card.getId())
+                && card.getManaCost() != null && !card.getManaCost().isBlank()) {
+            result.add(Card.embalmAbility(card.getManaCost()));
         }
         return result;
     }
@@ -1903,10 +1910,38 @@ public class GameQueryService {
         return result;
     }
 
+    private int replacePlusOnePlusOneCounters(
+            GameData gameData, UUID controllerId, int count, boolean affectedPermanentIsNonCreatureVehicle) {
+        if (!affectedPermanentIsNonCreatureVehicle) {
+            return replaceCounters(gameData, controllerId, CounterType.PLUS_ONE_PLUS_ONE, count, true);
+        }
+        if (count <= 0 || controllerId == null) {
+            return count;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return count;
+        }
+        int result = count;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
+                        && replacement.appliesToNonCreatureVehicles()) {
+                    result = replacement.replace(result);
+                }
+            }
+        }
+        return result;
+    }
+
     /** Applies all counter replacements for a permanent already on the battlefield. */
     public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType, int count) {
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
+                && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE)) {
+            return replacePlusOnePlusOneCounters(gameData, controllerId, count, true);
+        }
         return replaceCounters(gameData, controllerId, counterType, count, creature);
     }
 
@@ -1914,6 +1949,10 @@ public class GameQueryService {
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
                                CounterType counterType, int count) {
         boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE && permanent != null && !creature
+                && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
+            return replacePlusOnePlusOneCounters(gameData, controllerId, count, true);
+        }
         return replaceCounters(gameData, controllerId, counterType, count, creature);
     }
 
@@ -1926,18 +1965,24 @@ public class GameQueryService {
 
     /**
      * Convenience overload of {@link #replacePlusOnePlusOneCounters(GameData, UUID, int)} that
-     * resolves the affected permanent's controller from the battlefield. Non-creatures are
-     * unchanged because these replacement effects apply only to creatures.
+     * resolves the affected permanent's controller from the battlefield.
      */
     public int doublePlusOnePlusOneCounters(GameData gameData, Permanent permanent, int count) {
-        if (permanent == null || !isCreature(gameData, permanent)) {
+        if (permanent == null) {
+            return count;
+        }
+        boolean affectedPermanentIsCreature = isCreature(gameData, permanent);
+        boolean affectedPermanentIsNonCreatureVehicle = !affectedPermanentIsCreature
+                && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE);
+        if (!affectedPermanentIsCreature && !affectedPermanentIsNonCreatureVehicle) {
             return count;
         }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId)) {
             return 0;
         }
-        return doublePlusOnePlusOneCounters(gameData, controllerId, count);
+        return replacePlusOnePlusOneCounters(
+                gameData, controllerId, count, affectedPermanentIsNonCreatureVehicle);
     }
 
     /**
@@ -1945,13 +1990,20 @@ public class GameQueryService {
      */
     public int doublePlusOnePlusOneCounters(
             GameData gameData, Permanent permanent, UUID controllerId, int count) {
-        if (permanent == null || !isCreature(gameData, permanent)) {
+        if (permanent == null) {
+            return count;
+        }
+        boolean affectedPermanentIsCreature = isCreature(gameData, permanent);
+        boolean affectedPermanentIsNonCreatureVehicle = !affectedPermanentIsCreature
+                && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE);
+        if (!affectedPermanentIsCreature && !affectedPermanentIsNonCreatureVehicle) {
             return count;
         }
         if (cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId)) {
             return 0;
         }
-        return doublePlusOnePlusOneCounters(gameData, controllerId, count);
+        return replacePlusOnePlusOneCounters(
+                gameData, controllerId, count, affectedPermanentIsNonCreatureVehicle);
     }
 
     /**
@@ -2053,6 +2105,40 @@ public class GameQueryService {
      */
     public int getEffectivePower(GameData gameData, Permanent permanent) {
         return getEffectivePower(permanent, computeStaticBonus(gameData, permanent));
+    }
+
+    /**
+     * Returns the power used when {@code permanent} pays a crew or saddle cost for
+     * {@code sourcePermanent}. Pilot-style bonuses affect only those costs, not the permanent's
+     * ordinary effective power.
+     */
+    public int getEffectivePowerForCrewOrSaddle(GameData gameData, Permanent sourcePermanent,
+                                                Permanent permanent) {
+        int power = getEffectivePower(gameData, permanent);
+        if (sourcePermanent == null || !hasMountOrVehicleSubtype(gameData, sourcePermanent)) {
+            return power;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.losesAllAbilities()) {
+            return power;
+        }
+        boolean usesToughnessInsteadOfPower = false;
+        int powerBonus = 0;
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
+                usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
+                powerBonus += modifier.powerBonus();
+            }
+        }
+        if (usesToughnessInsteadOfPower) {
+            power = getEffectiveToughness(permanent, bonus);
+        }
+        return power + powerBonus;
+    }
+
+    private boolean hasMountOrVehicleSubtype(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> subtypes = effectiveCreatureSubtypes(gameData, permanent);
+        return subtypes.contains(CardSubtype.MOUNT) || subtypes.contains(CardSubtype.VEHICLE);
     }
 
     /**
@@ -2907,6 +2993,9 @@ public class GameQueryService {
                 && accumulator.getGrantedColors().isEmpty()
                 && accumulator.getGrantedSubtypes().isEmpty()
                 && accumulator.getGrantedCardTypes().isEmpty()
+                && accumulator.getPower() == 0
+                && accumulator.getToughness() == 0
+                && !accumulator.isBasePTOverridden()
                 && !accumulator.isSubtypeOverriding()
                 && !accumulator.isLandSubtypeOverriding()
                 && !accumulator.isCardTypeOverriding()
@@ -4303,6 +4392,17 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether the player may activate an exhaust ability as though it has not been
+     * activated, as long as this is that player's turn and they have not begun another exhaust
+     * activation this turn.
+     */
+    public boolean canActivateExhaustAbilityAsThoughNotActivated(GameData gameData, UUID playerId) {
+        return playerId.equals(gameData.activePlayerId)
+                && !gameData.playersWhoActivatedExhaustAbilityThisTurn.contains(playerId)
+                && playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraExhaustActivationEffect.class);
+    }
+
+    /**
      * Returns {@code true} if the given card cannot be countered, either because it has
      * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
      * individually made uncounterable while on the stack (e.g. Vexing Shusher), or because
@@ -5192,6 +5292,40 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the additive damage bonus from static effects controlled by {@code sourceControllerId}
+     * when that controller's source would deal damage to {@code recipientPlayerId}.
+     */
+    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
+                                                   UUID recipientPlayerId) {
+        if (sourceControllerId == null || recipientPlayerId == null
+                || sourceControllerId.equals(recipientPlayerId)) {
+            return 0;
+        }
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!sourceControllerId.equals(controllerId)) return;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                bonus[0] += getControllerDamageToOpponentBonus(gameData, effect, permanent, controllerId);
+            }
+        });
+        return bonus[0];
+    }
+
+    private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
+                                                     Permanent source, UUID controllerId) {
+        if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus) {
+            return damageBonus.amount();
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))) {
+            return getControllerDamageToOpponentBonus(gameData, conditional.wrapped(), source, controllerId);
+        }
+        return 0;
+    }
+
+    /**
      * Returns the flat bonus added to damage a source with any of {@code sourceColors} would deal to a
      * player, from {@link AdditionalDamageToPlayersFromColorSourcesEffect} permanents anywhere on the
      * battlefield (Tok-Tok, Volcano Born). Multiple instances stack additively. Returns {@code 0} when
@@ -5562,6 +5696,10 @@ public class GameQueryService {
                             gameData, controllerId, source.getCard(), source, targetControllerId);
                 }
             }
+        }
+        if (target != null) {
+            bonus += getControllerDamageToOpponentBonus(gameData, controllerId,
+                    findPermanentController(gameData, target.getId()));
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);

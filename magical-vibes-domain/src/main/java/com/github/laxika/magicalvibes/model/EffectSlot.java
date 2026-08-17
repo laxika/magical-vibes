@@ -132,6 +132,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
      *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
     ON_CONTROLLER_DISCARDS,
+    /** Triggers once for a discard event in which the controller discards one or more cards. */
+    ON_CONTROLLER_DISCARD_EVENT,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
@@ -481,6 +483,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_WINS_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+    /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
+    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
@@ -559,6 +563,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller surveils, while this card is in the controller's
      *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
     GRAVEYARD_ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever the controller activates an exhaust ability, while this card is in the
+     *  controller's graveyard. Checked per-card inside
+     *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */
+    GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
     /** Triggers once for each creature card that leaves an opponent's graveyard, while this card is
      *  in its owner's graveyard. Fired per leaving card from
      *  {@code GraveyardService.notifyCardLeftGraveyard} (and the bulk clear path), which scans the
@@ -702,6 +710,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
+    /** Triggers during your turn whenever one or more cards are exiled from graveyards and/or the battlefield. */
+    ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
     ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever one or more artifact and/or creature cards leave the controller's graveyard. */
@@ -858,6 +868,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
      *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
     ON_CONTROLLER_ACTIVATES_ABILITY,
+    /** Triggers whenever the controller activates an exhaust ability. */
+    ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
+    /** Triggers whenever this creature saddles a Mount or crews a Vehicle during its controller's
+     *  main phase. The Mount or Vehicle is stored as the non-targeting source permanent on the
+     *  triggered ability's stack entry. Checked from {@code CrewCostHandler} as each creature is
+     *  tapped to pay the power-based cost. */
+    ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
     /** Triggers whenever the controller of this permanent activates a non-mana activated ability
      *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
      *  fires only after the ability has been put on the stack, so the triggering ability can be

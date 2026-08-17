@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
@@ -844,6 +846,27 @@ class GameQueryServiceTest {
 
         assertThat(gqs.computeStaticBonus(gd, permanent).grantedEffects())
                 .containsExactly(grantedEffect);
+    }
+
+    @Test
+    @DisplayName("retains self P/T modifiers on a noncreature permanent")
+    void retainsSelfPtModifiersOnNoncreaturePermanent() {
+        CardEffect boost = new BoostSelfEffect(-2, -2);
+        Card vehicle = createArtifact("Test Vehicle");
+        vehicle.setPower(3);
+        vehicle.setToughness(3);
+        vehicle.addEffect(EffectSlot.STATIC, boost);
+        when(staticEffectRegistry.getSelfHandler(boost))
+                .thenReturn((context, effect, accumulator) -> {
+                    accumulator.addPower(-2);
+                    accumulator.addToughness(-2);
+                });
+        Permanent permanent = addPermanent(player1Id, vehicle);
+
+        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, permanent);
+
+        assertThat(bonus.power()).isEqualTo(-2);
+        assertThat(bonus.toughness()).isEqualTo(-2);
     }
 
     // ===== withQueryScope =====
@@ -1853,6 +1876,21 @@ class GameQueryServiceTest {
         private void addGisela(UUID controllerId) {
             addPermanent(controllerId, createEnchantmentWithStaticEffect(
                     "Gisela, Blade of Goldnight", new DoubleDamageToOpponentsAndTheirPermanentsEffect()));
+        }
+    }
+
+    @Nested
+    @DisplayName("getControllerDamageToOpponentBonus")
+    class ControllerDamageToOpponentBonus {
+
+        @Test
+        @DisplayName("returns the bonus for an opponent and not for the controller")
+        void returnsBonusOnlyForOpponents() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
         }
     }
 

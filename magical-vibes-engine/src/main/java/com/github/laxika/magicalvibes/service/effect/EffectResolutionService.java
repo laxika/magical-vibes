@@ -229,11 +229,10 @@ public class EffectResolutionService {
                 }
             }
 
-            // A resolution-time may ability can wrap a conditional effect. Re-enter the same
-            // conditional path after the player accepts the may choice so nested conditions are
-            // evaluated against the current game state rather than being dispatched as ordinary
-            // effects.
-            if (effectToResolve instanceof ConditionalEffect conditional) {
+            // A resolution-time may-pay/may wrapper can expose an intervening conditional only
+            // after the re-entry branches above have unwrapped it. Apply the same condition logic
+            // here before dispatching the now-unwrapped effect.
+            if (effectToResolve != effect && effectToResolve instanceof ConditionalEffect conditional) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("

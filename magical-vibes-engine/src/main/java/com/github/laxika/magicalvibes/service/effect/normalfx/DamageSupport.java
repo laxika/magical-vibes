@@ -202,6 +202,15 @@ public class DamageSupport {
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
         }
+        UUID sourceControllerId = damageSource != null
+                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                : entry != null && entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
+                : entry == null ? null : entry.getControllerId();
+        if (rawDamage > 0) {
+            rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
+                    gameData, sourceControllerId, targetControllerId);
+        }
         // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls. The
         // combat counterpart lives in GameQueryService.applyCombatDamageMultiplier.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, targetControllerId,
@@ -320,9 +329,6 @@ public class DamageSupport {
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage);
             gameData.recordDamageRecipientBySource(sourcePermId, target.getId());
 
-            UUID sourceControllerId = damageSource != null
-                    ? gameQueryService.findPermanentController(gameData, damageSource.getId())
-                    : entry.getControllerId();
             accumulateSourceDamageForReflection(gameData,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     sourceControllerId,
@@ -888,6 +894,10 @@ public class DamageSupport {
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId, sourceControllerId);
+        if (rawDamage > 0) {
+            rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
+                    gameData, sourceControllerId, playerId);
+        }
         // Energy Storm and Hidden Retreat: prevent all damage dealt by instant and sorcery spells.
         if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,

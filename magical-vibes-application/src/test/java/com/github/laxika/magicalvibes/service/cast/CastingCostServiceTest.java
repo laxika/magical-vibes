@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -318,6 +319,31 @@ class CastingCostServiceTest {
 
             assertThat(svc.getCastCostModifier(gd, player1Id, artifact, snapshot)).isEqualTo(-2);
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isZero();
+        }
+
+        @Test
+        @DisplayName("Conditional battlefield cost reduction applies only at max speed")
+        void conditionalBattlefieldCostReductionUsesSourceControllerSpeed() {
+            Card reducer = new Card();
+            reducer.setName("Racers' Scoreboard");
+            reducer.setType(CardType.ARTIFACT);
+            reducer.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    new MaxSpeed(),
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.INSTANT), 1, CostModificationScope.SELF)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            evaluateCardTypePredicates();
+
+            Card instant = new Card();
+            instant.setName("Lightning Bolt");
+            instant.setType(CardType.INSTANT);
+            instant.setManaCost("{1}{R}");
+
+            gd.playerSpeeds.put(player1Id, 4);
+            assertThat(svc.getCastCostModifier(gd, player1Id, instant)).isEqualTo(-1);
+
+            gd.playerSpeeds.put(player1Id, 3);
+            assertThat(svc.getCastCostModifier(gd, player1Id, instant)).isZero();
         }
 
         @Test

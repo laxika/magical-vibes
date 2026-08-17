@@ -1217,6 +1217,10 @@ public class GraveyardService {
                 triggerCollectionService.checkControllerCardsExiledFromGraveyardTriggers(
                         gameData, pending.getKey(), pending.getValue());
             }
+            if (gameData.graveyardOrBattlefieldExileNotificationPending) {
+                triggerCollectionService.checkCardsExiledFromGraveyardsOrBattlefieldDuringYourTurnTriggers(
+                        gameData, 1);
+            }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingCreatureOwners) {
                 triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
             }
@@ -1225,6 +1229,7 @@ public class GraveyardService {
             }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
             gameData.graveyardExileNotificationPendingCounts.clear();
+            gameData.graveyardOrBattlefieldExileNotificationPending = false;
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         }
@@ -1253,8 +1258,7 @@ public class GraveyardService {
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
         }
-        if (leavingCard != null && !leavingCard.isToken()
-                && (leavingCard.hasType(CardType.ARTIFACT) || leavingCard.hasType(CardType.CREATURE))) {
+        if (isArtifactOrCreatureCard(leavingCard)) {
             notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
         }
     }
@@ -1267,8 +1271,7 @@ public class GraveyardService {
         if (leavingCards.stream().anyMatch(card -> !card.isToken() && card.hasType(CardType.CREATURE))) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
         }
-        if (leavingCards.stream().anyMatch(card -> !card.isToken()
-                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)))) {
+        if (leavingCards.stream().anyMatch(this::isArtifactOrCreatureCard)) {
             notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId);
         }
     }
@@ -1291,9 +1294,21 @@ public class GraveyardService {
     private void notifyCardsExiledFromGraveyard(GameData gameData, UUID ownerId, int count) {
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardExileNotificationPendingCounts.merge(ownerId, count, Integer::sum);
+            gameData.graveyardOrBattlefieldExileNotificationPending = true;
             return;
         }
         triggerCollectionService.checkControllerCardsExiledFromGraveyardTriggers(gameData, ownerId, count);
+        triggerCollectionService.checkCardsExiledFromGraveyardsOrBattlefieldDuringYourTurnTriggers(gameData, count);
+    }
+
+    /** Notifies the event watcher that one or more cards were exiled from the battlefield. */
+    public void notifyCardsExiledFromBattlefield(GameData gameData, int count) {
+        if (count <= 0) return;
+        if (gameData.graveyardLeaveNotificationDepth > 0) {
+            gameData.graveyardOrBattlefieldExileNotificationPending = true;
+            return;
+        }
+        triggerCollectionService.checkCardsExiledFromGraveyardsOrBattlefieldDuringYourTurnTriggers(gameData, count);
     }
 
     private void notifyCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId) {
@@ -1309,7 +1324,14 @@ public class GraveyardService {
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.add(ownerId);
             return;
         }
-        triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+        triggerCollectionService.checkControllerArtifactOrCreatureCardsLeaveGraveyardTriggers(
+                gameData, ownerId);
+    }
+
+    private boolean isArtifactOrCreatureCard(Card card) {
+        return card != null
+                && !card.isToken()
+                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE));
     }
 
     /**

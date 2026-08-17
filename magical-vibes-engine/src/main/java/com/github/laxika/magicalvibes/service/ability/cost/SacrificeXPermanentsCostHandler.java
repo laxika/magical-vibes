@@ -41,7 +41,12 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
-        if (xValue <= 0) return;
+        if (xValue <= 0) {
+            if (cost.requireAtLeastOne()) {
+                throw new IllegalStateException("Must sacrifice at least one permanent");
+            }
+            return;
+        }
         List<UUID> validIds = getValidChoiceIds(gameData, playerId);
         if (validIds.size() < xValue) {
             throw new IllegalStateException("Not enough permanents to sacrifice (need " + xValue + ", have " + validIds.size() + ")");

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfD
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
@@ -58,6 +59,9 @@ import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -89,6 +93,7 @@ public class DrawService {
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -98,7 +103,8 @@ public class DrawService {
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
                        @Lazy LifeSupport lifeSupport,
-                       @Lazy GraveyardService graveyardService) {
+                       @Lazy GraveyardService graveyardService,
+                       ConditionEvaluationService conditionEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -108,6 +114,7 @@ public class DrawService {
         this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
+        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -601,12 +608,27 @@ public class DrawService {
 
         for (Permanent permanent : battlefield) {
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> effect instanceof DoubleDrawReplacementEffect);
+                    .anyMatch(effect -> isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect));
             if (hasEffect) {
                 return permanent.getCard();
             }
         }
         return null;
+    }
+
+    private boolean isActiveDoubleDrawReplacement(GameData gameData, Permanent permanent,
+                                                   UUID controllerId, CardEffect effect) {
+        if (effect.getClass() == DoubleDrawReplacementEffect.class) {
+            return true;
+        }
+        if (effect.getClass() != ConditionalEffect.class) {
+            return false;
+        }
+
+        ConditionalEffect conditional = (ConditionalEffect) effect;
+        return conditional.wrapped().getClass() == DoubleDrawReplacementEffect.class
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forPermanent(permanent, controllerId));
     }
 
     private Permanent findCounterDrawReplacementSource(GameData gameData, UUID playerId,
@@ -1194,7 +1216,10 @@ public class DrawService {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
             if (drawEffects == null || drawEffects.isEmpty()) continue;
 
-            for (CardEffect effect : drawEffects) {
+            for (CardEffect authoredEffect : drawEffects) {
+                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
+                if (effect == null) continue;
+
                 if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
                     if (drawn == null
                             || (firstDraw.onlyOnControllerTurn()
@@ -1226,6 +1251,12 @@ public class DrawService {
                     continue;
                 }
 
+                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, drawingPlayerId))) {
+                    continue;
+                }
+
                 // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the
                 // equipped creature, so an unattached Equipment has no such ability — no trigger.
                 if (effect instanceof BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect
@@ -1235,6 +1266,7 @@ public class DrawService {
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
                     // Any-target draw trigger (Niv-Mizzet, the Firemind): the controller must choose a
                     // target before the ability goes on the stack.
@@ -1248,6 +1280,7 @@ public class DrawService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw any-target trigger queued",
                             gameData.id, perm.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1262,6 +1295,7 @@ public class DrawService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw trigger pushed onto stack",
                             gameData.id, perm.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 }
             }
         }

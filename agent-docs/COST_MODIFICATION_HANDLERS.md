@@ -79,6 +79,10 @@ components are exhausted.
   …); add a new `Condition` (sealed permit + `ConditionEvaluationService.isMet`) only for a genuinely
   new game-state check — never a new cost effect.
 
+  Battlefield permanents use the same `ConditionalEffect` wrapper around
+  `ReduceCastCostForMatchingSpellsEffect`; `ConditionalBattlefieldCostModificationHandler` evaluates
+  the condition against the source permanent and delegates to the wrapped battlefield handler.
+
 **Forbidden:** adding a new `ReduceOwnCastCostIf<Condition>Effect` or
 `ReduceOwnCastCostPer<Thing>Effect` record + bespoke handler. Those collapse onto the two shapes
 above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). A battlefield-source
@@ -159,6 +163,9 @@ cost.
   `ConditionalEffect`; evaluates the `Condition` via `ConditionEvaluationService` and delegates to
   the wrapped effect's registered spell-self handler (it injects the registry, like
   `ConditionalStaticEffectHandler` injects `StaticEffectHandlerRegistry`).
+- `cast/costmod/ConditionalBattlefieldCostModificationHandler.java` — battlefield handler for
+  `ConditionalEffect`; evaluates the condition against the source permanent and delegates to the
+  wrapped battlefield cost handler.
 - `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell)`.
 - `cast/CostModificationSource.java` — `record(Permanent sourcePermanent, UUID controllerId)`
   with `SPELL_ITSELF` constant and `controlledBy(UUID)`.

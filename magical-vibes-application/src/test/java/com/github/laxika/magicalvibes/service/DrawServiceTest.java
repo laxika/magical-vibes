@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -14,7 +15,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DrawServiceTest {
@@ -56,6 +62,9 @@ class DrawServiceTest {
 
     @Mock
     private BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private DrawService sut;
@@ -147,5 +156,24 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
+    }
+
+    @Test
+    void conditionalDoubleDrawReplacementOnlyAppliesWhenConditionIsMet() {
+        Card sourceCard = createCard("Vnwxt, Verbose Host", CardType.CREATURE);
+        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new MaxSpeed(), new DoubleDrawReplacementEffect()));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card firstCard = createCard("First card", CardType.CREATURE);
+        Card secondCard = createCard("Second card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(firstCard, secondCard)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+
+        sut.resolveDrawCard(gd, player1Id);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
     }
 }

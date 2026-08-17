@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -448,7 +449,8 @@ public class GraveyardTargetingService {
                 .map(e -> e.targetSpec().graveyardScope().orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .findFirst()
-                .orElse(null);
+                .orElseGet(() -> effects.stream().anyMatch(GraveyardCardChoosingEffect.class::isInstance)
+                        ? GraveyardSearchScope.ALL_GRAVEYARDS : null);
         if (scope == null) {
             return;
         }
@@ -798,6 +800,37 @@ public class GraveyardTargetingService {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, returnEffect.filter(),
                 maxTargetsCap, spellEffects, returnEffect.minTargets(),
                 returnEffect.requireSharedCreatureType(), false);
+    }
+
+    /**
+     * Targets the union of several independently optional graveyard target groups. The answer
+     * handler validates that the selected cards can be assigned one-to-one to the effect's filters.
+     */
+    public void handleUpToOneOfEachFilterGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                                                   Card card, StackEntryType entryType,
+                                                                   ReturnUpToOneOfEachFilterFromGraveyardToHandEffect effect,
+                                                                   List<CardEffect> spellEffects) {
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> graveyard = targetableGraveyard(gameData, controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (effect.filters().stream().anyMatch(filter ->
+                        predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId()))) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards,
+                effect.filters().size(),
+                "Choose up to " + effect.filters().size()
+                        + " target cards from your graveyard to return to your hand.");
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,

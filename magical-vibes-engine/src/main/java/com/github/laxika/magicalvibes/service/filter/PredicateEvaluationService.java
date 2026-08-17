@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -114,6 +115,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredic
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
@@ -331,6 +333,8 @@ public class PredicateEvaluationService {
             case CardHasEmbalmOrEternalizePredicate ignored ->
                     card.getGraveyardActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
+            case CardHasNoAbilitiesPredicate ignored ->
+                    card.getCardText() == null && card.getKeywords().isEmpty();
             case CardIsPermanentPredicate ignored ->
                     card.getType().isPermanentType();
             case CardIsTokenPredicate ignored ->
@@ -653,6 +657,10 @@ public class PredicateEvaluationService {
                     permanent.getCard().isToken();
             case PermanentIsAttackingPredicate ignored ->
                     permanent.isAttacking();
+            case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored ->
+                    permanent.isAttacking() && sourceControllerId != null && gameData != null
+                            && gameData.playerIds.contains(permanent.getAttackTarget())
+                            && !sourceControllerId.equals(permanent.getAttackTarget());
             case PermanentIsAttackingSourceControllerPredicate ignored ->
                     permanent.isAttacking() && sourceControllerId != null
                             && sourceControllerId.equals(permanent.getAttackTarget());
@@ -1455,6 +1463,13 @@ public class PredicateEvaluationService {
             case PermanentHasSupertypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsAttackingPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                yield permanent.isAttacking() && sourceControllerId != null && gameData != null
+                        && gameData.playerIds.contains(permanent.getAttackTarget())
+                        && !sourceControllerId.equals(permanent.getAttackTarget());
+            }
             case PermanentIsAttackingSourceControllerPredicate ignored -> {
                 // Recursion-safe: attack state and attack target are stored on the permanent, so
                 // "creatures attacking you" only needs the source controller from the context

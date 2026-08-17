@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +41,8 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
                 gameData, entry.getControllerId(), millEffect.count());
 
         List<Card> permanentCards = milled.stream()
-                .filter(card -> card.getType().isPermanentType())
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, millEffect.filter(), entry.getCard().getId(), gameData, entry.getControllerId()))
                 .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
                 .toList();
         if (permanentCards.isEmpty()) {
@@ -52,7 +55,7 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     entry.getControllerId(),
-                    List.of(new ReturnMilledPermanentToHandEffect(groupId)),
+                    List.of(new ReturnMilledPermanentToHandEffect(groupId, millEffect.filter())),
                     "Put " + card.getName() + " into your hand?"));
         }
     }

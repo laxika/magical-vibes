@@ -1719,7 +1719,7 @@ public class TargetLegalityService {
                         }
                         if (!targetFizzled && targetValidationService.checkEffectTargets(
                                 entry.getEffectsToResolve(),
-                                new TargetValidationContext(gameData, entry.getTargetId(), null,
+                                new TargetValidationContext(gameData, entry.getTargetId(), entry.getTargetZone(),
                                         entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                         entry.getSourcePermanentSnapshot())).isPresent()) {
                             targetFizzled = true;
@@ -1752,7 +1752,7 @@ public class TargetLegalityService {
                     primaryStillLegal = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) != null;
                 }
                 targetFizzled = !primaryStillLegal;
-            } else {
+            } else if (entry.getTargetCardIds().isEmpty()) {
                 targetFizzled = allSecondaryGone;
             }
         }
@@ -1892,7 +1892,7 @@ public class TargetLegalityService {
         }
         if (entry.getTargetIds().isEmpty()
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
-                new TargetValidationContext(gameData, targetId, null, entry.getCard(), entry.getXValue(),
+                new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot()))
                 .isPresent()) {
             return false;
@@ -2971,7 +2971,8 @@ public class TargetLegalityService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getOriginalCard().getId().equals(sourceCardId)) {
+                if (permanent.getOriginalCard().getId().equals(sourceCardId)
+                        || permanent.getCard().getId().equals(sourceCardId)) {
                     return permanent.getId();
                 }
             }

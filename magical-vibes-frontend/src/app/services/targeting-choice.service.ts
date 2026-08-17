@@ -179,6 +179,11 @@ export class TargetingChoiceService {
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
     this.graveyardTargetPrompt = '';
+    // Exile targeting
+    this.targetingExile = false;
+    this.exileTargetCards = [];
+    this.exileTargetCardIds = [];
+    this.exileTargetPrompt = '';
     // MTGO-style cast payment
     this.clearCastPayment();
     this.clearAbilityPayment();
@@ -215,7 +220,8 @@ export class TargetingChoiceService {
    * is chosen (e.g. Burning Fields shows no green lands until a target is picked).
    */
   get selectingCastTarget(): boolean {
-    return this.selectingTarget || this.targetingSpell || this.multiTargeting || this.targetingGraveyard;
+    return this.selectingTarget || this.targetingSpell || this.multiTargeting
+      || this.targetingGraveyard || this.targetingExile;
   }
 
   // --- Ability picker state ---
@@ -381,6 +387,12 @@ export class TargetingChoiceService {
   graveyardTargetCardIds: string[] = [];
   graveyardTargetPrompt = '';
 
+  // --- Exile targeting state ---
+  targetingExile = false;
+  exileTargetCards: Card[] = [];
+  exileTargetCardIds: string[] = [];
+  exileTargetPrompt = '';
+
   // --- MTGO-style cast payment state ---
   // A fully specified PLAY_CARD message waiting for the mana cost to be covered: the
   // player clicked a card only "potentially" playable (affordable if they tap their mana
@@ -415,30 +427,39 @@ export class TargetingChoiceService {
     this.pendingTargetRequest = false;
 
     const hasGraveyardTargets = msg.validGraveyardCardIds && msg.validGraveyardCardIds.length > 0;
+    const hasExileTargets = msg.validExiledCardIds && msg.validExiledCardIds.length > 0;
 
     // No valid targets — auto-cancel to prevent stuck UI
     if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0
-        && !hasGraveyardTargets && msg.minTargets > 0) {
+        && !hasGraveyardTargets && !hasExileTargets && msg.minTargets > 0) {
       this.resetTargetingState();
       this.cancelMultiTargeting();
       return;
     }
 
-    this.validTargetIds.set(new Set(msg.validPermanentIds));
-    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
-    this.targetingPrompt = msg.prompt;
-
-    if (msg.maxTargets > 1) {
-      if (!this.multiTargeting) {
-        this.multiTargeting = true;
-        this.multiTargetCardIndex = this.targetingCardIndex;
-        this.multiTargetCardName = this.targetingCardName;
-        this.multiTargetSelectedIds.set([]);
+    // Exile targeting: source-tracked exiled cards are displayed under their permanent.
+    if (hasExileTargets) {
+      const g = this.gameSignal();
+      if (g) {
+        const validIds = new Set(msg.validExiledCardIds);
+        const cards: Card[] = [];
+        const cardIds: string[] = [];
+        for (const battlefield of g.battlefields) {
+          for (const permanent of battlefield) {
+            for (const card of permanent.exiledWithCards ?? []) {
+              if (card.id && validIds.has(card.id)) {
+                cards.push(card);
+                cardIds.push(card.id);
+              }
+            }
+          }
+        }
+        this.targetingExile = true;
+        this.exileTargetCards = cards;
+        this.exileTargetCardIds = cardIds;
+        this.exileTargetPrompt = msg.prompt;
       }
-      this.multiTargetMinCount = msg.minTargets;
-      this.multiTargetMaxCount = msg.maxTargets;
-    } else {
-      this.selectingTarget = true;
+      return;
     }
 
     // Graveyard targeting: show graveyard cards as targets in an overlay
@@ -1699,6 +1720,37 @@ export class TargetingChoiceService {
     this.resetTargetingState();
   }
 
+  selectExileTarget(cardId: string): void {
+    if (!this.targetingExile) return;
+    if (!this.exileTargetCardIds.includes(cardId)) return;
+    if (this.targetingForAbility) {
+      const msg: any = {
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.targetingCardIndex,
+        abilityIndex: this.targetingAbilityIndex,
+        targetId: cardId,
+        targetZone: 'EXILE'
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.sendActivateAbilityMessage(msg);
+    }
+    this.targetingExile = false;
+    this.exileTargetCards = [];
+    this.exileTargetCardIds = [];
+    this.exileTargetPrompt = '';
+    this.resetTargetingState();
+  }
+
+  cancelExileTargeting(): void {
+    this.targetingExile = false;
+    this.exileTargetCards = [];
+    this.exileTargetCardIds = [];
+    this.exileTargetPrompt = '';
+    this.resetTargetingState();
+  }
+
   cancelGraveyardTargeting(): void {
     const wasMultiTargeting = this.multiTargeting;
     this.targetingGraveyard = false;
@@ -1721,6 +1773,10 @@ export class TargetingChoiceService {
     this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = '';
+    this.targetingExile = false;
+    this.exileTargetCards = [];
+    this.exileTargetCardIds = [];
+    this.exileTargetPrompt = '';
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
     // A completed cast consumes these in sendPlayCardMessage before we get here;

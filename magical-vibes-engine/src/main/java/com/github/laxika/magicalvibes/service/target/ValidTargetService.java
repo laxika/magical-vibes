@@ -527,6 +527,14 @@ public class ValidTargetService {
                     gameData, ability, controllerId, excludeIds, sourceCard.getId(), xValue));
         }
 
+        List<UUID> validExiledCardIds = new ArrayList<>();
+        boolean targetsExile = ability.getEffects().stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+        if (targetsExile && abilitySourcePermanentId != null) {
+            validExiledCardIds.addAll(computeValidExiledTargetsForAbility(
+                    gameData, ability, sourceCard, controllerId, abilitySourcePermanentId, excludeIds));
+        }
+
         int minTargets = 1;
         int maxTargets = 1;
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
@@ -578,7 +586,36 @@ public class ValidTargetService {
             }
         }
 
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, minTargets, maxTargets, prompt);
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
+                validExiledCardIds, minTargets, maxTargets, prompt);
+    }
+
+    private List<UUID> computeValidExiledTargetsForAbility(GameData gameData, ActivatedAbility ability,
+                                                            Card sourceCard, UUID controllerId,
+                                                            UUID sourcePermanentId, Set<UUID> excludeIds) {
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent == null) {
+            return List.of();
+        }
+        FilterContext context = targetFilterContext(gameData, sourceCard.getId(), controllerId, null);
+        List<UUID> validIds = new ArrayList<>();
+        for (Card exiledCard : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
+            if (excludeIds.contains(exiledCard.getId())) {
+                continue;
+            }
+            boolean valid = ability.getEffects().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .anyMatch(effect -> targetPredicateEvaluationService.matchesExiledCard(
+                            effect.targetSpec().targetPredicate(), exiledCard, context)
+                            && targetValidationService.checkEffectTargets(List.of(effect),
+                                    new TargetValidationContext(gameData, exiledCard.getId(),
+                                            com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, 0,
+                                            controllerId, sourcePermanent)).isEmpty());
+            if (valid) {
+                validIds.add(exiledCard.getId());
+            }
+        }
+        return validIds;
     }
 
     /**
@@ -1253,7 +1290,8 @@ public class ValidTargetService {
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
-        return true;
+        return effect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards graveyardCards
+                && predicateEvaluationService.matchesCardPredicate(c, graveyardCards.inner(), sourceCardId);
     }
 
     private boolean matchesReturnCardFilter(GameData gameData, ReturnCardFromGraveyardEffect effect,

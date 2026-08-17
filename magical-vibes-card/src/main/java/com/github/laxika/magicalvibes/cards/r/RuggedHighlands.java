@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "240")
 @CardRegistration(set = "FDN", collectorNumber = "265")
 @CardRegistration(set = "M21", collectorNumber = "249")
+@CardRegistration(set = "DFT", collectorNumber = "262")
 public class RuggedHighlands extends Card {
 
     public RuggedHighlands() {

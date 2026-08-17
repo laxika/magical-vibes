@@ -275,6 +275,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (int i = 0; i < amount; i++) {
             List<Card> currentHand = gameData.playerHands.get(playerId);
             if (currentHand.isEmpty()) break;
@@ -285,6 +286,7 @@ public class PlayerInteractionSupport {
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
@@ -581,7 +583,7 @@ public class PlayerInteractionSupport {
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
-                imprintOnSource, shuffleIntoLibraryMode));
+                imprintOnSource, shuffleIntoLibraryMode, false));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
@@ -707,6 +709,42 @@ public class PlayerInteractionSupport {
                 true, true));
 
         log.info("Game {} - {} may choose a nonland card from {}'s hand (bottom + draw)",
+                gameData.id, casterName, targetName);
+    }
+
+    /**
+     * Oildeep Gearhulk: the caster looks at the target player's hand, then may choose a card for
+     * that player to discard and draw a card.
+     */
+    public void resolveLookAtHandChooseCardToDiscardAndDraw(GameData gameData, StackEntry entry) {
+
+        UUID targetPlayerId = entry.getTargetId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
+        gameData.discardCausedByOpponent = !casterId.equals(targetPlayerId);
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, validIndices, 1, true, false, List.of(), null,
+                "You may choose a card to discard. If you do, that player draws a card.",
+                false, true, false, null, null, 0, null, false, false, false, true));
+
+        log.info("Game {} - {} may choose a card from {}'s hand to discard and draw",
                 gameData.id, casterName, targetName);
     }
 

@@ -240,10 +240,12 @@ public class GraveyardReturnSupport {
 
         Permanent returnedPermanent = null;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
-            if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
+            if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                    || effect.sacrificeAtEndStep()) {
                 returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
                         effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                        effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
+                        effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                        effect.exileAtYourNextEndStep());
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, controllerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
@@ -534,10 +536,12 @@ public class GraveyardReturnSupport {
                         gameData.playerDecks.get(targetPlayerId).addFirst(card);
                     } else if (effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
                         gameData.playerDecks.get(targetPlayerId).addLast(card);
-                    } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
+                    } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                            || effect.sacrificeAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
+                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                                effect.exileAtYourNextEndStep());
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
@@ -626,10 +630,12 @@ public class GraveyardReturnSupport {
                         ? randomCard.hasType(CardType.CREATURE)
                         : effect.destination() != GraveyardChoiceDestination.HAND;
                 if (toBattlefield) {
-                    if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
+                    if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                            || effect.sacrificeAtEndStep()) {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, randomCard,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
+                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                                effect.exileAtYourNextEndStep());
                     } else {
                         putCardOntoBattlefield(gameData, controllerId, randomCard,
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking());
@@ -1124,6 +1130,16 @@ public class GraveyardReturnSupport {
                                                               boolean sacrificeAtEndStep,
                                                               boolean exileIfLeavesBattlefield,
                                                               boolean enterTapped, boolean enterAttacking) {
+        return putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, card, grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, exileIfLeavesBattlefield, enterTapped, enterAttacking, false);
+    }
+
+    public Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                              boolean grantHaste, boolean exileAtEndStep,
+                                                              boolean sacrificeAtEndStep,
+                                                              boolean exileIfLeavesBattlefield,
+                                                              boolean enterTapped, boolean enterAttacking,
+                                                              boolean exileAtYourNextEndStep) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -1156,8 +1172,11 @@ public class GraveyardReturnSupport {
             // reason, exile it instead. Shallow Grave has only the delayed exile, not this.
             permanent.setExileIfLeavesBattlefield(true);
         }
-        if (exileAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        if (exileAtEndStep || exileAtYourNextEndStep) {
+            gameData.queueDelayedAction(exileAtYourNextEndStep
+                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                    controllerId)
+                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
         }
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));

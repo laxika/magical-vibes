@@ -155,11 +155,30 @@ public class TurnProgressionService {
             additionalCombatPhase = true;
         }
 
+        if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                && gameData.additionalCombatPhasesAfterMain > 0) {
+            next = TurnStep.BEGINNING_OF_COMBAT;
+            gameData.additionalCombatPhasesAfterMain--;
+        }
+
         // Finest Hour: an additional combat phase with no additional main phase — loop straight from
         // this combat's end back into another combat phase (skipping the postcombat main phase).
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.additionalCombatPhasesOnly > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatPhasesOnly--;
+        }
+
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalCombatPhasesOnly == 0
+                && gameData.additionalCombatPhasesAfterMain > 0) {
+            next = TurnStep.BEGINNING_OF_COMBAT;
+            gameData.additionalCombatPhasesAfterMain--;
+        } else if (gameData.currentStep == TurnStep.END_OF_COMBAT
+                && gameData.additionalCombatPhasesAfterMain == 0
+                && gameData.additionalCombatPhasesAfterMainReturnStep != null) {
+            next = gameData.additionalCombatPhasesAfterMainReturnStep;
+            gameData.additionalCombatPhasesAfterMainReturnStep = null;
         }
 
         // Blinding Angel: the active player skips their next combat phase — jump straight from the
@@ -442,6 +461,7 @@ public class TurnProgressionService {
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
@@ -515,6 +535,8 @@ public class TurnProgressionService {
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatPhasesOnly = 0;
+        gameData.additionalCombatPhasesAfterMain = 0;
+        gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.combatPhasesThisTurn = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
@@ -529,7 +551,10 @@ public class TurnProgressionService {
             p.setAttackedThisTurn(false);
             p.setBlockedThisTurn(false);
             p.setBecomeTargetCounterUsedThisTurn(false);
+            p.getChosenModeLabelsThisTurn().clear();
         });
+        gameData.phasedOutPermanents.values().forEach(
+                battlefield -> battlefield.forEach(p -> p.getChosenModeLabelsThisTurn().clear()));
 
         // Clear "until your next turn" activated abilities for the active player's permanents
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
@@ -561,7 +586,7 @@ public class TurnProgressionService {
         // Tamiyo, Field Researcher +1: the "whenever either of those creatures deals combat damage"
         // watch lasts until its controller's next turn, so it expires here too.
         gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
-                watch -> watch.controllerId().equals(nextActive));
+                watch -> !watch.untilEndOfTurn() && watch.controllerId().equals(nextActive));
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

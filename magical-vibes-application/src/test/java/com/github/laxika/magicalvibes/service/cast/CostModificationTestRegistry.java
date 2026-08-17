@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.costmod.ConditionalCostModificationHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ConditionalBattlefieldCostModificationHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler;
@@ -55,6 +56,7 @@ public final class CostModificationTestRegistry {
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
         registry.register(new ReduceOwnCastCostByManaCostEffectHandler());
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
+        registry.register(new ConditionalBattlefieldCostModificationHandler(conditionEvaluationService, registry));
         return registry;
     }
 }

@@ -1681,9 +1681,31 @@ public class MiscTriggerCollectorService {
                     match.permanent().getId()
             ));
         }
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN)
+    boolean handleCardsExiledFromGraveyardsOrBattlefieldDuringYourTurn(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardsExiledFromGraveyardsOrBattlefield exiled)) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setEventValue(exiled.count());
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (artifact or creature cards left graveyard)",
+        log.info("Game {} - {} triggers (cards exiled from graveyards or battlefield during your turn)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
+
 }

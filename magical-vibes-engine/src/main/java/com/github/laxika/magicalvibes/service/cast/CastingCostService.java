@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
+import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
@@ -518,7 +520,8 @@ public class CastingCostService {
                                 sourcePermanent, reducer.affectedPermanents(),
                                 FilterContext.of(gameData)
                                         .withSourceCardId(permanent.getOriginalCard().getId())
-                                        .withSourceControllerId(activatingPlayerId))) {
+                                        .withSourceControllerId(activatingPlayerId)
+                                        .withSourcePermanentSnapshot(permanent))) {
                     reduction += reducer.genericCostReduction();
                 }
             }
@@ -1285,13 +1288,14 @@ public class CastingCostService {
                 || !canPayImposedSacrificeTax(gameData, playerId, card)) {
             return false;
         }
-        return card.getCastingOption(GraveyardCast.class)
+        boolean canPayCounterCosts = card.getCastingOption(GraveyardCast.class)
                 .map(GraveyardCast::costs)
                 .orElse(List.of())
                 .stream()
                 .filter(RemoveCountersFromControlledCreaturesCastingCost.class::isInstance)
                 .map(RemoveCountersFromControlledCreaturesCastingCost.class::cast)
                 .allMatch(cost -> totalMatchingCounters(gameData, playerId, cost) >= cost.count());
+        return canPayCounterCosts && canPayGraveyardCastAdditionalCosts(gameData, playerId, card);
     }
 
     private int totalMatchingCounters(GameData gameData, UUID playerId,
@@ -1317,6 +1321,34 @@ public class CastingCostService {
         }
         var discardCost = graveyardCast.getCost(DiscardCardCastingCost.class);
         return discardCost.isEmpty() || !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty();
+    }
+
+    private boolean canPayGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card) {
+        var graveyardCast = card.getCastingOption(GraveyardCast.class);
+        if (graveyardCast.isEmpty()) {
+            return true;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (CastingCost cost : graveyardCast.get().additionalCosts()) {
+            if (cost instanceof LifeCastingCost lifeCost) {
+                if (gameData.getLife(playerId) < lifeCost.amount()
+                        || !gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+                    return false;
+                }
+            } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                long matchingCount = battlefield.stream()
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, sacrificeCost.filter(),
+                                FilterContext.of(gameData).withSourceControllerId(playerId)))
+                        .count();
+                if (matchingCount < sacrificeCost.count()) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Returns the maximum generic mana reduction currently available from delve, if present. */

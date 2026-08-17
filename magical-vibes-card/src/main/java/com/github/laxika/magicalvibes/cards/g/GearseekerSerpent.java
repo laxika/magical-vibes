@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "48")
+@CardRegistration(set = "DFT", collectorNumber = "43")
 public class GearseekerSerpent extends Card {
 
     public GearseekerSerpent() {

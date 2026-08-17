@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
@@ -16,36 +17,47 @@ import java.util.List;
  *                                     mana cost when cast from the graveyard (e.g. Worldheart Phoenix's
  *                                     "by paying {W}{U}{B}{R}{G}"); {@code null} = pay the normal cost
  * @param additionalCosts              additional costs that must be paid when using this permission
+ * @param availabilityCondition       optional condition that must be true to cast from the graveyard
  */
 public record GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost,
-                            List<CastingCost> additionalCosts) implements CastingOption {
+                            List<CastingCost> additionalCosts, Condition availabilityCondition)
+        implements CastingOption {
 
     public GraveyardCast {
         additionalCosts = additionalCosts == null ? List.of() : List.copyOf(additionalCosts);
     }
 
     public GraveyardCast() {
-        this(null, null, List.of());
+        this(null, null, List.of(), null);
     }
 
     public GraveyardCast(PermanentPredicate controllerControlsPredicate) {
-        this(controllerControlsPredicate, null, List.of());
+        this(controllerControlsPredicate, null, List.of(), null);
     }
 
     public GraveyardCast(String alternateManaCost) {
-        this(null, alternateManaCost, List.of());
+        this(null, alternateManaCost, List.of(), null);
+    }
+
+    public GraveyardCast(Condition availabilityCondition) {
+        this(null, null, List.of(), availabilityCondition);
     }
 
     public GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost) {
-        this(controllerControlsPredicate, alternateManaCost, List.of());
+        this(controllerControlsPredicate, alternateManaCost, List.of(), null);
+    }
+
+    public GraveyardCast(PermanentPredicate controllerControlsPredicate, String alternateManaCost,
+                         List<CastingCost> additionalCosts) {
+        this(controllerControlsPredicate, alternateManaCost, additionalCosts, null);
     }
 
     public GraveyardCast(List<CastingCost> additionalCosts) {
-        this(null, null, additionalCosts);
+        this(null, null, additionalCosts, null);
     }
 
     public GraveyardCast(PermanentPredicate controllerControlsPredicate, List<CastingCost> additionalCosts) {
-        this(controllerControlsPredicate, null, additionalCosts);
+        this(controllerControlsPredicate, null, additionalCosts, null);
     }
 
     @Override

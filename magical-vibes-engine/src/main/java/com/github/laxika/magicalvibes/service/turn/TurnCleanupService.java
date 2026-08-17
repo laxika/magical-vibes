@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -232,6 +233,8 @@ public class TurnCleanupService {
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
+        gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
+                watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
@@ -256,6 +259,7 @@ public class TurnCleanupService {
         gameData.permanentDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
+        gameData.playersWhoseSpeedIncreasedThisTurn.clear();
         gameData.temporaryGlobalTriggeredAbilities.clear();
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
@@ -286,6 +290,7 @@ public class TurnCleanupService {
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
@@ -305,8 +310,10 @@ public class TurnCleanupService {
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
+        gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
+        gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellIds.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,

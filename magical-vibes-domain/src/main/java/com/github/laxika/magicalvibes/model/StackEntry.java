@@ -166,6 +166,8 @@ public class StackEntry {
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
     private List<UUID> convokeCreatureIds = List.of();
+    /** Last-known card characteristics of the permanent sacrificed as an additional cast cost. */
+    private Card sacrificedCard;
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -507,6 +509,7 @@ public class StackEntry {
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.sacrificedPower = source.sacrificedPower;
         this.sacrificedToughness = source.sacrificedToughness;
+        this.sacrificedCard = source.sacrificedCard;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
@@ -587,6 +590,10 @@ public class StackEntry {
 
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
+    }
+
+    public void setSacrificedCard(Card sacrificedCard) {
+        this.sacrificedCard = freezeCard(sacrificedCard);
     }
 
     public Card getPhysicalCard() {

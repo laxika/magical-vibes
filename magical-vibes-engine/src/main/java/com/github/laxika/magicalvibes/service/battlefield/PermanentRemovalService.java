@@ -284,6 +284,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             exileService.exileCard(gameData, ownerId, leaving);
         }
+        graveyardService.notifyCardsExiledFromBattlefield(gameData, target.cardsLeavingBattlefield().size());
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -615,7 +616,9 @@ public class PermanentRemovalService {
      */
     public void processDelayedPermanentActions(GameData gameData, DelayedPermanentActionKind kind) {
         List<DelayedPermanentAction> actions =
-                gameData.drainDelayedActions(DelayedPermanentAction.class, a -> a.kind() == kind);
+                gameData.drainDelayedActions(DelayedPermanentAction.class,
+                        a -> a.kind() == kind
+                                && (a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
         for (DelayedPermanentAction action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
             if (perm == null) {
@@ -766,6 +769,7 @@ public class PermanentRemovalService {
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
         if (!target.isExileIfLeavesBattlefield()
                 && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
+                && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 && !permanentGraveyardReplacement) {
             return false;
         }
@@ -948,6 +952,7 @@ public class PermanentRemovalService {
                                               boolean destroyedBySpellOrAbility,
                                               List<CardEffect> grantedDeathEffects) {
         boolean wentToGraveyard = false;
+        int exiledFromBattlefield = 0;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
         // card that leaves is still originalCard / meld components.
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
@@ -957,13 +962,17 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
+                exiledFromBattlefield++;
                 gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
             } else if (graveyardService.addCardToGraveyard(
                     gameData, ownerId, leaving, Zone.BATTLEFIELD, controllerId)) {
                 wentToGraveyard = true;
+            } else if (gameData.findExiledCard(leaving.getId()) != null) {
+                exiledFromBattlefield++;
             }
         }
+        graveyardService.notifyCardsExiledFromBattlefield(gameData, exiledFromBattlefield);
         if (wentToGraveyard) {
             triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target,
                     grantedDeathEffects);

@@ -53,16 +53,33 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Colorless mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect). */
+    /** Mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect). */
     record ArtifactSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addArtifactOnlyColorless(amount);
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactOnlyColorless(amount);
+            } else {
+                pool.addArtifactOnlyMana(color, amount);
+            }
         }
 
         @Override
         public String description() {
             return "artifact spells only";
+        }
+    }
+
+    /** Mana spendable only to cast artifact spells or activate any activated ability (Guidelight Optimizer). */
+    record ArtifactSpellsOrAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addArtifactSpellOrAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "artifact spells or abilities only";
         }
     }
 

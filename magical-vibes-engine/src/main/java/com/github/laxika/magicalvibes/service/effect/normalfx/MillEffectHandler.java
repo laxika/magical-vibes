@@ -40,40 +40,43 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int count = Math.max(0, amountEvaluationService.evaluate(gameData, mill.count(),
-                AmountContext.forStackEntry(entry, source)));
-
         switch (mill.recipient()) {
-            case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
+            case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(),
+                    evaluateCount(gameData, entry, mill, source, null));
             case TARGET_PLAYER, ACTIVE_PLAYER -> {
                 List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
                 if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
                     targetPlayerIds = Collections.singletonList(entry.getTargetId());
                 }
                 for (UUID targetPlayerId : targetPlayerIds) {
-                    graveyardService.resolveMillPlayer(gameData, targetPlayerId, count);
+                    graveyardService.resolveMillPlayer(gameData, targetPlayerId,
+                            evaluateCount(gameData, entry, mill, source, targetPlayerId));
                 }
             }
             case EACH_OPPONENT -> {
                 UUID controllerId = entry.getControllerId();
+                int count = evaluateCount(gameData, entry, mill, source, null);
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (playerId.equals(controllerId)) continue;
                     graveyardService.resolveMillPlayer(gameData, playerId, count);
                 }
             }
             case TARGET_SPELL_CONTROLLER -> {
+                int count = evaluateCount(gameData, entry, mill, source, null);
                 UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
                 if (spellControllerId != null) {
                     graveyardService.resolveMillPlayer(gameData, spellControllerId, count);
                 }
             }
             case TARGET_PERMANENT_CONTROLLER -> {
+                int count = evaluateCount(gameData, entry, mill, source, null);
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (target != null) {
                     graveyardService.resolveMillPlayer(gameData, gameQueryService.findPermanentController(gameData, target.getId()), count);
                 }
             }
             case UNTAPPED_PERMANENT_CONTROLLER -> {
+                int count = evaluateCount(gameData, entry, mill, source, null);
                 UUID controllerId = entry.getEventPlayerIds().isEmpty()
                         ? null
                         : entry.getEventPlayerIds().getFirst();
@@ -82,6 +85,24 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                 }
             }
         }
+    }
+
+    private int evaluateCount(GameData gameData, StackEntry entry, MillEffect mill,
+                               Permanent source, UUID targetPlayerId) {
+        AmountContext context = targetPlayerId == null
+                ? AmountContext.forStackEntry(entry, source)
+                : new AmountContext(
+                        entry.getControllerId(),
+                        source,
+                        targetPlayerId,
+                        entry.getXValue(),
+                        entry.getEventValue(),
+                        false,
+                        entry.getChosenPermanentId(),
+                        entry.getRepeatedAdditionalCosts(),
+                        entry.getCard()
+                );
+        return Math.max(0, amountEvaluationService.evaluate(gameData, mill.count(), context));
     }
 
     /** Controller of the spell on the stack whose card id matches {@code targetCardId}, or null. */

@@ -60,6 +60,10 @@ public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes
         this(excludedTypes, null, Integer.MAX_VALUE, false, false, null);
     }
 
+    public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, int maxCount) {
+        this(excludedTypes, null, maxCount, false, false, null);
+    }
+
     /** No draw follow-up; retained for the existing name-choice exile cards. */
     @Override
     public TargetSpec targetSpec() {

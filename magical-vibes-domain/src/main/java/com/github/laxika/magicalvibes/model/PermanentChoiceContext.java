@@ -401,13 +401,27 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
+                                 UUID sourcePermanentId, boolean modesResetEachTurn) implements PermanentChoiceContext {
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, false);
+        }
+    }
 
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
      *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
      *  flying until end of turn." The controller chooses the target when the discard trigger is
      *  serviced; mirrors {@link EntersTriggerTarget}'s any-permanent target flow. */
-    record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID sourcePermanentId, int discardedCount)
+            implements PermanentChoiceContext {
+
+        public DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                               UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, 0);
+        }
+    }
 
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        boolean playerTargetOnly, TargetFilter targetFilter,
@@ -865,15 +879,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code GraveyardSearchScope}.
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                       UUID graveyardOwnerId, int minCount) implements PermanentChoiceContext {
+                                       UUID graveyardOwnerId, int minCount, int xValue)
+            implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0);
+            this(sourceCard, controllerId, effects, null, 0, 0);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           int xValue) {
+            this(sourceCard, controllerId, effects, null, 0, xValue);
         }
     }
 

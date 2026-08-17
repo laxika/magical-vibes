@@ -87,9 +87,13 @@ public class StaticEffectSupport {
 
     /**
      * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
+     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
      */
     public boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        if (scope == GrantScope.OWN_PERMANENTS) {
+            return context.targetOnSameBattlefield()
+                    && matchesStaticFilter(context, context.target(), filter);
+        }
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
             return context.source().isAttached()
                     && context.source().getAttachedTo().equals(context.target().getId())
