@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -1548,6 +1549,15 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but the library ran short — fall through to the penalty.
         }
 
+        if (accepted) {
+            var millPayment = forcedCostOrElseEffectHandler.tryPayMillControllerCost(
+                    gameData, effect, sourceControllerId);
+            if (millPayment.orElse(false)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost graveyardCost) {
             if (graveyardTopExileSupport.exileTopMatching(gameData, sourceControllerId, graveyardCost.requiredType())) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -1618,6 +1628,31 @@ public class MayPenaltyChoiceHandlerService {
                 return;
             }
             // Accepted but the source or required counters are gone — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof PutCounterOnControlledCreatureCost counterCost) {
+            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, decidingPlayerId,
+                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                            && (counterCost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
+            if (!candidates.isEmpty()) {
+                StackEntry counterEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                        ability.sourceCard().getName() + "'s ability", List.of(effect),
+                        ability.targetCardId(), ability.sourcePermanentId());
+                counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                if (forcedCostOrElseEffectHandler.putCounterOnChosenPermanent(
+                        gameData, decidingPlayerId, candidates, counterEntry, counterCost)) {
+                    if (candidates.size() == 1) {
+                        clearAnyPlayerPayState(gameData);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    }
+                    return;
+                }
+            }
+            // Accepted but no eligible creature remains — fall through to the penalty.
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {

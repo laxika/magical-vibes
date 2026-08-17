@@ -152,7 +152,7 @@ class SpecializedInteractionAiStrategiesTest {
         new ActivatedAbilityGraveyardExileCostChoiceAiStrategy().answer(
                 new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
                         aiPlayerId, UUID.randomUUID(), 0, UUID.randomUUID(), null,
-                        List.of(first, second), "Choose cards to exile."),
+                        List.of(first, second), "Choose cards to exile.", 0, 2, false),
                 context);
 
         assertThat(capturedAnswer())

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -157,6 +158,37 @@ class LandTapTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(match(source, player1Id, effect),
                 EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rainbow Vale's own tap queues its delayed control trigger")
+    void rainbowValeTapQueuesDelayedControlTrigger() {
+        Permanent source = createLandPermanent("Rainbow Vale", ManaColor.BLUE);
+        var effect = new RegisterDelayedChooseOpponentGainsControlOfSourceEffect();
+
+        boolean result = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                new TriggerContext.LandTap(player1Id, source.getId()));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(source.getId());
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("Rainbow Vale's trigger does not fire for another land's tap")
+    void rainbowValeDoesNotTriggerForAnotherLand() {
+        Permanent source = createLandPermanent("Rainbow Vale", ManaColor.BLUE);
+        var effect = new RegisterDelayedChooseOpponentGainsControlOfSourceEffect();
+
+        boolean result = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();

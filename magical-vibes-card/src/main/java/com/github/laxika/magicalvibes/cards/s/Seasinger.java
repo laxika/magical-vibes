@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "121")
+@CardRegistration(set = "FEM", collectorNumber = "25")
+@CardRegistration(set = "FEM", collectorNumber = "147")
 public class Seasinger extends Card {
 
     public Seasinger() {

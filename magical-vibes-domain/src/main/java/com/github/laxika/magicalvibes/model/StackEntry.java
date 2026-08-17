@@ -168,6 +168,10 @@ public class StackEntry {
     private List<UUID> convokeCreatureIds = List.of();
     /** Last-known card characteristics of the permanent sacrificed as an additional cast cost. */
     private Card sacrificedCard;
+    /** Card id of the creature exiled as an additional cost to cast this spell, when one was paid. */
+    @Setter private UUID exiledCostCardId;
+    /** Last-known card of the creature exiled as an additional cost to cast this spell. */
+    @Setter private Card exiledCostCardSnapshot;
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -510,6 +514,8 @@ public class StackEntry {
         this.sacrificedPower = source.sacrificedPower;
         this.sacrificedToughness = source.sacrificedToughness;
         this.sacrificedCard = source.sacrificedCard;
+        this.exiledCostCardId = source.exiledCostCardId;
+        this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;

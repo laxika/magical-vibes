@@ -55,7 +55,7 @@ class ForcedCostOrElseEnergyTest {
         handler = new ForcedCostOrElseEffectHandler(
                 destructionSupport, gameQueryService, predicateEvaluationService,
                 playerInputService, libraryExileSupport, null, null, null, drawService,
-                amountEvaluationService);
+                amountEvaluationService, null);
     }
 
     @Test

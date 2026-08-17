@@ -257,7 +257,7 @@ public class GraveyardReturnSupport {
         }
 
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
-            applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect);
+            applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect, entry);
             trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, targetOwnerId);
         }
 
@@ -357,10 +357,21 @@ public class GraveyardReturnSupport {
      */
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect) {
+        applyBattlefieldReturnRiders(gameData, controllerId, card, effect, null);
+    }
+
+    private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
+                                              ReturnCardFromGraveyardEffect effect, StackEntry entry) {
         boolean plusOneCounters = effect.plusOneCounterCount() > 0
                 && (effect.plusOneCountersIfSubtype() == null
                 || (card.getSubtypes() != null
                 && card.getSubtypes().contains(effect.plusOneCountersIfSubtype())))
+                && (effect.plusOneCountersIfExiledCostCardHasSubtype() == null
+                || (entry != null
+                && entry.getExiledCostCardSnapshot() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes() != null
+                && entry.getExiledCostCardSnapshot().getSubtypes()
+                .contains(effect.plusOneCountersIfExiledCostCardHasSubtype())))
                 && (effect.plusOneCountersIfCardType() == null
                 || effect.plusOneCountersIfCardType() == CardType.CREATURE
                 || card.hasType(effect.plusOneCountersIfCardType()))

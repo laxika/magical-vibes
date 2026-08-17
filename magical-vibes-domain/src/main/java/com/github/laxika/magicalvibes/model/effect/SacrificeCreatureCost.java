@@ -18,6 +18,11 @@ public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean tr
         return true;
     }
 
+    @Override
+    public boolean tracksSacrificedCard() {
+        return true;
+    }
+
     public SacrificeCreatureCost() {
         this(false, false, false, false, null);
     }

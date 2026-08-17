@@ -248,6 +248,9 @@ export class TargetingChoiceService {
   modeChoicesMax = 1;
   modeOptional = false;
   modeSelectedIndices: number[] = [];
+  modeForAbility = false;
+  modeAbilityPermanentIndex = -1;
+  modeAbilityIndex = -1;
   // Multi-spell-target modal modes (e.g. "copy target instant and target creature spell")
   spellTargetCount = 1;
   spellTargetSelectedIds: string[] = [];
@@ -930,9 +933,33 @@ export class TargetingChoiceService {
     const cardName = this.modeCardName;
     const zoneCard = this.pendingZoneCard;
     const card = zoneCard ?? g.hand[cardIndex];
+    const modeForAbility = this.modeForAbility;
+    const abilityPermanentIndex = this.modeAbilityPermanentIndex;
+    const abilityIndex = this.modeAbilityIndex;
     const chosen = this.modeSelectedIndices.map(i => this.modeOptions[i]);
     const encoded = this.encodeModeSelection(this.modeSelectedIndices);
     this.resetModeState();
+
+    if (modeForAbility) {
+      if (chosen.some(o => o.needsTarget)) {
+        this.targetingCardIndex = abilityPermanentIndex;
+        this.targetingCardName = cardName;
+        this.targetingForAbility = true;
+        this.targetingAbilityIndex = abilityIndex;
+        this.pendingAbilityXValue = encoded;
+        this.multiTargetCardIndex = abilityPermanentIndex;
+        this.multiTargetCardName = cardName;
+        this.sendValidTargetsRequest(null, abilityPermanentIndex, abilityIndex, [], encoded);
+      } else {
+        this.sendActivateAbilityMessage({
+          type: MessageType.ACTIVATE_ABILITY,
+          permanentIndex: abilityPermanentIndex,
+          abilityIndex,
+          xValue: encoded
+        });
+      }
+      return;
+    }
 
     if (chosen.some(o => o.needsSpellTarget)) {
       // Works for zone plays too: selectSpellTarget sends via sendPlayCardMessage,
@@ -999,6 +1026,9 @@ export class TargetingChoiceService {
     this.modeChoicesMax = 1;
     this.modeOptional = false;
     this.modeSelectedIndices = [];
+    this.modeForAbility = false;
+    this.modeAbilityPermanentIndex = -1;
+    this.modeAbilityIndex = -1;
   }
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
@@ -1673,12 +1703,16 @@ export class TargetingChoiceService {
     const playerId = g.playerIds[playerIndex];
     if (!this.validTargetPlayerIds().has(playerId)) return;
     if (this.targetingForAbility) {
-      this.sendActivateAbilityMessage({
+      const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
         abilityIndex: this.targetingAbilityIndex,
         targetId: playerId
-      });
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.sendActivateAbilityMessage(msg);
     } else {
       const extra: Record<string, any> = {};
       if (this.pendingAbilityXValue != null) {
@@ -2601,6 +2635,21 @@ export class TargetingChoiceService {
 
   activateAbilityAtIndex(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
     const ability = perm.card.activatedAbilities[abilityIndex];
+
+    if ((ability.modalChoicesRequired ?? 0) > 0 && (ability.modalOptions?.length ?? 0) > 0) {
+      this.choosingMode = true;
+      this.modeForAbility = true;
+      this.modeAbilityPermanentIndex = permanentIndex;
+      this.modeAbilityIndex = abilityIndex;
+      this.modeCardIndex = -1;
+      this.modeCardName = perm.card.name;
+      this.modeOptions = ability.modalOptions ?? [];
+      this.modeChoicesRequired = ability.modalChoicesRequired ?? 1;
+      this.modeChoicesMax = ability.modalChoicesMax ?? this.modeChoicesRequired;
+      this.modeOptional = false;
+      this.modeSelectedIndices = [];
+      return;
+    }
 
     if (ability.requiresXValue) {
       this.choosingXValue = true;

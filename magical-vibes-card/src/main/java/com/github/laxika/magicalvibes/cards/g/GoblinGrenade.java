@@ -10,6 +10,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "140")
 @CardRegistration(set = "ATH", collectorNumber = "32")
+@CardRegistration(set = "FEM", collectorNumber = "56a")
+@CardRegistration(set = "FEM", collectorNumber = "56b")
+@CardRegistration(set = "FEM", collectorNumber = "56c")
+@CardRegistration(set = "FEM", collectorNumber = "114")
+@CardRegistration(set = "FEM", collectorNumber = "115")
+@CardRegistration(set = "FEM", collectorNumber = "116")
 public class GoblinGrenade extends Card {
 
     public GoblinGrenade() {

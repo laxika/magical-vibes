@@ -500,7 +500,12 @@ public class ActivatedAbilityExecutionService {
         }
 
         int abilityStackIndex = gameData.stack.size();
-        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetIds, damageAssignments);
+        boolean tracksSacrificedCard = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::tracksSacrificedCard);
+        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
+                targetZone, targetIds, damageAssignments, tracksSacrificedCard);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -1468,7 +1473,8 @@ public class ActivatedAbilityExecutionService {
                                     UUID effectiveTargetId,
                                     Zone targetZone,
                                     List<UUID> targetIds,
-                                    Map<UUID, Integer> damageAssignments) {
+                                    Map<UUID, Integer> damageAssignments,
+                                    boolean tracksSacrificedCard) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -1524,6 +1530,9 @@ public class ActivatedAbilityExecutionService {
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         stackEntry.setSourcePermanentSnapshot(permanent);
+        if (tracksSacrificedCard) {
+            stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
+        }
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so

@@ -279,6 +279,9 @@ public class CardViewFactory {
                 && ability.getEffects().stream()
                         .filter(e -> !(e instanceof CostEffect))
                         .anyMatch(e -> e instanceof ManaProducingEffect);
+        ChooseOneEffect modalEffect = ability.modalEffectAtActivation();
+        List<ModalOptionView> modalOptions = modalEffect == null ? null
+                : modalEffect.options().stream().map(this::createModalOptionView).toList();
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
@@ -297,6 +300,9 @@ public class CardViewFactory {
                         .findFirst()
                         .orElse(null),
                 ability.isRequiresXValue(),
-                ability.isXValueFromControlledCreatureCounters());
+                ability.isXValueFromControlledCreatureCounters(),
+                modalEffect != null ? modalEffect.choicesRequired() : 0,
+                modalEffect != null ? modalEffect.choicesMax() : 0,
+                modalOptions);
     }
 }

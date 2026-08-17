@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ATH", collectorNumber = "7")
+@CardRegistration(set = "FEM", collectorNumber = "8a")
+@CardRegistration(set = "FEM", collectorNumber = "8b")
+@CardRegistration(set = "FEM", collectorNumber = "8c")
 public class IcatianJavelineers extends Card {
 
     public IcatianJavelineers() {

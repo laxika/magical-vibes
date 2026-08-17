@@ -195,6 +195,7 @@ public class TurnCleanupService {
             p.setMinusOneCounterRegenerationShield(0);
             p.setPlusOnePlusOneCounterRegenerationShield(0);
             p.getGainControlRegenerationShields().clear();
+            p.clearTappedPermanentsForAbilityThisTurn();
         });
 
         gameData.playerDamagePreventionShields.clear();

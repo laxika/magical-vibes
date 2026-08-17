@@ -106,6 +106,8 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .RaidingPartyEffectHandler raidingPartyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.WhimsOfTheFatesEffectHandler
             whimsOfTheFatesEffectHandler;
@@ -241,6 +243,29 @@ public class MultiPermanentChoiceHandlerService {
                 })) {
             throw new IllegalStateException("A selected creature is no longer untapped");
         }
+        if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice) {
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null || permanent.isTapped()
+                        || !gameQueryService.isCreature(gameData, permanent)
+                        || !gameQueryService.hasColor(gameData, permanent,
+                        com.github.laxika.magicalvibes.model.CardColor.WHITE)
+                        || !playerId.equals(gameQueryService.findPermanentController(gameData, id));
+            })) {
+                throw new IllegalStateException("A selected permanent is no longer an untapped white creature you control");
+            }
+        }
+        if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice) {
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null || !gameQueryService.isLand(gameData, permanent)
+                        || !gameQueryService.cardHasSubtype(permanent.getCard(),
+                        com.github.laxika.magicalvibes.model.CardSubtype.PLAINS,
+                        gameData, permanent.getCard().getOwnerId());
+            })) {
+                throw new IllegalStateException("A selected permanent is no longer a Plains");
+            }
+        }
         if (context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice fadeAway
                 && permanentIds.size() != fadeAway.requiredCount()) {
             throw new IllegalStateException("Must select exactly " + fadeAway.requiredCount()
@@ -297,6 +322,8 @@ public class MultiPermanentChoiceHandlerService {
             handleAimCounterPlacement(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement ctx) {
             handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer ctx) {
+            handleOwnPermanentCounterPlacementByPlayer(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
             handleOwnPermanentCounterPlacementWithChosenReference(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AwakeningCounterPlacement) {
@@ -383,6 +410,10 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice ctx) {
             handleEachPlayerChoosesLandsThenDestroyRestChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice ctx) {
+            handleRaidingPartyTapChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice ctx) {
+            handleRaidingPartyPlainsChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut ctx) {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
@@ -1316,6 +1347,21 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleOwnPermanentCounterPlacementByPlayer(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer context) {
+        if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
+                placementEntry.setControllerId(context.placingPlayerId());
+                permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
+                        context.counterType(), context.count());
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleOwnPermanentCounterPlacementWithChosenReference(
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference context) {
@@ -1843,12 +1889,22 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " untaps no creatures."));
         } else {
-            int totalCost = context.manaPerCreature() * permanentIds.size();
             com.github.laxika.magicalvibes.model.ManaCost cost =
-                    new com.github.laxika.magicalvibes.model.ManaCost("{" + totalCost + "}");
+                    new com.github.laxika.magicalvibes.model.ManaCost(context.manaCost());
             com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(actingPlayerId);
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            boolean canPay = pool != null;
+            com.github.laxika.magicalvibes.model.ManaPool remaining = canPay
+                    ? new com.github.laxika.magicalvibes.model.ManaPool(pool) : null;
+            for (int i = 0; canPay && i < permanentIds.size(); i++) {
+                canPay = cost.canPay(remaining);
+                if (canPay) {
+                    cost.pay(remaining);
+                }
+            }
+            if (canPay) {
+                for (int i = 0; i < permanentIds.size(); i++) {
+                    cost.pay(pool);
+                }
                 List<Card> untappedCards = new ArrayList<>();
                 for (UUID permId : permanentIds) {
                     Permanent perm = gameQueryService.findPermanentById(gameData, permId);
@@ -1857,13 +1913,15 @@ public class MultiPermanentChoiceHandlerService {
                     }
                 }
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " pays {" + totalCost + "} and untaps "),
+                        appendCards(GameLog.builder().text(playerName + " pays " + context.manaCost()
+                                        + " per creature and untaps "),
                                 untappedCards).text(".").build());
-                log.info("Game {} - {} pays {} to untap {} creature(s)", gameData.id, playerName, totalCost,
+                log.info("Game {} - {} pays {} per creature to untap {} creature(s)", gameData.id, playerName,
+                        context.manaCost(),
                         untappedCards.size());
             } else {
                 gameLogService.append(gameData, GameLog.text(playerName
-                        + " can't pay {" + totalCost + "} — untaps no creatures."));
+                        + " can't pay " + context.manaCost() + " per creature — untaps no creatures."));
             }
         }
 
@@ -1985,6 +2043,30 @@ public class MultiPermanentChoiceHandlerService {
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice context) {
         eachPlayerChoosesLandsThenDestroyRestHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRaidingPartyTapChoice(GameData gameData, List<UUID> permanentIds,
+                                             MultiPermanentChoiceContext.RaidingPartyTapChoice context) {
+        raidingPartyEffectHandler.completeTapChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRaidingPartyPlainsChoice(GameData gameData, List<UUID> permanentIds,
+                                                MultiPermanentChoiceContext.RaidingPartyPlainsChoice context) {
+        raidingPartyEffectHandler.completePlainsChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

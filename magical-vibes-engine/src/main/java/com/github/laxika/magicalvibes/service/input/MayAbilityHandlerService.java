@@ -764,7 +764,8 @@ public class MayAbilityHandlerService {
                 .orElse(null);
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(ability.sourceCard().getId())
-                .withSourceControllerId(ability.controllerId());
+                .withSourceControllerId(ability.controllerId())
+                .withSourcePermanentId(ability.sourcePermanentId());
 
         List<UUID> validTargets = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {

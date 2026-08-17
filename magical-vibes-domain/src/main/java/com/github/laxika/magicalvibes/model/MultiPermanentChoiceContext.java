@@ -259,6 +259,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put counters on the chosen permanent and attribute the placement to the choosing player. */
+    record OwnPermanentCounterPlacementByPlayer(CounterType counterType, int count, UUID placingPlayerId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and remember it for a following effect. */
     record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count)
             implements MultiPermanentChoiceContext {
@@ -319,6 +324,28 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Tap each chosen untapped creature, then boost the source by +1/+1 per creature tapped. */
     record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    }
+
+    /** Raiding Party's current player chooses any number of untapped white creatures to tap. */
+    record RaidingPartyTapChoice(List<UUID> playerIds, int playerIndex, List<Integer> tappedCounts,
+                                 String sourceName) implements MultiPermanentChoiceContext {
+
+        public RaidingPartyTapChoice {
+            playerIds = List.copyOf(playerIds);
+            tappedCounts = List.copyOf(tappedCounts);
+        }
+    }
+
+    /** Raiding Party's current player chooses Plains to preserve from the final destruction. */
+    record RaidingPartyPlainsChoice(List<UUID> playerIds, int playerIndex, List<Integer> tappedCounts,
+                                    List<UUID> chosenPlains, String sourceName)
+            implements MultiPermanentChoiceContext {
+
+        public RaidingPartyPlainsChoice {
+            playerIds = List.copyOf(playerIds);
+            tappedCounts = List.copyOf(tappedCounts);
+            chosenPlains = List.copyOf(chosenPlains);
+        }
     }
 
     /** The controller chooses exactly two creatures; their power difference determines the effect. */
@@ -436,14 +463,18 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * Magnetic Mountain: the acting player ({@code actingPlayerId}, the player whose upkeep it is)
-     * chose any number of their tapped blue creatures (up to what they can afford). They pay
-     * {@code manaPerCreature} for each chosen creature from their mana pool, then those creatures
-     * untap. The choice was already capped at begin time by the mana available, so payment always
-     * succeeds; the empty selection means "untap none".
+     * Magnetic Mountain / Thelon's Curse: the acting player ({@code actingPlayerId}, the player
+     * whose upkeep it is) chose any number of their tapped matching creatures (up to what they can
+     * afford). They pay {@code manaCost} for each chosen creature from their mana pool, then those
+     * creatures untap. The choice was already capped at begin time by the mana available, so
+     * payment always succeeds; the empty selection means "untap none".
      */
-    record PayManaPerCreatureUntap(UUID actingPlayerId, int manaPerCreature)
+    record PayManaPerCreatureUntap(UUID actingPlayerId, String manaCost)
             implements MultiPermanentChoiceContext {
+
+        public PayManaPerCreatureUntap(UUID actingPlayerId, int manaPerCreature) {
+            this(actingPlayerId, "{" + manaPerCreature + "}");
+        }
     }
 
     /**

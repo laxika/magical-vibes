@@ -46,6 +46,7 @@ class CostEffectClassificationTest {
             "ExilePermanentCost",
             "ExileSelfCost",
             "ExileSelfFromGraveyardCost",
+            "ExileNCardsFromSingleGraveyardCost",
             "ExileTopCardOfGraveyardCost",
             "ExileTopCardOfLibraryCost",
             "IncreaseActivationCostPerCounterEffect",

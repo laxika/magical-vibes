@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -42,6 +43,8 @@ public class ActivatedAbility {
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
+    /** Whether this ability's mana cost is the mana cost of the permanent this Aura enchants. */
+    private boolean manaCostOfEnchantedPermanent;
     /** Colors that may be spent on X in this ability's mana cost, or null when unrestricted. */
     private Set<ManaColor> xColorRestrictions;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
@@ -114,6 +117,8 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
+    /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
+    private boolean modalChoiceAtActivation;
     /**
      * Whether the chosen xValue is bounded by the +1/+1 counters on all creatures the activating
      * player controls rather than by those on the source permanent ("Remove one or more +1/+1
@@ -243,6 +248,7 @@ public class ActivatedAbility {
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         copy.activatableOnlyByEnchantedPermanentController = this.activatableOnlyByEnchantedPermanentController;
+        copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
@@ -267,6 +273,7 @@ public class ActivatedAbility {
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
+        copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
@@ -457,6 +464,12 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this Aura ability as using its enchanted permanent's mana cost. */
+    public ActivatedAbility withManaCostOfEnchantedPermanent() {
+        this.manaCostOfEnchantedPermanent = true;
+        return this;
+    }
+
     /**
      * Narrows {@link #withActivatableByAnyPlayer()} to the opponents of the source permanent's
      * controller (Soul Ransom: "Only your opponents may activate this ability."). Chain both flags:
@@ -509,6 +522,27 @@ public class ActivatedAbility {
     public ActivatedAbility withXValue() {
         this.requiresXValue = true;
         return this;
+    }
+
+    /** Marks the modal choice as part of activating this ability rather than resolving it. */
+    public ActivatedAbility withModalChoiceAtActivation() {
+        this.modalChoiceAtActivation = true;
+        return this;
+    }
+
+    public boolean isModalChoiceAtActivation() {
+        return modalChoiceAtActivation;
+    }
+
+    public ChooseOneEffect modalEffectAtActivation() {
+        if (!modalChoiceAtActivation) {
+            return null;
+        }
+        return effects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Modal activated ability has no ChooseOneEffect"));
     }
 
     /** As {@link #withXValue()}, but X is capped by the +1/+1 counters among all creatures you control. */

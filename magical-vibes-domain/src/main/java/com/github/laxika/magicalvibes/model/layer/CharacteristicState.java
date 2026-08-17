@@ -126,19 +126,23 @@ public class CharacteristicState {
         int counterDelta = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + 2 * permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
+        int plusOnePlusTwo = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO);
         // +1/+0 counters (e.g. Clockwork Beast) add power only; -1/-0 (Jabari's Influence) subtract
         // power only.
         // -2/-1 counters (Contagion) subtract two power and one toughness.
         int minusTwoMinusOne = permanent.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE);
-        this.powerDelta = counterDelta + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
+        int minusTwoMinusTwo = permanent.getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
+        this.powerDelta = counterDelta + plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
-                - 2 * minusTwoMinusOne;
+                - 2 * minusTwoMinusOne
+                - 2 * minusTwoMinusTwo;
         // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-1 (Essence Flare) and
         // -0/-2 (Greater Werewolf / Spirit Shackle) subtract toughness only.
-        this.toughnessDelta = counterDelta + permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
+        this.toughnessDelta = counterDelta + 2 * plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
-                - minusTwoMinusOne;
+                - minusTwoMinusOne
+                - 2 * minusTwoMinusTwo;
     }
 
     /**

@@ -219,6 +219,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO) + count);
                 yield "+1/+0";
             }
+            case PLUS_ONE_PLUS_TWO -> {
+                if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) { yield null; }
+                target.setCounterCount(CounterType.PLUS_ONE_PLUS_TWO, target.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO) + count);
+                yield "+1/+2";
+            }
             case PLUS_TWO_PLUS_TWO -> {
                 if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) { yield null; }
                 target.setCounterCount(CounterType.PLUS_TWO_PLUS_TWO, target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO) + count);
@@ -239,6 +244,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.MINUS_TWO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE) + count);
                 yield "-2/-1";
             }
+            case MINUS_TWO_MINUS_TWO -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.MINUS_TWO_MINUS_TWO, target.getCounterCount(CounterType.MINUS_TWO_MINUS_TWO) + count);
+                yield "-2/-2";
+            }
             case MINUS_ZERO_MINUS_ONE -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + count);
@@ -255,6 +265,8 @@ public class PermanentCounterSupport {
                 yield "+0/+1";
             }
             case CARRION -> { target.setCounterCount(CounterType.CARRION, target.getCounterCount(CounterType.CARRION) + count); yield "carrion"; }
+            case CUBE -> { target.setCounterCount(CounterType.CUBE, target.getCounterCount(CounterType.CUBE) + count); yield "cube"; }
+            case CREDIT -> { target.setCounterCount(CounterType.CREDIT, target.getCounterCount(CounterType.CREDIT) + count); yield "credit"; }
             case CURRENCY -> { target.setCounterCount(CounterType.CURRENCY, target.getCounterCount(CounterType.CURRENCY) + count); yield "currency"; }
             case DOOM -> { target.setCounterCount(CounterType.DOOM, target.getCounterCount(CounterType.DOOM) + count); yield "doom"; }
             case CORPSE -> {
@@ -341,6 +353,7 @@ public class PermanentCounterSupport {
             case VELOCITY -> { target.setCounterCount(CounterType.VELOCITY, target.getCounterCount(CounterType.VELOCITY) + count); yield "velocity"; }
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
+            case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
             case FLYING, FIRST_STRIKE, LIFELINK -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
                 if (count > 0) {
@@ -407,9 +420,11 @@ public class PermanentCounterSupport {
             case LOYALTY -> "loyalty";
             case PLUS_ONE_PLUS_ONE -> "+1/+1";
             case PLUS_ONE_PLUS_ZERO -> "+1/+0";
+            case PLUS_ONE_PLUS_TWO -> "+1/+2";
             case PLUS_TWO_PLUS_TWO -> "+2/+2";
             case MINUS_ONE_MINUS_ONE -> "-1/-1";
             case MINUS_ONE_MINUS_ZERO -> "-1/-0";
+            case MINUS_TWO_MINUS_TWO -> "-2/-2";
             case HATCHLING -> "hatchling";
             case STUDY -> "study";
             case WISH -> "wish";

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "418")
+@CardRegistration(set = "FEM", collectorNumber = "97")
+@CardRegistration(set = "FEM", collectorNumber = "182")
 public class HollowTrees extends Card {
 
     public HollowTrees() {

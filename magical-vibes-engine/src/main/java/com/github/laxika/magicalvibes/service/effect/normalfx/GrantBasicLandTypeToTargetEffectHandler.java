@@ -83,6 +83,8 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
             // and is cleared at that controller's next turn by clearUntilNextTurnEffects().
             if (duration == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP) {
                 targetLand.setUntilNextTurnLandTypeOverride(subtype);
+            } else if (duration == EffectDuration.CONTINUOUS || duration == EffectDuration.PERMANENT) {
+                targetLand.setPersistentLandTypeOverride(subtype);
             } else {
                 targetLand.setTransientLandTypeOverride(subtype);
             }

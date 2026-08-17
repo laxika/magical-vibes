@@ -11,6 +11,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `requiresTap` | `boolean` | `true` if the ability has {T} in its cost (tap as cost) |
 | `requiresUntap` | `boolean` | `true` if the ability has {Q} in its cost (untap as cost); set via `.withRequiresUntap()`, never combined with `requiresTap` |
 | `manaCost` | `String` | Mana cost string like `"{2}{B}"`, or `null` for no mana cost |
+| `manaCostOfEnchantedPermanent` | `boolean` | Uses the mana cost of the permanent enchanted by this Aura; set via `.withManaCostOfEnchantedPermanent()` |
 | `effects` | `List<CardEffect>` | Effects to resolve (costs first, then actual effects) |
 | `description` | `String` | Rules text shown to the player (e.g. `"{T}: Draw a card."`) |
 | `targetFilter` | `TargetFilter` | Restricts valid targets (permanent filter or stack filter) |

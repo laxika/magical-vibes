@@ -343,6 +343,11 @@ public class ValidTargetService {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
+        List<CardEffect> targetingEffects = ability.getEffects();
+        if (ability.isModalChoiceAtActivation() && xValue != null) {
+            targetingEffects = EffectResolution.resolveEffects(
+                    targetingEffects, null, ability.modalEffectAtActivation().decodeModeIndices(xValue).getFirst());
+        }
         Set<UUID> excludeIds = alreadySelectedIds != null && !alreadySelectedIds.isEmpty()
                 && !ability.isAllowSharedTargets() ? Set.copyOf(alreadySelectedIds) : Set.of();
         // Source-relative player predicates ("dealt damage by this creature this turn") key their
@@ -419,9 +424,9 @@ public class ValidTargetService {
                 // another permanent type.
                 boolean unfiltered = positionFilter == null;
                 PermanentPredicate declared = unfiltered
-                        ? EffectResolution.declaredPermanentRestriction(ability.getEffects()).orElse(null)
+                        ? EffectResolution.declaredPermanentRestriction(targetingEffects).orElse(null)
                         : null;
-                if (unfiltered && EffectResolution.allowsPlayerTargets(ability.getEffects())
+                if (unfiltered && EffectResolution.allowsPlayerTargets(targetingEffects)
                         && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
@@ -496,13 +501,13 @@ public class ValidTargetService {
                     ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
         }
 
-        boolean targetsPlayer = ability.getEffects().stream()
+        boolean targetsPlayer = targetingEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean targetsPermanent = ability.getEffects().stream()
+        boolean targetsPermanent = targetingEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        boolean targetsGraveyard = ability.getEffects().stream()
+        boolean targetsGraveyard = targetingEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        boolean targetsBlockingThis = ability.getEffects().stream()
+        boolean targetsBlockingThis = targetingEffects.stream()
                 .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
 
         if (targetsPermanent) {
@@ -539,7 +544,7 @@ public class ValidTargetService {
         int maxTargets = 1;
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
 
-        for (CardEffect effect : ability.getEffects()) {
+        for (CardEffect effect : targetingEffects) {
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.hasTotalManaValueCap()) {
                 int selectedManaValue = (alreadySelectedIds == null ? List.<UUID>of() : alreadySelectedIds).stream()
@@ -567,7 +572,7 @@ public class ValidTargetService {
         }
 
         // Multi-target graveyard ability (e.g. "exile two target cards")
-        for (CardEffect effect : ability.getEffects()) {
+        for (CardEffect effect : targetingEffects) {
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
                 minTargets = graveyardEffect.count();

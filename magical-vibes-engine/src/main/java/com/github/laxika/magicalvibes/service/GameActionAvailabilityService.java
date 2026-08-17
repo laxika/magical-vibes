@@ -116,7 +116,8 @@ public class GameActionAvailabilityService {
             VirtualManaPool poolWithoutSource = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
-                if (ability.getManaCost() == null
+                String abilityManaCost = effectiveAbilityManaCost(gameData, playerId, perm, ability);
+                if (abilityManaCost == null
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
@@ -131,7 +132,7 @@ public class GameActionAvailabilityService {
                     }
                     pool = poolWithoutSource;
                 }
-                ManaCost abilityManaCost = new ManaCost(ability.getManaCost());
+                ManaCost manaCost = new ManaCost(abilityManaCost);
                 boolean artifactCtx = gameQueryService.isArtifact(perm);
                 boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
                 boolean powerstoneCtx = pool.getPowerstoneOnlyColorless() > 0;
@@ -140,7 +141,7 @@ public class GameActionAvailabilityService {
                 soaCtx.addAll(perm.getGrantedSubtypes());
                 Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
                         ? soaCtx : Set.of();
-                if (abilityManaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null,
+                if (manaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null,
                         soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx,
                         powerstoneCtx)) {
                     payable.add(i);
@@ -151,6 +152,25 @@ public class GameActionAvailabilityService {
             }
         }
         return result;
+    }
+
+    private String effectiveAbilityManaCost(GameData gameData, UUID playerId, Permanent source,
+                                            ActivatedAbility ability) {
+        if (ability.isActivatableOnlyByEnchantedPermanentController()) {
+            UUID enchantedController = source.isAttached()
+                    ? gameQueryService.findPermanentController(gameData, source.getAttachedTo()) : null;
+            if (!playerId.equals(enchantedController)) {
+                return null;
+            }
+        }
+        if (!ability.isManaCostOfEnchantedPermanent()) {
+            return ability.getManaCost();
+        }
+        if (!source.isAttached()) {
+            return null;
+        }
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        return enchanted == null ? null : enchanted.getCard().getManaCost();
     }
 
     private List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana, ManaPool pool) {

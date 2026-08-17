@@ -11,11 +11,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param trackTappedCreaturePower when {@code true}, the tapped creature is remembered as the
  *                                 activation's chosen permanent so a companion effect can read its
  *                                 power at resolution via {@code ChosenPermanentPower} (Impelled Giant)
+ * @param trackTappedCreatureForSourceAbility when {@code true}, the tapped creature is remembered
+ *                                            on the source for an ability that refers to creatures
+ *                                            tapped to pay for its abilities
  */
 public record TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
-                              boolean trackTappedCreaturePower) implements CostEffect {
+                              boolean trackTappedCreaturePower,
+                              boolean trackTappedCreatureForSourceAbility) implements CostEffect {
 
     public TapCreatureCost(PermanentPredicate predicate) {
-        this(predicate, false, false);
+        this(predicate, false, false, false);
+    }
+
+    public TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
+                           boolean trackTappedCreaturePower) {
+        this(predicate, excludeSelf, trackTappedCreaturePower, false);
     }
 }

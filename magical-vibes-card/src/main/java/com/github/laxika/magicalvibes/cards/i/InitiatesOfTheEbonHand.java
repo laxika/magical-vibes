@@ -13,6 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "169")
+@CardRegistration(set = "FEM", collectorNumber = "18")
+@CardRegistration(set = "FEM", collectorNumber = "39a")
+@CardRegistration(set = "FEM", collectorNumber = "39b")
+@CardRegistration(set = "FEM", collectorNumber = "39c")
+@CardRegistration(set = "FEM", collectorNumber = "111")
+@CardRegistration(set = "FEM", collectorNumber = "112")
 public class InitiatesOfTheEbonHand extends Card {
 
     public InitiatesOfTheEbonHand() {

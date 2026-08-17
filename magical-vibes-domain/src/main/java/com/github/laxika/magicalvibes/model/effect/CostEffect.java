@@ -65,6 +65,14 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when the chosen permanent sacrificed to pay this cost is made available as a card
+     * snapshot on the activated ability's stack entry.
+     */
+    default boolean tracksSacrificedCard() {
+        return false;
+    }
+
+    /**
      * The life paid to satisfy this cost given the payer's current life total (a fixed amount,
      * or "half your life rounded up"), or {@code 0} when this cost costs no life.
      */

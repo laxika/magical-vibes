@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControl
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
@@ -97,6 +98,7 @@ public class DestructionSupport {
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
     private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
+    private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -636,6 +638,8 @@ public class DestructionSupport {
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
                 removeAllCountersHandler.resolve(gameData, entry, removeCounters);
+            } else if (elseEffect instanceof GrantEffectToSourceUntilEndOfCombatEffect grant) {
+                grantEffectToSourceUntilEndOfCombatHandler.resolve(gameData, entry, grant);
             } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
                 // "an opponent gains control of it" (Rogue Skycaptain).
                 opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);

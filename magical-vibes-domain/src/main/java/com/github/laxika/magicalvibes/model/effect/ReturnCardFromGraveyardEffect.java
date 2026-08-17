@@ -246,6 +246,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileIfLeavesBattlefield,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
+        CardSubtype plusOneCountersIfExiledCostCardHasSubtype,
         CardType plusOneCountersIfCardType,
         Condition plusOneCountersIfCondition,
         int plusOneCounterCount,

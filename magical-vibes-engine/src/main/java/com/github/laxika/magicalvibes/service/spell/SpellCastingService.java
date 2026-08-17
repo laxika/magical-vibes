@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -2326,6 +2327,10 @@ public class SpellCastingService {
             if (additionalCostPayment.sacrificedCardSnapshot() != null) {
                 entry.setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
             }
+            if (additionalCostPayment.exiledCostCardId() != null) {
+                entry.setExiledCostCardId(additionalCostPayment.exiledCostCardId());
+                entry.setExiledCostCardSnapshot(additionalCostPayment.exiledCostCardSnapshot());
+            }
             entry.setPutCounterCostPaid(isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             if (!repeatedAdditionalCosts.isEmpty()) {
                 entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -3121,6 +3126,10 @@ public class SpellCastingService {
             if (additionalCostPayment.sacrificedCardSnapshot() != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setSacrificedCard(additionalCostPayment.sacrificedCardSnapshot());
             }
+            if (additionalCostPayment.exiledCostCardId() != null && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setExiledCostCardId(additionalCostPayment.exiledCostCardId());
+                gameData.stack.getLast().setExiledCostCardSnapshot(additionalCostPayment.exiledCostCardSnapshot());
+            }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPutCounterCostPaid(
                         isPutCounterCostPaid(additionalCosts, paymentCostSelection));
@@ -3284,6 +3293,8 @@ public class SpellCastingService {
         SacrificeCostPayment sacrificeCostPayment = payAllSacrificeCosts(
                 gameData, player, card, selection.sacrificePermanentId(), costs, resolvedXValue);
         resolvedXValue = sacrificeCostPayment.resolvedXValue();
+        ExiledCostPayment exiledCostPayment = payExileCreatureCost(
+                gameData, player, card, costs.exileCreatureCost(), selection.sacrificePermanentId());
         payMultipleSacrificeCost(gameData, player, card, costs.sacrificeMultiplePermanentsCost(),
                 selection.sacrificePermanentIds());
         payEscalateSacrificeCost(gameData, player, card, costs.escalateSacrificeCost(),
@@ -3348,7 +3359,30 @@ public class SpellCastingService {
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
         return new AdditionalCostPayment(resolvedXValue, sacrificeCostPayment.sacrificedCardId(),
                 sacrificeCostPayment.sacrificedCardSnapshot(),
-                sacrificeCostPayment.sacrificedPower(), sacrificeCostPayment.sacrificedToughness());
+                sacrificeCostPayment.sacrificedPower(), sacrificeCostPayment.sacrificedToughness(),
+                exiledCostPayment.cardId(),
+                exiledCostPayment.cardSnapshot());
+    }
+
+    private ExiledCostPayment payExileCreatureCost(GameData gameData, Player player, Card card,
+                                                    ExileCreatureCost cost, UUID permanentId) {
+        if (cost == null) {
+            return new ExiledCostPayment(null, null);
+        }
+        Permanent toExile = additionalSpellCostService.validateSingleSacrificeCost(gameData, player, card,
+                permanentId, "a creature", p -> gameQueryService.isCreature(gameData, p));
+        Card exiledCard = toExile.getCard();
+        if (!permanentRemovalService.removePermanentToExile(gameData, toExile)) {
+            throw new IllegalStateException("Creature is no longer on the battlefield");
+        }
+        gameLogService.append(gameData, GameLog.builder()
+                .text(player.getUsername() + " exiles ")
+                .card(exiledCard)
+                .text(" to cast ")
+                .card(card)
+                .text(".")
+                .build());
+        return new ExiledCostPayment(exiledCard.getId(), exiledCard);
     }
 
     private BeheldCardPayment payBeholdCost(GameData gameData, Player player, Card card,
@@ -3701,7 +3735,8 @@ public class SpellCastingService {
 
     private record AdditionalCostPayment(int resolvedXValue, UUID sacrificedCardId,
                                          Card sacrificedCardSnapshot, int sacrificedPower,
-                                         int sacrificedToughness) {}
+                                         int sacrificedToughness, UUID exiledCostCardId,
+                                         Card exiledCostCardSnapshot) {}
 
     private record SacrificeCostPayment(int resolvedXValue, UUID sacrificedCardId,
                                         Card sacrificedCardSnapshot, int sacrificedPower,
@@ -3714,6 +3749,8 @@ public class SpellCastingService {
         entry.setSacrificedPower(payment.sacrificedPower());
         entry.setSacrificedToughness(payment.sacrificedToughness());
     }
+
+    private record ExiledCostPayment(UUID cardId, Card cardSnapshot) {}
 
     private record SacrificedCreatureStats(UUID cardId, Card card, int manaValue, int power, int toughness) {}
 
@@ -4350,7 +4387,7 @@ public class SpellCastingService {
             // the spell's GY index excluded) is not re-checked against a null selection.
             AdditionalSpellCostService.ExtractedCosts sacOnly = new AdditionalSpellCostService.ExtractedCosts(
                     false, false, true,
-                    null, null, null, null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null, null, null,
                     false,
                     null, null, null,
                     false,

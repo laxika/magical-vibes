@@ -1469,12 +1469,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Select any number of cards from a graveyard as an activated ability cost. The selected count
-     * becomes the ability's X value; the cards are held in this record until the cost is paid.
+     * Select cards from one or more graveyards as an activated ability cost. The selected count
+     * may become the ability's X value; the cards are held in this record until the cost is paid.
      */
     record ActivatedAbilityGraveyardExileCostChoice(UUID playerId, UUID sourcePermanentId,
                                                      int abilityIndex, UUID targetId, Zone targetZone,
-                                                     java.util.List<Card> cards, String prompt)
+                                                     java.util.List<Card> cards, String prompt,
+                                                     int minimumCards, int maximumCards,
+                                                     boolean singleGraveyard)
             implements PendingInteraction {
 
         public ActivatedAbilityGraveyardExileCostChoice {
@@ -1492,7 +1494,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, cards.size());
+            return new InteractionOptions.MultiCardPick(validCardIds(), minimumCards, maximumCards);
         }
     }
 

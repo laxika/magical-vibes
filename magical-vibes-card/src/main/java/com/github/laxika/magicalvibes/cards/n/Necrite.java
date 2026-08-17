@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatur
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "181")
+@CardRegistration(set = "FEM", collectorNumber = "41a")
+@CardRegistration(set = "FEM", collectorNumber = "41b")
+@CardRegistration(set = "FEM", collectorNumber = "41c")
+@CardRegistration(set = "FEM", collectorNumber = "121")
 public class Necrite extends Card {
 
     public Necrite() {

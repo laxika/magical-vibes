@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "ATH", collectorNumber = "4")
+@CardRegistration(set = "FEM", collectorNumber = "1a")
+@CardRegistration(set = "FEM", collectorNumber = "133")
+@CardRegistration(set = "FEM", collectorNumber = "135")
+@CardRegistration(set = "FEM", collectorNumber = "136")
 public class CombatMedic extends Card {
 
     public CombatMedic() {

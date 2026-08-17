@@ -140,6 +140,9 @@ export interface ActivatedAbilityView {
   variableCounterCostType: string | null;
   requiresXValue?: boolean;
   xValueFromControlledCreatureCounters?: boolean;
+  modalChoicesRequired?: number;
+  modalChoicesMax?: number;
+  modalOptions?: ModalOptionView[] | null;
 }
 
 export interface Card {

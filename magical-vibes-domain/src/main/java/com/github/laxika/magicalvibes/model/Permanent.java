@@ -148,6 +148,8 @@ public class Permanent {
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
+    /** Permanents tapped this turn to pay for activated abilities whose source tracks that payment. */
+    private final List<UUID> tappedPermanentsForAbilityThisTurn = new ArrayList<>();
     /**
      * Card of the permanent last chosen/sacrificed as payment for an ability that needs its printed
      * characteristics after that permanent has left the battlefield (Squandered Resources: the land
@@ -240,6 +242,8 @@ public class Permanent {
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
+    /** Triggered effects granted for the rest of the current combat. Cleared by {@link #clearCombatState()}. */
+    private final Map<EffectSlot, List<CardEffect>> combatTriggeredEffects = new EnumMap<>(EffectSlot.class);
     /** Triggered effects granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting
      *  {@code UPKEEP_TRIGGERED} + {@code CumulativeUpkeepEffect}). Survives {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffects = new EnumMap<>(EffectSlot.class);
@@ -320,6 +324,9 @@ public class Permanent {
      *  {@link #resetModifiers()} — it survives end-of-turn cleanup and is cleared at the beginning
      *  of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
     @Setter private CardSubtype untilNextTurnLandTypeOverride;
+    /** When non-null, this land permanently becomes the given basic land type, replacing its
+     *  other land types and mana ability. */
+    @Setter private CardSubtype persistentLandTypeOverride;
     /** When non-null, this creature "becomes a [creature type]" until end of turn, replacing all its
      *  other creature types (e.g. Boldwyr Intimidator: "target creature becomes a Coward"). Read by the
      *  layered pass, which strips every creature subtype and adds this one. Distinct from
@@ -622,6 +629,7 @@ public class Permanent {
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
@@ -645,6 +653,8 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        source.combatTriggeredEffects.forEach((slot, effects) ->
+                this.combatTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.persistentTriggeredEffects.forEach((slot, effects) ->
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.untilNextUpkeepTriggeredEffects.forEach((slot, effectsByPlayer) -> {
@@ -749,6 +759,7 @@ public class Permanent {
         this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
         this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
         this.untilNextTurnLandTypeOverride = source.untilNextTurnLandTypeOverride;
+        this.persistentLandTypeOverride = source.persistentLandTypeOverride;
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
@@ -887,6 +898,7 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
+        this.combatTriggeredEffects.clear();
         this.bandId = null;
         this.cantBlockThisCombat = false;
         this.mustAttackThisCombat = false;
@@ -1007,9 +1019,11 @@ public class Permanent {
      */
     public int getPowerModifiers() {
         return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
@@ -1020,11 +1034,13 @@ public class Permanent {
      */
     public int getToughnessModifiers() {
         return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
-                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE);
+                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
     }
 
     /**
@@ -1036,20 +1052,24 @@ public class Permanent {
      */
     public int getEffectivePower() {
         return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
     }
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
         return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
-                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE);
+                - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
     }
 
     /**
@@ -1180,17 +1200,21 @@ public class Permanent {
 
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
         List<CardEffect> effects = temporaryTriggeredEffects.getOrDefault(slot, List.of());
+        List<CardEffect> untilEndOfCombat = combatTriggeredEffects.getOrDefault(slot, List.of());
         List<CardEffect> untilNextUpkeep = getUntilNextUpkeepTriggeredEffects(slot);
-        if (untilNextUpkeep.isEmpty()) {
+        if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
             return effects;
         }
-        if (effects.isEmpty()) {
-            return untilNextUpkeep;
-        }
-        List<CardEffect> combined = new ArrayList<>(effects.size() + untilNextUpkeep.size());
+        List<CardEffect> combined = new ArrayList<>(effects.size()
+                + untilEndOfCombat.size() + untilNextUpkeep.size());
         combined.addAll(effects);
+        combined.addAll(untilEndOfCombat);
         combined.addAll(untilNextUpkeep);
         return combined;
+    }
+
+    public void addCombatTriggeredEffect(EffectSlot slot, CardEffect effect) {
+        combatTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
     }
 
     public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
@@ -1245,6 +1269,16 @@ public class Permanent {
 
     public boolean isLosesAllAbilitiesUntilEndOfTurn() {
         return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently;
+    }
+
+    public void recordTappedPermanentForAbility(UUID permanentId) {
+        if (permanentId != null && !tappedPermanentsForAbilityThisTurn.contains(permanentId)) {
+            tappedPermanentsForAbilityThisTurn.add(permanentId);
+        }
+    }
+
+    public void clearTappedPermanentsForAbilityThisTurn() {
+        tappedPermanentsForAbilityThisTurn.clear();
     }
 
     public void resetModifiers() {
@@ -1403,7 +1437,13 @@ public class Permanent {
      * {@link #untilNextTurnLandTypeOverride} (Orcish Farmer); either wins over the land's printed types.
      */
     public CardSubtype getEffectiveLandTypeOverride() {
-        return transientLandTypeOverride != null ? transientLandTypeOverride : untilNextTurnLandTypeOverride;
+        if (transientLandTypeOverride != null) {
+            return transientLandTypeOverride;
+        }
+        if (untilNextTurnLandTypeOverride != null) {
+            return untilNextTurnLandTypeOverride;
+        }
+        return persistentLandTypeOverride;
     }
 
     /**
