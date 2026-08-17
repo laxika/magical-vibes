@@ -797,7 +797,7 @@ class PlayerInputServiceTest {
             CreateTokenEffect tokenTemplate = CreateTokenEffect.blackZombie(1);
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null,
-                    true, tokenTemplate, "M21");
+                    Integer.MAX_VALUE, false, true, tokenTemplate, "M21");
 
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Bojuka Bog", "Bear");
