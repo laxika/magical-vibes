@@ -689,7 +689,8 @@ public class TriggerCollectionService {
         }
         if (!selfCastTriggeredEffects.isEmpty()) {
             if (selfCastTriggeredEffects.size() == 1
-                    && selfCastTriggeredEffects.getFirst() instanceof MayEffect may) {
+                    && selfCastTriggeredEffects.getFirst() instanceof MayEffect may
+                    && may.targetSpec() == TargetSpec.NONE) {
                 gameData.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
                         spellCard,
                         castingPlayerId,

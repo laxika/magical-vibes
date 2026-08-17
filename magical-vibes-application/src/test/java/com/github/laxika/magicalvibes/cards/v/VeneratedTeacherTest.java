@@ -27,6 +27,7 @@ class VeneratedTeacherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(escort.getCounterCount(CounterType.LEVEL)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.LEVEL)).isZero();

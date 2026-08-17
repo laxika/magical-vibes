@@ -338,6 +338,7 @@ public class TargetPolarityClassifier {
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetPermanentIntoLibraryNFromTopOrBottomEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PutTargetPermanentIntoLibraryNFromTopThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Chronostutter: library tuck of a permanent at a fixed depth.
             entry("PutTargetPermanentIntoLibraryNFromTopEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -376,6 +377,7 @@ public class TargetPolarityClassifier {
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),

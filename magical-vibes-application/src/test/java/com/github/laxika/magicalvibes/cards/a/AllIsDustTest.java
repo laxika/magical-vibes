@@ -29,12 +29,10 @@ class AllIsDustTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Island");
-        harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertOnBattlefield(player2, "Mountain");
         harness.assertOnBattlefield(player2, "Ornithopter");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Island");
-        harness.assertInGraveyard(player2, "Mountain");
     }
 }

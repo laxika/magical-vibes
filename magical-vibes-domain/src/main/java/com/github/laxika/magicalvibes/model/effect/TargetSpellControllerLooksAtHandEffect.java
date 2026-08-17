@@ -7,4 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * stack entry's target and must resolve before an accompanying counter effect.
  */
 public record TargetSpellControllerLooksAtHandEffect() implements CardEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.spellOnStack());
+    }
 }

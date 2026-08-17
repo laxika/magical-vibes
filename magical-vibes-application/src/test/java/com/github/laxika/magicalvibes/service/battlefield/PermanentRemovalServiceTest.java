@@ -258,7 +258,7 @@ class PermanentRemovalServiceTest {
             gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                     DelayedPermanentActionKind.DESTROY_AT_END_STEP));
             when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+            when(graveyardService.tryReplaceDestruction(gd, perm, true)).thenReturn(true);
 
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_STEP);
 
@@ -279,7 +279,7 @@ class PermanentRemovalServiceTest {
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
-            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(graveyardService).tryReplaceDestruction(gd, perm, false);
             verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Doomed Creature is destroyed.")));
         }
@@ -786,7 +786,6 @@ class PermanentRemovalServiceTest {
         void destroysNormalPermanent() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
             stubGraveyardForCreature(bears, player1Id);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
@@ -827,7 +826,7 @@ class PermanentRemovalServiceTest {
         void regenerationPreventsDestruction() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(true);
+            when(graveyardService.tryReplaceDestruction(gd, bears, true)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
 
@@ -846,7 +845,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
-            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(graveyardService).tryReplaceDestruction(gd, bears, false);
         }
 
         @Test
@@ -965,7 +964,6 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(4);
             // tryDestroyPermanent stubs
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, creature)).thenReturn(false);
             stubGraveyardForCreature(creature, player1Id);
 
             prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 4, "Fireball");

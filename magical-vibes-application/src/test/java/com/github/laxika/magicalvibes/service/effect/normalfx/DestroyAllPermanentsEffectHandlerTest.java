@@ -250,11 +250,11 @@ class DestroyAllPermanentsEffectHandlerTest {
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, elves)).thenReturn(true);
+                when(graveyardService.tryReplaceDestruction(gd, elves, true)).thenReturn(true);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService).tryRegenerate(gd, elves);
+                verify(graveyardService).tryReplaceDestruction(gd, elves, true);
                 verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, elves);
             }
 
@@ -273,7 +273,7 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService, never()).tryRegenerate(any(), any());
+                verify(graveyardService).tryReplaceDestruction(gd, bears, false);
                 verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
             }
 

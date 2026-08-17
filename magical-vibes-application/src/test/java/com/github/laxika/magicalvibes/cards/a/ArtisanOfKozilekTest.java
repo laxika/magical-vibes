@@ -27,11 +27,11 @@ class ArtisanOfKozilekTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(bears.getId()));
@@ -50,6 +50,8 @@ class ArtisanOfKozilekTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -70,7 +72,7 @@ class ArtisanOfKozilekTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
