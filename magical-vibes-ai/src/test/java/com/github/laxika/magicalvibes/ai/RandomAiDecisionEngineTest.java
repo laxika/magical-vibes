@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PullFromTheDeep;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
@@ -1127,6 +1129,58 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
         assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+    }
+
+    @Test
+    void choosesAtMostOneCardOfEachTypeForPullFromTheDeep() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        HolyDay firstInstant = new HolyDay();
+        HolyDay secondInstant = new HolyDay();
+        LavaAxe sorcery = new LavaAxe();
+        PullFromTheDeep spell = new PullFromTheDeep();
+
+        harness.setGraveyard(aiPlayer, List.of(firstInstant, secondInstant, sorcery));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return false;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return 0;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
+                    .isNotNull();
+
+            engine.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        StackEntry stackEntry = gameData.stack.stream()
+                .filter(entry -> entry.getCard() == spell)
+                .findFirst()
+                .orElseThrow();
+        assertThat(stackEntry.getTargetCardIds())
+                .containsExactly(firstInstant.getId(), sorcery.getId());
+        assertThat(gameData.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
