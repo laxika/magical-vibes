@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "20")
 @CardRegistration(set = "7ED", collectorNumber = "24")
 @CardRegistration(set = "S99", collectorNumber = "19")
+@CardRegistration(set = "S00", collectorNumber = "7")
 public class KnightErrant extends Card {
 }

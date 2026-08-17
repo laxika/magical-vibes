@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "224")
 @CardRegistration(set = "S99", collectorNumber = "120")
+@CardRegistration(set = "S00", collectorNumber = "4")
 public class TrainedOrgg extends Card {
 }

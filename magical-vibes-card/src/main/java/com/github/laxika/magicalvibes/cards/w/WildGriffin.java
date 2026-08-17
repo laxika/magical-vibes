@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "40")
 @CardRegistration(set = "P02", collectorNumber = "30")
 @CardRegistration(set = "S99", collectorNumber = "31")
+@CardRegistration(set = "S00", collectorNumber = "11")
 public class WildGriffin extends Card {
 }

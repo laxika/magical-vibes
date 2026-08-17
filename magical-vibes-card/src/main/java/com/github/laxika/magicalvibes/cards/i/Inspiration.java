@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "7ED", collectorNumber = "81")
 @CardRegistration(set = "6ED", collectorNumber = "76")
 @CardRegistration(set = "VIS", collectorNumber = "35")
+@CardRegistration(set = "S00", collectorNumber = "15")
 public class Inspiration extends Card {
 
     public Inspiration() {
