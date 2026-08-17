@@ -335,6 +335,8 @@ public class GameData {
     public final Map<UUID, Integer> skipNextUntapStepCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
+    /** When true, all combat damage that would be dealt by attacking creatures is prevented this turn (Harmless Assault). */
+    public boolean preventAllCombatDamageByAttackingCreatures;
     /** When true, all combat damage that would be dealt to players is prevented this turn (Defend the Hearth). */
     public boolean preventAllCombatDamageToPlayers;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
@@ -2823,6 +2825,7 @@ public class GameData {
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
+        copy.preventAllCombatDamageByAttackingCreatures = this.preventAllCombatDamageByAttackingCreatures;
         copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;

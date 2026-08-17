@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
@@ -91,6 +92,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastTriggerCollectorServiceTest {
@@ -375,6 +377,47 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(triggerEntry.getTargetZone()).isEqualTo(Zone.STACK);
             assertThat(triggerEntry.getEffectsToResolve()).singleElement()
                     .isEqualTo(new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE, 2));
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CasterLosesLifeOnChosenColorSpellCastEffect")
+    class AnyPlayerChosenColorLifeLoss {
+
+        @Test
+        @DisplayName("puts a life-loss trigger on the stack for a matching spell")
+        void triggersForMatchingColor() {
+            Permanent perm = createPermanent("Curse of Wizardry");
+            perm.setChosenColor(CardColor.RED);
+            var effect = new CasterLosesLifeOnChosenColorSpellCastEffect(1);
+            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
+            spellCard.setColors(List.of(CardColor.RED));
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("does not trigger for a spell of another color")
+        void ignoresAnotherColor() {
+            Permanent perm = createPermanent("Curse of Wizardry");
+            perm.setChosenColor(CardColor.RED);
+            var effect = new CasterLosesLifeOnChosenColorSpellCastEffect(1);
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 
@@ -1057,6 +1100,33 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("fires only on the Nth spell matching its filter")
+        void firesOnlyOnNthMatchingSpell() {
+            Permanent perm = createPermanent("Vengevine");
+            CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+            var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
+            var effect = SpellCastTriggerEffect.nth(2, filter, List.of(innerEffect));
+            Card noncreatureSpell = createInstant("Spellbook");
+            Card firstCreatureSpell = createCard("Grizzly Bears");
+            Card secondCreatureSpell = createCard("Llanowar Elves");
+            gd.recordSpellCast(player1Id, noncreatureSpell);
+            gd.recordSpellCast(player1Id, firstCreatureSpell);
+            gd.recordSpellCast(player1Id, secondCreatureSpell);
+            var ctx = new TriggerContext.SpellCast(secondCreatureSpell, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(Card.class), eq(filter), eq(null), eq(gd), eq(player1Id)))
+                    .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

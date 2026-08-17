@@ -910,6 +910,34 @@ public class GraveyardTargetingService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
     }
 
+    public void handleExactNTargetPlayerGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                                                 UUID targetPlayerId, Card card,
+                                                                 StackEntryType entryType, int targetCount,
+                                                                 CardPredicate filter, List<CardEffect> spellEffects) {
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> graveyard = targetableGraveyard(gameData, targetPlayerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = targetCount;
+        gameData.graveyardTargetOperation.anyNumber = false;
+        gameData.graveyardTargetOperation.targetPlayerId = targetPlayerId;
+        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, targetCount,
+                targetCount, "Choose " + targetCount + " target " + filterLabel + ""
+                        + (targetCount != 1 ? "s" : "") + " from " + targetPlayerName + "'s graveyard.");
+    }
+
     /**
      * "Exile up to N target cards from a single graveyard" (Scarab Feast). Pools every card in
      * every graveyard as a legal target, but flags the choice {@code singleGraveyard} so

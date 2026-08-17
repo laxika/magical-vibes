@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUp
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -66,8 +67,6 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
@@ -78,7 +77,6 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
-import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -99,15 +97,12 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
-import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -152,6 +147,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.effect.ReboundCastFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
@@ -592,6 +588,26 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(ReboundAtNextUpkeep.class)) {
+            List<ReboundAtNextUpkeep> pending = gameData.drainDelayedActions(
+                    ReboundAtNextUpkeep.class,
+                    action -> action.controllerId().equals(gameData.activePlayerId));
+            for (ReboundAtNextUpkeep action : pending) {
+                if (gameData.findExiledCard(action.card().getId()) == null) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.card(),
+                        action.controllerId(),
+                        action.card().getName() + "'s rebound ability",
+                        new ArrayList<>(List.of(new ReboundCastFromExileEffect())));
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.card(), "'s rebound ability triggers."));
+                log.info("Game {} - {} rebound trigger pushed onto stack", gameData.id, action.card().getName());
+            }
+        }
+
         // Chancellor cycle: at the beginning of the first upkeep, check all players' hands
         // for cards with ON_OPENING_HAND_REVEAL effects (revealed from opening hand)
         if (gameData.turnNumber == 1) {
@@ -828,6 +844,25 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
                                 gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.threshold());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && conditional.condition() instanceof AllOf) {
+                    if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: composed condition)",
+                                gameData.id, perm.getCard().getName());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControllerLifeAtLeast lifeCheck) {
@@ -1175,24 +1210,11 @@ public class StepTriggerService {
                         && !playerDependent.triggersFor(activePlayerId)) {
                     continue;
                 }
-                // Intervening-if: werewolf transform conditions checked at trigger time
                 if (effect instanceof ConditionalEffect conditional
                         && conditional.interveningIf()
-                        && conditional.condition() instanceof AnotherPermanentEnteredLastTurn
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, playerId))) {
                     continue;
-                } else if (effect instanceof ConditionalEffect conditional
-                        && (conditional.condition() instanceof NoSpellsCastLastTurn
-                                || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn
-                                || conditional.condition() instanceof ControllerLostLifeLastTurn
-                                || conditional.condition() instanceof OpponentLostLifeLastTurn
-                                || conditional.condition() instanceof ActivePlayerControlsPermanent
-                                || conditional.condition() instanceof ActivePlayerControlsMoreLandsThanEachOtherPlayer)) {
-                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        continue;
-                    }
                 }
 
                 if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "53")
 @CardRegistration(set = "FDN", collectorNumber = "155")
+@CardRegistration(set = "ROE", collectorNumber = "67")
 public class FleetingDistraction extends Card {
 
     public FleetingDistraction() {

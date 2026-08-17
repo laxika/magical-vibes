@@ -127,6 +127,7 @@ public class PermanentCounterSupport {
                 switch (counterType) {
                     case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + placed);
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + placed);
+                    case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case FLYING, FIRST_STRIKE, LIFELINK -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
@@ -201,6 +202,7 @@ public class PermanentCounterSupport {
 
         String counterName = switch (counterType) {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
+            case LEVEL -> { target.setCounterCount(CounterType.LEVEL, target.getCounterCount(CounterType.LEVEL) + count); yield "level"; }
             case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
             case LUCK -> { target.setCounterCount(CounterType.LUCK, target.getCounterCount(CounterType.LUCK) + count); yield "luck"; }

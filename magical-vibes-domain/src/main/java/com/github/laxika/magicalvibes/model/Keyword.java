@@ -77,7 +77,8 @@ public enum Keyword {
     DELVE,
     MODULAR,
     SUNBURST,
-    PROTOTYPE;
+    PROTOTYPE,
+    REBOUND;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

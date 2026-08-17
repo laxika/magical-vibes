@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -51,6 +52,11 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));
+            }
+            case ALL_COMBAT_BY_ATTACKING_CREATURES -> {
+                gameData.preventAllCombatDamageByAttackingCreatures = true;
+                gameLogService.append(gameData,
+                        GameLog.text("All combat damage dealt by attacking creatures will be prevented this turn."));
             }
             case ALL_COMBAT_TO_PLAYERS -> {
                 gameData.preventAllCombatDamageToPlayers = true;
@@ -127,7 +133,12 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         "All damage from non-Human sources will be prevented this turn."));
             }
             case ALL_COMBAT_EXCEPT -> {
-                gameData.combatDamageExemptPredicate = e.exemptPredicate();
+                var exemptPredicate = e.exemptPredicate();
+                if (exemptPredicate instanceof PermanentIsSourcePermanentPredicate
+                        && entry.getSourcePermanentId() != null) {
+                    exemptPredicate = new PermanentIsSpecificPermanentPredicate(entry.getSourcePermanentId());
+                }
+                gameData.combatDamageExemptPredicate = exemptPredicate;
                 gameLogService.append(gameData, GameLog.text(
                         "Combat damage from creatures that don't match the exemption will be prevented this turn."));
             }

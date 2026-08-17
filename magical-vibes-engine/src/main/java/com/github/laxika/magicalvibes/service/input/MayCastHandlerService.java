@@ -900,6 +900,85 @@ public class MayCastHandlerService {
         castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "madness", 0);
     }
 
+    /** Handles casting one Eldrazi spell from the controller's outside-the-game card pool. */
+    public void handleCastFromOutsideGameChoice(GameData gameData, Player player, boolean accepted,
+                                                PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> sideboard = gameData.playerSideboards.get(player.getId());
+        int cardIndex = -1;
+        if (sideboard != null) {
+            for (int i = 0; i < sideboard.size(); i++) {
+                if (sideboard.get(i).getId().equals(cardToCast.getId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+        if (cardIndex == -1) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " is no longer outside the game."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntryType spellType = switch (cardToCast.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + cardToCast.getType());
+        };
+        boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
+                || cardToCast.hasType(CardType.ARTIFACT)
+                || cardToCast.hasType(CardType.ENCHANTMENT)
+                || cardToCast.hasType(CardType.PLANESWALKER);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(cardToCast)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
+            if (validTargets.isEmpty()) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " has no valid targets and stays outside the game."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            sideboard.remove(cardIndex);
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LibraryCastSpellTarget(
+                            cardToCast, player.getId(), spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                    "Choose a target for " + cardToCast.getName() + ".");
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " casts ", cardToCast, " without paying its mana cost — choosing target."));
+            return;
+        }
+
+        sideboard.remove(cardIndex);
+        gameData.stack.add(new StackEntry(
+                spellType, cardToCast, player.getId(), cardToCast.getName(),
+                spellEffects, 0, (UUID) null, null));
+        gameData.recordSpellCast(player.getId(), cardToCast);
+        gameData.priorityPassedBy.clear();
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " casts ", cardToCast, " without paying its mana cost."));
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     /**
      * Handles the "may cast from hand without paying mana cost" choice (e.g. Counterlash).
      * Each eligible card gets its own PendingMayAbility; accepting one removes the rest.

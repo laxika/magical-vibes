@@ -40,6 +40,8 @@ import java.util.List;
  * @param onlyDuringControllerTurn  only fire when cast during the source controller's own turn
  * @param intervening                optional source condition checked when the spell is cast and
  *                                   again when the trigger resolves
+ * @param nthSpellNumber             if positive, only fire when this is the controller's Nth spell
+ *                                   matching {@code spellFilter} this turn
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
@@ -49,50 +51,58 @@ public record SpellCastTriggerEffect(
         StackEntryPredicate castSpellTargetCondition,
         boolean onlyDuringOpponentTurn,
         boolean onlyDuringControllerTurn,
-        Condition intervening
+        Condition intervening,
+        int nthSpellNumber
 ) implements CardEffect {
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null, null, null, false, false, null);
+        this(spellFilter, resolvedEffects, null, null, null, false, false, null, 0);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost) {
-        this(spellFilter, resolvedEffects, manaCost, null, null, false, false, null);
+        this(spellFilter, resolvedEffects, manaCost, null, null, false, false, null, 0);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter) {
-        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false, null);
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false, null, 0);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
                                   boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn) {
         this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
-                onlyDuringOpponentTurn, onlyDuringControllerTurn, null);
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, null, 0);
     }
 
     /** Trigger gated on the cast spell's targets (e.g. Repartee — "spell that targets a creature"). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false, false, null);
+        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false, false, null, 0);
     }
 
     /** Targets-gated trigger whose resolved effect itself targets (e.g. Graduation Day). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false, false, null);
+        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false, false, null, 0);
     }
 
     /** Trigger that only fires when the spell is cast during an opponent's turn (e.g. Glen Elendra Pranksters). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   boolean onlyDuringOpponentTurn) {
-        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn, false, null);
+        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn, false, null, 0);
+    }
+
+    /** Trigger only on the controller's Nth spell matching {@code spellFilter} this turn. */
+    public static SpellCastTriggerEffect nth(int spellNumber, CardPredicate spellFilter,
+                                             List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
+                false, false, null, spellNumber);
     }
 
     /** Trigger that only fires when the spell is cast during the source controller's own turn (e.g. Eyes of the Wisent). */
     public static SpellCastTriggerEffect duringYourTurn(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null);
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null, 0);
     }
 
     /** Spell-cast trigger with a source-relative intervening condition. */
@@ -100,6 +110,6 @@ public record SpellCastTriggerEffect(
                                                          List<CardEffect> resolvedEffects,
                                                          Condition intervening) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null,
-                false, false, intervening);
+                false, false, intervening, 0);
     }
 }

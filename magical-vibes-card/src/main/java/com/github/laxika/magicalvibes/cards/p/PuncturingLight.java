@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "35")
+@CardRegistration(set = "ROE", collectorNumber = "41")
 public class PuncturingLight extends Card {
 
     public PuncturingLight() {

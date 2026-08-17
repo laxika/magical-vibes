@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "55")
+@CardRegistration(set = "ROE", collectorNumber = "78")
 public class MnemonicWall extends Card {
 
     public MnemonicWall() {

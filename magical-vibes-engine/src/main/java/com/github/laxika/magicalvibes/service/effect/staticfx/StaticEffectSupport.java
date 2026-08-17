@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -213,6 +214,9 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
+        } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
+                && setPT.scope() == GrantScope.SELF) {
+            accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                     || matchesStaticFilter(context, context.target(), grant.filter())) {

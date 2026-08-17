@@ -228,6 +228,27 @@ class SacrificePermanentsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Records the number of automatically sacrificed permanents when requested")
+        void recordsSacrificedCount() {
+            Permanent firstForest = addPermanent(player1Id, "Forest", CardType.LAND);
+            Permanent secondForest = addPermanent(player1Id, "Forest", CardType.LAND);
+            stubCount(2);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(firstForest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(secondForest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+            StackEntry resolvingEntry = entry(player1Id, null);
+
+            handler.resolve(gd, resolvingEntry, new SacrificePermanentsEffect(
+                    2, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER)
+                    .withRecordedSacrificeCount());
+
+            assertThat(resolvingEntry.getEventValue()).isEqualTo(2);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, firstForest);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, secondForest);
+        }
+
+        @Test
         @DisplayName("Prompts multi-permanent ForcedSacrifice choice when more matches than count")
         void promptsForcedSacrificeChoice() {
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);

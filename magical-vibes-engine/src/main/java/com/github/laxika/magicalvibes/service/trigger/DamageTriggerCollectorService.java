@@ -672,6 +672,30 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    private boolean handleControllerDealtDamageMay(TriggerMatchContext match,
+            MayEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE may trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
     @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageRemoveCounter(TriggerMatchContext match,
             RemoveCounterFromSourceEffect effect, TriggerContext ctx) {

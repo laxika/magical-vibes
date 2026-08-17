@@ -50,6 +50,7 @@ public enum CounterType {
     JAVELIN,
     KI,
     LANDMARK,
+    LEVEL,
     LOYALTY,
     LUCK,
     MAGNET,

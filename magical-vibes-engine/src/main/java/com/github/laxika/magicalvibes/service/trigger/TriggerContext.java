@@ -94,6 +94,9 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
+    /** Context for opponent-nontoken-permanent-sacrificed triggers. */
+    record OpponentPermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */

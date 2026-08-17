@@ -19,6 +19,14 @@ import java.util.UUID;
 @Getter
 public class ActivatedAbility {
 
+    /**
+     * Whether this ability is the engine's representation of a level-up ability.
+     * Level-up is represented by an activated ability that puts a level counter on its source.
+     */
+    public boolean isLevelUpAbility() {
+        return description != null && description.startsWith("Level up ");
+    }
+
     private final boolean requiresTap;
     private final String manaCost;
     private final List<CardEffect> effects;

@@ -52,6 +52,8 @@ public class ManaPool {
     /** Colorless mana that can't be spent to cast nonartifact spells (Powerstone tokens). */
     private int powerstoneOnlyColorless;
     private int myrOnlyColorless;
+    /** Per-subtype colorless mana spendable only for matching spells or abilities. */
+    private final Map<CardSubtype, Integer> colorlessSubtypeSpellOrAbilityMana = new HashMap<>();
     /** Colorless mana spendable only to cast legendary spells (Untaidake, the Cloud Keeper). */
     private int legendarySpellOnlyColorless;
     private int restrictedRed;
@@ -167,6 +169,7 @@ public class ManaPool {
         this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
         this.powerstoneOnlyColorless = source.powerstoneOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
+        colorlessSubtypeSpellOrAbilityMana.putAll(source.colorlessSubtypeSpellOrAbilityMana);
         this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
@@ -266,6 +269,7 @@ public class ManaPool {
         artifactAbilityOnlyColorless = 0;
         powerstoneOnlyColorless = 0;
         myrOnlyColorless = 0;
+        colorlessSubtypeSpellOrAbilityMana.clear();
         legendarySpellOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
@@ -333,6 +337,7 @@ public class ManaPool {
         total += artifactAbilityOnlyColorless;
         total += powerstoneOnlyColorless;
         total += myrOnlyColorless;
+        total += colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum();
         total += legendarySpellOnlyColorless;
         total += restrictedRed;
         total += kickedOnlyGreen;
@@ -710,6 +715,19 @@ public class ManaPool {
         myrOnlyColorless = Math.max(0, myrOnlyColorless - amount);
     }
 
+    public int getColorlessSubtypeSpellOrAbilityMana(CardSubtype subtype) {
+        return colorlessSubtypeSpellOrAbilityMana.getOrDefault(subtype, 0);
+    }
+
+    public void addColorlessSubtypeSpellOrAbilityMana(CardSubtype subtype, int amount) {
+        colorlessSubtypeSpellOrAbilityMana.merge(subtype, amount, Integer::sum);
+    }
+
+    public void removeColorlessSubtypeSpellOrAbilityMana(CardSubtype subtype, int amount) {
+        int current = colorlessSubtypeSpellOrAbilityMana.getOrDefault(subtype, 0);
+        colorlessSubtypeSpellOrAbilityMana.put(subtype, Math.max(0, current - amount));
+    }
+
     public int getLegendarySpellOnlyColorless() {
         return legendarySpellOnlyColorless;
     }
@@ -975,6 +993,9 @@ public class ManaPool {
             if (colorMap != null) {
                 total += colorMap.getOrDefault(color, 0);
             }
+            if (color == ManaColor.COLORLESS) {
+                total += getColorlessSubtypeSpellOrAbilityMana(subtype);
+            }
         }
         if (containsPartySubtype(subtypes)) {
             total += partySpellOrAbilityMana.getOrDefault(color, 0);
@@ -992,6 +1013,7 @@ public class ManaPool {
                     total += v;
                 }
             }
+            total += getColorlessSubtypeSpellOrAbilityMana(subtype);
         }
         if (containsPartySubtype(subtypes)) {
             for (int v : partySpellOrAbilityMana.values()) {
@@ -1014,6 +1036,12 @@ public class ManaPool {
                 int available = colorMap.getOrDefault(color, 0);
                 int toRemove = Math.min(remaining, available);
                 colorMap.put(color, available - toRemove);
+                remaining -= toRemove;
+            }
+            if (remaining > 0 && color == ManaColor.COLORLESS) {
+                int available = getColorlessSubtypeSpellOrAbilityMana(subtype);
+                int toRemove = Math.min(remaining, available);
+                removeColorlessSubtypeSpellOrAbilityMana(subtype, toRemove);
                 remaining -= toRemove;
             }
         }
@@ -1360,6 +1388,7 @@ public class ManaPool {
             artifactAbilityOnlyColorless = 0;
             powerstoneOnlyColorless = 0;
             myrOnlyColorless = 0;
+            colorlessSubtypeSpellOrAbilityMana.clear();
             legendarySpellOnlyColorless = 0;
             instantSorceryOnlyColorless = 0;
             xCostOnlyColorless = 0;
@@ -1423,6 +1452,7 @@ public class ManaPool {
             if (color == ManaColor.COLORLESS) {
                 amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
                         + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless
+                        + colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum()
                         + cumulativeUpkeepOnlyColorless;
             }
             amount += artifactOnlyMana.getOrDefault(color, 0);

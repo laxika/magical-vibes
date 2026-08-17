@@ -160,6 +160,12 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT, null, false, null, null, null);
     }
 
+    /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */
+    public static PreventDamageEffect allCombatByAttackingCreatures() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_COMBAT_BY_ATTACKING_CREATURES, null, false, null, null, null);
+    }
+
     /** "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). */
     public static PreventDamageEffect allCombatToPlayers() {
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT_TO_PLAYERS, null, false, null, null, null);

@@ -57,6 +57,7 @@ public enum CardSet {
     SET_AVR("AVR"),
     SET_ZEN("ZEN"),
     SET_WWK("WWK"),
+    SET_ROE("ROE"),
     SET_BFZ("BFZ"),
     SET_ZNR("ZNR"),
     SET_RTR("RTR"),

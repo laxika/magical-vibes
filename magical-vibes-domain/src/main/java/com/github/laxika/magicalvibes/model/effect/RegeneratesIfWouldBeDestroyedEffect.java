@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+
 /**
  * Static self-replacement: "If this creature would be destroyed, regenerate it."
  * Unlike a one-shot regeneration shield ({@link RegenerateEffect}), this is an always-on
@@ -7,5 +9,15 @@ package com.github.laxika.magicalvibes.model.effect;
  * times as needed, without consuming a shield. Placed in {@code EffectSlot.STATIC} and honored
  * by {@code GraveyardService.tryRegenerate}. Used by Mossbridge Troll.
  */
-public record RegeneratesIfWouldBeDestroyedEffect() implements CardEffect {
+public record RegeneratesIfWouldBeDestroyedEffect() implements DestructionReplacementEffect {
+
+    @Override
+    public DestructionReplacement replacement() {
+        return DestructionReplacement.REGENERATE;
+    }
+
+    @Override
+    public boolean appliesTo(Permanent source, Permanent destroyedPermanent) {
+        return source.getId().equals(destroyedPermanent.getId());
+    }
 }

@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
  *       EXILE forwards the source permanent id when {@code returnOnSourceLeave}.</li>
  *   <li>TOP_OF_LIBRARY reveals every card ("looks at ... hand") with no type filter and begins a
  *       put-on-top choice; the final ordering is applied by the RevealedHandChoice answer handler.</li>
+ *   <li>SHUFFLE_INTO_LIBRARY uses the public hand-reveal flow and shuffles only after a card is
+ *       chosen; an empty hand therefore causes no shuffle.</li>
  * </ul>
  */
 @Slf4j
@@ -85,6 +87,8 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                         e.upTo(), e.exileAllCopiesOfChosenNames(), e.imprintOnSource());
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
+            case SHUFFLE_INTO_LIBRARY ->
+                    playerInteractionSupport.resolveHandRevealAndChooseToShuffleIntoLibrary(gameData, entry, count);
         }
     }
 

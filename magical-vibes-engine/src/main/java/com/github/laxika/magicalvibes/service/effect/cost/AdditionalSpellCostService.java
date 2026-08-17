@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatu
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -121,7 +122,8 @@ public class AdditionalSpellCostService {
             ChooseXValueCost.class,
             BeholdAndExileCost.class,
             BeholdCost.class,
-            DelveCost.class);
+            DelveCost.class,
+            RevealCardFromHandCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -144,7 +146,7 @@ public class AdditionalSpellCostService {
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             TapMultiplePermanentsCost tapMultipleCost,
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
-            boolean returnPermanentToHand,
+            ReturnPermanentToHandCost returnPermanentToHand,
             boolean returnCreatureToHand,
             BlightCost blightCost,
             PutCounterOnControlledCreatureCost putCounterCost,
@@ -165,7 +167,8 @@ public class AdditionalSpellCostService {
             ChooseXValueCost chooseXValueCost,
             BeholdAndExileCost beholdCost,
             BeholdCost beholdSelectionCost,
-            DelveCost delveCost
+            DelveCost delveCost,
+            RevealCardFromHandCost revealCardCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -176,7 +179,7 @@ public class AdditionalSpellCostService {
                     || escalateTapCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
-                    || returnPermanentToHand
+                    || returnPermanentToHand != null
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
@@ -184,7 +187,8 @@ public class AdditionalSpellCostService {
                     || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
-                    || beholdCost != null || beholdSelectionCost != null || delveCost != null;
+                    || beholdCost != null || beholdSelectionCost != null || delveCost != null
+                    || revealCardCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -296,7 +300,7 @@ public class AdditionalSpellCostService {
         TapMultiplePermanentsCost tapMultipleCost = removeFirst(effects, TapMultiplePermanentsCost.class);
         ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost =
                 removeFirst(effects, ReturnAnyNumberOfPermanentsToHandCost.class);
-        boolean returnPermanentToHand = effects.removeIf(ReturnPermanentToHandCost.class::isInstance);
+        ReturnPermanentToHandCost returnPermanentToHand = removeFirst(effects, ReturnPermanentToHandCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
         BlightCost blightCost = removeFirst(effects, BlightCost.class);
         PutCounterOnControlledCreatureCost putCounterCost = removeFirst(effects, PutCounterOnControlledCreatureCost.class);
@@ -319,6 +323,7 @@ public class AdditionalSpellCostService {
         BeholdAndExileCost beholdCost = removeFirst(effects, BeholdAndExileCost.class);
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
+        RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, returnAnyNumberCost,
@@ -327,7 +332,7 @@ public class AdditionalSpellCostService {
                 payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
                 discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
-                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost);
+                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost);
     }
 
     /**
@@ -405,8 +410,11 @@ public class AdditionalSpellCostService {
                 case ReturnCreatureToHandCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
-                case ReturnPermanentToHandCost ignored -> {
-                    if (battlefield.isEmpty()) return false;
+                case ReturnPermanentToHandCost cost -> {
+                    if (battlefield.stream().noneMatch(p ->
+                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) {
+                        return false;
+                    }
                 }
                 case BlightCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
@@ -460,6 +468,9 @@ public class AdditionalSpellCostService {
                 }
                 case DiscardCardTypeCost cost -> {
                     if (discardCostIndices(gameData, playerId, card, cost).size() < cost.count()) return false;
+                }
+                case RevealCardFromHandCost cost -> {
+                    if (revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
                 }
                 case DiscardRandomCardCost ignored -> {
                     if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
@@ -541,7 +552,25 @@ public class AdditionalSpellCostService {
         if (costs.discardCardOrPayManaCost() != null) {
             return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
         }
+        if (costs.revealCardCost() != null) {
+            return revealCardIndices(gameData, playerId, card, costs.revealCardCost());
+        }
         return null;
+    }
+
+    private List<Integer> revealCardIndices(GameData gameData, UUID playerId, Card card,
+                                            RevealCardFromHandCost cost) {
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (!candidate.getId().equals(card.getId())
+                    && (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(candidate, cost.predicate(), candidate.getId()))) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 
     private List<Integer> discardCostIndices(GameData gameData, UUID playerId, Card card, DiscardCardTypeCost cost) {
@@ -608,6 +637,10 @@ public class AdditionalSpellCostService {
                         + " to cast " + card.getName());
             }
         }
+        if (costs.revealCardCost() != null) {
+            validateRevealCardCost(gameData, player, card, costs.revealCardCost(),
+                    selection.discardHandCardIndex(), selection.spellCardIndex());
+        }
         if (costs.sacrificePermanentCost() != null) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     costs.sacrificePermanentCost().description(),
@@ -635,14 +668,15 @@ public class AdditionalSpellCostService {
         }
         if (costs.tapMultipleCost() != null) {
             validateTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
-                    selection.sacrificePermanentIds());
+                    selection.sacrificePermanentIds(), announcedXValue == null ? 0 : announcedXValue);
         }
         if (costs.returnAnyNumberCost() != null) {
             validateReturnAnyNumberOfPermanentsToHandCost(gameData, player, card, costs.returnAnyNumberCost(),
                     selection.sacrificePermanentIds());
         }
-        if (costs.returnPermanentToHand()) {
-            validateReturnPermanentToHandCost(gameData, player, card, selection.sacrificePermanentId());
+        if (costs.returnPermanentToHand() != null) {
+            validateReturnPermanentToHandCost(gameData, player, card, costs.returnPermanentToHand(),
+                    selection.sacrificePermanentId());
         }
         // Sacrificing all creatures / permanents you control has no failure mode (zero is legal).
         // Discarding your entire hand has no failure mode (empty hand is legal).
@@ -1193,14 +1227,21 @@ public class AdditionalSpellCostService {
         return chosen;
     }
 
-    /** Validates a fixed-count spell cost that taps untapped permanents the caster controls. */
+    /** Validates a spell cost that taps untapped permanents the caster controls. */
     public List<Permanent> validateTapMultiplePermanentsCost(GameData gameData, Player player, Card card,
                                                              TapMultiplePermanentsCost cost,
                                                              List<UUID> tapPermanentIds) {
+        return validateTapMultiplePermanentsCost(gameData, player, card, cost, tapPermanentIds, 0);
+    }
+
+    public List<Permanent> validateTapMultiplePermanentsCost(GameData gameData, Player player, Card card,
+                                                             TapMultiplePermanentsCost cost,
+                                                             List<UUID> tapPermanentIds,
+                                                             int announcedXValue) {
         List<UUID> ids = tapPermanentIds != null ? tapPermanentIds : List.of();
-        int required = fixedTapCount(cost);
-        if (ids.size() != required) {
-            throw new IllegalStateException("Must tap " + required + " permanents to cast " + card.getName());
+        int requiredCount = fixedTapCount(cost, announcedXValue);
+        if (ids.size() != requiredCount) {
+            throw new IllegalStateException("Must tap " + requiredCount + " permanents to cast " + card.getName());
         }
         if (ids.stream().distinct().count() != ids.size()) {
             throw new IllegalStateException("Duplicate permanents chosen to tap for " + card.getName());
@@ -1226,10 +1267,17 @@ public class AdditionalSpellCostService {
     }
 
     private int fixedTapCount(TapMultiplePermanentsCost cost) {
+        return fixedTapCount(cost, 0);
+    }
+
+    private int fixedTapCount(TapMultiplePermanentsCost cost, int announcedXValue) {
         if (cost.count() instanceof Fixed fixed) {
             return fixed.value();
         }
-        throw new IllegalStateException("Spell tap costs must have a fixed count");
+        if (cost.count() instanceof com.github.laxika.magicalvibes.model.amount.XValue) {
+            return announcedXValue;
+        }
+        throw new IllegalStateException("Spell tap costs must use a fixed count or X");
     }
 
     /**
@@ -1317,7 +1365,7 @@ public class AdditionalSpellCostService {
      * without mutating anything.
      */
     public Permanent validateReturnPermanentToHandCost(GameData gameData, Player player, Card card,
-                                                       UUID returnPermanentId) {
+                                                       ReturnPermanentToHandCost cost, UUID returnPermanentId) {
         if (returnPermanentId == null) {
             throw new IllegalStateException("Must return a permanent you control to cast " + card.getName());
         }
@@ -1328,6 +1376,9 @@ public class AdditionalSpellCostService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, returnPermanentId);
         if (!player.getId().equals(controllerId)) {
             throw new IllegalStateException("Can only return permanents you control");
+        }
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toReturn, cost.filter())) {
+            throw new IllegalStateException("Return target does not match the return cost");
         }
         return toReturn;
     }
@@ -1523,6 +1574,29 @@ public class AdditionalSpellCostService {
         if (cost.predicate() != null
                 && !predicateEvaluationService.matchesCardPredicate(toDiscard, cost.predicate(), toDiscard.getId())) {
             throw new IllegalStateException("Discarded card must be " + label);
+        }
+        return effectiveIndex;
+    }
+
+    /** Validates the revealed hand card for an additional cast cost without moving it. */
+    public int validateRevealCardCost(GameData gameData, Player player, Card card,
+                                      RevealCardFromHandCost cost, Integer handCardIndex,
+                                      int spellCardIndex) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        String label = cost.label() != null ? cost.label() + " card" : "a card";
+        if (handCardIndex == null || handCardIndex == spellCardIndex || hand == null) {
+            throw new IllegalStateException("Must reveal " + label + " to cast " + card.getName());
+        }
+        int effectiveIndex = spellCardIndex >= 0 && handCardIndex > spellCardIndex
+                ? handCardIndex - 1 : handCardIndex;
+        if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
+            throw new IllegalStateException("Must reveal " + label + " to cast " + card.getName());
+        }
+        Card toReveal = hand.get(effectiveIndex);
+        if (toReveal.getId().equals(card.getId())
+                || (cost.predicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(toReveal, cost.predicate(), toReveal.getId()))) {
+            throw new IllegalStateException("Revealed card must be " + label);
         }
         return effectiveIndex;
     }

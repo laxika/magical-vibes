@@ -147,6 +147,7 @@ import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
@@ -1430,6 +1431,21 @@ public class GameQueryService {
             }
             if (predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId())) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card, Keyword ability) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                        && grant.grantedAbility() == ability
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -3520,6 +3536,7 @@ public class GameQueryService {
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
+                || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
@@ -3538,10 +3555,41 @@ public class GameQueryService {
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || hasProtectionFrom(gameData, target, sourceCard.getColor())
+                || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(target, sourceCard);
+    }
+
+    public boolean hasProtectionFromColoredSpellSource(GameData gameData, Permanent target, Card sourceCard) {
+        if (sourceCard == null || !isSpellOnStack(gameData, sourceCard)
+                || getEffectiveCardColors(gameData, sourceCard).isEmpty()) {
+            return false;
+        }
+        return hasProtectionFromColoredSpells(gameData, target);
+    }
+
+    public boolean hasProtectionFromColoredSpells(GameData gameData, Permanent target) {
+        return hasProtectionFromColoredSpellEffect(target.getCard().getEffects(EffectSlot.STATIC))
+                || hasProtectionFromColoredSpellEffect(computeStaticBonus(gameData, target).grantedEffects());
+    }
+
+    private boolean hasProtectionFromColoredSpellEffect(Iterable<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionFromColoredSpells()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isSpellOnStack(GameData gameData, Card sourceCard) {
+        return gameData.stack.stream().anyMatch(entry -> entry.getCard() != null
+                && entry.getCard().getId().equals(sourceCard.getId())
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY);
     }
 
     /**
@@ -5586,6 +5634,9 @@ public class GameQueryService {
         // Fog Bank: "Prevent all combat damage that would be dealt to and dealt by this creature."
         if (isCombatDamage && creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(PreventAllCombatDamageToAndBySelfEffect.class::isInstance)) {
+            return true;
+        }
+        if (isCombatDamage && gameData.preventAllCombatDamageByAttackingCreatures && creature.isAttacking()) {
             return true;
         }
         if (isCombatDamage && gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())) {

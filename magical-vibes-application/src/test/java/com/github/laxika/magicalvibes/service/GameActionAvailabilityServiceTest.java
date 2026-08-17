@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.cast.CostModificationTestRegistry;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -65,6 +66,7 @@ class GameActionAvailabilityServiceTest {
     @Mock private GameLogViewFactory gameLogViewFactory;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private TargetLegalityService targetLegalityService;
     @Mock private com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
@@ -85,7 +87,8 @@ class GameActionAvailabilityServiceTest {
                 new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
                         gameQueryService, predicateEvaluationService),
                 new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
-                        predicateEvaluationService, gameQueryService));
+                        predicateEvaluationService, gameQueryService),
+                targetLegalityService);
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
         svc = new GameActionAvailabilityService(

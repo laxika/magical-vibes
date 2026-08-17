@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -642,6 +644,26 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Level-up ability predicate matches level-up abilities only")
+        void levelUpAbilityPredicateMatchesLevelUpAbilitiesOnly() {
+            Card levelUpCreature = createCreature("Leveler", 1, 1, CardColor.BLUE);
+            levelUpCreature.addActivatedAbility(new ActivatedAbility(false, "{2}",
+                    List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                    "Level up {2} ({2}: Put a level counter on this.)"));
+            Permanent levelUpPermanent = addPermanent(player1Id, levelUpCreature);
+
+            Card ordinaryCreature = createCreature("Ordinary Creature", 1, 1, CardColor.BLUE);
+            ordinaryCreature.addActivatedAbility(new ActivatedAbility(false, "{1}",
+                    List.of(new DrawCardEffect()), "Draw a card."));
+            Permanent ordinaryPermanent = addPermanent(player1Id, ordinaryCreature);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, levelUpPermanent,
+                    PermanentHasNonManaActivatedAbilityPredicate.levelUp())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, ordinaryPermanent,
+                    PermanentHasNonManaActivatedAbilityPredicate.levelUp())).isFalse();
         }
 
         @Test

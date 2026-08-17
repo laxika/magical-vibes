@@ -1798,7 +1798,7 @@ public class TargetLegalityService {
                         card, effect.returnFilter(), entry.getCard().getId());
     }
 
-    private boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
+    public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
         if (entry.getTargetZone() == Zone.EXILE) {
             return gameQueryService.findCardInExileById(gameData, targetId) != null;
         }
@@ -2186,7 +2186,7 @@ public class TargetLegalityService {
         if (peaceTalks != null) {
             return Optional.of(peaceTalks);
         }
-        String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
+        String protectionReason = checkSpellProtection(gameData, target, card, controllerId, true);
         if (protectionReason != null) {
             return Optional.of(protectionReason);
         }
@@ -2289,7 +2289,7 @@ public class TargetLegalityService {
      * spells and activated abilities.
      */
     public Optional<String> checkTriggeredPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
-        String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
+        String protectionReason = checkSpellProtection(gameData, target, card, controllerId, false);
         if (protectionReason != null) {
             return Optional.of(protectionReason);
         }
@@ -2316,7 +2316,8 @@ public class TargetLegalityService {
         return type != StackEntryType.TRIGGERED_ABILITY;
     }
 
-    private String checkSpellProtection(GameData gameData, Permanent target, Card card, UUID sourcePlayerId) {
+    private String checkSpellProtection(GameData gameData, Permanent target, Card card, UUID sourcePlayerId,
+                                        boolean sourceIsSpell) {
         if (card.hasType(CardType.INSTANT)
                 && gameQueryService.hasHexproofFromCardType(gameData, target, CardType.INSTANT, sourcePlayerId)) {
             return target.getCard().getName() + " has hexproof from instants";
@@ -2325,6 +2326,11 @@ public class TargetLegalityService {
             return target.getCard().getName() + " has protection from the source's controller";
         }
         Set<CardColor> effectiveColors = gameQueryService.getEffectiveCardColors(gameData, card);
+        if (!effectiveColors.isEmpty()
+                && ((sourceIsSpell && gameQueryService.hasProtectionFromColoredSpells(gameData, target))
+                || gameQueryService.hasProtectionFromColoredSpellSource(gameData, target, card))) {
+            return target.getCard().getName() + " has protection from colored spells";
+        }
         for (CardColor color : effectiveColors) {
             if (gameQueryService.hasProtectionFrom(gameData, target, color)) {
                 return target.getCard().getName() + " has protection from " + color.name().toLowerCase();

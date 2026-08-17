@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -185,5 +188,18 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
+            }
+
+            @Test
+            void queuesBeginningEffectForEachAdditionalCombat() {
+                Card card = createCard("World at War", CardType.SORCERY);
+                UntapPermanentsEffect beginningEffect = new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES);
+                AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(2, beginningEffect);
+                StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
+
+                additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.getDelayedActions(DelayedAdditionalCombatBeginningEffect.class)).hasSize(2)
+                        .allMatch(delayed -> delayed.effect().equals(beginningEffect));
             }
 }

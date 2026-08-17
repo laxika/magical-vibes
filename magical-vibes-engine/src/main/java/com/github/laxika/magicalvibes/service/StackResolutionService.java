@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1026,6 +1027,15 @@ public class StackResolutionService {
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
             paradigmService.onParadigmSpellResolved(gameData, entry);
+        } else if (entry.getSourceZone() == Zone.HAND
+                && (entry.getCard().getKeywords().contains(Keyword.REBOUND)
+                || gameQueryService.hasSpellCastingAbilityGrant(
+                gameData, entry.getControllerId(), entry.getCard(), Keyword.REBOUND))) {
+            gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
+            gameData.addToExile(ownerId, entry.getCard());
+            gameData.queueDelayedAction(new ReboundAtNextUpkeep(
+                    entry.getControllerId(), ownerId, entry.getCard()));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with rebound."));
         } else if (entry.isExileInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
             gameData.addToExile(ownerId, entry.getCard());

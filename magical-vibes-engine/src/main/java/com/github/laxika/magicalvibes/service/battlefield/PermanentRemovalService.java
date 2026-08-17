@@ -561,7 +561,7 @@ public class PermanentRemovalService {
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
-        if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, target)) {
+        if (graveyardService.tryReplaceDestruction(gameData, target, !cannotBeRegenerated)) {
             return false;
         }
         destroyPermanentToGraveyard(gameData, target);

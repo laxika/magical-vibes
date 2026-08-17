@@ -252,6 +252,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.damagePreventionLifeGainShields.clear();
         gameData.preventAllCombatDamage = false;
+        gameData.preventAllCombatDamageByAttackingCreatures = false;
         gameData.preventAllCombatDamageToPlayers = false;
         gameData.preventAllDamageToAllCreatures = false;
         gameData.preventAllDamageByCreatures = false;

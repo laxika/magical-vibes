@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
@@ -49,14 +50,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,6 +74,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -82,6 +89,7 @@ class CastingCostServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private TargetLegalityService targetLegalityService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     private CastingCostService svc;
@@ -98,7 +106,8 @@ class CastingCostServiceTest {
                 new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
                         gameQueryService, predicateEvaluationService),
                 new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
-                        predicateEvaluationService, gameQueryService));
+                        predicateEvaluationService, gameQueryService),
+                targetLegalityService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -781,6 +790,27 @@ class CastingCostServiceTest {
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, equipment, otherAbility))
                     .isZero();
         }
+
+        @Test
+        @DisplayName("Symmetric activated-ability reductions are not counted as controller-scoped reductions")
+        void symmetricReductionIsNotCountedTwice() {
+            Card trainingGrounds = new Card();
+            trainingGrounds.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentIsCreaturePredicate(), 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(trainingGrounds));
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{2}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, creature, ability))
+                    .isZero();
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
+                    .isEqualTo(2);
+        }
     }
 
     @Nested
@@ -902,10 +932,44 @@ class CastingCostServiceTest {
             gd.stack.add(targetEntry);
 
             when(gameQueryService.findStackEntryByCardId(gd, targetInstant.getId())).thenReturn(targetEntry);
-            when(predicateEvaluationService.matchesStackEntryPredicate(targetEntry, predicate, null)).thenReturn(true);
+            when(targetLegalityService.matchesStackEntryPredicate(gd, targetEntry, predicate, player1Id))
+                    .thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, brushOff, List.of(targetInstant.getId())))
                     .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Stack-entry reduction evaluates predicates against the game state")
+        void stackEntryReductionUsesTargetAwarePredicateEvaluation() {
+            var predicate = new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentPowerAtLeastPredicate(7),
+                    new PermanentControlledBySourceControllerPredicate())));
+            Card notOfThisWorld = new Card();
+            notOfThisWorld.setName("Not of This World");
+            notOfThisWorld.setType(CardType.INSTANT);
+            notOfThisWorld.setManaCost("{7}");
+            notOfThisWorld.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect(
+                            predicate, 7));
+
+            Card targetSpell = new Card();
+            targetSpell.setName("Target Spell");
+            targetSpell.setType(CardType.INSTANT);
+            UUID targetId = UUID.randomUUID();
+            var targetEntry = new com.github.laxika.magicalvibes.model.StackEntry(
+                    com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL,
+                    targetSpell, player2Id, "Target Spell", List.of(), 0, targetId, Map.of());
+            gd.stack.add(targetEntry);
+
+            when(gameQueryService.findStackEntryByCardId(gd, targetSpell.getId())).thenReturn(targetEntry);
+            when(targetLegalityService.matchesStackEntryPredicate(gd, targetEntry, predicate, player1Id))
+                    .thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, notOfThisWorld, List.of(targetSpell.getId())))
+                    .isEqualTo(7);
         }
 
         @Test

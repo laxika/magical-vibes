@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -501,6 +502,27 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
         // "that player" = the caster; preset the target so the loss falls on them, not a choice.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new LoseLifeEffect(trigger.amount(), LoseLifeRecipient.TARGET_PLAYER)))
+        );
+        entry.setTargetId(sc.castingPlayerId());
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = CasterLosesLifeOnChosenColorSpellCastEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCasterLosesLifeOnChosenColorSpellCast(TriggerMatchContext match,
+            CasterLosesLifeOnChosenColorSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (match.permanent().getChosenColor() == null
+                || !sc.spellCard().getColors().contains(match.permanent().getChosenColor())) {
+            return false;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -1394,6 +1416,10 @@ public class SpellCastTriggerCollectorService {
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 
+        if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(match.gameData(), trigger, castingPlayerId)) {
+            return false;
+        }
+
         if (trigger.intervening() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
                 ConditionContext.forPermanent(match.permanent(), match.controllerId())
@@ -1549,6 +1575,14 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean isNthMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
+        long matchingSpells = gameData.getSpellsCastThisTurn(playerId).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(
+                        spell, trigger.spellFilter(), null, gameData, playerId))
+                .count();
+        return matchingSpells == trigger.nthSpellNumber();
     }
 
     private boolean hasOptionalSingleTarget(Card card, CardEffect effect) {

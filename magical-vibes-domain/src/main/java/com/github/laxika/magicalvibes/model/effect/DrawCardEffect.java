@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -41,13 +42,16 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) imp
     @Override
     public TargetSpec targetSpec() {
         // Only target-relative amounts require a player target on the stack entry (e.g. Dream
-        // Salvage draws equal to the number of cards target opponent discarded this turn; Tamiyo,
-        // the Moon Sage draws for each tapped creature target player controls).
+        // Salvage draws equal to the number of cards target opponent discarded this turn; Recurring
+        // Insight draws equal to the number of cards in target opponent's hand).
         return isTargetRelative() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
     private boolean isTargetRelative() {
         if (amount instanceof CardsDiscardedByTargetPlayerThisTurn) {
+            return true;
+        }
+        if (amount instanceof CardsInHand count && count.scope() == CountScope.TARGET_PLAYER) {
             return true;
         }
         return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER;

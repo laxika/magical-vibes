@@ -483,6 +483,17 @@ public class Card {
     }
 
     /**
+     * Declares exactly X targets for a spell's X value. The cap is a sanity ceiling for target
+     * position handling and should be at least as large as any practical X value.
+     */
+    public SpellTarget targetExactlyX(TargetFilter filter, int cap) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, cap, cap, spellTargets.size(), true);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Declares an optional target group whose maximum is evaluated when an ETB trigger is put on
      * the stack. The fixed cap is only a sanity ceiling for target-position handling.
      */

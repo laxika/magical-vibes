@@ -2524,6 +2524,16 @@ public abstract class AiDecisionEngine {
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
             }
+            if (effect instanceof TapMultiplePermanentsCost cost
+                    && cost.count() instanceof Fixed fixed) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .limit(fixed.value())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == fixed.value() ? chosen : List.of();
+            }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))

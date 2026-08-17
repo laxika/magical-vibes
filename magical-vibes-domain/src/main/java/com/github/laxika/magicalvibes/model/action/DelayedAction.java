@@ -18,6 +18,7 @@ package com.github.laxika.magicalvibes.model.action;
  * {@code GameData} god-class.
  */
 public sealed interface DelayedAction permits
+        DelayedAdditionalCombatBeginningEffect,
         DelayedPermanentAction,
         ExilePermanentAtControllerEndStep,
         SacrificeAtEndOfCombat,
@@ -79,6 +80,7 @@ public sealed interface DelayedAction permits
         RevokeExilePlayPermissionAtNextUpkeep,
         TransformSourceAtNextUpkeep,
         GrantChosenLandwalkAtNextUpkeep,
+        ReboundAtNextUpkeep,
         PendingExileReturn,
         EachPlayerHandExileReturnAtNextEndStep {
 }

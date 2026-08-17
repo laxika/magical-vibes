@@ -209,6 +209,7 @@ public class TurnCleanupService {
         gameData.damagePreventionLifeGainShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
+        gameData.preventAllCombatDamageByAttackingCreatures = false;
         gameData.preventAllCombatDamageToPlayers = false;
         gameData.preventAllDamageToAllCreatures = false;
         gameData.preventAllDamageByCreatures = false;

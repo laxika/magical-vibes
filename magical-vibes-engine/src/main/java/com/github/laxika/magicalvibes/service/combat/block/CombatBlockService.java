@@ -437,6 +437,12 @@ public class CombatBlockService {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
                             resolvedBlockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
                         }
+                    } else if (e instanceof TriggeringPermanentConditionalEffect permConditional) {
+                        // "When this creature blocks a [filter] creature"; the attacker is the event subject.
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, attacker, permConditional.predicate())) {
+                            resolvedBlockEffects.add(permConditional.wrapped());
+                        }
                     } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);

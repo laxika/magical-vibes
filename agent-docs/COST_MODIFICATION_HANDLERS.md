@@ -4,6 +4,10 @@
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not
 reduce generic mana; Ragemonger uses this for `{B}{R}`.
 
+`ReduceOwnColoredCastCostEffectHandler` is the spell-self counterpart for dynamic colored
+reductions. It removes matching colored symbols first, then generic mana if the colored component
+is exhausted; Khalni Hydra uses it for one `{G}` per green creature controlled.
+
 Cast-cost modifiers (cost reductions and increases — "this spell costs {2} less", "creatures
 you cast cost {1} more", metalcraft/graveyard/opponent-count reductions, etc.) and optional
 buyback-cost modifiers are resolved by
@@ -57,6 +61,11 @@ Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` o
 with a cast-time `AmountContext.forCasting(castingPlayerId)` and returns it as a negative
 generic-mana delta.
 
+When the oracle wording names a colored mana symbol rather than generic mana, use
+`ReduceOwnColoredCastCostEffect(ManaColor, DynamicAmount)`. Its handler evaluates the amount at
+cast time and returns a colored reduction that spills into generic mana after matching colored
+components are exhausted.
+
 - **Flat reduction** ("costs {2} less"): `new ReduceOwnCastCostEffect(new Fixed(2))`.
 - **"For each …" reduction**: pass a counting `DynamicAmount` — e.g. Ghoultree
   `new CardsInGraveyard(new CardTypePredicate(CREATURE), CountScope.CONTROLLER)`, Blasphemous Act
@@ -107,6 +116,9 @@ cost.
   (`battlefieldHandlers`, `spellSelfHandlers`); `register(...)` routes by `onSpellItself()`.
 - `cast/costmod/ReduceOwnCastCostEffectHandler.java` — spell-self handler for
   `ReduceOwnCastCostEffect(DynamicAmount)`; evaluates via `AmountEvaluationService`.
+- `cast/costmod/ReduceOwnColoredCastCostEffectHandler.java` — spell-self handler for
+  `ReduceOwnColoredCastCostEffect(ManaColor, DynamicAmount)`; evaluates via
+  `AmountEvaluationService` and returns a colored-only reduction.
 - `cast/costmod/IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler.java` — spell-self handler for
   `IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype)`; returns `+amount` unless the
   caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
@@ -171,7 +183,9 @@ cost.
 Temporary reductions are represented by `ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect`, whose normal-effect handler adds the existing `ReduceCastCostForMatchingSpellsEffect` as an until-end-of-turn floating effect. `CastingCostService` includes active floating cost modifiers in its snapshot so preview and payment use the same result.
 
 **First check whether it's a spell-self reduction** ("this spell costs {N} less to cast …"). If so,
-do NOT add a record or handler — use `ReduceOwnCastCostEffect(DynamicAmount)`, optionally wrapped in
+use `ReduceOwnCastCostEffect(DynamicAmount)` for generic mana, or
+`ReduceOwnColoredCastCostEffect(ManaColor, DynamicAmount)` when the wording names a colored symbol;
+optionally wrapped in
 `ConditionalEffect`, per the section above. Only the steps below apply to genuinely new *shapes*
 (a new battlefield-source tax/discount, or a new `Condition` for the wrapper).
 

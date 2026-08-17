@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -679,6 +680,8 @@ public class CardChoiceHandlerService {
                 prompt = "Choose another card to discard.";
             } else if (exileMode) {
                 prompt = "Choose another card to exile.";
+            } else if (revealedHandChoice.shuffleIntoLibraryMode()) {
+                prompt = "Choose another card to shuffle into " + targetName + "'s library.";
             } else {
                 prompt = "Choose another card to put on top of " + targetName + "'s library.";
             }
@@ -686,7 +689,8 @@ public class CardChoiceHandlerService {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
                     discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
-                    false, null, null, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames()));
+                    false, null, null, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
+                    false, revealedHandChoice.shuffleIntoLibraryMode()));
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
@@ -694,7 +698,8 @@ public class CardChoiceHandlerService {
 
     /**
      * Applies the batch action of a completed {@link PendingInteraction.RevealedHandChoice} (discard
-     * / exile / bottom-then-draw / put on top of library) and resumes the interrupted resolution.
+     * / exile / bottom-then-draw / put on top of library / shuffle into library) and resumes the
+     * interrupted resolution.
      */
     private void finishRevealedHandChoice(GameData gameData, Player player,
                                           PendingInteraction.RevealedHandChoice revealedHandChoice,
@@ -704,6 +709,7 @@ public class CardChoiceHandlerService {
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
+        boolean shuffleIntoLibraryMode = revealedHandChoice.shuffleIntoLibraryMode();
 
         gameData.interaction.clearAwaitingInput();
 
@@ -779,6 +785,16 @@ public class CardChoiceHandlerService {
             if (revealedHandChoice.exileAllCopiesOfChosenNames()) {
                 exileSameNamedCopies(gameData, player, targetPlayerId, chosenCards);
             }
+        } else if (shuffleIntoLibraryMode) {
+            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+            deck.addAll(chosenCards);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+
+            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(targetName + " shuffles "), chosenCards)
+                            .text(" into their library.").build());
+            log.info("Game {} - {} shuffles {} into their library", gameData.id, targetName, cardNames);
         } else if (bottomThenDrawMode) {
             // Vendilion Clique: reveal chosen card, put it on the bottom of the library, then draw a card.
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);

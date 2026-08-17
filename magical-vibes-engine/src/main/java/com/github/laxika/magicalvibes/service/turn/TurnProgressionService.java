@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
@@ -31,6 +32,8 @@ import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -127,6 +130,7 @@ public class TurnProgressionService {
         }
 
         TurnStep next = gameData.currentStep.next();
+        boolean additionalCombatPhase = false;
 
         if (gameData.currentStep == TurnStep.UNTAP
                 && next == TurnStep.UPKEEP
@@ -146,6 +150,7 @@ public class TurnProgressionService {
         if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
+            additionalCombatPhase = true;
         }
 
         // Finest Hour: an additional combat phase with no additional main phase — loop straight from
@@ -202,6 +207,9 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                if (additionalCombatPhase) {
+                    processAdditionalCombatBeginningEffects(gameData);
+                }
                 gameData.combatBlockOpponentIdsThisCombat.clear();
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
@@ -232,6 +240,22 @@ public class TurnProgressionService {
             }
         } else {
             advanceTurn(gameData);
+        }
+    }
+
+    private void processAdditionalCombatBeginningEffects(GameData gameData) {
+        List<DelayedAdditionalCombatBeginningEffect> pendingEffects =
+                gameData.drainDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
+        for (DelayedAdditionalCombatBeginningEffect pending : pendingEffects) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pending.sourceCard(),
+                    pending.controllerId(),
+                    pending.sourceCard().getName() + "'s additional combat trigger",
+                    new ArrayList<>(List.of(pending.effect()))
+            ));
+            gameLogService.append(gameData,
+                    GameLog.cardThen(pending.sourceCard(), "'s additional combat trigger triggers."));
         }
     }
 
@@ -453,6 +477,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
+        gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();

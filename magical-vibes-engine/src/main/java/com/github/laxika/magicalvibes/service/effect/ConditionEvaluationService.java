@@ -199,6 +199,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
@@ -649,6 +650,8 @@ public class ConditionEvaluationService {
                         && !(ctx.sourceCard() != null && gameQueryService.isProtectedFromCounterBySourceCard(
                                 gameData, targetSpell.getControllerId(), ctx.sourceCard()));
             }
+            case ControllerControlsMoreCreaturesThanTargetSpellController ignored ->
+                    controllerControlsMoreCreaturesThanTargetSpellController(gameData, ctx);
             case TargetSpellMatches c -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
@@ -922,6 +925,18 @@ public class ConditionEvaluationService {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         return countCreaturesControlled(gameData, controllerId)
                 > countCreaturesControlled(gameData, opponentId);
+    }
+
+    private boolean controllerControlsMoreCreaturesThanTargetSpellController(
+            GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) return false;
+        com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .findFirst()
+                .orElse(null);
+        if (targetSpell == null) return false;
+        return countCreaturesControlled(gameData, ctx.controllerId())
+                > countCreaturesControlled(gameData, targetSpell.getControllerId());
     }
 
     private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData) {

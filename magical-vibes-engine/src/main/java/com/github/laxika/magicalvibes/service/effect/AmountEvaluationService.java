@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.LastMilledCardColorSymbols;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.amount.LowestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
@@ -93,6 +94,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
@@ -183,6 +186,10 @@ public class AmountEvaluationService {
                     (int) ctx.repeatedAdditionalCosts().stream().filter(a.manaCost()::equals).count();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
+            case SacrificedPermanentPower ignored ->
+                    Math.max(0, ctx.sacrificedPower());
+            case SacrificedPermanentToughness ignored ->
+                    Math.max(0, ctx.sacrificedToughness());
             case Divided d ->
                     evaluate(gameData, d.amount(), ctx) / d.divisor();
             case Sum s ->
@@ -250,6 +257,8 @@ public class AmountEvaluationService {
                     ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
             case HighestLifeTotalAmongPlayers ignored ->
                     gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
+            case LowestLifeTotalAmongPlayers ignored ->
+                    gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).min().orElse(0);
             case HighestOpponentLifeTotal ignored ->
                     highestOpponentLifeTotal(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->

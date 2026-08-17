@@ -196,6 +196,7 @@ public sealed interface Condition permits
         TargetPlayerHasMoreCardsInHandThanController,
         TargetPlayerHandEmpty,
         TargetSpellCanBeCountered,
+        ControllerControlsMoreCreaturesThanTargetSpellController,
         TargetSpellMatches,
         TopCardOfLibraryColor,
         TopCardOfLibraryType,

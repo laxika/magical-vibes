@@ -10,8 +10,11 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -103,9 +106,15 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.setSupertypes(sourceCard.getSupertypes());
                     }
 
-                    // Copy keywords
-                    if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
-                        tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
+                    // Copy keywords and apply any plain-copy exception.
+                    if ((sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) || e.grantHaste()) {
+                        EnumSet<Keyword> keywords = sourceCard.getKeywords() == null
+                                ? EnumSet.noneOf(Keyword.class)
+                                : EnumSet.copyOf(sourceCard.getKeywords());
+                        if (e.grantHaste()) {
+                            keywords.add(Keyword.HASTE);
+                        }
+                        tokenCard.setKeywords(keywords);
                     }
 
                     // Copy effects and activated abilities (copiable characteristics per CR 707.2)
@@ -141,6 +150,12 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
 
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+                    entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+
+                    if (e.exileAtEndStep()) {
+                        gameData.queueDelayedAction(new DelayedPermanentAction(
+                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                    }
 
                     if (e.removeLegendary()) {
                         gameLogService.append(gameData, GameLog.textCardText(

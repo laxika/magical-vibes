@@ -15,5 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum HandChoiceDestination {
     DISCARD,
     EXILE,
-    TOP_OF_LIBRARY
+    TOP_OF_LIBRARY,
+    /** Put the chosen cards into the target's library, then shuffle that library. */
+    SHUFFLE_INTO_LIBRARY
 }

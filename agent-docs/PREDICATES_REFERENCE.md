@@ -50,7 +50,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsCreaturePredicate` | `()` | creatures |
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
-| `PermanentHasNonManaActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability that isn't a mana ability; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
@@ -61,6 +61,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentSharesMostCommonColorPredicate` | `()` | permanents with at least one color tied for most common among all permanents; multicolored permanents count once for each color, and colorless permanents never match. Needs game data. Barrin's Unmaking |
 | `PermanentIsAuraAttachedToCreaturePredicate` | `()` | an Aura permanent currently attached to a creature (checks `card.isAura()`, `isAttached()`, and that the host permanent is a creature — needs game data). Used to filter the Aura target of Crown of the Ages ("target Aura attached to a creature") |
 | `PermanentIsAuraAttachedToLandPredicate` | `()` | an Aura permanent currently attached to a land (checks `card.isAura()`, `isAttached()`, and that the host permanent is a land — needs game data). Used to filter the Aura target of Enchantment Alteration ("target Aura attached to a creature or land") |
+| `PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate` | `()` | an Aura permanent currently attached to a permanent controlled by the static effect's source controller — needs game data. Used by Umbra Mystic to grant umbra armor regardless of who controls the Aura |
 | `PermanentAttachedToCreaturePredicate` | `()` | any permanent currently attached to a creature, regardless of card type — needs game data. Used by End Hostilities to include Auras and Equipment in its mass destruction |
 | `PermanentIsAuraAttachedToSourcePredicate` | `()` | an Aura permanent currently attached to the **source** permanent, whoever controls the Aura — needs game data + `sourceCardId`. Pair with `DestroyAllPermanentsEffect` for "Destroy all Auras attached to CARDNAME" (Hakim, Loreweaver) |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |

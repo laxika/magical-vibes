@@ -171,6 +171,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true, null);
         }
 
+        /** A mode whose target count is exactly the spell's paid X value. */
+        public static ChooseOneOption exactlyXTargets(String label, CardEffect effect,
+                                                       TargetFilter filter, int cap) {
+            return new ChooseOneOption(label, List.of(effect), filter, null, cap, cap, true, null);
+        }
+
         /** This mode with its own total mana cost (split-card half / fuse mode). */
         public ChooseOneOption withManaCost(String manaCost) {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,

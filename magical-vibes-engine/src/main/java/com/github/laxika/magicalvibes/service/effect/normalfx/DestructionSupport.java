@@ -195,7 +195,7 @@ public class DestructionSupport {
             if (indestructible.contains(perm)) {
                 continue;
             }
-            if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, perm)) {
+            if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
                 continue;
             }
             actuallyDying.add(perm);

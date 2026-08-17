@@ -39,6 +39,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
         return false;
     }
 
+    /** Whether this effect protects only from spells that have one or more colors. */
+    default boolean protectionFromColoredSpells() {
+        return false;
+    }
+
     /**
      * For colour-based protection, whether the raw effect applies to the permanent that carries it
      * ({@code null} = self, e.g. Black Knight) or to an equipped creature

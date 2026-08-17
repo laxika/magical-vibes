@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -86,6 +87,7 @@ public class CastingCostService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final AmountEvaluationService amountEvaluationService;
+    private final TargetLegalityService targetLegalityService;
 
     /**
      * All cost-modifying static effects currently on the battlefield, in emblems, or among active
@@ -239,7 +241,9 @@ public class CastingCostService {
                 ManaCost reduction = handler.coloredManaCostReduction(
                         context, effect, CostModificationSource.SPELL_ITSELF);
                 if (reduction != null) {
-                    effectiveCost = effectiveCost.reducedByColoredOnly(reduction);
+                    effectiveCost = handler.coloredReductionCanReduceGeneric()
+                            ? effectiveCost.reducedBy(reduction)
+                            : effectiveCost.reducedByColoredOnly(reduction);
                 }
             }
         }
@@ -247,7 +251,9 @@ public class CastingCostService {
             ManaCost reduction = modifier.handler().coloredManaCostReduction(
                     context, modifier.effect(), modifier.source());
             if (reduction != null) {
-                effectiveCost = effectiveCost.reducedByColoredOnly(reduction);
+                effectiveCost = modifier.handler().coloredReductionCanReduceGeneric()
+                        ? effectiveCost.reducedBy(reduction)
+                        : effectiveCost.reducedByColoredOnly(reduction);
             }
         }
         return effectiveCost;
@@ -490,9 +496,11 @@ public class CastingCostService {
     }
 
     /**
-     * Generic mana removed from an activated ability's cost by reductions controlled by the
-     * activating player. Only the generic portion of the ability's own mana cost is reducible;
-     * additional costs are handled separately by their respective payment rules.
+     * Generic mana removed from an activated ability's cost by controller-scoped reductions on the
+     * activating player's battlefield. Symmetric reductions are collected by
+     * {@link #getActivatedAbilityActivationCostReduction(GameData, Permanent, ActivatedAbility)}.
+     * Only the generic portion of the ability's own mana cost is reducible; additional costs are
+     * handled separately by their respective payment rules.
      */
     public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
                                                 Permanent sourcePermanent, ActivatedAbility ability) {
@@ -503,6 +511,7 @@ public class CastingCostService {
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ActivatedAbilityCostReducingEffect reducer
+                        && !reducer.appliesSymmetrically()
                         && reducer.appliesTo(ability)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 sourcePermanent, reducer.affectedPermanents(),
@@ -1136,7 +1145,8 @@ public class CastingCostService {
                 .map(ReduceOwnCastCostIfTargetingStackEntryEffect.class::cast)
                 .findFirst().orElse(null);
         if (stackEffect != null
-                && predicateEvaluationService.matchesStackEntryPredicate(firstTargetSpell, stackEffect.predicate(), null)) {
+                && targetLegalityService.matchesStackEntryPredicate(
+                        gameData, firstTargetSpell, stackEffect.predicate(), playerId)) {
             return stackEffect.amount();
         }
         return 0;
@@ -1222,6 +1232,11 @@ public class CastingCostService {
 
     public boolean stackHasMatchingSpell(GameData gameData, StackEntryPredicate predicate) {
         return support.stackHasMatchingSpell(gameData, predicate);
+    }
+
+    public boolean stackHasMatchingSpell(GameData gameData, UUID controllerId, StackEntryPredicate predicate) {
+        return gameData.stack.stream().anyMatch(entry -> targetLegalityService.matchesStackEntryPredicate(
+                gameData, entry, predicate, controllerId));
     }
 
     /**

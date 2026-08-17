@@ -46,9 +46,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1316,6 +1316,16 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
+            }
+            if (effect instanceof TapMultiplePermanentsCost cost
+                    && cost.count() instanceof Fixed fixed) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
+                        .limit(fixed.value())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == fixed.value() ? chosen : List.of();
             }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()

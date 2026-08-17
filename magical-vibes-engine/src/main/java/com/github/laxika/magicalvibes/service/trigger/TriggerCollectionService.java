@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -405,6 +406,9 @@ public class TriggerCollectionService {
                 for (CardEffect effect : graveyardEffects) {
                     if (effect instanceof SpellCastTriggerEffect trigger) {
                         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
+                        if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(gameData, trigger, castingPlayerId)) {
+                            continue;
+                        }
 
                         if (trigger.manaCost() != null) {
                             // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
@@ -684,60 +688,76 @@ public class TriggerCollectionService {
             }
         }
         if (!selfCastTriggeredEffects.isEmpty()) {
-            // Targeted ON_SELF_CAST (e.g. Abundant Maw: "target opponent loses 3 life") chooses
-            // targets as the ability goes on the stack — reuse SpellTargetTriggerAnyTarget.
-            // Multi-target ("up to N target permanents", Elder Deep-Fiend) reuses the ETB
-            // multi-target slot walker with a null source permanent id.
-            boolean needsPlayerTarget = selfCastTriggeredEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean needsPermanentTarget = selfCastTriggeredEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            boolean needsGraveyardTarget = selfCastTriggeredEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-            if (needsGraveyardTarget && !needsPlayerTarget && !needsPermanentTarget) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects)));
-                log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
-            } else if (needsPlayerTarget || needsPermanentTarget) {
-                boolean multiTarget = spellCard.getSpellTargets().size() > 1
-                        || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
-                if (multiTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                            spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
-                            null, new ArrayList<>(), 0, 0));
-                    log.info("Game {} - {} self-cast multi-target trigger queued for {}",
-                            gameData.id, spellCard.getName(), castingPlayerId);
-                } else {
-                    boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
-                            playerTargetOnly, spellCard.getTargetFilter()));
-                    log.info("Game {} - {} self-cast targeting trigger queued for {}",
-                            gameData.id, spellCard.getName(), castingPlayerId);
-                }
-            } else {
-                // Carry the spell's X onto the trigger so "reveal the top X cards" (Genesis Hydra)
-                // sees the value locked in on cast (CR 601.2b); 0 for spells without {X}.
-                int selfCastX = 0;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
-                        selfCastX = se.getXValue();
-                        break;
-                    }
-                }
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+            if (selfCastTriggeredEffects.size() == 1
+                    && selfCastTriggeredEffects.getFirst() instanceof MayEffect may) {
+                gameData.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
                         spellCard,
                         castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(selfCastTriggeredEffects),
-                        selfCastX
-                ));
-                log.info("Game {} - {} self-cast trigger queued for {}",
+                        new ArrayList<>(List.of(may.wrapped())),
+                        spellCard.getName() + " — " + may.prompt(),
+                        null,
+                        null,
+                        spellCard.getId()));
+                log.info("Game {} - {} self-cast may trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
+            } else {
+                // Targeted ON_SELF_CAST (e.g. Abundant Maw: "target opponent loses 3 life") chooses
+                // targets as the ability goes on the stack — reuse SpellTargetTriggerAnyTarget.
+                // Multi-target ("up to N target permanents", Elder Deep-Fiend) reuses the ETB
+                // multi-target slot walker with a null source permanent id.
+                boolean needsPlayerTarget = selfCastTriggeredEffects.stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                boolean needsPermanentTarget = selfCastTriggeredEffects.stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                boolean needsGraveyardTarget = selfCastTriggeredEffects.stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                if (needsGraveyardTarget && !needsPlayerTarget && !needsPermanentTarget) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects)));
+                    log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
+                            gameData.id, spellCard.getName(), castingPlayerId);
+                } else if (needsPlayerTarget || needsPermanentTarget) {
+                    boolean multiTarget = spellCard.getSpellTargets().size() > 1
+                            || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
+                    if (multiTarget) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
+                                null, new ArrayList<>(), 0, 0));
+                        log.info("Game {} - {} self-cast multi-target trigger queued for {}",
+                                gameData.id, spellCard.getName(), castingPlayerId);
+                    } else {
+                        boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
+                                playerTargetOnly, spellCard.getTargetFilter()));
+                        log.info("Game {} - {} self-cast targeting trigger queued for {}",
+                                gameData.id, spellCard.getName(), castingPlayerId);
+                    }
+                } else {
+                    // Carry the spell's X onto the trigger so "reveal the top X cards" (Genesis Hydra)
+                    // sees the value locked in on cast (CR 601.2b); 0 for spells without {X}.
+                    int selfCastX = 0;
+                    for (StackEntry se : gameData.stack) {
+                        if (se.getCard().getId().equals(spellCard.getId())) {
+                            selfCastX = se.getXValue();
+                            break;
+                        }
+                    }
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(selfCastTriggeredEffects),
+                            selfCastX
+                    ));
+                    log.info("Game {} - {} self-cast trigger queued for {}",
+                            gameData.id, spellCard.getName(), castingPlayerId);
+                }
             }
         }
+
+        // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
 
         // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
         // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
@@ -769,6 +789,13 @@ public class TriggerCollectionService {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    private boolean isNthMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
+        long matchingSpells = gameData.getSpellsCastThisTurn(playerId).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, trigger.spellFilter(), null))
+                .count();
+        return matchingSpells == trigger.nthSpellNumber();
+    }
+
     private boolean isUnconditionalNonTargetingEmblemTrigger(SpellCastTriggerEffect trigger) {
         return trigger.spellFilter() == null
                 && trigger.manaCost() == null
@@ -777,6 +804,7 @@ public class TriggerCollectionService {
                 && !trigger.onlyDuringOpponentTurn()
                 && !trigger.onlyDuringControllerTurn()
                 && trigger.intervening() == null
+                && trigger.nthSpellNumber() == 0
                 && !trigger.resolvedEffects().isEmpty()
                 && trigger.resolvedEffects().stream()
                 .allMatch(effect -> effect.targetSpec().equals(TargetSpec.NONE));
@@ -1706,10 +1734,41 @@ public class TriggerCollectionService {
         // sacrifice-self / sacrifice-as-cost paths that funnel through this method.
         checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
+        checkOpponentNontokenPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+
         // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
         collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Fires triggers for permanents controlled by players other than the player who sacrificed the
+     * nontoken permanent. The sacrificed card is carried on the trigger so effects can still find
+     * it in its owner's graveyard when the ability resolves.
+     */
+    public void checkOpponentNontokenPermanentSacrificedTriggers(GameData gameData,
+                                                                  UUID sacrificingPlayerId,
+                                                                  Card sacrificedCard) {
+        if (sacrificedCard == null || sacrificedCard.isToken()) return;
+
+        var ctx = new TriggerContext.OpponentPermanentSacrificed(sacrificingPlayerId, sacrificedCard);
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(sacrificingPlayerId)) continue;
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+                    dispatch(match, EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED, effect, ctx);
+                }
+            }
+        }
     }
 
     /**
@@ -1803,6 +1862,7 @@ public class TriggerCollectionService {
                     collectAllyPermanentOrPlayerBecomesTargetOfOpponentTriggers(gameData, targetId, spellEntry);
                 }
                 if (targetedPlayers.add(targetId)) {
+                    collectControllerBecomesTargetOfSpellTriggers(gameData, targetId, spellEntry);
                     collectControllerBecomesTargetOfOpponentTriggers(gameData, targetId, spellEntry);
                 }
                 continue;
@@ -2275,6 +2335,40 @@ public class TriggerCollectionService {
                         "'s triggered ability triggers — counter unless controller pays {1}."));
                 log.info("Game {} - {} controller-target counter trigger queued", gameData.id,
                         source.getCard().getName());
+            }
+        }
+    }
+
+    private void collectControllerBecomesTargetOfSpellTriggers(
+            GameData gameData, UUID playerId, StackEntry triggeringEntry) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+                    EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL));
+            if (effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(source.getCard(), playerId, may, null, source.getId());
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(),
+                            playerId,
+                            source.getCard().getName() + "'s triggered ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            source.getId()
+                    ));
+                }
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                        "'s triggered ability triggers."));
+                log.info("Game {} - {} controller-becomes-target-of-spell trigger queued",
+                        gameData.id, source.getCard().getName());
             }
         }
     }

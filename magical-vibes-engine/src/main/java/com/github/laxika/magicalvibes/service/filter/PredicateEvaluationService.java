@@ -116,6 +116,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -503,8 +504,8 @@ public class PredicateEvaluationService {
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
             }
-            case PermanentHasNonManaActivatedAbilityPredicate ignored ->
-                    hasNonManaActivatedAbility(gameData, permanent);
+            case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
+                    hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
             case PermanentIsCreaturePredicate ignored -> {
@@ -601,6 +602,14 @@ public class PredicateEvaluationService {
                 }
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
                 yield host != null && gameQueryService.isLand(gameData, host);
+            }
+            case PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null
+                        || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                yield host != null && sourceControllerId.equals(gameData.findControllerOf(host));
             }
             case PermanentIsEnchantmentPredicate ignored -> {
                 if (gameData == null) {
@@ -1370,7 +1379,7 @@ public class PredicateEvaluationService {
      * needs the board (controlled-by-source, is-blocked) is a silent {@code false} — a wrong answer
      * dressed as a legitimate one.
      *
-     * <p>The context supplies the board shape and the source's identity, which four predicates
+     * <p>The context supplies the board shape and the source's identity, which some predicates
      * need to answer at all. It is deliberately <em>not</em> passed down to the characteristic
      * leaves: those stay on the recursion-safe path whether or not a {@code GameData} is at hand,
      * because having one is exactly what would let them re-enter the assembly.
@@ -1442,6 +1451,16 @@ public class PredicateEvaluationService {
             case PermanentIsFaceDownPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsHistoricPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsKindredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceControllerId = context == null ? null : context.sourceControllerId();
+                if (gameData == null || sourceControllerId == null
+                        || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                yield host != null && sourceControllerId.equals(gameData.findControllerOf(host));
+            }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 // Recursion-safe: attachment state is stored on the source snapshot, not derived
                 // through computeStaticBonus. Used by Vampirism-style "other than enchanted creature".
@@ -1739,9 +1758,10 @@ public class PredicateEvaluationService {
         return source == null ? null : source.getChosenColor();
     }
 
-    private boolean hasNonManaActivatedAbility(GameData gameData, Permanent permanent) {
+    private boolean hasNonManaActivatedAbility(GameData gameData, Permanent permanent, boolean levelUpOnly) {
         return effectiveActivatedAbilities(gameData, permanent).stream()
-                .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
+                .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability)
+                        && (!levelUpOnly || ability.isLevelUpAbility()));
     }
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {

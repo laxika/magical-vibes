@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionE
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerAndCreaturesDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -74,15 +76,18 @@ public class DamagePreventionService {
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
+    private final StaticEffectConditionResolver staticEffectConditionResolver;
 
     public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
-                                   DamagePreventionReplacementSupport damagePreventionReplacementSupport) {
+                                   DamagePreventionReplacementSupport damagePreventionReplacementSupport,
+                                   StaticEffectConditionResolver staticEffectConditionResolver) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
+        this.staticEffectConditionResolver = staticEffectConditionResolver;
     }
 
     public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
@@ -258,6 +263,11 @@ public class DamagePreventionService {
                 damage -= Math.min(damage, selfDamagePrevented);
                 if (damage <= 0) return 0;
             }
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                damage -= applyControllerAndCreaturesFixedPerSourceDamagePrevention(
+                        gameData, gameQueryService.findPermanentController(gameData, permanent.getId()), damage);
+                if (damage <= 0) return 0;
+            }
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
@@ -395,6 +405,30 @@ public class DamagePreventionService {
     }
 
     /**
+     * Applies fixed per-source prevention to a player's damage and to damage to that player's
+     * creatures. Conditional static effects are resolved against their carrying permanent so
+     * level counters and similar live conditions are evaluated at damage time.
+     */
+    private int applyControllerAndCreaturesFixedPerSourceDamagePrevention(
+            GameData gameData, UUID controllerId, int damage) {
+        if (controllerId == null || damage <= 0) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+
+        int reduction = 0;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                CardEffect resolved = staticEffectConditionResolver.resolve(
+                        gameData, source, controllerId, effect);
+                if (resolved instanceof ControllerAndCreaturesDamagePreventionEffect prevention) {
+                    reduction += prevention.amount();
+                }
+            }
+        }
+        return Math.min(damage, reduction);
+    }
+
+    /**
      * Vigor-style protection: returns true when the given creature's controller controls some other
      * permanent (i.e. not the creature itself — "another creature you control") carrying
      * {@link PreventDamageToOtherCreaturesAndAddPlusCountersEffect}. Such damage is fully prevented and
@@ -498,6 +532,8 @@ public class DamagePreventionService {
         if (gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.contains(playerId)) return 0;
         // Gisela, Blade of Goldnight: prevent half the damage dealt to her controller, rounded up.
         damage = applyHalfDamagePrevention(gameData, playerId, damage);
+        if (damage <= 0) return 0;
+        damage -= applyControllerAndCreaturesFixedPerSourceDamagePrevention(gameData, playerId, damage);
         if (damage <= 0) return 0;
         // Process redirect shields first (e.g. Vengeful Archon)
         damage = applyRedirectShields(gameData, playerId, damage);

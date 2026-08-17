@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -764,6 +766,37 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (become a copy of it)",
                 match.gameData().id, match.permanent().getCard().getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * Renegade Doppelganger: "Whenever another creature you control enters, you may have this
+     * creature become a copy of that creature until end of turn." The copy effect is already
+     * temporary and does not retain the source's ability, so accepting the may choice also models
+     * the parenthetical loss of the ability for the rest of the turn.
+     */
+    @CollectsTrigger(value = BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyBecomeCopyOfEnteringUntilEndOfTurn(TriggerMatchContext match,
+            BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        MayEffect may = new MayEffect(
+                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
+                "Have " + sourceCard.getName() + " become a copy of "
+                        + pe.enteringCard().getName() + " until end of turn?");
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (may become a copy until end of turn)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 

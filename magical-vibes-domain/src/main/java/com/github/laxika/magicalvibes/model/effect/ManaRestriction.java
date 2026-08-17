@@ -137,6 +137,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Colorless mana spendable only to cast colorless spells or activate abilities of the given subtype. */
+    record ColorlessSubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSubtypeSpellOrAbilityMana(subtype, amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless " + subtype + " spells or abilities only";
+        }
+    }
+
     /**
      * Mana spendable only to cast creature spells of the given subtype (Gnarlroot Trapper: "Add
      * {G}. Spend this mana only to cast an Elf creature spell."). Routes into the per-subtype

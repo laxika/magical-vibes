@@ -64,6 +64,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsAttackingSourceControllerPredicate,
         PermanentIsAuraAttachedToCreaturePredicate,
         PermanentIsAuraAttachedToLandPredicate,
+        PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate,
         PermanentIsAuraAttachedToSourcePredicate,
         PermanentIsBattlePredicate,
         PermanentIsColorlessPredicate,

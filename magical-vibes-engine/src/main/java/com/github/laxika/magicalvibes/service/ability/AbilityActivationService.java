@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
@@ -2415,7 +2416,7 @@ public class AbilityActivationService {
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
+            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
                     ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
@@ -3391,7 +3392,7 @@ public class AbilityActivationService {
             }
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
+            Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent);
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
             boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
@@ -4199,6 +4200,14 @@ public class AbilityActivationService {
         return subtypes;
     }
 
+    private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> subtypes = effectiveSubtypes(permanent);
+        if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
+            subtypes.remove(CardSubtype.ELDRAZI);
+        }
+        return subtypes;
+    }
+
     private ManaPool copyManaPool(ManaPool manaPool) {
         return manaPool instanceof VirtualManaPool virtualManaPool
                 ? new VirtualManaPool(virtualManaPool)
@@ -4857,7 +4866,13 @@ public class AbilityActivationService {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
                             && (lock.blocksManaAbilities() || !manaAbility)) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, p.getId());
+                        FilterContext filterContext = FilterContext.of(gameData)
+                                .withSourceCardId(p.getCard().getId())
+                                .withSourceControllerId(sourceControllerId)
+                                .withSourcePermanentId(p.getId());
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, lock.predicate(), filterContext)) {
                             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
                                     + " can't be activated (" + p.getCard().getName() + ")");
                         }

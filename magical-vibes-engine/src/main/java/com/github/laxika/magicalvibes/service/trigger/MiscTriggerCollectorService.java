@@ -295,6 +295,27 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    private boolean handleOpponentNontokenPermanentSacrificed(TriggerMatchContext match,
+                                                               CardEffect effect,
+                                                               TriggerContext ctx) {
+        TriggerContext.OpponentPermanentSacrificed sacrificed =
+                (TriggerContext.OpponentPermanentSacrificed) ctx;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringCardId(sacrificed.sacrificedCard().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     // ── ON_ENCHANTED_PERMANENT_TAPPED ──────────────────────────────────
 
     @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)

@@ -30,6 +30,8 @@ public enum PreventionScope {
     NEXT_TO_EACH_CREATURE_AND_PLAYER,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
+    /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */
+    ALL_COMBAT_BY_ATTACKING_CREATURES,
     /** "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). */
     ALL_COMBAT_TO_PLAYERS,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */

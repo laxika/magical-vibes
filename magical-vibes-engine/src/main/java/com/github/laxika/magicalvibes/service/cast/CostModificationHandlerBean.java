@@ -53,12 +53,20 @@ public interface CostModificationHandlerBean {
     }
 
     /**
-     * Returns a colored-only mana-cost reduction for this occurrence, or {@code null} when the
-     * handler does not provide one. The default keeps ordinary generic cost handlers unchanged.
+     * Returns a colored mana-cost reduction for this occurrence, or {@code null} when the handler
+     * does not provide one. The default keeps ordinary generic cost handlers unchanged.
      */
     default ManaCost coloredManaCostReduction(CostModificationContext context, CardEffect effect,
                                               CostModificationSource source) {
         return null;
+    }
+
+    /**
+     * Whether a colored reduction may reduce generic mana after matching colored components are
+     * exhausted. Ordinary colored-only reductions such as Ragemonger's default to false.
+     */
+    default boolean coloredReductionCanReduceGeneric() {
+        return false;
     }
 
     /**

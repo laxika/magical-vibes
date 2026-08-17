@@ -601,6 +601,8 @@ public class LibraryChoiceHandlerService {
             java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
             List<Card> remainingMatches = deck.stream()
                     .filter(c -> !excluded.contains(c.getName()))
+                    .filter(c -> filterPredicate == null || predicateEvaluationService.matchesCardPredicate(
+                            c, filterPredicate, null, gameData, deckOwnerId))
                     .toList();
             if (remainingCount > 1 && !remainingMatches.isEmpty()) {
                 int newRemaining = remainingCount - 1;
@@ -610,6 +612,7 @@ public class LibraryChoiceHandlerService {
                                 .reveals(true)
                                 .canFailToFind(true)
                                 .destination(LibrarySearchDestination.GIFTS_UNGIVEN_POOL)
+                                .filterPredicate(filterPredicate)
                                 .requireDifferentNames(true)
                                 .accumulatedCards(accumulatedCards)
                                 .excludedCardNames(excludedCardNames)

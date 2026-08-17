@@ -476,6 +476,12 @@ public class PlayerInteractionSupport {
                 declineFallbackDiscardCount, false, false);
     }
 
+    public void resolveHandRevealAndChooseToShuffleIntoLibrary(GameData gameData, StackEntry entry,
+                                                               int count) {
+        resolveHandRevealAndChoose(gameData, entry, count, List.of(), List.of(), null,
+                false, false, null, false, false, 0, false, true, true);
+    }
+
     private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId,
@@ -483,16 +489,31 @@ public class PlayerInteractionSupport {
                                              int declineFallbackDiscardCount, boolean imprintOnSource,
                                              boolean revealHand) {
 
+        resolveHandRevealAndChoose(gameData, entry, count, excludedTypes, includedTypes, filter,
+                discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
+                declineFallbackDiscardCount, imprintOnSource, revealHand, false);
+    }
+
+    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                             CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId,
+                                             boolean optional, boolean exileAllCopiesOfChosenNames,
+                                             int declineFallbackDiscardCount, boolean imprintOnSource,
+                                             boolean revealHand, boolean shuffleIntoLibraryMode) {
+
         boolean effectiveOptional = optional || declineFallbackDiscardCount > 0;
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
-        String actionVerb = exileMode ? "exile" : "discard";
+        String actionVerb = exileMode ? "exile"
+                : shuffleIntoLibraryMode ? "shuffle into their library" : "discard";
 
         if (hand == null || hand.isEmpty()) {
-            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            String logEntry = revealHand
+                    ? targetName + " reveals their hand. It is empty."
+                    : casterName + " looks at " + targetName + "'s hand. It is empty.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
@@ -548,6 +569,9 @@ public class PlayerInteractionSupport {
                     .orElse("card");
             choicePrompt = (choiceOptional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
                     + " card to " + actionVerb + ".";
+        } else if (shuffleIntoLibraryMode) {
+            choicePrompt = (choiceOptional ? "You may choose a card to " : "Choose a card to ")
+                    + actionVerb + ".";
         } else {
             choicePrompt = (choiceOptional ? "You may choose a nonland card to " : "Choose a nonland card to ")
                     + actionVerb + ".";
@@ -557,7 +581,7 @@ public class PlayerInteractionSupport {
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
-                imprintOnSource));
+                imprintOnSource, shuffleIntoLibraryMode));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);

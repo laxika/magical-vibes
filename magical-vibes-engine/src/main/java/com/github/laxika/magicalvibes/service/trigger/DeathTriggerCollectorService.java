@@ -2308,13 +2308,17 @@ public class DeathTriggerCollectorService {
                     match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     sl.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect))
-            ));
+                    new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(),
+                    List.of()
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            match.gameData().stack.add(entry);
         }
         logSelfLeaves(match);
         return true;

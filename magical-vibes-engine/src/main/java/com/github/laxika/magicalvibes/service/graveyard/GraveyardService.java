@@ -33,7 +33,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
-import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
+import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
@@ -47,9 +48,11 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -70,6 +73,7 @@ public class GraveyardService {
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final PermanentRemovalService permanentRemovalService;
     // @Lazy to break indirect circular dependency:
     // GraveyardService → TriggerCollectionService → PermanentRemovalService → GraveyardService
     private TriggerCollectionService triggerCollectionService;
@@ -80,11 +84,24 @@ public class GraveyardService {
                             PredicateEvaluationService predicateEvaluationService,
                             PermanentCounterSupport permanentCounterSupport,
                             @Lazy TriggerCollectionService triggerCollectionService) {
+        this(gameQueryService, gameLogService, exileService, predicateEvaluationService,
+                permanentCounterSupport, null, triggerCollectionService);
+    }
+
+    @Autowired
+    public GraveyardService(GameQueryService gameQueryService,
+                            GameLogService gameLogService,
+                            ExileService exileService,
+                            PredicateEvaluationService predicateEvaluationService,
+                            PermanentCounterSupport permanentCounterSupport,
+                            @Lazy PermanentRemovalService permanentRemovalService,
+                            @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
+        this.permanentRemovalService = permanentRemovalService;
         this.triggerCollectionService = triggerCollectionService;
     }
 
@@ -622,14 +639,21 @@ public class GraveyardService {
 
 
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
-        if (perm.isCantRegenerateThisTurn() || damagedByRegenerationDenyingSource(gameData, perm)) {
+        return tryReplaceDestruction(gameData, perm, true);
+    }
+
+    public boolean tryReplaceDestruction(GameData gameData, Permanent perm, boolean allowRegeneration) {
+        Permanent umbraArmor = findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR);
+        if (umbraArmor != null) {
+            performUmbraArmorReplacement(gameData, perm, umbraArmor);
+            return true;
+        }
+        if (!allowRegeneration || perm.isCantRegenerateThisTurn()
+                || damagedByRegenerationDenyingSource(gameData, perm)) {
             return false;
         }
-        // Always-on intrinsic regeneration ("If this creature would be destroyed, regenerate it")
-        // — regenerates every time without consuming a shield.
-        boolean intrinsicRegen = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(RegeneratesIfWouldBeDestroyedEffect.class::isInstance);
-        if (intrinsicRegen) {
+        Permanent intrinsicRegen = findDestructionReplacementSource(gameData, perm, DestructionReplacement.REGENERATE);
+        if (intrinsicRegen != null) {
             performRegeneration(gameData, perm);
             return true;
         }
@@ -643,6 +667,36 @@ public class GraveyardService {
             return true;
         }
         return false;
+    }
+
+    private Permanent findDestructionReplacementSource(GameData gameData, Permanent destroyedPermanent,
+                                                       DestructionReplacement replacement) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent source : battlefield) {
+                boolean applies = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(DestructionReplacementEffect.class::isInstance)
+                        .map(DestructionReplacementEffect.class::cast)
+                        .anyMatch(effect -> effect.replacement() == replacement
+                                && effect.appliesTo(source, destroyedPermanent));
+                if (!applies) {
+                    applies = gameQueryService.computeStaticBonus(gameData, source).grantedEffects().stream()
+                            .filter(DestructionReplacementEffect.class::isInstance)
+                            .map(DestructionReplacementEffect.class::cast)
+                            .anyMatch(effect -> effect.replacement() == replacement
+                                    && effect.appliesTo(source, destroyedPermanent));
+                }
+                if (applies) {
+                    return source;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void performUmbraArmorReplacement(GameData gameData, Permanent protectedPermanent, Permanent aura) {
+        protectedPermanent.setMarkedDamage(0);
+        protectedPermanent.setDamagedByDeathtouch(false);
+        permanentRemovalService.tryDestroyPermanent(gameData, aura);
     }
 
     /**

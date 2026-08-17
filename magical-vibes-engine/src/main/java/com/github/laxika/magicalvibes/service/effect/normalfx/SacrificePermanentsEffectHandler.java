@@ -115,6 +115,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
         if (isSacrificeProtected(gameData, entry, playerId)) {
+            if (e.recordSacrificedCount() && !creatureSingleSac) {
+                entry.setEventValue(0);
+            }
             return;
         }
 
@@ -125,6 +128,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         int count = evaluateCount(gameData, entry, e, playerId);
         if (count <= 0) {
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(0);
+            }
             // A dynamic count can evaluate to zero ("for each creature put into your graveyard this
             // turn" with no deaths) — nothing is sacrificed and no choice is prompted.
             return;
@@ -132,6 +138,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || battlefield.isEmpty()) {
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(0);
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no permanents to sacrifice.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -145,6 +154,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .toList();
 
         if (matching.isEmpty()) {
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(0);
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no matching permanents to sacrifice.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -156,6 +168,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             // Sacrifice all matching — no choice needed
             for (Permanent perm : matching) {
                 destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+            }
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(matching.size());
             }
         } else {
             // More matching permanents than required — prompt player to choose

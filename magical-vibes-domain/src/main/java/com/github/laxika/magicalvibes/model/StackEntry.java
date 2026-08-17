@@ -159,6 +159,10 @@ public class StackEntry {
     @Setter private UUID sacrificedCardId;
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
+    /** Effective power of the permanent sacrificed as an additional cost, when snapshotted. */
+    @Setter private int sacrificedPower;
+    /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
+    @Setter private int sacrificedToughness;
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -497,6 +501,8 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
+        this.sacrificedPower = source.sacrificedPower;
+        this.sacrificedToughness = source.sacrificedToughness;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;

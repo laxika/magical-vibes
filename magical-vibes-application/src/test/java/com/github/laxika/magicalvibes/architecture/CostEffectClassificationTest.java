@@ -103,6 +103,7 @@ class CostEffectClassificationTest {
             "RepeatableAdditionalManaCost",
             "BeholdCost",
             "BeholdAndExileCost",
+            "RevealCardFromHandCost",
             "DelveCost");
 
     private static final String EFFECT_PKG_PATH =

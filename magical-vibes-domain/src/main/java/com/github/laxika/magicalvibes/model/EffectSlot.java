@@ -147,6 +147,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
+    /** Triggers whenever an opponent sacrifices a nontoken permanent. */
+    ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
     /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
      *  sacrifices a creature"). Fires on every permanent with this slot across all battlefields, once
      *  per sacrificed creature (last-known info decides creature-ness). The trigger belongs to the
@@ -168,6 +170,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (pair with {@code DrawCardEffect}). */
     ON_BECOMES_TARGET_OF_AURA_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+    /** Triggers when this permanent's controller becomes the target of a spell. */
+    ON_CONTROLLER_BECOMES_TARGET_OF_SPELL,
     /** Triggers when the controller of a permanent with this slot becomes the target of a spell or
      * ability controlled by an opponent. The targeted player is not a permanent, so this is checked
      * from the player-target paths in {@code TriggerCollectionService}. */
