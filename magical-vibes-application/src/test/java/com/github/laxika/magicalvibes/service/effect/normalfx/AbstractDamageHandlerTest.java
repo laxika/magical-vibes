@@ -67,6 +67,7 @@ abstract class AbstractDamageHandlerTest {
         amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any())).thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any(), any())).thenReturn(1);
         lenient().when(gameQueryService.getPermanentDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getSourceDamageMultiplier(eq(gd), any(), any(Permanent.class))).thenReturn(1);
         lenient().when(gameQueryService.hasProtectionFromDamageSource(

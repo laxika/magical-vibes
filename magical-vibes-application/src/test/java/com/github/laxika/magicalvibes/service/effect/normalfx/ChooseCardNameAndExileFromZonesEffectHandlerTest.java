@@ -22,7 +22,9 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
         resolveEffect(gd, entry, effect);
 
-        verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(CardType.LAND), null);
+        verify(playerInputService).beginSpellCardNameChoice(
+                gd, player1Id, player2Id, List.of(CardType.LAND), null,
+                Integer.MAX_VALUE, false, false, null, card.getSetCode());
     }
 
     @Test
@@ -34,7 +36,9 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
         resolveEffect(gd, entry, effect);
 
-        verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(), CardType.ARTIFACT);
+        verify(playerInputService).beginSpellCardNameChoice(
+                gd, player1Id, player2Id, List.of(), CardType.ARTIFACT,
+                Integer.MAX_VALUE, false, false, null, card.getSetCode());
     }
 
     @Test
@@ -49,7 +53,7 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
         verify(playerInputService).beginSpellCardNameChoice(
                 gd, player1Id, player2Id, List.of(CardType.ARTIFACT, CardType.LAND), null,
-                Integer.MAX_VALUE, true);
+                Integer.MAX_VALUE, true, false, null, card.getSetCode());
     }
 
     @Test
@@ -62,6 +66,8 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
         resolveEffect(gd, entry, effect);
 
-        verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(), null, 4, true);
+        verify(playerInputService).beginSpellCardNameChoice(
+                gd, player1Id, player2Id, List.of(), null,
+                4, true, false, null, card.getSetCode());
     }
 }

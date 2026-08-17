@@ -27,9 +27,11 @@ class NiambiEsteemedSpeakerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, hillGiant.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, hillGiant.getId());
 
         harness.assertInHand(player1, "Hill Giant");
         harness.assertOnBattlefield(player1, "Niambi, Esteemed Speaker");
@@ -39,11 +41,14 @@ class NiambiEsteemedSpeakerTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the ETB leaves the creature and life total unchanged")
     void decliningEtbDoesNothing() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLife(player1, 20);
         castNiambi();
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

@@ -218,9 +218,9 @@ class MayCastHandlerServiceTest {
             gd.playerBattlefields.get(PLAYER1_ID).add(artifact);
             gd.playerBattlefields.get(PLAYER1_ID).add(creature);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact), any(), any()))
                     .thenReturn(true);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(creature), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), any(), any()))
                     .thenReturn(false);
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
@@ -280,7 +280,7 @@ class MayCastHandlerServiceTest {
             Permanent artifact = new Permanent(createArtifact("Sol Ring"));
             gd.playerBattlefields.get(PLAYER1_ID).add(artifact);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact), any(), any()))
                     .thenReturn(true);
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);

@@ -70,6 +70,13 @@ public interface CostModificationHandlerBean {
     }
 
     /**
+     * Effect-aware form used by wrapper handlers such as conditional cost modifiers.
+     */
+    default boolean coloredReductionCanReduceGeneric(CardEffect effect) {
+        return coloredReductionCanReduceGeneric();
+    }
+
+    /**
      * Returns a signed generic-mana delta for an optional buyback cost. Ordinary cast-cost
      * modifiers do not affect buyback costs unless they override this method.
      */

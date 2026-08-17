@@ -32,4 +32,9 @@ public class ReduceOwnCastCostByManaCostEffectHandler implements CostModificatio
                                              CostModificationSource source) {
         return ((ReduceOwnCastCostByManaCostEffect) effect).reduction();
     }
+
+    @Override
+    public boolean coloredReductionCanReduceGeneric() {
+        return true;
+    }
 }

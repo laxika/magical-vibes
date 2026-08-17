@@ -234,7 +234,6 @@ public class CombatDamageService {
         // marked damage + deathtouch flags on creatures, life loss on the player, loyalty on
         // planeswalkers. Nothing dies here — the state-based action check below is the single
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
-        int stackSizeBeforeDamageTriggers = gameData.stack.size();
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
@@ -329,6 +328,10 @@ public class CombatDamageService {
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
+        // Death triggers were already collected by the SBA pass above. They must remain on the
+        // stack for normal priority rather than being folded into the engine's auto-resolved
+        // combat-damage trigger batch below.
+        int stackSizeBeforeDamageTriggers = gameData.stack.size();
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);

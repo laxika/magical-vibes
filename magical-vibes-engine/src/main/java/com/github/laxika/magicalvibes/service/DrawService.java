@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -1206,6 +1207,12 @@ public class DrawService {
                             .text(".")
                             .build());
                     effect = firstDraw.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
+                if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                     if (effect == null) {
                         continue;
                     }

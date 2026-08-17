@@ -241,7 +241,7 @@ public class CastingCostService {
                 ManaCost reduction = handler.coloredManaCostReduction(
                         context, effect, CostModificationSource.SPELL_ITSELF);
                 if (reduction != null) {
-                    effectiveCost = handler.coloredReductionCanReduceGeneric()
+                    effectiveCost = handler.coloredReductionCanReduceGeneric(effect)
                             ? effectiveCost.reducedBy(reduction)
                             : effectiveCost.reducedByColoredOnly(reduction);
                 }
@@ -251,7 +251,7 @@ public class CastingCostService {
             ManaCost reduction = modifier.handler().coloredManaCostReduction(
                     context, modifier.effect(), modifier.source());
             if (reduction != null) {
-                effectiveCost = modifier.handler().coloredReductionCanReduceGeneric()
+                effectiveCost = modifier.handler().coloredReductionCanReduceGeneric(modifier.effect())
                         ? effectiveCost.reducedBy(reduction)
                         : effectiveCost.reducedByColoredOnly(reduction);
             }

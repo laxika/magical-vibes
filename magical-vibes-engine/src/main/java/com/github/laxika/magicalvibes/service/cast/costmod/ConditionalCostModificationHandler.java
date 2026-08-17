@@ -60,4 +60,11 @@ public class ConditionalCostModificationHandler implements CostModificationHandl
                 conditional.wrapped());
         return handler == null ? null : handler.coloredManaCostReduction(context, conditional.wrapped(), source);
     }
+
+    @Override
+    public boolean coloredReductionCanReduceGeneric(CardEffect effect) {
+        CardEffect wrapped = ((ConditionalEffect) effect).wrapped();
+        CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(wrapped);
+        return handler != null && handler.coloredReductionCanReduceGeneric(wrapped);
+    }
 }

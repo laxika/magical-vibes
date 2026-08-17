@@ -302,6 +302,17 @@ public class StepTriggerService {
                 }
                 Card source = emblem.sourceCard();
                 String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                boolean needsGraveyardTarget = upkeepTrigger.effects().stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                if (needsGraveyardTarget) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            source, emblem.controllerId(), new ArrayList<>(upkeepTrigger.effects())));
+                    gameLogService.append(gameData, GameLog.text(
+                            description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
+                    log.info("Game {} - {} {} emblem trigger queued for graveyard target selection",
+                            gameData.id, description, step);
+                    continue;
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
                         new ArrayList<>(upkeepTrigger.effects()),
@@ -624,6 +635,10 @@ public class StepTriggerService {
         if (battlefield == null) return;
 
         for (Permanent perm : battlefield) {
+            int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                    + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    gameData, activePlayerId, perm));
+            try {
             List<CardEffect> upkeepEffects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
             upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
             upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
@@ -1142,6 +1157,9 @@ public class StepTriggerService {
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                     log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
+            }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         }
 
@@ -2431,6 +2449,10 @@ public class StepTriggerService {
         }
 
         for (Permanent perm : battlefield) {
+            int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                    + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    gameData, activePlayerId, perm));
+            try {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
             if (effects == null || effects.isEmpty()) {
                 continue;
@@ -2475,6 +2497,9 @@ public class StepTriggerService {
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} precombat main trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
         }
     }
 
@@ -4411,6 +4436,8 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleBeginningOfCombatTriggers(GameData gameData) {
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
+
         UUID activePlayerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield != null) {
@@ -4444,6 +4471,11 @@ public class StepTriggerService {
         }
 
         if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }
 
@@ -4521,12 +4553,18 @@ public class StepTriggerService {
             }
         }
 
+        int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                gameData, controllerId, perm));
+        try {
         List<CardEffect> mayEffects = combatEffects.stream()
-                .filter(e -> e instanceof MayEffect)
+                .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
-            if (effect instanceof MayEffect) {
+            // Targets are chosen when a triggered ability is put on the stack, before the
+            // resolution-time may choice. Keep targeted MayEffects in the targeting flow.
+            if (effect instanceof MayEffect && effect.targetSpec() == TargetSpec.NONE) {
                 continue;
             }
             // Intervening-if (CR 603.4): AllOf / ControlsPermanentCount /
@@ -4607,6 +4645,9 @@ public class StepTriggerService {
                     GameLog.cardThen(perm.getCard(), "'s beginning of combat ability triggers."));
             log.info("Game {} - {} beginning-of-combat trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
+        }
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
     }
 

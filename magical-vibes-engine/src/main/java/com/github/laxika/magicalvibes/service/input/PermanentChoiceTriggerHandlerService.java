@@ -1333,7 +1333,9 @@ public class PermanentChoiceTriggerHandlerService {
                 null,
                 efg.sourcePermanentId());
         entry.setTargetId(targetId);
-            pushTriggeredEntry(gameData, entry);
+        entry.setChosenPermanentId(efg.chosenPermanentId());
+        entry.setTriggeringPermanentPowerAtTrigger(efg.chosenPermanentPowerAtTrigger());
+        pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);
         

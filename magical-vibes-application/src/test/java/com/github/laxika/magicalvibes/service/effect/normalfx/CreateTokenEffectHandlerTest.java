@@ -88,8 +88,10 @@ class CreateTokenEffectHandlerTest {
         StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, source, playerId, "Investigate",
                 List.of(effect), 0);
 
-        when(amountEvaluationService.evaluate(eq(gd), org.mockito.ArgumentMatchers.any(),
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.amount()),
                 org.mockito.ArgumentMatchers.any())).thenReturn(1);
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.power()),
+                org.mockito.ArgumentMatchers.any())).thenReturn(0);
         when(permanentControlSupport.applyCreateToken(eq(gd), eq(playerId), eq(effect), eq(1), eq("SOI"), eq(0), eq(0)))
                 .thenReturn(List.of());
 

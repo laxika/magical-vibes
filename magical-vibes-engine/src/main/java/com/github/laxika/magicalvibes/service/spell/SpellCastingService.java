@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.CastingCost;
+import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
@@ -1333,10 +1334,16 @@ public class SpellCastingService {
                 // Allow — sacrifice cost reduction will be validated during casting
             } else {
                 boolean playableWithTargetingReduction = false;
+                Permanent targetingReductionTarget = targetId != null
+                        ? gameQueryService.findPermanentById(gameData, targetId)
+                        : null;
                 if (targetId != null
-                        && gameQueryService.findPermanentById(gameData, targetId) != null) {
+                        && cardCheck.getTargetFilter() != null
+                        && (targetingReductionTarget != null || gameData.playerIds.contains(targetId))) {
                     targetLegalityService.validateSpellTargeting(
                             gameData, cardCheck, targetId, null, playerId, true);
+                }
+                if (targetingReductionTarget != null) {
                     int targetingCostModifier = castingCostService.getTargetingSpellCostModifier(
                             gameData, playerId, targetId, targetIds);
                     if (targetingCostModifier < 0) {
@@ -1638,7 +1645,7 @@ public class SpellCastingService {
         int targetingTax = castingCostService.getTargetingSpellCostModifier(gameData, playerId, targetId, targetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
-        if (targetingLifeTax > gameData.getLife(playerId)) {
+        if (targetingLifeTax > 0 && targetingLifeTax > gameData.getLife(playerId)) {
             throw new IllegalStateException("Not enough life to pay the targeting life cost");
         }
         int selectedDelveReduction = additionalSpellCostService.delveReduction(
@@ -4247,13 +4254,21 @@ public class SpellCastingService {
         additionalCost += castingCostService.getTargetingSpellCostModifier(gameData, playerId, targetId, targetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
-        if (targetingLifeTax > gameData.getLife(playerId)) {
+        if (targetingLifeTax > 0 && targetingLifeTax > gameData.getLife(playerId)) {
             throw new IllegalStateException("Not enough life to pay the targeting life cost");
+        }
+        if (isGraveyardCast) {
+            validateGraveyardCastAdditionalCosts(gameData, playerId, graveyardCastOpt.orElseThrow(),
+                    retraceDiscardHandCardIndex);
         }
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedGraveyardCardCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
                 isGraveyardCast, isRetrace, isDisturb, isGrantedCyclingGraveyardCast, isMayCastTopInstantOrSorcery,
                 effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
+        if (isGraveyardCast) {
+            payGraveyardCastAdditionalCosts(gameData, player, card, graveyardCastOpt.orElseThrow(),
+                    retraceDiscardHandCardIndex);
+        }
         payTargetingLifeCost(gameData, player, card, targetingLifeTax);
         payRemoveCountersFromControlledCreaturesCost(
                 gameData, player, card, graveyardCounterCost, additionalCostSacrificePermanentIds);
@@ -4964,7 +4979,7 @@ public class SpellCastingService {
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, card);
         if (card.hasType(CardType.LAND)) {
             if (!freeTopPlay && !castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId)) {
-                throw new IllegalStateException("No effect allowing play of lands from library top");
+                throw new IllegalStateException("Card is not playable: no effect allowing play of lands from library top");
             }
             if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
                 throw new IllegalStateException("Card is not playable");
@@ -4996,9 +5011,8 @@ public class SpellCastingService {
         }
 
         // Verify the player can cast from top of library
-        Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
-        if (!freeTopPlay && castableTypes.isEmpty()) {
-            throw new IllegalStateException("No effect allowing cast from library top");
+        if (!freeTopPlay && !castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, card)) {
+            throw new IllegalStateException("Top card is not castable from library");
         }
 
         effectiveXValue = freeTopPlay ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
@@ -6091,6 +6105,48 @@ public class SpellCastingService {
                 .text(".")
                 .build());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
+    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId,
+                                                       GraveyardCast graveyardCast,
+                                                       Integer discardHandCardIndex) {
+        graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
+            if (gameData.getLife(playerId) < lifeCost.amount()) {
+                throw new IllegalStateException("Not enough life to pay graveyard cast cost");
+            }
+        });
+        if (graveyardCast.getCost(DiscardCardCastingCost.class).isPresent()) {
+            List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+            if (discardHandCardIndex == null
+                    || discardHandCardIndex < 0
+                    || discardHandCardIndex >= hand.size()) {
+                throw new IllegalStateException("Must discard a card to cast from the graveyard");
+            }
+        }
+    }
+
+    private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
+                                                  GraveyardCast graveyardCast,
+                                                  Integer discardHandCardIndex) {
+        UUID playerId = player.getId();
+        graveyardCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
+            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeCost.amount());
+            gameData.lifeLostThisTurn.merge(playerId, lifeCost.amount(), Integer::sum);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + lifeCost.amount() + " life for ", card, "."));
+        });
+        if (graveyardCast.getCost(DiscardCardCastingCost.class).isPresent()) {
+            Card discarded = gameData.playerHands.get(playerId).remove((int) discardHandCardIndex);
+            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " discards ")
+                    .card(discarded)
+                    .text(" to cast ")
+                    .card(card)
+                    .text(" from the graveyard.")
+                    .build());
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        }
     }
 
     private int payFlashbackOrGraveyardCastCost(GameData gameData, Player player, Card card,
