@@ -77,6 +77,22 @@ class GameSimulatorTest {
     }
 
     @Test
+    @DisplayName("Auto-resolving a library reveal honors a zero maximum")
+    void autoResolvesLibraryRevealWithZeroMaximum() {
+        Card eligible = new GrizzlyBears();
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player2.getId(), List.of(eligible), List.of(eligible.getId()), false, false,
+                false, true, false, 0, null, 0, "Choose up to zero cards."));
+
+        simulator.applyAction(gd, player1.getId(), new SimulationAction.PassPriority());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).contains(eligible);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() == eligible);
+    }
+
+    @Test
     @DisplayName("Legal actions exclude requiresCreatureMana card when only land mana available")
     void legalActionsExcludeCreatureManaCardWithLandMana() {
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));

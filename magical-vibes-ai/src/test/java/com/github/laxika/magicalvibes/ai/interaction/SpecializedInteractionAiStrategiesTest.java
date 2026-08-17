@@ -93,6 +93,20 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void libraryRevealRespectsZeroMaximum() throws Exception {
+        UUID validCardId = UUID.randomUUID();
+
+        new LibraryRevealChoiceAiStrategy().answer(
+                new PendingInteraction.LibraryRevealChoice(
+                        aiPlayerId, List.of(), List.of(validCardId), false, false,
+                        false, false, false, 0, null, 0, "Choose up to zero cards."),
+                context);
+
+        assertThat(capturedAnswer())
+                .isEqualTo(new InteractionAnswer.CardsChosen(List.of()));
+    }
+
+    @Test
     void brilliantUltimatumPileStrategiesProduceLegalAnswers() throws Exception {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();

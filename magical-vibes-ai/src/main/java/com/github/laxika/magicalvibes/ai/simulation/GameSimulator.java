@@ -940,8 +940,9 @@ public class GameSimulator {
                         // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
                         gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.CardsChosen(List.of()));
                     } else {
-                        // Normal library reveal: choose all valid cards
-                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.CardsChosen(new ArrayList<>(lrc.validCardIds())));
+                        // Normal library reveal: choose as many valid cards as the interaction allows.
+                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.CardsChosen(
+                                lrc.validCardIds().stream().limit(Math.max(0, lrc.maxCount())).toList()));
                     }
                 }
             }
