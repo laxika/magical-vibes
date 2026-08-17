@@ -17,12 +17,14 @@ class NightSoilTest extends BaseCardTest {
 
     @Test
     void exilesTwoCreatureCardsFromOpponentGraveyardAndCreatesSaproling() {
-        harness.addToBattlefield(player1, new NightSoil());
+        var nightSoil = harness.addToBattlefieldAndReturn(player1, new NightSoil());
         GrizzlyBears bears = new GrizzlyBears();
         LlanowarElves elves = new LlanowarElves();
         harness.setGraveyard(player2, List.of(bears, elves));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        assertThat(gs.canActivateAbility(gd, player1.getId(), nightSoil, 0,
+                gd.playerManaPools.get(player1.getId()))).isTrue();
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction())
@@ -37,13 +39,15 @@ class NightSoilTest extends BaseCardTest {
 
     @Test
     void requiresBothCardsToComeFromTheSameGraveyard() {
-        harness.addToBattlefield(player1, new NightSoil());
+        var nightSoil = harness.addToBattlefieldAndReturn(player1, new NightSoil());
         GrizzlyBears opponentCreature = new GrizzlyBears();
         LlanowarElves controllerCreature = new LlanowarElves();
         harness.setGraveyard(player1, List.of(controllerCreature));
         harness.setGraveyard(player2, List.of(opponentCreature));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        assertThat(gs.canActivateAbility(gd, player1.getId(), nightSoil, 0,
+                gd.playerManaPools.get(player1.getId()))).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("single graveyard");

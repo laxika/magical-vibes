@@ -3634,6 +3634,16 @@ public class AbilityActivationService {
             }
         }
 
+        ExileNCardsFromSingleGraveyardCost exileSingleGraveyardCost = abilityEffects.stream()
+                .filter(ExileNCardsFromSingleGraveyardCost.class::isInstance)
+                .map(ExileNCardsFromSingleGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileSingleGraveyardCost != null
+                && collectAnySingleGraveyardExileCandidates(gameData, exileSingleGraveyardCost).isEmpty()) {
+            throw new IllegalStateException("Not enough matching cards in a single graveyard to exile");
+        }
+
         ExileXCardsFromGraveyardCost exileXGraveyardCost = abilityEffects.stream()
                 .filter(ExileXCardsFromGraveyardCost.class::isInstance)
                 .map(ExileXCardsFromGraveyardCost.class::cast)
