@@ -252,6 +252,25 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Top-of-library kind moves the permanent to its owner's library")
+        void topOfLibraryKindMovesToLibrary() {
+            Permanent perm = addPermanent(player1Id, createCreature("Library Bound Creature"));
+            gd.playerDecks.put(player1Id, new ArrayList<>());
+            gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
+            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
+
+            prs.processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(perm.getOriginalCard());
+            verify(gameLogService).append(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText()
+                            .equals("Library Bound Creature is put on top of its owner's library.")));
+        }
+
+        @Test
         @DisplayName("Destroy kind goes through regeneration and logs nothing when the permanent survives")
         void destroyKindRespectsRegeneration() {
             Permanent perm = addPermanent(player1Id, createCreature("Doomed Creature"));

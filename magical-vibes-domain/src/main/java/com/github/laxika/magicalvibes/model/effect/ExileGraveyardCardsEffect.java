@@ -22,8 +22,7 @@ import java.util.UUID;
  *                         graveyard" flavour — Rag Dealer; unused for the whole-graveyard scopes).
  *                         Kept as an int — no live card uses a dynamic count here.
  * @param scope            which graveyard(s) are affected and how targets are chosen
- * @param filter           for TARGET_CARDS_ANY_GRAVEYARD only: an optional type restriction on the
- *                         targeted card (null = any card)
+ * @param filter           optional type restriction on the cards to exile (null = any card)
  * @param affectedPlayerId for OWN only: the player who must exile cards, baked in at trigger time
  *                         (e.g. the enchanted player for Curse of Oblivion); null = the controller
  */

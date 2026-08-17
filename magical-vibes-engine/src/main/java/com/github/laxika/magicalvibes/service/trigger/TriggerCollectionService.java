@@ -4735,6 +4735,11 @@ public class TriggerCollectionService {
                         resolved, ctx);
             }
 
+            if (!dyingCard.isToken()) {
+                dispatchSlot(gameData, perm, playerId,
+                        EffectSlot.ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            }
+
             if (playerId.equals(graveyardOwnerId) && !dyingCard.isToken()) {
                 for (CardEffect effect : perm.getCard().getEffects(
                         EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {

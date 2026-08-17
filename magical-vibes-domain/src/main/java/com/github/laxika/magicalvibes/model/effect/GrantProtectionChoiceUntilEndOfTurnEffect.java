@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Elements) — every creature the controller controls that matches {@code filter}, determined on
  * resolution. {@code filter} is only meaningful there; {@code null} means "each creature you
  * control".
+ * Scope {@link GrantScope#ALL_CREATURES} is the untargeted global form; it applies the chosen
+ * protection to every creature on the battlefield.
  */
 public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts,
                                                         boolean targetControllerChooses,
@@ -29,9 +31,10 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
                                                         PermanentPredicate filter) implements CardEffect {
 
     public GrantProtectionChoiceUntilEndOfTurnEffect {
-        if (scope != GrantScope.TARGET && scope != GrantScope.SELF && scope != GrantScope.OWN_CREATURES) {
+        if (scope != GrantScope.TARGET && scope != GrantScope.SELF && scope != GrantScope.OWN_CREATURES
+                && scope != GrantScope.ALL_CREATURES) {
             throw new IllegalArgumentException(
-                    "GrantProtectionChoiceUntilEndOfTurnEffect supports only TARGET, SELF and OWN_CREATURES, got "
+                    "GrantProtectionChoiceUntilEndOfTurnEffect supports only TARGET, SELF, OWN_CREATURES and ALL_CREATURES, got "
                             + scope);
         }
         if (filter != null && scope != GrantScope.OWN_CREATURES) {

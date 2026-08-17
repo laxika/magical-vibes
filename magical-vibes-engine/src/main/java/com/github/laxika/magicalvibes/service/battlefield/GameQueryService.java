@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalBlockLifeCostEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalBlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
@@ -154,6 +155,7 @@ import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffec
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -4773,6 +4775,13 @@ public class GameQueryService {
                 }
             }
         });
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
+                if (floatingEffect.effect() instanceof GlobalBlockCostEffect tax) {
+                    total[0] += tax.blockCostPerCreature();
+                }
+            }
+        }
         return total[0];
     }
 
@@ -5642,6 +5651,9 @@ public class GameQueryService {
         if (isCombatDamage && gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())) {
             return true;
         }
+        if (isCombatDamage && isAllCombatDamageByControlledCreaturePrevented(gameData, creature)) {
+            return true;
+        }
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null
                 && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, gameData.combatDamageExemptPredicate)) {
             return true;
@@ -5700,6 +5712,34 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns whether a permanent controlled by the creature's controller prevents all combat damage
+     * to that creature. Control is checked when damage is dealt, so the effect covers creatures that
+     * enter later and follows control changes.
+     */
+    public boolean isAllCombatDamageToControlledCreaturePrevented(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        return controllerId != null && hasCombatDamageToAndByCreaturePrevention(gameData, controllerId);
+    }
+
+    /**
+     * Returns whether a permanent controlled by the creature's controller prevents all combat damage
+     * dealt by that creature. Control is checked when damage is dealt, so the effect follows control
+     * changes.
+     */
+    public boolean isAllCombatDamageByControlledCreaturePrevented(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        return controllerId != null && hasCombatDamageToAndByCreaturePrevention(gameData, controllerId);
+    }
+
+    private boolean hasCombatDamageToAndByCreaturePrevention(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(PreventAllCombatDamageToAndByCreaturesYouControlEffect.class::isInstance);
     }
 
     /**

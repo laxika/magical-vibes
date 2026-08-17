@@ -46,6 +46,8 @@ import java.util.UUID;
  * Balance only; the list is empty when the flow has no sacrifice half).
  * {@code grimReminderSearch} carries the selected card name's life-loss amount for Grim Reminder's
  * reveal-only search.
+ * {@code remainingEachPlayerLandToBattlefieldSearches} is the APNAP remainder of an opponent land
+ * search flow (Hired Giant).
  */
 public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
                                     List<UUID> remainingEachPlayerBasicLandSearches,
@@ -62,7 +64,8 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<ToHandPick> remainingToHandPicks,
                                     List<Integer> remainingInstantManaValueToHandPicks,
                                     BasicLandSearchQueue basicLandSearchQueue,
-                                    GrimReminderSearch grimReminderSearch) {
+                                    GrimReminderSearch grimReminderSearch,
+                                    List<UUID> remainingEachPlayerLandToBattlefieldSearches) {
 
     /** Completion data for Grim Reminder's reveal-only library search. */
     public record GrimReminderSearch(int lifeLoss) {
@@ -213,6 +216,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         remainingInstantManaValueToHandPicks = remainingInstantManaValueToHandPicks == null
                 ? null
                 : List.copyOf(remainingInstantManaValueToHandPicks);
+        remainingEachPlayerLandToBattlefieldSearches = List.copyOf(remainingEachPlayerLandToBattlefieldSearches);
     }
 
     /** Backward-compatible constructor for follow-ups that do not use targeted top searches. */
@@ -236,7 +240,32 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 remainingEachPlayerToHandSearches, eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
                 remainingEachPlayerCreatureToBattlefieldSearches, List.of(), secondBoundedPick,
                 remainingSameNamePicks, remainingToHandPicks, remainingInstantManaValueToHandPicks,
-                basicLandSearchQueue, grimReminderSearch);
+                basicLandSearchQueue, grimReminderSearch, List.of());
+    }
+
+    /** Backward-compatible constructor for the pre-Hired Giant follow-up shape. */
+    public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
+                                 List<UUID> remainingEachPlayerBasicLandSearches,
+                                 boolean eachPlayerSearchTapped,
+                                 PendingOpponentExileChoice opponentExileChoice,
+                                 UUID imprintSourcePermanentId,
+                                 List<UUID> remainingEachPlayerToHandSearches,
+                                 int eachPlayerToHandCount,
+                                 boolean eachPlayerToHandCreatureOnly,
+                                 List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
+                                 List<UUID> remainingTargetPlayerTopSearches,
+                                 SecondBoundedPick secondBoundedPick,
+                                 SameNamePickQueue remainingSameNamePicks,
+                                 List<ToHandPick> remainingToHandPicks,
+                                 List<Integer> remainingInstantManaValueToHandPicks,
+                                 BasicLandSearchQueue basicLandSearchQueue,
+                                 GrimReminderSearch grimReminderSearch) {
+        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
+                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
+                remainingEachPlayerToHandSearches, eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
+                remainingEachPlayerCreatureToBattlefieldSearches, remainingTargetPlayerTopSearches,
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
+                remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch, List.of());
     }
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
@@ -312,6 +341,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp eachPlayerCreatureToBattlefield(List<UUID> remainingSearchers) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, remainingSearchers,
                 null, null, List.of(), null, null, null);
+    }
+
+    public static LibrarySearchFollowUp eachPlayerLandToBattlefield(List<UUID> remainingSearchers) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(),
+                List.of(), null, null, List.of(), null, null, null, remainingSearchers);
     }
 
     /** The remaining targeted players in a multi-player search-to-top effect. */
@@ -408,6 +442,17 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 imprintSourcePermanentId, remainingEachPlayerToHandSearches,
                 eachPlayerToHandCount, eachPlayerToHandCreatureOnly, remaining, secondBoundedPick, remainingSameNamePicks,
                 remainingToHandPicks, remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
+    }
+
+    /** The same follow-up with the opponent land-search remainder advanced past the current searcher. */
+    public LibrarySearchFollowUp withRemainingEachPlayerLandToBattlefieldSearches(List<UUID> remaining) {
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
+                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+                imprintSourcePermanentId, remainingEachPlayerToHandSearches,
+                eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
+                remainingEachPlayerCreatureToBattlefieldSearches, remainingTargetPlayerTopSearches,
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
+                remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch, remaining);
     }
 
     /** The same follow-up with the targeted top-search remainder advanced past the current player. */

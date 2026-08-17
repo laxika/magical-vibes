@@ -112,7 +112,8 @@ public enum CounterType {
     WAGE,
     FLYING,
     FIRST_STRIKE,
-    LIFELINK;
+    LIFELINK,
+    WINCH;
 
     public Keyword grantedKeyword() {
         return switch (this) {

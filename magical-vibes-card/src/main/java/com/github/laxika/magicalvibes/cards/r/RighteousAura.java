@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSource
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "20")
+@CardRegistration(set = "MMQ", collectorNumber = "45")
 public class RighteousAura extends Card {
 
     public RighteousAura() {

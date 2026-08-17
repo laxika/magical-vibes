@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -1090,6 +1091,11 @@ public class ActivatedAbilityExecutionService {
                 permanent.setReturnToHandAtNextUntap(true);
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " will return to its owner's hand during its controller's next untap step."));
+            } else if (effect instanceof SacrificeSelfEffect
+                    && permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
+                permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);

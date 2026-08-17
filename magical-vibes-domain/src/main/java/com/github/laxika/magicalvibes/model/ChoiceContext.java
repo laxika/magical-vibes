@@ -233,6 +233,9 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Assembly Hall: choose the name of a creature card currently in your hand to reveal. */
+    record AssemblyHallCreatureCardChoice(UUID controllerId) implements ChoiceContext {}
+
     /**
      * First half of Mindblaze: the controller picks a card name. The answer chains into
      * {@link RevealLibraryNumberGuessChoice}, which asks for the number.
@@ -304,6 +307,9 @@ public sealed interface ChoiceContext {
 
     /** Choosing a color at resolution for a spell with no permanent to store it on. */
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
+
+    /** Choosing a card type at resolution for a spell with no permanent to store it on. */
+    record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
     record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}

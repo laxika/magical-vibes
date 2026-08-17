@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.condition.AllNonartifactCreaturesShareColor;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -58,6 +60,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasNoLandCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
@@ -135,6 +138,7 @@ import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
+import com.github.laxika.magicalvibes.model.condition.DidntPlayLandThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -212,6 +216,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
@@ -430,6 +435,10 @@ public class ConditionEvaluationService {
                                     .noneMatch(e -> ctx.sourcePermanentId().equals(e.sourcePermanentId()));
             case ControllerHandEmpty ignored ->
                     countCardsInHand(gameData, ctx.controllerId()) == 0;
+            case ControllerHasNoLandCardsInHand ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playerHands.getOrDefault(ctx.controllerId(), List.of()).stream()
+                            .noneMatch(card -> card.hasType(CardType.LAND));
             case ControllerHadNoCardsInHandAtTurnStart ignored ->
                     ctx.controllerId() != null
                             && gameData.handSizeAtTurnStart.getOrDefault(ctx.controllerId(), -1) == 0;
@@ -508,6 +517,9 @@ public class ConditionEvaluationService {
             case DidntActivateLoyaltyAbilityThisTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersWhoActivatedLoyaltyAbilityThisTurn.contains(ctx.controllerId());
+            case DidntPlayLandThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.landsPlayedThisTurn.getOrDefault(ctx.controllerId(), 0) == 0;
             case DealtDamageByRedSpellThisTurn ignored ->
                     gameData.lastRedSpellDamagerThisTurn.containsKey(ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
@@ -767,6 +779,8 @@ public class ConditionEvaluationService {
             }
             case ColorMostCommonAmongAllPermanents c ->
                     ColorMostCommonAmongAllPermanents.isMostCommon(gameData, c.color());
+            case AllNonartifactCreaturesShareColor ignored ->
+                    allNonartifactCreaturesShareColor(gameData);
             case CardsLeftGraveyardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseCardsLeftGraveyardThisTurn.contains(ctx.controllerId());
@@ -917,6 +931,41 @@ public class ConditionEvaluationService {
             }
         }
         return count;
+    }
+
+    private boolean allNonartifactCreaturesShareColor(GameData gameData) {
+        Set<CardColor> sharedColors = EnumSet.allOf(CardColor.class);
+        boolean foundCreature = false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!isCreatureForCondition(gameData, permanent)
+                        || isArtifactForCondition(gameData, permanent)) {
+                    continue;
+                }
+                foundCreature = true;
+                Set<CardColor> colors = effectiveColorsForCondition(gameData, permanent);
+                if (colors.isEmpty()) return false;
+                sharedColors.retainAll(colors);
+                if (sharedColors.isEmpty()) return false;
+            }
+        }
+        return foundCreature && !sharedColors.isEmpty();
+    }
+
+    private boolean isArtifactForCondition(GameData gameData, Permanent permanent) {
+        return GameQueryService.isStaticEvaluationActive()
+                ? predicateEvaluationService.matchesStaticLeaf(permanent, ARTIFACT_FILTER)
+                : gameQueryService.isArtifact(gameData, permanent);
+    }
+
+    private Set<CardColor> effectiveColorsForCondition(GameData gameData, Permanent permanent) {
+        if (GameQueryService.isStaticEvaluationActive()) {
+            CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+            if (state != null) return state.getColors();
+        }
+        return gameQueryService.getEffectiveColors(gameData, permanent);
     }
 
     private boolean controlsMoreCreaturesThanOpponent(GameData gameData, ConditionContext ctx) {

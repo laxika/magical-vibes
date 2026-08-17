@@ -376,6 +376,7 @@ public class StackResolutionService {
         }
 
         Permanent perm = createEnteringPermanent(entry, card, disturbCharacteristics(entry, card));
+        perm.setChosenSubtype(entry.getBeholdChosenSubtype());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
         // (castFromZone already set in createEnteringPermanent)

@@ -1413,7 +1413,8 @@ public class SpellCastTriggerCollectorService {
         if (trigger.onlyDuringControllerTurn()
                 && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
 
-        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(),
+                match.permanent().getOriginalCard().getId(),
                 match.gameData(), castingPlayerId)) return false;
 
         if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(match.gameData(), trigger, castingPlayerId)) {

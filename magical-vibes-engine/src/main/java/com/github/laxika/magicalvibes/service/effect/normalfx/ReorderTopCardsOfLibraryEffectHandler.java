@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +47,8 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         boolean ownLibrary = deckOwnerId.equals(controllerId);
         String libraryOf = ownLibrary ? "their library" : gameData.playerIdToName.get(deckOwnerId) + "'s library";
 
-        int count = Math.min(reorder.count(), deck.size());
+        int count = Math.min(amountEvaluationService.evaluate(gameData, reorder.count(),
+                AmountContext.forStackEntry(entry, null)), deck.size());
         if (count == 0) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ownLibrary
                     ? ": library is empty, nothing to reorder."

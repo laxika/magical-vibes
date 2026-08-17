@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayingShieldDamageReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CrumblingSanctuaryDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -950,6 +951,9 @@ public class DamageSupport {
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
         processSourceRedirectDamage(gameData);
+        rawDamage = damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
+                gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+        processSourceRedirectDamage(gameData);
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         rawDamage = damagePreventionService.applyReflectDamageToSourceControllerShield(
                 gameData, entry.getSourcePermanentId(), rawDamage);
@@ -1049,6 +1053,14 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.cardThen(source,
                         "'s " + lichReplaced + " damage to " + gameData.playerIdToName.get(playerId)
                                 + " is replaced by Nefarious Lich."));
+            }
+
+            int crumblingSanctuaryReplaced = applyCrumblingSanctuaryReplacement(gameData, playerId, effectiveDamage);
+            if (crumblingSanctuaryReplaced > 0) {
+                effectiveDamage -= crumblingSanctuaryReplaced;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + crumblingSanctuaryReplaced + " damage to " + gameData.playerIdToName.get(playerId)
+                                + " is replaced by Crumbling Sanctuary."));
             }
 
             // Immortal Coil: prevent all remaining damage to the controller and exile a card from
@@ -1573,6 +1585,31 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
                         + " can't exile enough cards from their graveyard and loses the game."));
                 gameOutcomeService.declareWinner(gameData, winnerId);
+            }
+        }
+        return damage;
+    }
+
+    /**
+     * Replaces damage to any player while Crumbling Sanctuary is on the battlefield with exiling
+     * cards from that player's library. The replacement removes the whole damage event, even when
+     * the library contains fewer cards than the damage amount.
+     */
+    public int applyCrumblingSanctuaryReplacement(GameData gameData, UUID playerId, int damage) {
+        if (damage <= 0) return 0;
+
+        boolean hasEffect = gameData.playerBattlefields.values().stream()
+                .flatMap(Collection::stream)
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(CrumblingSanctuaryDamageReplacementEffect.class::isInstance));
+        if (!hasEffect) return 0;
+
+        List<Card> library = gameData.playerDecks.get(playerId);
+        int exiled = 0;
+        if (library != null) {
+            while (exiled < damage && !library.isEmpty()) {
+                gameData.addToExile(playerId, library.removeFirst());
+                exiled++;
             }
         }
         return damage;

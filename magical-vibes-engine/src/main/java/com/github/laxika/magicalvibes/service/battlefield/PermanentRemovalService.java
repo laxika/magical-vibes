@@ -598,6 +598,7 @@ public class PermanentRemovalService {
                     }
                 }
                 case RETURN_TO_HAND -> removePermanentToHand(gameData, perm);
+                case PUT_ON_TOP_OF_LIBRARY -> removePermanentToLibraryTop(gameData, perm);
                 case DESTROY -> {
                     if (!tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
                         continue;

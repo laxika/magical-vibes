@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -120,6 +121,7 @@ public class AdditionalSpellCostService {
             EscalateManaCost.class,
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
+            ChooseCreatureTypeCost.class,
             BeholdAndExileCost.class,
             BeholdCost.class,
             DelveCost.class,
@@ -168,7 +170,8 @@ public class AdditionalSpellCostService {
             BeholdAndExileCost beholdCost,
             BeholdCost beholdSelectionCost,
             DelveCost delveCost,
-            RevealCardFromHandCost revealCardCost
+            RevealCardFromHandCost revealCardCost,
+            ChooseCreatureTypeCost chooseCreatureTypeCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
@@ -188,7 +191,7 @@ public class AdditionalSpellCostService {
                     || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
-                    || revealCardCost != null;
+                    || revealCardCost != null || chooseCreatureTypeCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -324,6 +327,7 @@ public class AdditionalSpellCostService {
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
+        ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
         return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay, permCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, returnAnyNumberCost,
@@ -332,7 +336,8 @@ public class AdditionalSpellCostService {
                 payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
                 discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
-                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost);
+                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
+                chooseCreatureTypeCost);
     }
 
     /**
@@ -479,6 +484,7 @@ public class AdditionalSpellCostService {
                 case PayXLifeCost ignored -> { }
                 // Choosing X consumes no resource and is always satisfiable within its declared range.
                 case ChooseXValueCost ignored -> { }
+                case ChooseCreatureTypeCost ignored -> { }
                 // A fixed life payment is only legal while the life total covers it (CR 119.4).
                 case PayLifeCost cost -> {
                     if (!lifeAndSacAllowed) return false;
@@ -743,6 +749,16 @@ public class AdditionalSpellCostService {
         }
         if (costs.beholdSelectionCost() != null && costs.beholdSelectionCost().chosenCreatureType()) {
             validateBeholdCost(gameData, player, card, costs.beholdSelectionCost(), selection);
+        }
+        if (costs.chooseCreatureTypeCost() != null) {
+            validateChooseCreatureTypeCost(gameData, card, selection.beholdChosenSubtype());
+        }
+    }
+
+    /** Validates the creature subtype chosen as an additional cast cost. */
+    public void validateChooseCreatureTypeCost(GameData gameData, Card card, CardSubtype chosenSubtype) {
+        if (chosenSubtype == null || !gameQueryService.isCreatureSubtype(chosenSubtype)) {
+            throw new IllegalStateException("Choose a creature type to cast " + card.getName());
         }
     }
 

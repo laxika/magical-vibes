@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -39,9 +40,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CardViewFactory {
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = Set.of(
+            CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND, CardSubtype.PLAINS,
+            CardSubtype.SWAMP, CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.AJANI,
+            CardSubtype.KOTH, CardSubtype.BOLAS);
 
     /**
      * Creates a CardView with additional granted subtypes merged in.
@@ -105,6 +112,14 @@ public class CardViewFactory {
                 .map(ChooseXValueCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        boolean chooseCreatureTypeCost = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureTypeCost.class::isInstance);
+        List<String> creatureTypeChoices = chooseCreatureTypeCost
+                ? java.util.Arrays.stream(CardSubtype.values())
+                .filter(subtype -> !NON_CREATURE_SUBTYPES.contains(subtype))
+                .map(CardSubtype::getDisplayName)
+                .toList()
+                : List.of();
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
@@ -208,6 +223,8 @@ public class CardViewFactory {
                 modalEffect != null && modalEffect.optional(),
                 modalOptions,
                 0,
+                chooseCreatureTypeCost,
+                creatureTypeChoices,
                 prepareSpellView);
     }
 

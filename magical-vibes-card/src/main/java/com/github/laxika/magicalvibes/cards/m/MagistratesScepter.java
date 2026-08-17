@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "238")
+@CardRegistration(set = "MMQ", collectorNumber = "304")
 public class MagistratesScepter extends Card {
 
     public MagistratesScepter() {

@@ -112,6 +112,12 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
+    void resolveForPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
+            UUID playerId) {
+        resolveSinglePlayer(gameData, entry, effect, playerId,
+                effect.filter() instanceof PermanentIsCreaturePredicate);
+    }
+
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
         if (isSacrificeProtected(gameData, entry, playerId)) {

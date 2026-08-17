@@ -176,6 +176,8 @@ public class Card {
      * "target Merfolk", where a Merfolk satisfies both).
      */
     private boolean allowSharedTargets;
+    /** Whether this card's targeted attack trigger is chosen by the defending player. */
+    private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
      * Optional cross-target restriction on the whole set of chosen targets (e.g. Rivals' Duel's
      * "two target creatures that share no creature types"), checked at announcement in addition
@@ -312,6 +314,7 @@ public class Card {
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
+        this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
         this.effectTargetIndexMap.putAll(source.effectTargetIndexMap);
@@ -419,6 +422,10 @@ public class Card {
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
     public void setAdditionalLifeCostPerTarget(int additionalLifeCostPerTarget) { assertMutable(); this.additionalLifeCostPerTarget = additionalLifeCostPerTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setAttackTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
+        assertMutable();
+        this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
+    }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }

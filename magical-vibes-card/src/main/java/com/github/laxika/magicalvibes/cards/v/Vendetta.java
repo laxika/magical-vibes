@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "130")
+@CardRegistration(set = "MMQ", collectorNumber = "170")
 public class Vendetta extends Card {
 
     public Vendetta() {

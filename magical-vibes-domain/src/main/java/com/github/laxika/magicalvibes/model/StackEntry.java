@@ -172,7 +172,7 @@ public class StackEntry {
     @Setter private UUID triggeringPermanentId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
-    /** Power and toughness of the entering permanent when an evolve trigger was created. */
+    /** Power and toughness captured for a permanent when its trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;
     @Setter private Integer triggeringPermanentToughnessAtTrigger;
     private List<UUID> targetIds;

@@ -93,6 +93,7 @@ on what the mana may pay for.
 | Buyback with life and random discard | `f/FlowstoneFlood.java` | STATIC `new BuybackEffect(new PayLifeCost(3), 1, true)` + SPELL `ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell())`; the random discard is paid automatically from hand when buyback is announced |
 | Buyback with a sacrifice cost | `c/ConstantMists.java` | STATIC `new BuybackEffect(new PermanentIsLandPredicate(), "a land")` + the same `BuybackPaid` return effect; pass the chosen permanent through `sacrificePermanentId` when announcing buyback |
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
+| Each creature deals its power to itself | `w/WaveOfReckoning.java` | `EachCreatureDealsPowerDamageToItselfEffect()` — non-targeting; each creature is its own damage source |
 | Remove all counters + exile all tokens | `a/AetherSnap.java` | SPELL `RemoveAllCountersFromAllPermanentsEffect` followed by `ExileAllPermanentsEffect(PermanentIsTokenPredicate)` |
 | Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |
 | Modal charm (mixed targeting / non-targeting modes) | `b/BorosCharm.java` | ChooseOneEffect with a player-or-planeswalker damage mode (`DealDamageToTargetPlayerOrPlaneswalkerEffect` + `PermanentPredicateTargetFilter(PermanentIsPlaneswalkerPredicate)`), a non-targeting `GrantKeywordEffect(INDESTRUCTIBLE, OWN_PERMANENTS)` mode, and a `GrantKeywordEffect(DOUBLE_STRIKE, TARGET)` creature mode. Test with `castInstant(player, idx, modeIndex, targetId)` (null target for the non-targeting mode) |
@@ -180,6 +181,7 @@ on what the mana may pay for.
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |
+| Each other player may draw up to N | `i/IndenturedDjinn.java` | ON_ENTER_BATTLEFIELD `EachOtherPlayerMayDrawUpToNCardsEffect(N)` — each other player chooses independently in APNAP order |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
 | Library selection (N to hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1) |
 | Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 2) + DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER) |

@@ -203,6 +203,9 @@ export interface Card {
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;
+  /** A mandatory creature-type choice made as an additional cast cost. */
+  additionalChooseCreatureType?: boolean;
+  additionalCreatureTypeChoices?: string[];
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;

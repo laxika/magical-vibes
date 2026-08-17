@@ -264,6 +264,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record RedirectCreatureDamageSourceChoice(UUID controllerId, UUID protectedCreatureId, UUID redirectTargetId,
                                               boolean nextEventOnly) implements PermanentChoiceContext {}
 
+    /** "The next time a source of your choice would deal damage to you this turn, that damage is dealt
+     *  to target creature you control instead." Chooses the source permanent; the target creature is
+     *  stored as the redirect destination. */
+    record RedirectPlayerDamageSourceChoice(UUID controllerId, UUID redirectTargetId) implements PermanentChoiceContext {}
+
     record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) implements PermanentChoiceContext {}
 
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage."
@@ -323,7 +328,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record RedirectNextDamageFromChosenSourceToPermanentChoice(UUID controllerId, UUID destinationPermanentId)
             implements PermanentChoiceContext {}
 
-    record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** A targeted attack trigger. {@code choosingPlayerId} defaults to the ability controller and
+     *  differs only for text such as Erithizon's "of defending player's choice". */
+    record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                               UUID sourcePermanentId, UUID choosingPlayerId) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId);
+        }
+    }
 
     /** Remembers the attack target for each token entering tapped and attacking. */
     record CreateTokensAttacking(UUID controllerId, Card sourceCard,

@@ -1211,6 +1211,31 @@ public class CombatDamageService {
                             continue;
                         }
                     }
+                    if (may.wrapped() instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
+                        if (damageDealt < destroyEffect.minimumDamage()) {
+                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                    "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
+                                            + " damage dealt."));
+                            continue;
+                        }
+                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                        boolean hasValidTargets = false;
+                        if (defenderBf != null) {
+                            for (Permanent p : defenderBf) {
+                                if (destroyEffect.predicate() == null
+                                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, destroyEffect.predicate())) {
+                                    hasValidTargets = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasValidTargets) {
+                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                                    "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
+                                            + " has no valid targets."));
+                            continue;
+                        }
+                    }
                     // Wire the combat damage dealt as the event value for dynamic combat-damage
                     // amounts, such as "draw that many cards" or "deal that much damage".
                     int mayEventValue = readsCombatDamage(may.wrapped()) ? damageDealt : 0;
@@ -2258,6 +2283,10 @@ public class CombatDamageService {
         if (lichReplaced) {
             state.damageToDefendingPlayer = 0;
             state.poisonDamageToDefendingPlayer = 0;
+        } else if (damageSupport.applyCrumblingSanctuaryReplacement(gameData, defenderId,
+                state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0) {
+            state.damageToDefendingPlayer = 0;
+            state.poisonDamageToDefendingPlayer = 0;
         } else {
         // Immortal Coil: prevent all combat damage to its controller and exile a card from their
         // graveyard for each 1 damage prevented (before any infect conversion, so it never becomes poison).
@@ -2579,6 +2608,9 @@ public class CombatDamageService {
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            damage = damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
+                    gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
             // Soltari Guerrillas: this attacker's next combat damage to an opponent goes to a creature instead.
             UUID atkController = gameQueryService.findPermanentController(gameData, atk.getId());

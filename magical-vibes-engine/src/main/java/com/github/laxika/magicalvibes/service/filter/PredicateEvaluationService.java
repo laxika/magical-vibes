@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -297,6 +298,14 @@ public class PredicateEvaluationService {
                 yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)
                         || (gameQueryService.isCreatureSubtype(source.getChosenSubtype())
                         && card.getKeywords().contains(Keyword.CHANGELING));
+            }
+            case CardHasSourceChosenColorPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                CardColor chosenColor = source == null ? null : source.getChosenColor();
+                yield chosenColor != null && card.getColors().contains(chosenColor);
             }
             case CardKeywordPredicate p ->
                     card.getKeywords().contains(p.keyword());
@@ -1211,10 +1220,10 @@ public class PredicateEvaluationService {
                 yield foundOther[0];
             }
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
-                if (gameData == null || sourceCardId == null) {
-                    yield false;
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
-                Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 CardSubtype chosenSubtype = sourcePermanent == null ? null : sourcePermanent.getChosenSubtype();
                 yield chosenSubtype != null
                         && matchesPermanentPredicate(permanent, new PermanentHasSubtypePredicate(chosenSubtype), filterContext);
@@ -1228,11 +1237,14 @@ public class PredicateEvaluationService {
                 yield chosenName != null && chosenName.equals(effectiveName(permanent, filterContext));
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
-                if (gameData == null || sourceCardId == null) {
+                Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && sourceCardId != null) {
+                    sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                }
+                if (sourcePermanent == null) {
                     yield false;
                 }
-                Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
-                CardColor chosenColor = sourcePermanent == null ? null : sourcePermanent.getChosenColor();
+                CardColor chosenColor = sourcePermanent.getChosenColor();
                 yield chosenColor != null
                         && matchesPermanentPredicate(permanent,
                                 new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);

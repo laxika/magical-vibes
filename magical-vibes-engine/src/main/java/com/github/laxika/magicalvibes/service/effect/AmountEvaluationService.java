@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsIn
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
+import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
@@ -379,6 +380,8 @@ public class AmountEvaluationService {
                     topCardOfLibraryManaValue(gameData, ctx);
             case EnchantedPermanentManaValue ignored ->
                     enchantedPermanentManaValue(gameData, ctx);
+            case EnchantedPermanentPower ignored ->
+                    enchantedPermanentPower(gameData, ctx);
             case TargetSpellManaValue ignored ->
                     targetSpellManaValue(gameData, ctx);
             case TargetSpellPower ignored ->
@@ -489,6 +492,19 @@ public class AmountEvaluationService {
         if (source == null || source.getAttachedTo() == null) return 0;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
         return enchanted == null ? 0 : enchanted.getCard().getManaValue();
+    }
+
+    /** Effective power of the permanent the source Aura enchants; 0 if there is none. */
+    private int enchantedPermanentPower(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source != null && source.getAttachedTo() != null) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+            if (enchanted != null) {
+                return Math.max(0, gameQueryService.getEffectivePower(gameData, enchanted));
+            }
+        }
+        Integer lastKnownPower = ctx.triggeringPermanentPowerAtTrigger();
+        return lastKnownPower == null ? 0 : Math.max(0, lastKnownPower);
     }
 
     /** Mana value of the targeted spell on the stack (Refuse); 0 if it has already left. */
@@ -1285,14 +1301,24 @@ public class AmountEvaluationService {
      */
     private UUID defendingPlayerId(GameData gameData, AmountContext ctx) {
         Permanent source = ctx.sourcePermanent();
-        if (source == null || !source.isAttacking() || source.getAttackTarget() == null) {
+        if (source != null) {
+            if (!source.isAttacking() || source.getAttackTarget() == null) {
+                return null;
+            }
+            UUID attackTarget = source.getAttackTarget();
+            if (gameData.orderedPlayerIds.contains(attackTarget)) {
+                return attackTarget;
+            }
+            // Attacking a planeswalker: the defending player is that planeswalker's controller.
+            return gameQueryService.findPermanentController(gameData, attackTarget);
+        }
+
+        // A resolving spell has no source permanent. In the two-player combat model, the
+        // defending player is the opponent of the active (attacking) player.
+        if (gameData.currentStep == null || !gameData.currentStep.isCombatPhase()
+                || gameData.activePlayerId == null || gameData.orderedPlayerIds.size() != 2) {
             return null;
         }
-        UUID attackTarget = source.getAttackTarget();
-        if (gameData.orderedPlayerIds.contains(attackTarget)) {
-            return attackTarget;
-        }
-        // Attacking a planeswalker: the defending player is that planeswalker's controller.
-        return gameQueryService.findPermanentController(gameData, attackTarget);
+        return gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
     }
 }

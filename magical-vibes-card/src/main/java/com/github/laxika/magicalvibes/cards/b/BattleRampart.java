@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "135")
+@CardRegistration(set = "MMQ", collectorNumber = "173")
 public class BattleRampart extends Card {
 
     public BattleRampart() {

@@ -175,6 +175,34 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Starts the next pending "each opponent may search for a land card to battlefield" search
+     * from the follow-up's remaining-searchers list. Each searcher may take one land card, which
+     * enters untapped, then shuffles.
+     */
+    public boolean startNextEachPlayerLandToBattlefieldSearch(GameData gameData,
+                                                               LibrarySearchFollowUp followUp) {
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerLandToBattlefieldSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            boolean started = performLibrarySearch(
+                    gameData,
+                    nextPlayerId,
+                    card -> card.hasType(CardType.LAND),
+                    "land cards",
+                    "You may search your library for a land card and put it onto the battlefield.",
+                    false,
+                    true,
+                    LibrarySearchDestination.BATTLEFIELD,
+                    followUp.withRemainingEachPlayerLandToBattlefieldSearches(remaining)
+            );
+            if (started) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Starts the next targeted player's mandatory unrestricted search for a card to put on top of
      * their library. Players whose searches cannot start are skipped, while the remaining players
      * continue through the shared library-search interaction flow.

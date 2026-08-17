@@ -364,6 +364,19 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Processes top-of-library moves when leaving END_OF_COMBAT")
+        void processesTopOfLibraryMoves() {
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(),
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
+
+            turnProgressionService.advanceStep(gd);
+
+            verify(combatService).processEndOfCombatLibraryTucks(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        }
+
+        @Test
         @DisplayName("Clears priority passed after processing end-of-combat sacrifices")
         void clearsPriorityAfterSacrifices() {
             gd.currentStep = TurnStep.END_OF_COMBAT;

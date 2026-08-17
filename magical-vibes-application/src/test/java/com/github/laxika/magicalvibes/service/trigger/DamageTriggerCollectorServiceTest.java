@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
@@ -555,6 +556,27 @@ class DamageTriggerCollectorServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("ON_DEALT_DAMAGE binds the source controller for control gain")
+    void bindsSourceControllerForControlGain() {
+        Permanent damagedCreature = createPermanent("Crag Saurian");
+        var effect = new DamageSourceControllerGainsControlOfDamagedPermanentEffect();
+        var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+
+        when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+
+        boolean result = registry.dispatch(
+                match(damagedCreature, player1Id, effect),
+                EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        var boundEffect = gd.stack.getFirst().getEffectsToResolve().getFirst();
+        assertThat(boundEffect).isInstanceOf(DamageSourceControllerGainsControlOfDamagedPermanentEffect.class);
+        assertThat(((DamageSourceControllerGainsControlOfDamagedPermanentEffect) boundEffect)
+                .damageSourceControllerId()).isEqualTo(player2Id);
+    }
+
     // ===== ON_DEALT_DAMAGE — DamageSourceControllerSacrificesPermanentsEffect =====
 
     @Nested
@@ -678,6 +700,25 @@ class DamageTriggerCollectorServiceTest {
             assertThat(stackEntry.getEventValue()).isEqualTo(3);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+        }
+
+        @Test
+        @DisplayName("preserves an optional trigger and snapshots its damage amount")
+        void enqueuesMayTriggerWithDamageAmount() {
+            Permanent hound = createPermanent("Blood Hound");
+            MayEffect effect = new MayEffect(
+                    new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
+                    "Put that many +1/+1 counters on Blood Hound?");
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(hound, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
         }
     }
 

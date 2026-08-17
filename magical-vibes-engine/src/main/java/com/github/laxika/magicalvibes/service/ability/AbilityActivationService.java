@@ -19,12 +19,14 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentExileCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.SequencePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentExileAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
@@ -89,6 +91,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCos
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantOrSorcerySpellCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
@@ -2731,6 +2734,16 @@ public class AbilityActivationService {
                     }
                 }
             }
+            if (handler.costEffect() instanceof ExilePermanentCost exilePermCost
+                    && exilePermCost.trackExiledManaValue()) {
+                List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
+                if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
+                    Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
+                    if (autoTarget != null) {
+                        effectiveXValue = autoTarget.getCard().getManaValue();
+                    }
+                }
+            }
             // Remember the auto-tapped creature so ChosenPermanentPower can read its power at
             // resolution (Impelled Giant). Only the single-valid-choice case auto-pays here;
             // multi-choice payment records the pick in completeActivatedAbilityCostChoice.
@@ -2826,9 +2839,11 @@ public class AbilityActivationService {
                                                             UUID sourcePermanentId, int xValue,
                                                             List<UUID> chosenSoFar) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
+        PermanentExileAction exileAction = this::exilePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
+        if (effect instanceof ExilePermanentCost c) return new MultiplePermanentExileCostHandler(c, predicateEvaluationService, exileAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
@@ -2993,6 +3008,11 @@ public class AbilityActivationService {
             if (sacPermCost.trackSacrificedToughness()) {
                 updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
             }
+        }
+
+        if (context.costEffect() instanceof ExilePermanentCost exilePermCost
+                && exilePermCost.trackExiledManaValue()) {
+            updatedXValue = chosen.getCard().getManaValue();
         }
 
         // Remember the tapped creature so ChosenPermanentPower reads its power at resolution (Impelled Giant).
@@ -3659,6 +3679,16 @@ public class AbilityActivationService {
         permanentRemovalService.removePermanentToGraveyard(gameData, sacTarget);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacTarget.getCard());
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , sacTarget.getCard(), "."));
+    }
+
+    private void exilePermanentAsCost(GameData gameData, Player player, Permanent exileTarget) {
+        UUID playerId = player.getId();
+        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+        if (playerBf == null || !playerBf.contains(exileTarget)) {
+            throw new IllegalStateException("Must exile a permanent you control");
+        }
+        permanentRemovalService.removePermanentToExile(gameData, exileTarget);
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exileTarget.getCard(), " as an activation cost."));
     }
 
     private void returnPermanentToHandAsCost(GameData gameData, Player player, Permanent target) {

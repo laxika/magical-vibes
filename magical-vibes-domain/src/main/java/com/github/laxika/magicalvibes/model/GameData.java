@@ -425,6 +425,8 @@ public class GameData {
     public Integer chosenSpellNumber;
     /** Resolution-time Turnabout permanent type choice. */
     public CardType chosenSpellPermanentType;
+    /** Resolution-time card type choice for a spell with no permanent to store it on. */
+    public CardType chosenSpellCardType;
     /** Resolution-time Turnabout action choice: true to tap, false to untap. */
     public Boolean turnaboutTap;
     /**
@@ -722,6 +724,10 @@ public class GameData {
     public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot redirection shields (General's Regalia): the next damage event from a chosen source
+     *  to the controller is dealt to a fixed creature instead. */
+    public final List<PlayerSourceNextDamageRedirectShield> playerSourceNextDamageRedirectShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** Aegis of Honor: redirect the next damage from an instant or sorcery spell dealt to a protected player onto that spell's controller. */
     public final List<UUID> playerNextInstantOrSorceryDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Soltari Guerrillas: redirect the next combat damage a specific source would deal to an opponent onto a fixed creature. */
@@ -731,6 +737,8 @@ public class GameData {
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
+    /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
+    public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
@@ -2715,6 +2723,23 @@ public class GameData {
         queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0);
     }
 
+    /** Queues a resolution-time may ability while preserving its active-player context. */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, UUID activePlayerId, Permanent sourcePermanentSnapshot) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                targetCardId,
+                sourcePermanentId
+        );
+        entry.setActivePlayerId(activePlayerId);
+        entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        stack.add(entry);
+    }
+
     /** Queues a may ability while keeping its controller distinct from the choosing player. */
     public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
                                          UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
@@ -2855,6 +2880,7 @@ public class GameData {
         copy.chosenSpellColor = this.chosenSpellColor;
         copy.chosenSpellNumber = this.chosenSpellNumber;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
+        copy.chosenSpellCardType = this.chosenSpellCardType;
         copy.turnaboutTap = this.turnaboutTap;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
@@ -2938,6 +2964,7 @@ public class GameData {
         copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
+        copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 
@@ -3006,6 +3033,7 @@ public class GameData {
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
+        copy.playerSourceNextDamageRedirectShields.addAll(this.playerSourceNextDamageRedirectShields);
         copy.playerNextInstantOrSorceryDamageRedirectShields.addAll(this.playerNextInstantOrSorceryDamageRedirectShields);
         copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);

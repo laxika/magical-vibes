@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.effect.GlobalBlockTaxEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -383,6 +387,25 @@ class CombatBlockServiceTest extends BaseCardTest {
 
             assertThat(hipparion.isBlocking()).isTrue();
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("A floating global block tax is charged once per unique blocker")
+        void floatingGlobalBlockTaxChargesOncePerUniqueBlocker() {
+            Permanent firstAttacker = attacking(player1, new GrizzlyBears());
+            Permanent secondAttacker = attacking(player1, new GrizzlyBears());
+            Permanent blocker = addCreatureReady(player2, new PalaceGuard());
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Test block tax", null, player1.getId(),
+                    new GlobalBlockTaxEffect(2), null, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+            enterDeclareBlockers();
+
+            harness.addMana(player2, ManaColor.WHITE, 2);
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(defenderIndex(blocker), attackerIndex(firstAttacker)),
+                    new BlockerAssignment(defenderIndex(blocker), attackerIndex(secondAttacker))));
+
+            assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         }
 
         @Test

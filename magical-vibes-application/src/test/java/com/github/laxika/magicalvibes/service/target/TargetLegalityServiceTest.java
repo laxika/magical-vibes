@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -339,6 +340,21 @@ class TargetLegalityServiceTest {
                             new StackEntryHasTargetPredicate(),
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.TRIGGERED_ABILITY))
                     )), "error");
+
+            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
+        }
+
+        @Test
+        @DisplayName("accepts an ability targeting a permanent when the filter matches that permanent")
+        void acceptsAbilityViaTargetsPermanentPredicate() {
+            Card source = createCreature("Source", CardColor.GREEN);
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            StackEntry entry = new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of(), target.getId(), source.getId());
+            gd.stack.add(entry);
+
+            StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
+                    new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()), "error");
 
             sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
         }

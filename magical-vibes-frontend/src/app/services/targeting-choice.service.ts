@@ -173,6 +173,7 @@ export class TargetingChoiceService {
     this.beholdChosenType = '';
     this.pendingBeholdCard = null;
     this.pendingBeholdIsFlashback = false;
+    this.choosingCreatureTypeOnly = false;
     // Graveyard targeting
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
@@ -372,6 +373,7 @@ export class TargetingChoiceService {
   private skipBeholdForCardIndex: number | null = null;
   private pendingBeholdCard: Card | null = null;
   private pendingBeholdIsFlashback = false;
+  choosingCreatureTypeOnly = false;
 
   // --- Graveyard targeting state ---
   targetingGraveyard = false;
@@ -576,7 +578,7 @@ export class TargetingChoiceService {
     const card = g.hand[index];
     if (!card) return;
 
-    if ((card.additionalBeholdSubtype || card.additionalBeholdChosenCreatureType) && !card.additionalBeholdFlashbackOnly
+    if ((card.additionalBeholdSubtype || card.additionalBeholdChosenCreatureType || card.additionalChooseCreatureType) && !card.additionalBeholdFlashbackOnly
         && this.skipBeholdForCardIndex !== index
         && this.pendingBeholdPermanentId == null && this.pendingBeholdHandCardIndex == null
         && this.pendingBeholdPermanentIds.length === 0 && this.pendingBeholdHandCardIndices.length === 0) {
@@ -2042,7 +2044,8 @@ export class TargetingChoiceService {
   // ========== Alternate casting cost selection ==========
 
   private beginBeholdSelection(card: Card, cardIndex: number, fromGraveyard: boolean): void {
-    this.beholdChosenCreatureType = card.additionalBeholdChosenCreatureType;
+    this.choosingCreatureTypeOnly = card.additionalChooseCreatureType === true;
+    this.beholdChosenCreatureType = card.additionalBeholdChosenCreatureType || this.choosingCreatureTypeOnly;
     this.choosingBehold = this.beholdChosenCreatureType || card.additionalBeholdCount <= 1;
     this.selectingBeholdPermanent = !this.beholdChosenCreatureType && card.additionalBeholdCount > 1;
     this.selectingBeholdHandCard = !this.beholdChosenCreatureType && card.additionalBeholdCount > 1;
@@ -2065,11 +2068,19 @@ export class TargetingChoiceService {
     this.beholdSubtype = chosenType;
     this.pendingBeholdChosenType = chosenType;
     this.choosingBehold = false;
+    if (this.choosingCreatureTypeOnly) {
+      this.skipBeholdForCardIndex = this.beholdCardIndex;
+      this.finishBeholdSelection(this.beholdCardIndex);
+      return;
+    }
     this.selectingBeholdPermanent = true;
     this.selectingBeholdHandCard = true;
   }
 
   get beholdCreatureTypes(): string[] {
+    if (this.choosingCreatureTypeOnly) {
+      return this.pendingBeholdCard?.additionalCreatureTypeChoices ?? [];
+    }
     const counts = new Map<string, number>();
     const addCard = (card: Card): void => {
       if (card.type !== 'CREATURE' && !(card.additionalTypes ?? []).includes('CREATURE')) return;
@@ -2152,6 +2163,7 @@ export class TargetingChoiceService {
     this.beholdRequiredCount = 1;
     this.beholdSelectedCount = 0;
     this.beholdCardIsInGraveyard = false;
+    this.choosingCreatureTypeOnly = false;
     this.pendingBeholdCard = null;
     this.pendingBeholdIsFlashback = false;
     if (fromGraveyard && card) {
@@ -2178,6 +2190,7 @@ export class TargetingChoiceService {
     this.pendingBeholdPermanentIds = [];
     this.pendingBeholdHandCardIndices = [];
     this.pendingBeholdChosenType = null;
+    this.choosingCreatureTypeOnly = false;
     this.pendingBeholdCard = null;
     this.pendingBeholdIsFlashback = false;
   }

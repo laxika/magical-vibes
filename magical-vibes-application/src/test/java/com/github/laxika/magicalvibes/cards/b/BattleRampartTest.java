@@ -28,6 +28,18 @@ class BattleRampartTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent's creature")
+    void canTargetOpponentCreature() {
+        addReadyBattleRampart();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Granted haste wears off at end of turn")
     void hasteWearsOffAtEndOfTurn() {
         addReadyBattleRampart();

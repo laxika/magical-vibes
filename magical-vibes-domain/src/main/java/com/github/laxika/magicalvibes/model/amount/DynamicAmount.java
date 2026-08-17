@@ -52,6 +52,7 @@ public sealed interface DynamicAmount permits
         Divided,
         DuringControllerTurn,
         EnchantedPermanentManaValue,
+        EnchantedPermanentPower,
         EventValue,
         Fixed,
         FixedIfCondition,

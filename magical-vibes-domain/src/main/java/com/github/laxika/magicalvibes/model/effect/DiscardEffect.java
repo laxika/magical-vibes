@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Makes one or more players discard cards. A single record covers the whole discard family:
- * the {@link DiscardRecipient} routes who discards (controller / target player / each player /
+ * the {@link DiscardRecipient} routes who discards (controller / target player / triggering player /
+ * each player /
  * each opponent), {@code random} chooses between the player picking their discards and a random
  * discard, and the {@link DynamicAmount} count covers fixed counts ("discards two cards"), an X
  * value (Mind Shatter), or a source-relative count such as {@code CountersOnSource(CHARGE)}

@@ -82,6 +82,8 @@ public record CardView(
         boolean modalOptional,
         List<ModalOptionView> modalOptions,
         int exileCastCounterCost,
+        boolean additionalChooseCreatureType,
+        List<String> additionalCreatureTypeChoices,
         CardView prepareSpell
 ) {
 }

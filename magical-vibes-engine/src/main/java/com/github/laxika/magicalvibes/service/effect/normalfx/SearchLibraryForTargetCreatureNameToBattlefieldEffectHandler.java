@@ -31,14 +31,19 @@ public class SearchLibraryForTargetCreatureNameToBattlefieldEffectHandler implem
             return;
         }
 
+        SearchLibraryForTargetCreatureNameToBattlefieldEffect searchEffect =
+                (SearchLibraryForTargetCreatureNameToBattlefieldEffect) effect;
         String targetName = target.getCard().getName();
         UUID controllerId = entry.getControllerId();
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,
-                card -> targetName.equals(card.getName()),
-                "cards named " + targetName,
-                "Search your library for a card with the same name as target creature and put it onto the battlefield.",
+                card -> targetName.equals(card.getName())
+                        && (!searchEffect.permanentCardOnly() || card.getType().isPermanentType()),
+                searchEffect.permanentCardOnly() ? "permanent cards named " + targetName : "cards named " + targetName,
+                searchEffect.permanentCardOnly()
+                        ? "Search your library for a permanent card with the same name as target creature and put it onto the battlefield."
+                        : "Search your library for a card with the same name as target creature and put it onto the battlefield.",
                 false,
                 true,
                 LibrarySearchDestination.BATTLEFIELD);

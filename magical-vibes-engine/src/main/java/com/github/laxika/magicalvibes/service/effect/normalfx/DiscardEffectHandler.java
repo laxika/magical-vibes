@@ -64,7 +64,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
 
         switch (e.recipient()) {
-            case CONTROLLER, TARGET_PLAYER, ACTIVE_PLAYER, TARGET_PERMANENT_CONTROLLER,
+            case CONTROLLER, TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER, TARGET_PERMANENT_CONTROLLER,
                     TARGET_PLAYER_OR_PERMANENT_CONTROLLER, DEFENDING_PLAYER ->
                     resolveSinglePlayer(gameData, entry, e, amount);
             case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
@@ -78,6 +78,10 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYER -> {
                 playerId = entry.getTargetId();
                 opponentCaused = true;
+            }
+            case TRIGGERING_PLAYER -> {
+                playerId = entry.getTargetId();
+                opponentCaused = !playerId.equals(entry.getControllerId());
             }
             case ACTIVE_PLAYER -> {
                 playerId = entry.getTargetId();

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -87,6 +88,9 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastingServiceTest {
+
+    @Mock
+    private CardRevealService cardRevealService;
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
@@ -156,7 +160,7 @@ class SpellCastingServiceTest {
     void setUp() {
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
-        svc = new SpellCastingService(battlefieldEntryService, graveyardTargetingService,
+        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, graveyardTargetingService,
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService),

@@ -545,6 +545,13 @@ public class GameTestHarness {
                 null, beholdHandCardIndex);
     }
 
+    public void castCreatureWithChosenType(Player player, int cardIndex, CardSubtype chosenSubtype) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), chosenSubtype);
+    }
+
     /** Cast a targeted instant using its alternate hand cost (e.g. Fireblast sacrificing two Mountains). */
     public void castInstantWithAlternateCost(Player player, int cardIndex, UUID targetId,
                                              List<UUID> alternateCostPermanentIds) {

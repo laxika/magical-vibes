@@ -73,9 +73,20 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
         if (e.scope() == GrantScope.OWN_CREATURES) {
             return ownMatchingCreatureIds(gameData, entry, e);
         }
+        if (e.scope() == GrantScope.ALL_CREATURES) {
+            return allCreatureIds(gameData);
+        }
         return entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId()))
                 : entry.getTargetIds();
+    }
+
+    private List<UUID> allCreatureIds(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
     }
 
     private List<UUID> ownMatchingCreatureIds(GameData gameData, StackEntry entry,

@@ -305,14 +305,16 @@
     @if (choice.targeting.choosingBehold) {
       <div class="side-prompt prompt-targeting">
         @if (choice.targeting.beholdChosenCreatureType) {
-          <span class="side-prompt-text">Cast {{ choice.targeting.beholdCardName }} &mdash; choose a creature type to behold:</span>
+          <span class="side-prompt-text">Cast {{ choice.targeting.beholdCardName }} &mdash; choose a creature type{{ choice.targeting.choosingCreatureTypeOnly ? '' : ' to behold' }}:</span>
           <select class="form-select" [value]="choice.targeting.beholdChosenType" (change)="choice.targeting.chooseBeholdType($any($event.target).value)">
             <option value="" disabled>Choose a creature type</option>
             @for (type of choice.targeting.beholdCreatureTypes; track type) {
               <option [value]="type">{{ type }}</option>
             }
           </select>
-          <button class="btn-side-prompt" (click)="choice.targeting.declineBehold()">Cast without beholding</button>
+          @if (!choice.targeting.choosingCreatureTypeOnly) {
+            <button class="btn-side-prompt" (click)="choice.targeting.declineBehold()">Cast without beholding</button>
+          }
         } @else {
           <span class="side-prompt-text">Cast {{ choice.targeting.beholdCardName }} &mdash; behold {{ choice.targeting.beholdRequiredCount }} {{ choice.targeting.beholdSubtype.toLowerCase() }}:</span>
         }

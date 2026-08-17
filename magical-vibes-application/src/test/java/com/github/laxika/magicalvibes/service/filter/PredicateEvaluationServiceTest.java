@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -370,6 +371,25 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(bear, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(elf, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
             assertThat(evaluator.matchesCardPredicate(changeling, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("CardHasSourceChosenColorPredicate matches every color of a multicolored card")
+        void cardHasSourceChosenColorPredicateMatchesSourceChoice() {
+            Card sourceCard = createArtifact("Jeweled Torque");
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenColor(CardColor.GREEN);
+
+            Card green = createCreature("Green Creature", 2, 2, CardColor.GREEN);
+            Card multicolored = createCreature("Green White Creature", 2, 2, CardColor.GREEN);
+            multicolored.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
+            Card red = createCreature("Red Creature", 2, 2, CardColor.RED);
+            CardHasSourceChosenColorPredicate predicate = new CardHasSourceChosenColorPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(green, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(multicolored, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(red, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
         }
 
         @Test
@@ -1194,6 +1214,10 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(perm,
                     new PermanentHasSourceChosenColorPredicate(), ctx)).isTrue();
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new PermanentHasSourceChosenColorPredicate(),
+                    FilterContext.empty().withSourcePermanentSnapshot(source))).isTrue();
         }
 
         @Test

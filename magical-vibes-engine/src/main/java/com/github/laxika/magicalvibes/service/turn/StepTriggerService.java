@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -137,6 +139,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -1181,13 +1184,9 @@ public class StepTriggerService {
                     // Unwrap intervening-if conditional — check the gate at trigger time before
                     // offering the ability (Kuldotha Phoenix metalcraft, Rekindled Flame's "if an
                     // opponent has no cards in hand")
-                    if (innerEffect instanceof ConditionalEffect conditional
-                            && (conditional.condition() instanceof Metalcraft
-                                    || conditional.condition() instanceof AnOpponentHandEmpty
-                                    || conditional.condition() instanceof CardsAboveSelfInGraveyard
-                                    || conditional.condition() instanceof CardDirectlyAboveSelfInGraveyard)) {
+                    if (innerEffect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                new ConditionContext(activePlayerId, null, null, card, false, false, false, false, null, 0, null, null, false))) {
+                                ConditionContext.forCard(card, activePlayerId))) {
                             log.info("Game {} - {} graveyard upkeep ability skipped ({})",
                                     gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;
@@ -1241,7 +1240,13 @@ public class StepTriggerService {
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
                             activePlayerId));
                 } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                    if (may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER) {
+                        gameData.queueMayAbility(
+                                perm.getCard(), playerId, may, null, perm.getId(), activePlayerId,
+                                new Permanent(perm));
+                    } else {
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                    }
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
@@ -1333,6 +1338,9 @@ public class StepTriggerService {
             UUID enchantedPermanentControllerId = gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
             if (enchantedPermanentControllerId == null) return;
             if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
+            Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+            int enchantedPermanentPowerAtTrigger = enchantedPermanent == null
+                    ? 0 : gameQueryService.getEffectivePower(gameData, enchantedPermanent);
 
             for (CardEffect effect : enchantedControllerUpkeepEffects) {
                 // Bake the enchanted permanent's controller into effects that need it
@@ -1353,6 +1361,7 @@ public class StepTriggerService {
                         enchantedPermanentControllerId,
                         perm.getId()
                 );
+                entry.setTriggeringPermanentPowerAtTrigger(enchantedPermanentPowerAtTrigger);
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 gameData.stack.add(entry);
 
@@ -3005,6 +3014,24 @@ public class StepTriggerService {
 
     public void handleEndStepTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
+
+        if (gameData.hasDelayedAction(DrawCardsAtNextEndStep.class)) {
+            List<DrawCardsAtNextEndStep> pendingDraws =
+                    gameData.drainDelayedActions(DrawCardsAtNextEndStep.class);
+            for (DrawCardsAtNextEndStep pending : pendingDraws) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new DrawCardEffect(pending.count())))
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s delayed ability triggers — draw " + pending.count() + " card(s)."));
+                log.info("Game {} - {} delayed draw trigger pushed onto stack for {} card(s)",
+                        gameData.id, pending.sourceCard().getName(), pending.count());
+            }
+        }
 
         // Memory Jar: each player discards their hand and returns the cards exiled by its ability.
         if (gameData.hasDelayedAction(EachPlayerHandExileReturnAtNextEndStep.class)) {

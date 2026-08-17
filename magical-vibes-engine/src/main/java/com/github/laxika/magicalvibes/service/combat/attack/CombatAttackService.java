@@ -853,9 +853,11 @@ public class CombatAttackService {
                                                 attackCard, playerId, otherEffects, attacker.getId(),
                                                 List.of(), 0, 0));
                             } else {
+                                UUID targetChooserId = attacker.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
+                                        ? defendingPlayerId : playerId;
                                 gameData.queueInteraction(
                                         new PermanentChoiceContext.AttackTriggerTarget(
-                                                attackCard, playerId, otherEffects, attacker.getId()));
+                                                attackCard, playerId, otherEffects, attacker.getId(), targetChooserId));
                             }
                         } else {
                             // Capture the attacked player/planeswalker so non-targeting attack

@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,19 +37,35 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantBasicLandTypeToTargetEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
-        }
-
         if (e.fixedSubtype() == null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target == null && !entry.getTargetIds().isEmpty()) {
+                target = gameQueryService.findPermanentById(gameData, entry.getTargetIds().getFirst());
+            }
+            if (target == null) {
+                return;
+            }
             playerInputService.beginAddBasicLandTypeChoice(gameData, entry.getControllerId(), target.getId(), e.duration(), e.replacing());
             return;
         }
 
-        applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
-        gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
-                target, e.fixedSubtype(), e.duration(), e.replacing())));
+        for (UUID targetId : targetIds(entry)) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
+            gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
+                    target, e.fixedSubtype(), e.duration(), e.replacing())));
+        }
+    }
+
+    private static List<UUID> targetIds(StackEntry entry) {
+        if (!entry.getTargetIds().isEmpty()) {
+            return entry.getTargetIds();
+        }
+        return entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
     }
 
     /**

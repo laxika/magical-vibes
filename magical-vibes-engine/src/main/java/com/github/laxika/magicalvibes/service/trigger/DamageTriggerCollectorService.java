@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
@@ -343,7 +344,9 @@ public class DamageTriggerCollectorService {
     @CollectsTriggers({
         @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
         @CollectsTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
-        @CollectsTrigger(value = DamageSourceControllerMillsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+        @CollectsTrigger(value = DamageSourceControllerMillsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
+        @CollectsTrigger(value = DamageSourceControllerGainsControlOfDamagedPermanentEffect.class,
+                slot = EffectSlot.ON_DEALT_DAMAGE)
     })
     private boolean handleDamageSourceControllerAware(TriggerMatchContext match,
             DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "150")
 @CardRegistration(set = "9ED", collectorNumber = "138")
+@CardRegistration(set = "MMQ", collectorNumber = "139")
 public class HighwayRobber extends Card {
 
     public HighwayRobber() {

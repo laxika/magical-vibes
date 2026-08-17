@@ -281,8 +281,8 @@ public class CombatBlockService {
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
             blockTaxTotal += gameQueryService.getBlockManaTax(gameData, blocker, attacker);
 
-            // Board-wide mana tax to block at all (Archangel of Tithes): once per unique blocker,
-            // however many attackers it blocks.
+            // Board-wide mana tax to block at all (Archangel of Tithes, War Cadence): once per
+            // unique blocker, however many attackers it blocks.
             globalBlockManaTaxByBlocker.computeIfAbsent(blocker.getId(),
                     ignored -> gameQueryService.getGlobalBlockManaTax(gameData, blocker));
 
@@ -1336,6 +1336,19 @@ public class CombatBlockService {
             }
             if (matchingEffects.isEmpty()) continue;
 
+            boolean needsTarget = matchingEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        perm.getCard(), activeId, new ArrayList<>(matchingEffects), perm.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                        "'s becomes-blocked ability triggers."));
+                log.info("Game {} - {} targeted ON_ALLY_CREATURE_BECOMES_BLOCKED trigger queued",
+                        gameData.id, perm.getCard().getName());
+                continue;
+            }
+
             StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
@@ -1386,13 +1399,21 @@ public class CombatBlockService {
                         if (!pairEffect.firesForPair(attackerPower, blockerPower)) {
                             continue;
                         }
+                        if (pairEffect.attackerPredicate() != null
+                                && !predicateEvaluationService.matchesPermanentPredicate(
+                                attacker, pairEffect.attackerPredicate(),
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(watcher.getCard().getId())
+                                        .withSourceControllerId(battlefield.getKey()))) {
+                            continue;
+                        }
                         Permanent subject = pairEffect.actsOn() == BlockParticipant.BLOCKER ? blocker : attacker;
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 watcher.getCard(),
                                 battlefield.getKey(),
                                 watcher.getCard().getName() + "'s block trigger",
-                                List.of(effect),
+                                List.of(pairEffect.resolvedEffect()),
                                 subject.getId(),
                                 attacker.getId()
                         );

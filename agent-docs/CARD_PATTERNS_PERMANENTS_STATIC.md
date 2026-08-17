@@ -2,6 +2,8 @@
 
 | Attack cost paid by returning a permanent | `f/FloodtideSerpent.java` | STATIC `CantAttackUnlessEffect(new ControlsPermanentCount(1, filter), desc)` + `CantAttackUnlessReturnToHandEffect(1, filter, desc)` — the controller returns a matching permanent to its owner's hand as attackers are declared |
 
+| Choose a creature type as an additional cast cost; P/T equal matching creatures | `c/CallerOfTheHunt.java` | SPELL ChooseCreatureTypeCost + STATIC SetPowerToughnessToAmountEffect(PermanentCount(AllOf(IsCreature, PermanentHasSourceChosenSubtypePredicate), ANY_PLAYER), same) - the cast-time choice is stored on the entering permanent and the count updates with the battlefield |
+
 All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
@@ -400,6 +402,7 @@ All paths relative to `cards/`.
 | Any creature dealt damage â†’ destroy it | `d/DeathPitsOfRath.java` | ON_ANY_CREATURE_DEALT_DAMAGE DestroyTargetPermanentEffect(true) â€” global enchantment; fires once per damaged creature (combat + noncombat), queued entry auto-targets the damaged creature and destroys it, no regeneration |
 | Modal upkeep: exact life lose-game then Â±1 life | `t/Triskaidekaphobia.java` | UPKEEP_TRIGGERED ChooseOneEffect of two ExactLifeLoseGameThenAdjustLifeEffect(13, Â±1) modes â€” mode picked as trigger resolves; simultaneous lose-at-13 first (both â‡’ draw via declareDraw), then each player gains/loses 1 if game continues |
 | Global block watcher: weaker combatant dies | `n/NoQuarter.java` | Two ON_ANY_CREATURE_BECOMES_BLOCKED registrations of `DestroyWeakerBlockParticipantEffect` (`BlockParticipant.BLOCKER` and `BlockParticipant.ATTACKER`) — "whenever a creature becomes blocked by a creature with lesser power, destroy the blocking creature" plus the mirrored attacker clause. The slot fires once per attacker/blocker pair on every battlefield, so it watches combats its controller isn't part of |
+| Global block watcher: matching attackers boost blockers | `r/RighteousIndignation.java` | ON_ANY_CREATURE_BECOMES_BLOCKED `BoostBlockerWhenAttackerMatchesEffect(PermanentColorInPredicate(BLACK, RED), 1, 1)` — evaluates the attacking creature's colors at declaration and boosts the blocking creature once per matching attacker/blocker pair |
 | Cast a colored spell by discarding a card that shares its color | `d/DreamHalls.java` | STATIC `SharedColorDiscardAlternativeCostEffect()` — symmetric battlefield permission; the selected hand card is a separate cast-request choice from any printed additional discard cost and is moved to the graveyard when paid |
 | Global shared-color creature damage prevention | `w/WellLaidPlans.java` | STATIC `PreventDamageToCreaturesByCreaturesOfSharedColorEffect()` — prevents combat and noncombat damage dealt to a creature by another creature when their current colors overlap |
 

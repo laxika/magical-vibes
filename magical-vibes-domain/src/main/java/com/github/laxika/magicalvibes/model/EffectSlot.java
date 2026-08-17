@@ -212,6 +212,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}. Used by Yomiji,
      *  Who Bars the Way (pair with {@code ReturnTriggeringCardToOwnerHandEffect}). */
     ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a nontoken permanent of any type is put into any player's graveyard from
+     *  the battlefield. Fires for the graveyard owner and excludes tokens. */
+    ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a nontoken permanent is put into the controller's graveyard from the
      *  battlefield. Fires only for the graveyard owner, including permanents of any type, and
      *  excludes tokens. Checked in {@code TriggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers}.

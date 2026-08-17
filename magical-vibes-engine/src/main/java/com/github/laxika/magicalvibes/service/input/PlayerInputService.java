@@ -668,6 +668,18 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color for a spell", gameData.id, playerName);
     }
 
+    public void beginSpellCardTypeChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellCardTypeChoice choiceContext = new ChoiceContext.SpellCardTypeChoice(playerId);
+        List<String> cardTypes = Arrays.stream(CardType.values())
+                .map(CardType::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, cardTypes, "Choose a card type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a card type for a spell", gameData.id, playerName);
+    }
+
     public void beginSpellNumberChoice(GameData gameData, UUID playerId, int maxNumber) {
         ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId);
         List<String> numbers = java.util.stream.IntStream.rangeClosed(0, Math.max(0, maxNumber))
@@ -1191,6 +1203,29 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (reveal hand, damage, exile)", gameData.id, playerName);
+    }
+
+    /** Begins Assembly Hall's choice of a creature card name from the controller's hand. */
+    public void beginAssemblyHallCreatureCardChoice(GameData gameData, UUID controllerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
+        List<String> creatureNames = hand.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .map(Card::getName)
+                .distinct()
+                .sorted()
+                .toList();
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (creatureNames.isEmpty()) {
+            log.info("Game {} - {} has no creature card in hand for Assembly Hall", gameData.id, playerName);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, new ChoiceContext.AssemblyHallCreatureCardChoice(controllerId),
+                creatureNames, "Choose a creature card in your hand to reveal."));
+        log.info("Game {} - Awaiting {} to choose a creature card in hand for Assembly Hall",
+                gameData.id, playerName);
     }
 
     /**

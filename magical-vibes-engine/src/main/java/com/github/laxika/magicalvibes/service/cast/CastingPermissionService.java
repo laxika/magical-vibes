@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifact
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardNameRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
@@ -471,6 +472,7 @@ public class CastingPermissionService {
 
     public Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {
         Set<String> forbidden = new HashSet<>();
+        Set<String> nontokenPermanentNames = getNontokenPermanentNames(gameData);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -508,6 +510,9 @@ public class CastingPermissionService {
                             forbidden.add(perm.getSecondChosenName());
                         }
                     }
+                    if (effect instanceof CardNameRestrictionEffect restriction) {
+                        forbidden.addAll(restriction.forbiddenSpellNames(nontokenPermanentNames));
+                    }
                 }
             }
         }
@@ -526,6 +531,7 @@ public class CastingPermissionService {
      * spell-casting filters (they aren't spells), so the name check has its own entry point here.
      */
     public boolean isLandPlayForbiddenByChosenName(GameData gameData, Card card) {
+        Set<String> nontokenPermanentNames = getNontokenPermanentNames(gameData);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -536,10 +542,29 @@ public class CastingPermissionService {
                                 || card.getName().equals(perm.getSecondChosenName()))) {
                         return true;
                     }
+                    if (effect instanceof CardNameRestrictionEffect restriction
+                            && !card.getSupertypes().contains(CardSupertype.BASIC)
+                            && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
+    }
+
+    private Set<String> getNontokenPermanentNames(GameData gameData) {
+        Set<String> names = new HashSet<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!permanent.getCard().isToken()) {
+                    names.add(gameQueryService.getEffectiveName(gameData, permanent));
+                }
+            }
+        }
+        return names;
     }
 
     /**

@@ -487,6 +487,7 @@ public class LibraryChoiceHandlerService {
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+            if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;
@@ -1200,6 +1201,7 @@ public class LibraryChoiceHandlerService {
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextToHandPick(gameData, playerId, followUp)) return;

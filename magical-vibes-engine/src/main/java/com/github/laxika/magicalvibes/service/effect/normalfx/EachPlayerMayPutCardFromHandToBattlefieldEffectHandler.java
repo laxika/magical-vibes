@@ -23,8 +23,13 @@ public class EachPlayerMayPutCardFromHandToBattlefieldEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        support.beginNextChoice(gameData, apnapOrder(gameData), List.of(),
-                (EachPlayerMayPutCardFromHandToBattlefieldEffect) effect, entry.getCard().getName());
+        EachPlayerMayPutCardFromHandToBattlefieldEffect typedEffect =
+                (EachPlayerMayPutCardFromHandToBattlefieldEffect) effect;
+        List<UUID> players = apnapOrder(gameData);
+        if (typedEffect.opponentsOnly()) {
+            players.removeIf(playerId -> playerId.equals(entry.getControllerId()));
+        }
+        support.beginNextChoice(gameData, players, List.of(), typedEffect, entry.getCard().getName());
     }
 
     private List<UUID> apnapOrder(GameData gameData) {

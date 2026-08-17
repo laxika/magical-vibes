@@ -2472,6 +2472,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryHasTargetPredicate) {
             return true;
         }
+        if (predicate instanceof StackEntryTargetsPermanentPredicate) {
+            return true;
+        }
         if (predicate instanceof StackEntryTypeInPredicate typeIn) {
             return typeIn.spellTypes().contains(StackEntryType.ACTIVATED_ABILITY)
                     || typeIn.spellTypes().contains(StackEntryType.TRIGGERED_ABILITY);

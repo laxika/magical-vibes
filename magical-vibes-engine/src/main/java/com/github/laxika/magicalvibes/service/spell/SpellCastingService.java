@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -151,6 +153,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class SpellCastingService {
 
+    private final CardRevealService cardRevealService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final GameQueryService gameQueryService;
@@ -2905,11 +2908,19 @@ public class SpellCastingService {
                             }
                         }
                     } else {
-                        // X-damage divided among target creatures — restriction comes from
+                        // Damage divided among target creatures — restriction comes from
                         // DealDividedDamageEffect.targetRestriction (Hail of Arrows: attacking;
                         // Fire Covenant: any creature; Rock Slide: attacking/blocking without flying).
-                        if (totalDamage != resolvedXValue) {
-                            throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
+                        // Dynamic totals such as Volcanic Wind's battlefield creature count are
+                        // evaluated in the same cast-time context as X-based totals.
+                        int expectedTotal = dividedEffect == null
+                                ? resolvedXValue
+                                : amountEvaluationService.evaluate(gameData,
+                                        dividedEffect.totalDamage(),
+                                        com.github.laxika.magicalvibes.service.effect.AmountContext
+                                                .forCasting(playerId, resolvedXValue));
+                        if (totalDamage != expectedTotal) {
+                            throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
                         }
                         for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
@@ -4205,7 +4216,8 @@ public class SpellCastingService {
                 || additionalCosts.escalateDiscardCost() != null
                 || additionalCosts.escalateManaCost() != null
                 || additionalCosts.escalateSacrificeCost() != null
-                || additionalCosts.delveCost() != null;
+                || additionalCosts.delveCost() != null
+                || additionalCosts.chooseCreatureTypeCost() != null;
         if (hasUnsupportedAdditionalCost) {
             throw new IllegalStateException("Cannot cast " + castHalf.getName()
                     + " from the graveyard — paying its additional cast cost is not supported from this zone");
@@ -4239,7 +4251,7 @@ public class SpellCastingService {
                     null, null, null, null,
                     null, null, null,
                     false,
-                    null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null);
             AdditionalSpellCostService.CostSelection sacSelection = new AdditionalSpellCostService.CostSelection(
                     sacrificePermanentId, null, null, null, null, 0, -1, null);
             additionalSpellCostService.validateAll(gameData, player, castHalf, sacOnly, sacSelection, effectiveXValue);
@@ -6488,16 +6500,22 @@ public class SpellCastingService {
 
         var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
         if (revealHandCost.isPresent()) {
-            int effectiveIndex = validateRevealFromHandAlternateCost(gameData, playerId, card, revealHandCost.get(),
-                    discardHandCardIndex, spellCardIndex);
-            Card toReveal = gameData.playerHands.get(playerId).get(effectiveIndex);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " reveals ")
-                    .card(toReveal)
-                    .text(" from their hand for ")
-                    .card(card)
-                    .text(".")
-                    .build());
+            if (revealHandCost.get().revealEntireHand()) {
+                cardRevealService.revealHandToAllPlayers(gameData, playerId);
+            } else {
+                int effectiveIndex = validateRevealFromHandAlternateCost(gameData, playerId, card,
+                        revealHandCost.get(), discardHandCardIndex, spellCardIndex);
+                Card toReveal = gameData.playerHands.get(playerId).get(effectiveIndex);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " reveals ")
+                        .card(toReveal)
+                        .text(" from their hand for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+                cardRevealService.revealToAllPlayers(gameData, playerId,
+                        GameEventFact.RevealZone.HAND, List.of(toReveal));
+            }
         }
 
         // Exile the top matching cards of the caster's graveyard (determined, not chosen)
@@ -6581,6 +6599,12 @@ public class SpellCastingService {
                                                     Integer handCardIndex, int spellCardIndex) {
         String label = cost.label() != null ? cost.label() + " card" : "a card";
         List<Card> hand = gameData.playerHands.get(playerId);
+        if (cost.revealEntireHand()) {
+            if (hand == null) {
+                throw new IllegalStateException("Must reveal your hand to cast " + card.getName());
+            }
+            return -1;
+        }
         boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < (hand == null ? 0 : hand.size())
                 && hand.get(spellCardIndex) == card;
         if (handCardIndex == null || hand == null || (spellStillInHand && handCardIndex == spellCardIndex)) {

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
@@ -981,7 +982,7 @@ public class CastingCostService {
         }
 
         var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
-        if (revealHandCost.isPresent()) {
+        if (revealHandCost.isPresent() && !revealHandCost.get().revealEntireHand()) {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) return false;
             boolean hasMatchingCard = hand.stream()
@@ -1200,6 +1201,13 @@ public class CastingCostService {
                                 gameData, tax.activeCondition(), ConditionContext.forPermanent(perm, defenderId)))) {
                     totalTax += amountEvaluationService.evaluate(gameData, tax.amountPerAttacker(),
                             AmountContext.forStaticEffect(perm, defenderId));
+                }
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (var floatingEffect : gameData.floatingEffects) {
+                if (floatingEffect.effect() instanceof GlobalAttackCostEffect tax) {
+                    totalTax += tax.attackCostPerCreature();
                 }
             }
         }

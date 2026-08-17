@@ -41,8 +41,11 @@ import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingM
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -185,6 +188,10 @@ public class ChoiceHandlerService {
             handleRevealHandDamageAndExileByNameChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
+            handleAssemblyHallCreatureCardChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RevealLibraryNameGuessChoice ctx) {
             handleRevealLibraryNameGuessChoice(gameData, colorName, ctx);
             return;
@@ -259,6 +266,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellColorChoice) {
             handleSpellColorChoice(gameData, player, colorName);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
+            handleSpellCardTypeChoice(gameData, player, colorName);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellNumberChoice) {
@@ -2860,6 +2871,19 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleSpellCardTypeChoice(GameData gameData, Player player, String cardTypeName) {
+        CardType cardType = CardType.valueOf(cardTypeName);
+
+        gameData.chosenSpellCardType = cardType;
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + cardType.getDisplayName().toLowerCase() + ".";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chooses card type {} for a spell", gameData.id, player.getUsername(), cardType);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void handleSpellNumberChoice(GameData gameData, Player player, String numberText) {
         PendingInteraction.ColorChoice active =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -3284,6 +3308,37 @@ public class ChoiceHandlerService {
             matchingCards.addAll(library.stream().filter(card -> card.getName().equals(cardName)).toList());
         }
         return matchingCards;
+    }
+
+    private void handleAssemblyHallCreatureCardChoice(GameData gameData, String cardName,
+                                                       ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
+        PendingInteraction.ColorChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice == null || !choice.options().contains(cardName)) {
+            throw new IllegalArgumentException("Invalid Assembly Hall creature card name: " + cardName);
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
+        Card revealed = hand.stream()
+                .filter(card -> card.getName().equals(cardName) && card.hasType(CardType.CREATURE))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Chosen creature card is no longer in hand"));
+
+        gameData.interaction.clearAwaitingInput();
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData,
+                GameLog.textCardText(playerName + " reveals ", revealed, " from their hand."));
+        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                List.of(revealed));
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect resolution is waiting for Assembly Hall's choice");
+        }
+        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                List.of(new SearchLibraryEffect(new CardNamedPredicate(cardName), LibrarySearchDestination.HAND)));
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /**

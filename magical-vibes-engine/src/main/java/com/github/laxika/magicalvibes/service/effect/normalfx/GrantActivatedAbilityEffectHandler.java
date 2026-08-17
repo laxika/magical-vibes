@@ -64,13 +64,18 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
         } else {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+            boolean grantsToAllCreatures = e.scope() == GrantScope.ALL_CREATURES
+                    || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF;
+            List<Permanent> battlefield = grantsToAllCreatures
+                    ? gameData.playerBattlefields.values().stream().flatMap(List::stream).toList()
+                    : gameData.playerBattlefields.get(entry.getControllerId());
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                     .withSourceControllerId(entry.getControllerId());
             // OWN_CREATURES means "other creatures you control" — the source is excluded.
             // ALL_OWN_CREATURES includes the source.
-            boolean excludeSource = e.scope() == GrantScope.OWN_CREATURES;
+            boolean excludeSource = e.scope() == GrantScope.OWN_CREATURES
+                    || e.scope() == GrantScope.ALL_CREATURES;
             boolean grantsToLands = e.scope() == GrantScope.OWN_LANDS;
             boolean grantsToAllPermanents = e.scope() == GrantScope.OWN_PERMANENTS;
             if (battlefield != null) {

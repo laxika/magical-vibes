@@ -302,6 +302,20 @@ class SacrificePermanentsEffectHandlerTest {
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(),
                     anyInt(), any(), anyString());
         }
+
+        @Test
+        @DisplayName("Resolves a controller-directed sacrifice for an explicitly supplied player")
+        void resolvesForExplicitPlayer() {
+            Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
+            stubCount(1);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+            handler.resolveForPlayer(gd, entry(player1Id, null), new SacrificePermanentsEffect(
+                    1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER), player2Id);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
+        }
     }
 
     // ===================================================================================

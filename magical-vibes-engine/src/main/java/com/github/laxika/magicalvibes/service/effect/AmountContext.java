@@ -38,6 +38,9 @@ import java.util.UUID;
  * @param chosenPermanentPowerAtTrigger last-known effective power captured for an entering permanent
  *                          carried as the chosen permanent; used if that permanent leaves before
  *                          resolution
+ * @param triggeringPermanentPowerAtTrigger effective power captured for the permanent that caused
+ *                          a trigger, used as last-known information when an enchanted permanent
+ *                          leaves before resolution
  * @param sacrificedPower   effective power snapshotted from a permanent sacrificed as a cost
  * @param sacrificedToughness effective toughness snapshotted from a permanent sacrificed as a cost
  */
@@ -52,6 +55,7 @@ public record AmountContext(
         List<String> repeatedAdditionalCosts,
         Card sourceCard,
         Integer chosenPermanentPowerAtTrigger,
+        Integer triggeringPermanentPowerAtTrigger,
         int sacrificedPower,
         int sacrificedToughness
 ) {
@@ -61,7 +65,7 @@ public record AmountContext(
                          int xValue, int eventValue, boolean staticEvaluation,
                          UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard) {
         this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
-                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, 0, 0);
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, 0, 0);
     }
 
     /** Convenience for the common case with no repeatable additional cost payments. */
@@ -92,7 +96,8 @@ public record AmountContext(
     public AmountContext withControllerId(UUID otherControllerId) {
         return new AmountContext(otherControllerId, sourcePermanent, targetPermanentId, xValue,
                 eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
-                chosenPermanentPowerAtTrigger, sacrificedPower, sacrificedToughness);
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
+                sacrificedPower, sacrificedToughness);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
@@ -100,6 +105,7 @@ public record AmountContext(
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
                 entry.getRepeatedAdditionalCosts(), entry.getCard(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness());
     }

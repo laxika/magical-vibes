@@ -563,6 +563,34 @@ class PlayerInputServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("beginSpellCardTypeChoice")
+    class BeginSpellCardTypeChoice {
+
+        @Test
+        @DisplayName("Sends every card type option")
+        void sendsCardTypes() {
+            svc.beginSpellCardTypeChoice(gd, PLAYER1_ID);
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).containsExactly(
+                    "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
+                    "PLANESWALKER", "BATTLE", "KINDRED");
+            assertThat(msg.prompt()).isEqualTo("Choose a card type.");
+        }
+
+        @Test
+        @DisplayName("Stores SpellCardTypeChoice context")
+        void storesContext() {
+            svc.beginSpellCardTypeChoice(gd, PLAYER1_ID);
+
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.context()).isInstanceOf(ChoiceContext.SpellCardTypeChoice.class);
+            assertThat(((ChoiceContext.SpellCardTypeChoice) choice.context()).controllerId())
+                    .isEqualTo(PLAYER1_ID);
+        }
+    }
+
     // ========================================================================
     // beginBasicLandTypeChoice
     // ========================================================================

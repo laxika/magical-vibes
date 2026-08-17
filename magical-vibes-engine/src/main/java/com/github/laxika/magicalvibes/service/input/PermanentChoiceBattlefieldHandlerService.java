@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
@@ -965,6 +966,26 @@ public class PermanentChoiceBattlefieldHandlerService {
                 : " would deal to " + protectedName + " this turn is dealt to " + redirectName + " instead.";
         gameLogService.append(gameData, GameLog.textCardText(prefix, chosenPermanent.getCard(), suffix));
         log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
+                gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleRedirectPlayerDamageSourceChoice(GameData gameData, UUID permanentId,
+                                                       PermanentChoiceContext.RedirectPlayerDamageSourceChoice redirectSource) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.playerSourceNextDamageRedirectShields.add(new PlayerSourceNextDamageRedirectShield(
+                redirectSource.controllerId(), permanentId, redirectSource.redirectTargetId()));
+
+        Permanent destination = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
+        String destinationName = destination != null ? destination.getCard().getName() : "the target creature";
+        gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenPermanent.getCard(),
+                " would deal damage to you this turn, that damage is dealt to " + destinationName + " instead."));
+        log.info("Game {} - {} chose {} as player damage redirect source", gameData.id,
                 gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

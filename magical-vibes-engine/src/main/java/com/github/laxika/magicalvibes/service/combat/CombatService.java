@@ -349,6 +349,16 @@ public class CombatService {
     }
 
     /**
+     * Puts all permanents marked for an end-of-combat library-top move on top of their owners'
+     * libraries. A permanent that already left the battlefield is skipped.
+     */
+    public void processEndOfCombatLibraryTucks(GameData gameData) {
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
      * Destroys, for each creature scheduled by Venomous Breath, every creature that blocked or was
      * blocked by it this turn. The opponent set is read here rather than at spell resolution, so
      * blocks declared after the spell resolved are included. Respects indestructible and

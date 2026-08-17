@@ -347,6 +347,7 @@ public class TriggeredAbilityQueueService {
     public void processNextAttackTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             PermanentChoiceContext.AttackTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            UUID choosingPlayerId = pending.choosingPlayerId();
 
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
@@ -371,7 +372,7 @@ public class TriggeredAbilityQueueService {
                             : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+            playerInputService.beginPermanentChoice(gameData, choosingPlayerId, result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

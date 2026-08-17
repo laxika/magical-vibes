@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
@@ -285,6 +286,8 @@ public class DamagePreventionService {
             if (hasCreatureDamagePreventionSource(gameData, permanent, isCombatDamage)) return 0;
             // Emmara Tandris: "Prevent all damage that would be dealt to creature tokens you control."
             if (gameQueryService.isAllDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
+            if (isCombatDamage
+                    && gameQueryService.isAllCombatDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
             // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
             // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
             // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
@@ -1150,6 +1153,34 @@ public class DamagePreventionService {
 
         gameData.playerNextDamageRedirectShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /**
+     * General's Regalia: redirect the next damage event from a chosen source that would be dealt to
+     * the controller onto a fixed creature. This protects only the player, not their permanents.
+     */
+    public int applyPlayerSourceNextDamageRedirectShield(GameData gameData, UUID protectedPlayerId,
+                                                         UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || protectedPlayerId == null || sourcePermanentId == null
+                || gameData.playerSourceNextDamageRedirectShields.isEmpty()) return damage;
+
+        Iterator<PlayerSourceNextDamageRedirectShield> it =
+                gameData.playerSourceNextDamageRedirectShields.iterator();
+        while (it.hasNext()) {
+            PlayerSourceNextDamageRedirectShield shield = it.next();
+            if (!shield.protectedPlayerId().equals(protectedPlayerId)
+                    || !shield.sourcePermanentId().equals(sourcePermanentId)) continue;
+
+            Permanent destination = gameQueryService.findPermanentById(gameData,
+                    shield.redirectTargetPermanentId());
+            if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
+
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPlayerId, sourcePermanentId, damage, destination.getId()));
+            return 0;
+        }
+        return damage;
     }
 
     /**
