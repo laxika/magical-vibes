@@ -192,6 +192,20 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void xValueChoiceReservesFixedManaComponents() throws Exception {
+        ManaPool manaPool = new ManaPool();
+        manaPool.add(ManaColor.RED, 4);
+        gameData.playerManaPools.put(aiPlayerId, manaPool);
+
+        new XValueChoiceAiStrategy().answer(
+                new PendingInteraction.XValueChoice(
+                        aiPlayerId, 7, "Choose X.", "Flameblast Dragon", true, "{X}{R}"),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.NumberChosen(3));
+    }
+
+    @Test
     void exileFromOpponentHandOrGraveyardChoosesHighestManaValue() throws Exception {
         UUID opponentId = UUID.randomUUID();
         Card handCard = card("Hand card", "{2}");

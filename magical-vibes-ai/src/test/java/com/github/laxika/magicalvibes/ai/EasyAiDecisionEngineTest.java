@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
@@ -2856,6 +2857,39 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore);
             assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses a legal X when a pay-X trigger has a fixed mana component")
+        void choosesLegalXForFlameblastDragon() {
+            Permanent dragon = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new FlameblastDragon());
+            dragon.setSummoningSick(false);
+            for (int i = 0; i < 4; i++) {
+                Permanent mountain = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new Mountain());
+                mountain.setSummoningSick(false);
+            }
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new AirElemental());
+            target.setSummoningSick(false);
+            testHarness.setHand(aiTestPlayer, List.of());
+
+            testHarness.forceActivePlayer(aiTestPlayer);
+            testHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testHarness.beginAttackerDeclarationInput();
+
+            int dragonIndex = testGd.playerBattlefields.get(aiTestPlayer.getId()).indexOf(dragon);
+            testHarness.getGameService().declareAttackers(testGd, aiTestPlayer, List.of(dragonIndex));
+            testHarness.handlePermanentChosen(aiTestPlayer, target.getId());
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+
+            easyAi.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(target.getMarkedDamage()).isEqualTo(3);
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).getTotal()).isZero();
         }
     }
 }

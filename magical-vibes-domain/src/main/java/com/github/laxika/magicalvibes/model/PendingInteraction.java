@@ -120,23 +120,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code manaPayment} marks prompts whose X is charged from the mana pool — those open
      * the CR 605.3a window so the player may tap mana sources while the prompt is up.
      */
-    record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName, boolean manaPayment)
+    record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
+                        boolean manaPayment, String manaCost)
             implements PendingInteraction {
 
         /** Non-mana number pick (discard counts, life payments, bids). */
         public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
-            this(playerId, 0, maxValue, prompt, cardName, false);
+            this(playerId, 0, maxValue, prompt, cardName, false, null);
         }
 
         /** Non-mana number pick with an explicit lower bound. */
         public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName) {
-            this(playerId, minValue, maxValue, prompt, cardName, false);
+            this(playerId, minValue, maxValue, prompt, cardName, false, null);
         }
 
         /** Backward-compatible mana-payment form with the usual zero lower bound. */
         public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName,
                             boolean manaPayment) {
-            this(playerId, 0, maxValue, prompt, cardName, manaPayment);
+            this(playerId, 0, maxValue, prompt, cardName, manaPayment, null);
+        }
+
+        /** Mana-payment form that carries the full cost when X is only one part of it. */
+        public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName,
+                            boolean manaPayment, String manaCost) {
+            this(playerId, 0, maxValue, prompt, cardName, manaPayment, manaCost);
         }
 
         @Override
