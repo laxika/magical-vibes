@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
@@ -404,6 +405,24 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack.getFirst().getCard()).isSameAs(primitiveJustice);
             assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+            assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI uses the base X when paying no multikicker payments")
+        void castsStrengthOfTheTajuruWithoutMultikicker() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 4);
+            Permanent creature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            StrengthOfTheTajuru strengthOfTheTajuru = new StrengthOfTheTajuru();
+            testHarness.setHand(aiTestPlayer, List.of(strengthOfTheTajuru));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
             assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
         }
 

@@ -111,7 +111,11 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -253,6 +257,44 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(primitiveJustice);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    private Card repeatableArtifactRemoval() {
+        Card card = new Card();
+        card.setName("Repeatable artifact removal");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{X}{R}");
+        card.addEffect(EffectSlot.SPELL,
+                new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
+        card.targetX(new PermanentPredicateTargetFilter(
+                new PermanentIsArtifactPredicate(), "Targets must be artifacts"), 100)
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        return card;
+    }
+
+    @Test
+    @DisplayName("Hard AI uses the base X when paying no repeatable additional cost")
+    void castsRepeatableTargetSpellWithItsBaseTargetCount() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.RED, 3);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Card spell = repeatableArtifactRemoval();
+        harness.setHand(player1, List.of(spell));
+
+        HardAiDecisionEngine ai = createHardAi(player1);
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, artifact.getId(), 2));
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
         assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();

@@ -2233,9 +2233,10 @@ public abstract class AiDecisionEngine {
                 ? beholdSelection
                 : new BeholdSelection(null, null);
         Integer effectiveXValue = xValue;
-        if (effectiveXValue == null && card.hasXScaledTargets()
+        if (card.hasXScaledTargets()
                 && card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(RepeatableAdditionalManaCost.class::isInstance)) {
+            // This request does not submit repeatable payments, so use the base target count.
             effectiveXValue = 1;
         }
         return new PlayCardRequest(

@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
@@ -192,6 +193,44 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(primitiveJustice);
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+        assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    void castsStrengthOfTheTajuruWithoutMultikicker() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent creature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        harness.addMana(aiPlayer, ManaColor.GREEN, 4);
+        StrengthOfTheTajuru strengthOfTheTajuru = new StrengthOfTheTajuru();
+        harness.setHand(aiPlayer, List.of(strengthOfTheTajuru));
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 

@@ -215,7 +215,7 @@ class MediumAiDecisionEngineTest {
         Card card = new Card();
         card.setName("Repeatable artifact removal");
         card.setType(CardType.SORCERY);
-        card.setManaCost("{1}{R}");
+        card.setManaCost("{X}{R}");
         card.addEffect(EffectSlot.SPELL,
                 new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
         card.targetX(new PermanentPredicateTargetFilter(
@@ -284,7 +284,7 @@ class MediumAiDecisionEngineTest {
     @DisplayName("Medium AI announces one target when paying no repeatable additional cost")
     void castsRepeatableTargetSpellWithItsBaseTargetCount() {
         giveAiPriority();
-        giveAiMountains(2);
+        harness.addMana(aiPlayer, ManaColor.RED, 3);
         Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
         Card spell = repeatableArtifactRemoval();
         harness.setHand(aiPlayer, List.of(spell));
