@@ -44,8 +44,8 @@ class HatcherySpiderTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may decline the green permanent and the revealed cards go to the bottom")
     void mayDeclinePuttingPermanentOntoBattlefield() {
-        Card eligible = new GrizzlyBears();
-        Card belowReveal = new LlanowarElves();
+        Card eligible = new LlanowarElves();
+        Card belowReveal = new GrizzlyBears();
 
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         gd.playerDecks.get(player1.getId()).clear();
@@ -57,7 +57,7 @@ class HatcherySpiderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowReveal, eligible);
     }
 

@@ -21,7 +21,8 @@ class WhisperingSnitchTest extends BaseCardTest {
     @DisplayName("Deals damage and gains life on the first surveil each turn")
     void triggersOnlyOnFirstSurveilEachTurn() {
         addCreatureReady(player1, new WhisperingSnitch());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         List<Card> library = List.of(new GrizzlyBears(), new Island(), new GrizzlyBears(), new Island());
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new DazzlingLights(), new DazzlingLights()));
@@ -29,13 +30,13 @@ class WhisperingSnitchTest extends BaseCardTest {
         int player1Life = gd.getLife(player1.getId());
         int player2Life = gd.getLife(player2.getId());
 
-        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, firstTarget.getId());
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, secondTarget.getId());
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));

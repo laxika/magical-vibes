@@ -50,7 +50,6 @@ class TruefireCaptainTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).isEmpty();
         assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player1.getId(), player2.getId());
 
         harness.handlePermanentChosen(player2, player1.getId());

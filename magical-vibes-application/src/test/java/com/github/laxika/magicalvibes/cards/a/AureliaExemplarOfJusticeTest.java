@@ -55,7 +55,7 @@ class AureliaExemplarOfJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }

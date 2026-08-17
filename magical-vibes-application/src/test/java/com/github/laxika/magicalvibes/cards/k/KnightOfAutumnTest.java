@@ -59,7 +59,7 @@ class KnightOfAutumnTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castKnight(1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("target");
+                .hasMessageContaining("artifact or enchantment");
     }
 
     @Test

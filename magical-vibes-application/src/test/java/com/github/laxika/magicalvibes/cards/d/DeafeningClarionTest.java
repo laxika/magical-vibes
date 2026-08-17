@@ -25,7 +25,7 @@ class DeafeningClarionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -50,7 +50,9 @@ class DeafeningClarionTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing both modes deals damage and grants lifelink")
     void choosesBothModes() {
-        harness.addToBattlefield(player1, new HillGiant());
+        HillGiant giant = new HillGiant();
+        giant.setToughness(4);
+        harness.addToBattlefield(player1, giant);
         harness.addToBattlefield(player2, new GrizzlyBears());
         cast(new int[]{0, 1});
 

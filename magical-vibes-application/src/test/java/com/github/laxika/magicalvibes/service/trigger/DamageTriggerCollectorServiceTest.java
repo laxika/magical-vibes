@@ -818,12 +818,13 @@ class DamageTriggerCollectorServiceTest {
         @Test
         @DisplayName("queues a player-only target choice for a target-player damage trigger")
         void queuesPlayerOnlyTargetChoice() {
-            Permanent damagedCreature = createPermanent("Truefire Captain");
-            damagedCreature.getCard().target(TargetFilters.creature());
+            Card damagedCard = createCard("Truefire Captain");
+            damagedCard.target(TargetFilters.creature());
             var effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue());
-            damagedCreature.getCard().target(new PlayerPredicateTargetFilter(
+            damagedCard.target(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
                     .addEffect(EffectSlot.ON_DEALT_DAMAGE, effect);
+            Permanent damagedCreature = new Permanent(damagedCard);
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
 
             when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);

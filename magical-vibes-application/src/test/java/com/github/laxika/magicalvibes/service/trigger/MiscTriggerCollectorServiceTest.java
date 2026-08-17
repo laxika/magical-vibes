@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -180,6 +181,22 @@ class MiscTriggerCollectorServiceTest {
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect.wrapped());
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("surveil default trigger queues the original effect")
+    void surveilDefaultTriggerQueuesOriginalEffect() {
+        Permanent perm = createPermanent("Disinformation Campaign");
+        var effect = ReturnToHandEffect.self();
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 

@@ -41,9 +41,9 @@ class NotionRainTest extends BaseCardTest {
         assertThat(surveil.cards()).containsExactly(surveilledCard, keptCard);
 
         harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.ScryOrder(List.of(0), List.of(1)));
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
-        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(keptCard, drawnCard, secondDrawnCard);
+        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(keptCard, drawnCard);
         assertThat(gameData.playerGraveyards.get(player1.getId())).contains(surveilledCard);
         harness.assertLife(player1, startingLife - 2);
         assertThat(gameData.interaction.activeInteraction()).isNull();

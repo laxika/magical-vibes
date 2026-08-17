@@ -70,7 +70,7 @@ class ArtfulTakedownTest extends BaseCardTest {
             harness.castModalInstantWithModes(player1, 0, 1, 2,
                     new int[]{0}, List.of(player2.getId()));
         }).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("cannot target players");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targetIds) {

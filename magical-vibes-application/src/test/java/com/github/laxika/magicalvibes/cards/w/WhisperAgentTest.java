@@ -27,13 +27,9 @@ class WhisperAgentTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
-                .containsExactly(topCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
-
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 }

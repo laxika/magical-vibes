@@ -46,9 +46,6 @@ class IzoniThousandEyedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);

@@ -177,7 +177,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -201,7 +202,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -221,7 +223,8 @@ class SpellCastTriggerCollectorServiceTest {
             gd.stack.add(spellOnStack);
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any()))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -244,7 +247,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -267,7 +271,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(aura.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(aura, player1Id, effect),
@@ -287,7 +292,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
@@ -309,7 +315,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, mayEffect),
@@ -330,7 +337,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -686,7 +694,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any()))
                     .thenReturn(true);
             when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
 
@@ -1090,7 +1099,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1118,7 +1128,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(secondCreatureSpell, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), eq(filter), eq(null), eq(gd), eq(player1Id)))
+                    any(Card.class), eq(filter), any(), eq(gd), eq(player1Id)))
                     .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
 
             boolean result = registry.dispatch(
@@ -1138,7 +1148,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1162,7 +1173,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Opt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any()))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -1186,7 +1198,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1317,7 +1330,8 @@ class SpellCastTriggerCollectorServiceTest {
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1337,7 +1351,8 @@ class SpellCastTriggerCollectorServiceTest {
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1356,7 +1371,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1376,7 +1392,8 @@ class SpellCastTriggerCollectorServiceTest {
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1401,7 +1418,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1436,7 +1454,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1454,7 +1473,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1629,7 +1649,8 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
+                    eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),

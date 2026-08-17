@@ -24,6 +24,7 @@ class LeagueGuildmageTest extends BaseCardTest {
     @DisplayName("Draw ability draws a card")
     void drawAbilityDrawsCard() {
         addReadyGuildmage(player1);
+        harness.setHand(player1, List.of());
         setDeck(player1, List.of(new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -46,7 +47,7 @@ class LeagueGuildmageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castSorcery(player1, 0, 0);
-        harness.activateAbility(player1, 0, 1, 2, counsel.getId());
+        harness.activateAbility(player1, 0, 1, 3, counsel.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);

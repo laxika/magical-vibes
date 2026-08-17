@@ -100,19 +100,34 @@ public class PlayCardRequestDispatchService {
                     Boolean.TRUE.equals(request.buyback()), request.sharedColorDiscardHandCardIndex());
             return;
         }
+        if (chosenCreatureType == null) {
+            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    request.damageAssignments(),
+                    listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
+                    request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
+                    request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
+                    Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
+                    nullIfEmpty(request.discardHandCardIndices()),
+                    nullIfEmpty(request.imposedSacrificePermanentIds()),
+                    nullIfEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
+                    Boolean.TRUE.equals(request.buyback()),
+                    request.beholdPermanentId(), request.beholdHandCardIndex(),
+                    listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
+                    chosenBeholdType);
+            return;
+        }
         gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                request.damageAssignments(),
-                listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                request.damageAssignments(), listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
                 Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
                 request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
                 request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
                 Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
-                nullIfEmpty(request.discardHandCardIndices()),
-                nullIfEmpty(request.imposedSacrificePermanentIds()),
+                nullIfEmpty(request.discardHandCardIndices()), nullIfEmpty(request.imposedSacrificePermanentIds()),
                 nullIfEmpty(request.additionalCostSacrificePermanentIds()),
                 request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
-                Boolean.TRUE.equals(request.buyback()),
-                request.beholdPermanentId(), request.beholdHandCardIndex(),
+                Boolean.TRUE.equals(request.buyback()), request.beholdPermanentId(), request.beholdHandCardIndex(),
                 listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
                 chosenBeholdType, chosenCreatureType);
     }

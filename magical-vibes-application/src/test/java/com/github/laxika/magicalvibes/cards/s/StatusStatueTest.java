@@ -57,11 +57,11 @@ class StatusStatueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        harness.castModalInstant(player1, 0, STATUE, List.of(artifact.getId()));
+        harness.castInstant(player1, 0, STATUE, artifact.getId());
         harness.passBothPriorities();
-        harness.castModalInstant(player1, 0, STATUE, List.of(creature.getId()));
+        harness.castInstant(player1, 0, STATUE, creature.getId());
         harness.passBothPriorities();
-        harness.castModalInstant(player1, 0, STATUE, List.of(enchantment.getId()));
+        harness.castInstant(player1, 0, STATUE, enchantment.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");

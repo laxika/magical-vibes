@@ -26,7 +26,7 @@ class MarchOfTheMultitudesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 2, null, null,
-                List.of(firstConvokeCreature.getId(), secondConvokeCreature.getId()), List.of());
+                List.of(), List.of(firstConvokeCreature.getId(), secondConvokeCreature.getId()));
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()

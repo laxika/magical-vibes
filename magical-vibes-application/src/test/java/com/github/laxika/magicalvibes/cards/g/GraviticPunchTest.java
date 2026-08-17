@@ -55,7 +55,8 @@ class GraviticPunchTest extends BaseCardTest {
         addMana();
 
         UUID giantId = harness.getPermanentId(player1, "Hill Giant");
-        harness.castFlashback(player1, 0, List.of(giantId, player2.getId()));
+        gs.playFlashbackSpell(gd, player1, 0, null, null,
+                List.of(giantId, player2.getId()), null, null, List.of(), 0);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);

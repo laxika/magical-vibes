@@ -22,17 +22,17 @@ class PlaguecrafterTest extends BaseCardTest {
     @DisplayName("Each player sacrifices a creature, with all choices resolving together")
     void eachPlayerSacrificesCreature() {
         GameData gd = harness.getGameData();
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         castPlaguecrafter();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         harness.handleMultiplePermanentsChosen(player2, List.of(opponentBears.getId()));
 

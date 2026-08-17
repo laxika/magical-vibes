@@ -31,6 +31,7 @@ class ArclightPhoenixTest extends BaseCardTest {
         }
 
         advanceToCombat(player1);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(phoenix.getId()));
@@ -68,21 +69,22 @@ class ArclightPhoenixTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(phoenix));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Shock(), new Shock()));
 
-        harness.castCreature(player1, 3);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
         }
 
         advanceToCombat(player1);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(phoenix.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(phoenix.getId()));
     }
 
     private void advanceToCombat(Player activePlayer) {

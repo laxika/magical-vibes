@@ -36,7 +36,7 @@ class DiscoveryDispersalTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);

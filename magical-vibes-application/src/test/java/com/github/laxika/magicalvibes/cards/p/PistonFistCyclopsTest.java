@@ -29,6 +29,7 @@ class PistonFistCyclopsTest extends BaseCardTest {
     @DisplayName("Can attack after its controller casts an instant")
     void canAttackAfterInstant() {
         addCreatureReady(player1, new PistonFistCyclops());
+        addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -43,6 +44,7 @@ class PistonFistCyclopsTest extends BaseCardTest {
     @DisplayName("Can attack after its controller casts a sorcery")
     void canAttackAfterSorcery() {
         addCreatureReady(player1, new PistonFistCyclops());
+        addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

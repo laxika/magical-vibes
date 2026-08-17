@@ -29,20 +29,20 @@ class InvertInventTest extends BaseCardTest {
     void invertSwitchesTwoCreatures() {
         Permanent tortoise = harness.addToBattlefieldAndReturn(player2, new GiantTortoise());
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
-        int tortoisePower = tortoise.getEffectivePower();
-        int tortoiseToughness = tortoise.getEffectiveToughness();
-        int wallPower = wall.getEffectivePower();
-        int wallToughness = wall.getEffectiveToughness();
+        int tortoisePower = gqs.getEffectivePower(gd, tortoise);
+        int tortoiseToughness = gqs.getEffectiveToughness(gd, tortoise);
+        int wallPower = gqs.getEffectivePower(gd, wall);
+        int wallToughness = gqs.getEffectiveToughness(gd, wall);
 
         harness.setHand(player1, List.of(new InvertInvent()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castModalInstant(player1, 0, INVERT, List.of(tortoise.getId(), wall.getId()));
         harness.passBothPriorities();
 
-        assertThat(tortoise.getEffectivePower()).isEqualTo(tortoiseToughness);
-        assertThat(tortoise.getEffectiveToughness()).isEqualTo(tortoisePower);
-        assertThat(wall.getEffectivePower()).isEqualTo(wallToughness);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(wallPower);
+        assertThat(gqs.getEffectivePower(gd, tortoise)).isEqualTo(tortoiseToughness);
+        assertThat(gqs.getEffectiveToughness(gd, tortoise)).isEqualTo(tortoisePower);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(wallToughness);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(wallPower);
     }
 
     @Test

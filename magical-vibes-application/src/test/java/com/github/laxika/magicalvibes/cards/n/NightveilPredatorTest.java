@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,7 +43,7 @@ class NightveilPredatorTest extends BaseCardTest {
     void deathtouchDestroysLargerCreature() {
         Permanent predator = addCreatureReady(player1, new NightveilPredator());
         predator.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new ColossalDreadmaw());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

@@ -79,7 +79,7 @@ class NullhideFeroxTest extends BaseCardTest {
     void entersBattlefieldWhenDiscardedByOpponent() {
         harness.setHand(player1, new ArrayList<>(List.of(new NullhideFerox())));
         harness.setHand(player2, List.of(new Distress()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.BLACK, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

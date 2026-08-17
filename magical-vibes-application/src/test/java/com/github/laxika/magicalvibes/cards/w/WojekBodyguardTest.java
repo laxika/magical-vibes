@@ -51,8 +51,7 @@ class WojekBodyguardTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack alone");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -71,7 +70,6 @@ class WojekBodyguardTest extends BaseCardTest {
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't block alone");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -59,7 +59,7 @@ class KraulHarpoonerTest extends BaseCardTest {
         castHarpooner();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, groundCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
 

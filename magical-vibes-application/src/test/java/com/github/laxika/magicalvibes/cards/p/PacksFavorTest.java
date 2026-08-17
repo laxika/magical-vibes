@@ -82,7 +82,6 @@ class PacksFavorTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

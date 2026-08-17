@@ -1347,6 +1347,25 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
+    private boolean handleSurveilDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Permanent source = match.permanent();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                match.controllerId(),
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                source.getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers on surveil", gameData.id, source.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainMayPayMana(TriggerMatchContext match,
             MayPayManaEffect effect, TriggerContext ctx) {

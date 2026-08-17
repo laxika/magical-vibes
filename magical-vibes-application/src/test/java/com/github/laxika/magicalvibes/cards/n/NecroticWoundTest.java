@@ -48,7 +48,7 @@ class NecroticWoundTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.exiledCards).anyMatch(card -> card.card().getId().equals(target.getId()));
+        assertThat(gd.exiledCards).anyMatch(card -> card.card().getId().equals(target.getCard().getId()));
     }
 
     @Test
@@ -73,7 +73,7 @@ class NecroticWoundTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.exiledCards).anyMatch(card -> card.card().getId().equals(target.getId()));
+        assertThat(gd.exiledCards).anyMatch(card -> card.card().getId().equals(target.getCard().getId()));
     }
 
     @Test

@@ -82,6 +82,7 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
         resolveEffect(gd, entry, effect);
 
         verify(playerInputService).beginSpellCardNameChoice(
-                gd, player1Id, player2Id, List.of(CardType.ARTIFACT, CardType.LAND), null, true, 4);
+                gd, player1Id, player2Id, List.of(CardType.ARTIFACT, CardType.LAND), null,
+                4, true, false, null, card.getSetCode());
     }
 }

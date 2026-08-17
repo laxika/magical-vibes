@@ -33,13 +33,17 @@ class RhizomeLurcherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no creature cards in its controller's graveyard it enters as a 0/0 and dies")
-    void diesWithNoCreatureCardsInGraveyard() {
+    @DisplayName("With no creature cards in its controller's graveyard it enters as a 2/2")
+    void entersAsTwoTwoWithNoCreatureCardsInGraveyard() {
         gd.playerGraveyards.get(player1.getId()).add(new Shock());
 
         castLurcher();
 
-        harness.assertNotOnBattlefield(player1, "Rhizome Lurcher");
+        Permanent lurcher = findLurcher();
+        assertThat(lurcher).isNotNull();
+        assertThat(lurcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, lurcher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lurcher)).isEqualTo(2);
     }
 
     private void castLurcher() {

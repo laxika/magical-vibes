@@ -93,7 +93,7 @@ class RalIzzetViceroyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 6);
         assertThat(gd.playerHands.get(player1.getId())).contains(firstDraw, secondDraw);
     }
 

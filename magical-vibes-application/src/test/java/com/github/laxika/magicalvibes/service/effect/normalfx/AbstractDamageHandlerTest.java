@@ -110,6 +110,9 @@ abstract class AbstractDamageHandlerTest {
                 .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(

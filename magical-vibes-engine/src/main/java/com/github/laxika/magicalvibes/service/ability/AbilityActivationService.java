@@ -2225,7 +2225,8 @@ public class AbilityActivationService {
 
         // Validate spell target for abilities that counter spells
         if (ability.targetsSpellOnStack(targetZone)) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId, permanent);
+            targetLegalityService.validateSpellTargetOnStack(
+                    gameData, targetId, ability.getTargetFilter(), playerId, permanent, effectiveXValue);
         }
 
         UUID sourceId = permanent.getId();

@@ -27,7 +27,7 @@ public class RunawaySteamKin extends Card {
                 new NotCondition(new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE))));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(3, CounterType.PLUS_ONE_PLUS_ONE),

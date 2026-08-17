@@ -21,8 +21,9 @@ class ExpansionTest extends BaseCardTest {
     void expansionCopiesSmallInstantOrSorcery() {
         AngelsMercy mercy = new AngelsMercy();
         harness.setHand(player1, List.of(mercy, new Expansion()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0);
         harness.castInstant(player1, 0, 0, mercy.getId());

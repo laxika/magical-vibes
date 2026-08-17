@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,9 @@ class NivMizzetParunTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.passPriority(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).hasSize(1);

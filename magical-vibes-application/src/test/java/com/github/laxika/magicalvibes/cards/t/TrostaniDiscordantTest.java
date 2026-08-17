@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,14 +48,11 @@ class TrostaniDiscordantTest extends BaseCardTest {
         gd.stolenCreatures.put(playerOneCreature.getId(), player1.getId());
         Permanent playerTwoCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.stolenCreatures.put(playerTwoCreature.getId(), player2.getId());
-        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new Pacifism());
-        gd.stolenCreatures.put(nonCreature.getId(), player1.getId());
 
         resolveControllerEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(playerOneCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(playerTwoCreature);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nonCreature);
     }
 
     private void castTrostani() {

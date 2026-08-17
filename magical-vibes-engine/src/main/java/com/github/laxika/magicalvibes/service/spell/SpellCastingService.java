@@ -4973,6 +4973,9 @@ public class SpellCastingService {
             );
         }
         stackEntry.setSourceZone(Zone.EXILE);
+        if (!exiledEntry.ownerId().equals(playerId)) {
+            stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
+        }
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         gameData.stack.add(stackEntry);
 

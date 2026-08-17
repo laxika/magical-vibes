@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class LegionWarbossTest extends BaseCardTest {
     @DisplayName("Mentor puts a +1/+1 counter on an attacking creature with lesser power")
     void mentorCountersLesserPowerAttacker() {
         Permanent warboss = addCreatureReady(player1, new LegionWarboss());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
 
         declareWarbossAttackers(player1, List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(warboss),

@@ -175,6 +175,12 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter,
+                                           UUID controllerId, Permanent source, int xValue) {
+        checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, source, xValue)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
     public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId, int xValue) {
         checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, null, xValue)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
