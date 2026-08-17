@@ -240,14 +240,89 @@ public class CombatAttackService {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        Set<Integer> restrictionValidAttackers = new HashSet<>(
+                getRestrictionValidGroupAttackers(gameData, playerId, attackableIndices));
+        for (int idx : attackableIndices) {
+            if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
+                restrictionValidAttackers.add(idx);
+            }
+        }
         List<Integer> mustAttack = new ArrayList<>();
         for (int idx : attackableIndices) {
             Permanent p = battlefield.get(idx);
-            if (attackLegalityService.getMustAttackRequirementCount(gameData, p) > 0) {
+            if (restrictionValidAttackers.contains(idx)
+                    && attackLegalityService.getMustAttackRequirementCount(gameData, p) > 0) {
                 mustAttack.add(idx);
             }
         }
         return mustAttack;
+    }
+
+    private List<Integer> getRestrictionValidGroupAttackers(GameData gameData, UUID playerId,
+                                                              List<Integer> attackableIndices) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+
+        List<Integer> candidates = attackableIndices.stream()
+                .filter(idx -> !canOnlyAttackAlone(gameData, battlefield.get(idx)))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        boolean changed;
+        do {
+            changed = false;
+            for (int idx : List.copyOf(candidates)) {
+                if (hasUnmetAttackRestriction(gameData, battlefield, candidates, idx)) {
+                    candidates.remove(Integer.valueOf(idx));
+                    changed = true;
+                }
+            }
+        } while (changed);
+        return candidates;
+    }
+
+    private boolean isRestrictionValidSingleton(GameData gameData, List<Permanent> battlefield,
+                                                 int attackerIndex) {
+        return !hasUnmetAttackRestriction(gameData, battlefield, List.of(attackerIndex), attackerIndex);
+    }
+
+    private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,
+                                               List<Integer> attackerIndices, int attackerIndex) {
+        Permanent attacker = battlefield.get(attackerIndex);
+        if (attackerIndices.size() == 1 && hasCantAttackOrBlockAlone(gameData, attacker)) {
+            return true;
+        }
+        if (attackerIndices.size() > 1 && canOnlyAttackAlone(gameData, attacker)) {
+            return true;
+        }
+
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && attackerIndices.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int power = gameQueryService.getEffectivePower(gameData, attacker);
+                boolean hasGreaterPowerAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
+                if (!hasGreaterPowerAttacker) {
+                    return true;
+                }
+            }
+            if (effect instanceof MatchingAttackerRestrictionEffect restriction) {
+                boolean hasMatchingAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, other, restriction.matchingAttackerPredicate()));
+                if (!hasMatchingAttacker) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -1475,9 +1550,17 @@ public class CombatAttackService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
 
+        List<Integer> restrictionValidGroupAttackers = getRestrictionValidGroupAttackers(
+                gameData, playerId, attackableIndices);
         int maxRequirements = 0;
-        for (int idx : attackableIndices) {
+        for (int idx : restrictionValidGroupAttackers) {
             maxRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
+        }
+        for (int idx : attackableIndices) {
+            if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
+                maxRequirements = Math.max(maxRequirements,
+                        attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)));
+            }
         }
 
         int satisfiedRequirements = 0;
@@ -1486,7 +1569,13 @@ public class CombatAttackService {
         }
 
         if (satisfiedRequirements < maxRequirements) {
+            Set<Integer> restrictionValidAttackers = new HashSet<>(restrictionValidGroupAttackers);
             for (int idx : attackableIndices) {
+                if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
+                    restrictionValidAttackers.add(idx);
+                }
+            }
+            for (int idx : restrictionValidAttackers) {
                 if (!declaredAttackerIndices.contains(idx)
                         && attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");

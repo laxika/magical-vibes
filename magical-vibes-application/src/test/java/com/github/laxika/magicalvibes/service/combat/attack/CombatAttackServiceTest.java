@@ -202,6 +202,20 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("A forced creature that cannot satisfy its group restriction may stay home")
+        void forcedRestrictedCreatureMayStayHomeWhenNoLegalDeclarationIncludesIt() {
+            Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());
+            conscripts.setMustAttackThisTurn(true);
+
+            List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
+            assertThat(service().getMustAttackIndices(gd, player1.getId(), attackable)).isEmpty();
+
+            enterDeclareAttackers();
+
+            assertThatCode(() -> declare(List.of())).doesNotThrowAnyException();
+        }
+
+        @Test
         @DisplayName("CR 508.1d: an attack tax suspends every requirement, since the cost is optional")
         void anAttackTaxSuspendsEveryRequirement() {
             addCreatureReady(player1, new BerserkersOfBloodRidge());
