@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -30,6 +31,12 @@ public class PermanentCopierService {
      */
     public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
                                 Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
+        applyCloneCopy(clonePerm, target, powerOverride, toughnessOverride, additionalTypesOverride, List.of());
+    }
+
+    public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
+                               Integer toughnessOverride, Set<CardType> additionalTypesOverride,
+                               List<ActivatedAbility> retainedAbilities) {
         Card copy = new Card();
         copy.setName(target.getName());
         copy.setType(target.getType());
@@ -56,6 +63,9 @@ public class PermanentCopierService {
             }
         }
         for (ActivatedAbility ability : target.getActivatedAbilities()) {
+            copy.addActivatedAbility(ability);
+        }
+        for (ActivatedAbility ability : retainedAbilities) {
             copy.addActivatedAbility(ability);
         }
 

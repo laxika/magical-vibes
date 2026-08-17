@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "178")
-@CardRegistration(set = "FEM", collectorNumber = "40")
-@CardRegistration(set = "FEM", collectorNumber = "118")
-@CardRegistration(set = "FEM", collectorNumber = "119")
+@CardRegistration(set = "FEM", collectorNumber = "40a")
+@CardRegistration(set = "FEM", collectorNumber = "40b")
+@CardRegistration(set = "FEM", collectorNumber = "40c")
 public class MindstabThrull extends Card {
 
     public MindstabThrull() {

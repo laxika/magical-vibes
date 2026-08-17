@@ -47,10 +47,8 @@ public class BecomeCopyOfTargetExiledCreatureCardEffectHandler implements Normal
         }
 
         Card printed = source.getOriginalCard();
-        permanentCopierService.applyCloneCopy(source, exiledEntry.card(), 0, 0, java.util.Set.of());
-        for (var ability : printed.getActivatedAbilities()) {
-            source.getCard().addActivatedAbility(ability);
-        }
+        permanentCopierService.applyCloneCopy(source, exiledEntry.card(), 0, 0, java.util.Set.of(),
+                printed.getActivatedAbilities());
 
         gameLogService.append(gameData,
                 GameLog.textCardText(printed.getName() + " becomes a copy of ", exiledEntry.card(), "."));
