@@ -84,6 +84,7 @@ public enum CardSet {
     SET_DOM("DOM"),
     SET_GRN("GRN"),
     SET_SOS("SOS"),
+    SET_S00("S00"),
     SET_S99("S99"),
     SET_POR("POR"),
     SET_P02("P02"),
@@ -101,6 +102,7 @@ public enum CardSet {
     SET_MGB("MGB"),
     SET_TPR("TPR"),
     SET_ATH("ATH"),
+    SET_BRB("BRB"),
     SET_FDN("FDN"),
     SET_ULG("ULG"),
     SET_DFT("DFT");
