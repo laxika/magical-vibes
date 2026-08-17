@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "187")
+@CardRegistration(set = "BRB", collectorNumber = "27")
 public class FireAnts extends Card {
 
     public FireAnts() {

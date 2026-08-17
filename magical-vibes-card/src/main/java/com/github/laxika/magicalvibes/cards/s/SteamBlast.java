@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "219")
+@CardRegistration(set = "BRB", collectorNumber = "81")
 public class SteamBlast extends Card {
 
     public SteamBlast() {

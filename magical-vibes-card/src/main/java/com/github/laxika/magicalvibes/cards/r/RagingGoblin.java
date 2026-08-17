@@ -14,5 +14,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "6ED", collectorNumber = "200")
 @CardRegistration(set = "ATH", collectorNumber = "49")
 @CardRegistration(set = "S99", collectorNumber = "114")
+@CardRegistration(set = "BRB", collectorNumber = "55")
 public class RagingGoblin extends Card {
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "233")
+@CardRegistration(set = "BRB", collectorNumber = "6")
 public class ArgothianElder extends Card {
 
     public ArgothianElder() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCreatureToHandEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "68")
+@CardRegistration(set = "BRB", collectorNumber = "17")
 public class Curfew extends Card {
 
     public Curfew() {

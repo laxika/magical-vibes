@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "329")
 @CardRegistration(set = "TPR", collectorNumber = "247")
+@CardRegistration(set = "BRB", collectorNumber = "93")
 public class VecTownships extends Card {
 
     public VecTownships() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "275")
+@CardRegistration(set = "BRB", collectorNumber = "85")
 public class Symbiosis extends Card {
 
     public Symbiosis() {

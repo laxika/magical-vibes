@@ -15,5 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "TPR", collectorNumber = "81")
 @CardRegistration(set = "KLD", collectorNumber = "70")
 @CardRegistration(set = "S99", collectorNumber = "61")
+@CardRegistration(set = "BRB", collectorNumber = "98")
 public class WindDrake extends Card {
 }

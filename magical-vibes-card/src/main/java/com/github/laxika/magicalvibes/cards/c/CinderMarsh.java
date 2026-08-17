@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "317")
 @CardRegistration(set = "TPR", collectorNumber = "236")
+@CardRegistration(set = "BRB", collectorNumber = "13")
 public class CinderMarsh extends Card {
 
     public CinderMarsh() {

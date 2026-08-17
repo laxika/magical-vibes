@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 @CardRegistration(set = "M15", collectorNumber = "148")
 @CardRegistration(set = "USG", collectorNumber = "199")
 @CardRegistration(set = "ROE", collectorNumber = "150")
+@CardRegistration(set = "BRB", collectorNumber = "32")
 public class HeatRay extends Card {
 
     public HeatRay() {

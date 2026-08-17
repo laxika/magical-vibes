@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "69")
+@CardRegistration(set = "BRB", collectorNumber = "21")
 public class DisruptiveStudent extends Card {
 
     public DisruptiveStudent() {

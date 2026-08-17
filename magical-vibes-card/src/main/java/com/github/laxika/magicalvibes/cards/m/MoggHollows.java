@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "320")
 @CardRegistration(set = "TPR", collectorNumber = "239")
+@CardRegistration(set = "BRB", collectorNumber = "45")
 public class MoggHollows extends Card {
 
     public MoggHollows() {

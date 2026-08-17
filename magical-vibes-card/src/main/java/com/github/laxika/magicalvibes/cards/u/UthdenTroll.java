@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "228")
 @CardRegistration(set = "ATH", collectorNumber = "50")
+@CardRegistration(set = "BRB", collectorNumber = "92")
 public class UthdenTroll extends Card {
 
     public UthdenTroll() {

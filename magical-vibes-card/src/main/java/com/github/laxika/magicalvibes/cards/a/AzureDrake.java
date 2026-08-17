@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "63")
 @CardRegistration(set = "5ED", collectorNumber = "73")
 @CardRegistration(set = "CHR", collectorNumber = "15")
+@CardRegistration(set = "BRB", collectorNumber = "8")
 public class AzureDrake extends Card {
 }

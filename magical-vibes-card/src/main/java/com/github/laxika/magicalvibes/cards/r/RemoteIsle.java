@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "324")
+@CardRegistration(set = "BRB", collectorNumber = "58")
 public class RemoteIsle extends Card {
 
     public RemoteIsle() {

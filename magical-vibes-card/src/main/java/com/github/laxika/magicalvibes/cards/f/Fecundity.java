@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDra
 
 @CardRegistration(set = "8ED", collectorNumber = "247")
 @CardRegistration(set = "USG", collectorNumber = "251")
+@CardRegistration(set = "BRB", collectorNumber = "25")
 public class Fecundity extends Card {
 
     public Fecundity() {

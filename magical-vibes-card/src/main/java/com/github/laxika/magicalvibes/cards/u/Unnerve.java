@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "USG", collectorNumber = "162")
+@CardRegistration(set = "BRB", collectorNumber = "91")
 public class Unnerve extends Card {
 
     public Unnerve() {

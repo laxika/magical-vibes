@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "217")
+@CardRegistration(set = "BRB", collectorNumber = "71")
 public class ShowerOfSparks extends Card {
 
     public ShowerOfSparks() {

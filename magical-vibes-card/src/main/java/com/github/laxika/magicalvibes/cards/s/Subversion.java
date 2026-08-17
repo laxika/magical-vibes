@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "ULG", collectorNumber = "68")
+@CardRegistration(set = "BRB", collectorNumber = "82")
 public class Subversion extends Card {
 
     public Subversion() {

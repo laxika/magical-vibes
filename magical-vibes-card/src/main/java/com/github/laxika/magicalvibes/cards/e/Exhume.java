@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGra
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "134")
+@CardRegistration(set = "BRB", collectorNumber = "24")
 public class Exhume extends Card {
 
     public Exhume() {

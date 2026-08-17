@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
  * Syphon Soul deals 2 damage to each other player. You gain life equal to the damage dealt this way.
  */
 @CardRegistration(set = "6ED", collectorNumber = "159")
+@CardRegistration(set = "BRB", collectorNumber = "86")
 public class SyphonSoul extends Card {
 
     public SyphonSoul() {
