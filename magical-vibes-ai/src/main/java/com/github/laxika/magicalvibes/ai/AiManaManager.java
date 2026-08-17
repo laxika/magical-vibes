@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -355,6 +356,11 @@ public class AiManaManager {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<ManaActivation> ordered = new ArrayList<>(plan.activations());
         ordered.sort((left, right) -> {
+            boolean leftConsumesAnotherPermanent = consumesAnotherPermanent(gameData, battlefield, left);
+            boolean rightConsumesAnotherPermanent = consumesAnotherPermanent(gameData, battlefield, right);
+            if (leftConsumesAnotherPermanent != rightConsumesAnotherPermanent) {
+                return Boolean.compare(leftConsumesAnotherPermanent, rightConsumesAnotherPermanent);
+            }
             Permanent leftPermanent = findPermanent(battlefield, left.permanentId());
             Permanent rightPermanent = findPermanent(battlefield, right.permanentId());
             int leftScore = leftPermanent == null ? Integer.MIN_VALUE
@@ -364,6 +370,31 @@ public class AiManaManager {
             return Integer.compare(rightScore, leftScore);
         });
         return new ManaPaymentPlan(ordered);
+    }
+
+    /**
+     * A mana ability that consumes another permanent must run after that permanent has produced
+     * its mana. Otherwise the cost can remove a source that is still waiting in the payment plan.
+     */
+    private boolean consumesAnotherPermanent(GameData gameData, List<Permanent> battlefield,
+                                             ManaActivation activation) {
+        if (activation.abilityIndex() == null) {
+            return false;
+        }
+        Permanent permanent = findPermanent(battlefield, activation.permanentId());
+        if (permanent == null) {
+            return false;
+        }
+        List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(
+                gameData, permanent, permanent.getCard());
+        int index = activation.abilityIndex();
+        if (index < 0 || index >= abilities.size()) {
+            return false;
+        }
+        return abilities.get(index).getEffects().stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(cost -> cost.consumedPermanentFilter() != null);
     }
 
     private static Permanent findPermanent(List<Permanent> battlefield, UUID permanentId) {

@@ -32,11 +32,13 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -1739,6 +1741,63 @@ class AiManaManagerTest {
             // iteration re-scans the (now-shorter) battlefield.
             verify(action).tap(1, null);
             verify(action).tap(0, 0);
+        }
+
+        @Test
+        @DisplayName("uses a mana source before another source can sacrifice it")
+        void usesSourceBeforeSacrificeManaAbility() {
+            Card marbleDiamondCard = new Card();
+            marbleDiamondCard.setType(CardType.ARTIFACT);
+            marbleDiamondCard.setName("Marble Diamond");
+            marbleDiamondCard.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.WHITE)), "Add {W}."));
+            Permanent marbleDiamond = new Permanent(marbleDiamondCard);
+            marbleDiamond.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(marbleDiamond);
+
+            Card stokerCard = new Card();
+            stokerCard.setType(CardType.CREATURE);
+            stokerCard.setName("Krark-Clan Stoker");
+            stokerCard.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new SacrificePermanentCost(
+                                    new PermanentIsArtifactPredicate(), "an artifact", false),
+                            new AwardManaEffect(ManaColor.RED, 2)),
+                    "Add {R}{R}."));
+            Permanent stoker = new Permanent(stokerCard);
+            stoker.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(stoker);
+
+            Permanent mountain = addUntappedLand("Mountain", ManaColor.RED);
+            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+            lenient().when(gameQueryService.isCreature(gd, marbleDiamond)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, marbleDiamond)).thenReturn(true);
+            lenient().when(gameQueryService.isCreature(gd, stoker)).thenReturn(true);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, stoker)).thenReturn(true);
+
+            List<String> activationOrder = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                Permanent source = gd.playerBattlefields.get(player1Id).get(permanentIndex);
+                activationOrder.add(source.getCard().getName());
+                source.tap();
+                if (source == marbleDiamond) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.WHITE);
+                } else if (source == mountain) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.RED);
+                } else if (source == forest) {
+                    gd.playerManaPools.get(player1Id).add(ManaColor.GREEN);
+                } else if (source == stoker) {
+                    gd.playerBattlefields.get(player1Id).remove(marbleDiamond);
+                    gd.playerManaPools.get(player1Id).add(ManaColor.RED, 2);
+                }
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{3}{R}{R}", 0, action);
+
+            assertThat(activationOrder.indexOf("Marble Diamond"))
+                    .isLessThan(activationOrder.indexOf("Krark-Clan Stoker"));
+            assertThat(new ManaCost("{3}{R}{R}").canPay(
+                    gd.playerManaPools.get(player1Id), 0)).isTrue();
         }
 
         @Test
