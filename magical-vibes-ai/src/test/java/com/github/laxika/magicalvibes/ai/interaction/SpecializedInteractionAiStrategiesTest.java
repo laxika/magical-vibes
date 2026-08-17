@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.ai.AiGameActions;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class SpecializedInteractionAiStrategiesTest {
 
@@ -134,6 +141,38 @@ class SpecializedInteractionAiStrategiesTest {
 
         assertThat(capturedAnswer())
                 .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId(), second.getId())));
+    }
+
+    @Test
+    void graveyardExileCostChoosesAnAffordableCardWhenTheAbilityPaysItsManaCost() throws Exception {
+        UUID sourceId = UUID.randomUUID();
+        Permanent source = mock(Permanent.class);
+        when(source.getId()).thenReturn(sourceId);
+        ActivatedAbility ability = new ActivatedAbility(
+                false,
+                null,
+                List.of(new ExileCardFromGraveyardCost(CardType.CREATURE, true, false)),
+                "Choose a creature and pay its mana cost.");
+        when(context.gameQueryService().findPermanentById(gameData, sourceId)).thenReturn(source);
+        when(actions.getEffectiveActivatedAbilities(gameData, source)).thenReturn(List.of(ability));
+
+        Card affordable = card("Affordable", "{1}");
+        affordable.setType(CardType.CREATURE);
+        Card expensive = card("Expensive", "{5}");
+        expensive.setType(CardType.CREATURE);
+        gameData.playerGraveyards.put(aiPlayerId, new ArrayList<>(List.of(affordable, expensive)));
+        ManaPool manaPool = new ManaPool();
+        manaPool.add(ManaColor.COLORLESS);
+        gameData.playerManaPools.put(aiPlayerId, manaPool);
+        gameData.pendingAbilityActivation = new PendingAbilityActivation(
+                sourceId, 0, 0, null, null, null);
+
+        new GraveyardExileCostChoiceAiStrategy().answer(
+                new PendingInteraction.GraveyardExileCostChoice(
+                        aiPlayerId, List.of(0, 1), "Choose a creature to exile."),
+                context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.GraveyardCardChosen(0));
     }
 
     @Test
