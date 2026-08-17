@@ -25,7 +25,9 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
@@ -48,6 +50,7 @@ import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
+import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
@@ -907,6 +910,50 @@ class RandomAiDecisionEngineTest {
         assertThat(conscripts.isAttackedThisTurn()).isFalse();
         assertThat(ally.isAttackedThisTurn()).isTrue();
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    void sendsRequiredAttackerToAvailablePlaneswalker() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new IslandSanctuary());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(opponent, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent blocker = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new Ramroller());
+        attacker.setSummoningSick(false);
+        gameData.turnNumber = 2;
+
+        harness.forceActivePlayer(opponent);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(opponent, true);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gameData));
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getAttackTarget()).isEqualTo(planeswalker.getId());
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                .isNull();
     }
 
     @Test

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.Lure;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
 import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
+import com.github.laxika.magicalvibes.cards.r.Ramroller;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
@@ -1855,6 +1857,43 @@ class EasyAiDecisionEngineTest {
             }
             assertThat(attacker.isAttacking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI sends a required attacker to an available planeswalker")
+        void sendsRequiredAttackerToAvailablePlaneswalker() {
+            combatHarness.addToBattlefield(opponent, new IslandSanctuary());
+            Permanent planeswalker = combatHarness.addToBattlefieldAndReturn(opponent, new JaceBeleren());
+            planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            combatGd.turnNumber = 2;
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.UPKEEP);
+            combatHarness.clearPriorityPassed();
+            combatHarness.passBothPriorities();
+            combatHarness.handleMayAbilityChosen(opponent, true);
+
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Ramroller());
+            attacker.setSummoningSick(false);
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.inMutationScope(() ->
+                    combatHarness.getCombatAttackService().handleDeclareAttackersStep(combatGd));
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+            assertThat(attacker.isAttacking()).isTrue();
+            assertThat(attacker.getAttackTarget()).isEqualTo(planeswalker.getId());
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
 
         @Test

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -1082,7 +1083,10 @@ public abstract class AiDecisionEngine {
         GameData gameData = gameRegistry.get(gameId);
         DeclareAttackersRequest requirementLegalRequest = gameData == null
                 ? request
-                : enforceConditionalAttackRequirements(gameData, request);
+                : enforceAttackerDeclarationRequirements(gameData, request);
+        if (gameData != null) {
+            requirementLegalRequest = enforceConditionalAttackRequirements(gameData, requirementLegalRequest);
+        }
         DeclareAttackersRequest targetLegalRequest = gameData == null
                 ? requirementLegalRequest
                 : removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
@@ -1132,23 +1136,34 @@ public abstract class AiDecisionEngine {
 
     private DeclareAttackersRequest findLegalFallbackAttackerDeclaration(GameData gameData) {
         UUID attackingPlayerId = activeDecisionPlayerId(gameData);
-        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
-        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndicesForTarget(
-                gameData, attackingPlayerId, defaultTarget);
-        if (allAttackable == null) {
-            allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
-        }
+        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
         if (allAttackable == null || allAttackable.isEmpty()) {
             return new DeclareAttackersRequest(List.of(), null);
         }
 
         DeclareAttackersRequest fallback = new DeclareAttackersRequest(allAttackable, null);
+        fallback = enforceAttackerDeclarationRequirements(gameData, fallback);
         fallback = enforceConditionalAttackRequirements(gameData, fallback);
         fallback = removeAttackersThatCannotAttackDefaultTarget(gameData, fallback);
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
         fallback = capAttackersToCombatMaximum(gameData, fallback);
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
         return fallback;
+    }
+
+    private DeclareAttackersRequest enforceAttackerDeclarationRequirements(
+            GameData gameData, DeclareAttackersRequest request) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration == null || declaration.mustAttackIndices().isEmpty()
+                || request.attackerIndices().containsAll(declaration.mustAttackIndices())) {
+            return request;
+        }
+
+        LinkedHashSet<Integer> mergedIndices = new LinkedHashSet<>(request.attackerIndices());
+        mergedIndices.addAll(declaration.mustAttackIndices());
+        return new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
+                request.attackTargets(), request.bands());
     }
 
     /**
@@ -1173,17 +1188,25 @@ public abstract class AiDecisionEngine {
 
         LinkedHashSet<Integer> mergedIndices = new LinkedHashSet<>(request.attackerIndices());
         mergedIndices.addAll(requiredIndices);
-        return new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
-                request.attackTargets(), request.bands());
+        return removeAttackersThatCannotAttackDefaultTarget(gameData,
+                new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
+                        request.attackTargets(), request.bands()),
+                new HashSet<>(requiredIndices));
     }
 
     /**
      * The combat service exposes target-independent attackers for the declaration prompt, while
-     * the AI's default request attacks the opponent. Remove creatures barred by a defender-scoped
-     * restriction before sending that request so a legal attack is never rejected by the engine.
+     * the AI's default request attacks the opponent. Remove optional creatures barred by a
+     * defender-scoped restriction, while assigning a required creature to another legal target
+     * when the defending player is unavailable.
      */
     private DeclareAttackersRequest removeAttackersThatCannotAttackDefaultTarget(
             GameData gameData, DeclareAttackersRequest request) {
+        return removeAttackersThatCannotAttackDefaultTarget(gameData, request, Set.of());
+    }
+
+    private DeclareAttackersRequest removeAttackersThatCannotAttackDefaultTarget(
+            GameData gameData, DeclareAttackersRequest request, Set<Integer> additionalRequiredIndices) {
         if (request.attackerIndices().isEmpty()
                 || (request.attackTargets() != null && !request.attackTargets().isEmpty())) {
             return request;
@@ -1196,14 +1219,58 @@ public abstract class AiDecisionEngine {
         if (targetLegal == null) {
             return request;
         }
-        if (request.attackerIndices().stream().allMatch(targetLegal::contains)) {
-            return request;
+
+        Set<Integer> requiredIndices = new HashSet<>(additionalRequiredIndices);
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            requiredIndices.addAll(declaration.mustAttackIndices());
         }
 
-        List<Integer> filtered = request.attackerIndices().stream()
-                .filter(targetLegal::contains)
-                .toList();
-        return new DeclareAttackersRequest(filtered, request.attackTargets(), request.bands());
+        List<CombatAttackTarget> availableTargets = declaration == null
+                ? List.of()
+                : declaration.availableTargets();
+        List<Integer> filtered = new ArrayList<>();
+        Map<Integer, String> redirectedTargets = new LinkedHashMap<>();
+        for (int attackerIndex : request.attackerIndices()) {
+            if (targetLegal.contains(attackerIndex)) {
+                filtered.add(attackerIndex);
+                continue;
+            }
+
+            if (!requiredIndices.contains(attackerIndex)) {
+                continue;
+            }
+
+            UUID alternateTarget = findAlternateAttackTarget(
+                    gameData, attackingPlayerId, defaultTarget, attackerIndex, availableTargets);
+            if (alternateTarget != null) {
+                filtered.add(attackerIndex);
+                redirectedTargets.put(attackerIndex, alternateTarget.toString());
+            }
+        }
+
+        if (filtered.equals(request.attackerIndices()) && redirectedTargets.isEmpty()) {
+            return request;
+        }
+        return new DeclareAttackersRequest(filtered,
+                redirectedTargets.isEmpty() ? null : redirectedTargets, request.bands());
+    }
+
+    private UUID findAlternateAttackTarget(GameData gameData, UUID attackingPlayerId,
+                                            UUID defaultTarget, int attackerIndex,
+                                            List<CombatAttackTarget> availableTargets) {
+        for (CombatAttackTarget target : availableTargets) {
+            if (target.id() == null || target.id().equals(defaultTarget)) {
+                continue;
+            }
+            List<Integer> targetLegal = combatAttackService.getAttackableCreatureIndicesForTarget(
+                    gameData, attackingPlayerId, target.id());
+            if (targetLegal != null && targetLegal.contains(attackerIndex)) {
+                return target.id();
+            }
+        }
+        return null;
     }
 
     private List<Integer> removeUnmetAttackRestrictions(GameData gameData, List<Integer> attackerIndices) {
