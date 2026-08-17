@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -369,9 +370,14 @@ public class MayAbilityHandlerService {
 
             // Effects that copy an entering permanent need the target permanent ID from the trigger
             boolean needsEnteringTarget = ability.effects().stream()
-                    .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect);
+                    .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect
+                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget());
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
+            }
+            if (ability.effects().stream().anyMatch(e -> e instanceof DiscardCardThenEffect discard
+                    && discard.useEntryTarget())) {
+                entry.setNonTargeting(true);
             }
             entry.setAttackedTargetId(ability.attackedTargetId());
 

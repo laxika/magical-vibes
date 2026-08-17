@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -36,9 +38,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -48,6 +52,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -78,6 +83,9 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private ExileService exileService;
@@ -291,6 +299,40 @@ class MiscTriggerCollectorServiceTest {
     }
 
     // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
+
+    @Nested
+    @DisplayName("ON_ALLY_PERMANENT_SACRIFICED - targeted conditional trigger")
+    class SacrificeTargetedConditional {
+
+        @Test
+        @DisplayName("queues target selection instead of putting an untargeted ability on the stack")
+        void queuesTargetSelection() {
+            Permanent perm = createPermanent("Fleeting Memories");
+            Card clue = createCard("Clue");
+            clue.setType(CardType.ARTIFACT);
+            clue.setSubtypes(List.of(CardSubtype.CLUE));
+            var effect = new TriggeringPermanentConditionalEffect(
+                    new PermanentHasSubtypePredicate(CardSubtype.CLUE),
+                    new MillEffect(3, MillRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
+
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(GameData.class), any(Permanent.class), any(PermanentPredicate.class)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+            assertThat(pending.controllerId()).isEqualTo(player1Id);
+            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(pending.effects()).containsExactly(effect.wrapped());
+        }
+    }
 
     @Nested
     @DisplayName("ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE")

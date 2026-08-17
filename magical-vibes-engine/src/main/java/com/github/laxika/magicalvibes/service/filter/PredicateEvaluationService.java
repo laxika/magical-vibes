@@ -168,6 +168,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostXWhenMadnessOtherwisePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
@@ -817,6 +818,15 @@ public class PredicateEvaluationService {
                     yield gameQueryService.toughnessForStaticFilter(permanent) <= toughnessAtMostPredicate.maxToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= toughnessAtMostPredicate.maxToughness();
+            }
+            case PermanentToughnessAtMostXWhenMadnessOtherwisePredicate madnessPredicate -> {
+                int maxToughness = filterContext != null && filterContext.madness()
+                        ? filterContext.xValue() != null ? filterContext.xValue() : 0
+                        : madnessPredicate.normalMaxToughness();
+                if (gameData == null) {
+                    yield gameQueryService.toughnessForStaticFilter(permanent) <= maxToughness;
+                }
+                yield gameQueryService.getEffectiveToughness(gameData, permanent) <= maxToughness;
             }
             case PermanentToughnessAtLeastPredicate toughnessAtLeastPredicate -> {
                 if (gameData == null) {

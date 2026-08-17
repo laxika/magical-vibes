@@ -10,11 +10,13 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -54,6 +56,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
 @ExtendWith(MockitoExtension.class)
 class MayCastHandlerServiceTest {
@@ -71,6 +74,7 @@ class MayCastHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     @Mock private SpellCastingService spellCastingService;
+    @Mock private TargetLegalityService targetLegalityService;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -282,6 +286,25 @@ class MayCastHandlerServiceTest {
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
 
             assertThat(targets).contains(artifact.getId());
+        }
+
+        @Test
+        @DisplayName("Returns spell IDs for spell-targeting effects")
+        void returnsSpellIdsForSpellTargetingEffects() {
+            Card card = createInstant("Counterspell");
+            CardEffect effect = new CounterSpellEffect();
+            card.addEffect(EffectSlot.SPELL, effect);
+
+            Card targetSpell = createInstant("Shock");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, targetSpell, PLAYER2_ID,
+                    targetSpell.getName(), List.of()));
+            when(targetLegalityService.checkSpellTargetOnStack(
+                    eq(gd), eq(targetSpell.getId()), eq(card.getTargetFilter()), eq(PLAYER1_ID), any()))
+                    .thenReturn(java.util.Optional.empty());
+
+            List<UUID> targets = svc.buildValidSpellTargets(gd, card, List.of(effect), PLAYER1_ID);
+
+            assertThat(targets).containsExactly(targetSpell.getId());
         }
     }
 

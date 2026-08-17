@@ -269,6 +269,18 @@ public class MiscTriggerCollectorService {
             return false;
         }
         String cardName = match.permanent().getCard().getName();
+        if (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    new ArrayList<>(List.of(conditional.wrapped())),
+                    match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} triggers on matching permanent sacrifice (awaiting target)",
+                    match.gameData().id, cardName);
+            return true;
+        }
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

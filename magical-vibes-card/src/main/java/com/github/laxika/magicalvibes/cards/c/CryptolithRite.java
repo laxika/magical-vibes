@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "INR", collectorNumber = "189")
 @CardRegistration(set = "INR", collectorNumber = "316")
 @CardRegistration(set = "INR", collectorNumber = "408")
+@CardRegistration(set = "SOI", collectorNumber = "200")
 public class CryptolithRite extends Card {
 
     public CryptolithRite() {

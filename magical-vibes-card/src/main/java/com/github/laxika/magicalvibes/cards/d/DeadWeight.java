@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "96")
+@CardRegistration(set = "SOI", collectorNumber = "106")
 public class DeadWeight extends Card {
 
     public DeadWeight() {

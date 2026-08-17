@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "281")
 @CardRegistration(set = "M19", collectorNumber = "250")
+@CardRegistration(set = "SOI", collectorNumber = "273")
 public class ForsakenSanctuary extends Card {
 
     public ForsakenSanctuary() {

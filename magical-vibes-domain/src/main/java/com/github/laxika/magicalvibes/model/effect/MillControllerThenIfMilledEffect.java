@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -11,6 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@link SequenceEffect}; the steps resolve in order against the same stack entry, so they must be
  * synchronous (no player-input pauses).</p>
  */
-public record MillControllerThenIfMilledEffect(int count, CardPredicate filter, CardEffect thenEffect)
+public record MillControllerThenIfMilledEffect(DynamicAmount count, CardPredicate filter, CardEffect thenEffect)
         implements CardEffect {
+
+    /** Convenience constructor for a fixed mill count. */
+    public MillControllerThenIfMilledEffect(int count, CardPredicate filter, CardEffect thenEffect) {
+        this(new Fixed(count), filter, thenEffect);
+    }
 }

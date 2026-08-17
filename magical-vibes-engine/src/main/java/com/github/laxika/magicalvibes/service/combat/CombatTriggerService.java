@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
@@ -164,15 +165,22 @@ public class CombatTriggerService {
                             log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         } else {
+                            UUID triggeringPlayerId = effectsForStack.stream()
+                                    .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
+                                    ? finalCreatureControllerId
+                                    : null;
                             StackEntry trigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     perm.getCard(),
                                     auraOwnerId,
                                     perm.getCard().getName() + "'s triggered ability",
                                     effectsForStack,
-                                    null,
+                                    triggeringPlayerId,
                                     perm.getId()
                             );
+                            if (triggeringPlayerId != null) {
+                                trigger.setNonTargeting(true);
+                            }
                             // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());

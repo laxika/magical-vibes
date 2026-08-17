@@ -93,6 +93,10 @@ public class GameData {
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who investigated this turn. */
+    public final Set<UUID> playersWhoInvestigatedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Counts permanents sacrificed by subtype and controller this turn. */
+    public final Map<UUID, Map<CardSubtype, Integer>> sacrificedPermanentSubtypeCountThisTurn = new ConcurrentHashMap<>();
     /**
      * Card IDs of every spell cast this turn by any player, in cast order. Unlike
      * {@link #spellsCastThisTurn} this preserves the global ordering across players, which is what
@@ -450,6 +454,8 @@ public class GameData {
     /** Progress state for each-player discard effects with an opponent life-loss fallback. */
     public final EachPlayerDiscardsOrLosesLifeState eachPlayerDiscardsOrLosesLife =
             new EachPlayerDiscardsOrLosesLifeState();
+    /** Progress state for Creeping Dread's each-player discard comparison. */
+    public final CreepingDreadState creepingDread = new CreepingDreadState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
@@ -1074,6 +1080,8 @@ public class GameData {
      *  central discard hook. Read by {@code LastDiscardedCardManaValue} so a later effect of the same
      *  spell can scale off the card just discarded (Blast of Genius). */
     public int lastDiscardedCardManaValue;
+    /** Card types of the most recently discarded card, including additional card types. */
+    public Set<CardType> lastDiscardedCardTypes = Set.of();
 
     /** Counts colored mana symbols on the most recently milled card. */
     public final Map<ManaColor, Integer> lastMilledCardColorSymbols = new ConcurrentHashMap<>();
@@ -2138,6 +2146,14 @@ public class GameData {
         playersWhoPlayedCardFromExileThisTurn.add(playerId);
     }
 
+    /** Records a permanent sacrificed by the given player this turn. */
+    public void recordSacrificedPermanent(UUID playerId, Card card) {
+        if (playerId == null || card == null) return;
+        Map<CardSubtype, Integer> subtypeCounts = sacrificedPermanentSubtypeCountThisTurn
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
+        card.getSubtypes().stream().distinct().forEach(subtype -> subtypeCounts.merge(subtype, 1, Integer::sum));
+    }
+
     /**
      * Adds a pending "the next creature spell you cast this turn ..." grant for the player
      * (Savage Summoning).
@@ -2848,6 +2864,12 @@ public class GameData {
         copy.eachPlayerDiscardsOrLosesLife.currentPlayerId = this.eachPlayerDiscardsOrLosesLife.currentPlayerId;
         copy.eachPlayerDiscardsOrLosesLife.discardPending = this.eachPlayerDiscardsOrLosesLife.discardPending;
         copy.eachPlayerDiscardsOrLosesLife.remaining.addAll(this.eachPlayerDiscardsOrLosesLife.remaining);
+        copy.creepingDread.active = this.creepingDread.active;
+        copy.creepingDread.controllerId = this.creepingDread.controllerId;
+        copy.creepingDread.currentPlayerId = this.creepingDread.currentPlayerId;
+        copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
+        this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
+                copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
         copy.eachPlayerPayLife.active = this.eachPlayerPayLife.active;
         copy.eachPlayerPayLife.order.addAll(this.eachPlayerPayLife.order);
         copy.eachPlayerPayLife.index = this.eachPlayerPayLife.index;
@@ -3049,6 +3071,7 @@ public class GameData {
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
         copy.lastDiscardedCardManaValue = this.lastDiscardedCardManaValue;
+        copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
@@ -3165,6 +3188,8 @@ public class GameData {
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
                 copy.creatureSubtypeDeathCountThisTurn.put(k, new HashMap<>(v)));
+        this.sacrificedPermanentSubtypeCountThisTurn.forEach((k, v) ->
+                copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
@@ -3431,6 +3456,7 @@ public class GameData {
         });
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
+        copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
         copy.activeTriggeredAbilityCopies = this.activeTriggeredAbilityCopies;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->

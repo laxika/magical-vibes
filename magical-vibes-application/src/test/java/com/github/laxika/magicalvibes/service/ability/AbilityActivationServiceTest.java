@@ -16,8 +16,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
@@ -28,6 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -1447,6 +1451,41 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(gameData.activatedAbilityUsesThisGame.get(perm.getId()).get(0)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("activateGraveyardAbility")
+    class ActivateGraveyardAbility {
+
+        @Test
+        @DisplayName("Validates and records a graveyard ability's stack-spell target")
+        void validatesAndRecordsStackSpellTarget() {
+            Card source = new Card();
+            source.setName("Graveyard Copier");
+            source.addGraveyardActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{U}",
+                    List.of(new ExileSelfFromGraveyardCost(), new CopySpellEffect()),
+                    "{U}, Exile this card: Copy target spell."));
+            gameData.playerGraveyards.get(player1Id).add(source);
+
+            Card target = new Card();
+            target.setName("Target Spell");
+            target.setType(CardType.SORCERY);
+            StackEntry targetEntry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, target, player1Id, target.getName(), List.of());
+            gameData.stack.add(targetEntry);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLUE, 1);
+            when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+
+            service.activateGraveyardAbility(gameData, player1, 0, null, null, target.getId(), null);
+
+            verify(targetLegalityService).validateSpellTargetOnStack(
+                    gameData, target.getId(), null, player1Id);
+            StackEntry abilityEntry = gameData.stack.getLast();
+            assertThat(abilityEntry.getTargetId()).isEqualTo(target.getId());
+            assertThat(abilityEntry.getTargetZone()).isEqualTo(Zone.STACK);
         }
     }
 

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * "Reveal the top {@code count} cards of your library. An opponent separates those cards into two
@@ -19,38 +21,48 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
  * entry's target is the player who separates the piles. Reuses the shared card-pile flow
  * ({@code PendingPileSeparation}).
  */
-public record RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
+public record RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDisposition disposition,
                                               boolean controllerSeparates, boolean targetedSeparator,
                                               boolean faceDownPile) implements CardEffect {
 
+    public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
+                                           boolean controllerSeparates) {
+        this(new Fixed(count), disposition, controllerSeparates, false,
+                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
+    }
+
     /** Fact-or-Fiction default: the unchosen pile goes to the controller's graveyard. */
     public RevealTopCardsAndSeparateEffect(int count) {
+        this(new Fixed(count), CardPileDisposition.HAND, false, false, false);
+    }
+
+    public RevealTopCardsAndSeparateEffect(DynamicAmount count) {
         this(count, CardPileDisposition.HAND, false, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition) {
-        this(count, disposition, false, false, false);
+        this(new Fixed(count), disposition, false, false,
+                disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
     }
 
-    public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
-                                           boolean controllerSeparates) {
-        this(count, disposition, controllerSeparates, false,
+    public RevealTopCardsAndSeparateEffect(DynamicAmount count, CardPileDisposition disposition) {
+        this(count, disposition, false, false,
                 disposition == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE);
     }
 
     /** Steam Augury variant: the controller separates and an opponent chooses a pile. */
     public RevealTopCardsAndSeparateEffect(int count, boolean controllerSeparates) {
+        this(new Fixed(count), CardPileDisposition.HAND, controllerSeparates, false, false);
+    }
+
+    public RevealTopCardsAndSeparateEffect(DynamicAmount count, boolean controllerSeparates) {
         this(count, CardPileDisposition.HAND, controllerSeparates, false, false);
     }
 
     public RevealTopCardsAndSeparateEffect(int count, CardPileDisposition disposition,
                                             boolean controllerSeparates, boolean targetedSeparator,
                                             boolean faceDownPile) {
-        this.count = count;
-        this.disposition = disposition;
-        this.controllerSeparates = controllerSeparates;
-        this.targetedSeparator = targetedSeparator;
-        this.faceDownPile = faceDownPile;
+        this(new Fixed(count), disposition, controllerSeparates, targetedSeparator, faceDownPile);
     }
 
     @Override

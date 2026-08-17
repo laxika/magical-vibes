@@ -88,6 +88,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
+                graveyardReturnSupport.applyPermanentGrants(permanent, e.grantColor(), e.grantSubtype());
                 if (e.enterTapped()) {
                     permanent.tap();
                 }

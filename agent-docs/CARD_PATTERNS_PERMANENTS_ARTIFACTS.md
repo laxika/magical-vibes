@@ -6,6 +6,7 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Target opponent's library until instant/sorcery + free cast | `c/ChaosWand.java` | `{4}`+tap `ActivatedAbility` with `PlayerPredicateTargetFilter(OPPONENT)` + `RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect()` — the target opponent's library is revealed from the top until an instant or sorcery is found, the controller may cast it for free, and the remaining cards are bottomed randomly |
 | Opponent's first spell each turn — exile top card and offer a free cast | `m/MindsDilation.java` | ON_OPPONENT_CASTS_SPELL `ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect()` — collector gates on the opponent's per-turn spell count equaling one, carries the caster as non-target context, then exiles that player's top card and offers a nonland card to the enchantment's controller through `MayPlayExiledCardWithoutPayingManaCostEffect` |
+| Charge counter + exact-mana-value hand cast / variable scry | `b/BrainInAJar.java` | `{1}`+tap `PutCountersOnSelfEffect(CHARGE)` + `MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEffect(CHARGE)`; `{3}`+tap+`RemoveXCountersFromSourceCost(CHARGE)` + `ScryEffect(new XValue())` |
 
 ## Artifacts
 

@@ -30,6 +30,7 @@ import java.util.List;
  */
 @CardRegistration(set = "INR", collectorNumber = "91")
 @CardRegistration(set = "INR", collectorNumber = "460")
+@CardRegistration(set = "SOI", collectorNumber = "92")
 public class ThingInTheIce extends Card {
 
     public ThingInTheIce() {

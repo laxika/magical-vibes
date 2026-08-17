@@ -41,6 +41,7 @@ public record LibrarySearchParams(
         List<String> excludedCardNames,
         boolean grantHaste,
         boolean exileAtEndStep,
+        boolean returnToHandAtEndStep,
         AnimatePermanentsEffect animateFound,
         boolean repeatUntilDecline,
         CreateTokenEffect tokenTemplate,
@@ -71,7 +72,7 @@ public record LibrarySearchParams(
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                 manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType);
     }
 
@@ -104,6 +105,7 @@ public record LibrarySearchParams(
         private List<String> excludedCardNames = List.of();
         private boolean grantHaste;
         private boolean exileAtEndStep;
+        private boolean returnToHandAtEndStep;
         private AnimatePermanentsEffect animateFound;
         private boolean repeatUntilDecline;
         private CreateTokenEffect tokenTemplate;
@@ -242,6 +244,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder returnToHandAtEndStep(boolean returnToHandAtEndStep) {
+            this.returnToHandAtEndStep = returnToHandAtEndStep;
+            return this;
+        }
+
         public Builder animateFound(AnimatePermanentsEffect animateFound) {
             this.animateFound = animateFound;
             return this;
@@ -279,7 +286,7 @@ public record LibrarySearchParams(
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
                     manaValueBoundValue, manaValueExact, excludedCardNames, grantHaste, exileAtEndStep,
-                    animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
+                    returnToHandAtEndStep, animateFound, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType);
         }
     }

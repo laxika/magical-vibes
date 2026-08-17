@@ -132,6 +132,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .manaValueBound(boundValue, bound != null && bound.exact())
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
+                        .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
                         .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()

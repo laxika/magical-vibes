@@ -1233,15 +1233,25 @@ public class PlayerInputService {
     }
 
     /**
-     * Shimian Specter / Lobotomy: {@code targetPlayerId} reveals their hand and the controller
-     * chooses a card in it accepted by {@code choosable}. The pick reuses the Thought Hemorrhage
-     * answer flow with {@code damagePerCard = 0}, so every copy of the chosen name is exiled from
-     * the target's hand, graveyard, and library and they shuffle. Unlike that card the options come
-     * from the revealed hand only, so no interaction begins when the hand holds no legal card.
+     * Shimian Specter / Lobotomy / Pick the Brain: {@code targetPlayerId} reveals their hand and
+     * the controller chooses a card in it accepted by {@code choosable}. The pick reuses the
+     * Thought Hemorrhage answer flow with {@code damagePerCard = 0}. The normal mode exiles every
+     * copy of the chosen name; {@code chooseAnyNumber} exiles the chosen card first and offers any
+     * number of the remaining copies from the target's hand, graveyard, and library. Unlike name
+     * choice effects, the options come from the revealed hand only, so no interaction begins when
+     * the hand holds no legal card.
      */
     public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
                                                                        UUID targetPlayerId, Predicate<Card> choosable,
                                                                        String choosableLabel, Card sourceCard) {
+        beginRevealHandChooseCardFromItAndExileAllCopiesChoice(gameData, choosingPlayerId, targetPlayerId,
+                choosable, choosableLabel, sourceCard, false);
+    }
+
+    public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
+                                                                       UUID targetPlayerId, Predicate<Card> choosable,
+                                                                       String choosableLabel, Card sourceCard,
+                                                                       boolean chooseAnyNumber) {
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         List<String> cardNames = hand == null ? List.of() : hand.stream()
                 .filter(choosable)
@@ -1257,7 +1267,8 @@ public class PlayerInputService {
         }
 
         ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
-                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, List.of(), 0, sourceCard);
+                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, List.of(), 0,
+                        sourceCard, chooseAnyNumber);
 
         String prompt = "Choose a " + choosableLabel + " from " + targetName + "'s revealed hand.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

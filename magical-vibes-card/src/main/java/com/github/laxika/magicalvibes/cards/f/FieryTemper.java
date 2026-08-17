@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "154")
+@CardRegistration(set = "SOI", collectorNumber = "156")
 public class FieryTemper extends Card {
 
     public FieryTemper() {

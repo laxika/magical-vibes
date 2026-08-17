@@ -22,7 +22,9 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
+        return TargetSpec.benign(filter == null
+                ? TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS)
+                : TargetPredicates.graveyardCards(filter, GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 
     @Override

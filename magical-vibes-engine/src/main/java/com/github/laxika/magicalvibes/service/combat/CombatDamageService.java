@@ -234,10 +234,12 @@ public class CombatDamageService {
         // marked damage + deathtouch flags on creatures, life loss on the player, loyalty on
         // planeswalkers. Nothing dies here — the state-based action check below is the single
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
+        int stackSizeBeforeDamageTriggers = gameData.stack.size();
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
         processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
+        processOpponentSourceDamageToYouOrYourPermanentTriggers(gameData, state);
         checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers(gameData, state, defenderId);
 
         for (var entry : state.combatDamageDealt.entrySet()) {
@@ -327,7 +329,6 @@ public class CombatDamageService {
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
-        int stackSizeBeforeDamageTriggers = gameData.stack.size();
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state);
@@ -2325,6 +2326,9 @@ public class CombatDamageService {
             for (var sourceDamage : state.combatDamageDealtToPlayer.entrySet()) {
                 if (sourceDamage.getValue() > 0) {
                     gameData.recordDamageRecipientBySource(sourceDamage.getKey().getId(), defenderId);
+                    state.combatDamageRecipientControllers
+                            .computeIfAbsent(sourceDamage.getKey(), ignored -> new HashSet<>())
+                            .add(defenderId);
                 }
             }
             gameData.recordDamageToPlayer(defenderId, damageDealt);
@@ -2360,6 +2364,19 @@ public class CombatDamageService {
             pw.setCounterCount(CounterType.LOYALTY, pw.getCounterCount(CounterType.LOYALTY) - damage);
             gameLogService.append(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
                     + pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+        }
+    }
+
+    private void processOpponentSourceDamageToYouOrYourPermanentTriggers(GameData gameData,
+                                                                           CombatDamageState state) {
+        for (var entry : state.combatDamageRecipientControllers.entrySet()) {
+            Permanent source = entry.getKey();
+            UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
+            if (sourceControllerId == null) {
+                sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            }
+            triggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers(
+                    gameData, source.getCard(), sourceControllerId, source.getId(), entry.getValue());
         }
     }
 
@@ -2508,6 +2525,9 @@ public class CombatDamageService {
                 state.combatDamageAmountsToPlaneswalkers
                         .computeIfAbsent(atk, ignored -> new HashMap<>())
                         .merge(attackTarget, damage, Integer::sum);
+                state.combatDamageRecipientControllers
+                        .computeIfAbsent(atk, ignored -> new HashSet<>())
+                        .add(pwControllerId);
                 gameData.recordDamageRecipientBySource(atk.getId(), attackTarget);
             }
             return;
@@ -2892,6 +2912,9 @@ public class CombatDamageService {
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {
             state.combatDamageTargetControllers.putIfAbsent(target.getId(), targetControllerId);
+            state.combatDamageRecipientControllers
+                    .computeIfAbsent(source, ignored -> new HashSet<>())
+                    .add(targetControllerId);
         }
         graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);

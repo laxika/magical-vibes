@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "13")
 @CardRegistration(set = "INR", collectorNumber = "335")
+@CardRegistration(set = "SOI", collectorNumber = "7")
 public class BoundByMoonsilver extends Card {
 
     public BoundByMoonsilver() {

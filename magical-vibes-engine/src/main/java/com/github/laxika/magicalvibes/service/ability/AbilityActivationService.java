@@ -951,6 +951,10 @@ public class AbilityActivationService {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects,
                     graveyardTargetIds);
         } else {
+            if (ability.targetsSpellOnStack(null)) {
+                targetLegalityService.validateSpellTargetOnStack(
+                        gameData, targetId, ability.getTargetFilter(), playerId);
+            }
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetId, null, card, xValue);
         }
@@ -1264,7 +1268,8 @@ public class AbilityActivationService {
         // battlefield/player target group instead rides in the flat targetIds list, exactly as it
         // does for a battlefield activation.
         boolean multiTarget = isMultiTargetGraveyardAbility(ability);
-        boolean hasGraveyardTargets = !multiTarget && graveyardTargetIds != null;
+        boolean hasGraveyardTargets = !multiTarget && graveyardTargetIds != null && !graveyardTargetIds.isEmpty();
+        boolean targetsSpellOnStack = !multiTarget && !hasGraveyardTargets && ability.targetsSpellOnStack(null);
         StackEntry stackEntry = multiTarget
                 ? new StackEntry(
                         StackEntryType.ACTIVATED_ABILITY,
@@ -1292,6 +1297,20 @@ public class AbilityActivationService {
                         Map.of(),
                         Zone.GRAVEYARD,
                         new ArrayList<>(graveyardTargetIds),
+                        List.of())
+                : targetsSpellOnStack
+                ? new StackEntry(
+                        StackEntryType.ACTIVATED_ABILITY,
+                        card,
+                        playerId,
+                        card.getName() + "'s ability",
+                        snapshotEffects,
+                        xValue,
+                        targetId,
+                        null,
+                        Map.of(),
+                        Zone.STACK,
+                        List.of(),
                         List.of())
                 : new StackEntry(
                         StackEntryType.ACTIVATED_ABILITY,

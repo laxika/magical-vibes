@@ -403,6 +403,8 @@ public class TurnProgressionService {
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.playersWhoSearchedLibraryThisTurn.clear();
+        gameData.playersWhoInvestigatedThisTurn.clear();
+        gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();

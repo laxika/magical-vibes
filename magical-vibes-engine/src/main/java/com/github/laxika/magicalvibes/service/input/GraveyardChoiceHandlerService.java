@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -235,6 +236,17 @@ public class GraveyardChoiceHandlerService {
                             sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);
                             gameLogService.append(gameData, GameLog.cardThen(sourcePerm.getCard(), " gains haste until end of turn."));
                         }
+                    }
+
+                    if (!gameData.pendingGraveyardReturnQueue.isEmpty()
+                            && gameData.pendingGraveyardReturnQueue.getFirst().distinctManaValues()) {
+                        PendingGraveyardReturnChoice next = gameData.pendingGraveyardReturnQueue.removeFirst();
+                        Set<Integer> excludedManaValues = new HashSet<>(next.excludedManaValues());
+                        excludedManaValues.add(card.getManaValue());
+                        gameData.pendingGraveyardReturnQueue.addFirst(new PendingGraveyardReturnChoice(
+                                next.playerId(), next.remainingCount(), next.filter(), next.destination(),
+                                next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
+                                next.distinctManaValues(), excludedManaValues));
                     }
                 }
                 case BATTLEFIELD -> {

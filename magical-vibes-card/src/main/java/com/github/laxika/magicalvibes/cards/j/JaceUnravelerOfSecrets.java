@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "70")
 @CardRegistration(set = "AKR", collectorNumber = "65")
+@CardRegistration(set = "SOI", collectorNumber = "69")
 public class JaceUnravelerOfSecrets extends Card {
 
     public JaceUnravelerOfSecrets() {

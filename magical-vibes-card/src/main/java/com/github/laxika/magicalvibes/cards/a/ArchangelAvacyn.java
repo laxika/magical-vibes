@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "11")
 @CardRegistration(set = "INR", collectorNumber = "449")
+@CardRegistration(set = "SOI", collectorNumber = "5")
 public class ArchangelAvacyn extends Card {
 
     public ArchangelAvacyn() {

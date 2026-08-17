@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -48,10 +51,12 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
+        int count = Math.max(0, amountEvaluationService.evaluate(
+                gameData, e.count(), AmountContext.forStackEntry(entry, null)));
 
         List<Card> revealedCards = new ArrayList<>();
         Map<UUID, UUID> cardOwners = new HashMap<>();
-        for (int i = 0; i < e.count() && deck != null && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && deck != null && !deck.isEmpty(); i++) {
             Card card = deck.removeFirst();
             revealedCards.add(card);
             cardOwners.put(card.getId(), controllerId);

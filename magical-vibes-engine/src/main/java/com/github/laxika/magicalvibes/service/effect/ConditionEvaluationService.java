@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGra
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisT
 import com.github.laxika.magicalvibes.model.condition.ControllerHadNoCardsInHandAtTurnStart;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageByAtLeastCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
@@ -293,6 +295,8 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case PutCounterCostPaid ignored ->
                     ctx.putCounterCostPaid();
+            case CastForMadnessCost ignored ->
+                    ctx.madness();
             case CastForProwlCost ignored ->
                     ctx.prowl();
             case Overloaded ignored ->
@@ -528,6 +532,11 @@ public class ConditionEvaluationService {
             case ControllerDrewAtLeastCardsThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.cardsDrawnThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
+            case ControllerSacrificedPermanentSubtypeAtLeastThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.sacrificedPermanentSubtypeCountThisTurn
+                                    .getOrDefault(ctx.controllerId(), Map.of())
+                                    .getOrDefault(c.subtype(), 0) >= c.minimum();
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
             case SelfWasDealtDamageThisTurn ignored ->

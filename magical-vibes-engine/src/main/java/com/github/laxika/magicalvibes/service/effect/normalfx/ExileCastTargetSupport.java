@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class ExileCastTargetSupport {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
@@ -124,6 +126,16 @@ public class ExileCastTargetSupport {
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
             validTargets.addAll(gameData.orderedPlayerIds);
+        }
+
+        if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
+            for (var stackEntry : gameData.stack) {
+                UUID targetId = stackEntry.getCard().getId();
+                if (targetLegalityService.checkSpellTargetOnStack(
+                        gameData, targetId, card.getTargetFilter(), controllerId).isEmpty()) {
+                    validTargets.add(targetId);
+                }
+            }
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {

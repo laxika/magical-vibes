@@ -252,6 +252,7 @@ public class DestructionSupport {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
+        gameData.recordSacrificedPermanent(playerId, sacrificedCard);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
@@ -844,7 +845,9 @@ public class DestructionSupport {
             for (UUID permId : pileToSacrifice) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                    if (permanentRemovalService.removePermanentToGraveyard(gameData, perm)) {
+                        gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
+                    }
                 }
             }
         }

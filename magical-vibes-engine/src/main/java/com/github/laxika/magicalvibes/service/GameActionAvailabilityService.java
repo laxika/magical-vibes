@@ -638,6 +638,20 @@ public class GameActionAvailabilityService {
             }
         }
 
+        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && castingCostService.hasEnchantedPlayerCastCostReduction(gameData, playerId)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            for (UUID targetPlayerId : validTargets.validPlayerIds()) {
+                int reduction = castingCostService.computeTargetBasedCostReduction(
+                        gameData, playerId, card, List.of(targetPlayerId));
+                if (reduction > 0 && cost.canPayWithAdditionalGenericCost(
+                        pool, 0, additionalCost - reduction)) {
+                    return true;
+                }
+            }
+        }
+
         // Check non-zero alternative cost from battlefield (e.g. Jodah)
         if (castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
             return true;

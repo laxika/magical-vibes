@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "111")
 @CardRegistration(set = "INR", collectorNumber = "379")
+@CardRegistration(set = "SOI", collectorNumber = "114")
 public class GisasBidding extends Card {
 
     public GisasBidding() {

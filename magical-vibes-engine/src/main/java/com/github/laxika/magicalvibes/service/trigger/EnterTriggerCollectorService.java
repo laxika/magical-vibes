@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -395,12 +396,15 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        UUID enteringPermanentId = gainLifeEqualToEnteringPower
-                ? findEnteringPermanentId(match, pe.enteringCard())
-                : null;
+        boolean usesEnteringTarget = may.wrapped() instanceof DiscardCardThenEffect discard
+                && discard.useEntryTarget();
+        UUID enteringPermanentId = (gainLifeEqualToEnteringPower || usesEnteringTarget)
+                ? findEnteringPermanentId(match, pe.enteringCard()) : null;
+        UUID mayTargetId = gainLifeEqualToEnteringPower || usesEnteringTarget
+                ? enteringPermanentId : pe.defaultTargetPlayerId();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    enteringPermanentId != null ? enteringPermanentId : pe.defaultTargetPlayerId(),
+                    mayTargetId,
                     match.permanent().getId());
         }
         logTriggered(match);

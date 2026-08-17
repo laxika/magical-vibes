@@ -423,8 +423,9 @@ public class CardChoiceHandlerService {
             CardEffect thenEffect = followUp.thenEffect();
             Card sourceCard = followUp.thenEffectSourceCard();
             TargetSpec targetSpec = thenEffect.targetSpec();
-            boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                    || targetSpec.admits(TargetPredicate.Kind.PLAYER);
+            boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
+            boolean needsTarget = !hasPreboundTarget && (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                    || targetSpec.admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
@@ -465,6 +466,17 @@ public class CardChoiceHandlerService {
                             gameData.id, player.getUsername(), sourceCard.getName());
                     return;
                 }
+            } else if (hasPreboundTarget) {
+                StackEntry thenEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        playerId,
+                        sourceCard.getName() + "'s effect",
+                        List.of(thenEffect),
+                        followUp.thenEffectTargetId(),
+                        (UUID) null);
+                thenEntry.setNonTargeting(true);
+                gameData.stack.add(thenEntry);
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "141")
+@CardRegistration(set = "SOI", collectorNumber = "153")
 public class DualShot extends Card {
 
     public DualShot() {

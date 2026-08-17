@@ -3199,6 +3199,35 @@ public class ChoiceHandlerService {
             damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, damage);
         }
 
+        if (ctx.chooseAnyNumber()) {
+            Card chosenCard = hand == null ? null : hand.stream()
+                    .filter(card -> card.getName().equals(cardName))
+                    .findFirst()
+                    .orElse(null);
+            if (chosenCard != null) {
+                hand.remove(chosenCard);
+                gameData.addToExile(targetPlayerId, chosenCard);
+                gameLogService.append(gameData,
+                        GameLog.text(controllerName + " exiles " + chosenCard.getName()
+                                + " from " + targetName + "'s hand."));
+            }
+
+            List<Card> matchingCards = collectMatchingCards(gameData, targetPlayerId, cardName);
+            if (!matchingCards.isEmpty()) {
+                playerInputService.beginMultiZoneExileChoice(
+                        gameData, controllerId, matchingCards, targetPlayerId, cardName);
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+
+            List<Card> library = gameData.playerDecks.get(targetPlayerId);
+            if (library != null) {
+                Collections.shuffle(library);
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Exile every copy from the target's hand, graveyard, and library (mandatory, no choice).
         int exiledCount = 0;
 
@@ -3238,6 +3267,23 @@ public class ChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private List<Card> collectMatchingCards(GameData gameData, UUID targetPlayerId, String cardName) {
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (hand != null) {
+            matchingCards.addAll(hand.stream().filter(card -> card.getName().equals(cardName)).toList());
+        }
+        if (graveyard != null) {
+            matchingCards.addAll(graveyard.stream().filter(card -> card.getName().equals(cardName)).toList());
+        }
+        if (library != null) {
+            matchingCards.addAll(library.stream().filter(card -> card.getName().equals(cardName)).toList());
+        }
+        return matchingCards;
     }
 
     /**

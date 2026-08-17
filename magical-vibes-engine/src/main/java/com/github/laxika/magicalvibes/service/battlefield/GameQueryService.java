@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpel
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
@@ -5050,12 +5051,26 @@ public class GameQueryService {
      */
     public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
                                               UUID sourceControllerId) {
+        return getDamageToRecipientMultiplier(gameData, recipientPlayerId, sourceControllerId, null);
+    }
+
+    /**
+     * Returns the damage multiplier for a player or permanent recipient when the controller of the
+     * damage source is known. The recipient permanent id is used by effects that apply only to a
+     * specific permanent, such as Goldnight Castigator.
+     */
+    public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
+                                              UUID sourceControllerId, UUID recipientPermanentId) {
         if (recipientPlayerId == null) return 1;
 
         int[] multiplier = {1};
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!recipientPlayerId.equals(controllerId)
+                if (effect instanceof DoubleDamageToControllerAndSelfEffect
+                        && ((recipientPermanentId == null && recipientPlayerId.equals(controllerId))
+                        || p.getId().equals(recipientPermanentId))) {
+                    multiplier[0] *= 2;
+                } else if (!recipientPlayerId.equals(controllerId)
                         && effect instanceof DoubleDamageToOpponentsAndTheirPermanentsEffect) {
                     multiplier[0] *= 2;
                 } else if (!recipientPlayerId.equals(controllerId)
@@ -5487,7 +5502,8 @@ public class GameQueryService {
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
             // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls.
-            result *= getDamageToRecipientMultiplier(gameData, findPermanentController(gameData, target.getId()), controllerId);
+            result *= getDamageToRecipientMultiplier(gameData, findPermanentController(gameData, target.getId()),
+                    controllerId, target.getId());
             for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
                 result *= 2;
             }

@@ -135,6 +135,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
+    /** Triggers when this permanent's controller investigates for the first time each turn. */
+    ON_CONTROLLER_INVESTIGATES,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -381,6 +383,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
      *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
     ON_EQUIPPED_CREATURE_TRANSFORMS,
+    /** Triggers whenever a permanent controlled by this permanent's controller transforms. */
+    ON_ALLY_PERMANENT_TRANSFORMS,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
@@ -617,6 +621,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
+    GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
     /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is
      *  in the controller's graveyard. Like {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} but fired from
      *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
@@ -982,6 +988,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the damaging spell/ability's controller). Used by Retaliator Griffin
      *  ({@code MayEffect(PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE, new EventValue()))}). */
     ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT,
+    /** Triggers whenever a source controlled by an opponent deals damage to this permanent's
+     *  controller or to a permanent that controller controls. */
+    ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
     /** Triggers whenever a creature deals damage (combat or non-combat) to this permanent's
      *  controller, or to a permanent they control matching the effect's filter — "Whenever a
      *  creature of the chosen color deals damage to you or a white creature you control, ...".

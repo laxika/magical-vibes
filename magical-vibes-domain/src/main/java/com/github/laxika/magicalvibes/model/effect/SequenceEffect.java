@@ -37,9 +37,13 @@ import java.util.List;
  * are <em>unsupported</em>: the spliced steps are not registered in the card's effect→target-group
  * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
  * effects on the card for genuinely multi-target abilities.</p>
+ *
+ * <p>When used in an end-step trigger, the active end-step player is also carried in the stack
+ * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
+ * "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0);

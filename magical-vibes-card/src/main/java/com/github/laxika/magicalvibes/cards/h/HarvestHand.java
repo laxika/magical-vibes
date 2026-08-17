@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "265")
+@CardRegistration(set = "SOI", collectorNumber = "256")
 public class HarvestHand extends Card {
 
     public HarvestHand() {

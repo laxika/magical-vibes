@@ -35,8 +35,10 @@ import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -1075,6 +1077,39 @@ class CastingCostServiceTest {
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, other.getId(), null, false)).isZero();
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, source.getId(), null, true)).isZero();
         }
+    }
+
+    @Test
+    @DisplayName("Spell targeting a source permanent can receive its opponent cost reduction")
+    void targetingSpellCostModifierIncludesOpponentReduction() {
+        var predicate = new PermanentIsSourcePermanentPredicate();
+        Card witch = new Card();
+        witch.addEffect(EffectSlot.STATIC,
+                new ReduceOpponentCostForTargetingControlledPermanentEffect(predicate, 1));
+        Permanent source = new Permanent(witch);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+        when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(source), eq(predicate), any(FilterContext.class))).thenReturn(true);
+
+        assertThat(svc.getTargetingSpellCostModifier(gd, player2Id, source.getId(), null)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Spell targeting an enchanted player receives the Aura controller's reduction")
+    void enchantedPlayerTargetReductionApplies() {
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        Card curse = new Card();
+        curse.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingEnchantedPlayerEffect(1));
+        Permanent aura = new Permanent(curse);
+        aura.setAttachedTo(player2Id);
+        gd.playerBattlefields.get(player1Id).add(aura);
+
+        assertThat(svc.computeTargetBasedCostReduction(
+                gd, player1Id, new Card(), List.of(player2Id))).isEqualTo(1);
     }
 
     @Nested

@@ -39,6 +39,15 @@ public class GraveyardTransformedReturnService {
      * @return true when the card actually entered the battlefield
      */
     public boolean returnTransformed(GameData gameData, UUID cardId, UUID ownerId, UUID controllerId) {
+        return returnTransformed(gameData, cardId, ownerId, controllerId, null);
+    }
+
+    /**
+     * Moves {@code cardId} from the graveyard onto the battlefield transformed and, when supplied,
+     * attaches the resulting Aura to the target player.
+     */
+    public boolean returnTransformed(GameData gameData, UUID cardId, UUID ownerId, UUID controllerId,
+                                     UUID attachmentTargetId) {
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
         if (graveyard == null) {
             return false;
@@ -70,6 +79,9 @@ public class GraveyardTransformedReturnService {
         permanent.setCard(backFace);
         permanent.setTransformed(true);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        if (attachmentTargetId != null) {
+            permanent.setAttachedTo(attachmentTargetId);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
 
         String playerName = gameData.playerIdToName.get(controllerId);

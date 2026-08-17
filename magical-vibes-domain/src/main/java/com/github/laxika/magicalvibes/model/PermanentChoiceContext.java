@@ -645,10 +645,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * with X=0.
      */
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
-                               StackEntryType spellType, int xValue) implements PermanentChoiceContext {
+                               StackEntryType spellType, int xValue, boolean castForMadnessCost)
+            implements PermanentChoiceContext {
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, 0);
+            this(cardToCast, controllerId, spellEffects, spellType, 0, false);
+        }
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, false);
         }
     }
 

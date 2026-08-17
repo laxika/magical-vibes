@@ -96,6 +96,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerSacrificesOneOfEachTypeEffectHandler eachPlayerSacrificesOneOfEachTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .TargetPlayerSacrificesCreatureAndPlaneswalkerEffectHandler
+            targetPlayerSacrificesCreatureAndPlaneswalkerHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler eachPlayerChoosesLandOfEachBasicTypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseLandOfEachBasicTypeThenDestroyEffectHandler chooseLandOfEachBasicTypeThenDestroyHandler;
@@ -188,6 +191,19 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two creatures must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx) {
+            if (permanentIds.size() != ctx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + ctx.requiredCount()
+                        + " permanents to sacrifice");
+            }
+            if (ctx.requiredCount() == 2) {
+                boolean hasCreature = permanentIds.stream().anyMatch(ctx.creatureIds()::contains);
+                boolean hasPlaneswalker = permanentIds.stream().anyMatch(ctx.planeswalkerIds()::contains);
+                if (!hasCreature || !hasPlaneswalker) {
+                    throw new IllegalStateException("The selection must include a creature and a planeswalker");
+                }
+            }
         }
 
         if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter enterCtx) {
@@ -339,6 +355,10 @@ public class MultiPermanentChoiceHandlerService {
             handleWinnowingChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx) {
             handleEachPlayerSacrificeOneOfEachTypeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx) {
+            targetPlayerSacrificesCreatureAndPlaneswalkerHandler.completeChoice(gameData, permanentIds, ctx);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
             handleEachPlayerChoosesLandOfEachBasicTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {

@@ -111,6 +111,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -506,20 +507,23 @@ public class BattlefieldEntryService {
             return;
         }
         RevealSubtypeOrEntersTappedEffect activeEffect = effect;
+        String subtypeDescription = activeEffect.subtypes().stream()
+                .map(CardSubtype::getDisplayName)
+                .collect(Collectors.joining(" or "));
         List<Card> hand = gameData.playerHands.get(controllerId);
         boolean canReveal = hand != null && hand.stream()
-                .anyMatch(c -> c.getSubtypes().contains(activeEffect.subtype()));
+                .anyMatch(c -> c.getSubtypes().stream().anyMatch(activeEffect.subtypes()::contains));
         if (!canReveal) {
             permanent.tap();
             log.info("Game {} - {} enters tapped (no {} card to reveal)",
-                    gameData.id, permanent.getCard().getName(), activeEffect.subtype().getDisplayName());
+                    gameData.id, permanent.getCard().getName(), subtypeDescription);
             return;
         }
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 permanent.getCard(),
                 controllerId,
                 List.of(activeEffect),
-                permanent.getCard().getName() + " — Reveal a " + activeEffect.subtype().getDisplayName()
+                permanent.getCard().getName() + " — Reveal a " + subtypeDescription
                         + " card from your hand? (If you don't, it enters tapped.)",
                 null,
                 null,
@@ -1718,6 +1722,7 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (!faceDown && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);

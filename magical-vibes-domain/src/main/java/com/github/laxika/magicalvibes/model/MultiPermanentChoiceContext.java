@@ -173,6 +173,19 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The target player chooses a creature and a planeswalker to sacrifice when possible. */
+    record TargetPlayerSacrificesCreatureAndPlaneswalker(UUID targetPlayerId,
+                                                          List<UUID> creatureIds,
+                                                          List<UUID> planeswalkerIds,
+                                                          int requiredCount,
+                                                          String sourceName)
+            implements MultiPermanentChoiceContext {
+        public TargetPlayerSacrificesCreatureAndPlaneswalker {
+            creatureIds = List.copyOf(creatureIds);
+            planeswalkerIds = List.copyOf(planeswalkerIds);
+        }
+    }
+
     /**
      * Desolation-style forced sacrifice: same APNAP simultaneous pick as {@link ForcedSacrifice},
      * then after all sacrifices the source deals {@code damageAmount} to each player who

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "205")
+@CardRegistration(set = "SOI", collectorNumber = "213")
 public class IntrepidProvisioner extends Card {
 
     public IntrepidProvisioner() {

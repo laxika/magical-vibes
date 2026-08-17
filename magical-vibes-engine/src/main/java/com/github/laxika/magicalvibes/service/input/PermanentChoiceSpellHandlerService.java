@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
@@ -17,12 +19,14 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -50,6 +54,7 @@ public class PermanentChoiceSpellHandlerService {
     private final PsychicBattleSupport psychicBattleSupport;
     private final SpellCastingService spellCastingService;
     private final ChandraTorchExileCastSupport chandraTorchExileCastSupport;
+    private final TargetLegalityService targetLegalityService;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -61,7 +66,8 @@ public class PermanentChoiceSpellHandlerService {
                                               @Lazy InputCompletionService inputCompletionService,
                                               PsychicBattleSupport psychicBattleSupport,
                                               @Lazy SpellCastingService spellCastingService,
-                                              @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport) {
+                                              @Lazy ChandraTorchExileCastSupport chandraTorchExileCastSupport,
+                                              TargetLegalityService targetLegalityService) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -73,6 +79,7 @@ public class PermanentChoiceSpellHandlerService {
         this.psychicBattleSupport = psychicBattleSupport;
         this.spellCastingService = spellCastingService;
         this.chandraTorchExileCastSupport = chandraTorchExileCastSupport;
+        this.targetLegalityService = targetLegalityService;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -141,8 +148,10 @@ public class PermanentChoiceSpellHandlerService {
     public void handleLibraryCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.LibraryCastSpellTarget lct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        boolean isSpellTarget = isValidSpellTarget(gameData, lct.cardToCast(), lct.spellEffects(), permanentId,
+                lct.controllerId(), 0);
 
-        if (target != null || isPlayerTarget) {
+        if (target != null || isPlayerTarget || isSpellTarget) {
             StackEntry entry = new StackEntry(
                     lct.spellType(),
                     lct.cardToCast(),
@@ -151,6 +160,10 @@ public class PermanentChoiceSpellHandlerService {
                     new ArrayList<>(lct.spellEffects()),
                     0,
                     permanentId,
+                    null,
+                    null,
+                    isSpellTarget ? Zone.STACK : null,
+                    null,
                     null
             );
             gameData.stack.add(entry);
@@ -160,7 +173,7 @@ public class PermanentChoiceSpellHandlerService {
 
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
-                    : target.getCard().getName();
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
             
             gameLogService.append(gameData, GameLog.builder().card(lct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
@@ -186,11 +199,13 @@ public class PermanentChoiceSpellHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        boolean isSpellTarget = isValidSpellTarget(gameData, ect.cardToCast(), ect.spellEffects(), permanentId,
+                ect.controllerId(), 0);
         // A cipher copy of a graveyard-targeting spell (Midnight Recovery) targets a card in a
         // graveyard, which is neither a permanent nor a player.
         boolean isGraveyardTarget = gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
 
-        if (target != null || isPlayerTarget || isGraveyardTarget) {
+        if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
             StackEntry entry = isGraveyardTarget
                     ? new StackEntry(
                             ect.spellType(),
@@ -208,6 +223,10 @@ public class PermanentChoiceSpellHandlerService {
                             new ArrayList<>(ect.spellEffects()),
                             0,
                             permanentId,
+                            null,
+                            null,
+                            isSpellTarget ? Zone.STACK : null,
+                            null,
                             null
             );
             entry.setCopy(ect.copy());
@@ -367,8 +386,20 @@ public class PermanentChoiceSpellHandlerService {
     public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        boolean isPermanentOrPlayerTarget = (target != null || isPlayerTarget)
+                && targetLegalityService.checkSpellTargeting(
+                        gameData, hct.cardToCast(), permanentId, null, hct.controllerId(),
+                        EffectResolution.needsTarget(hct.cardToCast()), hct.xValue(), false,
+                        hct.castForMadnessCost())
+                .isEmpty();
+        boolean isSpellTarget = isValidSpellTarget(gameData, hct.cardToCast(), hct.spellEffects(), permanentId,
+                hct.controllerId(), hct.xValue());
 
-        if (target != null || isPlayerTarget) {
+        if (isPermanentOrPlayerTarget || isSpellTarget) {
+            Map<UUID, Integer> damageAssignments = hct.castForMadnessCost()
+                    && EffectResolution.needsDamageDistribution(hct.spellEffects())
+                    ? Map.of(permanentId, hct.xValue())
+                    : null;
             StackEntry entry = new StackEntry(
                     hct.spellType(),
                     hct.cardToCast(),
@@ -377,8 +408,13 @@ public class PermanentChoiceSpellHandlerService {
                     new ArrayList<>(hct.spellEffects()),
                     hct.xValue(),
                     permanentId,
+                    null,
+                    damageAssignments,
+                    isSpellTarget ? Zone.STACK : null,
+                    null,
                     null
             );
+            entry.setMadness(hct.castForMadnessCost());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
@@ -386,7 +422,7 @@ public class PermanentChoiceSpellHandlerService {
 
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
-                    : target.getCard().getName();
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
@@ -399,6 +435,13 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean isValidSpellTarget(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                       UUID targetId, UUID controllerId, int xValue) {
+        return EffectResolution.needsSpellTarget(spellEffects)
+                && targetLegalityService.checkSpellTargetOnStack(
+                        gameData, targetId, card.getTargetFilter(), controllerId, null, xValue).isEmpty();
     }
 
     private String getTargetDisplayName(GameData gameData, UUID targetId) {

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ public class AnimationSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -554,6 +556,7 @@ public class AnimationSupport {
 
         fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
         fireEquipmentTransformTriggers(gameData, self);
+        fireAllyPermanentTransformTriggers(gameData, self, backFace);
         return true;
     }
 
@@ -568,6 +571,13 @@ public class AnimationSupport {
 
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
         fireEquipmentTransformTriggers(gameData, self);
+        fireAllyPermanentTransformTriggers(gameData, self, originalCard);
+    }
+
+    private void fireAllyPermanentTransformTriggers(GameData gameData, Permanent transformed, Card transformedCard) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, transformed.getId());
+        triggerCollectionService.checkAllyPermanentTransformsTriggers(
+                gameData, controllerId, transformed, transformedCard);
     }
 
     /**

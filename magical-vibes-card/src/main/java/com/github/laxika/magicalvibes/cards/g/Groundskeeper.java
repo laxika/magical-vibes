@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "247")
 @CardRegistration(set = "INR", collectorNumber = "200")
+@CardRegistration(set = "SOI", collectorNumber = "208")
 public class Groundskeeper extends Card {
 
     public Groundskeeper() {

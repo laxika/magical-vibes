@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "269")
 @CardRegistration(set = "INR", collectorNumber = "473")
+@CardRegistration(set = "SOI", collectorNumber = "260")
 public class NeglectedHeirloom extends Card {
 
     public NeglectedHeirloom() {

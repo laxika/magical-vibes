@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -20,16 +21,32 @@ import java.util.UUID;
  *                                available
  * @param fromBattlefieldThisTurn if {@code true}, only cards tracked as having entered the graveyard
  *                                from the battlefield this turn are eligible
+ * @param distinctManaValues      if {@code true}, each selected card must have a mana value not
+ *                                already selected in this queued return flow
+ * @param excludedManaValues      mana values already selected in this queued return flow
  */
 public record PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                            GraveyardChoiceDestination destination,
                                            boolean skipRemainingOnDecline,
-                                           boolean mandatory,
-                                           boolean fromBattlefieldThisTurn) {
+                                           boolean mandatory, boolean fromBattlefieldThisTurn,
+                                           boolean distinctManaValues, Set<Integer> excludedManaValues) {
+
+    public PendingGraveyardReturnChoice {
+        excludedManaValues = excludedManaValues == null ? Set.of() : Set.copyOf(excludedManaValues);
+    }
 
     public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
                                         GraveyardChoiceDestination destination,
                                         boolean skipRemainingOnDecline) {
-        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false, false);
+        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, false, false,
+                false, Set.of());
+    }
+
+    public PendingGraveyardReturnChoice(UUID playerId, int remainingCount, CardPredicate filter,
+                                        GraveyardChoiceDestination destination,
+                                        boolean skipRemainingOnDecline, boolean mandatory,
+                                        boolean fromBattlefieldThisTurn) {
+        this(playerId, remainingCount, filter, destination, skipRemainingOnDecline, mandatory,
+                fromBattlefieldThisTurn, false, Set.of());
     }
 }

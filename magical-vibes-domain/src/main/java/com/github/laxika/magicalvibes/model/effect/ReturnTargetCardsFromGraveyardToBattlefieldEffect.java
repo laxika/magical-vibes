@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -18,39 +20,51 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean fromBattlefieldThisTurn,
         boolean enterTapped,
         DynamicAmount dynamicMaxTargets,
-        int maxTotalManaValue
+        int maxTotalManaValue,
+        CardColor grantColor,
+        CardSubtype grantSubtype
 ) implements CardEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {
-        this(filter, 0, false, false, null, 0);
+        this(filter, 0, false, false, null, 0, null, null);
     }
 
     /** Creates the fixed-cap form used by up-to-N reanimation spells. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped) {
-        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0);
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, null, null);
     }
 
     /** Creates an ETB form whose up-to cap is evaluated from the entering spell's cast context. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter,
                                                               DynamicAmount dynamicMaxTargets) {
-        this(filter, 0, false, false, dynamicMaxTargets, 0);
+        this(filter, 0, false, false, dynamicMaxTargets, 0, null, null);
     }
 
     /** Creates an any-number form capped by the total mana value of the chosen cards. */
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValue(
             CardPredicate filter, int maxTotalManaValue) {
         return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                filter, 0, false, false, null, maxTotalManaValue);
+                filter, 0, false, false, null, maxTotalManaValue, null, null);
+    }
+
+    /** Creates a fixed-cap form that also permanently grants a color and subtype. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped, CardColor grantColor,
+                                                              CardSubtype grantSubtype) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, grantColor, grantSubtype);
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped,
                                                               DynamicAmount dynamicMaxTargets,
-                                                              int maxTotalManaValue) {
+                                                              int maxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -63,6 +77,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.enterTapped = enterTapped;
         this.dynamicMaxTargets = dynamicMaxTargets;
         this.maxTotalManaValue = maxTotalManaValue;
+        this.grantColor = grantColor;
+        this.grantSubtype = grantSubtype;
     }
 
     public boolean xScaled() {

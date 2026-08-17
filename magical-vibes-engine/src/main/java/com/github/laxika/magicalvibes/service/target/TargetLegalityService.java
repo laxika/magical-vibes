@@ -861,6 +861,13 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                                UUID controllerId, boolean needsTarget, int xValue,
+                                                boolean kicked, boolean castForMadnessCost) {
+        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+                controllerId, needsTarget, xValue, kicked, castForMadnessCost);
+    }
+
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
         return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card), 0);
     }
@@ -878,18 +885,26 @@ public class TargetLegalityService {
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue) {
         return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
-                needsTarget, xValue, false);
+                needsTarget, xValue, false, false);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                                  UUID controllerId, boolean needsTarget, int xValue, boolean kicked) {
         return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
-                controllerId, needsTarget, xValue, kicked);
+                controllerId, needsTarget, xValue, kicked, false);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue, boolean kicked) {
+        return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
+                needsTarget, xValue, kicked, false);
+    }
+
+    private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                                 UUID targetId, Zone targetZone, UUID controllerId,
+                                                 boolean needsTarget, int xValue, boolean kicked,
+                                                 boolean castForMadnessCost) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
             return Optional.of("Invalid target");
@@ -960,7 +975,8 @@ public class TargetLegalityService {
         if (effectiveTargetFilter != null && target != null) {
             Optional<String> filterReason = predicateEvaluationService.checkTargetFilter(effectiveTargetFilter,
                     target,
-                    filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
+                    filterContext(gameData, card.getId(), controllerId).withXValue(xValue)
+                            .withMadness(castForMadnessCost));
             if (filterReason.isPresent()) return filterReason;
         }
 
@@ -1691,10 +1707,11 @@ public class TargetLegalityService {
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
-                                        filterContext(gameData,
+                                filterContext(gameData,
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
                                                 entry.getControllerId()).withXValue(entry.getXValue())
-                                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()));
+                                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                                .withMadness(entry.isMadness()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
                             }
@@ -1866,7 +1883,8 @@ public class TargetLegalityService {
                 predicateEvaluationService.validateTargetFilter(targetFilter, target,
                         filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
                                 entry.getControllerId()).withXValue(entry.getXValue())
-                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()));
+                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                .withMadness(entry.isMadness()));
             } catch (IllegalStateException e) {
                 return false;
             }

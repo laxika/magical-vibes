@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "39")
+@CardRegistration(set = "SOI", collectorNumber = "47")
 public class UnrulyMob extends Card {
 
     public UnrulyMob() {

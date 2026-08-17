@@ -1675,7 +1675,8 @@ public class GraveyardReturnSupport {
                 : null;
         for (int i = 0; i < graveyard.size(); i++) {
             if ((trackedIds == null || trackedIds.contains(graveyard.get(i).getId()))
-                    && predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null)) {
+                    && predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null)
+                    && !next.excludedManaValues().contains(graveyard.get(i).getManaValue())) {
                 matchingIndices.add(i);
             }
         }
@@ -1691,7 +1692,8 @@ public class GraveyardReturnSupport {
             gameData.pendingGraveyardReturnQueue.addFirst(
                     new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
                             next.destination(), next.skipRemainingOnDecline(), next.mandatory(),
-                            next.fromBattlefieldThisTurn()));
+                            next.fromBattlefieldThisTurn(), next.distinctManaValues(),
+                            next.excludedManaValues()));
         }
 
         GraveyardChoiceDestination destination = next.destination();

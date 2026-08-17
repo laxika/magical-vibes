@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEf
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
@@ -151,6 +152,35 @@ public class DamageTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers to put a counter on itself", gameData.id, source.getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    private boolean handleSelfDealsDamageToCreatureCreateToken(TriggerMatchContext match,
+            CreateTokenEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
+        Permanent source = match.permanent();
+        if (source == null || dc.damageSource() == null || dc.damageDealt() <= 0
+                || !source.getId().equals(dc.damageSource().getId())) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                match.controllerId(),
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                source.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers to create a token after dealing damage to a creature",
+                gameData.id, source.getCard().getName());
         return true;
     }
 
@@ -825,6 +855,29 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    private boolean handleOpponentSourceDamageToYouOrYourPermanent(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.SourceDamageToYouOrYourPermanent damage =
+                (TriggerContext.SourceDamageToYouOrYourPermanent) ctx;
+        if (match.permanent() == null || damage.sourceControllerId() == null
+                || damage.sourceControllerId().equals(match.controllerId())) {
+            return false;
+        }
+
+        MayEffect boundMay = new MayEffect(
+                new DealDamageToDamageSourceControllerEffect(
+                        1, damage.sourcePermanentId(), damage.sourceControllerId()),
+                may.prompt(), may.elseEffect(), may.choicePlayer());
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), boundMay,
+                null, match.permanent().getId());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers after an opponent-controlled source dealt damage to its controller or permanent",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     // ── ON_ANY_SOURCE_DEALS_DAMAGE (Justice) ───────────────────────────
 
     @CollectsTrigger(value = ReflectSourceDamageToItsControllerEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
@@ -915,6 +968,28 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sd.sourceCard();
         // The source may have died dealing the damage; keep its last-known permanent id when present.
         UUID sourcePermanentId = match.permanent() != null ? match.permanent().getId() : null;
+
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+            ConditionContext conditionContext = match.permanent() != null
+                    ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                    : ConditionContext.forCard(sourceCard, match.controllerId());
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                return false;
+            }
+        }
+
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    "deals damage", sourcePermanentId));
+
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger awaits target ({} damage)",
+                    gameData.id, sourceCard.getName(), sd.totalDamage());
+            return true;
+        }
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

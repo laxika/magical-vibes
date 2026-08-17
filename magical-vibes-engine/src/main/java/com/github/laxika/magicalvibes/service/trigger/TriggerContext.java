@@ -58,6 +58,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for controller-investigate triggers. */
+    record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
+
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */
@@ -170,6 +173,10 @@ public sealed interface TriggerContext {
 
     /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
+
+    /** Context for a permanent controlled by a player transforming. */
+    record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
+            implements TriggerContext {}
 
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
@@ -411,4 +418,9 @@ public sealed interface TriggerContext {
      */
     record CreatureDamageToYouOrYourPermanent(Permanent damageSource, UUID damagedPlayerId,
                                               Permanent damagedPermanent, int damage) implements TriggerContext {}
+
+    /** Context for any opponent-controlled source damaging this permanent's controller or their permanent. */
+    record SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
+                                            UUID sourcePermanentId, UUID damagedPlayerId)
+            implements TriggerContext {}
 }

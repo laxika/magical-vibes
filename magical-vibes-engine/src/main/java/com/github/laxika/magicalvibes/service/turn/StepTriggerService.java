@@ -1241,6 +1241,13 @@ public class StepTriggerService {
                             continue; // Condition not met, don't trigger
                         }
                     }
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && conditional.targetSpec() != TargetSpec.NONE
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
                     // Intervening-if on the active opponent's hand size — Hollowborn Barghest's
                     // "if that player has no cards in hand" and Misers' Cage's "if that player has
                     // five or more cards in hand"
@@ -1253,17 +1260,22 @@ public class StepTriggerService {
                         continue;
                     }
 
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s upkeep ability",
-                            new ArrayList<>(List.of(effect)),
-                            activePlayerId,
-                            perm.getId()
-                    );
-                    entry.setSourcePermanentSnapshot(new Permanent(perm));
-                    gameData.stack.add(entry);
+                    if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                                perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                    } else {
+                        StackEntry entry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                activePlayerId,
+                                perm.getId()
+                        );
+                        entry.setSourcePermanentSnapshot(new Permanent(perm));
+                        gameData.stack.add(entry);
+                    }
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                     log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());

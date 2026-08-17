@@ -1305,21 +1305,25 @@ public class SpellCastingService {
             } else if (hasSacrificeForCostReduction) {
                 // Allow — sacrifice cost reduction will be validated during casting
             } else {
+                boolean playableWithTargetingReduction = false;
                 if (targetId != null
-                        && cardCheck.getTargetFilter() != null
-                        && (gameQueryService.findPermanentById(gameData, targetId) != null
-                            || gameData.playerIds.contains(targetId))) {
+                        && gameQueryService.findPermanentById(gameData, targetId) != null) {
                     targetLegalityService.validateSpellTargeting(
                             gameData, cardCheck, targetId, null, playerId, true);
+                    int targetingCostModifier = castingCostService.getTargetingSpellCostModifier(
+                            gameData, playerId, targetId, targetIds);
+                    if (targetingCostModifier < 0) {
+                        playableWithTargetingReduction = actionAvailabilityService.isCardPlayable(
+                                gameData, playerId, cardCheck, gameData.playerManaPools.get(playerId),
+                                targetingCostModifier);
+                    }
                 }
-                // Diagnostic: log why this card was not in the playable list
-                ManaPool diagPool = gameData.playerManaPools.get(playerId);
-                log.warn("Game {} - Card '{}' at index {} not playable. Step={}, activePlayer={}, isActive={}, stackEmpty={}, pool={}, playableIndices={}, hand={}",
-                        gameData.id, cardCheck.getName(), cardIndex, gameData.currentStep,
-                        gameData.activePlayerId, playerId.equals(gameData.activePlayerId),
-                        gameData.stack.isEmpty(), diagPool != null ? diagPool.toMap() : "null",
-                        playable, handCheck.stream().map(c -> c.getName()).toList());
-                throw new IllegalStateException("Card is not playable");
+                if (playableWithTargetingReduction) {
+                    // Allow — the chosen target supplies a cost reduction that the target-free
+                    // playability query cannot see.
+                } else {
+                    throw new IllegalStateException("Card is not playable");
+                }
             }
         }
 
@@ -1604,7 +1608,7 @@ public class SpellCastingService {
         }
 
         // Compute targeting tax from effects like Kopala, Warden of Waves and Kaervek's Torch
-        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
+        int targetingTax = castingCostService.getTargetingSpellCostModifier(gameData, playerId, targetId, targetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
         if (targetingLifeTax > gameData.getLife(playerId)) {
@@ -1631,7 +1635,7 @@ public class SpellCastingService {
                 boolean normalCostPayable = normalCost.hasX()
                         ? normalCost.canPayWithAdditionalGenericCost(
                                 pool, effectiveXValue, additionalCost - selectedDelveReduction)
-                        : normalCost.canPay(pool, additionalCost);
+                        : normalCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost);
                 if (!normalCostPayable) {
                     usingBattlefieldAlternativeCost = castingCostService.canAffordAlternativeCostFromBattlefield(
                             gameData, playerId, card, pool, additionalCost);
@@ -1677,7 +1681,8 @@ public class SpellCastingService {
                                 pool, effectiveXValue, totalAdditionalCost - selectedDelveReduction)) {
                             throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                         }
-                    } else if (!escalateManaSuffix.isEmpty() && !cost.canPay(pool, additionalCost)) {
+                    } else if (!escalateManaSuffix.isEmpty()
+                            && !cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay escalate cost");
                     }
                 }
@@ -1699,7 +1704,7 @@ public class SpellCastingService {
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue)
                     + targetingTax;
             ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
-            if (!escalateOnly.canPay(pool, additionalCost)) {
+            if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay escalate cost");
             }
         }
@@ -4149,7 +4154,7 @@ public class SpellCastingService {
         boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
         int additionalCost = castingCostService.getCastCostModifier(
                 gameData, playerId, card, paysFlashbackCost, effectiveXValue);
-        additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds, false)
+        additionalCost += castingCostService.getTargetingSpellCostModifier(gameData, playerId, targetId, targetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, targetIds);
         int targetingLifeTax = castingCostService.getTargetingLifeTax(gameData, playerId, targetId, targetIds);
         if (targetingLifeTax > gameData.getLife(playerId)) {
@@ -4986,11 +4991,11 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
         ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
-        if (!escalateOnly.canPay(pool, additionalCost)) {
+        if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay escalate cost");
         }
         int before = pool.getTotalAllMana();
-        escalateOnly.pay(pool, additionalCost);
+        escalateOnly.payWithAdditionalGenericCost(pool, 0, additionalCost);
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
     }
 
@@ -5211,10 +5216,10 @@ public class SpellCastingService {
         if (castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, sourceZone)) {
             if (additionalCostsMana.isEmpty()) return 0;
             ManaCost additionalCosts = new ManaCost(additionalCostsMana);
-            if (!additionalCosts.canPay(pool, additionalCost)) {
+            if (!additionalCosts.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay additional spell costs");
             }
-            additionalCosts.pay(pool, additionalCost);
+            additionalCosts.payWithAdditionalGenericCost(pool, 0, additionalCost);
             return before - pool.getTotalAllMana();
         }
 
@@ -5263,7 +5268,7 @@ public class SpellCastingService {
                             flags.legendarySpellOnly(), flags.manaValueAtLeastFour(),
                             flags.subtypeOrPlaneswalkerSpellContext(),
                             flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext)
-                    : cost.canPay(pool, additionalCost);
+                    : cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost);
         }
         if (!normallyPayable) {
             String altCostStr = castingCostService.findAffordableAlternativeCostFromBattlefield(
@@ -5271,10 +5276,10 @@ public class SpellCastingService {
             if (altCostStr != null) {
                 ManaCost altCost = castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, new ManaCost(altCostStr + additionalCostsMana));
-                if (!altCost.canPay(pool, additionalCost)) {
+                if (!altCost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                     throw new IllegalStateException("Not enough mana to pay additional spell costs");
                 }
-                altCost.pay(pool, additionalCost);
+                altCost.payWithAdditionalGenericCost(pool, 0, additionalCost);
                 return before - pool.getTotalAllMana();
             }
             if (targetingTax > 0) {
@@ -5335,7 +5340,7 @@ public class SpellCastingService {
                         flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
                         flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext);
             } else {
-                cost.pay(pool, additionalCost);
+                cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
             }
         }
 
