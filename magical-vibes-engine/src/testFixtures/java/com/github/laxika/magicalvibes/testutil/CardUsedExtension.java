@@ -9,8 +9,12 @@ import org.junit.platform.commons.support.AnnotationSupport;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
+import java.util.List;
 
-/** Preloads oracle sets declared through {@link CardUsed}. */
+/**
+ * Preloads oracle sets by largest shared coverage among the cards declared through
+ * {@link CardUsed}.
+ */
 public final class CardUsedExtension implements BeforeAllCallback, BeforeEachCallback {
 
     @Override
@@ -20,21 +24,21 @@ public final class CardUsedExtension implements BeforeAllCallback, BeforeEachCal
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        preload(context.getRequiredTestMethod());
+        preload(context.getRequiredTestClass(), context.getRequiredTestMethod());
     }
 
-    private static void preload(AnnotatedElement element) {
-        AnnotationSupport.findAnnotation(element, CardUsed.class)
-                .map(CardUsed::value)
-                .stream()
-                .flatMap(Arrays::stream)
+    private static void preload(AnnotatedElement... elements) {
+        List<Class<? extends Card>> cardClasses = Arrays.stream(elements)
+                .flatMap(element -> AnnotationSupport.findAnnotation(element, CardUsed.class)
+                        .map(CardUsed::value)
+                        .stream()
+                        .flatMap(Arrays::stream))
                 .distinct()
-                .forEach(CardUsedExtension::preload);
-    }
-
-    private static void preload(Class<? extends Card> cardClass) {
-        GameTestEngineContext.get()
-                .getBean(CardRegistry.class)
-                .ensureCardDataLoaded(cardClass);
+                .toList();
+        if (!cardClasses.isEmpty()) {
+            GameTestEngineContext.get()
+                    .getBean(CardRegistry.class)
+                    .ensureCardDataLoaded(cardClasses);
+        }
     }
 }

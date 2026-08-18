@@ -58,6 +58,7 @@ Do **not** add tests for:
 If you add tests:
 - Put them in the card’s existing test class (create the test file only if missing and tests are required).
 - Match nearby `BaseCardTest` patterns; keep cases focused and named for the behavior.
+- Make sure that only one set's cards are used in the test, preferably the set where the tested card is from. If that is not possible, other sets may be used, but keep the number of sets as limited as practical.
 - Optionally run only that card’s tests via `scripts/run-card-test.ps1`. If a new test fails and confirms a real bug, that is a **FAIL** finding (implementation still wrong) — leave the failing test in place unless it is flaky/invalid; note it in the result file. If the new test passes, that strengthens coverage; it alone does not create a FAIL.
 
 Still do **not** change production card/effect code in this step.

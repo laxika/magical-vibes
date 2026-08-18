@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -118,11 +119,31 @@ public class CardRegistry implements CardCatalog {
      *                                  indexed back face
      */
     public void ensureCardDataLoaded(Class<? extends Card> cardClass) {
-        CardSet cardSet = findSetFor(cardClass);
-        if (cardSet == null) {
-            throw new IllegalArgumentException("No registered printing found for " + cardClass.getName());
+        ensureCardDataLoaded(List.of(cardClass));
+    }
+
+    /**
+     * Limits oracle-set loads for a group of registered card classes. At each step, the set
+     * containing the most still-uncovered classes is selected. This lets {@code @CardUsed} tests
+     * reuse a shared printing set instead of independently choosing an unrelated preferred set for
+     * every reprinted support card.
+     *
+     * @throws IllegalArgumentException if any class is neither a registered front face nor an
+     *                                  indexed back face
+     */
+    public void ensureCardDataLoaded(List<Class<? extends Card>> cardClasses) {
+        Set<Class<? extends Card>> remaining = new LinkedHashSet<>(cardClasses);
+        for (Class<? extends Card> cardClass : remaining) {
+            if (setsFor(cardClass).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No registered printing found for " + cardClass.getName());
+            }
         }
-        ensureSetLoaded(cardSet);
+        while (!remaining.isEmpty()) {
+            CardSet cardSet = setCoveringMost(remaining);
+            ensureSetLoaded(cardSet);
+            remaining.removeIf(cardClass -> setsFor(cardClass).contains(cardSet));
+        }
     }
 
     private void indexBackFaces() {
@@ -162,6 +183,28 @@ public class CardRegistry implements CardCatalog {
     private CardSet findSetFor(Class<? extends Card> cardClass) {
         CardSet cardSet = preferredSet(cardClass);
         return cardSet != null ? cardSet : backFaceSets.get(cardClass);
+    }
+
+    private CardSet setCoveringMost(Set<Class<? extends Card>> cardClasses) {
+        return Arrays.stream(CardSet.values())
+                .max(Comparator.comparingLong((CardSet cardSet) -> cardClasses.stream()
+                                .filter(cardClass -> setsFor(cardClass).contains(cardSet))
+                                .count())
+                        .thenComparingInt(CardSet::ordinal))
+                .filter(cardSet -> cardClasses.stream()
+                        .anyMatch(cardClass -> setsFor(cardClass).contains(cardSet)))
+                .orElse(null);
+    }
+
+    private Set<CardSet> setsFor(Class<? extends Card> cardClass) {
+        Set<CardSet> cardSets = Arrays.stream(cardClass.getAnnotationsByType(CardRegistration.class))
+                .map(registration -> CardSet.findByCode(registration.set()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (cardSets.isEmpty() && backFaceSets.containsKey(cardClass)) {
+            return Set.of(backFaceSets.get(cardClass));
+        }
+        return cardSets;
     }
 
     private static CardSet preferredSet(Class<? extends Card> cardClass) {

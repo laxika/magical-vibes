@@ -13,7 +13,8 @@ import java.lang.annotation.Target;
  * <p>The annotation may be placed on a test class for cards shared by all its test methods, or on
  * an individual method for cards used only by that scenario. {@link BaseCardTest} preloads their
  * sets before test setup. List every concrete card constructed by the annotated scope, including
- * support cards.
+ * support cards. The preloader groups those classes by their registered printings and favors the
+ * set covering the most cards, minimizing the number of oracle sets loaded for the test.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
